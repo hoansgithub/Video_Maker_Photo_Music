@@ -1,0 +1,188 @@
+[versions]
+# ============================================
+# CORE VERSIONS
+# ============================================
+agp = "8.13.2"
+kotlin = "2.1.20"
+ksp = "2.1.20-2.0.1"
+
+# ============================================
+# ANDROIDX CORE
+# ============================================
+coreKtx = "1.17.0"
+coreSplashscreen = "1.0.1"
+lifecycleRuntimeKtx = "2.9.4"
+activityCompose = "1.11.0"
+fragmentKtx = "1.8.6"
+
+# ============================================
+# COMPOSE (December 2025 BOM)
+# ============================================
+composeBom = "2025.10.01"
+lifecycleViewmodelCompose = "2.9.4"
+navigationCompose = "2.9.5"
+
+# ============================================
+# MEDIA3 (Video Editing)
+# ============================================
+media3 = "1.6.1"
+
+# ============================================
+# DATA PERSISTENCE
+# ============================================
+room = "2.8.4"
+datastore = "1.1.7"
+
+# ============================================
+# SERIALIZATION
+# ============================================
+kotlinxSerialization = "1.7.3"
+
+# ============================================
+# BACKGROUND WORK
+# ============================================
+workManager = "2.11.0"
+
+# ============================================
+# ACCCORE (AlcheClub DI & Services)
+# ============================================
+acccore = "0.0.9"
+
+# ============================================
+# FIREBASE (Optional - for analytics/crash reporting)
+# ============================================
+firebaseBom = "34.6.0"
+
+# ============================================
+# MONETIZATION (Optional)
+# ============================================
+revenuecat = "9.1.0"
+
+# ============================================
+# UI UTILITIES
+# ============================================
+shimmer = "1.3.1"
+coil = "2.7.0"
+
+# ============================================
+# TESTING
+# ============================================
+junit = "4.13.2"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+
+[libraries]
+# ============================================
+# ACCCORE - AlcheClub Custom DI & Services
+# ============================================
+acccore = { module = "com.github.hoansgithub.ACCCoreAndroid:ACCCore", version.ref = "acccore" }
+acccore-firebase = { module = "com.github.hoansgithub.ACCCoreAndroid:ACCCore-Firebase", version.ref = "acccore" }
+acccore-revenuecat = { module = "com.github.hoansgithub.ACCCoreAndroid:ACCCore-RevenueCat", version.ref = "acccore" }
+acccore-ads = { module = "com.github.hoansgithub.ACCCoreAndroid:ACCCore-Ads", version.ref = "acccore" }
+acccore-appsflyer = { module = "com.github.hoansgithub.ACCCoreAndroid:ACCCore-AppsFlyer", version.ref = "acccore" }
+
+# ============================================
+# ANDROIDX CORE
+# ============================================
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleViewmodelCompose" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
+androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleRuntimeKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragmentKtx" }
+
+# ============================================
+# COMPOSE
+# ============================================
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+
+# ============================================
+# NAVIGATION
+# ============================================
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+
+# ============================================
+# MEDIA3 (Video Editing & Playback)
+# ============================================
+media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
+media3-transformer = { group = "androidx.media3", name = "media3-transformer", version.ref = "media3" }
+media3-effect = { group = "androidx.media3", name = "media3-effect", version.ref = "media3" }
+media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3" }
+media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
+
+# ============================================
+# ROOM DATABASE
+# ============================================
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+
+# ============================================
+# DATASTORE
+# ============================================
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+# ============================================
+# WORKMANAGER
+# ============================================
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
+
+# ============================================
+# SERIALIZATION
+# ============================================
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+
+# ============================================
+# FIREBASE (via BOM)
+# ============================================
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-config = { module = "com.google.firebase:firebase-config" }
+firebase-crashlytics-ndk = { module = "com.google.firebase:firebase-crashlytics-ndk" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
+firebase-perf = { module = "com.google.firebase:firebase-perf" }
+
+# ============================================
+# MONETIZATION
+# ============================================
+revenuecat-purchases = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenuecat" }
+
+# ============================================
+# UI UTILITIES
+# ============================================
+shimmer-compose = { group = "com.valentinilk.shimmer", name = "compose-shimmer", version.ref = "shimmer" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+coil-video = { group = "io.coil-kt", name = "coil-video", version.ref = "coil" }
+
+# ============================================
+# PLAY SERVICES
+# ============================================
+play-review = { group = "com.google.android.play", name = "review", version = "2.0.2" }
+play-review-ktx = { group = "com.google.android.play", name = "review-ktx", version = "2.0.2" }
+
+# ============================================
+# TESTING
+# ============================================
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+room = { id = "androidx.room", version.ref = "room" }
+# Note: kotlin-parcelize is included in kotlin-android plugin, no need to declare separately

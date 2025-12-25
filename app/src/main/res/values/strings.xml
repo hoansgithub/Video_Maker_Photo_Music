@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Video Maker</string>
+
+    <!-- Loading -->
+    <string name="loading">Loading…</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_get_started">Get Started</string>
+
+    <!-- Home -->
+    <string name="home_title">Video Maker</string>
+    <string name="home_create">Create</string>
+    <string name="home_my_projects">My Projects</string>
+</resources>

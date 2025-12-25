@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.VideoMaker" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Android 12+ Splash Screen Theme -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Set background color -->
+        <item name="windowSplashScreenBackground">@color/white</item>
+
+        <!-- Set splash screen icon -->
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_round</item>
+
+        <!-- Icon background color -->
+        <item name="windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+
+        <!-- Set the theme for the Activity after splash -->
+        <item name="postSplashScreenTheme">@style/Theme.VideoMaker</item>
+    </style>
+</resources>
