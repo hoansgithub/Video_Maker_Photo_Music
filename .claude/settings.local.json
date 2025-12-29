@@ -26,7 +26,8 @@
       "Bash(timeout 30 adb logcat:*)",
       "Bash(./gradlew clean:*)",
       "Bash(timeout 60 adb logcat:*)",
-      "Bash(timeout 90 adb logcat:*)"
+      "Bash(timeout 90 adb logcat:*)",
+      "Bash(grep:*)"
     ]
   }
 }

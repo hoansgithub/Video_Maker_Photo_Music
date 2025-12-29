@@ -68,9 +68,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Clear Activity reference to prevent memory leak
-        if (isFinishing) {
-            rootViewModel.clearActivityRef()
-        }
+        // Always clear Activity reference - WeakReference handles the rest
+        // Previously only cleared when isFinishing, but should always clear
+        rootViewModel.clearActivityRef()
     }
 }

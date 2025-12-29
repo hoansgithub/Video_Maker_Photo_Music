@@ -1,15 +1,20 @@
 package co.alcheclub.video.maker.photo.music.modules.export
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.alcheclub.video.maker.photo.music.domain.repository.ExportProgress
 import co.alcheclub.video.maker.photo.music.domain.repository.ExportRepository
+import co.alcheclub.video.maker.photo.music.media.export.MediaStoreHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.UUID
 
 // ============================================
@@ -36,8 +41,14 @@ sealed class ExportUiState {
      * Export completed successfully
      *
      * @param outputPath Path to the exported video file
+     * @param savedToGallery Whether the video has been saved to gallery
+     * @param saveError Error message if save to gallery failed
      */
-    data class Success(val outputPath: String) : ExportUiState()
+    data class Success(
+        val outputPath: String,
+        val savedToGallery: Boolean = false,
+        val saveError: String? = null
+    ) : ExportUiState()
 
     /**
      * Export failed
@@ -156,6 +167,34 @@ class ExportViewModel(
     fun navigateBack() {
         viewModelScope.launch {
             _navigationEvent.send(ExportNavigationEvent.NavigateBack)
+        }
+    }
+
+    /**
+     * Save the exported video to device gallery
+     */
+    fun saveToGallery(context: Context) {
+        val currentState = _uiState.value
+        if (currentState !is ExportUiState.Success) return
+        if (currentState.savedToGallery) return // Already saved
+
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                MediaStoreHelper.saveVideoToGallery(
+                    context = context,
+                    videoFile = File(currentState.outputPath),
+                    displayName = MediaStoreHelper.generateDisplayName(projectId)
+                )
+            }
+
+            _uiState.value = when (result) {
+                is MediaStoreHelper.SaveResult.Success -> {
+                    currentState.copy(savedToGallery = true, saveError = null)
+                }
+                is MediaStoreHelper.SaveResult.Error -> {
+                    currentState.copy(savedToGallery = false, saveError = result.message)
+                }
+            }
         }
     }
 }

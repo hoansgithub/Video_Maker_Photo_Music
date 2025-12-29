@@ -1,7 +1,5 @@
 package co.alcheclub.video.maker.photo.music.modules.editor.components
 
-import android.content.Context
-import android.net.Uri
 import android.view.ViewGroup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -35,15 +33,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.transformer.CompositionPlayer
 import androidx.media3.ui.PlayerView
 import co.alcheclub.video.maker.photo.music.domain.model.Project
 import co.alcheclub.video.maker.photo.music.media.composition.CompositionFactory
-import co.alcheclub.video.maker.photo.music.media.library.AudioTrackLibrary
-import java.io.File
 
 /**
  * Preview state for the video player
@@ -57,11 +51,18 @@ sealed class PreviewState {
 /**
  * VideoPreviewPlayer - Real-time video preview using Media3 CompositionPlayer
  *
+ * Architecture: Single-player mode using CompositionPlayer with audio included
+ *
+ * Requirements for multi-sequence support (video + audio):
+ * - All EditedMediaItems MUST have setDurationUs() set explicitly
+ * - Video and audio sequences MUST be equal length
+ * - isLooping is NOT supported
+ * See: https://github.com/androidx/media/issues/1560
+ *
  * Features:
  * - Renders actual video composition in real-time
  * - Rebuilds composition when project or settings change
  * - Play/pause controls
- * - Loops playback
  * - Auto-play when ready (optional)
  */
 @Composable
@@ -76,10 +77,9 @@ fun VideoPreviewPlayer(
     val context = LocalContext.current
     val aspectRatio = project.settings.aspectRatio.ratio
 
-    // State for preview
+    // State for preview - single player mode (video + audio in one CompositionPlayer)
     var previewState by remember { mutableStateOf<PreviewState>(PreviewState.Building) }
-    var videoPlayer by remember { mutableStateOf<CompositionPlayer?>(null) }
-    var audioPlayer by remember { mutableStateOf<ExoPlayer?>(null) }
+    var player by remember { mutableStateOf<CompositionPlayer?>(null) }
 
     // Create composition factory
     val compositionFactory = remember { CompositionFactory(context) }
@@ -95,57 +95,41 @@ fun VideoPreviewPlayer(
 
     // Build composition when key changes
     LaunchedEffect(compositionKey) {
-        android.util.Log.d("VideoPreviewPlayer", "=== Rebuilding composition ===")
+        android.util.Log.d("VideoPreviewPlayer", "=== Rebuilding composition (single-player mode) ===")
         android.util.Log.d("VideoPreviewPlayer", "Key: $compositionKey")
         android.util.Log.d("VideoPreviewPlayer", "Assets: ${project.assets.size}, AudioTrack: ${project.settings.audioTrackId}")
         previewState = PreviewState.Building
 
-        // Store old players to release AFTER new ones are ready
-        val oldVideoPlayer = videoPlayer
-        val oldAudioPlayer = audioPlayer
+        // Store old player to release AFTER new one is ready
+        val oldPlayer = player
 
         try {
             // Check if project has assets
             if (project.assets.isEmpty()) {
                 previewState = PreviewState.Error("No assets to preview")
-                oldVideoPlayer?.release()
-                oldAudioPlayer?.release()
-                videoPlayer = null
-                audioPlayer = null
+                oldPlayer?.release()
+                player = null
                 return@LaunchedEffect
             }
 
-            // Create video-only composition (CompositionPlayer doesn't support audio sequences)
-            android.util.Log.d("VideoPreviewPlayer", "Creating video composition...")
-            val composition = compositionFactory.createComposition(project, includeAudio = false)
-            android.util.Log.d("VideoPreviewPlayer", "Video composition created")
+            // Create composition WITH audio (single-player mode)
+            // CompositionPlayer now supports multi-sequence with explicit durations
+            android.util.Log.d("VideoPreviewPlayer", "Creating composition with audio...")
+            val composition = compositionFactory.createComposition(project, includeAudio = true)
+            android.util.Log.d("VideoPreviewPlayer", "Composition created")
 
-            // Create video player
+            // Create single player for both video and audio
             android.util.Log.d("VideoPreviewPlayer", "Creating CompositionPlayer...")
-            val newVideoPlayer = CompositionPlayer.Builder(context).build()
-            newVideoPlayer.setComposition(composition)
-            newVideoPlayer.repeatMode = Player.REPEAT_MODE_OFF
-            newVideoPlayer.prepare()
+            val newPlayer = CompositionPlayer.Builder(context).build()
+            newPlayer.setComposition(composition)
+            newPlayer.repeatMode = Player.REPEAT_MODE_OFF
+            newPlayer.prepare()
             android.util.Log.d("VideoPreviewPlayer", "CompositionPlayer ready")
 
-            // Create separate audio player for background music
-            android.util.Log.d("VideoPreviewPlayer", "Creating audio player...")
-            val newAudioPlayer = createAudioPlayer(context, project.settings.audioTrackId, project.settings.customAudioUri)
-            android.util.Log.d("VideoPreviewPlayer", "Audio player created: ${newAudioPlayer != null}")
-
-            // Add listener for video state changes
-            newVideoPlayer.addListener(object : Player.Listener {
+            // Add listener for playback state changes
+            newPlayer.addListener(object : Player.Listener {
                 override fun onIsPlayingChanged(playing: Boolean) {
                     onPlaybackStateChange(playing)
-                    // Sync audio with video
-                    newAudioPlayer?.let { audio ->
-                        if (playing) {
-                            audio.seekTo(newVideoPlayer.currentPosition)
-                            audio.play()
-                        } else {
-                            audio.pause()
-                        }
-                    }
                 }
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
@@ -155,19 +139,15 @@ fun VideoPreviewPlayer(
                             android.util.Log.d("VideoPreviewPlayer", "Player STATE_READY, autoPlay=$autoPlay")
                             previewState = PreviewState.Ready
                             if (autoPlay) {
-                                newVideoPlayer.play()
+                                newPlayer.play()
                             }
                         }
                         Player.STATE_BUFFERING -> {
-                            // Don't show Building state during normal buffering
                             android.util.Log.d("VideoPreviewPlayer", "Player STATE_BUFFERING")
                         }
                         Player.STATE_ENDED -> {
                             android.util.Log.d("VideoPreviewPlayer", "Player STATE_ENDED, resetting for replay")
-                            // Reset both players for replay
-                            newVideoPlayer.seekTo(0)
-                            newAudioPlayer?.seekTo(0)
-                            newAudioPlayer?.pause()
+                            newPlayer.seekTo(0)
                             onPlaybackStateChange(false)
                         }
                     }
@@ -179,49 +159,42 @@ fun VideoPreviewPlayer(
                 }
             })
 
-            // Atomically swap players - assign new ones first, then release old
-            videoPlayer = newVideoPlayer
-            audioPlayer = newAudioPlayer
+            // Atomically swap player - assign new one first, then release old
+            player = newPlayer
 
-            // Now release old players
-            android.util.Log.d("VideoPreviewPlayer", "Releasing old players...")
-            oldVideoPlayer?.release()
-            oldAudioPlayer?.release()
+            // Now release old player
+            android.util.Log.d("VideoPreviewPlayer", "Releasing old player...")
+            oldPlayer?.release()
             android.util.Log.d("VideoPreviewPlayer", "Player swap complete")
 
         } catch (e: Exception) {
             android.util.Log.e("VideoPreviewPlayer", "Failed to build preview", e)
             previewState = PreviewState.Error(e.message ?: "Failed to build preview")
-            // Keep old players if new ones failed to create
-            if (videoPlayer == null) {
-                videoPlayer = oldVideoPlayer
-                audioPlayer = oldAudioPlayer
+            // Keep old player if new one failed to create
+            if (player == null) {
+                player = oldPlayer
             } else {
-                oldVideoPlayer?.release()
-                oldAudioPlayer?.release()
+                oldPlayer?.release()
             }
         }
     }
 
     // Control playback based on isPlaying
-    LaunchedEffect(isPlaying, videoPlayer, audioPlayer) {
-        videoPlayer?.let { video ->
-            if (isPlaying && video.playbackState == Player.STATE_READY) {
-                video.play()
+    LaunchedEffect(isPlaying, player) {
+        player?.let { p ->
+            if (isPlaying && p.playbackState == Player.STATE_READY) {
+                p.play()
             } else {
-                video.pause()
-                audioPlayer?.pause()
+                p.pause()
             }
         }
     }
 
-    // Cleanup players on dispose
+    // Cleanup player on dispose
     DisposableEffect(Unit) {
         onDispose {
-            videoPlayer?.release()
-            videoPlayer = null
-            audioPlayer?.release()
-            audioPlayer = null
+            player?.release()
+            player = null
         }
     }
 
@@ -238,7 +211,7 @@ fun VideoPreviewPlayer(
             contentAlignment = Alignment.Center
         ) {
             // Always show the player if available (keeps last frame visible during rebuild)
-            videoPlayer?.let { compositionPlayer ->
+            player?.let { compositionPlayer ->
                 AndroidView(
                     factory = { ctx ->
                         PlayerView(ctx).apply {
@@ -363,77 +336,4 @@ fun VideoPreviewPlayer(
             }
         }
     }
-}
-
-/**
- * Create audio player for background music preview
- */
-private fun createAudioPlayer(
-    context: Context,
-    audioTrackId: String?,
-    customAudioUri: Uri?
-): ExoPlayer? {
-    android.util.Log.d("VideoPreviewPlayer", "createAudioPlayer: trackId=$audioTrackId, customUri=$customAudioUri")
-
-    val audioUri = getPreviewAudioUri(context, audioTrackId, customAudioUri)
-    if (audioUri == null) {
-        android.util.Log.w("VideoPreviewPlayer", "No audio URI available")
-        return null
-    }
-
-    android.util.Log.d("VideoPreviewPlayer", "Creating ExoPlayer with URI: $audioUri")
-    return ExoPlayer.Builder(context).build().apply {
-        setMediaItem(MediaItem.fromUri(audioUri))
-        repeatMode = Player.REPEAT_MODE_OFF
-        volume = 1.0f
-        prepare()
-    }
-}
-
-/**
- * Get audio URI for preview playback
- */
-private fun getPreviewAudioUri(context: Context, audioTrackId: String?, customAudioUri: Uri?): Uri? {
-    android.util.Log.d("VideoPreviewPlayer", "getPreviewAudioUri: trackId=$audioTrackId")
-
-    // Custom audio takes precedence
-    customAudioUri?.let {
-        android.util.Log.d("VideoPreviewPlayer", "Using custom audio URI: $it")
-        return it
-    }
-
-    // Get bundled track
-    audioTrackId?.let { trackId ->
-        val track = AudioTrackLibrary.getById(trackId)
-        if (track == null) {
-            android.util.Log.e("VideoPreviewPlayer", "Track not found: $trackId")
-            return null
-        }
-
-        android.util.Log.d("VideoPreviewPlayer", "Found track: ${track.name}, path: ${track.assetPath}")
-
-        // Copy asset to cache (ExoPlayer can't read asset:// URIs)
-        return try {
-            val fileName = track.assetPath.substringAfterLast("/")
-            val cacheFile = File(context.cacheDir, "audio/$fileName")
-            android.util.Log.d("VideoPreviewPlayer", "Cache file: ${cacheFile.absolutePath}, exists: ${cacheFile.exists()}")
-
-            if (!cacheFile.exists()) {
-                cacheFile.parentFile?.mkdirs()
-                context.assets.open(track.assetPath).use { input ->
-                    cacheFile.outputStream().use { output ->
-                        val bytes = input.copyTo(output)
-                        android.util.Log.d("VideoPreviewPlayer", "Copied $bytes bytes to cache")
-                    }
-                }
-            }
-
-            Uri.fromFile(cacheFile)
-        } catch (e: Exception) {
-            android.util.Log.e("VideoPreviewPlayer", "Failed to load audio: ${e.message}", e)
-            null
-        }
-    }
-
-    return null
 }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
@@ -98,6 +99,11 @@ fun ExportScreen(
             is ExportUiState.Success -> {
                 SuccessContent(
                     outputPath = state.outputPath,
+                    savedToGallery = state.savedToGallery,
+                    saveError = state.saveError,
+                    onSaveToGalleryClick = {
+                        viewModel.saveToGallery(context)
+                    },
                     onShareClick = {
                         shareVideo(context, state.outputPath)
                     },
@@ -219,6 +225,9 @@ private fun ProcessingContent(
 @Composable
 private fun SuccessContent(
     outputPath: String,
+    savedToGallery: Boolean,
+    saveError: String?,
+    onSaveToGalleryClick: () -> Unit,
     onShareClick: () -> Unit,
     onDoneClick: () -> Unit
 ) {
@@ -261,6 +270,49 @@ private fun SuccessContent(
         )
 
         Spacer(modifier = Modifier.height(48.dp))
+
+        // Save to Gallery button
+        Button(
+            onClick = onSaveToGalleryClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(12.dp),
+            enabled = !savedToGallery,
+            colors = if (savedToGallery) {
+                ButtonDefaults.buttonColors(
+                    disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    disabledContentColor = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                ButtonDefaults.buttonColors()
+            }
+        ) {
+            Icon(
+                imageVector = if (savedToGallery) Icons.Default.Check else Icons.Default.Download,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (savedToGallery) "Saved to Gallery" else "Save to Gallery",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        // Show error if save failed
+        if (saveError != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = saveError,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         Button(
             onClick = onShareClick,

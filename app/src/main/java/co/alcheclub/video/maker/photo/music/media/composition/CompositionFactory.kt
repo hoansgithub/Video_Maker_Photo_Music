@@ -72,26 +72,40 @@ class CompositionFactory(private val context: Context) {
         return EditedMediaItemSequence(editedItems)
     }
 
+    companion object {
+        // Default frame rate for image sequences (30 fps is standard)
+        private const val DEFAULT_FRAME_RATE = 30
+    }
+
     /**
      * Create an EditedMediaItem from an asset (image)
      *
-     * For images in Media3, we must use setImageDurationMs() on MediaItem.Builder
-     * to specify how long each image should be displayed.
+     * For images in Media3 Transformer, we MUST set:
+     * - setImageDurationMs() on MediaItem.Builder - how long to display
+     * - setFrameRate() on EditedMediaItem.Builder - required for Transformer export
+     * - setDurationUs() on EditedMediaItem.Builder - explicit duration for ImageAssetLoader
+     *
+     * See: ImageAssetLoader line 115 checks both durationUs and frameRate
      */
     private fun createEditedMediaItem(
         asset: Asset,
         settings: ProjectSettings
     ): EditedMediaItem {
+        val durationMs = settings.transitionDurationMs
+        val durationUs = durationMs * 1000L
+
         // For images, use setImageDurationMs on MediaItem.Builder
         val mediaItem = MediaItem.Builder()
             .setUri(asset.uri)
-            .setImageDurationMs(settings.transitionDurationMs)
+            .setImageDurationMs(durationMs)
             .build()
 
         val effects = createEffects(settings)
 
         return EditedMediaItem.Builder(mediaItem)
             .setEffects(effects)
+            .setDurationUs(durationUs)     // Required for Transformer ImageAssetLoader
+            .setFrameRate(DEFAULT_FRAME_RATE) // Required for Transformer ImageAssetLoader
             .build()
     }
 
@@ -127,7 +141,12 @@ class CompositionFactory(private val context: Context) {
     /**
      * Create audio sequence from bundled track or custom URI
      *
-     * Clips audio to match video duration for CompositionPlayer compatibility
+     * IMPORTANT for CompositionPlayer:
+     * - All EditedMediaItems MUST have setDurationUs() - explicit duration required
+     * - Both video and audio sequences MUST be equal length
+     * - isLooping is NOT supported for preview
+     *
+     * See: https://github.com/androidx/media/issues/1560
      */
     private fun createAudioSequence(
         settings: ProjectSettings,
@@ -140,7 +159,8 @@ class CompositionFactory(private val context: Context) {
             return null
         }
 
-        android.util.Log.d("CompositionFactory", "Creating audio sequence with URI: $audioUri, videoDuration: ${totalVideoDurationMs}ms")
+        val totalVideoDurationUs = totalVideoDurationMs * 1000L
+        android.util.Log.d("CompositionFactory", "Creating audio sequence with URI: $audioUri, videoDuration: ${totalVideoDurationMs}ms (${totalVideoDurationUs}us)")
 
         // Create audio MediaItem with explicit clipping to video duration
         // This is required for CompositionPlayer to determine sequence duration
@@ -153,8 +173,11 @@ class CompositionFactory(private val context: Context) {
             )
             .build()
 
+        // CRITICAL: Set explicit duration in microseconds for CompositionPlayer
+        // Without this, CompositionPlayer throws IllegalStateException: -9223372036854775807
         val editedAudioItem = EditedMediaItem.Builder(audioItem)
             .setRemoveVideo(true) // Audio only
+            .setDurationUs(totalVideoDurationUs)
             .build()
 
         return EditedMediaItemSequence(listOf(editedAudioItem))

@@ -10,6 +10,7 @@ import co.alcheclub.video.maker.photo.music.domain.model.Project
 import co.alcheclub.video.maker.photo.music.domain.model.ProjectSettings
 import co.alcheclub.video.maker.photo.music.domain.repository.ProjectRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.UUID
 
@@ -67,11 +68,7 @@ class ProjectRepositoryImpl(
     override suspend fun getAllProjects(): List<Project> {
         return projectDao.observeAllWithAssets()
             .map { list -> list.map { ProjectMapper.toDomain(it) } }
-            .let { flow ->
-                var result: List<Project> = emptyList()
-                flow.collect { result = it }
-                result
-            }
+            .first()  // Take first emission and complete (fixes infinite Flow issue)
     }
 
     override fun observeAllProjects(): Flow<List<Project>> {

@@ -14,6 +14,8 @@ import co.alcheclub.video.maker.photo.music.domain.repository.ExportRepository
 import co.alcheclub.video.maker.photo.music.domain.repository.ProjectRepository
 import co.alcheclub.video.maker.photo.music.domain.usecase.AddAssetsUseCase
 import co.alcheclub.video.maker.photo.music.domain.usecase.CreateProjectUseCase
+import co.alcheclub.video.maker.photo.music.domain.usecase.DeleteProjectUseCase
+import co.alcheclub.video.maker.photo.music.domain.usecase.GetAllProjectsUseCase
 import co.alcheclub.video.maker.photo.music.domain.usecase.GetProjectUseCase
 import co.alcheclub.video.maker.photo.music.domain.usecase.RemoveAssetUseCase
 import co.alcheclub.video.maker.photo.music.domain.usecase.ReorderAssetsUseCase
@@ -27,6 +29,7 @@ import co.alcheclub.video.maker.photo.music.modules.onboarding.domain.usecase.Ch
 import co.alcheclub.video.maker.photo.music.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import android.content.Context
 import co.alcheclub.video.maker.photo.music.modules.picker.AssetPickerViewModel
+import co.alcheclub.video.maker.photo.music.modules.projects.ProjectsViewModel
 import co.alcheclub.video.maker.photo.music.modules.root.RootViewModel
 
 /**
@@ -100,10 +103,12 @@ val domainModule = module {
     // Project use cases
     factory { CreateProjectUseCase(it.get()) }
     factory { GetProjectUseCase(it.get()) }
+    factory { GetAllProjectsUseCase(it.get()) }
     factory { UpdateProjectSettingsUseCase(it.get()) }
     factory { ReorderAssetsUseCase(it.get()) }
     factory { AddAssetsUseCase(it.get()) }
     factory { RemoveAssetUseCase(it.get()) }
+    factory { DeleteProjectUseCase(it.get()) }
 }
 
 // ========== PRESENTATION LAYER MODULE ==========
@@ -175,6 +180,21 @@ class ExportViewModelFactory(
     }
 }
 
+/**
+ * Factory wrapper for ProjectsViewModel.
+ */
+class ProjectsViewModelFactory(
+    private val getAllProjectsUseCase: GetAllProjectsUseCase,
+    private val deleteProjectUseCase: DeleteProjectUseCase
+) {
+    fun create(): ProjectsViewModel {
+        return ProjectsViewModel(
+            getAllProjectsUseCase = getAllProjectsUseCase,
+            deleteProjectUseCase = deleteProjectUseCase
+        )
+    }
+}
+
 val presentationModule = module {
     // Root ViewModel for Single-Activity Architecture
     viewModel {
@@ -208,6 +228,14 @@ val presentationModule = module {
     single {
         ExportViewModelFactory(
             exportRepository = it.get()
+        )
+    }
+
+    // Projects ViewModel factory (singleton - stateless factory)
+    single {
+        ProjectsViewModelFactory(
+            getAllProjectsUseCase = it.get(),
+            deleteProjectUseCase = it.get()
         )
     }
 }

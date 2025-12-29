@@ -1,5 +1,7 @@
 package co.alcheclub.video.maker.photo.music.modules.editor
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
@@ -24,6 +27,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -31,6 +35,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -68,6 +75,12 @@ fun EditorScreen(
     onNavigateToAddAssets: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showExitConfirmation by remember { mutableStateOf(false) }
+
+    // Handle back button press - show confirmation dialog
+    BackHandler {
+        showExitConfirmation = true
+    }
 
     // Handle navigation events - LaunchedEffect(Unit) for one-time collection
     LaunchedEffect(Unit) {
@@ -80,11 +93,12 @@ fun EditorScreen(
         }
     }
 
-    Scaffold(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
         topBar = {
             EditorTopBar(
                 title = (uiState as? EditorUiState.Success)?.project?.name ?: "Editor",
-                onBackClick = viewModel::navigateBack,
+                onBackClick = { showExitConfirmation = true },
                 onPreviewClick = viewModel::navigateToPreview,
                 onSettingsClick = viewModel::toggleSettingsPanel,
                 showSettingsSelected = (uiState as? EditorUiState.Success)?.showSettingsPanel == true
@@ -124,6 +138,26 @@ fun EditorScreen(
                     modifier = Modifier.padding(paddingValues)
                 )
             }
+        }
+        }
+
+        // Exit confirmation dialog - rendered last to overlay everything
+        if (showExitConfirmation) {
+            ExitConfirmationDialog(
+                onSaveAndExit = {
+                    showExitConfirmation = false
+                    // Project is already auto-saved via Room, just navigate back
+                    viewModel.navigateBack()
+                },
+                onDiscardAndExit = {
+                    showExitConfirmation = false
+                    // Navigate back without additional save (project remains as last auto-saved state)
+                    viewModel.navigateBack()
+                },
+                onCancel = {
+                    showExitConfirmation = false
+                }
+            )
         }
     }
 }
@@ -316,6 +350,91 @@ private fun BottomBar(
                 text = "Export",
                 fontWeight = FontWeight.Bold
             )
+        }
+    }
+}
+
+@Composable
+private fun ExitConfirmationDialog(
+    onSaveAndExit: () -> Unit,
+    onDiscardAndExit: () -> Unit,
+    onCancel: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(32.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Save Project?",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Your project will be saved and available in My Projects.",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Save & Exit button
+            Button(
+                onClick = onSaveAndExit,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "Save & Exit",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Discard button
+            OutlinedButton(
+                onClick = onDiscardAndExit,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(text = "Discard Changes")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Cancel button
+            OutlinedButton(
+                onClick = onCancel,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            ) {
+                Text(text = "Cancel")
+            }
         }
     }
 }

@@ -86,11 +86,14 @@ sealed class AssetPickerNavigationEvent {
  * - Image thumbnails handled by Coil with caching
  */
 class AssetPickerViewModel(
-    private val context: Context,
+    context: Context,  // Convert to Application context to prevent memory leak
     private val createProjectUseCase: CreateProjectUseCase,
     private val addAssetsUseCase: AddAssetsUseCase,
     private val projectId: String? = null // null = create new project, non-null = add to existing
 ) : ViewModel() {
+
+    // Use applicationContext to prevent Activity memory leak
+    private val appContext: Context = context.applicationContext
 
     /** True if adding to existing project, false if creating new */
     val isAddMode: Boolean get() = projectId != null
@@ -363,7 +366,7 @@ class AssetPickerViewModel(
 
         val sortOrder = "${MediaStore.Images.Media.DATE_ADDED} DESC"
 
-        context.contentResolver.query(
+        appContext.contentResolver.query(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             projection,
             null,

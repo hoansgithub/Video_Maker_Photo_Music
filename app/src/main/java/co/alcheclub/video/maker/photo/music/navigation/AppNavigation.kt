@@ -24,6 +24,7 @@ import co.alcheclub.lib.acccore.di.viewModel
 import co.alcheclub.video.maker.photo.music.di.AssetPickerViewModelFactory
 import co.alcheclub.video.maker.photo.music.di.EditorViewModelFactory
 import co.alcheclub.video.maker.photo.music.di.ExportViewModelFactory
+import co.alcheclub.video.maker.photo.music.di.ProjectsViewModelFactory
 import co.alcheclub.video.maker.photo.music.modules.editor.EditorScreen
 import co.alcheclub.video.maker.photo.music.modules.editor.EditorViewModel
 import co.alcheclub.video.maker.photo.music.modules.export.ExportScreen
@@ -32,6 +33,8 @@ import co.alcheclub.video.maker.photo.music.modules.home.HomeScreen
 import co.alcheclub.video.maker.photo.music.modules.onboarding.OnboardingScreen
 import co.alcheclub.video.maker.photo.music.modules.picker.AssetPickerScreen
 import co.alcheclub.video.maker.photo.music.modules.picker.AssetPickerViewModel
+import co.alcheclub.video.maker.photo.music.modules.projects.ProjectsScreen
+import co.alcheclub.video.maker.photo.music.modules.projects.ProjectsViewModel
 import co.alcheclub.video.maker.photo.music.modules.root.LoadingScreen
 import co.alcheclub.video.maker.photo.music.modules.root.RootNavigationEvent
 import co.alcheclub.video.maker.photo.music.modules.root.RootViewModel
@@ -241,14 +244,30 @@ fun AppNavigation(
             }
 
             // ============================================
-            // PROJECTS ROUTES (Placeholder for now)
+            // PROJECTS ROUTES
             // ============================================
 
             composable<AppRoute.Projects> {
-                // TODO: Implement ProjectsScreen
-                PlaceholderScreen(
-                    title = "My Projects",
-                    onBack = { navController.popBackStack() }
+                // Create ProjectsViewModel using factory
+                val projectsViewModelFactory: ProjectsViewModelFactory = ACCDI.get()
+                val projectsViewModel: ProjectsViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                            require(modelClass.isAssignableFrom(ProjectsViewModel::class.java)) {
+                                "Unknown ViewModel class: ${modelClass.name}"
+                            }
+                            return projectsViewModelFactory.create() as T
+                        }
+                    }
+                )
+
+                ProjectsScreen(
+                    viewModel = projectsViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEditor = { projectId ->
+                        navController.navigate(AppRoute.Editor(projectId))
+                    }
                 )
             }
         }
