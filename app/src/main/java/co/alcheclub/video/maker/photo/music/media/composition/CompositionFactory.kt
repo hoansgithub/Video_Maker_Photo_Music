@@ -28,21 +28,34 @@ class CompositionFactory(private val context: Context) {
 
     /**
      * Create a Media3 Composition from a Project
+     *
+     * @param project The project to create composition from
+     * @param includeAudio Whether to include audio track (false for preview, true for export)
      */
-    fun createComposition(project: Project): Composition {
+    fun createComposition(project: Project, includeAudio: Boolean = true): Composition {
         val settings = project.settings
+        android.util.Log.d("CompositionFactory", "createComposition: ${project.assets.size} assets, includeAudio=$includeAudio")
 
         // Create video/image sequence
+        android.util.Log.d("CompositionFactory", "Creating video sequence...")
         val videoSequence = createVideoSequence(project.assets, settings)
+        android.util.Log.d("CompositionFactory", "Video sequence created")
 
         val sequences = mutableListOf(videoSequence)
 
-        // Add audio sequence if music is selected
-        val audioSequence = createAudioSequence(settings, project.totalDurationMs)
-        if (audioSequence != null) {
-            sequences.add(audioSequence)
+        // Add audio sequence if music is selected and audio is enabled
+        if (includeAudio) {
+            android.util.Log.d("CompositionFactory", "Creating audio sequence...")
+            val audioSequence = createAudioSequence(settings, project.totalDurationMs)
+            if (audioSequence != null) {
+                sequences.add(audioSequence)
+                android.util.Log.d("CompositionFactory", "Audio sequence added")
+            } else {
+                android.util.Log.d("CompositionFactory", "No audio sequence created")
+            }
         }
 
+        android.util.Log.d("CompositionFactory", "Building composition with ${sequences.size} sequences")
         return Composition.Builder(sequences).build()
     }
 
@@ -114,18 +127,31 @@ class CompositionFactory(private val context: Context) {
     /**
      * Create audio sequence from bundled track or custom URI
      *
-     * Loops the audio if it's shorter than the video duration
+     * Clips audio to match video duration for CompositionPlayer compatibility
      */
     private fun createAudioSequence(
         settings: ProjectSettings,
         totalVideoDurationMs: Long
     ): EditedMediaItemSequence? {
         // Get audio URI from custom audio or bundled track
-        val audioUri = getAudioUri(settings) ?: return null
+        val audioUri = getAudioUri(settings)
+        if (audioUri == null) {
+            android.util.Log.d("CompositionFactory", "No audio URI available")
+            return null
+        }
 
-        // For MVP, create a single audio item
-        // TODO: Implement proper looping with clipping for last iteration
-        val audioItem = MediaItem.fromUri(audioUri)
+        android.util.Log.d("CompositionFactory", "Creating audio sequence with URI: $audioUri, videoDuration: ${totalVideoDurationMs}ms")
+
+        // Create audio MediaItem with explicit clipping to video duration
+        // This is required for CompositionPlayer to determine sequence duration
+        val audioItem = MediaItem.Builder()
+            .setUri(audioUri)
+            .setClippingConfiguration(
+                MediaItem.ClippingConfiguration.Builder()
+                    .setEndPositionMs(totalVideoDurationMs)
+                    .build()
+            )
+            .build()
 
         val editedAudioItem = EditedMediaItem.Builder(audioItem)
             .setRemoveVideo(true) // Audio only
@@ -138,18 +164,56 @@ class CompositionFactory(private val context: Context) {
      * Get audio URI from settings
      */
     private fun getAudioUri(settings: ProjectSettings): Uri? {
+        android.util.Log.d("CompositionFactory", "getAudioUri: customAudioUri=${settings.customAudioUri}, audioTrackId=${settings.audioTrackId}")
+
         // Custom audio takes precedence
         settings.customAudioUri?.let { return it }
 
         // Otherwise, get bundled track
         settings.audioTrackId?.let { trackId ->
             val track = AudioTrackLibrary.getById(trackId)
+            android.util.Log.d("CompositionFactory", "Track lookup: trackId=$trackId, found=${track != null}")
             if (track != null) {
-                // Create asset URI for bundled audio
-                return Uri.parse("file:///android_asset/${track.assetPath}")
+                // Copy asset to cache and return file URI
+                // Media3 doesn't support file:///android_asset/ URIs directly
+                val uri = copyAssetToCache(track.assetPath)
+                android.util.Log.d("CompositionFactory", "Audio URI from cache: $uri")
+                return uri
             }
         }
 
         return null
+    }
+
+    /**
+     * Copy bundled asset to cache directory for Media3 access
+     */
+    private fun copyAssetToCache(assetPath: String): Uri? {
+        return try {
+            val fileName = assetPath.substringAfterLast("/")
+            val cacheFile = java.io.File(context.cacheDir, "audio/$fileName")
+            android.util.Log.d("CompositionFactory", "Cache file path: ${cacheFile.absolutePath}, exists: ${cacheFile.exists()}")
+
+            // Only copy if not already cached
+            if (!cacheFile.exists()) {
+                cacheFile.parentFile?.mkdirs()
+                android.util.Log.d("CompositionFactory", "Copying asset: $assetPath")
+                context.assets.open(assetPath).use { input ->
+                    cacheFile.outputStream().use { output ->
+                        val bytes = input.copyTo(output)
+                        android.util.Log.d("CompositionFactory", "Copied $bytes bytes to cache")
+                    }
+                }
+            } else {
+                android.util.Log.d("CompositionFactory", "Using cached file: ${cacheFile.length()} bytes")
+            }
+
+            val uri = Uri.fromFile(cacheFile)
+            android.util.Log.d("CompositionFactory", "Audio file URI: $uri")
+            uri
+        } catch (e: Exception) {
+            android.util.Log.e("CompositionFactory", "Failed to copy audio asset: $assetPath", e)
+            null
+        }
     }
 }

@@ -34,13 +34,15 @@ object ProjectMapper {
 
     /**
      * Map ProjectEntity to ProjectSettings
+     * Applies defaults for null values from legacy projects
      */
     private fun toSettings(entity: ProjectEntity): ProjectSettings {
         return ProjectSettings(
             transitionDurationMs = entity.transitionDurationMs,
             transitionSetId = entity.transitionSetId,
             overlayFrameId = entity.overlayFrameId,
-            audioTrackId = entity.audioTrackId,
+            // Apply default audio track if not set (legacy projects)
+            audioTrackId = entity.audioTrackId ?: ProjectSettings.DEFAULT_AUDIO_TRACK_ID,
             customAudioUri = entity.customAudioUri?.let { Uri.parse(it) },
             audioVolume = entity.audioVolume,
             aspectRatio = AspectRatio.fromString(entity.aspectRatio)

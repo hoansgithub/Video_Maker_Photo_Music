@@ -260,11 +260,18 @@ class EditorViewModel(
     }
 
     fun updateAudioTrack(trackId: String?) {
+        android.util.Log.d("EditorViewModel", "updateAudioTrack called with: $trackId")
         updateSettings { it.copy(audioTrackId = trackId, customAudioUri = null) }
     }
 
     fun updateCustomAudio(uri: Uri?) {
-        updateSettings { it.copy(customAudioUri = uri, audioTrackId = null) }
+        // Only clear audioTrackId when setting a custom audio (uri is not null)
+        // When clearing custom audio (uri is null), keep the audioTrackId unchanged
+        if (uri != null) {
+            updateSettings { it.copy(customAudioUri = uri, audioTrackId = null) }
+        } else {
+            updateSettings { it.copy(customAudioUri = null) }
+        }
     }
 
     fun updateAudioVolume(volume: Float) {
@@ -279,9 +286,20 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
             val newSettings = update(currentState.project.settings)
+            android.util.Log.d("EditorViewModel", "updateSettings: old audioTrackId=${currentState.project.settings.audioTrackId}, new audioTrackId=${newSettings.audioTrackId}")
+
+            // Optimistically update UI immediately for responsive feel
+            val updatedProject = currentState.project.copy(settings = newSettings)
+            _uiState.value = currentState.copy(project = updatedProject)
+            android.util.Log.d("EditorViewModel", "UI state updated optimistically")
+
+            // Then persist to database (Room Flow will confirm the update)
             viewModelScope.launch {
                 updateSettingsUseCase(projectId, newSettings)
+                android.util.Log.d("EditorViewModel", "Settings saved to database")
             }
+        } else {
+            android.util.Log.w("EditorViewModel", "updateSettings called but state is not Success: $currentState")
         }
     }
 
