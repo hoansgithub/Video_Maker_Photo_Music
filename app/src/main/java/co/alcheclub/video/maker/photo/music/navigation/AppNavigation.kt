@@ -18,8 +18,20 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import co.alcheclub.lib.acccore.di.ACCDI
+import co.alcheclub.lib.acccore.di.get
+import co.alcheclub.lib.acccore.di.viewModel
+import co.alcheclub.video.maker.photo.music.di.AssetPickerViewModelFactory
+import co.alcheclub.video.maker.photo.music.di.EditorViewModelFactory
+import co.alcheclub.video.maker.photo.music.di.ExportViewModelFactory
+import co.alcheclub.video.maker.photo.music.modules.editor.EditorScreen
+import co.alcheclub.video.maker.photo.music.modules.editor.EditorViewModel
+import co.alcheclub.video.maker.photo.music.modules.export.ExportScreen
+import co.alcheclub.video.maker.photo.music.modules.export.ExportViewModel
 import co.alcheclub.video.maker.photo.music.modules.home.HomeScreen
 import co.alcheclub.video.maker.photo.music.modules.onboarding.OnboardingScreen
+import co.alcheclub.video.maker.photo.music.modules.picker.AssetPickerScreen
+import co.alcheclub.video.maker.photo.music.modules.picker.AssetPickerViewModel
 import co.alcheclub.video.maker.photo.music.modules.root.LoadingScreen
 import co.alcheclub.video.maker.photo.music.modules.root.RootNavigationEvent
 import co.alcheclub.video.maker.photo.music.modules.root.RootViewModel
@@ -46,13 +58,14 @@ fun AppNavigation(
                     when (event.route) {
                         is AppRoute.Home -> {
                             navController.navigate(event.route) {
-                                // Clear back stack when navigating to Home
-                                popUpTo(AppRoute.Loading) { inclusive = true }
+                                // Clear entire back stack - prevents going back to Loading or Onboarding
+                                popUpTo(navController.graph.id) { inclusive = true }
                             }
                         }
                         is AppRoute.Onboarding -> {
                             navController.navigate(event.route) {
-                                popUpTo(AppRoute.Loading) { inclusive = true }
+                                // Clear Loading from back stack
+                                popUpTo(navController.graph.id) { inclusive = true }
                             }
                         }
                         else -> {
@@ -139,19 +152,60 @@ fun AppNavigation(
 
             composable<AppRoute.AssetPicker> { backStackEntry ->
                 val route = backStackEntry.toRoute<AppRoute.AssetPicker>()
-                // TODO: Implement AssetPickerScreen
-                PlaceholderScreen(
-                    title = "Asset Picker",
-                    onBack = { navController.popBackStack() }
+                // Create AssetPickerViewModel with projectId using factory
+                val pickerViewModelFactory: AssetPickerViewModelFactory = ACCDI.get()
+                val pickerViewModel: AssetPickerViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                            require(modelClass.isAssignableFrom(AssetPickerViewModel::class.java)) {
+                                "Unknown ViewModel class: ${modelClass.name}"
+                            }
+                            return pickerViewModelFactory.create(route.projectId) as T
+                        }
+                    }
+                )
+
+                AssetPickerScreen(
+                    viewModel = pickerViewModel,
+                    onNavigateToEditor = { projectId ->
+                        navController.navigate(AppRoute.Editor(projectId)) {
+                            popUpTo(AppRoute.Home) { inclusive = false }
+                        }
+                    },
+                    onNavigateBack = { navController.popBackStack() },
+                    onAssetsAdded = { navController.popBackStack() }
                 )
             }
 
             composable<AppRoute.Editor> { backStackEntry ->
                 val route = backStackEntry.toRoute<AppRoute.Editor>()
-                // TODO: Implement EditorScreen
-                PlaceholderScreen(
-                    title = "Editor: ${route.projectId}",
-                    onBack = { navController.popBackStack() }
+                // Create EditorViewModel with projectId using factory wrapper from ACCDI
+                val editorViewModelFactory: EditorViewModelFactory = ACCDI.get()
+                val editorViewModel: EditorViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                            require(modelClass.isAssignableFrom(EditorViewModel::class.java)) {
+                                "Unknown ViewModel class: ${modelClass.name}"
+                            }
+                            return editorViewModelFactory.create(route.projectId) as T
+                        }
+                    }
+                )
+
+                EditorScreen(
+                    viewModel = editorViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToPreview = { projectId ->
+                        navController.navigate(AppRoute.Preview(projectId))
+                    },
+                    onNavigateToExport = { projectId ->
+                        navController.navigate(AppRoute.Export(projectId))
+                    },
+                    onNavigateToAddAssets = { projectId ->
+                        navController.navigate(AppRoute.AssetPicker(projectId))
+                    }
                 )
             }
 
@@ -166,10 +220,23 @@ fun AppNavigation(
 
             composable<AppRoute.Export> { backStackEntry ->
                 val route = backStackEntry.toRoute<AppRoute.Export>()
-                // TODO: Implement ExportScreen
-                PlaceholderScreen(
-                    title = "Export: ${route.projectId}",
-                    onBack = { navController.popBackStack() }
+                // Create ExportViewModel with projectId using factory wrapper from ACCDI
+                val exportViewModelFactory: ExportViewModelFactory = ACCDI.get()
+                val exportViewModel: ExportViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+                    factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                            require(modelClass.isAssignableFrom(ExportViewModel::class.java)) {
+                                "Unknown ViewModel class: ${modelClass.name}"
+                            }
+                            return exportViewModelFactory.create(route.projectId) as T
+                        }
+                    }
+                )
+
+                ExportScreen(
+                    viewModel = exportViewModel,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 

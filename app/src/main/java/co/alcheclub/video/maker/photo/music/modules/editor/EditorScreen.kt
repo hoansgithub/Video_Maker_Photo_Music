@@ -1,0 +1,321 @@
+package co.alcheclub.video.maker.photo.music.modules.editor
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.net.Uri
+import co.alcheclub.video.maker.photo.music.domain.model.Asset
+import co.alcheclub.video.maker.photo.music.domain.model.Project
+import co.alcheclub.video.maker.photo.music.modules.editor.components.AssetStrip
+import co.alcheclub.video.maker.photo.music.modules.editor.components.SettingsPanel
+import co.alcheclub.video.maker.photo.music.modules.editor.components.VideoPreviewPlayer
+
+/**
+ * EditorScreen - Main video editor screen
+ *
+ * Layout:
+ * - TopBar with back, title, and preview buttons
+ * - Preview area showing current asset
+ * - Timeline with horizontal scrollable asset thumbnails
+ * - Settings panel (expandable)
+ * - Export button
+ *
+ * Follows CLAUDE.md patterns:
+ * - collectAsStateWithLifecycle for StateFlow
+ * - LaunchedEffect(Unit) for navigation events
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditorScreen(
+    viewModel: EditorViewModel,
+    onNavigateBack: () -> Unit,
+    onNavigateToPreview: (String) -> Unit,
+    onNavigateToExport: (String) -> Unit,
+    onNavigateToAddAssets: (String) -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Handle navigation events - LaunchedEffect(Unit) for one-time collection
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
+            when (event) {
+                is EditorNavigationEvent.NavigateBack -> onNavigateBack()
+                is EditorNavigationEvent.NavigateToPreview -> onNavigateToPreview(event.projectId)
+                is EditorNavigationEvent.NavigateToExport -> onNavigateToExport(event.projectId)
+            }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            EditorTopBar(
+                title = (uiState as? EditorUiState.Success)?.project?.name ?: "Editor",
+                onBackClick = viewModel::navigateBack,
+                onPreviewClick = viewModel::navigateToPreview,
+                onSettingsClick = viewModel::toggleSettingsPanel,
+                showSettingsSelected = (uiState as? EditorUiState.Success)?.showSettingsPanel == true
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { paddingValues ->
+        when (val state = uiState) {
+            is EditorUiState.Loading -> {
+                LoadingContent(modifier = Modifier.padding(paddingValues))
+            }
+            is EditorUiState.Error -> {
+                ErrorContent(
+                    message = state.message,
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+            is EditorUiState.Success -> {
+                EditorContent(
+                    project = state.project,
+                    isPlaying = state.isPlaying,
+                    showSettingsPanel = state.showSettingsPanel,
+                    canRemoveAssets = viewModel.canRemoveAssets(),
+                    onPlayPauseClick = viewModel::togglePlayback,
+                    onPlaybackStateChange = viewModel::setPlaybackState,
+                    onAddAssetsClick = { onNavigateToAddAssets(state.project.id) },
+                    onRemoveAsset = { viewModel.removeAsset(it) },
+                    onTransitionSetChange = viewModel::updateTransitionSet,
+                    onTransitionDurationChange = viewModel::updateTransitionDuration,
+                    onOverlayFrameChange = viewModel::updateOverlayFrame,
+                    onAudioTrackChange = viewModel::updateAudioTrack,
+                    onCustomAudioChange = viewModel::updateCustomAudio,
+                    onAudioVolumeChange = viewModel::updateAudioVolume,
+                    onAspectRatioChange = viewModel::updateAspectRatio,
+                    onExportClick = viewModel::navigateToExport,
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditorTopBar(
+    title: String,
+    onBackClick: () -> Unit,
+    onPreviewClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    showSettingsSelected: Boolean
+) {
+    TopAppBar(
+        title = {
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
+                )
+            }
+        },
+        actions = {
+            IconButton(onClick = onSettingsClick) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = if (showSettingsSelected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    )
+}
+
+@Composable
+private fun LoadingContent(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun ErrorContent(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = message,
+            color = MaterialTheme.colorScheme.error,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun EditorContent(
+    project: Project,
+    isPlaying: Boolean,
+    showSettingsPanel: Boolean,
+    canRemoveAssets: Boolean,
+    onPlayPauseClick: () -> Unit,
+    onPlaybackStateChange: (Boolean) -> Unit,
+    onAddAssetsClick: () -> Unit,
+    onRemoveAsset: (String) -> Unit,
+    onTransitionSetChange: (String) -> Unit,
+    onTransitionDurationChange: (Long) -> Unit,
+    onOverlayFrameChange: (String?) -> Unit,
+    onAudioTrackChange: (String?) -> Unit,
+    onCustomAudioChange: (Uri?) -> Unit,
+    onAudioVolumeChange: (Float) -> Unit,
+    onAspectRatioChange: (co.alcheclub.video.maker.photo.music.domain.model.AspectRatio) -> Unit,
+    onExportClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+    ) {
+        // Real-time Video Preview using CompositionPlayer
+        VideoPreviewPlayer(
+            project = project,
+            isPlaying = isPlaying,
+            onPlayPauseClick = onPlayPauseClick,
+            onPlaybackStateChange = onPlaybackStateChange,
+            autoPlay = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        )
+
+        // Asset Strip - add/remove photos
+        AssetStrip(
+            assets = project.assets,
+            canRemove = canRemoveAssets,
+            onAddClick = onAddAssetsClick,
+            onRemoveAsset = onRemoveAsset,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        )
+
+        // Settings Panel (if visible)
+        if (showSettingsPanel) {
+            SettingsPanel(
+                settings = project.settings,
+                onTransitionSetChange = onTransitionSetChange,
+                onTransitionDurationChange = onTransitionDurationChange,
+                onOverlayFrameChange = onOverlayFrameChange,
+                onAudioTrackChange = onAudioTrackChange,
+                onCustomAudioChange = onCustomAudioChange,
+                onAudioVolumeChange = onAudioVolumeChange,
+                onAspectRatioChange = onAspectRatioChange,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // Duration and Export Button
+        BottomBar(
+            duration = project.formattedDuration,
+            assetCount = project.assets.size,
+            onExportClick = onExportClick,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+private fun BottomBar(
+    duration: String,
+    assetCount: Int,
+    onExportClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Duration info
+        Column {
+            Text(
+                text = "Duration: $duration",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "$assetCount photos",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        // Export button
+        Button(
+            onClick = onExportClick,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            ),
+            modifier = Modifier.height(48.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Upload,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(
+                text = "Export",
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}

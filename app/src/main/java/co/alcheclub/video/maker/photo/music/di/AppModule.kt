@@ -1,15 +1,32 @@
 package co.alcheclub.video.maker.photo.music.di
 
+import androidx.work.WorkManager
 import co.alcheclub.lib.acccore.di.Module
 import co.alcheclub.lib.acccore.di.androidContext
 import co.alcheclub.lib.acccore.di.get
 import co.alcheclub.lib.acccore.di.module
 import co.alcheclub.lib.acccore.di.viewModel
 import co.alcheclub.video.maker.photo.music.core.data.local.PreferencesManager
+import co.alcheclub.video.maker.photo.music.data.local.database.ProjectDatabase
+import co.alcheclub.video.maker.photo.music.data.repository.ExportRepositoryImpl
+import co.alcheclub.video.maker.photo.music.data.repository.ProjectRepositoryImpl
+import co.alcheclub.video.maker.photo.music.domain.repository.ExportRepository
+import co.alcheclub.video.maker.photo.music.domain.repository.ProjectRepository
+import co.alcheclub.video.maker.photo.music.domain.usecase.AddAssetsUseCase
+import co.alcheclub.video.maker.photo.music.domain.usecase.CreateProjectUseCase
+import co.alcheclub.video.maker.photo.music.domain.usecase.GetProjectUseCase
+import co.alcheclub.video.maker.photo.music.domain.usecase.RemoveAssetUseCase
+import co.alcheclub.video.maker.photo.music.domain.usecase.ReorderAssetsUseCase
+import co.alcheclub.video.maker.photo.music.domain.usecase.UpdateProjectSettingsUseCase
+import co.alcheclub.video.maker.photo.music.media.composition.CompositionFactory
+import co.alcheclub.video.maker.photo.music.modules.editor.EditorViewModel
+import co.alcheclub.video.maker.photo.music.modules.export.ExportViewModel
 import co.alcheclub.video.maker.photo.music.modules.onboarding.repository.OnboardingRepository
 import co.alcheclub.video.maker.photo.music.modules.onboarding.repository.OnboardingRepositoryImpl
 import co.alcheclub.video.maker.photo.music.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
 import co.alcheclub.video.maker.photo.music.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
+import android.content.Context
+import co.alcheclub.video.maker.photo.music.modules.picker.AssetPickerViewModel
 import co.alcheclub.video.maker.photo.music.modules.root.RootViewModel
 
 /**
@@ -38,12 +55,31 @@ val dataModule = module {
     // Shared data sources
     single { PreferencesManager(androidContext()) }
 
+    // WorkManager
+    single { WorkManager.getInstance(androidContext()) }
+
+    // Project Database
+    single { ProjectDatabase.getInstance(androidContext()) }
+    single { it.get<ProjectDatabase>().projectDao() }
+    single { it.get<ProjectDatabase>().assetDao() }
+
     // Repository implementations
     single<OnboardingRepository> { OnboardingRepositoryImpl(it.get()) }
+    single<ProjectRepository> { ProjectRepositoryImpl(it.get(), it.get()) }
+    single<ExportRepository> { ExportRepositoryImpl(it.get()) }
+}
 
-    // Future: Add more data sources
-    // single { AppDatabase.getInstance(androidContext()) }
-    // single { it.get<AppDatabase>().projectDao() }
+// ========== MEDIA LAYER MODULE ==========
+/**
+ * Media Module
+ *
+ * Contains:
+ * - Media processing utilities (CompositionFactory)
+ *
+ * Scope: Singleton - Expensive to create
+ */
+val mediaModule = module {
+    single { CompositionFactory(androidContext()) }
 }
 
 // ========== DOMAIN LAYER MODULE ==========
@@ -61,10 +97,13 @@ val domainModule = module {
     factory { CheckOnboardingStatusUseCase(it.get()) }
     factory { CompleteOnboardingUseCase(it.get()) }
 
-    // Future: Add more use cases
-    // factory { CreateProjectUseCase(it.get()) }
-    // factory { GetProjectsUseCase(it.get()) }
-    // factory { ExportVideoUseCase(it.get()) }
+    // Project use cases
+    factory { CreateProjectUseCase(it.get()) }
+    factory { GetProjectUseCase(it.get()) }
+    factory { UpdateProjectSettingsUseCase(it.get()) }
+    factory { ReorderAssetsUseCase(it.get()) }
+    factory { AddAssetsUseCase(it.get()) }
+    factory { RemoveAssetUseCase(it.get()) }
 }
 
 // ========== PRESENTATION LAYER MODULE ==========
@@ -77,6 +116,65 @@ val domainModule = module {
  * Scope: ViewModel - Tied to Activity/Fragment lifecycle
  *        (Survives configuration changes like rotation)
  */
+
+/**
+ * Factory wrapper for AssetPickerViewModel to support projectId parameter.
+ * - projectId = null: Create new project mode
+ * - projectId = "...": Add to existing project mode
+ */
+class AssetPickerViewModelFactory(
+    private val context: Context,
+    private val createProjectUseCase: CreateProjectUseCase,
+    private val addAssetsUseCase: AddAssetsUseCase
+) {
+    fun create(projectId: String? = null): AssetPickerViewModel {
+        return AssetPickerViewModel(
+            context = context,
+            createProjectUseCase = createProjectUseCase,
+            addAssetsUseCase = addAssetsUseCase,
+            projectId = projectId
+        )
+    }
+}
+
+/**
+ * Factory wrapper for EditorViewModel to avoid type erasure issues with ACCDI.
+ * Using a dedicated class instead of lambda type (String) -> EditorViewModel
+ * because ACCDI cannot distinguish between different lambda types at runtime.
+ */
+class EditorViewModelFactory(
+    private val getProjectUseCase: GetProjectUseCase,
+    private val updateSettingsUseCase: UpdateProjectSettingsUseCase,
+    private val reorderAssetsUseCase: ReorderAssetsUseCase,
+    private val addAssetsUseCase: AddAssetsUseCase,
+    private val removeAssetUseCase: RemoveAssetUseCase
+) {
+    fun create(projectId: String): EditorViewModel {
+        return EditorViewModel(
+            projectId = projectId,
+            getProjectUseCase = getProjectUseCase,
+            updateSettingsUseCase = updateSettingsUseCase,
+            reorderAssetsUseCase = reorderAssetsUseCase,
+            addAssetsUseCase = addAssetsUseCase,
+            removeAssetUseCase = removeAssetUseCase
+        )
+    }
+}
+
+/**
+ * Factory wrapper for ExportViewModel to avoid type erasure issues with ACCDI.
+ */
+class ExportViewModelFactory(
+    private val exportRepository: ExportRepository
+) {
+    fun create(projectId: String): ExportViewModel {
+        return ExportViewModel(
+            projectId = projectId,
+            exportRepository = exportRepository
+        )
+    }
+}
+
 val presentationModule = module {
     // Root ViewModel for Single-Activity Architecture
     viewModel {
@@ -86,10 +184,32 @@ val presentationModule = module {
         )
     }
 
-    // Future: Add more ViewModels
-    // viewModel { HomeViewModel(it.get()) }
-    // viewModel { EditorViewModel(it.get()) }
-    // viewModel { ProjectsViewModel(it.get()) }
+    // Asset Picker ViewModel factory (needs projectId parameter)
+    single {
+        AssetPickerViewModelFactory(
+            context = androidContext(),
+            createProjectUseCase = it.get(),
+            addAssetsUseCase = it.get()
+        )
+    }
+
+    // Editor ViewModel factory (singleton - stateless factory)
+    single {
+        EditorViewModelFactory(
+            getProjectUseCase = it.get(),
+            updateSettingsUseCase = it.get(),
+            reorderAssetsUseCase = it.get(),
+            addAssetsUseCase = it.get(),
+            removeAssetUseCase = it.get()
+        )
+    }
+
+    // Export ViewModel factory (singleton - stateless factory)
+    single {
+        ExportViewModelFactory(
+            exportRepository = it.get()
+        )
+    }
 }
 
 // ========== ALL MODULES ==========
@@ -101,6 +221,7 @@ val presentationModule = module {
  */
 val allModules = arrayOf(
     dataModule,
+    mediaModule,
     domainModule,
     presentationModule
 )

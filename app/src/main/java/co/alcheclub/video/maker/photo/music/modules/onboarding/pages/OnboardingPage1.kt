@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.sp
 import co.alcheclub.video.maker.photo.music.ui.theme.VideoMakerTheme
 
 /**
- * Onboarding Page 1 - Create Amazing Videos
+ * Onboarding Page 1 - Create Amazing Slideshows
  *
  * Introduces the main feature: turning photos into videos
  */
@@ -58,7 +58,7 @@ fun OnboardingPage1() {
         ) {
             // Title
             Text(
-                text = "Create Amazing\nVideos",
+                text = "Turn Photos Into\nBeautiful Videos",
                 fontSize = 36.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color.White,
@@ -82,18 +82,18 @@ fun OnboardingPage1() {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Feature 2 - Videos
+            // Feature 2 - Slideshow
             FeatureItem(
                 icon = {
                     Icon(
-                        imageVector = Icons.Default.VideoLibrary,
+                        imageVector = Icons.Default.Slideshow,
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
                     )
                 },
-                title = "Add Video Clips",
-                description = "Combine photos with video clips for dynamic content"
+                title = "Create Slideshow",
+                description = "Transform your photos into stunning video slideshows"
             )
         }
     }

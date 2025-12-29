@@ -15,6 +15,13 @@
 
 ## Project: Video Maker Photo Music
 
+### MVP Scope
+
+**Images Only** - The MVP supports only image/photo input. Video clip input will be added in a future version.
+
+- Input: Photos from gallery (via Photo Picker)
+- Output: MP4 slideshow video with transitions and music
+
 ### Core Libraries
 
 | Component | Library | Version |
@@ -31,9 +38,56 @@
 See `docs/RESEARCH.md` for full technical research including:
 - Media3 Transformer pipeline architecture
 - Audio composition and looping strategies
-- GL Transitions integration
+- **Transition Sets** - Curated collections of 20+ transitions (2D & 3D)
 - Storage model with Room/KSP2
 - Preview vs Export architecture
+
+### Settings Model
+
+Users can individually select each setting - mix and match as they like.
+
+| Setting | Options | Description |
+|---------|---------|-------------|
+| **Transition Set** | Classic, Geometric, Cinematic, Creative, Minimal, Dynamic | Collection of 20+ transition animations |
+| **Transition Duration** | 2, 3, 4, 5, 6, 8, 10, 12 seconds | How long each image is shown |
+| **Overlay Frame** | None, frame1, frame2, ... | Decorative frame overlay |
+| **Background Music** | None, track1, track2, or custom | Audio track |
+| **Audio Volume** | 0-100% | Music volume level |
+| **Aspect Ratio** | 16:9, 9:16, 1:1, 4:3 | Output video dimensions |
+
+### Bundled Assets
+
+```
+app/src/main/assets/audio/
+├── track1.mp3    # Sample background music
+└── track2.mp3    # Sample background music
+
+app/src/main/res/drawable/
+├── frame1.webp   # Overlay frame 1
+└── frame2.webp   # Overlay frame 2
+```
+
+### Image Scaling Strategy
+
+Images are rendered with a **blurred background fill** to avoid black bars:
+
+```
+┌─────────────────────────────────────┐
+│▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│  ← Blurred scale-aspect-fill
+│▓▓▓┌─────────────────────────┐▓▓▓▓▓│
+│▓▓▓│                         │▓▓▓▓▓│
+│▓▓▓│   Original Image        │▓▓▓▓▓│  ← Sharp scale-aspect-fit
+│▓▓▓│   (aspect-fit)          │▓▓▓▓▓│
+│▓▓▓│                         │▓▓▓▓▓│
+│▓▓▓└─────────────────────────┘▓▓▓▓▓│
+│▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│
+└─────────────────────────────────────┘
+
+Layers (bottom to top):
+1. Background: Same image, scale-aspect-fill + Gaussian blur
+2. Foreground: Original image, scale-aspect-fit (sharp)
+3. Overlay: Decorative frame (optional)
+```
 
 ---
 
@@ -461,9 +515,15 @@ val pickMedia = rememberLauncherForActivityResult(
     ActivityResultContracts.PickMultipleVisualMedia()
 ) { uris -> /* handle selection */ }
 
+// MVP: Images only
 pickMedia.launch(
-    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
 )
+
+// Future: When video input is supported
+// pickMedia.launch(
+//     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+// )
 ```
 
 ### 4. Room with KSP2
@@ -597,6 +657,7 @@ Before EVERY code change:
 - [ ] Media3 Transformer for video export (NOT raw MediaCodec)
 - [ ] CompositionPlayer for preview (NOT custom player)
 - [ ] Photo Picker for media selection (NOT MediaStore with permissions)
+- [ ] **MVP: ImageOnly** for picker (NOT ImageAndVideo)
 - [ ] WorkManager for export (NOT viewModelScope)
 - [ ] KSP2 for Room (NOT KAPT)
 - [ ] Same Composition for preview and export
