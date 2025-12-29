@@ -11,7 +11,10 @@ import co.alcheclub.video.maker.photo.music.domain.model.Asset
 import co.alcheclub.video.maker.photo.music.domain.model.Project
 import co.alcheclub.video.maker.photo.music.domain.model.ProjectSettings
 import co.alcheclub.video.maker.photo.music.media.effects.BlurBackgroundEffect
+import co.alcheclub.video.maker.photo.music.media.effects.FrameOverlayEffect
 import co.alcheclub.video.maker.photo.music.media.library.AudioTrackLibrary
+import co.alcheclub.video.maker.photo.music.media.library.FrameLibrary
+import androidx.media3.common.Effect
 
 /**
  * CompositionFactory - Creates Media3 Composition from Project domain model
@@ -80,23 +83,31 @@ class CompositionFactory(private val context: Context) {
     }
 
     /**
-     * Create effects for aspect ratio presentation
+     * Create effects for aspect ratio presentation and optional frame overlay
      *
      * Uses BlurBackgroundEffect to:
      * 1. Show a blurred, scaled-to-fill version of the image as background
      * 2. Overlay the original image scaled-to-fit on top (no cropping)
      *
-     * This gives a professional look without black bars or cropping.
+     * Optionally adds FrameOverlayEffect on top if a frame is selected.
      */
     private fun createEffects(settings: ProjectSettings): Effects {
         val aspectRatio = settings.aspectRatio.ratio
+        val videoEffects = mutableListOf<Effect>()
 
-        // Use blur background effect
-        val blurEffect = BlurBackgroundEffect(aspectRatio)
+        // Base effect: blur background with fit-inside content
+        videoEffects.add(BlurBackgroundEffect(aspectRatio))
+
+        // Optional: overlay frame on top (scale-to-fill)
+        settings.overlayFrameId?.let { frameId ->
+            FrameLibrary.getById(frameId)?.let { frame ->
+                videoEffects.add(FrameOverlayEffect(context, frame.assetPath))
+            }
+        }
 
         return Effects(
             /* audioProcessors= */ emptyList(),
-            /* videoEffects= */ listOf(blurEffect)
+            /* videoEffects= */ videoEffects
         )
     }
 

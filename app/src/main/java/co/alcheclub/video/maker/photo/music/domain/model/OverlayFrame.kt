@@ -1,18 +1,15 @@
 package co.alcheclub.video.maker.photo.music.domain.model
 
 /**
- * OverlayFrame - Decorative frame overlay for videos
+ * OverlayFrame - Represents a decorative frame overlay
  *
- * Rendered as the top layer over the video content.
- *
- * @param id Unique identifier
- * @param name Display name
- * @param drawableRes Drawable resource ID (R.drawable.frame1, etc.)
- * @param isPremium Whether this frame requires premium access
+ * Frames are WebP images with transparency that render on top of the video.
+ * They scale-to-fill the video area.
  */
 data class OverlayFrame(
     val id: String,
     val name: String,
-    val drawableRes: Int,
+    val assetPath: String,
+    val thumbnailPath: String = assetPath,
     val isPremium: Boolean = false
 )

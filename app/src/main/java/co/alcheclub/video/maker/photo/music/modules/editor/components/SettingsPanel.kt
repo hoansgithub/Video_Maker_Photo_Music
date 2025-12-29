@@ -1,7 +1,6 @@
 package co.alcheclub.video.maker.photo.music.modules.editor.components
 
 import android.net.Uri
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -44,8 +42,9 @@ import co.alcheclub.video.maker.photo.music.domain.model.OverlayFrame
 import co.alcheclub.video.maker.photo.music.domain.model.ProjectSettings
 import co.alcheclub.video.maker.photo.music.domain.model.TransitionSet
 import co.alcheclub.video.maker.photo.music.media.library.AudioTrackLibrary
-import co.alcheclub.video.maker.photo.music.media.library.OverlayFrameLibrary
+import co.alcheclub.video.maker.photo.music.media.library.FrameLibrary
 import co.alcheclub.video.maker.photo.music.media.library.TransitionSetLibrary
+import coil.compose.AsyncImage
 
 /**
  * SettingsPanel - Expandable panel for project settings
@@ -243,7 +242,7 @@ private fun OverlayFrameSelector(
     selectedFrameId: String?,
     onFrameSelect: (String?) -> Unit
 ) {
-    val frames = remember { OverlayFrameLibrary.getAll() }
+    val frames = remember { FrameLibrary.getAll() }
 
     Column {
         Text(
@@ -305,8 +304,8 @@ private fun FrameChip(
                 style = MaterialTheme.typography.labelSmall
             )
         } else {
-            Image(
-                painter = painterResource(id = frame.drawableRes),
+            AsyncImage(
+                model = "file:///android_asset/${frame.assetPath}",
                 contentDescription = frame.name,
                 modifier = Modifier.size(48.dp)
             )

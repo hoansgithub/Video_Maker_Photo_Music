@@ -1,26 +1,26 @@
 package co.alcheclub.video.maker.photo.music.media.library
 
-import co.alcheclub.video.maker.photo.music.R
 import co.alcheclub.video.maker.photo.music.domain.model.OverlayFrame
 
 /**
- * OverlayFrameLibrary - Provides all available overlay frames
+ * FrameLibrary - Provides all available bundled overlay frames
  *
- * Decorative frames rendered on top of the video content.
+ * WebP frames with transparency that render on top of video.
+ * Frames are stored in assets/frames/ directory.
  */
-object OverlayFrameLibrary {
+object FrameLibrary {
 
     private val frames = listOf(
         OverlayFrame(
             id = "frame1",
-            name = "Frame 1",
-            drawableRes = R.drawable.frame1,
+            name = "Classic Border",
+            assetPath = "frames/frame1.webp",
             isPremium = false
         ),
         OverlayFrame(
             id = "frame2",
-            name = "Frame 2",
-            drawableRes = R.drawable.frame2,
+            name = "Vintage",
+            assetPath = "frames/frame2.webp",
             isPremium = false
         )
     )

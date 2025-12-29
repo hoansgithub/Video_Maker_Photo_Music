@@ -19,7 +19,9 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:www.shadertoy.com)",
       "WebFetch(domain:community.arm.com)",
-      "WebFetch(domain:www.rastergrid.com)"
+      "WebFetch(domain:www.rastergrid.com)",
+      "Bash(unzip:*)",
+      "Bash(file:*)"
     ]
   }
 }
