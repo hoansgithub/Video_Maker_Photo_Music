@@ -15,16 +15,22 @@ data class Project(
     val assets: List<Asset>
 ) {
     /**
-     * Calculate total video duration based on assets and transition duration
+     * Calculate total video duration based on assets and transitions
      *
-     * Total = numberOfImages × transitionDuration
+     * Architecture:
+     * - Each image (except last) plays for: imageDurationMs + transitionOverlapMs
+     * - Last image plays for: imageDurationMs only
      *
-     * Example with 5 photos at 3s each = 15 seconds
+     * Total = N × imageDurationMs + (N-1) × transitionOverlapMs
+     *
+     * Example with 5 photos at 3s each with 500ms transitions:
+     * = 5 × 3000 + 4 × 500 = 15000 + 2000 = 17000ms (17 seconds)
      */
     val totalDurationMs: Long
         get() {
             if (assets.isEmpty()) return 0L
-            return assets.size * settings.transitionDurationMs
+            val n = assets.size
+            return n * settings.imageDurationMs + (n - 1) * settings.transitionOverlapMs
         }
 
     /**

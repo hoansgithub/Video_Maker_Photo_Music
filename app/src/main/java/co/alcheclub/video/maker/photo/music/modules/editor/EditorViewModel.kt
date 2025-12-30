@@ -33,8 +33,17 @@ sealed class EditorUiState {
         val project: Project,
         val selectedAssetIndex: Int = 0,
         val isPlaying: Boolean = false,
-        val showSettingsPanel: Boolean = false
-    ) : EditorUiState()
+        val showSettingsPanel: Boolean = false,
+        // Pending settings - changes made but not yet applied
+        // When null, no pending changes exist
+        val pendingSettings: ProjectSettings? = null
+    ) : EditorUiState() {
+        /** True if there are uncommitted setting changes */
+        val hasPendingChanges: Boolean get() = pendingSettings != null
+
+        /** Settings to display in UI (pending if exists, otherwise current) */
+        val displaySettings: ProjectSettings get() = pendingSettings ?: project.settings
+    }
 
     data class Error(val message: String) : EditorUiState()
 }
@@ -235,71 +244,102 @@ class EditorViewModel(
     }
 
     // ============================================
-    // SETTINGS
+    // SETTINGS (Pending pattern - changes are staged until Apply)
     // ============================================
 
     fun toggleSettingsPanel() {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
             _uiState.value = currentState.copy(
-                showSettingsPanel = !currentState.showSettingsPanel
+                showSettingsPanel = !currentState.showSettingsPanel,
+                // Clear pending settings when closing panel without applying
+                pendingSettings = if (currentState.showSettingsPanel) null else currentState.pendingSettings
             )
         }
     }
 
-    fun updateTransitionSet(setId: String) {
-        updateSettings { it.copy(transitionSetId = setId) }
+    fun updateTransitionSet(setId: String?) {
+        updatePendingSettings { it.copy(transitionSetId = setId) }
     }
 
-    fun updateTransitionDuration(durationMs: Long) {
-        updateSettings { it.copy(transitionDurationMs = durationMs) }
+    fun updateImageDuration(durationMs: Long) {
+        updatePendingSettings { it.copy(imageDurationMs = durationMs) }
     }
 
     fun updateOverlayFrame(frameId: String?) {
-        updateSettings { it.copy(overlayFrameId = frameId) }
+        updatePendingSettings { it.copy(overlayFrameId = frameId) }
     }
 
     fun updateAudioTrack(trackId: String?) {
         android.util.Log.d("EditorViewModel", "updateAudioTrack called with: $trackId")
-        updateSettings { it.copy(audioTrackId = trackId, customAudioUri = null) }
+        updatePendingSettings { it.copy(audioTrackId = trackId, customAudioUri = null) }
     }
 
     fun updateCustomAudio(uri: Uri?) {
-        // Only clear audioTrackId when setting a custom audio (uri is not null)
-        // When clearing custom audio (uri is null), keep the audioTrackId unchanged
         if (uri != null) {
-            updateSettings { it.copy(customAudioUri = uri, audioTrackId = null) }
+            updatePendingSettings { it.copy(customAudioUri = uri, audioTrackId = null) }
         } else {
-            updateSettings { it.copy(customAudioUri = null) }
+            updatePendingSettings { it.copy(customAudioUri = null) }
         }
     }
 
     fun updateAudioVolume(volume: Float) {
-        updateSettings { it.copy(audioVolume = volume) }
+        updatePendingSettings { it.copy(audioVolume = volume) }
     }
 
     fun updateAspectRatio(ratio: AspectRatio) {
-        updateSettings { it.copy(aspectRatio = ratio) }
+        updatePendingSettings { it.copy(aspectRatio = ratio) }
     }
 
-    private fun updateSettings(update: (ProjectSettings) -> ProjectSettings) {
+    /**
+     * Stage a setting change (does NOT trigger reprocessing)
+     * Changes are only applied when applySettings() is called
+     */
+    private fun updatePendingSettings(update: (ProjectSettings) -> ProjectSettings) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
-            val newSettings = update(currentState.project.settings)
-            android.util.Log.d("EditorViewModel", "updateSettings: old audioTrackId=${currentState.project.settings.audioTrackId}, new audioTrackId=${newSettings.audioTrackId}")
+            // Start from current pending settings, or current project settings if no pending
+            val baseSettings = currentState.pendingSettings ?: currentState.project.settings
+            val newPendingSettings = update(baseSettings)
 
-            // Optimistically update UI immediately for responsive feel
+            android.util.Log.d("EditorViewModel", "Staging setting change (pending)")
+            _uiState.value = currentState.copy(pendingSettings = newPendingSettings)
+        }
+    }
+
+    /**
+     * Apply all pending settings - triggers video reprocessing
+     * Called when user taps "Apply" button
+     */
+    fun applySettings() {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success && currentState.pendingSettings != null) {
+            val newSettings = currentState.pendingSettings
+            android.util.Log.d("EditorViewModel", "Applying settings: $newSettings")
+
+            // Update project with new settings and clear pending
             val updatedProject = currentState.project.copy(settings = newSettings)
-            _uiState.value = currentState.copy(project = updatedProject)
-            android.util.Log.d("EditorViewModel", "UI state updated optimistically")
+            _uiState.value = currentState.copy(
+                project = updatedProject,
+                pendingSettings = null  // Clear pending after apply
+            )
 
-            // Then persist to database (Room Flow will confirm the update)
+            // Persist to database
             viewModelScope.launch {
                 updateSettingsUseCase(projectId, newSettings)
-                android.util.Log.d("EditorViewModel", "Settings saved to database")
+                android.util.Log.d("EditorViewModel", "Settings applied and saved to database")
             }
-        } else {
-            android.util.Log.w("EditorViewModel", "updateSettings called but state is not Success: $currentState")
+        }
+    }
+
+    /**
+     * Discard pending settings and revert to current project settings
+     */
+    fun discardPendingSettings() {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success) {
+            android.util.Log.d("EditorViewModel", "Discarding pending settings")
+            _uiState.value = currentState.copy(pendingSettings = null)
         }
     }
 

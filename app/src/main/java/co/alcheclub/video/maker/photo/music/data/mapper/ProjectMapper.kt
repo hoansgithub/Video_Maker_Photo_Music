@@ -38,7 +38,8 @@ object ProjectMapper {
      */
     private fun toSettings(entity: ProjectEntity): ProjectSettings {
         return ProjectSettings(
-            transitionDurationMs = entity.transitionDurationMs,
+            imageDurationMs = entity.imageDurationMs,
+            transitionOverlapMs = entity.transitionOverlapMs,
             transitionSetId = entity.transitionSetId,
             overlayFrameId = entity.overlayFrameId,
             // Apply default audio track if not set (legacy projects)
@@ -71,7 +72,8 @@ object ProjectMapper {
             createdAt = project.createdAt,
             updatedAt = project.updatedAt,
             thumbnailUri = project.thumbnailUri?.toString(),
-            transitionDurationMs = project.settings.transitionDurationMs,
+            imageDurationMs = project.settings.imageDurationMs,
+            transitionOverlapMs = project.settings.transitionOverlapMs,
             transitionSetId = project.settings.transitionSetId,
             overlayFrameId = project.settings.overlayFrameId,
             audioTrackId = project.settings.audioTrackId,

@@ -31,8 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.Player
 import androidx.media3.transformer.CompositionPlayer
 import androidx.media3.ui.PlayerView
@@ -100,6 +103,9 @@ fun VideoPreviewPlayer(
         android.util.Log.d("VideoPreviewPlayer", "Assets: ${project.assets.size}, AudioTrack: ${project.settings.audioTrackId}")
         previewState = PreviewState.Building
 
+        // Yield to allow UI to update and show "Processing" indicator
+        kotlinx.coroutines.yield()
+
         // Store old player to release AFTER new one is ready
         val oldPlayer = player
 
@@ -112,13 +118,15 @@ fun VideoPreviewPlayer(
                 return@LaunchedEffect
             }
 
-            // Create composition WITH audio (single-player mode)
-            // CompositionPlayer now supports multi-sequence with explicit durations
+            // Create composition on background thread to not block UI
             android.util.Log.d("VideoPreviewPlayer", "Creating composition with audio...")
-            val composition = compositionFactory.createComposition(project, includeAudio = true)
+            val composition = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                compositionFactory.createComposition(project, includeAudio = true)
+            }
             android.util.Log.d("VideoPreviewPlayer", "Composition created")
 
-            // Create single player for both video and audio
+            // After withContext, we're back on the main thread (LaunchedEffect dispatcher)
+            // Create single player for both video and audio (must be on main thread)
             android.util.Log.d("VideoPreviewPlayer", "Creating CompositionPlayer...")
             val newPlayer = CompositionPlayer.Builder(context).build()
             newPlayer.setComposition(composition)
@@ -195,6 +203,30 @@ fun VideoPreviewPlayer(
         onDispose {
             player?.release()
             player = null
+        }
+    }
+
+    // Pause video when app goes to background
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, player) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_STOP -> {
+                    // App going to background - pause playback
+                    android.util.Log.d("VideoPreviewPlayer", "ON_STOP: Pausing player")
+                    player?.pause()
+                    onPlaybackStateChange(false)
+                }
+                Lifecycle.Event.ON_START -> {
+                    // App coming to foreground - player stays paused, user can resume manually
+                    android.util.Log.d("VideoPreviewPlayer", "ON_START: Player ready to resume")
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 

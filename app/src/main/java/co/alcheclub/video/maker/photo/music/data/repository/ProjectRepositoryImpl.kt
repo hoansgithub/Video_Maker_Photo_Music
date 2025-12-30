@@ -80,7 +80,8 @@ class ProjectRepositoryImpl(
     override suspend fun updateSettings(projectId: String, settings: ProjectSettings) {
         projectDao.updateSettings(
             id = projectId,
-            transitionDurationMs = settings.transitionDurationMs,
+            imageDurationMs = settings.imageDurationMs,
+            transitionOverlapMs = settings.transitionOverlapMs,
             transitionSetId = settings.transitionSetId,
             overlayFrameId = settings.overlayFrameId,
             audioTrackId = settings.audioTrackId,

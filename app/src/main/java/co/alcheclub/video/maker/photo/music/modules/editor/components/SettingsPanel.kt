@@ -1,6 +1,7 @@
 package co.alcheclub.video.maker.photo.music.modules.editor.components
 
 import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,8 +21,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,9 +53,14 @@ import coil.compose.AsyncImage
 /**
  * SettingsPanel - Expandable panel for project settings
  *
+ * Uses a "pending changes" pattern:
+ * - Setting changes are staged (not applied immediately)
+ * - User must tap "Apply" to trigger video reprocessing
+ * - This prevents unnecessary reprocessing while browsing options
+ *
  * Settings (user can mix and match):
  * - Transition Set (collection of 20+ transitions)
- * - Transition Duration (2-12 seconds)
+ * - Image Duration (2-12 seconds per image)
  * - Overlay Frame (decorative frame)
  * - Background Music (bundled or custom)
  * - Audio Volume (0-100%)
@@ -60,13 +69,16 @@ import coil.compose.AsyncImage
 @Composable
 fun SettingsPanel(
     settings: ProjectSettings,
-    onTransitionSetChange: (String) -> Unit,
-    onTransitionDurationChange: (Long) -> Unit,
+    hasPendingChanges: Boolean,
+    onTransitionSetChange: (String?) -> Unit,
+    onImageDurationChange: (Long) -> Unit,
     onOverlayFrameChange: (String?) -> Unit,
     onAudioTrackChange: (String?) -> Unit,
     onCustomAudioChange: (Uri?) -> Unit,
     onAudioVolumeChange: (Float) -> Unit,
     onAspectRatioChange: (AspectRatio) -> Unit,
+    onApplySettings: () -> Unit,
+    onDiscardSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -75,11 +87,48 @@ fun SettingsPanel(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Settings",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
+        // Header with Apply/Discard buttons
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Settings",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            // Apply/Discard buttons - only show when there are pending changes
+            AnimatedVisibility(visible = hasPendingChanges) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDiscardSettings,
+                        contentPadding = ButtonDefaults.ContentPadding
+                    ) {
+                        Text("Discard", style = MaterialTheme.typography.labelMedium)
+                    }
+
+                    Button(
+                        onClick = onApplySettings,
+                        contentPadding = ButtonDefaults.ContentPadding
+                    ) {
+                        Text("Apply", style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+            }
+        }
+
+        // Pending changes indicator
+        AnimatedVisibility(visible = hasPendingChanges) {
+            Text(
+                text = "You have unsaved changes",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
 
         // Transition Set
         TransitionSetSelector(
@@ -87,10 +136,10 @@ fun SettingsPanel(
             onSetSelect = onTransitionSetChange
         )
 
-        // Transition Duration
-        TransitionDurationSelector(
-            selectedDurationMs = settings.transitionDurationMs,
-            onDurationSelect = onTransitionDurationChange
+        // Image Duration
+        ImageDurationSelector(
+            selectedDurationMs = settings.imageDurationMs,
+            onDurationSelect = onImageDurationChange
         )
 
         // Overlay Frame
@@ -119,8 +168,8 @@ fun SettingsPanel(
 
 @Composable
 private fun TransitionSetSelector(
-    selectedSetId: String,
-    onSetSelect: (String) -> Unit
+    selectedSetId: String?,
+    onSetSelect: (String?) -> Unit
 ) {
     val sets = remember { TransitionSetLibrary.getAll() }
 
@@ -136,6 +185,13 @@ private fun TransitionSetSelector(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.horizontalScroll(rememberScrollState())
         ) {
+            // None option
+            NoneTransitionChip(
+                isSelected = selectedSetId == null,
+                onClick = { onSetSelect(null) }
+            )
+
+            // Available transition sets
             sets.forEach { set ->
                 TransitionSetChip(
                     set = set,
@@ -144,6 +200,54 @@ private fun TransitionSetSelector(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun NoneTransitionChip(
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .width(80.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surface
+            )
+            .border(
+                width = if (isSelected) 2.dp else 1.dp,
+                color = if (isSelected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.outline,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "OFF",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "None",
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -209,7 +313,7 @@ private fun TransitionSetChip(
 }
 
 @Composable
-private fun TransitionDurationSelector(
+private fun ImageDurationSelector(
     selectedDurationMs: Long,
     onDurationSelect: (Long) -> Unit
 ) {
@@ -225,7 +329,7 @@ private fun TransitionDurationSelector(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.horizontalScroll(rememberScrollState())
         ) {
-            ProjectSettings.DURATION_OPTIONS.forEach { seconds ->
+            ProjectSettings.IMAGE_DURATION_OPTIONS.forEach { seconds ->
                 val durationMs = seconds * 1000L
                 SelectableChip(
                     text = "${seconds}s",

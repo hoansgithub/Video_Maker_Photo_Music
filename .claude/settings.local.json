@@ -27,7 +27,8 @@
       "Bash(./gradlew clean:*)",
       "Bash(timeout 60 adb logcat:*)",
       "Bash(timeout 90 adb logcat:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebFetch(domain:gl-transitions.com)"
     ]
   }
 }

@@ -19,11 +19,12 @@ data class ProjectEntity(
     val thumbnailUri: String?,
 
     // Settings (embedded for simplicity)
-    val transitionDurationMs: Long = 3000L,
-    val transitionSetId: String = "classic",
+    val imageDurationMs: Long = 3000L,
+    val transitionOverlapMs: Long = 500L,
+    val transitionSetId: String? = "fade",
     val overlayFrameId: String? = null,
     val audioTrackId: String? = null,
     val customAudioUri: String? = null,
     val audioVolume: Float = 1.0f,
-    val aspectRatio: String = "RATIO_16_9"
+    val aspectRatio: String = "RATIO_9_16"
 )

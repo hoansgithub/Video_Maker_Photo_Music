@@ -1,7 +1,17 @@
 package co.alcheclub.video.maker.photo.music.media.composition
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
 import android.net.Uri
+import android.renderscript.Allocation
+import android.renderscript.Element
+import android.renderscript.RenderScript
+import android.renderscript.ScriptIntrinsicBlur
 import androidx.media3.common.MediaItem
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
@@ -10,11 +20,21 @@ import androidx.media3.transformer.Effects
 import co.alcheclub.video.maker.photo.music.domain.model.Asset
 import co.alcheclub.video.maker.photo.music.domain.model.Project
 import co.alcheclub.video.maker.photo.music.domain.model.ProjectSettings
+import co.alcheclub.video.maker.photo.music.domain.model.Transition
 import co.alcheclub.video.maker.photo.music.media.effects.BlurBackgroundEffect
 import co.alcheclub.video.maker.photo.music.media.effects.FrameOverlayEffect
+import co.alcheclub.video.maker.photo.music.media.effects.TransitionEffect
 import co.alcheclub.video.maker.photo.music.media.library.AudioTrackLibrary
 import co.alcheclub.video.maker.photo.music.media.library.FrameLibrary
+import co.alcheclub.video.maker.photo.music.media.library.TransitionSetLibrary
+import co.alcheclub.video.maker.photo.music.media.library.TransitionShaderLibrary
 import androidx.media3.common.Effect
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 
 /**
  * CompositionFactory - Creates Media3 Composition from Project domain model
@@ -22,23 +42,39 @@ import androidx.media3.common.Effect
  * Builds the composition with:
  * - Image sequence with configured duration
  * - Aspect ratio presentation effect
+ * - Transitions between images (pre-loaded bitmaps)
  * - Background music (looped if needed)
+ *
+ * Threading: This class may be called from background threads.
+ * RenderScript operations are synchronized to ensure thread safety.
  */
 class CompositionFactory(private val context: Context) {
+
+    // Lock for RenderScript operations to ensure thread safety
+    private val renderScriptLock = Any()
 
     /**
      * Create a Media3 Composition from a Project
      *
      * @param project The project to create composition from
      * @param includeAudio Whether to include audio track (false for preview, true for export)
+     * @param forExport If true, uses higher resolution textures for export quality
      */
-    fun createComposition(project: Project, includeAudio: Boolean = true): Composition {
+    fun createComposition(project: Project, includeAudio: Boolean = true, forExport: Boolean = false): Composition {
         val settings = project.settings
-        android.util.Log.d("CompositionFactory", "createComposition: ${project.assets.size} assets, includeAudio=$includeAudio")
+        val textureSize = if (forExport) EXPORT_TEXTURE_SIZE else PREVIEW_TEXTURE_SIZE
+        android.util.Log.d("CompositionFactory", "createComposition: ${project.assets.size} assets, includeAudio=$includeAudio, forExport=$forExport, textureSize=$textureSize")
+
+        // Pre-load transition bitmaps in PARALLEL (done on calling thread, not GL thread)
+        val startTime = System.currentTimeMillis()
+        android.util.Log.d("CompositionFactory", "Pre-loading transition bitmaps in parallel...")
+        val transitionBitmaps = preloadTransitionBitmapsParallel(project.assets, settings, textureSize)
+        val loadTime = System.currentTimeMillis() - startTime
+        android.util.Log.d("CompositionFactory", "Pre-loaded ${transitionBitmaps.size} transition bitmaps in ${loadTime}ms")
 
         // Create video/image sequence
         android.util.Log.d("CompositionFactory", "Creating video sequence...")
-        val videoSequence = createVideoSequence(project.assets, settings)
+        val videoSequence = createVideoSequence(project.assets, settings, transitionBitmaps)
         android.util.Log.d("CompositionFactory", "Video sequence created")
 
         val sequences = mutableListOf(videoSequence)
@@ -60,72 +96,534 @@ class CompositionFactory(private val context: Context) {
     }
 
     /**
-     * Create the video/image sequence from assets
+     * Pre-load bitmaps for all transition images IN PARALLEL
+     *
+     * PERFORMANCE OPTIMIZATION:
+     * - Uses coroutines to load multiple bitmaps simultaneously
+     * - Each bitmap is processed on IO dispatcher
+     * - Typically 2-4x faster than sequential loading
+     *
+     * IMPORTANT: This must be called on a background thread, NOT on GL thread.
+     * The bitmaps are kept in memory and passed to TransitionEffect.
+     *
+     * @param textureSize Resolution for transition textures (540 for preview, 1080 for export)
+     * @return Map of asset index to pre-loaded bitmap for the NEXT image
+     */
+    private fun preloadTransitionBitmapsParallel(
+        assets: List<Asset>,
+        settings: ProjectSettings,
+        textureSize: Int
+    ): Map<Int, Bitmap> {
+        // Skip if transitions are disabled
+        if (settings.transitionSetId == null) {
+            android.util.Log.d("CompositionFactory", "Transitions disabled, skipping bitmap preload")
+            return emptyMap()
+        }
+
+        val aspectRatio = settings.aspectRatio.ratio
+
+        // Load all bitmaps in parallel using coroutines
+        return runBlocking {
+            val deferredBitmaps = (0 until assets.lastIndex).map { index ->
+                async(Dispatchers.IO) {
+                    val nextAsset = assets[index + 1]
+                    val rawBitmap = loadBitmapFromUri(nextAsset.uri, textureSize, textureSize)
+                    if (rawBitmap != null) {
+                        // Apply blur background effect to match the video appearance
+                        val processedBitmap = createBlurBackgroundBitmap(rawBitmap, aspectRatio, textureSize)
+
+                        // Recycle raw bitmap if different from processed
+                        if (rawBitmap != processedBitmap) {
+                            rawBitmap.recycle()
+                        }
+
+                        index to processedBitmap
+                    } else {
+                        android.util.Log.w("CompositionFactory", "Failed to preload bitmap for asset ${index + 1}")
+                        null
+                    }
+                }
+            }
+
+            // Await all and filter out nulls
+            deferredBitmaps.awaitAll()
+                .filterNotNull()
+                .toMap()
+        }
+    }
+
+    /**
+     * Create a bitmap with blur background effect
+     *
+     * PERFORMANCE OPTIMIZED:
+     * - Uses ColorMatrix for GPU-accelerated desaturation/darkening
+     * - Combines flip with draw operation (single pass)
+     * - Reduced bitmap allocations
+     *
+     * Mimics the BlurBackgroundEffect shader:
+     * 1. Create output bitmap at target aspect ratio
+     * 2. Draw blurred, scaled-to-fill version as background with effects
+     * 3. Overlay original scaled-to-fit on top
+     * 4. Flip vertically during draw (not separate pass)
+     *
+     * @param textureSize Resolution for output texture
+     * Note: Does NOT recycle the source bitmap - caller is responsible
+     */
+    private fun createBlurBackgroundBitmap(source: Bitmap, targetAspectRatio: Float, textureSize: Int): Bitmap {
+        // Calculate output dimensions maintaining aspect ratio
+        val outputWidth = textureSize
+        val outputHeight = (textureSize / targetAspectRatio).toInt()
+
+        // Create output bitmap
+        val output = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(output)
+
+        // Apply vertical flip transform to entire canvas (single operation instead of separate flip)
+        canvas.scale(1f, -1f, outputWidth / 2f, outputHeight / 2f)
+
+        // 1. Create blurred background (scaled to fill)
+        val blurredBg = createBlurredBackground(source, outputWidth, outputHeight)
+
+        // 2. Apply desaturation and darkening using ColorMatrix (GPU-accelerated)
+        // Combined matrix: 30% desaturation + 55% darkening
+        val effectPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        effectPaint.colorFilter = createBackgroundColorFilter()
+        canvas.drawBitmap(blurredBg, 0f, 0f, effectPaint)
+        blurredBg.recycle()
+
+        // 3. Draw radial gradient for vignette effect
+        drawVignette(canvas, outputWidth, outputHeight)
+
+        // 4. Calculate scale-to-fit dimensions for foreground
+        val sourceAspect = source.width.toFloat() / source.height.toFloat()
+        val outputAspect = outputWidth.toFloat() / outputHeight.toFloat()
+
+        val fitWidth: Float
+        val fitHeight: Float
+        if (sourceAspect > outputAspect) {
+            fitWidth = outputWidth.toFloat()
+            fitHeight = outputWidth / sourceAspect
+        } else {
+            fitHeight = outputHeight.toFloat()
+            fitWidth = outputHeight * sourceAspect
+        }
+
+        // Center the foreground
+        val left = (outputWidth - fitWidth) / 2f
+        val top = (outputHeight - fitHeight) / 2f
+
+        // 5. Draw foreground (scaled to fit)
+        val destRect = RectF(left, top, left + fitWidth, top + fitHeight)
+        val srcRect = Rect(0, 0, source.width, source.height)
+        val fgPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        canvas.drawBitmap(source, srcRect, destRect, fgPaint)
+
+        return output
+    }
+
+    /**
+     * Create ColorMatrix filter for background effects
+     * Combines: 30% desaturation + 55% darkening
+     * GPU-accelerated - much faster than pixel-by-pixel processing
+     */
+    private fun createBackgroundColorFilter(): ColorMatrixColorFilter {
+        // Desaturation matrix (30% toward grayscale)
+        // Formula: color = color * 0.7 + luminance * 0.3
+        val saturation = 0.7f
+        val invSat = 1f - saturation
+        val rWeight = 0.299f * invSat
+        val gWeight = 0.587f * invSat
+        val bWeight = 0.114f * invSat
+
+        // Darkening factor
+        val darken = 0.55f
+
+        // Combined matrix: desaturation + darkening
+        val matrix = ColorMatrix(floatArrayOf(
+            (saturation + rWeight) * darken, gWeight * darken, bWeight * darken, 0f, 0f,
+            rWeight * darken, (saturation + gWeight) * darken, bWeight * darken, 0f, 0f,
+            rWeight * darken, gWeight * darken, (saturation + bWeight) * darken, 0f, 0f,
+            0f, 0f, 0f, 1f, 0f
+        ))
+
+        return ColorMatrixColorFilter(matrix)
+    }
+
+    /**
+     * Draw vignette overlay using radial gradient
+     * Matches shader: 1.0 - length(uv - 0.5) * 0.5
+     */
+    private fun drawVignette(canvas: Canvas, width: Int, height: Int) {
+        val centerX = width / 2f
+        val centerY = height / 2f
+        val radius = kotlin.math.sqrt(centerX * centerX + centerY * centerY)
+
+        val gradient = android.graphics.RadialGradient(
+            centerX, centerY, radius,
+            intArrayOf(0x00000000, 0x40000000), // Transparent center, semi-transparent edge
+            floatArrayOf(0f, 1f),
+            android.graphics.Shader.TileMode.CLAMP
+        )
+
+        val paint = Paint()
+        paint.shader = gradient
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
+    }
+
+    /**
+     * Create a blurred background bitmap scaled to fill target dimensions
+     * Always creates a NEW bitmap, never returns source
+     */
+    @Suppress("DEPRECATION")
+    private fun createBlurredBackground(source: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
+        // First, create a scaled-to-fill copy
+        val scaledToFill = createScaledToFillCopy(source, targetWidth, targetHeight)
+
+        // Then apply blur
+        return try {
+            applyBlurInPlace(scaledToFill, 25f)
+        } catch (e: Exception) {
+            android.util.Log.w("CompositionFactory", "Blur failed: ${e.message}")
+            scaledToFill
+        }
+    }
+
+    /**
+     * Create a new bitmap scaled to fill (and cropped to) target dimensions
+     * Always returns a NEW bitmap
+     */
+    private fun createScaledToFillCopy(source: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
+        val sourceAspect = source.width.toFloat() / source.height.toFloat()
+        val targetAspect = targetWidth.toFloat() / targetHeight.toFloat()
+
+        // Calculate scale to fill
+        val scale: Float
+        val srcRect: Rect
+        if (sourceAspect > targetAspect) {
+            // Source is wider - scale by height, crop width
+            scale = targetHeight.toFloat() / source.height
+            val scaledWidth = (source.width * scale).toInt()
+            val cropX = ((scaledWidth - targetWidth) / 2 / scale).toInt()
+            srcRect = Rect(cropX, 0, source.width - cropX, source.height)
+        } else {
+            // Source is taller - scale by width, crop height
+            scale = targetWidth.toFloat() / source.width
+            val scaledHeight = (source.height * scale).toInt()
+            val cropY = ((scaledHeight - targetHeight) / 2 / scale).toInt()
+            srcRect = Rect(0, cropY, source.width, source.height - cropY)
+        }
+
+        // Create new bitmap and draw scaled/cropped source
+        val result = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(result)
+        val destRect = Rect(0, 0, targetWidth, targetHeight)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        canvas.drawBitmap(source, srcRect, destRect, paint)
+
+        return result
+    }
+
+    /**
+     * Apply Gaussian blur to a bitmap IN PLACE using RenderScript
+     * Returns the same bitmap reference with blur applied
+     *
+     * Thread Safety: Synchronized to prevent RenderScript race conditions
+     * when called from multiple threads simultaneously.
+     */
+    @Suppress("DEPRECATION")
+    private fun applyBlurInPlace(bitmap: Bitmap, radius: Float): Bitmap {
+        // Synchronize RenderScript operations to ensure thread safety
+        synchronized(renderScriptLock) {
+            val rs = RenderScript.create(context)
+            try {
+                val input = Allocation.createFromBitmap(rs, bitmap)
+                val output = Allocation.createTyped(rs, input.type)
+                val script = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs))
+
+                script.setRadius(radius.coerceIn(1f, 25f))
+                script.setInput(input)
+                script.forEach(output)
+
+                // Copy result back to the same bitmap
+                output.copyTo(bitmap)
+
+                input.destroy()
+                output.destroy()
+                script.destroy()
+
+                return bitmap
+            } finally {
+                rs.destroy()
+            }
+        }
+    }
+
+    /**
+     * Load bitmap from URI with size constraints
+     *
+     * @param uri Source URI
+     * @param maxWidth Maximum width
+     * @param maxHeight Maximum height
+     * @return Decoded bitmap or null if failed
+     */
+    private fun loadBitmapFromUri(uri: Uri, maxWidth: Int, maxHeight: Int): Bitmap? {
+        return try {
+            // First pass: get dimensions only
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                BitmapFactory.decodeStream(input, null, options)
+            }
+
+            // Calculate sample size to reduce memory usage
+            val sampleSize = calculateSampleSize(
+                options.outWidth,
+                options.outHeight,
+                maxWidth,
+                maxHeight
+            )
+
+            // Second pass: decode actual bitmap
+            val decodeOptions = BitmapFactory.Options().apply {
+                inSampleSize = sampleSize
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            }
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                BitmapFactory.decodeStream(input, null, decodeOptions)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("CompositionFactory", "Failed to load bitmap from $uri", e)
+            null
+        }
+    }
+
+    /**
+     * Calculate sample size for bitmap decoding
+     */
+    private fun calculateSampleSize(
+        sourceWidth: Int,
+        sourceHeight: Int,
+        targetWidth: Int,
+        targetHeight: Int
+    ): Int {
+        var sampleSize = 1
+        if (sourceWidth > targetWidth || sourceHeight > targetHeight) {
+            val halfWidth = sourceWidth / 2
+            val halfHeight = sourceHeight / 2
+            while ((halfWidth / sampleSize) >= targetWidth &&
+                (halfHeight / sampleSize) >= targetHeight) {
+                sampleSize *= 2
+            }
+        }
+        return sampleSize
+    }
+
+    /**
+     * Create the video/image sequence from assets with transitions
+     *
+     * Each image (except the last) gets a transition effect that blends
+     * it with the next image during the transition duration.
+     *
+     * Transitions are cycled from the selected TransitionSet for variety.
+     *
+     * IMPORTANT: We track cumulative start time (clipStartTimeUs) for each clip
+     * because presentationTimeUs in GlShaderProgram.drawFrame() is GLOBAL
+     * (relative to composition start), not local to each clip.
      */
     private fun createVideoSequence(
         assets: List<Asset>,
-        settings: ProjectSettings
+        settings: ProjectSettings,
+        transitionBitmaps: Map<Int, Bitmap>
     ): EditedMediaItemSequence {
-        val editedItems = assets.map { asset ->
-            createEditedMediaItem(asset, settings)
+        // Get transitions from the selected set
+        val transitions = getTransitionsFromSet(settings)
+
+        var cumulativeStartTimeUs = 0L  // Track global start time for each clip
+
+        val editedItems = assets.mapIndexed { index, asset ->
+            // Get pre-loaded bitmap for next image (null for last image)
+            val nextBitmap = transitionBitmaps[index]
+            val hasTransition = nextBitmap != null && settings.transitionSetId != null && transitions.isNotEmpty()
+
+            // Get transition for this clip (cycle through available transitions)
+            val transition = if (hasTransition && transitions.isNotEmpty()) {
+                transitions[index % transitions.size]
+            } else null
+
+            // Calculate clip duration
+            val imageDurationMs = settings.imageDurationMs
+            val transitionDurationMs = if (hasTransition) settings.transitionOverlapMs else 0L
+            val totalDurationMs = imageDurationMs + transitionDurationMs
+
+            val clipStartTimeUs = cumulativeStartTimeUs
+
+            android.util.Log.d("CompositionFactory", "Clip $index: startTime=${clipStartTimeUs/1000}ms, duration=${totalDurationMs}ms, transition=${transition?.name ?: "none"}")
+
+            val editedItem = createEditedMediaItem(
+                asset = asset,
+                settings = settings,
+                transition = transition,
+                nextImageBitmap = nextBitmap,
+                hasTransition = hasTransition,
+                clipStartTimeUs = clipStartTimeUs
+            )
+
+            // Update cumulative start time for next clip
+            cumulativeStartTimeUs += totalDurationMs * 1000L
+
+            editedItem
         }
         return EditedMediaItemSequence(editedItems)
+    }
+
+    /**
+     * Get all transitions from the selected transition set
+     *
+     * Returns a list of transitions that will be cycled through
+     * for each image pair in the video.
+     */
+    private fun getTransitionsFromSet(settings: ProjectSettings): List<Transition> {
+        val setId = settings.transitionSetId ?: return emptyList()
+
+        val transitionSet = TransitionSetLibrary.getById(setId)
+        if (transitionSet == null) {
+            android.util.Log.w("CompositionFactory", "Transition set not found: $setId")
+            return listOf(TransitionShaderLibrary.getDefault())
+        }
+
+        android.util.Log.d("CompositionFactory", "getTransitionsFromSet: setId=$setId, count=${transitionSet.transitions.size}")
+        transitionSet.transitions.forEachIndexed { index, t ->
+            android.util.Log.d("CompositionFactory", "  [$index] ${t.name}")
+        }
+
+        return if (transitionSet.transitions.isNotEmpty()) {
+            transitionSet.transitions
+        } else {
+            // Fallback to default if set has no transitions
+            listOf(TransitionShaderLibrary.getDefault())
+        }
     }
 
     companion object {
         // Default frame rate for image sequences (30 fps is standard)
         private const val DEFAULT_FRAME_RATE = 30
+
+        // Texture sizes for transition images
+        // Preview uses lower resolution for faster processing
+        // Export uses full resolution for quality
+        private const val PREVIEW_TEXTURE_SIZE = 540
+        private const val EXPORT_TEXTURE_SIZE = 1080
     }
 
     /**
-     * Create an EditedMediaItem from an asset (image)
+     * Create an EditedMediaItem from an asset (image) with optional transition
      *
      * For images in Media3 Transformer, we MUST set:
      * - setImageDurationMs() on MediaItem.Builder - how long to display
      * - setFrameRate() on EditedMediaItem.Builder - required for Transformer export
      * - setDurationUs() on EditedMediaItem.Builder - explicit duration for ImageAssetLoader
      *
+     * Transition architecture:
+     * - Each clip displays for imageDurationMs + transitionDurationMs
+     * - The transition effect activates during the last transitionDurationMs
+     * - It blends the current image with the next image (nextImageBitmap)
+     * - The last clip has no transition (nextImageBitmap is null)
+     *
+     * @param clipStartTimeUs The GLOBAL composition time when this clip starts
+     *                        Used for correct transition timing since drawFrame
+     *                        receives global presentationTimeUs
+     *
      * See: ImageAssetLoader line 115 checks both durationUs and frameRate
      */
     private fun createEditedMediaItem(
         asset: Asset,
-        settings: ProjectSettings
+        settings: ProjectSettings,
+        transition: Transition?,
+        nextImageBitmap: Bitmap?,
+        hasTransition: Boolean,
+        clipStartTimeUs: Long
     ): EditedMediaItem {
-        val durationMs = settings.transitionDurationMs
-        val durationUs = durationMs * 1000L
+        // Image display duration (how long each image is shown)
+        val imageDurationMs = settings.imageDurationMs
+
+        // Transition duration (overlap at the end)
+        val transitionDurationMs = settings.transitionOverlapMs
+
+        // Total clip duration = image time + transition time (if not last image)
+        val totalDurationMs = if (hasTransition) {
+            imageDurationMs + transitionDurationMs
+        } else {
+            imageDurationMs
+        }
+        val totalDurationUs = totalDurationMs * 1000L
+        val transitionDurationUs = transitionDurationMs * 1000L
 
         // For images, use setImageDurationMs on MediaItem.Builder
         val mediaItem = MediaItem.Builder()
             .setUri(asset.uri)
-            .setImageDurationMs(durationMs)
+            .setImageDurationMs(totalDurationMs)
             .build()
 
-        val effects = createEffects(settings)
+        val effects = createEffects(
+            settings = settings,
+            transition = transition,
+            nextImageBitmap = nextImageBitmap,
+            transitionDurationUs = transitionDurationUs,
+            clipDurationUs = totalDurationUs,
+            clipStartTimeUs = clipStartTimeUs
+        )
 
         return EditedMediaItem.Builder(mediaItem)
             .setEffects(effects)
-            .setDurationUs(durationUs)     // Required for Transformer ImageAssetLoader
+            .setDurationUs(totalDurationUs)     // Required for Transformer ImageAssetLoader
             .setFrameRate(DEFAULT_FRAME_RATE) // Required for Transformer ImageAssetLoader
             .build()
     }
 
     /**
-     * Create effects for aspect ratio presentation and optional frame overlay
+     * Create effects for aspect ratio presentation, transitions, and optional frame overlay
+     *
+     * Effect chain (order matters):
+     * 1. BlurBackgroundEffect - Blur background with fit-inside content
+     * 2. TransitionEffect - Blend with next image (if applicable)
+     * 3. FrameOverlayEffect - Overlay frame on top (if selected)
      *
      * Uses BlurBackgroundEffect to:
      * 1. Show a blurred, scaled-to-fill version of the image as background
      * 2. Overlay the original image scaled-to-fit on top (no cropping)
      *
-     * Optionally adds FrameOverlayEffect on top if a frame is selected.
+     * @param clipStartTimeUs Global composition time when this clip starts
      */
-    private fun createEffects(settings: ProjectSettings): Effects {
+    private fun createEffects(
+        settings: ProjectSettings,
+        transition: Transition?,
+        nextImageBitmap: Bitmap?,
+        transitionDurationUs: Long,
+        clipDurationUs: Long,
+        clipStartTimeUs: Long
+    ): Effects {
         val aspectRatio = settings.aspectRatio.ratio
         val videoEffects = mutableListOf<Effect>()
 
-        // Base effect: blur background with fit-inside content
+        // 1. Base effect: blur background with fit-inside content
         videoEffects.add(BlurBackgroundEffect(aspectRatio))
 
-        // Optional: overlay frame on top (scale-to-fill)
+        // 2. Transition effect (if there's a next image and transition is enabled)
+        if (transition != null && nextImageBitmap != null) {
+            android.util.Log.d("CompositionFactory", "Adding TransitionEffect: ${transition.name}, clipStart=${clipStartTimeUs}us")
+            videoEffects.add(
+                TransitionEffect(
+                    transition = transition,
+                    toImageBitmap = nextImageBitmap,
+                    transitionDurationUs = transitionDurationUs,
+                    clipDurationUs = clipDurationUs,
+                    clipStartTimeUs = clipStartTimeUs
+                )
+            )
+        }
+
+        // 3. Optional: overlay frame on top (scale-to-fill)
         settings.overlayFrameId?.let { frameId ->
             FrameLibrary.getById(frameId)?.let { frame ->
                 videoEffects.add(FrameOverlayEffect(context, frame.assetPath))

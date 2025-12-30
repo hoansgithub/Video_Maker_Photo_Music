@@ -16,7 +16,7 @@ import co.alcheclub.video.maker.photo.music.data.local.database.entity.ProjectEn
  */
 @Database(
     entities = [ProjectEntity::class, AssetEntity::class],
-    version = 1,
+    version = 2, // Bumped for transition settings schema change
     exportSchema = true
 )
 abstract class ProjectDatabase : RoomDatabase() {
@@ -41,7 +41,10 @@ abstract class ProjectDatabase : RoomDatabase() {
                 context.applicationContext,
                 ProjectDatabase::class.java,
                 DATABASE_NAME
-            ).build()
+            )
+                // TODO: Replace with proper migration before production release
+                .fallbackToDestructiveMigration()
+                .build()
         }
     }
 }

@@ -120,6 +120,8 @@ fun EditorScreen(
             is EditorUiState.Success -> {
                 EditorContent(
                     project = state.project,
+                    displaySettings = state.displaySettings,
+                    hasPendingChanges = state.hasPendingChanges,
                     isPlaying = state.isPlaying,
                     showSettingsPanel = state.showSettingsPanel,
                     canRemoveAssets = viewModel.canRemoveAssets(),
@@ -128,12 +130,14 @@ fun EditorScreen(
                     onAddAssetsClick = { onNavigateToAddAssets(state.project.id) },
                     onRemoveAsset = { viewModel.removeAsset(it) },
                     onTransitionSetChange = viewModel::updateTransitionSet,
-                    onTransitionDurationChange = viewModel::updateTransitionDuration,
+                    onImageDurationChange = viewModel::updateImageDuration,
                     onOverlayFrameChange = viewModel::updateOverlayFrame,
                     onAudioTrackChange = viewModel::updateAudioTrack,
                     onCustomAudioChange = viewModel::updateCustomAudio,
                     onAudioVolumeChange = viewModel::updateAudioVolume,
                     onAspectRatioChange = viewModel::updateAspectRatio,
+                    onApplySettings = viewModel::applySettings,
+                    onDiscardSettings = viewModel::discardPendingSettings,
                     onExportClick = viewModel::navigateToExport,
                     modifier = Modifier.padding(paddingValues)
                 )
@@ -235,6 +239,8 @@ private fun ErrorContent(
 @Composable
 private fun EditorContent(
     project: Project,
+    displaySettings: co.alcheclub.video.maker.photo.music.domain.model.ProjectSettings,
+    hasPendingChanges: Boolean,
     isPlaying: Boolean,
     showSettingsPanel: Boolean,
     canRemoveAssets: Boolean,
@@ -242,13 +248,15 @@ private fun EditorContent(
     onPlaybackStateChange: (Boolean) -> Unit,
     onAddAssetsClick: () -> Unit,
     onRemoveAsset: (String) -> Unit,
-    onTransitionSetChange: (String) -> Unit,
-    onTransitionDurationChange: (Long) -> Unit,
+    onTransitionSetChange: (String?) -> Unit,
+    onImageDurationChange: (Long) -> Unit,
     onOverlayFrameChange: (String?) -> Unit,
     onAudioTrackChange: (String?) -> Unit,
     onCustomAudioChange: (Uri?) -> Unit,
     onAudioVolumeChange: (Float) -> Unit,
     onAspectRatioChange: (co.alcheclub.video.maker.photo.music.domain.model.AspectRatio) -> Unit,
+    onApplySettings: () -> Unit,
+    onDiscardSettings: () -> Unit,
     onExportClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -258,6 +266,8 @@ private fun EditorContent(
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
         // Real-time Video Preview using CompositionPlayer
+        // Note: Uses project.settings (committed), not displaySettings (pending)
+        // This is intentional - preview only updates after Apply
         VideoPreviewPlayer(
             project = project,
             isPlaying = isPlaying,
@@ -281,16 +291,20 @@ private fun EditorContent(
         )
 
         // Settings Panel (if visible)
+        // Uses displaySettings which shows pending changes for immediate UI feedback
         if (showSettingsPanel) {
             SettingsPanel(
-                settings = project.settings,
+                settings = displaySettings,
+                hasPendingChanges = hasPendingChanges,
                 onTransitionSetChange = onTransitionSetChange,
-                onTransitionDurationChange = onTransitionDurationChange,
+                onImageDurationChange = onImageDurationChange,
                 onOverlayFrameChange = onOverlayFrameChange,
                 onAudioTrackChange = onAudioTrackChange,
                 onCustomAudioChange = onCustomAudioChange,
                 onAudioVolumeChange = onAudioVolumeChange,
                 onAspectRatioChange = onAspectRatioChange,
+                onApplySettings = onApplySettings,
+                onDiscardSettings = onDiscardSettings,
                 modifier = Modifier.fillMaxWidth()
             )
         }
