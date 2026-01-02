@@ -63,12 +63,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.alcheclub.video.maker.photo.music.R
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -235,12 +237,12 @@ private fun AssetPickerContent(
             IconButton(onClick = onCloseClick) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Close"
+                    contentDescription = stringResource(R.string.close)
                 )
             }
 
             Text(
-                text = "Select Photos",
+                text = stringResource(R.string.picker_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -254,7 +256,7 @@ private fun AssetPickerContent(
                     ),
                     shape = RoundedCornerShape(20.dp)
                 ) {
-                    Text("Done (${uiState.selectedAssets.size})")
+                    Text(stringResource(R.string.picker_done, uiState.selectedAssets.size))
                 }
             } else {
                 Spacer(modifier = Modifier.width(48.dp))
@@ -460,7 +462,7 @@ private fun ImageGridItem(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Photo,
-                        contentDescription = "Error",
+                        contentDescription = stringResource(R.string.error),
                         tint = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.5f)
                     )
                 }
@@ -497,7 +499,7 @@ private fun ImageGridItem(
                 } else {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Selected",
+                        contentDescription = stringResource(R.string.picker_selected),
                         tint = Color.White,
                         modifier = Modifier.size(16.dp)
                     )
@@ -526,12 +528,12 @@ private fun EmptyGalleryContent(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "No photos found",
+                text = stringResource(R.string.picker_no_photos),
                 fontSize = 18.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Take some photos to get started",
+                text = stringResource(R.string.picker_no_photos_hint),
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
@@ -565,7 +567,7 @@ private fun PermissionDeniedContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Photo Access Required",
+                text = stringResource(R.string.picker_permission_title),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -574,7 +576,7 @@ private fun PermissionDeniedContent(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "To create videos from your photos, we need permission to access your photo library.",
+                text = stringResource(R.string.picker_permission_message),
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -587,7 +589,7 @@ private fun PermissionDeniedContent(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Allow Access", modifier = Modifier.padding(vertical = 8.dp))
+                Text(stringResource(R.string.picker_allow_access), modifier = Modifier.padding(vertical = 8.dp))
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -601,7 +603,7 @@ private fun PermissionDeniedContent(
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Go Back", modifier = Modifier.padding(vertical = 8.dp))
+                Text(stringResource(R.string.export_go_back), modifier = Modifier.padding(vertical = 8.dp))
             }
         }
     }

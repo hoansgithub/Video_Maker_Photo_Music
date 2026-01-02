@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Video Maker</string>
+
+    <!-- Loading -->
+    <string name="loading">Memuat…</string>
+
+    <!-- Language Selection -->
+    <string name="language_select_title">Pilih Bahasa</string>
+    <string name="language_select_subtitle">Pilih bahasa yang Anda inginkan</string>
+    <string name="language_continue">Lanjutkan</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Berikutnya</string>
+    <string name="onboarding_get_started">Mulai</string>
+    <!-- Page 1 -->
+    <string name="onboarding_page1_title">Ubah Foto Menjadi\nVideo Indah</string>
+    <string name="onboarding_page1_feature1_title">Pilih Foto</string>
+    <string name="onboarding_page1_feature1_desc">Pilih foto favorit Anda dari galeri</string>
+    <string name="onboarding_page1_feature2_title">Buat Slideshow</string>
+    <string name="onboarding_page1_feature2_desc">Ubah foto Anda menjadi video slideshow yang menakjubkan</string>
+    <!-- Page 2 -->
+    <string name="onboarding_page2_title">Tambahkan Musik\n&amp; Efek</string>
+    <string name="onboarding_page2_feature1_title">Musik Latar</string>
+    <string name="onboarding_page2_feature1_desc">Tambahkan musik favorit atau pilih dari perpustakaan kami</string>
+    <string name="onboarding_page2_feature2_title">Transisi Halus</string>
+    <string name="onboarding_page2_feature2_desc">Transisi indah antar foto dan klip Anda</string>
+    <!-- Page 3 -->
+    <string name="onboarding_page3_title">Ekspor &amp;\nBagikan</string>
+    <string name="onboarding_page3_feature1_title">Ekspor Kualitas Tinggi</string>
+    <string name="onboarding_page3_feature1_desc">Ekspor video Anda dalam kualitas HD hingga 4K</string>
+    <string name="onboarding_page3_feature2_title">Bagikan di Mana Saja</string>
+    <string name="onboarding_page3_feature2_desc">Bagikan langsung ke media sosial atau simpan ke galeri</string>
+
+    <!-- Home -->
+    <string name="home_title">Video Maker</string>
+    <string name="home_welcome">Apa yang ingin Anda lakukan?</string>
+    <string name="home_create">Buat</string>
+    <string name="home_create_description">Buat slideshow dari foto Anda</string>
+    <string name="home_my_projects">Proyek Saya</string>
+    <string name="home_my_projects_description">Lihat proyek yang tersimpan</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Pengaturan</string>
+    <string name="settings_language">Bahasa</string>
+    <string name="settings_language_description">Ubah bahasa aplikasi</string>
+    <string name="settings_about">Tentang</string>
+    <string name="settings_version">Versi</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Edit Proyek</string>
+    <string name="editor_add_photos">Tambah Foto</string>
+    <string name="editor_settings">Pengaturan</string>
+    <string name="editor_preview">Pratinjau</string>
+    <string name="editor_export">Ekspor</string>
+    <string name="editor_transition">Transisi</string>
+    <string name="editor_duration">Durasi</string>
+    <string name="editor_music">Musik</string>
+    <string name="editor_frame">Bingkai</string>
+    <string name="editor_aspect_ratio">Rasio Aspek</string>
+    <string name="editor_volume">Volume</string>
+    <string name="editor_duration_format">Durasi: %s</string>
+    <string name="editor_photos_count">%d foto</string>
+    <string name="editor_save_dialog_title">Simpan Proyek?</string>
+    <string name="editor_save_dialog_message">Proyek Anda akan disimpan dan tersedia di Proyek Saya.</string>
+    <string name="editor_save_and_exit">Simpan &amp; Keluar</string>
+    <string name="editor_discard_changes">Buang Perubahan</string>
+
+    <!-- Projects -->
+    <string name="projects_title">Proyek Saya</string>
+    <string name="projects_empty">Belum ada proyek</string>
+    <string name="projects_empty_description">Buat proyek pertama Anda untuk melihatnya di sini</string>
+    <string name="projects_item_info">%1$d foto • %2$s</string>
+    <string name="projects_delete_title">Hapus Proyek?</string>
+    <string name="projects_delete_message">\"%s\" akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.</string>
+
+    <!-- Export -->
+    <string name="export_title">Ekspor Video</string>
+    <string name="export_processing">Memproses…</string>
+    <string name="export_complete">Ekspor Selesai!</string>
+    <string name="export_share">Bagikan</string>
+    <string name="export_save">Simpan ke Galeri</string>
+    <string name="export_preparing">Menyiapkan ekspor…</string>
+    <string name="export_exporting">Mengekspor video…</string>
+    <string name="export_dont_close">Mohon jangan tutup aplikasi</string>
+    <string name="export_video_saved">Video Anda telah disimpan</string>
+    <string name="export_saved_to_gallery">Tersimpan di Galeri</string>
+    <string name="export_share_video">Bagikan Video</string>
+    <string name="export_failed">Ekspor Gagal</string>
+    <string name="export_try_again">Coba Lagi</string>
+    <string name="export_go_back">Kembali</string>
+    <string name="export_cancelled">Ekspor Dibatalkan</string>
+    <string name="export_cancelled_message">Ekspor video telah dibatalkan</string>
+    <string name="export_back_to_editor">Kembali ke Editor</string>
+    <string name="export_cancel_title">Batalkan Ekspor?</string>
+    <string name="export_cancel_message">Apakah Anda yakin ingin membatalkan ekspor? Semua progres akan hilang.</string>
+    <string name="export_continue">Lanjutkan</string>
+    <string name="export_cancel_export">Batalkan Ekspor</string>
+
+    <!-- Asset Picker -->
+    <string name="picker_title">Pilih Foto</string>
+    <string name="picker_done">Selesai (%d)</string>
+    <string name="picker_close">Tutup</string>
+    <string name="picker_selected">Terpilih</string>
+    <string name="picker_no_photos">Tidak ada foto</string>
+    <string name="picker_no_photos_hint">Ambil beberapa foto untuk memulai</string>
+    <string name="picker_permission_title">Akses Foto Diperlukan</string>
+    <string name="picker_permission_message">Untuk membuat video dari foto Anda, kami memerlukan izin untuk mengakses perpustakaan foto Anda.</string>
+    <string name="picker_allow_access">Izinkan Akses</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">Pengaturan</string>
+    <string name="settings_panel_apply">Terapkan</string>
+    <string name="settings_panel_close">Tutup</string>
+    <string name="settings_apply">Terapkan</string>
+    <string name="settings_transition_effect">Efek Transisi</string>
+    <string name="settings_all">Semua</string>
+    <string name="settings_off">MATI</string>
+    <string name="settings_none">Tidak ada</string>
+    <string name="settings_pro">PRO</string>
+    <string name="settings_duration_per_image">Durasi per Gambar</string>
+    <string name="settings_seconds_format">%dd</string>
+    <string name="settings_duration_seconds">%dd</string>
+    <string name="settings_overlay_frame">Bingkai Overlay</string>
+    <string name="settings_background_music">Musik Latar</string>
+    <string name="settings_custom">Kustom</string>
+    <string name="settings_add">+ Tambah</string>
+    <string name="settings_add_audio">+ Tambah</string>
+    <string name="settings_volume">Volume</string>
+    <string name="settings_aspect_ratio">Rasio Aspek</string>
+
+    <!-- Common -->
+    <string name="cancel">Batal</string>
+    <string name="confirm">Konfirmasi</string>
+    <string name="delete">Hapus</string>
+    <string name="save">Simpan</string>
+    <string name="back">Kembali</string>
+    <string name="done">Selesai</string>
+    <string name="error">Kesalahan</string>
+    <string name="retry">Coba Lagi</string>
+    <string name="seconds">%d detik</string>
+    <string name="none">Tidak ada</string>
+    <string name="close">Tutup</string>
+    <string name="settings">Pengaturan</string>
+</resources>

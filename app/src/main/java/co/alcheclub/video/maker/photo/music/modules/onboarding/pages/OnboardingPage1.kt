@@ -24,10 +24,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.alcheclub.video.maker.photo.music.R
 import co.alcheclub.video.maker.photo.music.ui.theme.VideoMakerTheme
 
 /**
@@ -58,7 +60,7 @@ fun OnboardingPage1() {
         ) {
             // Title
             Text(
-                text = "Turn Photos Into\nBeautiful Videos",
+                text = stringResource(R.string.onboarding_page1_title),
                 fontSize = 36.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color.White,
@@ -76,8 +78,8 @@ fun OnboardingPage1() {
                         modifier = Modifier.size(24.dp)
                     )
                 },
-                title = "Select Photos",
-                description = "Choose your favorite photos from your gallery"
+                title = stringResource(R.string.onboarding_page1_feature1_title),
+                description = stringResource(R.string.onboarding_page1_feature1_desc)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -92,8 +94,8 @@ fun OnboardingPage1() {
                         modifier = Modifier.size(24.dp)
                     )
                 },
-                title = "Create Slideshow",
-                description = "Transform your photos into stunning video slideshows"
+                title = stringResource(R.string.onboarding_page1_feature2_title),
+                description = stringResource(R.string.onboarding_page1_feature2_desc)
             )
         }
     }

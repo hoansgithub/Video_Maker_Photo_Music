@@ -23,10 +23,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.alcheclub.video.maker.photo.music.R
 import co.alcheclub.video.maker.photo.music.ui.theme.VideoMakerTheme
 
 /**
@@ -57,7 +59,7 @@ fun OnboardingPage3() {
         ) {
             // Title
             Text(
-                text = "Export &\nShare",
+                text = stringResource(R.string.onboarding_page3_title),
                 fontSize = 36.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color.White,
@@ -75,8 +77,8 @@ fun OnboardingPage3() {
                         modifier = Modifier.size(24.dp)
                     )
                 },
-                title = "High Quality Export",
-                description = "Export your videos in HD quality up to 4K"
+                title = stringResource(R.string.onboarding_page3_feature1_title),
+                description = stringResource(R.string.onboarding_page3_feature1_desc)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -91,8 +93,8 @@ fun OnboardingPage3() {
                         modifier = Modifier.size(24.dp)
                     )
                 },
-                title = "Share Anywhere",
-                description = "Share directly to social media or save to gallery"
+                title = stringResource(R.string.onboarding_page3_feature2_title),
+                description = stringResource(R.string.onboarding_page3_feature2_desc)
             )
         }
     }

@@ -4,12 +4,145 @@
     <!-- Loading -->
     <string name="loading">Loading…</string>
 
+    <!-- Language Selection -->
+    <string name="language_select_title">Select Language</string>
+    <string name="language_select_subtitle">Choose your preferred language</string>
+    <string name="language_continue">Continue</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+
     <!-- Onboarding -->
     <string name="onboarding_next">Next</string>
     <string name="onboarding_get_started">Get Started</string>
+    <!-- Page 1 -->
+    <string name="onboarding_page1_title">Turn Photos Into\nBeautiful Videos</string>
+    <string name="onboarding_page1_feature1_title">Select Photos</string>
+    <string name="onboarding_page1_feature1_desc">Choose your favorite photos from your gallery</string>
+    <string name="onboarding_page1_feature2_title">Create Slideshow</string>
+    <string name="onboarding_page1_feature2_desc">Transform your photos into stunning video slideshows</string>
+    <!-- Page 2 -->
+    <string name="onboarding_page2_title">Add Music &amp;\nEffects</string>
+    <string name="onboarding_page2_feature1_title">Background Music</string>
+    <string name="onboarding_page2_feature1_desc">Add your favorite music or choose from our library</string>
+    <string name="onboarding_page2_feature2_title">Smooth Transitions</string>
+    <string name="onboarding_page2_feature2_desc">Beautiful transitions between your photos and clips</string>
+    <!-- Page 3 -->
+    <string name="onboarding_page3_title">Export &amp;\nShare</string>
+    <string name="onboarding_page3_feature1_title">High Quality Export</string>
+    <string name="onboarding_page3_feature1_desc">Export your videos in HD quality up to 4K</string>
+    <string name="onboarding_page3_feature2_title">Share Anywhere</string>
+    <string name="onboarding_page3_feature2_desc">Share directly to social media or save to gallery</string>
 
     <!-- Home -->
     <string name="home_title">Video Maker</string>
+    <string name="home_welcome">What would you like to do?</string>
     <string name="home_create">Create</string>
+    <string name="home_create_description">Create a slideshow from your photos</string>
     <string name="home_my_projects">My Projects</string>
+    <string name="home_my_projects_description">View your saved projects</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_description">Change app language</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Edit Project</string>
+    <string name="editor_add_photos">Add Photos</string>
+    <string name="editor_settings">Settings</string>
+    <string name="editor_preview">Preview</string>
+    <string name="editor_export">Export</string>
+    <string name="editor_transition">Transition</string>
+    <string name="editor_duration">Duration</string>
+    <string name="editor_music">Music</string>
+    <string name="editor_frame">Frame</string>
+    <string name="editor_aspect_ratio">Aspect Ratio</string>
+    <string name="editor_volume">Volume</string>
+    <string name="editor_duration_format">Duration: %s</string>
+    <string name="editor_photos_count">%d photos</string>
+    <string name="editor_save_dialog_title">Save Project?</string>
+    <string name="editor_save_dialog_message">Your project will be saved and available in My Projects.</string>
+    <string name="editor_save_and_exit">Save &amp; Exit</string>
+    <string name="editor_discard_changes">Discard Changes</string>
+
+    <!-- Projects -->
+    <string name="projects_title">My Projects</string>
+    <string name="projects_empty">No projects yet</string>
+    <string name="projects_empty_description">Create your first project to see it here</string>
+    <string name="projects_item_info">%1$d photos • %2$s</string>
+    <string name="projects_delete_title">Delete Project?</string>
+    <string name="projects_delete_message">\"%s\" will be permanently deleted. This action cannot be undone.</string>
+
+    <!-- Export -->
+    <string name="export_title">Export Video</string>
+    <string name="export_processing">Processing…</string>
+    <string name="export_complete">Export Complete!</string>
+    <string name="export_share">Share</string>
+    <string name="export_save">Save to Gallery</string>
+    <string name="export_preparing">Preparing export…</string>
+    <string name="export_exporting">Exporting video…</string>
+    <string name="export_dont_close">Please don\'t close the app</string>
+    <string name="export_video_saved">Your video has been saved</string>
+    <string name="export_saved_to_gallery">Saved to Gallery</string>
+    <string name="export_share_video">Share Video</string>
+    <string name="export_failed">Export Failed</string>
+    <string name="export_try_again">Try Again</string>
+    <string name="export_go_back">Go Back</string>
+    <string name="export_cancelled">Export Cancelled</string>
+    <string name="export_cancelled_message">The video export was cancelled</string>
+    <string name="export_back_to_editor">Back to Editor</string>
+    <string name="export_cancel_title">Cancel Export?</string>
+    <string name="export_cancel_message">Are you sure you want to cancel the export? All progress will be lost.</string>
+    <string name="export_continue">Continue</string>
+    <string name="export_cancel_export">Cancel Export</string>
+
+    <!-- Asset Picker -->
+    <string name="picker_title">Select Photos</string>
+    <string name="picker_done">Done (%d)</string>
+    <string name="picker_close">Close</string>
+    <string name="picker_selected">Selected</string>
+    <string name="picker_no_photos">No photos found</string>
+    <string name="picker_no_photos_hint">Take some photos to get started</string>
+    <string name="picker_permission_title">Photo Access Required</string>
+    <string name="picker_permission_message">To create videos from your photos, we need permission to access your photo library.</string>
+    <string name="picker_allow_access">Allow Access</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">Settings</string>
+    <string name="settings_panel_apply">Apply</string>
+    <string name="settings_panel_close">Close</string>
+    <string name="settings_apply">Apply</string>
+    <string name="settings_transition_effect">Transition Effect</string>
+    <string name="settings_all">All</string>
+    <string name="settings_off">OFF</string>
+    <string name="settings_none">None</string>
+    <string name="settings_pro">PRO</string>
+    <string name="settings_duration_per_image">Duration per Image</string>
+    <string name="settings_seconds_format">%ds</string>
+    <string name="settings_duration_seconds">%ds</string>
+    <string name="settings_overlay_frame">Overlay Frame</string>
+    <string name="settings_background_music">Background Music</string>
+    <string name="settings_custom">Custom</string>
+    <string name="settings_add">+ Add</string>
+    <string name="settings_add_audio">+ Add</string>
+    <string name="settings_volume">Volume</string>
+    <string name="settings_aspect_ratio">Aspect Ratio</string>
+
+    <!-- Common -->
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+    <string name="back">Back</string>
+    <string name="done">Done</string>
+    <string name="error">Error</string>
+    <string name="retry">Retry</string>
+    <string name="seconds">%d seconds</string>
+    <string name="none">None</string>
+    <string name="close">Close</string>
+    <string name="settings">Settings</string>
 </resources>

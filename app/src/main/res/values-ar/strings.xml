@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">صانع الفيديو</string>
+
+    <!-- Loading -->
+    <string name="loading">جاري التحميل…</string>
+
+    <!-- Language Selection -->
+    <string name="language_select_title">اختر اللغة</string>
+    <string name="language_select_subtitle">اختر لغتك المفضلة</string>
+    <string name="language_continue">متابعة</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">التالي</string>
+    <string name="onboarding_get_started">ابدأ الآن</string>
+    <!-- Page 1 -->
+    <string name="onboarding_page1_title">حوّل الصور إلى\nفيديوهات جميلة</string>
+    <string name="onboarding_page1_feature1_title">اختر الصور</string>
+    <string name="onboarding_page1_feature1_desc">اختر صورك المفضلة من معرض الصور</string>
+    <string name="onboarding_page1_feature2_title">أنشئ عرض شرائح</string>
+    <string name="onboarding_page1_feature2_desc">حوّل صورك إلى فيديوهات عرض شرائح مذهلة</string>
+    <!-- Page 2 -->
+    <string name="onboarding_page2_title">أضف موسيقى\nوتأثيرات</string>
+    <string name="onboarding_page2_feature1_title">موسيقى خلفية</string>
+    <string name="onboarding_page2_feature1_desc">أضف موسيقاك المفضلة أو اختر من مكتبتنا</string>
+    <string name="onboarding_page2_feature2_title">انتقالات سلسة</string>
+    <string name="onboarding_page2_feature2_desc">انتقالات جميلة بين صورك ومقاطعك</string>
+    <!-- Page 3 -->
+    <string name="onboarding_page3_title">صدّر\nوشارك</string>
+    <string name="onboarding_page3_feature1_title">تصدير عالي الجودة</string>
+    <string name="onboarding_page3_feature1_desc">صدّر فيديوهاتك بجودة HD حتى 4K</string>
+    <string name="onboarding_page3_feature2_title">شارك في أي مكان</string>
+    <string name="onboarding_page3_feature2_desc">شارك مباشرة على وسائل التواصل أو احفظ في المعرض</string>
+
+    <!-- Home -->
+    <string name="home_title">صانع الفيديو</string>
+    <string name="home_welcome">ماذا تريد أن تفعل؟</string>
+    <string name="home_create">إنشاء</string>
+    <string name="home_create_description">أنشئ عرض شرائح من صورك</string>
+    <string name="home_my_projects">مشاريعي</string>
+    <string name="home_my_projects_description">عرض مشاريعك المحفوظة</string>
+
+    <!-- Settings -->
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_language">اللغة</string>
+    <string name="settings_language_description">تغيير لغة التطبيق</string>
+    <string name="settings_about">حول</string>
+    <string name="settings_version">الإصدار</string>
+
+    <!-- Editor -->
+    <string name="editor_title">تعديل المشروع</string>
+    <string name="editor_add_photos">إضافة صور</string>
+    <string name="editor_settings">الإعدادات</string>
+    <string name="editor_preview">معاينة</string>
+    <string name="editor_export">تصدير</string>
+    <string name="editor_transition">الانتقال</string>
+    <string name="editor_duration">المدة</string>
+    <string name="editor_music">الموسيقى</string>
+    <string name="editor_frame">الإطار</string>
+    <string name="editor_aspect_ratio">نسبة العرض</string>
+    <string name="editor_volume">مستوى الصوت</string>
+    <string name="editor_duration_format">المدة: %s</string>
+    <string name="editor_photos_count">%d صور</string>
+    <string name="editor_save_dialog_title">حفظ المشروع؟</string>
+    <string name="editor_save_dialog_message">سيتم حفظ مشروعك وسيكون متاحاً في مشاريعي.</string>
+    <string name="editor_save_and_exit">حفظ والخروج</string>
+    <string name="editor_discard_changes">تجاهل التغييرات</string>
+
+    <!-- Projects -->
+    <string name="projects_title">مشاريعي</string>
+    <string name="projects_empty">لا توجد مشاريع بعد</string>
+    <string name="projects_empty_description">أنشئ مشروعك الأول لتراه هنا</string>
+    <string name="projects_item_info">%1$d صور • %2$s</string>
+    <string name="projects_delete_title">حذف المشروع؟</string>
+    <string name="projects_delete_message">سيتم حذف \"%s\" نهائياً. لا يمكن التراجع عن هذا الإجراء.</string>
+
+    <!-- Export -->
+    <string name="export_title">تصدير الفيديو</string>
+    <string name="export_processing">جاري المعالجة…</string>
+    <string name="export_complete">اكتمل التصدير!</string>
+    <string name="export_share">مشاركة</string>
+    <string name="export_save">حفظ في المعرض</string>
+    <string name="export_preparing">جاري التحضير للتصدير…</string>
+    <string name="export_exporting">جاري تصدير الفيديو…</string>
+    <string name="export_dont_close">يرجى عدم إغلاق التطبيق</string>
+    <string name="export_video_saved">تم حفظ الفيديو الخاص بك</string>
+    <string name="export_saved_to_gallery">تم الحفظ في المعرض</string>
+    <string name="export_share_video">مشاركة الفيديو</string>
+    <string name="export_failed">فشل التصدير</string>
+    <string name="export_try_again">حاول مرة أخرى</string>
+    <string name="export_go_back">رجوع</string>
+    <string name="export_cancelled">تم إلغاء التصدير</string>
+    <string name="export_cancelled_message">تم إلغاء تصدير الفيديو</string>
+    <string name="export_back_to_editor">العودة إلى المحرر</string>
+    <string name="export_cancel_title">إلغاء التصدير؟</string>
+    <string name="export_cancel_message">هل أنت متأكد من إلغاء التصدير؟ ستفقد كل التقدم.</string>
+    <string name="export_continue">متابعة</string>
+    <string name="export_cancel_export">إلغاء التصدير</string>
+
+    <!-- Asset Picker -->
+    <string name="picker_title">اختر الصور</string>
+    <string name="picker_done">تم (%d)</string>
+    <string name="picker_close">إغلاق</string>
+    <string name="picker_selected">محدد</string>
+    <string name="picker_no_photos">لم يتم العثور على صور</string>
+    <string name="picker_no_photos_hint">التقط بعض الصور للبدء</string>
+    <string name="picker_permission_title">مطلوب الوصول للصور</string>
+    <string name="picker_permission_message">لإنشاء فيديوهات من صورك، نحتاج إذن الوصول إلى مكتبة الصور.</string>
+    <string name="picker_allow_access">السماح بالوصول</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">الإعدادات</string>
+    <string name="settings_panel_apply">تطبيق</string>
+    <string name="settings_panel_close">إغلاق</string>
+    <string name="settings_apply">تطبيق</string>
+    <string name="settings_transition_effect">تأثير الانتقال</string>
+    <string name="settings_all">الكل</string>
+    <string name="settings_off">إيقاف</string>
+    <string name="settings_none">بدون</string>
+    <string name="settings_pro">احترافي</string>
+    <string name="settings_duration_per_image">مدة كل صورة</string>
+    <string name="settings_seconds_format">%dث</string>
+    <string name="settings_duration_seconds">%dث</string>
+    <string name="settings_overlay_frame">إطار التراكب</string>
+    <string name="settings_background_music">موسيقى الخلفية</string>
+    <string name="settings_custom">مخصص</string>
+    <string name="settings_add">+ إضافة</string>
+    <string name="settings_add_audio">+ إضافة</string>
+    <string name="settings_volume">مستوى الصوت</string>
+    <string name="settings_aspect_ratio">نسبة العرض</string>
+
+    <!-- Common -->
+    <string name="cancel">إلغاء</string>
+    <string name="confirm">تأكيد</string>
+    <string name="delete">حذف</string>
+    <string name="save">حفظ</string>
+    <string name="back">رجوع</string>
+    <string name="done">تم</string>
+    <string name="error">خطأ</string>
+    <string name="retry">إعادة المحاولة</string>
+    <string name="seconds">%d ثواني</string>
+    <string name="none">بدون</string>
+    <string name="close">إغلاق</string>
+    <string name="settings">الإعدادات</string>
+</resources>

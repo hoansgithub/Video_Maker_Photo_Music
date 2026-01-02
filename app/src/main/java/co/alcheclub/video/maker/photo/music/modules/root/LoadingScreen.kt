@@ -14,8 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import co.alcheclub.video.maker.photo.music.R
 import co.alcheclub.video.maker.photo.music.ui.theme.VideoMakerTheme
 
 /**
@@ -64,8 +66,9 @@ fun LoadingScreen(
                     CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.primary
                     )
+                    val defaultLoadingText = stringResource(R.string.loading)
                     Text(
-                        text = message.ifEmpty { "Loading..." },
+                        text = message.ifEmpty { defaultLoadingText },
                         color = Color.White,
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(top = 16.dp)

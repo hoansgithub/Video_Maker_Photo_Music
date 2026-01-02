@@ -46,12 +46,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import co.alcheclub.video.maker.photo.music.R
 import co.alcheclub.video.maker.photo.music.domain.model.Project
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -93,7 +95,7 @@ fun ProjectsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "My Projects",
+                        text = stringResource(R.string.projects_title),
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -101,7 +103,7 @@ fun ProjectsScreen(
                     IconButton(onClick = viewModel::navigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -185,13 +187,13 @@ private fun EmptyContent(modifier: Modifier = Modifier) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "No projects yet",
+                text = stringResource(R.string.projects_empty),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Create your first project to see it here",
+                text = stringResource(R.string.projects_empty_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
@@ -296,7 +298,7 @@ private fun ProjectCard(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "${project.assets.size} photos • ${project.formattedDuration}",
+                    text = stringResource(R.string.projects_item_info, project.assets.size, project.formattedDuration),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -314,7 +316,7 @@ private fun ProjectCard(
             IconButton(onClick = { showDeleteConfirmation = true }) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
+                    contentDescription = stringResource(R.string.delete),
                     tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
                 )
             }
@@ -359,7 +361,7 @@ private fun DeleteConfirmationDialog(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Delete Project?",
+                text = stringResource(R.string.projects_delete_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -367,7 +369,7 @@ private fun DeleteConfirmationDialog(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "\"$projectName\" will be permanently deleted. This action cannot be undone.",
+                text = stringResource(R.string.projects_delete_message, projectName),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -386,7 +388,7 @@ private fun DeleteConfirmationDialog(
                         .height(48.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
 
                 androidx.compose.material3.Button(
@@ -399,7 +401,7 @@ private fun DeleteConfirmationDialog(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete))
                 }
             }
         }

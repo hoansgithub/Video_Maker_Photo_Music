@@ -30,7 +30,14 @@ import co.alcheclub.video.maker.photo.music.modules.editor.EditorViewModel
 import co.alcheclub.video.maker.photo.music.modules.export.ExportScreen
 import co.alcheclub.video.maker.photo.music.modules.export.ExportViewModel
 import co.alcheclub.video.maker.photo.music.modules.home.HomeScreen
+import co.alcheclub.video.maker.photo.music.modules.language.LanguageSelectionScreen
+import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.ApplyLanguageUseCase
+import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
+import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.GetSelectedLanguageUseCase
+import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
+import co.alcheclub.video.maker.photo.music.core.data.local.LanguageManager
 import co.alcheclub.video.maker.photo.music.modules.onboarding.OnboardingScreen
+import co.alcheclub.video.maker.photo.music.modules.settings.SettingsScreen
 import co.alcheclub.video.maker.photo.music.modules.picker.AssetPickerScreen
 import co.alcheclub.video.maker.photo.music.modules.picker.AssetPickerViewModel
 import co.alcheclub.video.maker.photo.music.modules.projects.ProjectsScreen
@@ -65,9 +72,15 @@ fun AppNavigation(
                                 popUpTo(navController.graph.id) { inclusive = true }
                             }
                         }
-                        is AppRoute.Onboarding -> {
+                        is AppRoute.LanguageSelection -> {
                             navController.navigate(event.route) {
                                 // Clear Loading from back stack
+                                popUpTo(navController.graph.id) { inclusive = true }
+                            }
+                        }
+                        is AppRoute.Onboarding -> {
+                            navController.navigate(event.route) {
+                                // Clear Language Selection from back stack
                                 popUpTo(navController.graph.id) { inclusive = true }
                             }
                         }
@@ -126,6 +139,33 @@ fun AppNavigation(
                 )
             }
 
+            composable<AppRoute.LanguageSelection> {
+                val languageManager: LanguageManager = ACCDI.get()
+                val getSelectedLanguageUseCase: GetSelectedLanguageUseCase = ACCDI.get()
+                val saveLanguagePreferenceUseCase: SaveLanguagePreferenceUseCase = ACCDI.get()
+                val applyLanguageUseCase: ApplyLanguageUseCase = ACCDI.get()
+                val completeLanguageSelectionUseCase: CompleteLanguageSelectionUseCase = ACCDI.get()
+                val currentLanguage = getSelectedLanguageUseCase()
+
+                LanguageSelectionScreen(
+                    currentLanguage = currentLanguage,
+                    onLanguageSelected = { languageCode ->
+                        // Save preference only, don't apply (no Activity recreation)
+                        saveLanguagePreferenceUseCase(languageCode)
+                    },
+                    onContinue = {
+                        // Apply the saved language and mark selection complete
+                        applyLanguageUseCase()
+                        completeLanguageSelectionUseCase()
+                        rootViewModel.onLanguageSelectionComplete()
+                    },
+                    // Provide localized string preview function
+                    getLocalizedString = { resId, languageCode ->
+                        languageManager.getLocalizedString(resId, languageCode)
+                    }
+                )
+            }
+
             composable<AppRoute.Onboarding> {
                 OnboardingScreen(
                     onComplete = {
@@ -145,6 +185,9 @@ fun AppNavigation(
                     },
                     onMyProjectsClick = {
                         navController.navigate(AppRoute.Projects)
+                    },
+                    onSettingsClick = {
+                        navController.navigate(AppRoute.Settings)
                     }
                 )
             }
@@ -267,6 +310,57 @@ fun AppNavigation(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToEditor = { projectId ->
                         navController.navigate(AppRoute.Editor(projectId))
+                    }
+                )
+            }
+
+            // ============================================
+            // SETTINGS ROUTES
+            // ============================================
+
+            composable<AppRoute.Settings> {
+                val getSelectedLanguageUseCase: GetSelectedLanguageUseCase = ACCDI.get()
+                val languageManager: LanguageManager = ACCDI.get()
+                val currentLanguageCode = getSelectedLanguageUseCase()
+                val currentLanguageName = languageManager.getLanguageDisplayName(currentLanguageCode)
+
+                SettingsScreen(
+                    currentLanguageName = currentLanguageName,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToLanguage = {
+                        navController.navigate(AppRoute.LanguageSettings)
+                    }
+                )
+            }
+
+            composable<AppRoute.LanguageSettings> {
+                val languageManager: LanguageManager = ACCDI.get()
+                val getSelectedLanguageUseCase: GetSelectedLanguageUseCase = ACCDI.get()
+                val saveLanguagePreferenceUseCase: SaveLanguagePreferenceUseCase = ACCDI.get()
+                val applyLanguageUseCase: ApplyLanguageUseCase = ACCDI.get()
+                val currentLanguage = getSelectedLanguageUseCase()
+
+                LanguageSelectionScreen(
+                    currentLanguage = currentLanguage,
+                    showBackButton = true,
+                    onLanguageSelected = { languageCode ->
+                        // Save preference only for preview
+                        saveLanguagePreferenceUseCase(languageCode)
+                    },
+                    onContinue = {
+                        // Apply the saved language from SharedPreferences (triggers Activity recreation)
+                        // Then navigate to Home to refresh the entire app with new locale
+                        applyLanguageUseCase()
+                        navController.navigate(AppRoute.Home) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    },
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    // Provide localized string preview function
+                    getLocalizedString = { resId, languageCode ->
+                        languageManager.getLocalizedString(resId, languageCode)
                     }
                 )
             }

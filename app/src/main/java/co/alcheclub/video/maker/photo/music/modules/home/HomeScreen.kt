@@ -19,6 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,10 +36,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.alcheclub.video.maker.photo.music.R
 import co.alcheclub.video.maker.photo.music.ui.theme.VideoMakerTheme
 
 /**
@@ -54,7 +58,8 @@ import co.alcheclub.video.maker.photo.music.ui.theme.VideoMakerTheme
 @Composable
 fun HomeScreen(
     onCreateClick: () -> Unit,
-    onMyProjectsClick: () -> Unit
+    onMyProjectsClick: () -> Unit,
+    onSettingsClick: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -66,9 +71,18 @@ fun HomeScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = "Video Maker",
+                            text = stringResource(R.string.home_title),
                             fontWeight = FontWeight.Bold
                         )
+                    },
+                    actions = {
+                        IconButton(onClick = onSettingsClick) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = stringResource(R.string.settings),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface
@@ -89,7 +103,7 @@ fun HomeScreen(
             ) {
             // Welcome text
             Text(
-                text = "What would you like to do?",
+                text = stringResource(R.string.home_welcome),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -99,8 +113,8 @@ fun HomeScreen(
             // Create Button
             FeatureCard(
                 icon = Icons.Default.Add,
-                title = "Create",
-                description = "Create a slideshow from your photos",
+                title = stringResource(R.string.home_create),
+                description = stringResource(R.string.home_create_description),
                 gradientColors = listOf(
                     Color(0xFF667eea),
                     Color(0xFF764ba2)
@@ -113,8 +127,8 @@ fun HomeScreen(
             // My Projects Button
             FeatureCard(
                 icon = Icons.Default.Folder,
-                title = "My Projects",
-                description = "View your saved projects",
+                title = stringResource(R.string.home_my_projects),
+                description = stringResource(R.string.home_my_projects_description),
                 gradientColors = listOf(
                     Color(0xFFf093fb),
                     Color(0xFFf5576c)

@@ -1,9 +1,9 @@
 package co.alcheclub.video.maker.photo.music
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -31,7 +31,7 @@ import co.alcheclub.video.maker.photo.music.ui.theme.VideoMakerTheme
  *    - Onboarding (first-time user)
  *    - Home (returning user)
  */
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     // Root ViewModel injected via ACCDI
     private val rootViewModel: RootViewModel by viewModel()

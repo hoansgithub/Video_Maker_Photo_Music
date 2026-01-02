@@ -9,6 +9,7 @@ ksp = "2.1.20-2.0.1"
 # ============================================
 # ANDROIDX CORE
 # ============================================
+appcompat = "1.7.0"
 coreKtx = "1.17.0"
 coreSplashscreen = "1.0.1"
 lifecycleRuntimeKtx = "2.9.4"
@@ -84,6 +85,7 @@ acccore-appsflyer = { module = "com.github.hoansgithub.ACCCoreAndroid:ACCCore-Ap
 # ============================================
 # ANDROIDX CORE
 # ============================================
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }

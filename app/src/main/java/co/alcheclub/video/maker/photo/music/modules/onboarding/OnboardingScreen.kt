@@ -25,10 +25,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.alcheclub.video.maker.photo.music.R
 import co.alcheclub.video.maker.photo.music.modules.onboarding.pages.OnboardingPage1
 import co.alcheclub.video.maker.photo.music.modules.onboarding.pages.OnboardingPage2
 import co.alcheclub.video.maker.photo.music.modules.onboarding.pages.OnboardingPage3
@@ -119,7 +121,11 @@ fun OnboardingScreen(
                 )
             ) {
                 Text(
-                    text = if (pagerState.currentPage < pageCount - 1) "Next" else "Get Started",
+                    text = if (pagerState.currentPage < pageCount - 1) {
+                        stringResource(R.string.onboarding_next)
+                    } else {
+                        stringResource(R.string.onboarding_get_started)
+                    },
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )

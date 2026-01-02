@@ -6,6 +6,7 @@ import co.alcheclub.lib.acccore.di.androidContext
 import co.alcheclub.lib.acccore.di.get
 import co.alcheclub.lib.acccore.di.module
 import co.alcheclub.lib.acccore.di.viewModel
+import co.alcheclub.video.maker.photo.music.core.data.local.LanguageManager
 import co.alcheclub.video.maker.photo.music.core.data.local.PreferencesManager
 import co.alcheclub.video.maker.photo.music.data.local.database.ProjectDatabase
 import co.alcheclub.video.maker.photo.music.data.repository.ExportRepositoryImpl
@@ -20,6 +21,13 @@ import co.alcheclub.video.maker.photo.music.domain.usecase.GetProjectUseCase
 import co.alcheclub.video.maker.photo.music.domain.usecase.RemoveAssetUseCase
 import co.alcheclub.video.maker.photo.music.domain.usecase.ReorderAssetsUseCase
 import co.alcheclub.video.maker.photo.music.domain.usecase.UpdateProjectSettingsUseCase
+import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.ApplyLanguageUseCase
+import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.CheckLanguageSelectedUseCase
+import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
+import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.GetSelectedLanguageUseCase
+import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.InitializeLanguageUseCase
+import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
+import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.SetLanguageUseCase
 import co.alcheclub.video.maker.photo.music.media.composition.CompositionFactory
 import co.alcheclub.video.maker.photo.music.modules.editor.EditorViewModel
 import co.alcheclub.video.maker.photo.music.modules.export.ExportViewModel
@@ -57,6 +65,7 @@ import co.alcheclub.video.maker.photo.music.modules.root.RootViewModel
 val dataModule = module {
     // Shared data sources
     single { PreferencesManager(androidContext()) }
+    single { LanguageManager(androidContext()) }
 
     // WorkManager
     single { WorkManager.getInstance(androidContext()) }
@@ -99,6 +108,15 @@ val domainModule = module {
     // Onboarding use cases
     factory { CheckOnboardingStatusUseCase(it.get()) }
     factory { CompleteOnboardingUseCase(it.get()) }
+
+    // Language use cases
+    factory { CheckLanguageSelectedUseCase(it.get()) }
+    factory { CompleteLanguageSelectionUseCase(it.get()) }
+    factory { GetSelectedLanguageUseCase(it.get()) }
+    factory { SetLanguageUseCase(it.get()) }
+    factory { SaveLanguagePreferenceUseCase(it.get()) }
+    factory { ApplyLanguageUseCase(it.get()) }
+    factory { InitializeLanguageUseCase(it.get()) }
 
     // Project use cases
     factory { CreateProjectUseCase(it.get()) }
@@ -199,8 +217,10 @@ val presentationModule = module {
     // Root ViewModel for Single-Activity Architecture
     viewModel {
         RootViewModel(
-            it.get<CheckOnboardingStatusUseCase>(),
-            it.get<CompleteOnboardingUseCase>()
+            checkOnboardingStatusUseCase = it.get<CheckOnboardingStatusUseCase>(),
+            completeOnboardingUseCase = it.get<CompleteOnboardingUseCase>(),
+            checkLanguageSelectedUseCase = it.get<CheckLanguageSelectedUseCase>(),
+            initializeLanguageUseCase = it.get<InitializeLanguageUseCase>()
         )
     }
 

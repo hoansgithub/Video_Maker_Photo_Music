@@ -4,6 +4,8 @@ import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import java.lang.ref.WeakReference
+import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.CheckLanguageSelectedUseCase
+import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.InitializeLanguageUseCase
 import co.alcheclub.video.maker.photo.music.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
 import co.alcheclub.video.maker.photo.music.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import co.alcheclub.video.maker.photo.music.navigation.AppRoute
@@ -31,7 +33,9 @@ import kotlinx.coroutines.launch
  */
 class RootViewModel(
     private val checkOnboardingStatusUseCase: CheckOnboardingStatusUseCase,
-    private val completeOnboardingUseCase: CompleteOnboardingUseCase
+    private val completeOnboardingUseCase: CompleteOnboardingUseCase,
+    private val checkLanguageSelectedUseCase: CheckLanguageSelectedUseCase,
+    private val initializeLanguageUseCase: InitializeLanguageUseCase
 ) : ViewModel() {
 
     // ============================================
@@ -60,6 +64,7 @@ class RootViewModel(
 
     private var isInitialized = false
     private var activityRef: WeakReference<Activity>? = null
+    private var shouldShowLanguageSelection = false
     private var shouldShowOnboarding = false
 
     // ============================================
@@ -87,6 +92,21 @@ class RootViewModel(
             } catch (e: Exception) {
                 proceedToNextScreen()
             }
+        }
+    }
+
+    /**
+     * Called when user completes language selection (presses Continue)
+     * Language is already applied when user tapped an option
+     */
+    fun onLanguageSelectionComplete() {
+        shouldShowLanguageSelection = false
+
+        // After language is selected, check if onboarding is needed
+        if (shouldShowOnboarding) {
+            _navigationEvent.trySend(RootNavigationEvent.NavigateTo(AppRoute.Onboarding))
+        } else {
+            navigateToHome()
         }
     }
 
@@ -143,6 +163,13 @@ class RootViewModel(
             // Short delay for splash screen display
             delay(500)
 
+            // Initialize language settings (restore previously selected language)
+            initializeLanguageUseCase()
+
+            // Check if language has been selected (first-time user check)
+            val languageResult = checkLanguageSelectedUseCase()
+            shouldShowLanguageSelection = languageResult.getOrNull() ?: false
+
             // Check onboarding status
             val onboardingResult = checkOnboardingStatusUseCase()
             shouldShowOnboarding = onboardingResult.getOrNull() ?: false
@@ -156,10 +183,16 @@ class RootViewModel(
     private fun proceedToNextScreen() {
         _isLoading.value = false
 
-        if (shouldShowOnboarding) {
-            _navigationEvent.trySend(RootNavigationEvent.NavigateTo(AppRoute.Onboarding))
-        } else {
-            _navigationEvent.trySend(RootNavigationEvent.NavigateTo(AppRoute.Home))
+        when {
+            shouldShowLanguageSelection -> {
+                _navigationEvent.trySend(RootNavigationEvent.NavigateTo(AppRoute.LanguageSelection))
+            }
+            shouldShowOnboarding -> {
+                _navigationEvent.trySend(RootNavigationEvent.NavigateTo(AppRoute.Onboarding))
+            }
+            else -> {
+                _navigationEvent.trySend(RootNavigationEvent.NavigateTo(AppRoute.Home))
+            }
         }
     }
 

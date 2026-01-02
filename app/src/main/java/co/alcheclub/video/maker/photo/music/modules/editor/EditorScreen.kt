@@ -43,10 +43,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.alcheclub.video.maker.photo.music.R
 import co.alcheclub.video.maker.photo.music.domain.model.Project
 import co.alcheclub.video.maker.photo.music.modules.editor.components.AssetStrip
 import co.alcheclub.video.maker.photo.music.modules.editor.components.SettingsPanel
@@ -96,10 +98,11 @@ fun EditorScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Main editor UI with Scaffold
+        val editorTitle = stringResource(R.string.editor_title)
         Scaffold(
             topBar = {
                 EditorTopBar(
-                    title = (uiState as? EditorUiState.Success)?.project?.name ?: "Editor",
+                    title = (uiState as? EditorUiState.Success)?.project?.name ?: editorTitle,
                     onBackClick = { showExitConfirmation = true },
                     onPreviewClick = viewModel::navigateToPreview,
                     onSettingsClick = viewModel::toggleSettingsPanel,
@@ -202,7 +205,7 @@ private fun EditorTopBar(
             IconButton(onClick = onBackClick) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
+                    contentDescription = stringResource(R.string.back)
                 )
             }
         },
@@ -210,7 +213,7 @@ private fun EditorTopBar(
             IconButton(onClick = onSettingsClick) {
                 Icon(
                     imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
+                    contentDescription = stringResource(R.string.settings),
                     tint = if (showSettingsSelected) {
                         MaterialTheme.colorScheme.primary
                     } else {
@@ -318,12 +321,12 @@ private fun BottomBar(
         // Duration info
         Column {
             Text(
-                text = "Duration: $duration",
+                text = stringResource(R.string.editor_duration_format, duration),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "$assetCount photos",
+                text = stringResource(R.string.editor_photos_count, assetCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -344,7 +347,7 @@ private fun BottomBar(
             )
             Spacer(modifier = Modifier.size(8.dp))
             Text(
-                text = "Export",
+                text = stringResource(R.string.editor_export),
                 fontWeight = FontWeight.Bold
             )
         }
@@ -374,7 +377,7 @@ private fun ExitConfirmationDialog(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Save Project?",
+                text = stringResource(R.string.editor_save_dialog_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -382,7 +385,7 @@ private fun ExitConfirmationDialog(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Your project will be saved and available in My Projects.",
+                text = stringResource(R.string.editor_save_dialog_message),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -399,7 +402,7 @@ private fun ExitConfirmationDialog(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Save & Exit",
+                    text = stringResource(R.string.editor_save_and_exit),
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -414,7 +417,7 @@ private fun ExitConfirmationDialog(
                     .height(48.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(text = "Discard Changes")
+                Text(text = stringResource(R.string.editor_discard_changes))
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -430,7 +433,7 @@ private fun ExitConfirmationDialog(
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             ) {
-                Text(text = "Cancel")
+                Text(text = stringResource(R.string.cancel))
             }
         }
     }

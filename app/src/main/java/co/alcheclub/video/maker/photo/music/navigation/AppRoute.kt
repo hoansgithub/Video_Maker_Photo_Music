@@ -32,6 +32,14 @@ sealed class AppRoute : Parcelable {
     data object Loading : AppRoute()
 
     /**
+     * Language Selection screen - First-time user language picker
+     * Shown before onboarding
+     */
+    @Parcelize
+    @Serializable
+    data object LanguageSelection : AppRoute()
+
+    /**
      * Onboarding screen - First-time user tutorial
      */
     @Parcelize
@@ -103,4 +111,23 @@ sealed class AppRoute : Parcelable {
     @Parcelize
     @Serializable
     data object Projects : AppRoute()
+
+    // ============================================
+    // SETTINGS ROUTES
+    // ============================================
+
+    /**
+     * Settings screen - App settings
+     */
+    @Parcelize
+    @Serializable
+    data object Settings : AppRoute()
+
+    /**
+     * Language Settings screen - Change app language
+     * Reuses LanguageSelectionScreen in settings context
+     */
+    @Parcelize
+    @Serializable
+    data object LanguageSettings : AppRoute()
 }

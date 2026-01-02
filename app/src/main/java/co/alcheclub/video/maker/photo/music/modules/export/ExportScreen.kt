@@ -38,12 +38,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.alcheclub.video.maker.photo.music.R
 import java.io.File
 
 /**
@@ -155,7 +157,7 @@ private fun PreparingContent() {
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Preparing export...",
+            text = stringResource(R.string.export_preparing),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Medium
         )
@@ -192,13 +194,13 @@ private fun ProcessingContent(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "Exporting video...",
+            text = stringResource(R.string.export_exporting),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Medium
         )
 
         Text(
-            text = "Please don't close the app",
+            text = stringResource(R.string.export_dont_close),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -217,7 +219,7 @@ private fun ProcessingContent(
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Cancel")
+            Text(stringResource(R.string.cancel))
         }
     }
 }
@@ -256,7 +258,7 @@ private fun SuccessContent(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "Export Complete!",
+            text = stringResource(R.string.export_complete),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
@@ -264,7 +266,7 @@ private fun SuccessContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Your video has been saved",
+            text = stringResource(R.string.export_video_saved),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -295,7 +297,7 @@ private fun SuccessContent(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = if (savedToGallery) "Saved to Gallery" else "Save to Gallery",
+                text = if (savedToGallery) stringResource(R.string.export_saved_to_gallery) else stringResource(R.string.export_save),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -328,7 +330,7 @@ private fun SuccessContent(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Share Video",
+                text = stringResource(R.string.export_share_video),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -344,7 +346,7 @@ private fun SuccessContent(
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = "Done",
+                text = stringResource(R.string.done),
                 fontSize = 16.sp
             )
         }
@@ -382,7 +384,7 @@ private fun ErrorContent(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "Export Failed",
+            text = stringResource(R.string.export_failed),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
@@ -412,7 +414,7 @@ private fun ErrorContent(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Try Again",
+                text = stringResource(R.string.export_try_again),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -428,7 +430,7 @@ private fun ErrorContent(
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = "Go Back",
+                text = stringResource(R.string.export_go_back),
                 fontSize = 16.sp
             )
         }
@@ -445,7 +447,7 @@ private fun CancelledContent(
         modifier = Modifier.padding(32.dp)
     ) {
         Text(
-            text = "Export Cancelled",
+            text = stringResource(R.string.export_cancelled),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
@@ -453,7 +455,7 @@ private fun CancelledContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "The video export was cancelled",
+            text = stringResource(R.string.export_cancelled_message),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -468,7 +470,7 @@ private fun CancelledContent(
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = "Back to Editor",
+                text = stringResource(R.string.export_back_to_editor),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -498,7 +500,7 @@ private fun CancelConfirmationDialog(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Cancel Export?",
+                text = stringResource(R.string.export_cancel_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -506,7 +508,7 @@ private fun CancelConfirmationDialog(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Are you sure you want to cancel the export? All progress will be lost.",
+                text = stringResource(R.string.export_cancel_message),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -524,7 +526,7 @@ private fun CancelConfirmationDialog(
                         .weight(1f)
                         .height(48.dp)
                 ) {
-                    Text("Continue")
+                    Text(stringResource(R.string.export_continue))
                 }
 
                 Button(
@@ -536,7 +538,7 @@ private fun CancelConfirmationDialog(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Cancel Export")
+                    Text(stringResource(R.string.export_cancel_export))
                 }
             }
         }
@@ -558,7 +560,7 @@ private fun shareVideo(context: android.content.Context, outputPath: String) {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        context.startActivity(Intent.createChooser(shareIntent, "Share Video"))
+        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.export_share_video)))
     } catch (e: Exception) {
         // Handle share error silently
     }

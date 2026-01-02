@@ -52,10 +52,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import co.alcheclub.video.maker.photo.music.R
 import co.alcheclub.video.maker.photo.music.domain.model.AspectRatio
 import co.alcheclub.video.maker.photo.music.domain.model.AudioTrack
 import co.alcheclub.video.maker.photo.music.domain.model.OverlayFrame
@@ -106,7 +108,7 @@ fun SettingsPanel(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Settings",
+                        text = stringResource(R.string.settings),
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -119,7 +121,7 @@ fun SettingsPanel(
                     }) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Close"
+                            contentDescription = stringResource(R.string.close)
                         )
                     }
                 },
@@ -133,7 +135,7 @@ fun SettingsPanel(
                             },
                             modifier = Modifier.padding(end = 8.dp)
                         ) {
-                            Text("Apply", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.settings_apply), fontWeight = FontWeight.Bold)
                         }
                     }
                 },
@@ -267,7 +269,7 @@ private fun TransitionSelector(
 
     Column {
         Text(
-            text = "Transition Effect",
+            text = stringResource(R.string.settings_transition_effect),
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -281,7 +283,7 @@ private fun TransitionSelector(
             // "All" chip
             item {
                 CategoryChip(
-                    text = "All",
+                    text = stringResource(R.string.settings_all),
                     isSelected = selectedCategory == null,
                     onClick = { selectedCategory = null }
                 )
@@ -385,7 +387,7 @@ private fun TransitionChip(
         ) {
             if (transition == null) {
                 Text(
-                    text = "OFF",
+                    text = stringResource(R.string.settings_off),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -410,7 +412,7 @@ private fun TransitionChip(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = transition?.name ?: "None",
+            text = transition?.name ?: stringResource(R.string.settings_none),
             style = MaterialTheme.typography.labelSmall,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -419,7 +421,7 @@ private fun TransitionChip(
 
         if (transition?.isPremium == true) {
             Text(
-                text = "PRO",
+                text = stringResource(R.string.settings_pro),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.tertiary,
                 fontWeight = FontWeight.Bold
@@ -435,7 +437,7 @@ private fun ImageDurationSelector(
 ) {
     Column {
         Text(
-            text = "Duration per Image",
+            text = stringResource(R.string.settings_duration_per_image),
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -448,7 +450,7 @@ private fun ImageDurationSelector(
             ProjectSettings.IMAGE_DURATION_OPTIONS.forEach { seconds ->
                 val durationMs = seconds * 1000L
                 SelectableChip(
-                    text = "${seconds}s",
+                    text = stringResource(R.string.settings_duration_seconds, seconds),
                     isSelected = selectedDurationMs == durationMs,
                     onClick = { onDurationSelect(durationMs) }
                 )
@@ -466,7 +468,7 @@ private fun OverlayFrameSelector(
 
     Column {
         Text(
-            text = "Overlay Frame",
+            text = stringResource(R.string.settings_overlay_frame),
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -520,7 +522,7 @@ private fun FrameChip(
     ) {
         if (frame == null) {
             Text(
-                text = "None",
+                text = stringResource(R.string.settings_none),
                 style = MaterialTheme.typography.labelSmall
             )
         } else {
@@ -548,7 +550,7 @@ private fun AudioSection(
 
     Column {
         Text(
-            text = "Background Music",
+            text = stringResource(R.string.settings_background_music),
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -598,7 +600,7 @@ private fun AudioSection(
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 Text(
-                    text = if (customAudioUri != null) "Custom" else "+ Add",
+                    text = if (customAudioUri != null) stringResource(R.string.settings_custom) else stringResource(R.string.settings_add_audio),
                     style = MaterialTheme.typography.labelMedium
                 )
             }
@@ -613,7 +615,7 @@ private fun AudioSection(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Volume",
+                    text = stringResource(R.string.settings_volume),
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
@@ -665,7 +667,7 @@ private fun AudioChip(
             Spacer(modifier = Modifier.width(4.dp))
         }
         Text(
-            text = track?.name ?: "None",
+            text = track?.name ?: stringResource(R.string.settings_none),
             style = MaterialTheme.typography.labelMedium
         )
     }
@@ -678,7 +680,7 @@ private fun AspectRatioSelector(
 ) {
     Column {
         Text(
-            text = "Aspect Ratio",
+            text = stringResource(R.string.settings_aspect_ratio),
             style = MaterialTheme.typography.bodyMedium
         )
 
