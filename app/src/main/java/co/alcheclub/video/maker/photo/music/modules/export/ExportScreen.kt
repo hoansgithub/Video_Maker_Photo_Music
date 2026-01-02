@@ -62,15 +62,18 @@ fun ExportScreen(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showCancelConfirmation by remember { mutableStateOf(false) }
 
-    // Handle navigation events
-    LaunchedEffect(Unit) {
-        viewModel.navigationEvent.collect { event ->
+    // Handle navigation events - StateFlow-based (Google recommended pattern)
+    // Observe navigationEvent StateFlow and call onNavigationHandled() after navigating
+    LaunchedEffect(navigationEvent) {
+        navigationEvent?.let { event ->
             when (event) {
                 is ExportNavigationEvent.NavigateBack -> onNavigateBack()
             }
+            viewModel.onNavigationHandled()
         }
     }
 

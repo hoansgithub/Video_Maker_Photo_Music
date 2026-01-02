@@ -9,12 +9,10 @@ import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.Init
 import co.alcheclub.video.maker.photo.music.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
 import co.alcheclub.video.maker.photo.music.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import co.alcheclub.video.maker.photo.music.navigation.AppRoute
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -52,11 +50,11 @@ class RootViewModel(
     val loadingMessage: StateFlow<String> = _loadingMessage.asStateFlow()
 
     // ============================================
-    // NAVIGATION EVENTS
+    // NAVIGATION EVENTS (StateFlow-based - Google recommended)
     // ============================================
 
-    private val _navigationEvent = Channel<RootNavigationEvent>(Channel.BUFFERED)
-    val navigationEvent = _navigationEvent.receiveAsFlow()
+    private val _navigationEvent = MutableStateFlow<RootNavigationEvent?>(null)
+    val navigationEvent: StateFlow<RootNavigationEvent?> = _navigationEvent.asStateFlow()
 
     // ============================================
     // INTERNAL STATE
@@ -104,7 +102,7 @@ class RootViewModel(
 
         // After language is selected, check if onboarding is needed
         if (shouldShowOnboarding) {
-            _navigationEvent.trySend(RootNavigationEvent.NavigateTo(AppRoute.Onboarding))
+            _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Onboarding)
         } else {
             navigateToHome()
         }
@@ -125,7 +123,14 @@ class RootViewModel(
      * Navigate to home screen
      */
     fun navigateToHome() {
-        _navigationEvent.trySend(RootNavigationEvent.NavigateTo(AppRoute.Home))
+        _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Home)
+    }
+
+    /**
+     * Called by UI after navigation is handled - clears the event
+     */
+    fun onNavigationHandled() {
+        _navigationEvent.value = null
     }
 
     /**
@@ -185,13 +190,13 @@ class RootViewModel(
 
         when {
             shouldShowLanguageSelection -> {
-                _navigationEvent.trySend(RootNavigationEvent.NavigateTo(AppRoute.LanguageSelection))
+                _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.LanguageSelection)
             }
             shouldShowOnboarding -> {
-                _navigationEvent.trySend(RootNavigationEvent.NavigateTo(AppRoute.Onboarding))
+                _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Onboarding)
             }
             else -> {
-                _navigationEvent.trySend(RootNavigationEvent.NavigateTo(AppRoute.Home))
+                _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Home)
             }
         }
     }

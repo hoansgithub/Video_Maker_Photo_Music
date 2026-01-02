@@ -60,9 +60,10 @@ fun AppNavigation(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
-    // Collect navigation events from RootViewModel
-    LaunchedEffect(Unit) {
-        rootViewModel.navigationEvent.collect { event ->
+    // Collect navigation events from RootViewModel - StateFlow-based (Google recommended pattern)
+    val navigationEvent by rootViewModel.navigationEvent.collectAsStateWithLifecycle()
+    LaunchedEffect(navigationEvent) {
+        navigationEvent?.let { event ->
             when (event) {
                 is RootNavigationEvent.NavigateTo -> {
                     when (event.route) {
@@ -93,6 +94,7 @@ fun AppNavigation(
                     navController.popBackStack()
                 }
             }
+            rootViewModel.onNavigationHandled()
         }
     }
 

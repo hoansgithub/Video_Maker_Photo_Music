@@ -5,11 +5,9 @@ import androidx.lifecycle.viewModelScope
 import co.alcheclub.video.maker.photo.music.domain.model.Project
 import co.alcheclub.video.maker.photo.music.domain.usecase.DeleteProjectUseCase
 import co.alcheclub.video.maker.photo.music.domain.usecase.GetAllProjectsUseCase
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 // ============================================
@@ -30,7 +28,8 @@ sealed class ProjectsUiState {
 // ============================================
 
 /**
- * ProjectsNavigationEvent - Channel-based navigation events
+ * ProjectsNavigationEvent - StateFlow-based navigation events (Google recommended)
+ * UI observes navigationEvent StateFlow and calls onNavigationHandled() after navigating
  */
 sealed class ProjectsNavigationEvent {
     data object NavigateBack : ProjectsNavigationEvent()
@@ -46,7 +45,7 @@ sealed class ProjectsNavigationEvent {
  *
  * Follows CLAUDE.md patterns:
  * - Sealed class state machine
- * - Channel for navigation events
+ * - StateFlow-based navigation events (Google recommended)
  * - viewModelScope for coroutines
  */
 class ProjectsViewModel(
@@ -62,11 +61,11 @@ class ProjectsViewModel(
     val uiState: StateFlow<ProjectsUiState> = _uiState.asStateFlow()
 
     // ============================================
-    // NAVIGATION EVENTS
+    // NAVIGATION EVENTS (StateFlow-based - Google recommended)
     // ============================================
 
-    private val _navigationEvent = Channel<ProjectsNavigationEvent>(Channel.BUFFERED)
-    val navigationEvent = _navigationEvent.receiveAsFlow()
+    private val _navigationEvent = MutableStateFlow<ProjectsNavigationEvent?>(null)
+    val navigationEvent: StateFlow<ProjectsNavigationEvent?> = _navigationEvent.asStateFlow()
 
     // ============================================
     // INITIALIZATION
@@ -98,9 +97,7 @@ class ProjectsViewModel(
      * Open a project in the editor
      */
     fun openProject(projectId: String) {
-        viewModelScope.launch {
-            _navigationEvent.send(ProjectsNavigationEvent.NavigateToEditor(projectId))
-        }
+        _navigationEvent.value = ProjectsNavigationEvent.NavigateToEditor(projectId)
     }
 
     /**
@@ -122,8 +119,13 @@ class ProjectsViewModel(
      * Navigate back to home
      */
     fun navigateBack() {
-        viewModelScope.launch {
-            _navigationEvent.send(ProjectsNavigationEvent.NavigateBack)
-        }
+        _navigationEvent.value = ProjectsNavigationEvent.NavigateBack
+    }
+
+    /**
+     * Called by UI after navigation is handled - clears the event
+     */
+    fun onNavigationHandled() {
+        _navigationEvent.value = null
     }
 }

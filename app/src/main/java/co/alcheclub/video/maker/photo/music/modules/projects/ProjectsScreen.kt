@@ -79,14 +79,17 @@ fun ProjectsScreen(
     onNavigateToEditor: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
 
-    // Handle navigation events - LaunchedEffect(Unit) for one-time collection
-    LaunchedEffect(Unit) {
-        viewModel.navigationEvent.collect { event ->
+    // Handle navigation events - StateFlow-based (Google recommended pattern)
+    // Observe navigationEvent StateFlow and call onNavigationHandled() after navigating
+    LaunchedEffect(navigationEvent) {
+        navigationEvent?.let { event ->
             when (event) {
                 is ProjectsNavigationEvent.NavigateBack -> onNavigateBack()
                 is ProjectsNavigationEvent.NavigateToEditor -> onNavigateToEditor(event.projectId)
             }
+            viewModel.onNavigationHandled()
         }
     }
 

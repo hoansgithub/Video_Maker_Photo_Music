@@ -7,11 +7,9 @@ import co.alcheclub.video.maker.photo.music.domain.repository.ExportProgress
 import co.alcheclub.video.maker.photo.music.domain.repository.ExportRepository
 import co.alcheclub.video.maker.photo.music.media.export.MediaStoreHelper
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -68,7 +66,8 @@ sealed class ExportUiState {
 // ============================================
 
 /**
- * ExportNavigationEvent - Channel-based navigation events
+ * ExportNavigationEvent - StateFlow-based navigation events (Google recommended)
+ * UI observes navigationEvent StateFlow and calls onNavigationHandled() after navigating
  */
 sealed class ExportNavigationEvent {
     data object NavigateBack : ExportNavigationEvent()
@@ -83,7 +82,7 @@ sealed class ExportNavigationEvent {
  *
  * Follows CLAUDE.md patterns:
  * - Sealed class state machine
- * - Channel for navigation events
+ * - StateFlow-based navigation events (Google recommended)
  * - viewModelScope for coroutines
  */
 class ExportViewModel(
@@ -99,11 +98,11 @@ class ExportViewModel(
     val uiState: StateFlow<ExportUiState> = _uiState.asStateFlow()
 
     // ============================================
-    // NAVIGATION EVENTS
+    // NAVIGATION EVENTS (StateFlow-based - Google recommended)
     // ============================================
 
-    private val _navigationEvent = Channel<ExportNavigationEvent>(Channel.BUFFERED)
-    val navigationEvent = _navigationEvent.receiveAsFlow()
+    private val _navigationEvent = MutableStateFlow<ExportNavigationEvent?>(null)
+    val navigationEvent: StateFlow<ExportNavigationEvent?> = _navigationEvent.asStateFlow()
 
     // ============================================
     // INTERNAL STATE
@@ -165,9 +164,14 @@ class ExportViewModel(
      * Navigate back to editor
      */
     fun navigateBack() {
-        viewModelScope.launch {
-            _navigationEvent.send(ExportNavigationEvent.NavigateBack)
-        }
+        _navigationEvent.value = ExportNavigationEvent.NavigateBack
+    }
+
+    /**
+     * Called by UI after navigation is handled - clears the event
+     */
+    fun onNavigationHandled() {
+        _navigationEvent.value = null
     }
 
     /**

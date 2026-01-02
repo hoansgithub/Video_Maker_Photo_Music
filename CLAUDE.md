@@ -7,9 +7,25 @@
 - **Min SDK**: 28 (Android 9.0)
 - **Target SDK**: 36
 - **Architecture**: Clean Architecture (Data/Domain/Presentation)
+- **Navigation**: Navigation Compose 2.x (type-safe routes)
 - **Concurrency**: Coroutines + Flow
 - **DI**: ACCDI (AlcheClub Custom DI) - see di/ module
 - **Build**: KSP2 (not KAPT)
+
+### Future Considerations
+
+| Technology | Current | Future Option | Notes |
+|------------|---------|---------------|-------|
+| Navigation | Nav Compose 2.x | Navigation 3 | Nav3 stable as of Nov 2025. Consider for major refactor. |
+| Compose BOM | 2025.10.01 | Latest stable | Update quarterly |
+| Media3 | 1.9.0 | Latest stable | Update for new features/fixes |
+
+**Navigation 3 Migration (When Ready):**
+- Nav3 gives you ownership of the back stack (`SnapshotStateList<T>`)
+- Built from ground up for Compose
+- Migration guide: https://developer.android.com/develop/ui/compose/navigation
+- Recipes: https://github.com/android/nav3-recipes
+- **Recommendation**: Migrate during major version update, not mid-feature
 
 ---
 
@@ -118,7 +134,7 @@ CODE REVIEW
 
 ## Critical Rules
 
-### 1. Navigation Pattern - Event-Based (GOLD STANDARD)
+### 1. Navigation Pattern - StateFlow-Based (GOLD STANDARD)
 
 ```kotlin
 // ❌ FORBIDDEN - State-based navigation (CAUSES BUGS!)
@@ -133,19 +149,39 @@ data class Success(val shouldNavigate: Boolean)
 var hasNavigated = false
 if (!hasNavigated) { navigate(); hasNavigated = true }
 
-// ✅ REQUIRED - Channel for one-time events
-private val _navigationEvent = Channel<NavigationEvent>(Channel.BUFFERED)
-val navigationEvent = _navigationEvent.receiveAsFlow()
+// ✅ REQUIRED - StateFlow for navigation events (Google recommended)
+private val _navigationEvent = MutableStateFlow<NavigationEvent?>(null)
+val navigationEvent: StateFlow<NavigationEvent?> = _navigationEvent.asStateFlow()
 
-// ✅ REQUIRED - LaunchedEffect(Unit) for collection
-LaunchedEffect(Unit) {
-    viewModel.navigationEvent.collect { event ->
+// ✅ REQUIRED - Navigation method with direct assignment
+fun navigateToNext() {
+    _navigationEvent.value = NavigationEvent.GoToNext
+}
+
+// ✅ REQUIRED - Callback to clear navigation event after handling
+fun onNavigationHandled() {
+    _navigationEvent.value = null
+}
+
+// ✅ REQUIRED - LaunchedEffect(navigationEvent) for observation
+val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
+LaunchedEffect(navigationEvent) {
+    navigationEvent?.let { event ->
         when (event) {
             is NavigationEvent.GoToNext -> navigateNext()
         }
+        viewModel.onNavigationHandled()
     }
 }
 ```
+
+**Why StateFlow-Based Navigation is Preferred:**
+- Google's officially recommended pattern for navigation events
+- Events become state with explicit consumed callback - clearer lifecycle
+- `collectAsStateWithLifecycle` automatically handles lifecycle transitions
+- `LaunchedEffect(navigationEvent)` only triggers when event changes
+- No risk of missing events during config changes
+- Consistent with Google's architecture samples (2024+)
 
 ### 2. Never Embed Activities as Composables
 
@@ -265,18 +301,25 @@ class FeatureViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<FeatureUiState>(FeatureUiState.Loading)
     val uiState: StateFlow<FeatureUiState> = _uiState.asStateFlow()
 
-    // Navigation Events - one-time events
-    private val _navigationEvent = Channel<FeatureNavigationEvent>(Channel.BUFFERED)
-    val navigationEvent = _navigationEvent.receiveAsFlow()
+    // Navigation Events - StateFlow-based (Google recommended)
+    private val _navigationEvent = MutableStateFlow<FeatureNavigationEvent?>(null)
+    val navigationEvent: StateFlow<FeatureNavigationEvent?> = _navigationEvent.asStateFlow()
 
     init {
         loadData()
     }
 
     fun onItemClick(id: String) {
-        viewModelScope.launch {
-            _navigationEvent.send(FeatureNavigationEvent.NavigateToDetail(id))
-        }
+        _navigationEvent.value = FeatureNavigationEvent.NavigateToDetail(id)
+    }
+
+    fun navigateBack() {
+        _navigationEvent.value = FeatureNavigationEvent.NavigateBack
+    }
+
+    /** Called by UI after navigation is handled - clears the event */
+    fun onNavigationHandled() {
+        _navigationEvent.value = null
     }
 
     private fun loadData() {
@@ -302,14 +345,17 @@ fun FeatureScreen(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
 
-    // Handle navigation events - LaunchedEffect(Unit) = one-time collection
-    LaunchedEffect(Unit) {
-        viewModel.navigationEvent.collect { event ->
+    // Handle navigation events - StateFlow-based (Google recommended pattern)
+    // Observe navigationEvent StateFlow and call onNavigationHandled() after navigating
+    LaunchedEffect(navigationEvent) {
+        navigationEvent?.let { event ->
             when (event) {
                 is FeatureNavigationEvent.NavigateToDetail -> onNavigateToDetail(event.id)
                 is FeatureNavigationEvent.NavigateBack -> onNavigateBack()
             }
+            viewModel.onNavigationHandled()
         }
     }
 
@@ -423,8 +469,9 @@ private fun FeatureScreenPreview() { ... }
 
 Before EVERY code change:
 
-- [ ] `Channel` for navigation events (NOT state-based)
-- [ ] `LaunchedEffect(Unit)` for event collection
+- [ ] `StateFlow<Event?>` for navigation events (NOT state-based)
+- [ ] `LaunchedEffect(navigationEvent)` for event observation
+- [ ] `onNavigationHandled()` callback to clear event after navigating
 - [ ] `collectAsStateWithLifecycle()` for StateFlow
 - [ ] `viewModelScope` for coroutines
 - [ ] `finish()` after `startActivity()` for forward nav

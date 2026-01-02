@@ -141,14 +141,17 @@ fun AssetPickerScreen(
         }
     }
 
-    // Handle navigation events
-    LaunchedEffect(Unit) {
-        viewModel.navigationEvent.collect { event ->
+    // Handle navigation events - StateFlow-based (Google recommended pattern)
+    // Observe navigationEvent StateFlow and call onNavigationHandled() after navigating
+    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
+    LaunchedEffect(navigationEvent) {
+        navigationEvent?.let { event ->
             when (event) {
                 is AssetPickerNavigationEvent.NavigateBack -> onNavigateBack()
                 is AssetPickerNavigationEvent.NavigateToEditor -> onNavigateToEditor(event.projectId)
                 is AssetPickerNavigationEvent.AssetsAdded -> onAssetsAdded()
             }
+            viewModel.onNavigationHandled()
         }
     }
 

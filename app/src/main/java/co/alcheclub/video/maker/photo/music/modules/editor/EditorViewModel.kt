@@ -12,11 +12,10 @@ import co.alcheclub.video.maker.photo.music.domain.usecase.GetProjectUseCase
 import co.alcheclub.video.maker.photo.music.domain.usecase.RemoveAssetUseCase
 import co.alcheclub.video.maker.photo.music.domain.usecase.ReorderAssetsUseCase
 import co.alcheclub.video.maker.photo.music.domain.usecase.UpdateProjectSettingsUseCase
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 // ============================================
@@ -36,7 +35,10 @@ sealed class EditorUiState {
         val showSettingsPanel: Boolean = false,
         // Pending settings - changes made but not yet applied
         // When null, no pending changes exist
-        val pendingSettings: ProjectSettings? = null
+        val pendingSettings: ProjectSettings? = null,
+        // Navigation event - StateFlow-based (Google recommended pattern)
+        // UI observes this and calls onNavigationHandled() after navigating
+        val navigationEvent: EditorNavigationEvent? = null
     ) : EditorUiState() {
         /** True if there are uncommitted setting changes */
         val hasPendingChanges: Boolean get() = pendingSettings != null
@@ -53,7 +55,8 @@ sealed class EditorUiState {
 // ============================================
 
 /**
- * EditorNavigationEvent - Channel-based navigation events
+ * EditorNavigationEvent - StateFlow-based navigation events (Google recommended)
+ * UI observes navigationEvent in UiState and calls onNavigationHandled() after navigating
  */
 sealed class EditorNavigationEvent {
     data object NavigateBack : EditorNavigationEvent()
@@ -70,7 +73,7 @@ sealed class EditorNavigationEvent {
  *
  * Follows CLAUDE.md patterns:
  * - Sealed class state machine
- * - Channel for navigation events
+ * - StateFlow-based navigation events (Google recommended)
  * - viewModelScope for coroutines
  */
 class EditorViewModel(
@@ -88,13 +91,6 @@ class EditorViewModel(
 
     private val _uiState = MutableStateFlow<EditorUiState>(EditorUiState.Loading)
     val uiState: StateFlow<EditorUiState> = _uiState.asStateFlow()
-
-    // ============================================
-    // NAVIGATION EVENTS
-    // ============================================
-
-    private val _navigationEvent = Channel<EditorNavigationEvent>(Channel.BUFFERED)
-    val navigationEvent = _navigationEvent.receiveAsFlow()
 
     // ============================================
     // INITIALIZATION
@@ -387,24 +383,51 @@ class EditorViewModel(
     }
 
     // ============================================
-    // NAVIGATION
+    // NAVIGATION (StateFlow-based - Google recommended)
     // ============================================
 
+    /**
+     * Trigger navigation back - UI will observe and navigate
+     */
     fun navigateBack() {
-        viewModelScope.launch {
-            _navigationEvent.send(EditorNavigationEvent.NavigateBack)
+        _uiState.update { state ->
+            if (state is EditorUiState.Success) {
+                state.copy(navigationEvent = EditorNavigationEvent.NavigateBack)
+            } else state
         }
     }
 
+    /**
+     * Trigger navigation to preview - UI will observe and navigate
+     */
     fun navigateToPreview() {
-        viewModelScope.launch {
-            _navigationEvent.send(EditorNavigationEvent.NavigateToPreview(projectId))
+        _uiState.update { state ->
+            if (state is EditorUiState.Success) {
+                state.copy(navigationEvent = EditorNavigationEvent.NavigateToPreview(projectId))
+            } else state
         }
     }
 
+    /**
+     * Trigger navigation to export - UI will observe and navigate
+     */
     fun navigateToExport() {
-        viewModelScope.launch {
-            _navigationEvent.send(EditorNavigationEvent.NavigateToExport(projectId))
+        _uiState.update { state ->
+            if (state is EditorUiState.Success) {
+                state.copy(navigationEvent = EditorNavigationEvent.NavigateToExport(projectId))
+            } else state
+        }
+    }
+
+    /**
+     * Called by UI after navigation is handled - clears the event
+     * This prevents re-navigation on configuration changes
+     */
+    fun onNavigationHandled() {
+        _uiState.update { state ->
+            if (state is EditorUiState.Success) {
+                state.copy(navigationEvent = null)
+            } else state
         }
     }
 }

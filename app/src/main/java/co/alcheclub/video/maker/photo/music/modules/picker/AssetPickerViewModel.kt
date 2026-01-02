@@ -9,11 +9,9 @@ import androidx.lifecycle.viewModelScope
 import co.alcheclub.video.maker.photo.music.domain.usecase.AddAssetsUseCase
 import co.alcheclub.video.maker.photo.music.domain.usecase.CreateProjectUseCase
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -115,11 +113,11 @@ class AssetPickerViewModel(
     val permissionGranted: StateFlow<Boolean> = _permissionGranted.asStateFlow()
 
     // ============================================
-    // NAVIGATION EVENTS
+    // NAVIGATION EVENTS (StateFlow-based - Google recommended)
     // ============================================
 
-    private val _navigationEvent = Channel<AssetPickerNavigationEvent>(Channel.BUFFERED)
-    val navigationEvent = _navigationEvent.receiveAsFlow()
+    private val _navigationEvent = MutableStateFlow<AssetPickerNavigationEvent?>(null)
+    val navigationEvent: StateFlow<AssetPickerNavigationEvent?> = _navigationEvent.asStateFlow()
 
     // ============================================
     // PUBLIC API
@@ -224,11 +222,11 @@ class AssetPickerViewModel(
                     if (projectId != null) {
                         // Add mode - add to existing project
                         addAssetsUseCase(projectId, uris)
-                        _navigationEvent.send(AssetPickerNavigationEvent.AssetsAdded)
+                        _navigationEvent.value = AssetPickerNavigationEvent.AssetsAdded
                     } else {
                         // Create mode - create new project
                         val project = createProjectUseCase(uris)
-                        _navigationEvent.send(AssetPickerNavigationEvent.NavigateToEditor(project.id))
+                        _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditor(project.id)
                     }
                 } catch (e: Exception) {
                     _uiState.value = AssetPickerUiState.Error(
@@ -243,9 +241,14 @@ class AssetPickerViewModel(
      * Navigate back
      */
     fun navigateBack() {
-        viewModelScope.launch {
-            _navigationEvent.send(AssetPickerNavigationEvent.NavigateBack)
-        }
+        _navigationEvent.value = AssetPickerNavigationEvent.NavigateBack
+    }
+
+    /**
+     * Called by UI after navigation is handled - clears the event
+     */
+    fun onNavigationHandled() {
+        _navigationEvent.value = null
     }
 
     // ============================================

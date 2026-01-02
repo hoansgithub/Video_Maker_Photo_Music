@@ -85,14 +85,17 @@ fun EditorScreen(
         showExitConfirmation = true
     }
 
-    // Handle navigation events - LaunchedEffect(Unit) for one-time collection
-    LaunchedEffect(Unit) {
-        viewModel.navigationEvent.collect { event ->
+    // Handle navigation events - StateFlow-based (Google recommended pattern)
+    // Observe navigationEvent from uiState and call onNavigationHandled() after navigating
+    val navigationEvent = (uiState as? EditorUiState.Success)?.navigationEvent
+    LaunchedEffect(navigationEvent) {
+        navigationEvent?.let { event ->
             when (event) {
                 is EditorNavigationEvent.NavigateBack -> onNavigateBack()
                 is EditorNavigationEvent.NavigateToPreview -> onNavigateToPreview(event.projectId)
                 is EditorNavigationEvent.NavigateToExport -> onNavigateToExport(event.projectId)
             }
+            viewModel.onNavigationHandled()
         }
     }
 
