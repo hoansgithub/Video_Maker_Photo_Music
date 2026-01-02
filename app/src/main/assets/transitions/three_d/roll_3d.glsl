@@ -3,76 +3,69 @@
 // @category: THREE_D
 // @premium: false
 
+// Roll effect - rolled part mirrors around the roll axis
+// Based on cylinder geometry with z-scale only
+
 const float PI = 3.14159265359;
+const float cylinderRadius = 0.12;
+
+float slowEase(float p) {
+    float edge = 0.12;
+    if (p < edge) {
+        return (p * p) / edge;
+    } else if (p > 1.0 - edge) {
+        float x = (p - (1.0 - edge)) / edge;
+        return (1.0 - edge) + (1.0 - (1.0 - x) * (1.0 - x)) * edge;
+    }
+    return p;
+}
 
 vec4 transition(vec2 uv) {
-    float p = progress;
-    // Smooth easing
-    float t = p * p * (3.0 - 2.0 * p);
+    if (progress <= 0.001) return getFromColor(uv);
+    if (progress >= 0.98) return getToColor(uv);
 
-    // Cylinder parameters - rolls up from bottom
-    float radius = 0.06;
-    float cylWidth = radius * PI;
+    float t = slowEase(progress);
 
-    // Roll position moves from below screen to above screen
-    // Start below (negative) so roll enters from bottom
-    // End above 1.0 so roll exits at top
-    float rollPos = -cylWidth + t * (1.0 + cylWidth * 2.0);
+    // Roll axis moves from bottom to top
+    float rollY = -0.2 + t * 1.4;
 
-    // Distance from roll line (bottom edge of cylinder)
-    float dist = uv.y - rollPos;
+    // Distance from roll axis
+    float d = uv.y - rollY;
 
-    // ZONE 1: Above the cylinder - still showing "from" image
-    if (dist > cylWidth) {
+    // === Flat FROM region (above roll) ===
+    if (d > cylinderRadius) {
         return getFromColor(uv);
     }
 
-    // ZONE 2: Below the cylinder - show "to" image (revealed area)
-    if (dist < 0.0) {
-        // Soft shadow near the roll
-        float shadow = 1.0 - smoothstep(-0.15, 0.0, dist) * 0.35;
-        vec4 col = getToColor(uv);
-        col.rgb *= shadow;
-        return col;
+    // === Revealed TO region (below roll) ===
+    if (d < -cylinderRadius) {
+        return getToColor(uv);
     }
 
-    // ZONE 3: On the cylinder surface (0 <= dist <= cylWidth)
-    float angle = (dist / cylWidth) * PI;
+    // === On the roll ===
+    // Normalize d to [-1, 1] range within cylinder
+    float nd = d / cylinderRadius;
 
-    // 3D cylinder coordinates
-    float cylY = sin(angle) * radius;
-    float cylZ = (1.0 - cos(angle)) * radius;
+    // Angle on cylinder: acos gives 0 at top, PI at bottom
+    float theta = acos(clamp(nd, -1.0, 1.0));
 
-    // Perspective
-    float fov = 2.5;
-    float perspScale = fov / (fov + cylZ);
+    // Arc length from the top edge of cylinder
+    float arcLength = theta * cylinderRadius;
 
-    // Source Y on the unrolled page - maps cylinder surface back to flat image
-    float srcY = rollPos + cylY;
+    // The texture y-coordinate: start from flat edge and go along the arc
+    float textureY = rollY + cylinderRadius - arcLength;
 
-    // Apply perspective to X for 3D effect
-    float xOffset = (uv.x - 0.5) * cylZ * 0.2;
-    vec2 srcUV = vec2(clamp(uv.x - xOffset, 0.0, 1.0), clamp(srcY, 0.0, 1.0));
+    // For the back side (theta > PI/2), mirror around the roll axis
+    bool isBackSide = theta > PI * 0.5;
 
-    // Lighting based on surface normal
-    float light = 0.4 + 0.6 * cos(angle - PI * 0.4);
-    light = max(light, 0.35);
-
-    // Front of cylinder (facing viewer) shows "from" image
-    // Back of cylinder (curling under) shows darkened "from"
-    if (angle < PI * 0.55) {
-        // Front face - normal "from" image
-        vec4 color = getFromColor(srcUV);
-        color.rgb *= light;
-        return color;
+    float sampleY;
+    if (isBackSide) {
+        // Mirror: reflect textureY around rollY
+        sampleY = 2.0 * rollY - textureY;
     } else {
-        // Back face - the underside of the curling page
-        // Show with paper-like appearance
-        float backLight = 0.3 + 0.25 * cos(angle - PI);
-        vec4 color = getFromColor(srcUV);
-        color.rgb *= backLight;
-        // Add slight paper tint
-        color.rgb = mix(color.rgb, vec3(0.92, 0.90, 0.86), 0.35);
-        return color;
+        sampleY = textureY;
     }
+    sampleY = clamp(sampleY, 0.0, 1.0);
+
+    return getFromColor(vec2(uv.x, sampleY));
 }

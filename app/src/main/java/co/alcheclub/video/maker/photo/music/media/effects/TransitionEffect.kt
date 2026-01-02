@@ -42,7 +42,8 @@ class TransitionEffect(
     private val toImageBitmap: Bitmap?,
     private val transitionDurationUs: Long,
     private val clipDurationUs: Long,
-    private val clipStartTimeUs: Long = 0L  // Global time when this clip starts
+    private val clipStartTimeUs: Long = 0L,  // Global time when this clip starts
+    private val targetAspectRatio: Float = 16f / 9f  // Target aspect ratio for blur background
 ) : GlEffect {
 
     override fun toGlShaderProgram(
@@ -55,7 +56,8 @@ class TransitionEffect(
             toImageBitmap = toImageBitmap,
             transitionDurationUs = transitionDurationUs,
             clipDurationUs = clipDurationUs,
-            clipStartTimeUs = clipStartTimeUs
+            clipStartTimeUs = clipStartTimeUs,
+            targetAspectRatio = targetAspectRatio
         )
     }
 }
@@ -81,7 +83,8 @@ private class TransitionShaderProgram(
     private val toImageBitmap: Bitmap?,
     private val transitionDurationUs: Long,
     private val clipDurationUs: Long,
-    private val clipStartTimeUs: Long
+    private val clipStartTimeUs: Long,
+    private val targetAspectRatio: Float
 ) : BaseGlShaderProgram(useHdr, /* expectedInputCount= */ 1) {
 
     private var glProgram: GlProgram? = null
@@ -90,6 +93,7 @@ private class TransitionShaderProgram(
     private var inputHeight: Int = 0
     private var isConfigured: Boolean = false
     private var frameCount: Int = 0
+    private var toImageAspectRatio: Float = 1f
 
     // Calculate GLOBAL times for when transition starts and ends
     // Transition starts at: (clip start) + (clip duration) - (transition duration)
@@ -136,7 +140,8 @@ private class TransitionShaderProgram(
         // Create GL texture from pre-loaded bitmap (only once)
         if (toTextureId == -1 && toImageBitmap != null && !toImageBitmap.isRecycled) {
             toTextureId = createTextureFromBitmap(toImageBitmap)
-            android.util.Log.d("TransitionEffect", "Created texture: $toTextureId from bitmap ${toImageBitmap.width}x${toImageBitmap.height}")
+            toImageAspectRatio = toImageBitmap.width.toFloat() / toImageBitmap.height.toFloat()
+            android.util.Log.d("TransitionEffect", "Created texture: $toTextureId from bitmap ${toImageBitmap.width}x${toImageBitmap.height}, aspect=$toImageAspectRatio")
         }
 
         isConfigured = true
@@ -200,6 +205,15 @@ private class TransitionShaderProgram(
         } catch (_: Exception) {
             // Uniform not used by this shader (optimized out)
         }
+
+        // Pass aspect ratios for blur background effect on TO image
+        try {
+            program.setFloatUniform("uToInputAspect", toImageAspectRatio)
+        } catch (_: Exception) {}
+
+        try {
+            program.setFloatUniform("uTargetAspect", targetAspectRatio)
+        } catch (_: Exception) {}
 
         try {
             program.setFloatUniform("smoothness", 0.05f)
@@ -282,16 +296,72 @@ uniform float progress;
 uniform float ratio;
 uniform float smoothness;
 uniform vec3 fadeColor;
+uniform float uToInputAspect;
+uniform float uTargetAspect;
 varying vec2 vTexCoords;
+
+// Gaussian blur for TO image background (matches BlurBackgroundEffect exactly)
+vec4 gaussianBlurTo(vec2 uv, vec2 direction) {
+    float weight0 = 0.2272542543;
+    float weight1 = 0.3165327489;
+    float weight2 = 0.0703065234;
+    float offset1 = 1.3846153846;
+    float offset2 = 3.2307692308;
+    float blurAmount = 0.025;
+    vec2 step = direction * blurAmount;
+
+    vec4 color = texture2D(uToSampler, uv) * weight0;
+    color += texture2D(uToSampler, clamp(uv + step * offset1, 0.0, 1.0)) * weight1;
+    color += texture2D(uToSampler, clamp(uv - step * offset1, 0.0, 1.0)) * weight1;
+    color += texture2D(uToSampler, clamp(uv + step * offset2, 0.0, 1.0)) * weight2;
+    color += texture2D(uToSampler, clamp(uv - step * offset2, 0.0, 1.0)) * weight2;
+    return color;
+}
 
 // GL Transitions API
 vec4 getFromColor(vec2 uv) {
     return texture2D(uFromSampler, uv);
 }
 
+// Apply blur background effect to TO image (same as BlurBackgroundEffect)
 vec4 getToColor(vec2 uv) {
-    // No Y-flip needed - bitmap is pre-flipped in CompositionFactory
-    return texture2D(uToSampler, uv);
+    // Background: scale to fill (zoom in, crop edges)
+    vec2 bgUV;
+    if (uToInputAspect > uTargetAspect) {
+        float scale = uTargetAspect / uToInputAspect;
+        bgUV.x = (uv.x - 0.5) * scale + 0.5;
+        bgUV.y = uv.y;
+    } else {
+        float scale = uToInputAspect / uTargetAspect;
+        bgUV.x = uv.x;
+        bgUV.y = (uv.y - 0.5) * scale + 0.5;
+    }
+
+    // 4-direction Gaussian blur for background
+    vec4 blurH = gaussianBlurTo(bgUV, vec2(1.0, 0.0));
+    vec4 blurV = gaussianBlurTo(bgUV, vec2(0.0, 1.0));
+    vec4 blurD1 = gaussianBlurTo(bgUV, vec2(0.707, 0.707));
+    vec4 blurD2 = gaussianBlurTo(bgUV, vec2(0.707, -0.707));
+    vec4 bgColor = (blurH + blurV + blurD1 + blurD2) * 0.25;
+
+    // Foreground: scale to fit (centered, show entire image)
+    vec2 fgUV;
+    if (uToInputAspect > uTargetAspect) {
+        float scale = uTargetAspect / uToInputAspect;
+        fgUV.x = uv.x;
+        fgUV.y = (uv.y - 0.5) / scale + 0.5;
+    } else {
+        float scale = uToInputAspect / uTargetAspect;
+        fgUV.x = (uv.x - 0.5) / scale + 0.5;
+        fgUV.y = uv.y;
+    }
+
+    // Return foreground if in bounds, otherwise blurred background
+    if (fgUV.x >= 0.0 && fgUV.x <= 1.0 && fgUV.y >= 0.0 && fgUV.y <= 1.0) {
+        return texture2D(uToSampler, fgUV);
+    } else {
+        return bgColor;
+    }
 }
 
 // Transition implementation

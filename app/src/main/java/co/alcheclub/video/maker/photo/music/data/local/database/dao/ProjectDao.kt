@@ -49,7 +49,7 @@ interface ProjectDao {
     @Query("""
         UPDATE projects SET
             imageDurationMs = :imageDurationMs,
-            transitionOverlapMs = :transitionOverlapMs,
+            transitionPercentage = :transitionPercentage,
             transitionId = :transitionId,
             overlayFrameId = :overlayFrameId,
             audioTrackId = :audioTrackId,
@@ -62,7 +62,7 @@ interface ProjectDao {
     suspend fun updateSettings(
         id: String,
         imageDurationMs: Long,
-        transitionOverlapMs: Long,
+        transitionPercentage: Int,
         transitionId: String?,
         overlayFrameId: String?,
         audioTrackId: String?,

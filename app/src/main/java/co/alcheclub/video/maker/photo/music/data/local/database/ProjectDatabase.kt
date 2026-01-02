@@ -16,7 +16,7 @@ import co.alcheclub.video.maker.photo.music.data.local.database.entity.ProjectEn
  */
 @Database(
     entities = [ProjectEntity::class, AssetEntity::class],
-    version = 3, // Bumped for transitionSetId -> transitionId rename
+    version = 4, // Bumped for transitionOverlapMs -> transitionPercentage change
     exportSchema = true
 )
 abstract class ProjectDatabase : RoomDatabase() {

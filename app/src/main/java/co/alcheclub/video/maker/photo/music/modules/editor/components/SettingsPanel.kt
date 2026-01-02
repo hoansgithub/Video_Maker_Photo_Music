@@ -92,6 +92,7 @@ fun SettingsPanel(
     hasPendingChanges: Boolean,
     onTransitionChange: (String?) -> Unit,
     onImageDurationChange: (Long) -> Unit,
+    onTransitionPercentageChange: (Int) -> Unit,
     onOverlayFrameChange: (String?) -> Unit,
     onAudioTrackChange: (String?) -> Unit,
     onCustomAudioChange: (Uri?) -> Unit,
@@ -168,6 +169,13 @@ fun SettingsPanel(
                 onDurationSelect = onImageDurationChange
             )
 
+            // Transition Duration (Percentage)
+            TransitionPercentageSelector(
+                selectedPercentage = settings.transitionPercentage,
+                imageDurationMs = settings.imageDurationMs,
+                onPercentageSelect = onTransitionPercentageChange
+            )
+
             // Overlay Frame
             OverlayFrameSelector(
                 selectedFrameId = settings.overlayFrameId,
@@ -196,75 +204,26 @@ fun SettingsPanel(
     }
 }
 
+/**
+ * Delay before auto-scrolling to let the panel animation complete
+ */
+private const val AUTO_SCROLL_DELAY_MS = 400L
+
 @Composable
 private fun TransitionSelector(
     selectedTransitionId: String?,
     onTransitionSelect: (String?) -> Unit
 ) {
-    // Get transitions grouped by category
-    val groupedTransitions = remember { TransitionShaderLibrary.getGroupedByCategory() }
+    // Load transitions asynchronously to avoid blocking composition
+    var groupedTransitions by remember { mutableStateOf<Map<TransitionCategory, List<Transition>>?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
 
-    // Get available categories (only those with transitions)
-    val availableCategories = remember(groupedTransitions) {
-        groupedTransitions.keys.toList().sortedBy { it.ordinal }
-    }
-
-    // Find the category of the currently selected transition
-    val initialCategory = remember(selectedTransitionId, groupedTransitions) {
-        if (selectedTransitionId == null) return@remember null
-        groupedTransitions.entries.find { (_, transitions) ->
-            transitions.any { it.id == selectedTransitionId }
-        }?.key
-    }
-
-    // Selected category filter (initialized to the category of selected transition)
-    var selectedCategory by remember(initialCategory) { mutableStateOf(initialCategory) }
-
-    // Filter transitions based on selected category
-    val filteredTransitions = remember(selectedCategory, groupedTransitions) {
-        val result = mutableListOf<Transition?>(null) // null = "None" option
-        if (selectedCategory == null) {
-            // Show all transitions
-            groupedTransitions.forEach { (_, transitions) ->
-                result.addAll(transitions)
-            }
-        } else {
-            // Show only selected category
-            groupedTransitions[selectedCategory]?.let { transitions ->
-                result.addAll(transitions)
-            }
-        }
-        result.toList()
-    }
-
-    // Find index of selected transition for auto-scroll
-    val selectedTransitionIndex = remember(selectedTransitionId, filteredTransitions) {
-        if (selectedTransitionId == null) 0 // "None" is at index 0
-        else filteredTransitions.indexOfFirst { it?.id == selectedTransitionId }.coerceAtLeast(0)
-    }
-
-    // Find index of selected category for auto-scroll
-    val selectedCategoryIndex = remember(selectedCategory, availableCategories) {
-        if (selectedCategory == null) 0 // "All" is at index 0
-        else availableCategories.indexOf(selectedCategory) + 1 // +1 because "All" is first
-    }
-
-    // LazyRow states for scrolling
-    val categoryListState = rememberLazyListState()
-    val transitionListState = rememberLazyListState()
-
-    // Auto-scroll to selected category on mount
+    // Load data on background thread
     LaunchedEffect(Unit) {
-        if (selectedCategoryIndex > 0) {
-            categoryListState.animateScrollToItem(selectedCategoryIndex)
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            groupedTransitions = TransitionShaderLibrary.getGroupedByCategory()
         }
-    }
-
-    // Auto-scroll to selected transition when category changes or on mount
-    LaunchedEffect(selectedCategory) {
-        if (selectedTransitionIndex > 0) {
-            transitionListState.animateScrollToItem(selectedTransitionIndex)
-        }
+        isLoading = false
     }
 
     Column {
@@ -275,54 +234,124 @@ private fun TransitionSelector(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Category filter chips
-        LazyRow(
-            state = categoryListState,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            // "All" chip
-            item {
-                CategoryChip(
-                    text = stringResource(R.string.settings_all),
-                    isSelected = selectedCategory == null,
-                    onClick = { selectedCategory = null }
+        if (isLoading || groupedTransitions == null) {
+            // Loading placeholder - matches height of actual content
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(130.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp
                 )
             }
+        } else {
+            TransitionSelectorContent(
+                groupedTransitions = groupedTransitions!!,
+                selectedTransitionId = selectedTransitionId,
+                onTransitionSelect = onTransitionSelect
+            )
+        }
+    }
+}
 
-            // Category chips
-            items(
-                items = availableCategories,
-                key = { it.name }
-            ) { category ->
-                CategoryChip(
-                    text = category.displayName,
-                    isSelected = selectedCategory == category,
-                    onClick = { selectedCategory = category }
-                )
+@Composable
+private fun TransitionSelectorContent(
+    groupedTransitions: Map<TransitionCategory, List<Transition>>,
+    selectedTransitionId: String?,
+    onTransitionSelect: (String?) -> Unit
+) {
+    // Compute categories once
+    val availableCategories = remember(groupedTransitions) {
+        groupedTransitions.keys.toList().sortedBy { it.ordinal }
+    }
+
+    // Find the initial category based on selected transition
+    val initialCategory = remember(selectedTransitionId) {
+        if (selectedTransitionId == null) null
+        else groupedTransitions.entries.find { (_, transitions) ->
+            transitions.any { it.id == selectedTransitionId }
+        }?.key
+    }
+
+    // Selected category state
+    var selectedCategory by remember { mutableStateOf(initialCategory) }
+
+    // Filter transitions based on selected category
+    val filteredTransitions = remember(selectedCategory, groupedTransitions) {
+        buildList {
+            add(null) // "None" option first
+            if (selectedCategory == null) {
+                groupedTransitions.forEach { (_, transitions) -> addAll(transitions) }
+            } else {
+                groupedTransitions[selectedCategory]?.let { addAll(it) }
             }
         }
+    }
 
-        Spacer(modifier = Modifier.height(12.dp))
+    // LazyRow states
+    val categoryListState = rememberLazyListState()
+    val transitionListState = rememberLazyListState()
 
-        // Transitions LazyRow
-        LazyRow(
-            state = transitionListState,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(
-                items = filteredTransitions,
-                key = { it?.id ?: "none" }
-            ) { transition ->
-                TransitionChip(
-                    transition = transition,
-                    isSelected = if (transition == null) {
-                        selectedTransitionId == null
-                    } else {
-                        transition.id == selectedTransitionId
-                    },
-                    onClick = { onTransitionSelect(transition?.id) }
-                )
-            }
+    // Delayed auto-scroll to let panel animation complete first
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(AUTO_SCROLL_DELAY_MS)
+        // Scroll to selected category
+        val categoryIndex = if (initialCategory == null) 0
+            else availableCategories.indexOf(initialCategory) + 1
+        if (categoryIndex > 0) {
+            categoryListState.animateScrollToItem(categoryIndex)
+        }
+        // Scroll to selected transition
+        val transitionIndex = if (selectedTransitionId == null) 0
+            else filteredTransitions.indexOfFirst { it?.id == selectedTransitionId }.coerceAtLeast(0)
+        if (transitionIndex > 0) {
+            transitionListState.animateScrollToItem(transitionIndex)
+        }
+    }
+
+    // Category filter chips
+    LazyRow(
+        state = categoryListState,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        item(key = "all") {
+            CategoryChip(
+                text = stringResource(R.string.settings_all),
+                isSelected = selectedCategory == null,
+                onClick = { selectedCategory = null }
+            )
+        }
+        items(
+            items = availableCategories,
+            key = { it.name }
+        ) { category ->
+            CategoryChip(
+                text = category.displayName,
+                isSelected = selectedCategory == category,
+                onClick = { selectedCategory = category }
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(12.dp))
+
+    // Transitions LazyRow
+    LazyRow(
+        state = transitionListState,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(
+            items = filteredTransitions,
+            key = { it?.id ?: "none" }
+        ) { transition ->
+            TransitionChip(
+                transition = transition,
+                isSelected = (transition?.id ?: null) == selectedTransitionId,
+                onClick = { onTransitionSelect(transition?.id) }
+            )
         }
     }
 }
@@ -453,6 +482,51 @@ private fun ImageDurationSelector(
                     text = stringResource(R.string.settings_duration_seconds, seconds),
                     isSelected = selectedDurationMs == durationMs,
                     onClick = { onDurationSelect(durationMs) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TransitionPercentageSelector(
+    selectedPercentage: Int,
+    imageDurationMs: Long,
+    onPercentageSelect: (Int) -> Unit
+) {
+    // Calculate actual transition duration for display
+    // Formula: percentage × (imageDuration × 2) / 100
+    val transitionDurationSec = (imageDurationMs * 2 * selectedPercentage / 100) / 1000f
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.settings_transition_duration),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            // Show actual duration based on current settings
+            Text(
+                text = stringResource(R.string.settings_transition_duration_value, transitionDurationSec),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.horizontalScroll(rememberScrollState())
+        ) {
+            ProjectSettings.TRANSITION_PERCENTAGE_OPTIONS.forEach { percentage ->
+                SelectableChip(
+                    text = "$percentage%",
+                    isSelected = selectedPercentage == percentage,
+                    onClick = { onPercentageSelect(percentage) }
                 )
             }
         }

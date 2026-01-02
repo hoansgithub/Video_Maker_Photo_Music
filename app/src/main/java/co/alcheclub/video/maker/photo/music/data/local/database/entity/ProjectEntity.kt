@@ -20,7 +20,7 @@ data class ProjectEntity(
 
     // Settings (embedded for simplicity)
     val imageDurationMs: Long = 3000L,
-    val transitionOverlapMs: Long = 500L,
+    val transitionPercentage: Int = 30, // Percentage of image duration for transition (10-50%)
     val transitionId: String? = "fade",
     val overlayFrameId: String? = null,
     val audioTrackId: String? = null,

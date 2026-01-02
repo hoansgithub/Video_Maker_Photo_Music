@@ -81,7 +81,7 @@ class ProjectRepositoryImpl(
         projectDao.updateSettings(
             id = projectId,
             imageDurationMs = settings.imageDurationMs,
-            transitionOverlapMs = settings.transitionOverlapMs,
+            transitionPercentage = settings.transitionPercentage,
             transitionId = settings.transitionId,
             overlayFrameId = settings.overlayFrameId,
             audioTrackId = settings.audioTrackId,

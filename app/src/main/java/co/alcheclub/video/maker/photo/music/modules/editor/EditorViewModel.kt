@@ -270,6 +270,10 @@ class EditorViewModel(
         updatePendingSettings { it.copy(imageDurationMs = durationMs) }
     }
 
+    fun updateTransitionPercentage(percentage: Int) {
+        updatePendingSettings { it.copy(transitionPercentage = percentage) }
+    }
+
     fun updateOverlayFrame(frameId: String?) {
         updatePendingSettings { it.copy(overlayFrameId = frameId) }
     }

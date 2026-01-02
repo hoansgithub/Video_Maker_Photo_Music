@@ -3,12 +3,27 @@
 // @category: THREE_D
 // @premium: false
 
+// 3D revolving door - panels rotate around center
+// Z-scale only: closer to camera = brighter
+
 const float PI = 3.14159265359;
 
+float slowEase(float p) {
+    float edge = 0.12;
+    if (p < edge) {
+        return (p * p) / edge;
+    } else if (p > 1.0 - edge) {
+        float x = (p - (1.0 - edge)) / edge;
+        return (1.0 - edge) + (1.0 - (1.0 - x) * (1.0 - x)) * edge;
+    }
+    return p;
+}
+
 vec4 transition(vec2 uv) {
-    float p = progress;
-    // Smooth easing
-    float t = p * p * (3.0 - 2.0 * p);
+    if (progress <= 0.001) return getFromColor(uv);
+    if (progress >= 0.98) return getToColor(uv);
+
+    float t = slowEase(progress);
 
     // Revolving door rotates around the center vertical axis
     float angle = t * PI;
@@ -21,10 +36,9 @@ vec4 transition(vec2 uv) {
     bool isLeftPanel = uv.x < 0.5;
 
     // Each panel rotates around its inner edge (center of screen)
-    // localX is distance from hinge (0 at center, 0.5 at edge)
     float localX = isLeftPanel ? (0.5 - uv.x) : (uv.x - 0.5);
 
-    // 3D transformation - rotate around the hinge
+    // 3D transformation
     float rotatedX = localX * abs(c);
     float rotatedZ = localX * s;
 
@@ -33,7 +47,6 @@ vec4 transition(vec2 uv) {
     float perspScale = fov / (fov + abs(rotatedZ) * 1.5);
     perspScale = max(perspScale, 0.3);
 
-    // Calculate screen X position after rotation
     float screenX;
     if (isLeftPanel) {
         screenX = 0.5 - rotatedX * perspScale;
@@ -48,33 +61,12 @@ vec4 transition(vec2 uv) {
         return vec4(0.0, 0.0, 0.0, 1.0);
     }
 
-    // Determine if we're seeing front or back based on Z
-    // Front: Z < 0 (rotating away from viewer)
-    // Back: Z > 0 (rotating toward viewer)
-    bool showingFront = (isLeftPanel && s >= 0.0) || (!isLeftPanel && s >= 0.0);
-    // Actually simpler: front when c > 0, back when c < 0
-    showingFront = c > 0.0;
-
-    // For the "to" image, we need to map back to original UV
-    // The UV should map naturally to the source texture
     vec2 sourceUV = vec2(uv.x, screenY);
 
-    // Lighting
-    float light = 0.4 + 0.6 * abs(c);
-
-    // Gap shadow in the middle during transition
-    float gapShadow = 1.0 - smoothstep(0.0, 0.15, abs(uv.x - 0.5)) * 0.4 * abs(s);
-    light *= gapShadow;
-
-    if (showingFront) {
-        // Front side - show "from" image
-        vec4 color = getFromColor(sourceUV);
-        color.rgb *= light;
-        return color;
+    // Front when c > 0, back when c < 0
+    if (c > 0.0) {
+        return getFromColor(sourceUV);
     } else {
-        // Back side - show "to" image (correctly oriented)
-        vec4 color = getToColor(sourceUV);
-        color.rgb *= light;
-        return color;
+        return getToColor(sourceUV);
     }
 }

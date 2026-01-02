@@ -3,70 +3,90 @@
 // @category: THREE_D
 // @premium: true
 
+// 3D Accordion Fold - panels fold like accordion
+// Z-scale only: closer to camera = brighter
+
 const float PI = 3.14159265359;
+const float NUM_FOLDS = 4.0;
+
+float slowEase(float p) {
+    float edge = 0.1;
+    if (p < edge) {
+        return (p * p) / edge;
+    } else if (p > 1.0 - edge) {
+        float x = (p - (1.0 - edge)) / edge;
+        return (1.0 - edge) + (1.0 - (1.0 - x) * (1.0 - x)) * edge;
+    }
+    return p;
+}
 
 vec4 transition(vec2 uv) {
-    float p = progress;
-    // Smooth easing
-    float t = p * p * (3.0 - 2.0 * p);
+    if (progress <= 0.001) return getFromColor(uv);
+    if (progress >= 0.98) return getToColor(uv);
 
-    // Accordion fold with 4 panels
-    float numFolds = 4.0;
-    float foldWidth = 1.0 / numFolds;
+    float t = slowEase(progress);
+    float foldWidth = 1.0 / NUM_FOLDS;
 
-    // Determine which panel we're in
-    float panelIdx = floor(uv.x * numFolds);
-    float localX = fract(uv.x * numFolds);
+    // Which panel and local position
+    float panelFloat = uv.x * NUM_FOLDS;
+    float panelIdx = floor(panelFloat);
+    float localX = fract(panelFloat);
 
-    // Each panel folds at different times (cascade effect)
-    float panelDelay = panelIdx / numFolds * 0.5;
-    float panelProgress = clamp((t - panelDelay) / (1.0 - panelDelay * 0.8), 0.0, 1.0);
+    // Cascade timing
+    float cascadeOffset = 0.12;
+    float foldDuration = 0.75;
 
-    // Fold angle - even panels fold forward, odd panels fold backward
-    float isEven = mod(panelIdx, 2.0);
-    float foldAngle = panelProgress * PI * 0.5;
+    float panelStart = panelIdx * cascadeOffset;
+    float panelProgress = clamp((t - panelStart) / foldDuration, 0.0, 1.0);
+    panelProgress = slowEase(panelProgress);
 
-    // 3D coordinates of the fold
-    float c = cos(foldAngle);
-    float s = sin(foldAngle);
+    // Fold angle
+    float maxFoldAngle = PI * 0.85;
+    float foldAngle = panelProgress * maxFoldAngle;
 
-    // Calculate where this point on the panel maps to
-    float foldedX;
-    float foldedZ;
-    float panelStart = panelIdx * foldWidth;
+    float cosAngle = cos(foldAngle);
+    float sinAngle = sin(foldAngle);
 
-    if (isEven < 0.5) {
-        // Even panels: hinge on left, fold right edge toward camera
-        foldedX = panelStart + localX * foldWidth * c;
-        foldedZ = localX * foldWidth * s;
-    } else {
-        // Odd panels: hinge on right, fold left edge toward camera
-        foldedX = panelStart + foldWidth - (1.0 - localX) * foldWidth * c;
-        foldedZ = (1.0 - localX) * foldWidth * s;
-    }
+    // Alternating fold direction
+    float isEven = step(0.5, 1.0 - mod(panelIdx, 2.0));
 
-    // Perspective projection
-    float fov = 2.0;
-    float depth = fov / (fov + foldedZ);
+    // Calculate folded position
+    float panelStartX = panelIdx * foldWidth;
+    float distFromHinge = mix(1.0 - localX, localX, isEven);
+    float foldedZ = distFromHinge * foldWidth * sinAngle;
 
-    // Calculate final UV
-    vec2 foldUV;
-    foldUV.x = foldedX;
-    foldUV.y = (uv.y - 0.5) * depth + 0.5;
+    float hingeX = mix(panelStartX + foldWidth, panelStartX, isEven);
+    float foldDirection = mix(-1.0, 1.0, isEven);
+    float foldedX = hingeX + foldDirection * distFromHinge * foldWidth * cosAngle;
+
+    // Perspective
+    float focalLength = 3.0;
+    float perspectiveScale = focalLength / (focalLength + abs(foldedZ) * 0.8);
+    float perspectiveY = (uv.y - 0.5) * perspectiveScale + 0.5;
+
+    // Smooth start
+    vec2 foldedUV = vec2(foldedX, perspectiveY);
+    float uvBlend = smoothstep(0.0, 0.08, t);
+    foldedUV = mix(uv, foldedUV, uvBlend);
+
+    vec2 sampleUV = clamp(foldedUV, 0.001, 0.999);
+    float inBounds = step(0.0, foldedUV.x) * step(foldedUV.x, 1.0) *
+                     step(0.0, foldedUV.y) * step(foldedUV.y, 1.0);
+
+    // Sample images
+    vec4 fromColor = getFromColor(sampleUV);
+    vec4 toColor = getToColor(uv);
+
+    // Blend to destination
+    float colorBlend = smoothstep(0.5, 0.9, t);
+    vec4 foldedColor = mix(fromColor, toColor, colorBlend);
 
     // Bounds check
-    if (foldUV.x < 0.0 || foldUV.x > 1.0 || foldUV.y < 0.0 || foldUV.y > 1.0) {
-        return mix(getFromColor(uv), getToColor(uv), t);
-    }
+    vec4 finalColor = mix(toColor, foldedColor, inBounds);
 
-    // Lighting - panels facing camera are brighter
-    float light = 0.4 + 0.6 * c;
+    // Smooth end
+    float endFade = smoothstep(0.88, 0.98, t);
+    finalColor = mix(finalColor, toColor, endFade);
 
-    // Blend from to image based on overall progress
-    vec4 fromCol = getFromColor(foldUV);
-    vec4 toCol = getToColor(foldUV);
-    vec4 color = mix(fromCol, toCol, t);
-    color.rgb *= light;
-
-    return color;
+    return finalColor;
 }

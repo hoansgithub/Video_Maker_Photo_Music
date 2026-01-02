@@ -154,6 +154,7 @@ fun EditorScreen(
                     hasPendingChanges = successState.hasPendingChanges,
                     onTransitionChange = viewModel::updateTransition,
                     onImageDurationChange = viewModel::updateImageDuration,
+                    onTransitionPercentageChange = viewModel::updateTransitionPercentage,
                     onOverlayFrameChange = viewModel::updateOverlayFrame,
                     onAudioTrackChange = viewModel::updateAudioTrack,
                     onCustomAudioChange = viewModel::updateCustomAudio,

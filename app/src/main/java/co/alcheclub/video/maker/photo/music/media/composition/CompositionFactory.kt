@@ -28,9 +28,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
 import kotlin.math.min
 import kotlin.math.max
 
@@ -164,15 +161,17 @@ class CompositionFactory(private val context: Context) {
                             val nextAsset = assets[index + 1]
                             val rawBitmap = loadBitmapFromUri(nextAsset.uri, textureSize, textureSize)
                             if (rawBitmap != null) {
-                                // Apply blur background effect to match the video appearance
-                                val processedBitmap = createBlurBackgroundBitmap(rawBitmap, aspectRatio, textureSize)
+                                // Just flip the bitmap vertically for GL texture orientation
+                                // Blur background is now applied in TransitionEffect shader
+                                // using the same GPU code as BlurBackgroundEffect
+                                val flippedBitmap = flipBitmapVertically(rawBitmap)
 
-                                // Recycle raw bitmap if different from processed
-                                if (rawBitmap != processedBitmap) {
+                                // Recycle raw bitmap if different from flipped
+                                if (rawBitmap != flippedBitmap) {
                                     rawBitmap.recycle()
                                 }
 
-                                index to processedBitmap
+                                index to flippedBitmap
                             } else {
                                 android.util.Log.w("CompositionFactory", "Failed to preload bitmap for asset ${index + 1}")
                                 null
@@ -201,6 +200,16 @@ class CompositionFactory(private val context: Context) {
         }
 
         return results
+    }
+
+    /**
+     * Flip bitmap vertically for OpenGL texture orientation
+     * OpenGL has (0,0) at bottom-left, while Android Bitmap has (0,0) at top-left
+     */
+    private fun flipBitmapVertically(source: Bitmap): Bitmap {
+        val matrix = android.graphics.Matrix()
+        matrix.setScale(1f, -1f, source.width / 2f, source.height / 2f)
+        return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
     }
 
     /**
@@ -235,17 +244,12 @@ class CompositionFactory(private val context: Context) {
         // 1. Create blurred background (scaled to fill)
         val blurredBg = createBlurredBackground(source, outputWidth, outputHeight)
 
-        // 2. Apply desaturation and darkening using ColorMatrix (GPU-accelerated)
-        // Combined matrix: 30% desaturation + 55% darkening
-        val effectPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-        effectPaint.colorFilter = createBackgroundColorFilter()
-        canvas.drawBitmap(blurredBg, 0f, 0f, effectPaint)
+        // 2. Draw blurred background - NO darkening to match GPU shader
+        val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        canvas.drawBitmap(blurredBg, 0f, 0f, bgPaint)
         blurredBg.recycle()
 
-        // 3. Draw radial gradient for vignette effect
-        drawVignette(canvas, outputWidth, outputHeight)
-
-        // 4. Calculate scale-to-fit dimensions for foreground
+        // 3. Calculate scale-to-fit dimensions for foreground
         val sourceAspect = source.width.toFloat() / source.height.toFloat()
         val outputAspect = outputWidth.toFloat() / outputHeight.toFloat()
 
@@ -273,66 +277,23 @@ class CompositionFactory(private val context: Context) {
     }
 
     /**
-     * Create ColorMatrix filter for background effects
-     * Combines: 30% desaturation + 55% darkening
-     * GPU-accelerated - much faster than pixel-by-pixel processing
-     */
-    private fun createBackgroundColorFilter(): ColorMatrixColorFilter {
-        // Desaturation matrix (30% toward grayscale)
-        // Formula: color = color * 0.7 + luminance * 0.3
-        val saturation = 0.7f
-        val invSat = 1f - saturation
-        val rWeight = 0.299f * invSat
-        val gWeight = 0.587f * invSat
-        val bWeight = 0.114f * invSat
-
-        // Darkening factor
-        val darken = 0.55f
-
-        // Combined matrix: desaturation + darkening
-        val matrix = ColorMatrix(floatArrayOf(
-            (saturation + rWeight) * darken, gWeight * darken, bWeight * darken, 0f, 0f,
-            rWeight * darken, (saturation + gWeight) * darken, bWeight * darken, 0f, 0f,
-            rWeight * darken, gWeight * darken, (saturation + bWeight) * darken, 0f, 0f,
-            0f, 0f, 0f, 1f, 0f
-        ))
-
-        return ColorMatrixColorFilter(matrix)
-    }
-
-    /**
-     * Draw vignette overlay using radial gradient
-     * Matches shader: 1.0 - length(uv - 0.5) * 0.5
-     */
-    private fun drawVignette(canvas: Canvas, width: Int, height: Int) {
-        val centerX = width / 2f
-        val centerY = height / 2f
-        val radius = kotlin.math.sqrt(centerX * centerX + centerY * centerY)
-
-        val gradient = android.graphics.RadialGradient(
-            centerX, centerY, radius,
-            intArrayOf(0x00000000, 0x40000000), // Transparent center, semi-transparent edge
-            floatArrayOf(0f, 1f),
-            android.graphics.Shader.TileMode.CLAMP
-        )
-
-        val paint = Paint()
-        paint.shader = gradient
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
-    }
-
-    /**
      * Create a blurred background bitmap scaled to fill target dimensions
      * Always creates a NEW bitmap, never returns source
      * Uses StackBlur algorithm (no RenderScript dependency)
+     *
+     * Blur radius is matched to GPU shader's blurAmount = 0.025 (2.5% of image)
      */
     private fun createBlurredBackground(source: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
         // First, create a scaled-to-fill copy
         val scaledToFill = createScaledToFillCopy(source, targetWidth, targetHeight)
 
+        // Calculate blur radius to match GPU shader
+        // GPU uses blurAmount = 0.025 (2.5% of image size)
+        val blurRadius = (targetWidth * 0.025f).toInt().coerceIn(1, 25)
+
         // Then apply blur using StackBlur
         return try {
-            stackBlur(scaledToFill, 25)
+            stackBlur(scaledToFill, blurRadius)
         } catch (e: Exception) {
             android.util.Log.w("CompositionFactory", "Blur failed: ${e.message}")
             scaledToFill
@@ -867,6 +828,8 @@ class CompositionFactory(private val context: Context) {
         videoEffects.add(BlurBackgroundEffect(aspectRatio))
 
         // 2. Transition effect (if there's a next image and transition is enabled)
+        // Note: TransitionEffect now applies blur background to TO image using same GPU code
+        // This ensures perfect color consistency when transitioning to next clip
         if (transition != null && nextImageBitmap != null) {
             android.util.Log.d("CompositionFactory", "Adding TransitionEffect: ${transition.name}, clipStart=${clipStartTimeUs}us")
             videoEffects.add(
@@ -875,7 +838,8 @@ class CompositionFactory(private val context: Context) {
                     toImageBitmap = nextImageBitmap,
                     transitionDurationUs = transitionDurationUs,
                     clipDurationUs = clipDurationUs,
-                    clipStartTimeUs = clipStartTimeUs
+                    clipStartTimeUs = clipStartTimeUs,
+                    targetAspectRatio = aspectRatio
                 )
             )
         }

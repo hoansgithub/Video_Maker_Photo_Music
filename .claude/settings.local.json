@@ -30,7 +30,10 @@
       "Bash(grep:*)",
       "WebFetch(domain:gl-transitions.com)",
       "WebFetch(domain:inspirnathan.com)",
-      "WebFetch(domain:iquilezles.org)"
+      "WebFetch(domain:iquilezles.org)",
+      "WebFetch(domain:andrewhungblog.wordpress.com)",
+      "WebFetch(domain:stackoverflow.com)",
+      "WebFetch(domain:tympanus.net)"
     ]
   }
 }

@@ -16,7 +16,7 @@ vec4 transition(vec2 uv) {
     if (progress < 0.01) {
         return getFromColor(uv);
     }
-    if (progress > 0.99) {
+    if (progress > 0.98) {
         return getToColor(uv);
     }
 
@@ -35,7 +35,9 @@ vec4 transition(vec2 uv) {
     float meltThreshold = t * 1.4;
 
     // How much this pixel has melted (0 = solid, 1 = fully melted)
-    float meltAmount = smoothstep(luma + noise * 0.5, luma + noise * 0.5 - 0.3, meltThreshold);
+    // Dark pixels (low luma) reach threshold earlier and melt first
+    // Bright pixels (high luma) hold longer before melting
+    float meltAmount = smoothstep(luma - 0.1 + noise * 0.3, luma + 0.2 + noise * 0.3, meltThreshold);
 
     // Drip distortion - pixels drip downward as they melt
     // More drip in the middle of transition
@@ -60,14 +62,10 @@ vec4 transition(vec2 uv) {
     // Blend: melted areas show TO, solid areas show dripped FROM
     vec4 result = mix(fromDripped, toColor, meltAmount);
 
-    // Add glow at melt edge for "hot" melting effect
+    // Add subtle glow at melt edge (no darkening)
     float edgeGlow = smoothstep(0.4, 0.5, meltAmount) - smoothstep(0.5, 0.6, meltAmount);
-    vec3 glowColor = vec3(1.0, 0.8, 0.4); // Warm glow
-    result.rgb += glowColor * edgeGlow * 0.5 * dripIntensity;
-
-    // Darken areas that are actively melting
-    float darkening = smoothstep(0.0, 0.5, meltAmount) * (1.0 - meltAmount) * 0.3;
-    result.rgb *= 1.0 - darkening;
+    vec3 glowColor = vec3(1.0, 0.9, 0.7);
+    result.rgb += glowColor * edgeGlow * 0.3 * dripIntensity;
 
     return result;
 }

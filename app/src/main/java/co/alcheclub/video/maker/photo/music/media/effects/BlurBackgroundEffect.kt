@@ -122,12 +122,14 @@ varying vec2 vTexCoords;
 
 // Optimized 9-tap Gaussian blur using linear sampling
 // Reduces 9 taps to 5 texture fetches via bilinear interpolation
-// Weights and offsets from RasterGrid's efficient gaussian blur
+// Weights normalized to sum exactly to 1.0 to prevent darkening
 vec4 gaussianBlur(sampler2D tex, vec2 uv, vec2 direction) {
-    // Linear sampling optimized weights (combines adjacent samples)
-    float weight0 = 0.2270270270;
-    float weight1 = 0.3162162162;
-    float weight2 = 0.0702702703;
+    // Normalized weights (sum = 1.0 exactly)
+    // Original: 0.227 + 0.316*2 + 0.070*2 = 0.999
+    // Adjusted: divide by 0.999 to normalize
+    float weight0 = 0.2272542543;  // 0.227/0.999
+    float weight1 = 0.3165327489;  // 0.316/0.999
+    float weight2 = 0.0703065234;  // 0.070/0.999
 
     // Linear sampling optimized offsets
     float offset1 = 1.3846153846;
@@ -172,14 +174,7 @@ void main() {
     // Combine all directions for smoother result
     vec4 bgColor = (blurH + blurV + blurD1 + blurD2) * 0.25;
 
-    // Darken and desaturate background slightly
-    float luminance = dot(bgColor.rgb, vec3(0.299, 0.587, 0.114));
-    bgColor.rgb = mix(bgColor.rgb, vec3(luminance), 0.3); // 30% desaturation
-    bgColor.rgb *= 0.55; // Darken
-
-    // Subtle vignette on background
-    float vignette = 1.0 - length(uv - 0.5) * 0.5;
-    bgColor.rgb *= vignette;
+    // No darkening - keep original colors, just blurred
 
     // Foreground: scale to fit (centered, show entire image)
     vec2 fgUV;

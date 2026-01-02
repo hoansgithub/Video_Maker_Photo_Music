@@ -3,59 +3,71 @@
 // @category: THREE_D
 // @premium: true
 
+// 3D flip - card flips from left edge, showing TO on back
+
 const float PI = 3.14159265359;
 
-vec4 transition(vec2 uv) {
-    float p = progress;
-    // Smooth easing for natural motion
-    float t = p * p * (3.0 - 2.0 * p);
+float slowEase(float p) {
+    float edge = 0.12;
+    if (p < edge) {
+        return (p * p) / edge;
+    } else if (p > 1.0 - edge) {
+        float x = (p - (1.0 - edge)) / edge;
+        return (1.0 - edge) + (1.0 - (1.0 - x) * (1.0 - x)) * edge;
+    }
+    return p;
+}
 
-    // Rotation angle (0 to 180 degrees) - card flips around Y axis
+vec4 transition(vec2 uv) {
+    if (progress <= 0.001) return getFromColor(uv);
+    if (progress >= 0.98) return getToColor(uv);
+
+    float t = slowEase(progress);
     float angle = t * PI;
     float c = cos(angle);
     float s = sin(angle);
 
-    // Centered coordinates
-    vec2 pos = uv - 0.5;
+    // Projected width of the page (shrinks to 0 at 90°, then grows again)
+    float projectedWidth = abs(c);
 
-    // 3D card position - rotating around Y axis at center
-    float x3d = pos.x * abs(c);
-    float z3d = pos.x * s;
-
-    // Perspective projection
-    float fov = 2.5;
-    float perspScale = fov / (fov - z3d * 0.8);
-
-    // Ensure we don't have extreme perspective
-    perspScale = clamp(perspScale, 0.5, 2.0);
-
-    // Apply perspective to UV
-    vec2 perspUV;
-    perspUV.x = x3d * perspScale + 0.5;
-    perspUV.y = pos.y * perspScale + 0.5;
-
-    // Bounds check with soft edge
-    if (perspUV.x < 0.0 || perspUV.x > 1.0 || perspUV.y < 0.0 || perspUV.y > 1.0) {
-        return vec4(0.0, 0.0, 0.0, 1.0);
-    }
-
-    // Lighting - based on surface normal relative to light
-    float light = 0.5 + 0.5 * abs(c);
-
-    // Add subtle shadow on edges during flip
-    float edgeShadow = 1.0 - smoothstep(0.4, 0.5, abs(uv.x - 0.5)) * (1.0 - abs(c)) * 0.3;
-    light *= edgeShadow;
-
-    // First half shows "from" face, second half shows "to" face
     if (c > 0.0) {
-        // Front face (from image)
-        vec4 color = getFromColor(perspUV);
-        color.rgb *= light;
-        return color;
+        // First half (0-90°): Front face showing FROM
+        // Page covers from x=0 to x=projectedWidth
+        if (uv.x <= projectedWidth && projectedWidth > 0.001) {
+            float sampleX = uv.x / projectedWidth;
+
+            // Perspective based on depth
+            float z = sampleX * s;
+            float fov = 2.0;
+            float perspScale = fov / (fov + z * 0.5);
+            float sampleY = 0.5 + (uv.y - 0.5) / perspScale;
+
+            if (sampleY >= 0.0 && sampleY <= 1.0) {
+                return getFromColor(vec2(sampleX, sampleY));
+            }
+        }
+        // Area not covered by page - show TO
+        return getToColor(uv);
     } else {
-        // Back face (to image) - show correctly oriented (not mirrored)
-        vec4 color = getToColor(perspUV);
-        color.rgb *= light;
-        return color;
+        // Second half (90-180°): Back face showing TO
+        // Page now appears from right side, growing leftward
+        float pageStart = 1.0 - projectedWidth;
+
+        if (uv.x >= pageStart && projectedWidth > 0.001) {
+            float localX = (uv.x - pageStart) / projectedWidth;
+            float sampleX = localX;
+
+            // Perspective
+            float z = (1.0 - localX) * (-s);
+            float fov = 2.0;
+            float perspScale = fov / (fov + abs(z) * 0.5);
+            float sampleY = 0.5 + (uv.y - 0.5) / perspScale;
+
+            if (sampleY >= 0.0 && sampleY <= 1.0) {
+                return getToColor(vec2(sampleX, sampleY));
+            }
+        }
+        // Area not covered by page - show TO
+        return getToColor(uv);
     }
 }

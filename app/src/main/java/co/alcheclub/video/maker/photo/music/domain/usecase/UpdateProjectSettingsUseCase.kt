@@ -12,7 +12,7 @@ class UpdateProjectSettingsUseCase(
     suspend operator fun invoke(projectId: String, settings: ProjectSettings) {
         // Validate settings
         val validImageDurations = ProjectSettings.IMAGE_DURATION_OPTIONS.map { it * 1000L }
-        val validTransitionDurations = ProjectSettings.TRANSITION_DURATION_OPTIONS.map { it.toLong() }
+        val validTransitionPercentages = ProjectSettings.TRANSITION_PERCENTAGE_OPTIONS
 
         val validatedSettings = settings.copy(
             // Ensure image duration is one of the valid options
@@ -24,14 +24,14 @@ class UpdateProjectSettingsUseCase(
                     kotlin.math.abs(it - settings.imageDurationMs)
                 } ?: 3000L
             },
-            // Ensure transition duration is one of the valid options
-            transitionOverlapMs = if (settings.transitionOverlapMs in validTransitionDurations) {
-                settings.transitionOverlapMs
+            // Ensure transition percentage is one of the valid options
+            transitionPercentage = if (settings.transitionPercentage in validTransitionPercentages) {
+                settings.transitionPercentage
             } else {
                 // Find closest valid option
-                validTransitionDurations.minByOrNull {
-                    kotlin.math.abs(it - settings.transitionOverlapMs)
-                } ?: 500L
+                validTransitionPercentages.minByOrNull {
+                    kotlin.math.abs(it - settings.transitionPercentage)
+                } ?: 30
             },
             audioVolume = settings.audioVolume.coerceIn(0f, 1f)
         )
