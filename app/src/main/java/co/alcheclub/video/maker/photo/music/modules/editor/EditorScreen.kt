@@ -1,6 +1,9 @@
 package co.alcheclub.video.maker.photo.music.modules.editor
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,8 +47,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import android.net.Uri
-import co.alcheclub.video.maker.photo.music.domain.model.Asset
 import co.alcheclub.video.maker.photo.music.domain.model.Project
 import co.alcheclub.video.maker.photo.music.modules.editor.components.AssetStrip
 import co.alcheclub.video.maker.photo.music.modules.editor.components.SettingsPanel
@@ -94,42 +95,58 @@ fun EditorScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        // Main editor UI with Scaffold
         Scaffold(
-        topBar = {
-            EditorTopBar(
-                title = (uiState as? EditorUiState.Success)?.project?.name ?: "Editor",
-                onBackClick = { showExitConfirmation = true },
-                onPreviewClick = viewModel::navigateToPreview,
-                onSettingsClick = viewModel::toggleSettingsPanel,
-                showSettingsSelected = (uiState as? EditorUiState.Success)?.showSettingsPanel == true
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { paddingValues ->
-        when (val state = uiState) {
-            is EditorUiState.Loading -> {
-                LoadingContent(modifier = Modifier.padding(paddingValues))
-            }
-            is EditorUiState.Error -> {
-                ErrorContent(
-                    message = state.message,
-                    modifier = Modifier.padding(paddingValues)
+            topBar = {
+                EditorTopBar(
+                    title = (uiState as? EditorUiState.Success)?.project?.name ?: "Editor",
+                    onBackClick = { showExitConfirmation = true },
+                    onPreviewClick = viewModel::navigateToPreview,
+                    onSettingsClick = viewModel::toggleSettingsPanel,
+                    showSettingsSelected = (uiState as? EditorUiState.Success)?.showSettingsPanel == true
                 )
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        ) { paddingValues ->
+            when (val state = uiState) {
+                is EditorUiState.Loading -> {
+                    LoadingContent(modifier = Modifier.padding(paddingValues))
+                }
+                is EditorUiState.Error -> {
+                    ErrorContent(
+                        message = state.message,
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                }
+                is EditorUiState.Success -> {
+                    EditorMainContent(
+                        project = state.project,
+                        isPlaying = state.isPlaying,
+                        canRemoveAssets = viewModel.canRemoveAssets(),
+                        onPlayPauseClick = viewModel::togglePlayback,
+                        onPlaybackStateChange = viewModel::setPlaybackState,
+                        onAddAssetsClick = { onNavigateToAddAssets(state.project.id) },
+                        onRemoveAsset = { viewModel.removeAsset(it) },
+                        onExportClick = viewModel::navigateToExport,
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                }
             }
-            is EditorUiState.Success -> {
-                EditorContent(
-                    project = state.project,
-                    displaySettings = state.displaySettings,
-                    hasPendingChanges = state.hasPendingChanges,
-                    isPlaying = state.isPlaying,
-                    showSettingsPanel = state.showSettingsPanel,
-                    canRemoveAssets = viewModel.canRemoveAssets(),
-                    onPlayPauseClick = viewModel::togglePlayback,
-                    onPlaybackStateChange = viewModel::setPlaybackState,
-                    onAddAssetsClick = { onNavigateToAddAssets(state.project.id) },
-                    onRemoveAsset = { viewModel.removeAsset(it) },
-                    onTransitionSetChange = viewModel::updateTransitionSet,
+        }
+
+        // Fullscreen Settings Panel - slides up from bottom
+        val successState = uiState as? EditorUiState.Success
+        AnimatedVisibility(
+            visible = successState?.showSettingsPanel == true,
+            enter = slideInVertically(initialOffsetY = { it }), // Slide up from bottom
+            exit = slideOutVertically(targetOffsetY = { it })   // Slide down to bottom
+        ) {
+            if (successState != null) {
+                SettingsPanel(
+                    settings = successState.displaySettings,
+                    hasPendingChanges = successState.hasPendingChanges,
+                    onTransitionChange = viewModel::updateTransition,
                     onImageDurationChange = viewModel::updateImageDuration,
                     onOverlayFrameChange = viewModel::updateOverlayFrame,
                     onAudioTrackChange = viewModel::updateAudioTrack,
@@ -138,11 +155,10 @@ fun EditorScreen(
                     onAspectRatioChange = viewModel::updateAspectRatio,
                     onApplySettings = viewModel::applySettings,
                     onDiscardSettings = viewModel::discardPendingSettings,
-                    onExportClick = viewModel::navigateToExport,
-                    modifier = Modifier.padding(paddingValues)
+                    onClose = viewModel::closeSettingsPanel,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
-        }
         }
 
         // Exit confirmation dialog - rendered last to overlay everything
@@ -237,26 +253,14 @@ private fun ErrorContent(
 }
 
 @Composable
-private fun EditorContent(
+private fun EditorMainContent(
     project: Project,
-    displaySettings: co.alcheclub.video.maker.photo.music.domain.model.ProjectSettings,
-    hasPendingChanges: Boolean,
     isPlaying: Boolean,
-    showSettingsPanel: Boolean,
     canRemoveAssets: Boolean,
     onPlayPauseClick: () -> Unit,
     onPlaybackStateChange: (Boolean) -> Unit,
     onAddAssetsClick: () -> Unit,
     onRemoveAsset: (String) -> Unit,
-    onTransitionSetChange: (String?) -> Unit,
-    onImageDurationChange: (Long) -> Unit,
-    onOverlayFrameChange: (String?) -> Unit,
-    onAudioTrackChange: (String?) -> Unit,
-    onCustomAudioChange: (Uri?) -> Unit,
-    onAudioVolumeChange: (Float) -> Unit,
-    onAspectRatioChange: (co.alcheclub.video.maker.photo.music.domain.model.AspectRatio) -> Unit,
-    onApplySettings: () -> Unit,
-    onDiscardSettings: () -> Unit,
     onExportClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -266,8 +270,6 @@ private fun EditorContent(
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
         // Real-time Video Preview using CompositionPlayer
-        // Note: Uses project.settings (committed), not displaySettings (pending)
-        // This is intentional - preview only updates after Apply
         VideoPreviewPlayer(
             project = project,
             isPlaying = isPlaying,
@@ -289,25 +291,6 @@ private fun EditorContent(
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
         )
-
-        // Settings Panel (if visible)
-        // Uses displaySettings which shows pending changes for immediate UI feedback
-        if (showSettingsPanel) {
-            SettingsPanel(
-                settings = displaySettings,
-                hasPendingChanges = hasPendingChanges,
-                onTransitionSetChange = onTransitionSetChange,
-                onImageDurationChange = onImageDurationChange,
-                onOverlayFrameChange = onOverlayFrameChange,
-                onAudioTrackChange = onAudioTrackChange,
-                onCustomAudioChange = onCustomAudioChange,
-                onAudioVolumeChange = onAudioVolumeChange,
-                onAspectRatioChange = onAspectRatioChange,
-                onApplySettings = onApplySettings,
-                onDiscardSettings = onDiscardSettings,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
 
         // Duration and Export Button
         BottomBar(

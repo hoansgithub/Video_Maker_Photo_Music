@@ -31,8 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -41,6 +41,10 @@ import androidx.media3.transformer.CompositionPlayer
 import androidx.media3.ui.PlayerView
 import co.alcheclub.video.maker.photo.music.domain.model.Project
 import co.alcheclub.video.maker.photo.music.media.composition.CompositionFactory
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlin.coroutines.resume
 
 /**
  * Preview state for the video player
@@ -49,6 +53,69 @@ sealed class PreviewState {
     data object Building : PreviewState()
     data object Ready : PreviewState()
     data class Error(val message: String) : PreviewState()
+}
+
+/**
+ * Await for player to reach STATE_READY using suspendCancellableCoroutine
+ * This is the proper async/await pattern instead of using delay()
+ */
+private suspend fun CompositionPlayer.awaitReady(): Boolean {
+    // If already ready, return immediately
+    if (playbackState == Player.STATE_READY) {
+        return true
+    }
+
+    return suspendCancellableCoroutine { continuation ->
+        val listener = object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                when (playbackState) {
+                    Player.STATE_READY -> {
+                        removeListener(this)
+                        if (continuation.isActive) {
+                            continuation.resume(true)
+                        }
+                    }
+                    Player.STATE_IDLE -> {
+                        removeListener(this)
+                        if (continuation.isActive) {
+                            continuation.resume(false)
+                        }
+                    }
+                }
+            }
+
+            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                removeListener(this)
+                if (continuation.isActive) {
+                    continuation.resume(false)
+                }
+            }
+        }
+
+        addListener(listener)
+
+        continuation.invokeOnCancellation {
+            removeListener(listener)
+        }
+    }
+}
+
+/**
+ * Safely play the player, awaiting for it to be ready first
+ * Returns true if playback started successfully
+ */
+private suspend fun CompositionPlayer.safePlay(): Boolean {
+    return try {
+        if (awaitReady()) {
+            play()
+            true
+        } else {
+            false
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("VideoPreviewPlayer", "Error in safePlay", e)
+        false
+    }
 }
 
 /**
@@ -84,6 +151,9 @@ fun VideoPreviewPlayer(
     var previewState by remember { mutableStateOf<PreviewState>(PreviewState.Building) }
     var player by remember { mutableStateOf<CompositionPlayer?>(null) }
 
+    // Flow to signal when player is fully initialized and safe to play
+    val playerReadyFlow = remember { MutableStateFlow(false) }
+
     // Create composition factory
     val compositionFactory = remember { CompositionFactory(context) }
 
@@ -101,6 +171,9 @@ fun VideoPreviewPlayer(
         android.util.Log.d("VideoPreviewPlayer", "=== Rebuilding composition (single-player mode) ===")
         android.util.Log.d("VideoPreviewPlayer", "Key: $compositionKey")
         android.util.Log.d("VideoPreviewPlayer", "Assets: ${project.assets.size}, AudioTrack: ${project.settings.audioTrackId}")
+
+        // Reset ready state
+        playerReadyFlow.value = false
         previewState = PreviewState.Building
 
         // Yield to allow UI to update and show "Processing" indicator
@@ -132,7 +205,7 @@ fun VideoPreviewPlayer(
             newPlayer.setComposition(composition)
             newPlayer.repeatMode = Player.REPEAT_MODE_OFF
             newPlayer.prepare()
-            android.util.Log.d("VideoPreviewPlayer", "CompositionPlayer ready")
+            android.util.Log.d("VideoPreviewPlayer", "CompositionPlayer prepared, awaiting ready...")
 
             // Add listener for playback state changes
             newPlayer.addListener(object : Player.Listener {
@@ -144,11 +217,10 @@ fun VideoPreviewPlayer(
                     android.util.Log.d("VideoPreviewPlayer", "Playback state: $playbackState")
                     when (playbackState) {
                         Player.STATE_READY -> {
-                            android.util.Log.d("VideoPreviewPlayer", "Player STATE_READY, autoPlay=$autoPlay")
+                            android.util.Log.d("VideoPreviewPlayer", "Player STATE_READY")
                             previewState = PreviewState.Ready
-                            if (autoPlay) {
-                                newPlayer.play()
-                            }
+                            // Signal that player is ready - this unblocks any waiting coroutines
+                            playerReadyFlow.value = true
                         }
                         Player.STATE_BUFFERING -> {
                             android.util.Log.d("VideoPreviewPlayer", "Player STATE_BUFFERING")
@@ -164,6 +236,7 @@ fun VideoPreviewPlayer(
                 override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                     android.util.Log.e("VideoPreviewPlayer", "Player error: ${error.message}", error)
                     previewState = PreviewState.Error(error.message ?: "Playback error")
+                    playerReadyFlow.value = false
                 }
             })
 
@@ -175,9 +248,20 @@ fun VideoPreviewPlayer(
             oldPlayer?.release()
             android.util.Log.d("VideoPreviewPlayer", "Player swap complete")
 
+            // Await for player to be truly ready using suspend function (no delay!)
+            val isReady = newPlayer.awaitReady()
+            android.util.Log.d("VideoPreviewPlayer", "Player await complete, isReady=$isReady")
+
+            // Handle autoPlay after player is confirmed ready
+            if (isReady && autoPlay) {
+                android.util.Log.d("VideoPreviewPlayer", "Auto-playing...")
+                newPlayer.play()
+            }
+
         } catch (e: Exception) {
             android.util.Log.e("VideoPreviewPlayer", "Failed to build preview", e)
             previewState = PreviewState.Error(e.message ?: "Failed to build preview")
+            playerReadyFlow.value = false
             // Keep old player if new one failed to create
             if (player == null) {
                 player = oldPlayer
@@ -187,22 +271,37 @@ fun VideoPreviewPlayer(
         }
     }
 
-    // Control playback based on isPlaying
+    // Control playback based on isPlaying state
+    // Uses async/await pattern - waits for playerReadyFlow instead of delay
     LaunchedEffect(isPlaying, player) {
-        player?.let { p ->
-            if (isPlaying && p.playbackState == Player.STATE_READY) {
-                p.play()
-            } else {
-                p.pause()
+        val currentPlayer = player ?: return@LaunchedEffect
+
+        if (isPlaying) {
+            // Await for player to be ready before playing (no delay!)
+            playerReadyFlow.first { it }
+            try {
+                if (currentPlayer.playbackState == Player.STATE_READY) {
+                    currentPlayer.play()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("VideoPreviewPlayer", "Error playing", e)
+            }
+        } else {
+            try {
+                currentPlayer.pause()
+            } catch (e: Exception) {
+                android.util.Log.e("VideoPreviewPlayer", "Error pausing", e)
             }
         }
     }
 
-    // Cleanup player on dispose
+    // Cleanup player and bitmaps on dispose
     DisposableEffect(Unit) {
         onDispose {
             player?.release()
             player = null
+            // Recycle transition bitmaps to free memory
+            compositionFactory.recycleBitmaps()
         }
     }
 

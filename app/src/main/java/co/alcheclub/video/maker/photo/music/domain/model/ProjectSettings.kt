@@ -9,7 +9,7 @@ import android.net.Uri
  *
  * @param imageDurationMs Duration each image is displayed (2-12 seconds)
  * @param transitionOverlapMs Duration of transition between images (200-1000ms)
- * @param transitionSetId ID of selected transition set (or single transition ID)
+ * @param transitionId ID of selected transition effect (null = no transition)
  * @param overlayFrameId ID of selected overlay frame (null = none)
  * @param audioTrackId ID of bundled audio track (null = none)
  * @param customAudioUri User's custom audio URI (overrides audioTrackId)
@@ -19,7 +19,7 @@ import android.net.Uri
 data class ProjectSettings(
     val imageDurationMs: Long = 3000L,
     val transitionOverlapMs: Long = 500L,
-    val transitionSetId: String? = "classic", // Default to classic set (fade transitions)
+    val transitionId: String? = "fade", // Default to crossfade transition
     val overlayFrameId: String? = null,
     val audioTrackId: String? = DEFAULT_AUDIO_TRACK_ID,
     val customAudioUri: Uri? = null,

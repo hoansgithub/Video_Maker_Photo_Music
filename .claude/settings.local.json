@@ -28,7 +28,9 @@
       "Bash(timeout 60 adb logcat:*)",
       "Bash(timeout 90 adb logcat:*)",
       "Bash(grep:*)",
-      "WebFetch(domain:gl-transitions.com)"
+      "WebFetch(domain:gl-transitions.com)",
+      "WebFetch(domain:inspirnathan.com)",
+      "WebFetch(domain:iquilezles.org)"
     ]
   }
 }

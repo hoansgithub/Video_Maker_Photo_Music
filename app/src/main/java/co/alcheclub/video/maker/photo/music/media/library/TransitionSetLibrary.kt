@@ -50,11 +50,11 @@ object TransitionSetLibrary {
             TransitionSet(
                 id = "cinematic",
                 name = "Cinematic",
-                description = "Movie-style: cube, page curl, doorway",
+                description = "Movie-style: light leak, film burn, doorway",
                 thumbnailRes = R.drawable.ic_launcher_foreground,
                 isPremium = true,
                 transitions = listOfNotNull(
-                    shaderLib.getById("cube"),
+                    shaderLib.getById("light_leak"),
                     shaderLib.getById("doorway"),
                     shaderLib.getById("page_flip"),
                     shaderLib.getById("film_burn")
@@ -82,7 +82,7 @@ object TransitionSetLibrary {
                 transitions = listOfNotNull(
                     shaderLib.getById("fade"),
                     shaderLib.getById("blur"),
-                    shaderLib.getById("directional_blur")
+                    shaderLib.getById("zoom_crossover")
                 )
             ),
             TransitionSet(
@@ -113,6 +113,27 @@ object TransitionSetLibrary {
                     shaderLib.getById("page_curl_3d"),
                     shaderLib.getById("roll_3d"),
                     shaderLib.getById("revolve_3d")
+                )
+            ),
+            TransitionSet(
+                id = "retro",
+                name = "Retro & Glitch",
+                description = "VHS, glitch, chromatic, TV static effects",
+                thumbnailRes = R.drawable.ic_launcher_foreground,
+                isPremium = false, // TODO: Set back to true for production
+                transitions = listOfNotNull(
+                    shaderLib.getById("glitch_memories"),
+                    shaderLib.getById("vhs"),
+                    shaderLib.getById("chromatic"),
+                    shaderLib.getById("tv_static"),
+                    shaderLib.getById("dreamy"),
+                    shaderLib.getById("kaleidoscope"),
+                    shaderLib.getById("mosaic_tiles"),
+                    shaderLib.getById("crosshatch"),
+                    shaderLib.getById("luminance_melt"),
+                    shaderLib.getById("wind"),
+                    shaderLib.getById("water_drop"),
+                    shaderLib.getById("squares_wire")
                 )
             )
         )

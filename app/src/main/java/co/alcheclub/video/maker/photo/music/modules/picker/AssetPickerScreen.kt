@@ -2,6 +2,7 @@ package co.alcheclub.video.maker.photo.music.modules.picker
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -71,6 +72,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import coil.size.Precision
 import coil.size.Size
 
 /**
@@ -415,10 +417,17 @@ private fun ImageGridItem(
             )
     ) {
         // Optimized image loading with Coil
+        // Memory optimizations:
+        // - RGB_565: 2 bytes/pixel vs ARGB_8888's 4 bytes = 50% memory reduction
+        // - INEXACT precision: allows slightly smaller images, saving memory
+        // - allowHardware(false): ensures software bitmaps that can be recycled
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(context)
                 .data(asset.uri)
                 .size(Size(thumbnailSizePx, thumbnailSizePx)) // Fixed thumbnail size
+                .bitmapConfig(Bitmap.Config.RGB_565) // Half memory vs ARGB_8888
+                .precision(Precision.INEXACT) // Allow slightly smaller size for memory savings
+                .allowHardware(false) // Software bitmaps can be recycled
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .memoryCacheKey("thumb_${asset.id}")

@@ -251,15 +251,23 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
             _uiState.value = currentState.copy(
-                showSettingsPanel = !currentState.showSettingsPanel,
-                // Clear pending settings when closing panel without applying
-                pendingSettings = if (currentState.showSettingsPanel) null else currentState.pendingSettings
+                showSettingsPanel = !currentState.showSettingsPanel
             )
         }
     }
 
-    fun updateTransitionSet(setId: String?) {
-        updatePendingSettings { it.copy(transitionSetId = setId) }
+    /**
+     * Close settings panel (used when settings handles its own discard/apply)
+     */
+    fun closeSettingsPanel() {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success) {
+            _uiState.value = currentState.copy(showSettingsPanel = false)
+        }
+    }
+
+    fun updateTransition(transitionId: String?) {
+        updatePendingSettings { it.copy(transitionId = transitionId) }
     }
 
     fun updateImageDuration(durationMs: Long) {

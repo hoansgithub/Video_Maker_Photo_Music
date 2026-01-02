@@ -21,7 +21,7 @@ data class ProjectEntity(
     // Settings (embedded for simplicity)
     val imageDurationMs: Long = 3000L,
     val transitionOverlapMs: Long = 500L,
-    val transitionSetId: String? = "fade",
+    val transitionId: String? = "fade",
     val overlayFrameId: String? = null,
     val audioTrackId: String? = null,
     val customAudioUri: String? = null,

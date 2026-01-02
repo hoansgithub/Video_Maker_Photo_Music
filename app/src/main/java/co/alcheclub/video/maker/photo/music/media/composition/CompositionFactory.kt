@@ -8,10 +8,6 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
 import android.net.Uri
-import android.renderscript.Allocation
-import android.renderscript.Element
-import android.renderscript.RenderScript
-import android.renderscript.ScriptIntrinsicBlur
 import androidx.media3.common.MediaItem
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
@@ -26,15 +22,17 @@ import co.alcheclub.video.maker.photo.music.media.effects.FrameOverlayEffect
 import co.alcheclub.video.maker.photo.music.media.effects.TransitionEffect
 import co.alcheclub.video.maker.photo.music.media.library.AudioTrackLibrary
 import co.alcheclub.video.maker.photo.music.media.library.FrameLibrary
-import co.alcheclub.video.maker.photo.music.media.library.TransitionSetLibrary
 import co.alcheclub.video.maker.photo.music.media.library.TransitionShaderLibrary
 import androidx.media3.common.Effect
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
+import kotlin.math.min
+import kotlin.math.max
 
 /**
  * CompositionFactory - Creates Media3 Composition from Project domain model
@@ -45,13 +43,42 @@ import android.graphics.ColorMatrixColorFilter
  * - Transitions between images (pre-loaded bitmaps)
  * - Background music (looped if needed)
  *
- * Threading: This class may be called from background threads.
- * RenderScript operations are synchronized to ensure thread safety.
+ * Threading: This class uses suspend functions for bitmap loading.
+ * Call createComposition from a coroutine scope.
+ *
+ * Memory Management: Track returned bitmaps via lastTransitionBitmaps
+ * and call recycleBitmaps() when composition is no longer needed.
  */
 class CompositionFactory(private val context: Context) {
 
-    // Lock for RenderScript operations to ensure thread safety
-    private val renderScriptLock = Any()
+    /**
+     * Tracks the last set of transition bitmaps for memory management.
+     * Call recycleBitmaps() when the composition is disposed.
+     */
+    private var lastTransitionBitmaps: Map<Int, Bitmap>? = null
+
+    /**
+     * Recycle all tracked transition bitmaps.
+     * Call this when the composition is no longer needed to free memory.
+     */
+    fun recycleBitmaps() {
+        val bitmaps = lastTransitionBitmaps
+        lastTransitionBitmaps = null
+
+        if (bitmaps != null) {
+            var recycledCount = 0
+            bitmaps.values.forEach { bitmap ->
+                if (!bitmap.isRecycled) {
+                    bitmap.recycle()
+                    recycledCount++
+                }
+            }
+            android.util.Log.d("CompositionFactory", "Recycled $recycledCount transition bitmaps")
+
+            // Force garbage collection to reclaim memory
+            System.gc()
+        }
+    }
 
     /**
      * Create a Media3 Composition from a Project
@@ -60,15 +87,19 @@ class CompositionFactory(private val context: Context) {
      * @param includeAudio Whether to include audio track (false for preview, true for export)
      * @param forExport If true, uses higher resolution textures for export quality
      */
-    fun createComposition(project: Project, includeAudio: Boolean = true, forExport: Boolean = false): Composition {
+    suspend fun createComposition(project: Project, includeAudio: Boolean = true, forExport: Boolean = false): Composition {
         val settings = project.settings
         val textureSize = if (forExport) EXPORT_TEXTURE_SIZE else PREVIEW_TEXTURE_SIZE
         android.util.Log.d("CompositionFactory", "createComposition: ${project.assets.size} assets, includeAudio=$includeAudio, forExport=$forExport, textureSize=$textureSize")
 
-        // Pre-load transition bitmaps in PARALLEL (done on calling thread, not GL thread)
+        // Recycle previous bitmaps before creating new ones
+        recycleBitmaps()
+
+        // Pre-load transition bitmaps in PARALLEL using coroutines
         val startTime = System.currentTimeMillis()
         android.util.Log.d("CompositionFactory", "Pre-loading transition bitmaps in parallel...")
         val transitionBitmaps = preloadTransitionBitmapsParallel(project.assets, settings, textureSize)
+        lastTransitionBitmaps = transitionBitmaps  // Track for later recycling
         val loadTime = System.currentTimeMillis() - startTime
         android.util.Log.d("CompositionFactory", "Pre-loaded ${transitionBitmaps.size} transition bitmaps in ${loadTime}ms")
 
@@ -96,60 +127,80 @@ class CompositionFactory(private val context: Context) {
     }
 
     /**
-     * Pre-load bitmaps for all transition images IN PARALLEL
+     * Pre-load bitmaps for all transition images with memory-safe chunked loading
      *
-     * PERFORMANCE OPTIMIZATION:
-     * - Uses coroutines to load multiple bitmaps simultaneously
+     * MEMORY OPTIMIZATION:
+     * - Loads bitmaps in chunks of MAX_CONCURRENT_LOADS to prevent OOM
      * - Each bitmap is processed on IO dispatcher
-     * - Typically 2-4x faster than sequential loading
+     * - Forces GC between chunks for memory pressure relief
      *
-     * IMPORTANT: This must be called on a background thread, NOT on GL thread.
+     * IMPORTANT: This is a suspend function - call from coroutine scope.
      * The bitmaps are kept in memory and passed to TransitionEffect.
      *
-     * @param textureSize Resolution for transition textures (540 for preview, 1080 for export)
+     * @param textureSize Resolution for transition textures (360 for preview, 720 for export)
      * @return Map of asset index to pre-loaded bitmap for the NEXT image
      */
-    private fun preloadTransitionBitmapsParallel(
+    private suspend fun preloadTransitionBitmapsParallel(
         assets: List<Asset>,
         settings: ProjectSettings,
         textureSize: Int
     ): Map<Int, Bitmap> {
         // Skip if transitions are disabled
-        if (settings.transitionSetId == null) {
+        if (settings.transitionId == null) {
             android.util.Log.d("CompositionFactory", "Transitions disabled, skipping bitmap preload")
             return emptyMap()
         }
 
         val aspectRatio = settings.aspectRatio.ratio
+        val indices = (0 until assets.lastIndex).toList()
+        val results = mutableMapOf<Int, Bitmap>()
 
-        // Load all bitmaps in parallel using coroutines
-        return runBlocking {
-            val deferredBitmaps = (0 until assets.lastIndex).map { index ->
-                async(Dispatchers.IO) {
-                    val nextAsset = assets[index + 1]
-                    val rawBitmap = loadBitmapFromUri(nextAsset.uri, textureSize, textureSize)
-                    if (rawBitmap != null) {
-                        // Apply blur background effect to match the video appearance
-                        val processedBitmap = createBlurBackgroundBitmap(rawBitmap, aspectRatio, textureSize)
+        // Load bitmaps in chunks to prevent OOM
+        indices.chunked(MAX_CONCURRENT_LOADS).forEach { chunk ->
+            val chunkResults = coroutineScope {
+                chunk.map { index ->
+                    async(Dispatchers.IO) {
+                        try {
+                            val nextAsset = assets[index + 1]
+                            val rawBitmap = loadBitmapFromUri(nextAsset.uri, textureSize, textureSize)
+                            if (rawBitmap != null) {
+                                // Apply blur background effect to match the video appearance
+                                val processedBitmap = createBlurBackgroundBitmap(rawBitmap, aspectRatio, textureSize)
 
-                        // Recycle raw bitmap if different from processed
-                        if (rawBitmap != processedBitmap) {
-                            rawBitmap.recycle()
+                                // Recycle raw bitmap if different from processed
+                                if (rawBitmap != processedBitmap) {
+                                    rawBitmap.recycle()
+                                }
+
+                                index to processedBitmap
+                            } else {
+                                android.util.Log.w("CompositionFactory", "Failed to preload bitmap for asset ${index + 1}")
+                                null
+                            }
+                        } catch (e: OutOfMemoryError) {
+                            android.util.Log.e("CompositionFactory", "OOM loading bitmap for asset ${index + 1}", e)
+                            System.gc()
+                            null
+                        } catch (e: Exception) {
+                            android.util.Log.e("CompositionFactory", "Error loading bitmap for asset ${index + 1}", e)
+                            null
                         }
-
-                        index to processedBitmap
-                    } else {
-                        android.util.Log.w("CompositionFactory", "Failed to preload bitmap for asset ${index + 1}")
-                        null
                     }
-                }
+                }.awaitAll()
             }
 
-            // Await all and filter out nulls
-            deferredBitmaps.awaitAll()
-                .filterNotNull()
-                .toMap()
+            // Add successful results
+            chunkResults.filterNotNull().forEach { (index, bitmap) ->
+                results[index] = bitmap
+            }
+
+            // Hint GC between chunks to free temporary memory
+            if (chunk.size == MAX_CONCURRENT_LOADS) {
+                System.gc()
+            }
         }
+
+        return results
     }
 
     /**
@@ -273,15 +324,15 @@ class CompositionFactory(private val context: Context) {
     /**
      * Create a blurred background bitmap scaled to fill target dimensions
      * Always creates a NEW bitmap, never returns source
+     * Uses StackBlur algorithm (no RenderScript dependency)
      */
-    @Suppress("DEPRECATION")
     private fun createBlurredBackground(source: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
         // First, create a scaled-to-fill copy
         val scaledToFill = createScaledToFillCopy(source, targetWidth, targetHeight)
 
-        // Then apply blur
+        // Then apply blur using StackBlur
         return try {
-            applyBlurInPlace(scaledToFill, 25f)
+            stackBlur(scaledToFill, 25)
         } catch (e: Exception) {
             android.util.Log.w("CompositionFactory", "Blur failed: ${e.message}")
             scaledToFill
@@ -324,38 +375,250 @@ class CompositionFactory(private val context: Context) {
     }
 
     /**
-     * Apply Gaussian blur to a bitmap IN PLACE using RenderScript
-     * Returns the same bitmap reference with blur applied
+     * StackBlur algorithm - Fast blur without RenderScript
      *
-     * Thread Safety: Synchronized to prevent RenderScript race conditions
-     * when called from multiple threads simultaneously.
+     * Based on the StackBlur algorithm by Mario Klingemann.
+     * This is a pure Kotlin implementation that works on all Android versions.
+     *
+     * @param bitmap The bitmap to blur (modified in place)
+     * @param radius Blur radius (1-25)
+     * @return The blurred bitmap
      */
-    @Suppress("DEPRECATION")
-    private fun applyBlurInPlace(bitmap: Bitmap, radius: Float): Bitmap {
-        // Synchronize RenderScript operations to ensure thread safety
-        synchronized(renderScriptLock) {
-            val rs = RenderScript.create(context)
-            try {
-                val input = Allocation.createFromBitmap(rs, bitmap)
-                val output = Allocation.createTyped(rs, input.type)
-                val script = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs))
+    private fun stackBlur(bitmap: Bitmap, radius: Int): Bitmap {
+        val r = radius.coerceIn(1, 25)
+        val w = bitmap.width
+        val h = bitmap.height
+        val pix = IntArray(w * h)
+        bitmap.getPixels(pix, 0, w, 0, 0, w, h)
 
-                script.setRadius(radius.coerceIn(1f, 25f))
-                script.setInput(input)
-                script.forEach(output)
+        val wm = w - 1
+        val hm = h - 1
+        val wh = w * h
+        val div = r + r + 1
 
-                // Copy result back to the same bitmap
-                output.copyTo(bitmap)
+        val rArr = IntArray(wh)
+        val gArr = IntArray(wh)
+        val bArr = IntArray(wh)
+        var rsum: Int
+        var gsum: Int
+        var bsum: Int
+        var x: Int
+        var y: Int
+        var i: Int
+        var p: Int
+        var yp: Int
+        var yi: Int
+        var yw: Int
+        val vmin = IntArray(max(w, h))
 
-                input.destroy()
-                output.destroy()
-                script.destroy()
-
-                return bitmap
-            } finally {
-                rs.destroy()
-            }
+        var divsum = (div + 1) shr 1
+        divsum *= divsum
+        val dv = IntArray(256 * divsum)
+        i = 0
+        while (i < 256 * divsum) {
+            dv[i] = i / divsum
+            i++
         }
+
+        yi = 0
+        yw = 0
+
+        val stack = Array(div) { IntArray(3) }
+        var stackpointer: Int
+        var stackstart: Int
+        var sir: IntArray
+        var rbs: Int
+        val r1 = r + 1
+        var routsum: Int
+        var goutsum: Int
+        var boutsum: Int
+        var rinsum: Int
+        var ginsum: Int
+        var binsum: Int
+
+        y = 0
+        while (y < h) {
+            bsum = 0
+            gsum = 0
+            rsum = 0
+            boutsum = 0
+            goutsum = 0
+            routsum = 0
+            binsum = 0
+            ginsum = 0
+            rinsum = 0
+            i = -r
+            while (i <= r) {
+                p = pix[yi + min(wm, max(i, 0))]
+                sir = stack[i + r]
+                sir[0] = (p and 0xff0000) shr 16
+                sir[1] = (p and 0x00ff00) shr 8
+                sir[2] = p and 0x0000ff
+                rbs = r1 - kotlin.math.abs(i)
+                rsum += sir[0] * rbs
+                gsum += sir[1] * rbs
+                bsum += sir[2] * rbs
+                if (i > 0) {
+                    rinsum += sir[0]
+                    ginsum += sir[1]
+                    binsum += sir[2]
+                } else {
+                    routsum += sir[0]
+                    goutsum += sir[1]
+                    boutsum += sir[2]
+                }
+                i++
+            }
+            stackpointer = r
+
+            x = 0
+            while (x < w) {
+                rArr[yi] = dv[rsum]
+                gArr[yi] = dv[gsum]
+                bArr[yi] = dv[bsum]
+
+                rsum -= routsum
+                gsum -= goutsum
+                bsum -= boutsum
+
+                stackstart = stackpointer - r + div
+                sir = stack[stackstart % div]
+
+                routsum -= sir[0]
+                goutsum -= sir[1]
+                boutsum -= sir[2]
+
+                if (y == 0) {
+                    vmin[x] = min(x + r + 1, wm)
+                }
+                p = pix[yw + vmin[x]]
+
+                sir[0] = (p and 0xff0000) shr 16
+                sir[1] = (p and 0x00ff00) shr 8
+                sir[2] = p and 0x0000ff
+
+                rinsum += sir[0]
+                ginsum += sir[1]
+                binsum += sir[2]
+
+                rsum += rinsum
+                gsum += ginsum
+                bsum += binsum
+
+                stackpointer = (stackpointer + 1) % div
+                sir = stack[stackpointer % div]
+
+                routsum += sir[0]
+                goutsum += sir[1]
+                boutsum += sir[2]
+
+                rinsum -= sir[0]
+                ginsum -= sir[1]
+                binsum -= sir[2]
+
+                yi++
+                x++
+            }
+            yw += w
+            y++
+        }
+
+        x = 0
+        while (x < w) {
+            bsum = 0
+            gsum = 0
+            rsum = 0
+            boutsum = 0
+            goutsum = 0
+            routsum = 0
+            binsum = 0
+            ginsum = 0
+            rinsum = 0
+            yp = -r * w
+            i = -r
+            while (i <= r) {
+                yi = max(0, yp) + x
+
+                sir = stack[i + r]
+
+                sir[0] = rArr[yi]
+                sir[1] = gArr[yi]
+                sir[2] = bArr[yi]
+
+                rbs = r1 - kotlin.math.abs(i)
+
+                rsum += rArr[yi] * rbs
+                gsum += gArr[yi] * rbs
+                bsum += bArr[yi] * rbs
+
+                if (i > 0) {
+                    rinsum += sir[0]
+                    ginsum += sir[1]
+                    binsum += sir[2]
+                } else {
+                    routsum += sir[0]
+                    goutsum += sir[1]
+                    boutsum += sir[2]
+                }
+
+                if (i < hm) {
+                    yp += w
+                }
+                i++
+            }
+            yi = x
+            stackpointer = r
+            y = 0
+            while (y < h) {
+                pix[yi] = (0xff000000.toInt() and pix[yi]) or (dv[rsum] shl 16) or (dv[gsum] shl 8) or dv[bsum]
+
+                rsum -= routsum
+                gsum -= goutsum
+                bsum -= boutsum
+
+                stackstart = stackpointer - r + div
+                sir = stack[stackstart % div]
+
+                routsum -= sir[0]
+                goutsum -= sir[1]
+                boutsum -= sir[2]
+
+                if (x == 0) {
+                    vmin[y] = min(y + r1, hm) * w
+                }
+                p = x + vmin[y]
+
+                sir[0] = rArr[p]
+                sir[1] = gArr[p]
+                sir[2] = bArr[p]
+
+                rinsum += sir[0]
+                ginsum += sir[1]
+                binsum += sir[2]
+
+                rsum += rinsum
+                gsum += ginsum
+                bsum += binsum
+
+                stackpointer = (stackpointer + 1) % div
+                sir = stack[stackpointer]
+
+                routsum += sir[0]
+                goutsum += sir[1]
+                boutsum += sir[2]
+
+                rinsum -= sir[0]
+                ginsum -= sir[1]
+                binsum -= sir[2]
+
+                yi += w
+                y++
+            }
+            x++
+        }
+
+        bitmap.setPixels(pix, 0, w, 0, 0, w, h)
+        return bitmap
     }
 
     /**
@@ -425,7 +688,7 @@ class CompositionFactory(private val context: Context) {
      * Each image (except the last) gets a transition effect that blends
      * it with the next image during the transition duration.
      *
-     * Transitions are cycled from the selected TransitionSet for variety.
+     * Uses a single selected transition for all image pairs.
      *
      * IMPORTANT: We track cumulative start time (clipStartTimeUs) for each clip
      * because presentationTimeUs in GlShaderProgram.drawFrame() is GLOBAL
@@ -436,20 +699,18 @@ class CompositionFactory(private val context: Context) {
         settings: ProjectSettings,
         transitionBitmaps: Map<Int, Bitmap>
     ): EditedMediaItemSequence {
-        // Get transitions from the selected set
-        val transitions = getTransitionsFromSet(settings)
+        // Get the selected transition
+        val selectedTransition = getTransition(settings)
 
         var cumulativeStartTimeUs = 0L  // Track global start time for each clip
 
         val editedItems = assets.mapIndexed { index, asset ->
             // Get pre-loaded bitmap for next image (null for last image)
             val nextBitmap = transitionBitmaps[index]
-            val hasTransition = nextBitmap != null && settings.transitionSetId != null && transitions.isNotEmpty()
+            val hasTransition = nextBitmap != null && selectedTransition != null
 
-            // Get transition for this clip (cycle through available transitions)
-            val transition = if (hasTransition && transitions.isNotEmpty()) {
-                transitions[index % transitions.size]
-            } else null
+            // Use the same transition for all clips
+            val transition = if (hasTransition) selectedTransition else null
 
             // Calculate clip duration
             val imageDurationMs = settings.imageDurationMs
@@ -474,35 +735,26 @@ class CompositionFactory(private val context: Context) {
 
             editedItem
         }
-        return EditedMediaItemSequence(editedItems)
+        return EditedMediaItemSequence.Builder(editedItems).build()
     }
 
     /**
-     * Get all transitions from the selected transition set
+     * Get the selected transition effect
      *
-     * Returns a list of transitions that will be cycled through
-     * for each image pair in the video.
+     * Returns a single transition that will be used for all image pairs.
+     * Returns null if no transition is selected (transitions disabled).
      */
-    private fun getTransitionsFromSet(settings: ProjectSettings): List<Transition> {
-        val setId = settings.transitionSetId ?: return emptyList()
+    private fun getTransition(settings: ProjectSettings): Transition? {
+        val transitionId = settings.transitionId ?: return null
 
-        val transitionSet = TransitionSetLibrary.getById(setId)
-        if (transitionSet == null) {
-            android.util.Log.w("CompositionFactory", "Transition set not found: $setId")
-            return listOf(TransitionShaderLibrary.getDefault())
+        val transition = TransitionShaderLibrary.getById(transitionId)
+        if (transition == null) {
+            android.util.Log.w("CompositionFactory", "Transition not found: $transitionId, using default")
+            return TransitionShaderLibrary.getDefault()
         }
 
-        android.util.Log.d("CompositionFactory", "getTransitionsFromSet: setId=$setId, count=${transitionSet.transitions.size}")
-        transitionSet.transitions.forEachIndexed { index, t ->
-            android.util.Log.d("CompositionFactory", "  [$index] ${t.name}")
-        }
-
-        return if (transitionSet.transitions.isNotEmpty()) {
-            transitionSet.transitions
-        } else {
-            // Fallback to default if set has no transitions
-            listOf(TransitionShaderLibrary.getDefault())
-        }
+        android.util.Log.d("CompositionFactory", "getTransition: id=$transitionId, name=${transition.name}")
+        return transition
     }
 
     companion object {
@@ -510,10 +762,15 @@ class CompositionFactory(private val context: Context) {
         private const val DEFAULT_FRAME_RATE = 30
 
         // Texture sizes for transition images
-        // Preview uses lower resolution for faster processing
+        // Preview uses lower resolution for faster processing and less memory
         // Export uses full resolution for quality
-        private const val PREVIEW_TEXTURE_SIZE = 540
-        private const val EXPORT_TEXTURE_SIZE = 1080
+        // Memory per bitmap: width * height * 4 bytes (ARGB_8888)
+        // 360px: ~0.5MB per bitmap, 540px: ~1.2MB, 720px: ~2MB, 1080px: ~4.5MB
+        private const val PREVIEW_TEXTURE_SIZE = 360  // Reduced from 540 to save memory
+        private const val EXPORT_TEXTURE_SIZE = 720   // Reduced from 1080 for stability
+
+        // Maximum concurrent bitmap loads to prevent OOM
+        private const val MAX_CONCURRENT_LOADS = 4
     }
 
     /**
@@ -678,7 +935,7 @@ class CompositionFactory(private val context: Context) {
             .setDurationUs(totalVideoDurationUs)
             .build()
 
-        return EditedMediaItemSequence(listOf(editedAudioItem))
+        return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
     }
 
     /**

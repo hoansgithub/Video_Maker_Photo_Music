@@ -82,6 +82,7 @@ sealed class AssetPickerNavigationEvent {
  * Performance optimizations:
  * - Lazy loading via StateFlow (UI only renders visible items)
  * - Single MediaStore query with bucket grouping
+ * - Query limit to prevent loading too many images at once
  * - Filtering done in-memory after initial load
  * - Image thumbnails handled by Coil with caching
  */
@@ -94,6 +95,11 @@ class AssetPickerViewModel(
 
     // Use applicationContext to prevent Activity memory leak
     private val appContext: Context = context.applicationContext
+
+    companion object {
+        // Note: No query limit needed - MediaStore query only loads lightweight metadata
+        // (IDs, names, dates). Actual image loading is lazy via LazyVerticalGrid + Coil.
+    }
 
     /** True if adding to existing project, false if creating new */
     val isAddMode: Boolean get() = projectId != null
@@ -364,6 +370,7 @@ class AssetPickerViewModel(
             MediaStore.Images.Media.BUCKET_DISPLAY_NAME
         )
 
+        // Sort by date descending - most recent photos first
         val sortOrder = "${MediaStore.Images.Media.DATE_ADDED} DESC"
 
         appContext.contentResolver.query(

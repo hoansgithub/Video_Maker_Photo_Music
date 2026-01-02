@@ -1,7 +1,6 @@
 package co.alcheclub.video.maker.photo.music.modules.editor.components
 
 import android.net.Uri
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,26 +10,42 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,20 +53,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.alcheclub.video.maker.photo.music.domain.model.AspectRatio
 import co.alcheclub.video.maker.photo.music.domain.model.AudioTrack
 import co.alcheclub.video.maker.photo.music.domain.model.OverlayFrame
 import co.alcheclub.video.maker.photo.music.domain.model.ProjectSettings
-import co.alcheclub.video.maker.photo.music.domain.model.TransitionSet
+import co.alcheclub.video.maker.photo.music.domain.model.Transition
+import co.alcheclub.video.maker.photo.music.domain.model.TransitionCategory
 import co.alcheclub.video.maker.photo.music.media.library.AudioTrackLibrary
 import co.alcheclub.video.maker.photo.music.media.library.FrameLibrary
-import co.alcheclub.video.maker.photo.music.media.library.TransitionSetLibrary
+import co.alcheclub.video.maker.photo.music.media.library.TransitionShaderLibrary
 import coil.compose.AsyncImage
 
 /**
- * SettingsPanel - Expandable panel for project settings
+ * SettingsPanel - Fullscreen settings overlay
  *
  * Uses a "pending changes" pattern:
  * - Setting changes are staged (not applied immediately)
@@ -59,18 +76,19 @@ import coil.compose.AsyncImage
  * - This prevents unnecessary reprocessing while browsing options
  *
  * Settings (user can mix and match):
- * - Transition Set (collection of 20+ transitions)
+ * - Transition Effect (individual transition)
  * - Image Duration (2-12 seconds per image)
  * - Overlay Frame (decorative frame)
  * - Background Music (bundled or custom)
  * - Audio Volume (0-100%)
  * - Aspect Ratio (16:9, 9:16, 1:1, 4:3)
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsPanel(
     settings: ProjectSettings,
     hasPendingChanges: Boolean,
-    onTransitionSetChange: (String?) -> Unit,
+    onTransitionChange: (String?) -> Unit,
     onImageDurationChange: (Long) -> Unit,
     onOverlayFrameChange: (String?) -> Unit,
     onAudioTrackChange: (String?) -> Unit,
@@ -79,124 +97,228 @@ fun SettingsPanel(
     onAspectRatioChange: (AspectRatio) -> Unit,
     onApplySettings: () -> Unit,
     onDiscardSettings: () -> Unit,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Header with Apply/Discard buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Settings",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        if (hasPendingChanges) {
+                            onDiscardSettings()
+                        }
+                        onClose()
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close"
+                        )
+                    }
+                },
+                actions = {
+                    // Apply button - always visible when there are changes
+                    if (hasPendingChanges) {
+                        Button(
+                            onClick = {
+                                onApplySettings()
+                                onClose()
+                            },
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Text("Apply", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Text(
-                text = "Settings",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+            // Transition Effect
+            TransitionSelector(
+                selectedTransitionId = settings.transitionId,
+                onTransitionSelect = onTransitionChange
             )
 
-            // Apply/Discard buttons - only show when there are pending changes
-            AnimatedVisibility(visible = hasPendingChanges) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = onDiscardSettings,
-                        contentPadding = ButtonDefaults.ContentPadding
-                    ) {
-                        Text("Discard", style = MaterialTheme.typography.labelMedium)
-                    }
-
-                    Button(
-                        onClick = onApplySettings,
-                        contentPadding = ButtonDefaults.ContentPadding
-                    ) {
-                        Text("Apply", style = MaterialTheme.typography.labelMedium)
-                    }
-                }
-            }
-        }
-
-        // Pending changes indicator
-        AnimatedVisibility(visible = hasPendingChanges) {
-            Text(
-                text = "You have unsaved changes",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary
+            // Image Duration
+            ImageDurationSelector(
+                selectedDurationMs = settings.imageDurationMs,
+                onDurationSelect = onImageDurationChange
             )
+
+            // Overlay Frame
+            OverlayFrameSelector(
+                selectedFrameId = settings.overlayFrameId,
+                onFrameSelect = onOverlayFrameChange
+            )
+
+            // Background Music
+            AudioSection(
+                selectedTrackId = settings.audioTrackId,
+                customAudioUri = settings.customAudioUri,
+                audioVolume = settings.audioVolume,
+                onTrackSelect = onAudioTrackChange,
+                onCustomAudioSelect = onCustomAudioChange,
+                onVolumeChange = onAudioVolumeChange
+            )
+
+            // Aspect Ratio
+            AspectRatioSelector(
+                selectedRatio = settings.aspectRatio,
+                onRatioSelect = onAspectRatioChange
+            )
+
+            // Bottom spacing
+            Spacer(modifier = Modifier.height(32.dp))
         }
-
-        // Transition Set
-        TransitionSetSelector(
-            selectedSetId = settings.transitionSetId,
-            onSetSelect = onTransitionSetChange
-        )
-
-        // Image Duration
-        ImageDurationSelector(
-            selectedDurationMs = settings.imageDurationMs,
-            onDurationSelect = onImageDurationChange
-        )
-
-        // Overlay Frame
-        OverlayFrameSelector(
-            selectedFrameId = settings.overlayFrameId,
-            onFrameSelect = onOverlayFrameChange
-        )
-
-        // Background Music
-        AudioSection(
-            selectedTrackId = settings.audioTrackId,
-            customAudioUri = settings.customAudioUri,
-            audioVolume = settings.audioVolume,
-            onTrackSelect = onAudioTrackChange,
-            onCustomAudioSelect = onCustomAudioChange,
-            onVolumeChange = onAudioVolumeChange
-        )
-
-        // Aspect Ratio
-        AspectRatioSelector(
-            selectedRatio = settings.aspectRatio,
-            onRatioSelect = onAspectRatioChange
-        )
     }
 }
 
 @Composable
-private fun TransitionSetSelector(
-    selectedSetId: String?,
-    onSetSelect: (String?) -> Unit
+private fun TransitionSelector(
+    selectedTransitionId: String?,
+    onTransitionSelect: (String?) -> Unit
 ) {
-    val sets = remember { TransitionSetLibrary.getAll() }
+    // Get transitions grouped by category
+    val groupedTransitions = remember { TransitionShaderLibrary.getGroupedByCategory() }
+
+    // Get available categories (only those with transitions)
+    val availableCategories = remember(groupedTransitions) {
+        groupedTransitions.keys.toList().sortedBy { it.ordinal }
+    }
+
+    // Find the category of the currently selected transition
+    val initialCategory = remember(selectedTransitionId, groupedTransitions) {
+        if (selectedTransitionId == null) return@remember null
+        groupedTransitions.entries.find { (_, transitions) ->
+            transitions.any { it.id == selectedTransitionId }
+        }?.key
+    }
+
+    // Selected category filter (initialized to the category of selected transition)
+    var selectedCategory by remember(initialCategory) { mutableStateOf(initialCategory) }
+
+    // Filter transitions based on selected category
+    val filteredTransitions = remember(selectedCategory, groupedTransitions) {
+        val result = mutableListOf<Transition?>(null) // null = "None" option
+        if (selectedCategory == null) {
+            // Show all transitions
+            groupedTransitions.forEach { (_, transitions) ->
+                result.addAll(transitions)
+            }
+        } else {
+            // Show only selected category
+            groupedTransitions[selectedCategory]?.let { transitions ->
+                result.addAll(transitions)
+            }
+        }
+        result.toList()
+    }
+
+    // Find index of selected transition for auto-scroll
+    val selectedTransitionIndex = remember(selectedTransitionId, filteredTransitions) {
+        if (selectedTransitionId == null) 0 // "None" is at index 0
+        else filteredTransitions.indexOfFirst { it?.id == selectedTransitionId }.coerceAtLeast(0)
+    }
+
+    // Find index of selected category for auto-scroll
+    val selectedCategoryIndex = remember(selectedCategory, availableCategories) {
+        if (selectedCategory == null) 0 // "All" is at index 0
+        else availableCategories.indexOf(selectedCategory) + 1 // +1 because "All" is first
+    }
+
+    // LazyRow states for scrolling
+    val categoryListState = rememberLazyListState()
+    val transitionListState = rememberLazyListState()
+
+    // Auto-scroll to selected category on mount
+    LaunchedEffect(Unit) {
+        if (selectedCategoryIndex > 0) {
+            categoryListState.animateScrollToItem(selectedCategoryIndex)
+        }
+    }
+
+    // Auto-scroll to selected transition when category changes or on mount
+    LaunchedEffect(selectedCategory) {
+        if (selectedTransitionIndex > 0) {
+            transitionListState.animateScrollToItem(selectedTransitionIndex)
+        }
+    }
 
     Column {
         Text(
-            text = "Transition Set",
+            text = "Transition Effect",
             style = MaterialTheme.typography.bodyMedium
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.horizontalScroll(rememberScrollState())
+        // Category filter chips
+        LazyRow(
+            state = categoryListState,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // None option
-            NoneTransitionChip(
-                isSelected = selectedSetId == null,
-                onClick = { onSetSelect(null) }
-            )
+            // "All" chip
+            item {
+                CategoryChip(
+                    text = "All",
+                    isSelected = selectedCategory == null,
+                    onClick = { selectedCategory = null }
+                )
+            }
 
-            // Available transition sets
-            sets.forEach { set ->
-                TransitionSetChip(
-                    set = set,
-                    isSelected = set.id == selectedSetId,
-                    onClick = { onSetSelect(set.id) }
+            // Category chips
+            items(
+                items = availableCategories,
+                key = { it.name }
+            ) { category ->
+                CategoryChip(
+                    text = category.displayName,
+                    isSelected = selectedCategory == category,
+                    onClick = { selectedCategory = category }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Transitions LazyRow
+        LazyRow(
+            state = transitionListState,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(
+                items = filteredTransitions,
+                key = { it?.id ?: "none" }
+            ) { transition ->
+                TransitionChip(
+                    transition = transition,
+                    isSelected = if (transition == null) {
+                        selectedTransitionId == null
+                    } else {
+                        transition.id == selectedTransitionId
+                    },
+                    onClick = { onTransitionSelect(transition?.id) }
                 )
             }
         }
@@ -204,62 +326,40 @@ private fun TransitionSetSelector(
 }
 
 @Composable
-private fun NoneTransitionChip(
+private fun CategoryChip(
+    text: String,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    Column(
+    Box(
         modifier = Modifier
-            .width(80.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(
-                if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surface
-            )
-            .border(
-                width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.outline,
-                shape = RoundedCornerShape(8.dp)
+                if (isSelected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.surfaceVariant
             )
             .clickable(onClick = onClick)
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "OFF",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
         Text(
-            text = "None",
-            style = MaterialTheme.typography.labelSmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
         )
     }
 }
 
 @Composable
-private fun TransitionSetChip(
-    set: TransitionSet,
+private fun TransitionChip(
+    transition: Transition?,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
-            .width(80.dp)
+            .width(72.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(
                 if (isSelected) MaterialTheme.colorScheme.primaryContainer
@@ -275,19 +375,34 @@ private fun TransitionSetChip(
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Thumbnail placeholder
+        // Icon/indicator
         Box(
             modifier = Modifier
-                .size(48.dp)
+                .size(40.dp)
                 .clip(RoundedCornerShape(4.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
-            if (isSelected) {
+            if (transition == null) {
+                Text(
+                    text = "OFF",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            } else if (isSelected) {
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            } else {
+                // Category initial
+                Text(
+                    text = transition.category.displayName.first().toString(),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -295,13 +410,14 @@ private fun TransitionSetChip(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = set.name,
+            text = transition?.name ?: "None",
             style = MaterialTheme.typography.labelSmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
         )
 
-        if (set.isPremium) {
+        if (transition?.isPremium == true) {
             Text(
                 text = "PRO",
                 style = MaterialTheme.typography.labelSmall,
