@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.alcheclub.video.maker.photo.music.R
 import co.alcheclub.video.maker.photo.music.domain.model.Project
 import co.alcheclub.video.maker.photo.music.modules.editor.components.AssetStrip
+import co.alcheclub.video.maker.photo.music.modules.editor.components.PlaybackSeekbar
 import co.alcheclub.video.maker.photo.music.modules.editor.components.SettingsPanel
 import co.alcheclub.video.maker.photo.music.modules.editor.components.VideoPreviewPlayer
 
@@ -129,9 +130,20 @@ fun EditorScreen(
                     EditorMainContent(
                         project = state.project,
                         isPlaying = state.isPlaying,
+                        currentPositionMs = state.currentPositionMs,
+                        durationMs = state.durationMs,
+                        seekToPosition = state.seekToPosition,
+                        scrubToPosition = state.scrubToPosition,
                         canRemoveAssets = viewModel.canRemoveAssets(),
                         onPlayPauseClick = viewModel::togglePlayback,
                         onPlaybackStateChange = viewModel::setPlaybackState,
+                        onPositionUpdate = viewModel::updatePlaybackPosition,
+                        onSeek = viewModel::seekTo,
+                        onScrub = viewModel::scrubTo,
+                        onSeekStart = viewModel::stopPlayback,
+                        onSeekEnd = {}, // Resume happens in clearSeekRequest after seek completes
+                        onSeekComplete = viewModel::clearSeekRequest,
+                        onScrubComplete = viewModel::clearScrubRequest,
                         onAddAssetsClick = { onNavigateToAddAssets(state.project.id) },
                         onRemoveAsset = { viewModel.removeAsset(it) },
                         onExportClick = viewModel::navigateToExport,
@@ -263,9 +275,20 @@ private fun ErrorContent(
 private fun EditorMainContent(
     project: Project,
     isPlaying: Boolean,
+    currentPositionMs: Long,
+    durationMs: Long,
+    seekToPosition: Long?,
+    scrubToPosition: Long?,
     canRemoveAssets: Boolean,
     onPlayPauseClick: () -> Unit,
     onPlaybackStateChange: (Boolean) -> Unit,
+    onPositionUpdate: (Long, Long) -> Unit,
+    onSeek: (Long) -> Unit,
+    onScrub: (Long) -> Unit,
+    onSeekStart: () -> Unit,
+    onSeekEnd: () -> Unit,
+    onSeekComplete: () -> Unit,
+    onScrubComplete: () -> Unit,
     onAddAssetsClick: () -> Unit,
     onRemoveAsset: (String) -> Unit,
     onExportClick: () -> Unit,
@@ -282,10 +305,27 @@ private fun EditorMainContent(
             isPlaying = isPlaying,
             onPlayPauseClick = onPlayPauseClick,
             onPlaybackStateChange = onPlaybackStateChange,
+            onPositionUpdate = onPositionUpdate,
+            seekToPosition = seekToPosition,
+            scrubToPosition = scrubToPosition,
+            onSeekComplete = onSeekComplete,
+            onScrubComplete = onScrubComplete,
             autoPlay = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
+        )
+
+        // Playback Seekbar - slider with time labels
+        PlaybackSeekbar(
+            currentPositionMs = currentPositionMs,
+            durationMs = durationMs,
+            isEnabled = durationMs > 0,
+            onSeek = onSeek,
+            onScrub = onScrub,
+            onSeekStart = onSeekStart,
+            onSeekEnd = onSeekEnd,
+            modifier = Modifier.fillMaxWidth()
         )
 
         // Asset Strip - add/remove photos

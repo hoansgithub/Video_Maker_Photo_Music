@@ -33,7 +33,8 @@
       "WebFetch(domain:iquilezles.org)",
       "WebFetch(domain:andrewhungblog.wordpress.com)",
       "WebFetch(domain:stackoverflow.com)",
-      "WebFetch(domain:tympanus.net)"
+      "WebFetch(domain:tympanus.net)",
+      "Bash(python3:*)"
     ]
   }
 }

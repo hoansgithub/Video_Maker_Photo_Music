@@ -81,6 +81,8 @@ private class BlurBackgroundShaderProgram(
         return Size(outputWidth, outputHeight)
     }
 
+    private var frameCount = 0
+
     override fun drawFrame(inputTexId: Int, presentationTimeUs: Long) {
         val program = glProgram ?: return
 
@@ -91,6 +93,12 @@ private class BlurBackgroundShaderProgram(
         val inputAspect = inputWidth.toFloat() / inputHeight.toFloat()
         program.setFloatUniform("uInputAspect", inputAspect)
         program.setFloatUniform("uTargetAspect", targetAspectRatio)
+
+        // Log aspect ratios for debugging color match with TransitionEffect
+        frameCount++
+        if (frameCount <= 3) {
+            android.util.Log.d("BlurBackgroundEffect", "CLIP START Frame #$frameCount: time=${presentationTimeUs/1000}ms, input: ${inputWidth}x${inputHeight}, aspect: $inputAspect, target: $targetAspectRatio, inputTexId: $inputTexId")
+        }
 
         program.bindAttributesAndUniforms()
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
@@ -189,11 +197,14 @@ void main() {
     }
 
     // Check if we're in the foreground region
+    vec4 result;
     if (fgUV.x >= 0.0 && fgUV.x <= 1.0 && fgUV.y >= 0.0 && fgUV.y <= 1.0) {
-        gl_FragColor = texture2D(uTexSampler, fgUV);
+        result = texture2D(uTexSampler, fgUV);
     } else {
-        gl_FragColor = bgColor;
+        result = bgColor;
     }
+
+    gl_FragColor = result;
 }
 """
     }

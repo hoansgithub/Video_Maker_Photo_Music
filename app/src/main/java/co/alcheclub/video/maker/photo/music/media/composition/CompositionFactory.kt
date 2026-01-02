@@ -134,6 +134,10 @@ class CompositionFactory(private val context: Context) {
      * IMPORTANT: This is a suspend function - call from coroutine scope.
      * The bitmaps are kept in memory and passed to TransitionEffect.
      *
+     * NOTE: Bitmaps are passed RAW (only scaled and flipped) - no CPU blur processing.
+     * TransitionEffect will apply blur using GPU to ensure exact color match with
+     * BlurBackgroundEffect that processes the FROM image.
+     *
      * @param textureSize Resolution for transition textures (360 for preview, 720 for export)
      * @return Map of asset index to pre-loaded bitmap for the NEXT image
      */
@@ -148,7 +152,6 @@ class CompositionFactory(private val context: Context) {
             return emptyMap()
         }
 
-        val aspectRatio = settings.aspectRatio.ratio
         val indices = (0 until assets.lastIndex).toList()
         val results = mutableMapOf<Int, Bitmap>()
 
@@ -161,16 +164,11 @@ class CompositionFactory(private val context: Context) {
                             val nextAsset = assets[index + 1]
                             val rawBitmap = loadBitmapFromUri(nextAsset.uri, textureSize, textureSize)
                             if (rawBitmap != null) {
-                                // Just flip the bitmap vertically for GL texture orientation
-                                // Blur background is now applied in TransitionEffect shader
-                                // using the same GPU code as BlurBackgroundEffect
+                                // Pass RAW bitmap - TransitionEffect will apply GPU blur
+                                // to ensure EXACT color match with BlurBackgroundEffect
+                                // Flip vertically for OpenGL coordinate system
                                 val flippedBitmap = flipBitmapVertically(rawBitmap)
-
-                                // Recycle raw bitmap if different from flipped
-                                if (rawBitmap != flippedBitmap) {
-                                    rawBitmap.recycle()
-                                }
-
+                                rawBitmap.recycle()
                                 index to flippedBitmap
                             } else {
                                 android.util.Log.w("CompositionFactory", "Failed to preload bitmap for asset ${index + 1}")
@@ -279,25 +277,194 @@ class CompositionFactory(private val context: Context) {
     /**
      * Create a blurred background bitmap scaled to fill target dimensions
      * Always creates a NEW bitmap, never returns source
-     * Uses StackBlur algorithm (no RenderScript dependency)
      *
-     * Blur radius is matched to GPU shader's blurAmount = 0.025 (2.5% of image)
+     * Uses 4-direction Gaussian blur to match GPU BlurBackgroundEffect exactly
      */
     private fun createBlurredBackground(source: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
         // First, create a scaled-to-fill copy
         val scaledToFill = createScaledToFillCopy(source, targetWidth, targetHeight)
 
-        // Calculate blur radius to match GPU shader
-        // GPU uses blurAmount = 0.025 (2.5% of image size)
-        val blurRadius = (targetWidth * 0.025f).toInt().coerceIn(1, 25)
-
-        // Then apply blur using StackBlur
+        // Apply 4-direction Gaussian blur to match GPU shader exactly
         return try {
-            stackBlur(scaledToFill, blurRadius)
+            gaussianBlur4Direction(scaledToFill)
         } catch (e: Exception) {
             android.util.Log.w("CompositionFactory", "Blur failed: ${e.message}")
             scaledToFill
         }
+    }
+
+    /**
+     * 4-direction Gaussian blur matching GPU BlurBackgroundEffect exactly
+     * Uses same weights, offsets, and bilinear interpolation as the GLSL shader
+     */
+    private fun gaussianBlur4Direction(bitmap: Bitmap): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+
+        val result = IntArray(width * height)
+
+        // Same weights as GPU shader (normalized to sum to 1.0)
+        val weight0 = 0.2272542543f
+        val weight1 = 0.3165327489f
+        val weight2 = 0.0703065234f
+
+        // Same offsets as GPU shader
+        val offset1 = 1.3846153846f
+        val offset2 = 3.2307692308f
+
+        // Blur amount = 0.025 (2.5% of image)
+        val blurAmount = 0.025f
+
+        // 4 directions: horizontal, vertical, diagonal1, diagonal2
+        val directions = arrayOf(
+            floatArrayOf(1f, 0f),
+            floatArrayOf(0f, 1f),
+            floatArrayOf(0.707f, 0.707f),
+            floatArrayOf(0.707f, -0.707f)
+        )
+
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                var totalR = 0f
+                var totalG = 0f
+                var totalB = 0f
+                var totalA = 0f
+
+                for (dir in directions) {
+                    val stepX = dir[0] * blurAmount * width
+                    val stepY = dir[1] * blurAmount * height
+
+                    // Center sample - use bilinear for consistency
+                    var pixel = getPixelBilinear(pixels, width, height, x.toFloat(), y.toFloat())
+                    var r = ((pixel shr 16) and 0xFF) * weight0
+                    var g = ((pixel shr 8) and 0xFF) * weight0
+                    var b = (pixel and 0xFF) * weight0
+                    var a = ((pixel shr 24) and 0xFF) * weight0
+
+                    // Offset 1 samples (positive and negative) - use bilinear like GPU texture2D
+                    val x1p = x + stepX * offset1
+                    val y1p = y + stepY * offset1
+                    pixel = getPixelBilinear(pixels, width, height, x1p, y1p)
+                    r += ((pixel shr 16) and 0xFF) * weight1
+                    g += ((pixel shr 8) and 0xFF) * weight1
+                    b += (pixel and 0xFF) * weight1
+                    a += ((pixel shr 24) and 0xFF) * weight1
+
+                    val x1n = x - stepX * offset1
+                    val y1n = y - stepY * offset1
+                    pixel = getPixelBilinear(pixels, width, height, x1n, y1n)
+                    r += ((pixel shr 16) and 0xFF) * weight1
+                    g += ((pixel shr 8) and 0xFF) * weight1
+                    b += (pixel and 0xFF) * weight1
+                    a += ((pixel shr 24) and 0xFF) * weight1
+
+                    // Offset 2 samples (positive and negative) - use bilinear like GPU texture2D
+                    val x2p = x + stepX * offset2
+                    val y2p = y + stepY * offset2
+                    pixel = getPixelBilinear(pixels, width, height, x2p, y2p)
+                    r += ((pixel shr 16) and 0xFF) * weight2
+                    g += ((pixel shr 8) and 0xFF) * weight2
+                    b += (pixel and 0xFF) * weight2
+                    a += ((pixel shr 24) and 0xFF) * weight2
+
+                    val x2n = x - stepX * offset2
+                    val y2n = y - stepY * offset2
+                    pixel = getPixelBilinear(pixels, width, height, x2n, y2n)
+                    r += ((pixel shr 16) and 0xFF) * weight2
+                    g += ((pixel shr 8) and 0xFF) * weight2
+                    b += (pixel and 0xFF) * weight2
+                    a += ((pixel shr 24) and 0xFF) * weight2
+
+                    totalR += r
+                    totalG += g
+                    totalB += b
+                    totalA += a
+                }
+
+                // Average the 4 directions (same as GPU: * 0.25)
+                // Use rounding instead of truncation to match GPU more closely
+                val finalR = (totalR * 0.25f + 0.5f).toInt().coerceIn(0, 255)
+                val finalG = (totalG * 0.25f + 0.5f).toInt().coerceIn(0, 255)
+                val finalB = (totalB * 0.25f + 0.5f).toInt().coerceIn(0, 255)
+                val finalA = (totalA * 0.25f + 0.5f).toInt().coerceIn(0, 255)
+
+                result[y * width + x] = (finalA shl 24) or (finalR shl 16) or (finalG shl 8) or finalB
+            }
+        }
+
+        bitmap.setPixels(result, 0, width, 0, 0, width, height)
+        return bitmap
+    }
+
+    /**
+     * Bilinear interpolation for pixel sampling - matches GPU texture2D behavior
+     * This is critical for color accuracy when blur samples at non-integer coordinates
+     */
+    private fun getPixelBilinear(pixels: IntArray, width: Int, height: Int, x: Float, y: Float): Int {
+        // Clamp to valid range
+        val clampedX = x.coerceIn(0f, (width - 1).toFloat())
+        val clampedY = y.coerceIn(0f, (height - 1).toFloat())
+
+        // Get integer coordinates and fractional parts
+        val x0 = clampedX.toInt().coerceIn(0, width - 1)
+        val y0 = clampedY.toInt().coerceIn(0, height - 1)
+        val x1 = (x0 + 1).coerceIn(0, width - 1)
+        val y1 = (y0 + 1).coerceIn(0, height - 1)
+
+        val fx = clampedX - x0.toFloat()
+        val fy = clampedY - y0.toFloat()
+
+        // Get the 4 surrounding pixels
+        val p00 = pixels[y0 * width + x0]
+        val p10 = pixels[y0 * width + x1]
+        val p01 = pixels[y1 * width + x0]
+        val p11 = pixels[y1 * width + x1]
+
+        // Bilinear interpolation for each channel
+        val a = bilinearInterpolate(
+            ((p00 shr 24) and 0xFF).toFloat(),
+            ((p10 shr 24) and 0xFF).toFloat(),
+            ((p01 shr 24) and 0xFF).toFloat(),
+            ((p11 shr 24) and 0xFF).toFloat(),
+            fx, fy
+        ).toInt().coerceIn(0, 255)
+
+        val r = bilinearInterpolate(
+            ((p00 shr 16) and 0xFF).toFloat(),
+            ((p10 shr 16) and 0xFF).toFloat(),
+            ((p01 shr 16) and 0xFF).toFloat(),
+            ((p11 shr 16) and 0xFF).toFloat(),
+            fx, fy
+        ).toInt().coerceIn(0, 255)
+
+        val g = bilinearInterpolate(
+            ((p00 shr 8) and 0xFF).toFloat(),
+            ((p10 shr 8) and 0xFF).toFloat(),
+            ((p01 shr 8) and 0xFF).toFloat(),
+            ((p11 shr 8) and 0xFF).toFloat(),
+            fx, fy
+        ).toInt().coerceIn(0, 255)
+
+        val b = bilinearInterpolate(
+            (p00 and 0xFF).toFloat(),
+            (p10 and 0xFF).toFloat(),
+            (p01 and 0xFF).toFloat(),
+            (p11 and 0xFF).toFloat(),
+            fx, fy
+        ).toInt().coerceIn(0, 255)
+
+        return (a shl 24) or (r shl 16) or (g shl 8) or b
+    }
+
+    /**
+     * Bilinear interpolation formula: lerp(lerp(p00, p10, fx), lerp(p01, p11, fx), fy)
+     */
+    private fun bilinearInterpolate(p00: Float, p10: Float, p01: Float, p11: Float, fx: Float, fy: Float): Float {
+        val top = p00 + (p10 - p00) * fx
+        val bottom = p01 + (p11 - p01) * fx
+        return top + (bottom - top) * fy
     }
 
     /**

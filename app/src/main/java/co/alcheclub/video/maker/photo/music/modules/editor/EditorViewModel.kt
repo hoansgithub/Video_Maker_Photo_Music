@@ -38,7 +38,16 @@ sealed class EditorUiState {
         val pendingSettings: ProjectSettings? = null,
         // Navigation event - StateFlow-based (Google recommended pattern)
         // UI observes this and calls onNavigationHandled() after navigating
-        val navigationEvent: EditorNavigationEvent? = null
+        val navigationEvent: EditorNavigationEvent? = null,
+        // Playback position tracking for seekbar
+        val currentPositionMs: Long = 0L,
+        val durationMs: Long = 0L,
+        // Pending seek request (null = no pending seek)
+        val seekToPosition: Long? = null,
+        // Scrub position for frame preview while dragging (no resume after)
+        val scrubToPosition: Long? = null,
+        // Track if video was playing before seek (to restore after)
+        val wasPlayingBeforeSeek: Boolean = false
     ) : EditorUiState() {
         /** True if there are uncommitted setting changes */
         val hasPendingChanges: Boolean get() = pendingSettings != null
@@ -377,12 +386,99 @@ class EditorViewModel(
     }
 
     /**
-     * Stop playback
+     * Stop playback (used during seeking)
+     * Saves current playing state to restore after seek
      */
     fun stopPlayback() {
         val currentState = _uiState.value
-        if (currentState is EditorUiState.Success && currentState.isPlaying) {
-            _uiState.value = currentState.copy(isPlaying = false)
+        if (currentState is EditorUiState.Success) {
+            _uiState.value = currentState.copy(
+                wasPlayingBeforeSeek = currentState.isPlaying,
+                isPlaying = false
+            )
+        }
+    }
+
+    /**
+     * Resume playback after seeking if video was playing before
+     */
+    fun resumePlaybackAfterSeek() {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success && currentState.wasPlayingBeforeSeek) {
+            _uiState.value = currentState.copy(
+                isPlaying = true,
+                wasPlayingBeforeSeek = false
+            )
+        }
+    }
+
+    /**
+     * Update playback position from player callback
+     * Called periodically by VideoPreviewPlayer's position tracker
+     */
+    fun updatePlaybackPosition(currentMs: Long, durationMs: Long) {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success) {
+            // Only update if values actually changed (avoid unnecessary recomposition)
+            if (currentState.currentPositionMs != currentMs || currentState.durationMs != durationMs) {
+                _uiState.value = currentState.copy(
+                    currentPositionMs = currentMs,
+                    durationMs = durationMs
+                )
+            }
+        }
+    }
+
+    /**
+     * Request seek to a specific position
+     * VideoPreviewPlayer will handle the actual seek and call clearSeekRequest
+     */
+    fun seekTo(positionMs: Long) {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success) {
+            _uiState.value = currentState.copy(seekToPosition = positionMs)
+        }
+    }
+
+    /**
+     * Scrub to a position for frame preview while dragging
+     * Unlike seekTo, this doesn't trigger resume after completion
+     */
+    fun scrubTo(positionMs: Long) {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success) {
+            _uiState.value = currentState.copy(scrubToPosition = positionMs)
+        }
+    }
+
+    /**
+     * Clear scrub request after it's been handled by the player
+     * No resume logic - just clears the position
+     */
+    fun clearScrubRequest() {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success) {
+            _uiState.value = currentState.copy(scrubToPosition = null)
+        }
+    }
+
+    /**
+     * Clear pending seek request after it's been handled by the player
+     * Also resumes playback if the video was playing before the seek
+     */
+    fun clearSeekRequest() {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success) {
+            // Resume playback if video was playing before seek
+            val shouldResume = currentState.wasPlayingBeforeSeek
+            _uiState.value = currentState.copy(
+                seekToPosition = null,
+                isPlaying = if (shouldResume) true else currentState.isPlaying,
+                wasPlayingBeforeSeek = false
+            )
+            if (shouldResume) {
+                android.util.Log.d("EditorViewModel", "Resuming playback after seek complete")
+            }
         }
     }
 

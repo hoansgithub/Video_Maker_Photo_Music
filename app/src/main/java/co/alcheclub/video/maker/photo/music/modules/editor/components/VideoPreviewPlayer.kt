@@ -45,6 +45,11 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlin.coroutines.resume
+import android.os.Handler
+import android.os.Looper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 /**
  * Preview state for the video player
@@ -53,6 +58,22 @@ sealed class PreviewState {
     data object Building : PreviewState()
     data object Ready : PreviewState()
     data class Error(val message: String) : PreviewState()
+}
+
+/**
+ * Release a CompositionPlayer asynchronously to avoid blocking the main thread.
+ * CompositionPlayer.release() can block for 10+ seconds causing ANR.
+ */
+private fun CompositionPlayer.releaseAsync() {
+    val playerToRelease = this
+    GlobalScope.launch(Dispatchers.Default) {
+        try {
+            playerToRelease.release()
+            android.util.Log.d("VideoPreviewPlayer", "Player released asynchronously")
+        } catch (e: Exception) {
+            android.util.Log.e("VideoPreviewPlayer", "Error releasing player", e)
+        }
+    }
 }
 
 /**
@@ -141,6 +162,11 @@ fun VideoPreviewPlayer(
     isPlaying: Boolean,
     onPlayPauseClick: () -> Unit,
     onPlaybackStateChange: (Boolean) -> Unit,
+    onPositionUpdate: (currentMs: Long, durationMs: Long) -> Unit = { _, _ -> },
+    seekToPosition: Long? = null,
+    scrubToPosition: Long? = null,
+    onSeekComplete: () -> Unit = {},
+    onScrubComplete: () -> Unit = {},
     autoPlay: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -156,6 +182,64 @@ fun VideoPreviewPlayer(
 
     // Create composition factory
     val compositionFactory = remember { CompositionFactory(context) }
+
+    // Handler for periodic position updates
+    val positionHandler = remember { Handler(Looper.getMainLooper()) }
+    val positionUpdateRunnable = remember {
+        object : Runnable {
+            override fun run() {
+                player?.let { p ->
+                    if (p.playbackState == Player.STATE_READY || p.playbackState == Player.STATE_BUFFERING) {
+                        val currentPos = p.currentPosition.coerceAtLeast(0)
+                        val duration = p.duration.coerceAtLeast(0)
+                        onPositionUpdate(currentPos, duration)
+                    }
+                }
+                positionHandler.postDelayed(this, POSITION_UPDATE_INTERVAL_MS)
+            }
+        }
+    }
+
+    // Start/stop position updates based on player state
+    DisposableEffect(player) {
+        player?.let {
+            positionHandler.post(positionUpdateRunnable)
+        }
+        onDispose {
+            positionHandler.removeCallbacks(positionUpdateRunnable)
+        }
+    }
+
+    // Handle seek requests (final seek when user releases slider)
+    LaunchedEffect(seekToPosition) {
+        if (seekToPosition != null && seekToPosition >= 0) {
+            player?.let { p ->
+                try {
+                    p.seekTo(seekToPosition)
+                    android.util.Log.d("VideoPreviewPlayer", "Seeked to: ${seekToPosition}ms")
+                    // Small delay to let seek complete before resuming
+                    kotlinx.coroutines.delay(50)
+                } catch (e: Exception) {
+                    android.util.Log.e("VideoPreviewPlayer", "Error seeking", e)
+                }
+            }
+            onSeekComplete()
+        }
+    }
+
+    // Handle scrub requests (frame preview while dragging - no delay needed)
+    LaunchedEffect(scrubToPosition) {
+        if (scrubToPosition != null && scrubToPosition >= 0) {
+            player?.let { p ->
+                try {
+                    p.seekTo(scrubToPosition)
+                } catch (e: Exception) {
+                    android.util.Log.e("VideoPreviewPlayer", "Error scrubbing", e)
+                }
+            }
+            onScrubComplete()
+        }
+    }
 
     // Key that changes when project or settings change
     val compositionKey = remember(
@@ -186,7 +270,7 @@ fun VideoPreviewPlayer(
             // Check if project has assets
             if (project.assets.isEmpty()) {
                 previewState = PreviewState.Error("No assets to preview")
-                oldPlayer?.release()
+                oldPlayer?.releaseAsync()
                 player = null
                 return@LaunchedEffect
             }
@@ -243,9 +327,9 @@ fun VideoPreviewPlayer(
             // Atomically swap player - assign new one first, then release old
             player = newPlayer
 
-            // Now release old player
-            android.util.Log.d("VideoPreviewPlayer", "Releasing old player...")
-            oldPlayer?.release()
+            // Release old player asynchronously to avoid blocking main thread
+            android.util.Log.d("VideoPreviewPlayer", "Releasing old player asynchronously...")
+            oldPlayer?.releaseAsync()
             android.util.Log.d("VideoPreviewPlayer", "Player swap complete")
 
             // Await for player to be truly ready using suspend function (no delay!)
@@ -266,23 +350,28 @@ fun VideoPreviewPlayer(
             if (player == null) {
                 player = oldPlayer
             } else {
-                oldPlayer?.release()
+                oldPlayer?.releaseAsync()
             }
         }
     }
 
     // Control playback based on isPlaying state
-    // Uses async/await pattern - waits for playerReadyFlow instead of delay
+    // Uses proper async/await - waits for playerReadyFlow only if not already true
     LaunchedEffect(isPlaying, player) {
         val currentPlayer = player ?: return@LaunchedEffect
 
         if (isPlaying) {
-            // Await for player to be ready before playing (no delay!)
-            playerReadyFlow.first { it }
             try {
-                if (currentPlayer.playbackState == Player.STATE_READY) {
-                    currentPlayer.play()
+                // Only await if player is not ready yet
+                // If playerReadyFlow is already true, first() returns immediately
+                if (!playerReadyFlow.value) {
+                    android.util.Log.d("VideoPreviewPlayer", "Waiting for player to be ready...")
+                    playerReadyFlow.first { it }
+                    android.util.Log.d("VideoPreviewPlayer", "Player is now ready")
                 }
+                // Player is ready, play it
+                android.util.Log.d("VideoPreviewPlayer", "Playing video, state=${currentPlayer.playbackState}")
+                currentPlayer.play()
             } catch (e: Exception) {
                 android.util.Log.e("VideoPreviewPlayer", "Error playing", e)
             }
@@ -298,7 +387,8 @@ fun VideoPreviewPlayer(
     // Cleanup player and bitmaps on dispose
     DisposableEffect(Unit) {
         onDispose {
-            player?.release()
+            // Release player asynchronously to avoid ANR
+            player?.releaseAsync()
             player = null
             // Recycle transition bitmaps to free memory
             compositionFactory.recycleBitmaps()
@@ -468,3 +558,5 @@ fun VideoPreviewPlayer(
         }
     }
 }
+
+private const val POSITION_UPDATE_INTERVAL_MS = 200L
