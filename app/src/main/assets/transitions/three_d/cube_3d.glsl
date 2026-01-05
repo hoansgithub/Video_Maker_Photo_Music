@@ -4,7 +4,7 @@
 // @premium: true
 
 // 3D Cube rotation - FROM rotates away, TO rotates in
-// Z-scale only: closer to camera = brighter
+// Full perspective: objects closer to camera appear larger in both X and Y
 
 const float PI = 3.14159265359;
 
@@ -39,33 +39,37 @@ vec4 transition(vec2 uv) {
         // FROM FACE (rotating away)
         float localX = uv.x / hinge;
 
-        // Z-depth increases toward the hinge
-        float z = localX * sin(angle) * 0.4;
+        // Z-depth increases toward the hinge (further = smaller)
+        float z = localX * sin(angle) * 0.5;
         float perspZ = 1.0 + z;
 
+        // Apply perspective to BOTH X and Y (z-scale effect)
         float perspectiveY = 0.5 + (uv.y - 0.5) / perspZ;
+        float perspectiveX = 0.5 + (localX - 0.5) / perspZ;
 
-        if (perspectiveY < 0.0 || perspectiveY > 1.0) {
+        if (perspectiveY < 0.0 || perspectiveY > 1.0 || perspectiveX < 0.0 || perspectiveX > 1.0) {
             return vec4(0.0, 0.0, 0.0, 1.0);
         }
 
-        vec2 fromUV = vec2(localX, perspectiveY);
+        vec2 fromUV = vec2(perspectiveX, perspectiveY);
         return getFromColor(fromUV);
     } else {
         // TO FACE (rotating into view)
         float localX = (uv.x - hinge) / (1.0 - hinge);
 
-        // Z-depth decreases away from the hinge
-        float z = (1.0 - localX) * cos(angle) * 0.4;
+        // Z-depth decreases away from the hinge (closer = larger)
+        float z = (1.0 - localX) * cos(angle) * 0.5;
         float perspZ = 1.0 + z;
 
+        // Apply perspective to BOTH X and Y (z-scale effect)
         float perspectiveY = 0.5 + (uv.y - 0.5) / perspZ;
+        float perspectiveX = 0.5 + (localX - 0.5) / perspZ;
 
-        if (perspectiveY < 0.0 || perspectiveY > 1.0) {
+        if (perspectiveY < 0.0 || perspectiveY > 1.0 || perspectiveX < 0.0 || perspectiveX > 1.0) {
             return vec4(0.0, 0.0, 0.0, 1.0);
         }
 
-        vec2 toUV = vec2(localX, perspectiveY);
+        vec2 toUV = vec2(perspectiveX, perspectiveY);
         return getToColor(toUV);
     }
 }

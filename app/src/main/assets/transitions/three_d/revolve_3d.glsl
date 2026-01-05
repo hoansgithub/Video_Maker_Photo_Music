@@ -4,7 +4,7 @@
 // @premium: false
 
 // 3D revolving door - panels rotate around center
-// Z-scale only: closer to camera = brighter
+// Full perspective: objects closer to camera appear larger in both X and Y
 
 const float PI = 3.14159265359;
 
@@ -42,9 +42,9 @@ vec4 transition(vec2 uv) {
     float rotatedX = localX * abs(c);
     float rotatedZ = localX * s;
 
-    // Perspective based on Z depth
+    // Perspective based on Z depth (z-scale: closer = larger in both X and Y)
     float fov = 2.0;
-    float perspScale = fov / (fov + abs(rotatedZ) * 1.5);
+    float perspScale = fov / (fov + abs(rotatedZ) * 1.8);
     perspScale = max(perspScale, 0.3);
 
     float screenX;
@@ -61,7 +61,13 @@ vec4 transition(vec2 uv) {
         return vec4(0.0, 0.0, 0.0, 1.0);
     }
 
-    vec2 sourceUV = vec2(uv.x, screenY);
+    // Apply perspective to texture sampling (z-scale effect)
+    float sampleX = 0.5 + (uv.x - 0.5) / perspScale;
+    float sampleY = 0.5 + (uv.y - 0.5) / perspScale;
+    sampleX = clamp(sampleX, 0.0, 1.0);
+    sampleY = clamp(sampleY, 0.0, 1.0);
+
+    vec2 sourceUV = vec2(sampleX, sampleY);
 
     // Front when c > 0, back when c < 0
     if (c > 0.0) {

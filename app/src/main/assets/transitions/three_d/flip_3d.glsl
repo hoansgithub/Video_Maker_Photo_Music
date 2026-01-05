@@ -4,6 +4,7 @@
 // @premium: true
 
 // 3D flip - card flips from left edge, showing TO on back
+// Full perspective: objects closer to camera appear larger in both X and Y
 
 const float PI = 3.14159265359;
 
@@ -36,14 +37,17 @@ vec4 transition(vec2 uv) {
         if (uv.x <= projectedWidth && projectedWidth > 0.001) {
             float sampleX = uv.x / projectedWidth;
 
-            // Perspective based on depth
+            // Perspective based on depth (z-scale effect)
             float z = sampleX * s;
             float fov = 2.0;
-            float perspScale = fov / (fov + z * 0.5);
-            float sampleY = 0.5 + (uv.y - 0.5) / perspScale;
+            float perspScale = fov / (fov + z * 0.6);
 
-            if (sampleY >= 0.0 && sampleY <= 1.0) {
-                return getFromColor(vec2(sampleX, sampleY));
+            // Apply perspective to BOTH X and Y
+            float perspX = 0.5 + (sampleX - 0.5) / perspScale;
+            float perspY = 0.5 + (uv.y - 0.5) / perspScale;
+
+            if (perspY >= 0.0 && perspY <= 1.0 && perspX >= 0.0 && perspX <= 1.0) {
+                return getFromColor(vec2(perspX, perspY));
             }
         }
         // Area not covered by page - show TO
@@ -57,14 +61,17 @@ vec4 transition(vec2 uv) {
             float localX = (uv.x - pageStart) / projectedWidth;
             float sampleX = localX;
 
-            // Perspective
+            // Perspective (z-scale effect)
             float z = (1.0 - localX) * (-s);
             float fov = 2.0;
-            float perspScale = fov / (fov + abs(z) * 0.5);
-            float sampleY = 0.5 + (uv.y - 0.5) / perspScale;
+            float perspScale = fov / (fov + abs(z) * 0.6);
 
-            if (sampleY >= 0.0 && sampleY <= 1.0) {
-                return getToColor(vec2(sampleX, sampleY));
+            // Apply perspective to BOTH X and Y
+            float perspX = 0.5 + (sampleX - 0.5) / perspScale;
+            float perspY = 0.5 + (uv.y - 0.5) / perspScale;
+
+            if (perspY >= 0.0 && perspY <= 1.0 && perspX >= 0.0 && perspX <= 1.0) {
+                return getToColor(vec2(perspX, perspY));
             }
         }
         // Area not covered by page - show TO

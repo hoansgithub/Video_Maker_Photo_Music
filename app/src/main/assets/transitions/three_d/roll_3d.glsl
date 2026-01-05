@@ -4,7 +4,7 @@
 // @premium: false
 
 // Roll effect - rolled part mirrors around the roll axis
-// Based on cylinder geometry with z-scale only
+// Full perspective: curved parts appear larger when closer to camera
 
 const float PI = 3.14159265359;
 const float cylinderRadius = 0.12;
@@ -49,6 +49,13 @@ vec4 transition(vec2 uv) {
     // Angle on cylinder: acos gives 0 at top, PI at bottom
     float theta = acos(clamp(nd, -1.0, 1.0));
 
+    // Z-depth based on cylinder curve (sin(theta) gives z-distance from camera)
+    float zDepth = sin(theta) * cylinderRadius;
+
+    // Perspective scaling (z-scale: closer = larger in both X and Y)
+    float fov = 2.0;
+    float perspScale = fov / (fov + zDepth * 2.0);
+
     // Arc length from the top edge of cylinder
     float arcLength = theta * cylinderRadius;
 
@@ -67,5 +74,11 @@ vec4 transition(vec2 uv) {
     }
     sampleY = clamp(sampleY, 0.0, 1.0);
 
-    return getFromColor(vec2(uv.x, sampleY));
+    // Apply perspective to BOTH X and Y
+    float perspX = 0.5 + (uv.x - 0.5) / perspScale;
+    float perspY = 0.5 + (sampleY - 0.5) / perspScale;
+    perspX = clamp(perspX, 0.0, 1.0);
+    perspY = clamp(perspY, 0.0, 1.0);
+
+    return getFromColor(vec2(perspX, perspY));
 }

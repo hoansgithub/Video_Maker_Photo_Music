@@ -4,6 +4,7 @@
 // @premium: true
 
 // Page roll effect - rolled part mirrors around the curl axis
+// Full perspective: curved parts appear larger when closer to camera
 
 const float PI = 3.14159265359;
 const float cylinderRadius = 0.12;
@@ -49,6 +50,13 @@ vec4 transition(vec2 uv) {
     // For roll: right edge (d=r) is angle 0, left edge (d=-r) is angle PI
     float theta = acos(clamp(nd, -1.0, 1.0));
 
+    // Z-depth based on cylinder curve (sin(theta) gives z-distance from camera)
+    float zDepth = sin(theta) * cylinderRadius;
+
+    // Perspective scaling (z-scale: closer = larger in both X and Y)
+    float fov = 2.0;
+    float perspScale = fov / (fov + zDepth * 2.0);
+
     // Arc length from the right edge of cylinder
     float arcLength = theta * cylinderRadius;
 
@@ -67,5 +75,11 @@ vec4 transition(vec2 uv) {
     }
     sampleX = clamp(sampleX, 0.0, 1.0);
 
-    return getFromColor(vec2(sampleX, uv.y));
+    // Apply perspective to BOTH X and Y
+    float perspX = 0.5 + (sampleX - 0.5) / perspScale;
+    float perspY = 0.5 + (uv.y - 0.5) / perspScale;
+    perspX = clamp(perspX, 0.0, 1.0);
+    perspY = clamp(perspY, 0.0, 1.0);
+
+    return getFromColor(vec2(perspX, perspY));
 }

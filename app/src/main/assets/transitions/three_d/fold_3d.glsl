@@ -4,7 +4,7 @@
 // @premium: true
 
 // 3D Accordion Fold - panels fold like accordion
-// Z-scale only: closer to camera = brighter
+// Full perspective: objects closer to camera appear larger in both X and Y
 
 const float PI = 3.14159265359;
 const float NUM_FOLDS = 4.0;
@@ -59,13 +59,16 @@ vec4 transition(vec2 uv) {
     float foldDirection = mix(-1.0, 1.0, isEven);
     float foldedX = hingeX + foldDirection * distFromHinge * foldWidth * cosAngle;
 
-    // Perspective
+    // Perspective (z-scale effect: closer = larger in both X and Y)
     float focalLength = 3.0;
-    float perspectiveScale = focalLength / (focalLength + abs(foldedZ) * 0.8);
-    float perspectiveY = (uv.y - 0.5) * perspectiveScale + 0.5;
+    float perspectiveScale = focalLength / (focalLength + abs(foldedZ) * 1.0);
+
+    // Apply perspective to BOTH X and Y
+    float perspectiveX = 0.5 + (foldedX - 0.5) * perspectiveScale;
+    float perspectiveY = 0.5 + (uv.y - 0.5) * perspectiveScale;
 
     // Smooth start
-    vec2 foldedUV = vec2(foldedX, perspectiveY);
+    vec2 foldedUV = vec2(perspectiveX, perspectiveY);
     float uvBlend = smoothstep(0.0, 0.08, t);
     foldedUV = mix(uv, foldedUV, uvBlend);
 
