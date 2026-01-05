@@ -42,16 +42,23 @@ vec4 transition(vec2 uv) {
     // Chromatic aberration - scales with glitch intensity
     float aberration = glitchIntensity * 0.015;
 
+    // Clamp distorted UV first
+    distortedUV = clamp(distortedUV, 0.0, 1.0);
+
+    // Clamp aberration UVs to prevent sampling outside texture bounds
+    vec2 uvR = clamp(distortedUV + vec2(aberration, 0.0), 0.0, 1.0);
+    vec2 uvB = clamp(distortedUV - vec2(aberration, 0.0), 0.0, 1.0);
+
     // Sample FROM with chromatic aberration
-    vec4 fromR = getFromColor(distortedUV + vec2(aberration, 0.0));
+    vec4 fromR = getFromColor(uvR);
     vec4 fromG = getFromColor(distortedUV);
-    vec4 fromB = getFromColor(distortedUV - vec2(aberration, 0.0));
+    vec4 fromB = getFromColor(uvB);
     vec4 fromColor = vec4(fromR.r, fromG.g, fromB.b, 1.0);
 
     // Sample TO with chromatic aberration
-    vec4 toR = getToColor(distortedUV + vec2(aberration, 0.0));
+    vec4 toR = getToColor(uvR);
     vec4 toG = getToColor(distortedUV);
-    vec4 toB = getToColor(distortedUV - vec2(aberration, 0.0));
+    vec4 toB = getToColor(uvB);
     vec4 toColor = vec4(toR.r, toG.g, toB.b, 1.0);
 
     // Flash probability increases with progress

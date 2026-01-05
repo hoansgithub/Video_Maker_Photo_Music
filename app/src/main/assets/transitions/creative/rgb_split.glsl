@@ -37,14 +37,19 @@ vec4 transition(vec2 uv) {
     offsetR.x += glitch;
     offsetB.x -= glitch;
 
-    // Sample channels
-    float fromR = getFromColor(uv + offsetR).r;
-    float fromG = getFromColor(uv + offsetG).g;
-    float fromB = getFromColor(uv + offsetB).b;
+    // Clamp UV offsets to prevent sampling outside texture bounds
+    vec2 uvR = clamp(uv + offsetR, 0.0, 1.0);
+    vec2 uvG = clamp(uv + offsetG, 0.0, 1.0);
+    vec2 uvB = clamp(uv + offsetB, 0.0, 1.0);
 
-    float toR = getToColor(uv + offsetR).r;
-    float toG = getToColor(uv + offsetG).g;
-    float toB = getToColor(uv + offsetB).b;
+    // Sample channels
+    float fromR = getFromColor(uvR).r;
+    float fromG = getFromColor(uvG).g;
+    float fromB = getFromColor(uvB).b;
+
+    float toR = getToColor(uvR).r;
+    float toG = getToColor(uvG).g;
+    float toB = getToColor(uvB).b;
 
     // Blend
     vec3 result;
@@ -52,9 +57,12 @@ vec4 transition(vec2 uv) {
     result.g = mix(fromG, toG, t);
     result.b = mix(fromB, toB, t);
 
-    // Digital noise
-    float noise = (hash(uv.x * 100.0 + uv.y * 100.0 + time) - 0.5) * intensity * 0.1;
+    // Digital noise (subtle)
+    float noise = (hash(uv.x * 100.0 + uv.y * 100.0 + time) - 0.5) * intensity * 0.05;
     result += noise;
+
+    // Clamp final result
+    result = clamp(result, 0.0, 1.0);
 
     return vec4(result, 1.0);
 }

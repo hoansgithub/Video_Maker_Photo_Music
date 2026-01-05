@@ -32,15 +32,18 @@ vec4 transition(vec2 uv) {
 
     // Sample with slight RGB offset (color bleeding)
     float bleed = intensity * 0.003;
+    vec2 uvR = clamp(curvedUV + vec2(bleed, 0.0), 0.0, 1.0);
+    vec2 uvB = clamp(curvedUV - vec2(bleed, 0.0), 0.0, 1.0);
+
     vec3 fromColor;
-    fromColor.r = getFromColor(curvedUV + vec2(bleed, 0.0)).r;
+    fromColor.r = getFromColor(uvR).r;
     fromColor.g = getFromColor(curvedUV).g;
-    fromColor.b = getFromColor(curvedUV - vec2(bleed, 0.0)).b;
+    fromColor.b = getFromColor(uvB).b;
 
     vec3 toColor;
-    toColor.r = getToColor(curvedUV + vec2(bleed, 0.0)).r;
+    toColor.r = getToColor(uvR).r;
     toColor.g = getToColor(curvedUV).g;
-    toColor.b = getToColor(curvedUV - vec2(bleed, 0.0)).b;
+    toColor.b = getToColor(uvB).b;
 
     vec3 result = mix(fromColor, toColor, t);
 
@@ -65,6 +68,9 @@ vec4 transition(vec2 uv) {
 
     // Slight green tint (old monitor look)
     result.g += intensity * 0.02;
+
+    // Clamp final result
+    result = clamp(result, 0.0, 1.0);
 
     return vec4(result, 1.0);
 }

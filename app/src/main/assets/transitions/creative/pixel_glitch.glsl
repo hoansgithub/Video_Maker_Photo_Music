@@ -65,10 +65,14 @@ vec4 transition(vec2 uv) {
     float scanline = step(0.5, fract(uv.y * 100.0 + t * 20.0));
     result.rgb *= 1.0 - scanline * intensity * 0.1;
 
-    // Random white/black blocks
+    // Subtle brightness variation in random blocks (instead of harsh white/black)
     if (blockRand > 0.95) {
-        result.rgb = vec3(step(0.5, hash(block + 3.5)));
+        float brightnessShift = (hash(block + 3.5) - 0.5) * 0.3 * intensity;
+        result.rgb += brightnessShift;
     }
+
+    // Clamp final result
+    result.rgb = clamp(result.rgb, 0.0, 1.0);
 
     return result;
 }
