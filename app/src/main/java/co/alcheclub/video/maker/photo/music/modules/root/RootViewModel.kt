@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import java.lang.ref.WeakReference
+import co.alcheclub.video.maker.photo.music.core.data.local.LanguageManager
 import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.CheckLanguageSelectedUseCase
 import co.alcheclub.video.maker.photo.music.modules.language.domain.usecase.InitializeLanguageUseCase
 import co.alcheclub.video.maker.photo.music.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
@@ -33,15 +34,13 @@ class RootViewModel(
     private val checkOnboardingStatusUseCase: CheckOnboardingStatusUseCase,
     private val completeOnboardingUseCase: CompleteOnboardingUseCase,
     private val checkLanguageSelectedUseCase: CheckLanguageSelectedUseCase,
-    private val initializeLanguageUseCase: InitializeLanguageUseCase
+    private val initializeLanguageUseCase: InitializeLanguageUseCase,
+    private val languageManager: LanguageManager
 ) : ViewModel() {
 
     // ============================================
     // STATE
     // ============================================
-
-    private val _currentRoute = MutableStateFlow<AppRoute>(AppRoute.Loading)
-    val currentRoute: StateFlow<AppRoute> = _currentRoute.asStateFlow()
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -79,9 +78,21 @@ class RootViewModel(
      * @param activity Activity context
      */
     fun initializeApp(activity: Activity) {
+        activityRef = WeakReference(activity)
+
+        // Check if this is a recreation due to locale change
+        if (languageManager.isPendingLocaleRecreation()) {
+            languageManager.clearPendingLocaleRecreation()
+
+            // Re-check status and navigate (skip loading delay)
+            viewModelScope.launch {
+                reloadAndNavigate()
+            }
+            return
+        }
+
         if (isInitialized) return
 
-        activityRef = WeakReference(activity)
         isInitialized = true
 
         viewModelScope.launch {
@@ -91,6 +102,21 @@ class RootViewModel(
                 proceedToNextScreen()
             }
         }
+    }
+
+    /**
+     * Reload status and navigate after locale change (skip delay)
+     */
+    private suspend fun reloadAndNavigate() {
+        // Check if language has been selected
+        val languageResult = checkLanguageSelectedUseCase()
+        shouldShowLanguageSelection = languageResult.getOrNull() ?: false
+
+        // Check onboarding status
+        val onboardingResult = checkOnboardingStatusUseCase()
+        shouldShowOnboarding = onboardingResult.getOrNull() ?: false
+
+        proceedToNextScreen()
     }
 
     /**

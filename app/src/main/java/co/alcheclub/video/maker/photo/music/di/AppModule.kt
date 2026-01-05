@@ -220,7 +220,8 @@ val presentationModule = module {
             checkOnboardingStatusUseCase = it.get<CheckOnboardingStatusUseCase>(),
             completeOnboardingUseCase = it.get<CompleteOnboardingUseCase>(),
             checkLanguageSelectedUseCase = it.get<CheckLanguageSelectedUseCase>(),
-            initializeLanguageUseCase = it.get<InitializeLanguageUseCase>()
+            initializeLanguageUseCase = it.get<InitializeLanguageUseCase>(),
+            languageManager = it.get<LanguageManager>()
         )
     }
 

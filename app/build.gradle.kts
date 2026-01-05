@@ -20,7 +20,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "co.alcheclub.video.maker.photo.music"
+        applicationId = "com.aimusic.videoeditor"
         minSdk = 28
         targetSdk = 36
         versionCode = 1

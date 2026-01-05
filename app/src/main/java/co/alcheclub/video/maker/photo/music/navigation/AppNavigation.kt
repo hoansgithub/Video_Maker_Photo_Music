@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -142,12 +143,12 @@ fun AppNavigation(
             }
 
             composable<AppRoute.LanguageSelection> {
-                val languageManager: LanguageManager = ACCDI.get()
-                val getSelectedLanguageUseCase: GetSelectedLanguageUseCase = ACCDI.get()
-                val saveLanguagePreferenceUseCase: SaveLanguagePreferenceUseCase = ACCDI.get()
-                val applyLanguageUseCase: ApplyLanguageUseCase = ACCDI.get()
-                val completeLanguageSelectionUseCase: CompleteLanguageSelectionUseCase = ACCDI.get()
-                val currentLanguage = getSelectedLanguageUseCase()
+                val languageManager = remember { ACCDI.get<LanguageManager>() }
+                val getSelectedLanguageUseCase = remember { ACCDI.get<GetSelectedLanguageUseCase>() }
+                val saveLanguagePreferenceUseCase = remember { ACCDI.get<SaveLanguagePreferenceUseCase>() }
+                val applyLanguageUseCase = remember { ACCDI.get<ApplyLanguageUseCase>() }
+                val completeLanguageSelectionUseCase = remember { ACCDI.get<CompleteLanguageSelectionUseCase>() }
+                val currentLanguage = remember { getSelectedLanguageUseCase() }
 
                 LanguageSelectionScreen(
                     currentLanguage = currentLanguage,
@@ -156,10 +157,15 @@ fun AppNavigation(
                         saveLanguagePreferenceUseCase(languageCode)
                     },
                     onContinue = {
-                        // Apply the saved language and mark selection complete
-                        applyLanguageUseCase()
+                        // 1. Mark selection complete FIRST (persists to SharedPreferences)
                         completeLanguageSelectionUseCase()
-                        rootViewModel.onLanguageSelectionComplete()
+
+                        // 2. Set pending recreation flag (so RootViewModel knows to navigate after recreation)
+                        languageManager.setPendingLocaleRecreation()
+
+                        // 3. Apply language (triggers Activity recreation)
+                        // After recreation, RootViewModel will check pending flag and navigate
+                        applyLanguageUseCase()
                     },
                     // Provide localized string preview function
                     getLocalizedString = { resId, languageCode ->
@@ -321,10 +327,10 @@ fun AppNavigation(
             // ============================================
 
             composable<AppRoute.Settings> {
-                val getSelectedLanguageUseCase: GetSelectedLanguageUseCase = ACCDI.get()
-                val languageManager: LanguageManager = ACCDI.get()
-                val currentLanguageCode = getSelectedLanguageUseCase()
-                val currentLanguageName = languageManager.getLanguageDisplayName(currentLanguageCode)
+                val getSelectedLanguageUseCase = remember { ACCDI.get<GetSelectedLanguageUseCase>() }
+                val languageManager = remember { ACCDI.get<LanguageManager>() }
+                val currentLanguageCode = remember { getSelectedLanguageUseCase() }
+                val currentLanguageName = remember(currentLanguageCode) { languageManager.getLanguageDisplayName(currentLanguageCode) }
 
                 SettingsScreen(
                     currentLanguageName = currentLanguageName,
@@ -336,11 +342,11 @@ fun AppNavigation(
             }
 
             composable<AppRoute.LanguageSettings> {
-                val languageManager: LanguageManager = ACCDI.get()
-                val getSelectedLanguageUseCase: GetSelectedLanguageUseCase = ACCDI.get()
-                val saveLanguagePreferenceUseCase: SaveLanguagePreferenceUseCase = ACCDI.get()
-                val applyLanguageUseCase: ApplyLanguageUseCase = ACCDI.get()
-                val currentLanguage = getSelectedLanguageUseCase()
+                val languageManager = remember { ACCDI.get<LanguageManager>() }
+                val getSelectedLanguageUseCase = remember { ACCDI.get<GetSelectedLanguageUseCase>() }
+                val saveLanguagePreferenceUseCase = remember { ACCDI.get<SaveLanguagePreferenceUseCase>() }
+                val applyLanguageUseCase = remember { ACCDI.get<ApplyLanguageUseCase>() }
+                val currentLanguage = remember { getSelectedLanguageUseCase() }
 
                 LanguageSelectionScreen(
                     currentLanguage = currentLanguage,
@@ -350,12 +356,12 @@ fun AppNavigation(
                         saveLanguagePreferenceUseCase(languageCode)
                     },
                     onContinue = {
-                        // Apply the saved language from SharedPreferences (triggers Activity recreation)
-                        // Then navigate to Home to refresh the entire app with new locale
+                        // 1. Set pending recreation flag
+                        languageManager.setPendingLocaleRecreation()
+
+                        // 2. Apply language (triggers Activity recreation)
+                        // After recreation, RootViewModel will check pending flag and navigate to Home
                         applyLanguageUseCase()
-                        navController.navigate(AppRoute.Home) {
-                            popUpTo(navController.graph.id) { inclusive = true }
-                        }
                     },
                     onBackClick = {
                         navController.popBackStack()

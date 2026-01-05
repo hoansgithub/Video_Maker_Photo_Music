@@ -34,6 +34,7 @@ class LanguageManager(private val context: Context) {
         private const val PREFS_NAME = "language_prefs"
         private const val KEY_SELECTED_LANGUAGE = "selected_language"
         private const val KEY_LANGUAGE_SELECTION_COMPLETE = "language_selection_complete"
+        private const val KEY_PENDING_LOCALE_RECREATION = "pending_locale_recreation"
 
         // Supported language codes
         const val LANGUAGE_ENGLISH = "en"
@@ -162,6 +163,29 @@ class LanguageManager(private val context: Context) {
         // With autoStoreLocales=true, AppCompat handles locale restoration automatically.
         // No manual initialization needed - the locale is applied before Activity.onCreate()
         // completes on Android 12 and below, or via system API on Android 13+.
+    }
+
+    /**
+     * Set flag indicating Activity will recreate due to locale change.
+     * Call this BEFORE applying locale change.
+     */
+    fun setPendingLocaleRecreation() {
+        prefs.edit { putBoolean(KEY_PENDING_LOCALE_RECREATION, true) }
+    }
+
+    /**
+     * Check if Activity was recreated due to locale change.
+     */
+    fun isPendingLocaleRecreation(): Boolean {
+        return prefs.getBoolean(KEY_PENDING_LOCALE_RECREATION, false)
+    }
+
+    /**
+     * Clear the pending locale recreation flag.
+     * Call this after handling the recreation.
+     */
+    fun clearPendingLocaleRecreation() {
+        prefs.edit { putBoolean(KEY_PENDING_LOCALE_RECREATION, false) }
     }
 
     /**

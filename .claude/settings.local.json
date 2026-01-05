@@ -34,7 +34,10 @@
       "WebFetch(domain:andrewhungblog.wordpress.com)",
       "WebFetch(domain:stackoverflow.com)",
       "WebFetch(domain:tympanus.net)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(./gradlew installDebug:*)",
+      "Bash(export:*)",
+      "Bash(timeout 15 adb logcat:*)"
     ]
   }
 }
