@@ -63,10 +63,15 @@ sealed class PreviewState {
 /**
  * Release a CompositionPlayer asynchronously to avoid blocking the main thread.
  * CompositionPlayer.release() can block for 10+ seconds causing ANR.
+ *
+ * Note: GlobalScope is used here intentionally for fire-and-forget cleanup.
+ * The player must be released even if the composable is disposed, and we don't
+ * have access to a ViewModel scope in this extension function.
  */
+@Suppress("OPT_IN_USAGE")
 private fun CompositionPlayer.releaseAsync() {
     val playerToRelease = this
-    GlobalScope.launch(Dispatchers.Default) {
+    GlobalScope.launch(Dispatchers.IO) {
         try {
             playerToRelease.release()
             android.util.Log.d("VideoPreviewPlayer", "Player released asynchronously")
@@ -559,4 +564,4 @@ fun VideoPreviewPlayer(
     }
 }
 
-private const val POSITION_UPDATE_INTERVAL_MS = 200L
+private const val POSITION_UPDATE_INTERVAL_MS = 500L  // Reduced from 200ms to minimize UI recomposition

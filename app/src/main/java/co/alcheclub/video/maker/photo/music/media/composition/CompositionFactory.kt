@@ -84,7 +84,7 @@ class CompositionFactory(private val context: Context) {
                 }
             }
             android.util.Log.d("CompositionFactory", "Recycled $recycledCount transition bitmaps")
-            System.gc()
+            // Note: Removed System.gc() - let GC run naturally to avoid jank
         }
     }
 
@@ -203,10 +203,10 @@ class CompositionFactory(private val context: Context) {
                                 )
                                 sourceBitmap.recycle()
 
-                                // Save to cache file as PNG
-                                val cacheFile = File(cacheDir, "img_${index}_${System.currentTimeMillis()}.png")
+                                // Save to cache file as JPEG (3-5x faster than PNG with imperceptible quality loss)
+                                val cacheFile = File(cacheDir, "img_${index}_${System.currentTimeMillis()}.jpg")
                                 FileOutputStream(cacheFile).use { out ->
-                                    processedBitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                                    processedBitmap.compress(Bitmap.CompressFormat.JPEG, 95, out)
                                 }
                                 processedBitmap.recycle()
 
@@ -231,10 +231,7 @@ class CompositionFactory(private val context: Context) {
                 cacheFiles.add(file)
             }
 
-            // GC between chunks
-            if (chunk.size == MAX_CONCURRENT_LOADS) {
-                System.gc()
-            }
+            // Note: Removed System.gc() - manual GC causes jank; let it run naturally
         }
 
         // Track cache files for cleanup

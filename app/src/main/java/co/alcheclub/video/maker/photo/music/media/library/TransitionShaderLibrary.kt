@@ -5,7 +5,9 @@ import co.alcheclub.video.maker.photo.music.domain.model.Transition
 import co.alcheclub.video.maker.photo.music.domain.model.TransitionCategory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
@@ -31,7 +33,22 @@ import kotlinx.coroutines.launch
 object TransitionShaderLibrary {
 
     private var loader: TransitionLoader? = null
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    // Scope for background loading - tied to app lifecycle
+    // Uses SupervisorJob so one failure doesn't cancel others
+    // Lazily initialized and cached for reuse
+    private var _scope: CoroutineScope? = null
+    private val scope: CoroutineScope
+        get() {
+            val currentScope = _scope
+            if (currentScope != null && currentScope.coroutineContext[Job]?.isActive == true) {
+                return currentScope
+            }
+            // Create new scope with SupervisorJob
+            val newScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+            _scope = newScope
+            return newScope
+        }
 
     // Pre-computed cached values for fast access
     @Volatile private var cachedGroupedByCategory: Map<TransitionCategory, List<Transition>>? = null
@@ -105,9 +122,14 @@ object TransitionShaderLibrary {
     }
 
     /**
-     * Clear cached transitions (useful for development/testing)
+     * Clear cached transitions and cancel pending operations.
+     * Useful for development/testing or app shutdown.
      */
     fun clearCache() {
+        // Cancel any pending preload operations
+        _scope?.cancel()
+        _scope = null
+
         loader?.clearCache()
         cachedGroupedByCategory = null
     }
