@@ -665,6 +665,62 @@ val editedItem = EditedMediaItem.Builder(mediaItem)
     .build()
 ```
 
+### 9. CRITICAL: Transition Texture Color Consistency
+
+**Problem Discovered (3-day investigation):**
+When using Media3 Transformer with custom `GlEffect`/`GlShaderProgram` for transitions between images, there was a visible color difference:
+- During transition: TO image appeared brighter
+- After transition ended: Same image appeared darker (visible "jump")
+
+**Root Cause:**
+Media3's internal image-to-texture pipeline uses different color space handling than `BitmapFactory.decodeFile` + `GLUtils.texImage2D`. Even loading the same PNG file, the resulting GPU textures had different RGB values.
+
+**The Fix - Single Source of Truth Architecture:**
+
+```kotlin
+// ❌ FORBIDDEN - Mixing Media3's texture with our own loaded texture
+// This causes color mismatch!
+class TransitionShaderProgram : BaseGlShaderProgram {
+    override fun drawFrame(inputTexId: Int, presentationTimeUs: Long) {
+        // inputTexId = FROM image (loaded by Media3)
+        // toTextureId = TO image (loaded by us via GLUtils.texImage2D)
+        // PROBLEM: These have DIFFERENT colors for the same image!
+        program.setSamplerTexIdUniform("uFromSampler", inputTexId, 0)  // Media3's texture
+        program.setSamplerTexIdUniform("uToSampler", toTextureId, 1)   // Our texture
+    }
+}
+
+// ✅ REQUIRED - Load BOTH textures ourselves, IGNORE Media3's inputTexId
+class TransitionShaderProgram : BaseGlShaderProgram {
+    private var fromTextureId: Int = -1  // WE load this
+    private var toTextureId: Int = -1    // WE load this
+
+    override fun configure(inputWidth: Int, inputHeight: Int): Size {
+        // Load BOTH from same source (BitmapFactory + GLUtils.texImage2D)
+        fromTextureId = createTextureFromBitmap(fromImageBitmap)
+        toTextureId = createTextureFromBitmap(toImageBitmap)
+        return Size(inputWidth, inputHeight)
+    }
+
+    override fun drawFrame(inputTexId: Int, presentationTimeUs: Long) {
+        // IGNORE inputTexId - use OUR textures for BOTH
+        val fromTexId = if (fromTextureId != -1) fromTextureId else inputTexId
+        val toTexId = if (toTextureId != -1) toTextureId else inputTexId
+
+        program.setSamplerTexIdUniform("uFromSampler", fromTexId, 0)  // Our texture
+        program.setSamplerTexIdUniform("uToSampler", toTexId, 1)      // Our texture
+        // Now BOTH use identical loading path → identical colors!
+    }
+}
+```
+
+**Key Takeaway:**
+When blending two images in a custom GlShaderProgram, NEVER mix Media3's internally-loaded texture with your own BitmapFactory-loaded texture. Either:
+1. Use Media3 for both (if possible)
+2. Load BOTH yourself using identical methods (recommended for transitions)
+
+This ensures the color handling is consistent across both textures.
+
 ---
 
 ## Module Structure

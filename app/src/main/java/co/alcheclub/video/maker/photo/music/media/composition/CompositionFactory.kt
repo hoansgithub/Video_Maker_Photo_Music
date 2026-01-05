@@ -3,11 +3,8 @@ package co.alcheclub.video.maker.photo.music.media.composition
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Rect
-import android.graphics.RectF
 import android.net.Uri
+import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
@@ -22,15 +19,7 @@ import co.alcheclub.video.maker.photo.music.media.effects.TransitionEffect
 import co.alcheclub.video.maker.photo.music.media.library.AudioTrackLibrary
 import co.alcheclub.video.maker.photo.music.media.library.FrameLibrary
 import co.alcheclub.video.maker.photo.music.media.library.TransitionShaderLibrary
-import androidx.media3.common.Effect
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import java.io.File
-import java.io.FileOutputStream
-import kotlin.math.min
-import kotlin.math.max
 
 /**
  * CompositionFactory - Creates Media3 Composition from Project domain model
@@ -59,9 +48,17 @@ class CompositionFactory(private val context: Context) {
     )
 
     /**
-     * Tracks the last set of transition bitmaps for memory management.
+     * Data class holding both FROM and TO bitmaps for a clip's transition
      */
-    private var lastTransitionBitmaps: Map<Int, Bitmap>? = null
+    private data class TransitionBitmapPair(
+        val fromBitmap: Bitmap,
+        val toBitmap: Bitmap
+    )
+
+    /**
+     * Tracks the last set of transition bitmap pairs (FROM + TO) for memory management.
+     */
+    private var lastTransitionBitmaps: Map<Int, TransitionBitmapPair>? = null
 
     /**
      * Tracks cache files for cleanup
@@ -69,21 +66,25 @@ class CompositionFactory(private val context: Context) {
     private var lastCacheFiles: List<File>? = null
 
     /**
-     * Recycle all tracked transition bitmaps.
+     * Recycle all tracked transition bitmaps (both FROM and TO).
      */
     fun recycleBitmaps() {
-        val bitmaps = lastTransitionBitmaps
+        val bitmapPairs = lastTransitionBitmaps
         lastTransitionBitmaps = null
 
-        if (bitmaps != null) {
+        if (bitmapPairs != null) {
             var recycledCount = 0
-            bitmaps.values.forEach { bitmap ->
-                if (!bitmap.isRecycled) {
-                    bitmap.recycle()
+            bitmapPairs.values.forEach { pair ->
+                if (!pair.fromBitmap.isRecycled) {
+                    pair.fromBitmap.recycle()
+                    recycledCount++
+                }
+                if (!pair.toBitmap.isRecycled) {
+                    pair.toBitmap.recycle()
                     recycledCount++
                 }
             }
-            android.util.Log.d("CompositionFactory", "Recycled $recycledCount transition bitmaps")
+            android.util.Log.d("CompositionFactory", "Recycled $recycledCount transition bitmaps (from+to pairs)")
             // Note: Removed System.gc() - let GC run naturally to avoid jank
         }
     }
@@ -160,13 +161,16 @@ class CompositionFactory(private val context: Context) {
     }
 
     /**
-     * Pre-process ALL images with blur background effect
+     * Pre-process ALL images with GPU blur background effect
      *
-     * SINGLE SOURCE OF TRUTH: Every image goes through identical processing:
+     * SINGLE SOURCE OF TRUTH: Every image goes through identical GPU processing:
      * 1. Load original image
-     * 2. Create blur background (scale-to-fill + Gaussian blur)
-     * 3. Overlay sharp foreground (scale-to-fit)
-     * 4. Save to cache as PNG
+     * 2. GPU renders blur background + sharp foreground (same shader as BlurBackgroundEffect)
+     * 3. Save GPU output to cache as PNG (lossless)
+     * 4. Both Media3 and TransitionEffect use this cached GPU output
+     *
+     * This ensures identical color handling because both consumers load the same
+     * GPU-rendered cached image.
      *
      * @return Map of asset index to ProcessedImage info
      */
@@ -185,53 +189,39 @@ class CompositionFactory(private val context: Context) {
             cacheDir.mkdirs()
         }
 
-        // Process images in chunks to prevent OOM
-        assets.indices.toList().chunked(MAX_CONCURRENT_LOADS).forEach { chunk ->
-            val chunkResults = coroutineScope {
-                chunk.map { index ->
-                    async(Dispatchers.IO) {
-                        try {
-                            val asset = assets[index]
-                            val sourceBitmap = loadBitmapFromUri(asset.uri, textureSize, textureSize)
+        // GPU preprocessing - single source of truth
+        val gpuPreprocessor = GPUImagePreprocessor(context)
+        try {
+            if (!gpuPreprocessor.initialize()) {
+                android.util.Log.e("CompositionFactory", "Failed to initialize GPU preprocessor")
+                return emptyMap()
+            }
 
-                            if (sourceBitmap != null) {
-                                // Apply blur background effect
-                                val processedBitmap = createBlurBackgroundBitmap(
-                                    source = sourceBitmap,
-                                    targetAspectRatio = targetAspectRatio,
-                                    textureSize = textureSize
-                                )
-                                sourceBitmap.recycle()
+            // Process images sequentially on GPU (GPU context is single-threaded)
+            assets.forEachIndexed { index, asset ->
+                try {
+                    val cacheFile = File(cacheDir, "img_${index}_${System.currentTimeMillis()}.png")
 
-                                // Save to cache file as JPEG (3-5x faster than PNG with imperceptible quality loss)
-                                val cacheFile = File(cacheDir, "img_${index}_${System.currentTimeMillis()}.jpg")
-                                FileOutputStream(cacheFile).use { out ->
-                                    processedBitmap.compress(Bitmap.CompressFormat.JPEG, 95, out)
-                                }
-                                processedBitmap.recycle()
+                    val success = gpuPreprocessor.preprocessImage(
+                        inputUri = asset.uri,
+                        outputFile = cacheFile,
+                        targetAspectRatio = targetAspectRatio,
+                        textureSize = textureSize
+                    )
 
-                                android.util.Log.d("CompositionFactory", "Pre-processed image $index: ${cacheFile.name}")
-
-                                Triple(index, ProcessedImage(Uri.fromFile(cacheFile), cacheFile), cacheFile)
-                            } else {
-                                android.util.Log.w("CompositionFactory", "Failed to load image $index")
-                                null
-                            }
-                        } catch (e: Exception) {
-                            android.util.Log.e("CompositionFactory", "Failed to pre-process image $index", e)
-                            null
-                        }
+                    if (success) {
+                        results[index] = ProcessedImage(Uri.fromFile(cacheFile), cacheFile)
+                        cacheFiles.add(cacheFile)
+                        android.util.Log.d("CompositionFactory", "GPU pre-processed image $index: ${cacheFile.name}")
+                    } else {
+                        android.util.Log.w("CompositionFactory", "Failed to GPU pre-process image $index")
                     }
-                }.awaitAll()
+                } catch (e: Exception) {
+                    android.util.Log.e("CompositionFactory", "Failed to pre-process image $index", e)
+                }
             }
-
-            // Collect results
-            chunkResults.filterNotNull().forEach { (index, processedImage, file) ->
-                results[index] = processedImage
-                cacheFiles.add(file)
-            }
-
-            // Note: Removed System.gc() - manual GC causes jank; let it run naturally
+        } finally {
+            gpuPreprocessor.release()
         }
 
         // Track cache files for cleanup
@@ -241,41 +231,65 @@ class CompositionFactory(private val context: Context) {
     }
 
     /**
-     * Load transition TO bitmaps from cache files
+     * Load bitmaps from GPU-cached files for ALL clips
      *
-     * SINGLE SOURCE OF TRUTH: TO textures come from the SAME cache files
-     * that Media3 uses for FROM textures. This ensures identical colors.
+     * SINGLE SOURCE OF TRUTH: All textures come from the SAME GPU-rendered cache files.
+     * This ensures identical color handling because:
+     * - Same GPU shader produced all images
+     * - Same PNG files are loaded using identical BitmapFactory.decodeFile
+     * - TransitionEffect loads textures itself (ignores Media3's inputTexId)
      *
-     * @return Map of clip index to pre-loaded bitmap (flipped for OpenGL)
+     * For clips with transitions: loads FROM + TO bitmaps
+     * For last clip (no transition): loads only FROM bitmap (for passthrough rendering)
+     *
+     * @return Map of clip index to TransitionBitmapPair (from + optional to)
      */
     private suspend fun loadTransitionBitmapsFromCache(
         processedImages: Map<Int, ProcessedImage>,
         settings: ProjectSettings
-    ): Map<Int, Bitmap> {
-        // Skip if transitions are disabled
-        if (settings.transitionId == null) {
-            android.util.Log.d("CompositionFactory", "Transitions disabled, skipping bitmap load")
-            return emptyMap()
-        }
+    ): Map<Int, TransitionBitmapPair> {
+        val results = mutableMapOf<Int, TransitionBitmapPair>()
+        val sortedIndices = processedImages.keys.sorted()
 
-        val results = mutableMapOf<Int, Bitmap>()
+        // Load bitmaps for ALL clips
+        sortedIndices.forEach { index ->
+            val currentProcessedImage = processedImages[index]
+            val isLastClip = index == sortedIndices.last()
+            val hasTransition = !isLastClip && settings.transitionId != null
 
-        // For each clip (except last), load the NEXT image's cache file
-        processedImages.keys.sorted().dropLast(1).forEach { index ->
-            val nextIndex = index + 1
-            val nextProcessedImage = processedImages[nextIndex]
-
-            if (nextProcessedImage != null) {
+            if (currentProcessedImage != null) {
                 try {
-                    // Load from cache file - SAME file that Media3 will use
-                    // DO NOT flip - let shader handle Y-flip to preserve exact color values
-                    val bitmap = BitmapFactory.decodeFile(nextProcessedImage.cacheFile.absolutePath)
-                    if (bitmap != null) {
-                        results[index] = bitmap
-                        android.util.Log.d("CompositionFactory", "Loaded TO bitmap for clip $index from cache (no flip)")
+                    // Load FROM bitmap (current clip's image) - needed for ALL clips
+                    val fromBitmap = BitmapFactory.decodeFile(currentProcessedImage.cacheFile.absolutePath)
+
+                    if (fromBitmap != null) {
+                        if (hasTransition) {
+                            // For clips with transition: also load TO bitmap (next clip)
+                            val nextIndex = index + 1
+                            val nextProcessedImage = processedImages[nextIndex]
+                            val toBitmap = nextProcessedImage?.let {
+                                BitmapFactory.decodeFile(it.cacheFile.absolutePath)
+                            }
+
+                            if (toBitmap != null) {
+                                results[index] = TransitionBitmapPair(fromBitmap, toBitmap)
+                                android.util.Log.d("CompositionFactory", "Loaded FROM+TO bitmaps for clip $index")
+                            } else {
+                                // Fallback: use FROM as TO (no visible transition but consistent rendering)
+                                results[index] = TransitionBitmapPair(fromBitmap, fromBitmap)
+                                android.util.Log.w("CompositionFactory", "Using FROM as TO for clip $index (fallback)")
+                            }
+                        } else {
+                            // For last clip (no transition): use FROM for both (passthrough mode)
+                            // This ensures consistent rendering through TransitionEffect
+                            results[index] = TransitionBitmapPair(fromBitmap, fromBitmap)
+                            android.util.Log.d("CompositionFactory", "Loaded passthrough bitmap for last clip $index")
+                        }
+                    } else {
+                        android.util.Log.w("CompositionFactory", "Failed to load FROM bitmap for clip $index")
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("CompositionFactory", "Failed to load TO bitmap for clip $index", e)
+                    android.util.Log.e("CompositionFactory", "Failed to load bitmaps for clip $index", e)
                 }
             }
         }
@@ -283,333 +297,60 @@ class CompositionFactory(private val context: Context) {
         return results
     }
 
-    /**
-     * Create blur background bitmap
-     *
-     * Creates output with:
-     * 1. Blurred, scale-to-fill background
-     * 2. Sharp, scale-to-fit foreground centered on top
-     */
-    private fun createBlurBackgroundBitmap(
-        source: Bitmap,
-        targetAspectRatio: Float,
-        textureSize: Int
-    ): Bitmap {
-        // Calculate output dimensions
-        val outputWidth = textureSize
-        val outputHeight = (textureSize / targetAspectRatio).toInt()
-
-        // Create output bitmap
-        val output = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(output)
-
-        // 1. Draw blurred background (scale-to-fill)
-        val blurredBg = createBlurredBackground(source, outputWidth, outputHeight)
-        val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-        canvas.drawBitmap(blurredBg, 0f, 0f, bgPaint)
-        blurredBg.recycle()
-
-        // 2. Calculate scale-to-fit dimensions for foreground
-        val sourceAspect = source.width.toFloat() / source.height.toFloat()
-        val outputAspect = outputWidth.toFloat() / outputHeight.toFloat()
-
-        val fitWidth: Float
-        val fitHeight: Float
-        if (sourceAspect > outputAspect) {
-            fitWidth = outputWidth.toFloat()
-            fitHeight = outputWidth / sourceAspect
-        } else {
-            fitHeight = outputHeight.toFloat()
-            fitWidth = outputHeight * sourceAspect
-        }
-
-        // Center the foreground
-        val left = (outputWidth - fitWidth) / 2f
-        val top = (outputHeight - fitHeight) / 2f
-
-        // 3. Draw foreground (scale-to-fit)
-        val destRect = RectF(left, top, left + fitWidth, top + fitHeight)
-        val srcRect = Rect(0, 0, source.width, source.height)
-        val fgPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-        canvas.drawBitmap(source, srcRect, destRect, fgPaint)
-
-        return output
-    }
-
-    /**
-     * Flip bitmap vertically for OpenGL coordinate system
-     */
-    private fun flipBitmapVertically(source: Bitmap): Bitmap {
-        val matrix = android.graphics.Matrix()
-        matrix.setScale(1f, -1f, source.width / 2f, source.height / 2f)
-        return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
-    }
-
-    /**
-     * Create blurred background (scale-to-fill + Gaussian blur)
-     */
-    private fun createBlurredBackground(source: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
-        val scaledToFill = createScaledToFillCopy(source, targetWidth, targetHeight)
-        return try {
-            gaussianBlur4Direction(scaledToFill)
-        } catch (e: Exception) {
-            android.util.Log.w("CompositionFactory", "Blur failed: ${e.message}")
-            scaledToFill
-        }
-    }
-
-    /**
-     * 4-direction Gaussian blur matching GPU implementation
-     */
-    private fun gaussianBlur4Direction(bitmap: Bitmap): Bitmap {
-        val width = bitmap.width
-        val height = bitmap.height
-        val pixels = IntArray(width * height)
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
-
-        val result = IntArray(width * height)
-
-        val weight0 = 0.2272542543f
-        val weight1 = 0.3165327489f
-        val weight2 = 0.0703065234f
-
-        val offset1 = 1.3846153846f
-        val offset2 = 3.2307692308f
-
-        val blurAmount = 0.025f
-
-        val directions = arrayOf(
-            floatArrayOf(1f, 0f),
-            floatArrayOf(0f, 1f),
-            floatArrayOf(0.707f, 0.707f),
-            floatArrayOf(0.707f, -0.707f)
-        )
-
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                var totalR = 0f
-                var totalG = 0f
-                var totalB = 0f
-                var totalA = 0f
-
-                for (dir in directions) {
-                    val stepX = dir[0] * blurAmount * width
-                    val stepY = dir[1] * blurAmount * height
-
-                    var pixel = getPixelBilinear(pixels, width, height, x.toFloat(), y.toFloat())
-                    var r = ((pixel shr 16) and 0xFF) * weight0
-                    var g = ((pixel shr 8) and 0xFF) * weight0
-                    var b = (pixel and 0xFF) * weight0
-                    var a = ((pixel shr 24) and 0xFF) * weight0
-
-                    val x1p = x + stepX * offset1
-                    val y1p = y + stepY * offset1
-                    pixel = getPixelBilinear(pixels, width, height, x1p, y1p)
-                    r += ((pixel shr 16) and 0xFF) * weight1
-                    g += ((pixel shr 8) and 0xFF) * weight1
-                    b += (pixel and 0xFF) * weight1
-                    a += ((pixel shr 24) and 0xFF) * weight1
-
-                    val x1n = x - stepX * offset1
-                    val y1n = y - stepY * offset1
-                    pixel = getPixelBilinear(pixels, width, height, x1n, y1n)
-                    r += ((pixel shr 16) and 0xFF) * weight1
-                    g += ((pixel shr 8) and 0xFF) * weight1
-                    b += (pixel and 0xFF) * weight1
-                    a += ((pixel shr 24) and 0xFF) * weight1
-
-                    val x2p = x + stepX * offset2
-                    val y2p = y + stepY * offset2
-                    pixel = getPixelBilinear(pixels, width, height, x2p, y2p)
-                    r += ((pixel shr 16) and 0xFF) * weight2
-                    g += ((pixel shr 8) and 0xFF) * weight2
-                    b += (pixel and 0xFF) * weight2
-                    a += ((pixel shr 24) and 0xFF) * weight2
-
-                    val x2n = x - stepX * offset2
-                    val y2n = y - stepY * offset2
-                    pixel = getPixelBilinear(pixels, width, height, x2n, y2n)
-                    r += ((pixel shr 16) and 0xFF) * weight2
-                    g += ((pixel shr 8) and 0xFF) * weight2
-                    b += (pixel and 0xFF) * weight2
-                    a += ((pixel shr 24) and 0xFF) * weight2
-
-                    totalR += r
-                    totalG += g
-                    totalB += b
-                    totalA += a
-                }
-
-                val finalR = (totalR * 0.25f + 0.5f).toInt().coerceIn(0, 255)
-                val finalG = (totalG * 0.25f + 0.5f).toInt().coerceIn(0, 255)
-                val finalB = (totalB * 0.25f + 0.5f).toInt().coerceIn(0, 255)
-                val finalA = (totalA * 0.25f + 0.5f).toInt().coerceIn(0, 255)
-
-                result[y * width + x] = (finalA shl 24) or (finalR shl 16) or (finalG shl 8) or finalB
-            }
-        }
-
-        bitmap.setPixels(result, 0, width, 0, 0, width, height)
-        return bitmap
-    }
-
-    private fun getPixelBilinear(pixels: IntArray, width: Int, height: Int, x: Float, y: Float): Int {
-        val clampedX = x.coerceIn(0f, (width - 1).toFloat())
-        val clampedY = y.coerceIn(0f, (height - 1).toFloat())
-
-        val x0 = clampedX.toInt().coerceIn(0, width - 1)
-        val y0 = clampedY.toInt().coerceIn(0, height - 1)
-        val x1 = (x0 + 1).coerceIn(0, width - 1)
-        val y1 = (y0 + 1).coerceIn(0, height - 1)
-
-        val fx = clampedX - x0.toFloat()
-        val fy = clampedY - y0.toFloat()
-
-        val p00 = pixels[y0 * width + x0]
-        val p10 = pixels[y0 * width + x1]
-        val p01 = pixels[y1 * width + x0]
-        val p11 = pixels[y1 * width + x1]
-
-        val a = bilinearInterpolate(
-            ((p00 shr 24) and 0xFF).toFloat(),
-            ((p10 shr 24) and 0xFF).toFloat(),
-            ((p01 shr 24) and 0xFF).toFloat(),
-            ((p11 shr 24) and 0xFF).toFloat(),
-            fx, fy
-        ).toInt().coerceIn(0, 255)
-
-        val r = bilinearInterpolate(
-            ((p00 shr 16) and 0xFF).toFloat(),
-            ((p10 shr 16) and 0xFF).toFloat(),
-            ((p01 shr 16) and 0xFF).toFloat(),
-            ((p11 shr 16) and 0xFF).toFloat(),
-            fx, fy
-        ).toInt().coerceIn(0, 255)
-
-        val g = bilinearInterpolate(
-            ((p00 shr 8) and 0xFF).toFloat(),
-            ((p10 shr 8) and 0xFF).toFloat(),
-            ((p01 shr 8) and 0xFF).toFloat(),
-            ((p11 shr 8) and 0xFF).toFloat(),
-            fx, fy
-        ).toInt().coerceIn(0, 255)
-
-        val b = bilinearInterpolate(
-            (p00 and 0xFF).toFloat(),
-            (p10 and 0xFF).toFloat(),
-            (p01 and 0xFF).toFloat(),
-            (p11 and 0xFF).toFloat(),
-            fx, fy
-        ).toInt().coerceIn(0, 255)
-
-        return (a shl 24) or (r shl 16) or (g shl 8) or b
-    }
-
-    private fun bilinearInterpolate(p00: Float, p10: Float, p01: Float, p11: Float, fx: Float, fy: Float): Float {
-        val top = p00 + (p10 - p00) * fx
-        val bottom = p01 + (p11 - p01) * fx
-        return top + (bottom - top) * fy
-    }
-
-    private fun createScaledToFillCopy(source: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
-        val sourceAspect = source.width.toFloat() / source.height.toFloat()
-        val targetAspect = targetWidth.toFloat() / targetHeight.toFloat()
-
-        val scale: Float
-        val srcRect: Rect
-        if (sourceAspect > targetAspect) {
-            scale = targetHeight.toFloat() / source.height
-            val scaledWidth = (source.width * scale).toInt()
-            val cropX = ((scaledWidth - targetWidth) / 2 / scale).toInt()
-            srcRect = Rect(cropX, 0, source.width - cropX, source.height)
-        } else {
-            scale = targetWidth.toFloat() / source.width
-            val scaledHeight = (source.height * scale).toInt()
-            val cropY = ((scaledHeight - targetHeight) / 2 / scale).toInt()
-            srcRect = Rect(0, cropY, source.width, source.height - cropY)
-        }
-
-        val result = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(result)
-        val destRect = Rect(0, 0, targetWidth, targetHeight)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-        canvas.drawBitmap(source, srcRect, destRect, paint)
-
-        return result
-    }
-
-    private fun loadBitmapFromUri(uri: Uri, maxWidth: Int, maxHeight: Int): Bitmap? {
-        return try {
-            val options = BitmapFactory.Options().apply {
-                inJustDecodeBounds = true
-            }
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                BitmapFactory.decodeStream(input, null, options)
-            }
-
-            val sampleSize = calculateSampleSize(
-                options.outWidth,
-                options.outHeight,
-                maxWidth,
-                maxHeight
-            )
-
-            val decodeOptions = BitmapFactory.Options().apply {
-                inSampleSize = sampleSize
-                inPreferredConfig = Bitmap.Config.ARGB_8888
-            }
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                BitmapFactory.decodeStream(input, null, decodeOptions)
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("CompositionFactory", "Failed to load bitmap from $uri", e)
-            null
-        }
-    }
-
-    private fun calculateSampleSize(
-        sourceWidth: Int,
-        sourceHeight: Int,
-        targetWidth: Int,
-        targetHeight: Int
-    ): Int {
-        var sampleSize = 1
-        if (sourceWidth > targetWidth || sourceHeight > targetHeight) {
-            val halfWidth = sourceWidth / 2
-            val halfHeight = sourceHeight / 2
-            while ((halfWidth / sampleSize) >= targetWidth &&
-                (halfHeight / sampleSize) >= targetHeight) {
-                sampleSize *= 2
-            }
-        }
-        return sampleSize
-    }
+    // CPU blur code removed - now using GPU preprocessing via GPUImagePreprocessor
+    // This ensures single source of truth for color handling
 
     /**
      * Create video sequence using pre-processed cache URIs
+     *
+     * IMPORTANT: ALL clips use TransitionEffect for consistent rendering:
+     * - Clips with transition: TransitionEffect with actual transition
+     * - Last clip (no transition): TransitionEffect in passthrough mode (shows FROM image)
+     *
+     * This ensures all images go through our consistent texture loading pipeline,
+     * avoiding orientation/color issues from Media3's internal image handling.
      */
     private fun createVideoSequence(
         assets: List<Asset>,
         settings: ProjectSettings,
         processedImages: Map<Int, ProcessedImage>,
-        transitionBitmaps: Map<Int, Bitmap>
+        transitionBitmaps: Map<Int, TransitionBitmapPair>
     ): EditedMediaItemSequence {
         val selectedTransition = getTransition(settings)
+        // For passthrough mode on last clip, use crossfade (simplest transition)
+        val passthroughTransition = TransitionShaderLibrary.getDefault()
 
         var cumulativeStartTimeUs = 0L
 
         val editedItems = assets.mapIndexed { index, asset ->
-            val nextBitmap = transitionBitmaps[index]
-            val hasTransition = nextBitmap != null && selectedTransition != null
-            val transition = if (hasTransition) selectedTransition else null
+            val bitmapPair = transitionBitmaps[index]
+            val isLastClip = index == assets.size - 1
+
+            // Determine transition mode:
+            // - Regular clips: use selected transition if available
+            // - Last clip: use passthrough mode (TransitionEffect with 0 duration)
+            val hasActualTransition = !isLastClip && bitmapPair != null && selectedTransition != null
+            val usePassthroughMode = isLastClip && bitmapPair != null
+
+            val transition = when {
+                hasActualTransition -> selectedTransition
+                usePassthroughMode -> passthroughTransition  // Passthrough uses crossfade at progress=0
+                else -> null
+            }
 
             val imageDurationMs = settings.imageDurationMs
-            val transitionDurationMs = if (hasTransition) settings.transitionOverlapMs else 0L
+            // Last clip has no transition overlap
+            val transitionDurationMs = if (hasActualTransition) settings.transitionOverlapMs else 0L
             val totalDurationMs = imageDurationMs + transitionDurationMs
 
             val clipStartTimeUs = cumulativeStartTimeUs
 
-            android.util.Log.d("CompositionFactory", "Clip $index: startTime=${clipStartTimeUs/1000}ms, duration=${totalDurationMs}ms, transition=${transition?.name ?: "none"}")
+            val logMode = when {
+                hasActualTransition -> "transition=${transition?.name}"
+                usePassthroughMode -> "passthrough"
+                else -> "none"
+            }
+            android.util.Log.d("CompositionFactory", "Clip $index: startTime=${clipStartTimeUs/1000}ms, duration=${totalDurationMs}ms, mode=$logMode")
 
             // Use CACHE URI instead of original asset URI
             val imageUri = processedImages[index]?.cacheUri ?: asset.uri
@@ -618,8 +359,10 @@ class CompositionFactory(private val context: Context) {
                 imageUri = imageUri,
                 settings = settings,
                 transition = transition,
-                nextImageBitmap = nextBitmap,
-                hasTransition = hasTransition,
+                fromImageBitmap = bitmapPair?.fromBitmap,
+                toImageBitmap = bitmapPair?.toBitmap,
+                hasTransition = hasActualTransition,
+                isPassthroughMode = usePassthroughMode,
                 clipStartTimeUs = clipStartTimeUs
             )
 
@@ -659,8 +402,10 @@ class CompositionFactory(private val context: Context) {
         imageUri: Uri,
         settings: ProjectSettings,
         transition: Transition?,
-        nextImageBitmap: Bitmap?,
+        fromImageBitmap: Bitmap?,
+        toImageBitmap: Bitmap?,
         hasTransition: Boolean,
+        isPassthroughMode: Boolean,
         clipStartTimeUs: Long
     ): EditedMediaItem {
         val imageDurationMs = settings.imageDurationMs
@@ -672,7 +417,8 @@ class CompositionFactory(private val context: Context) {
             imageDurationMs
         }
         val totalDurationUs = totalDurationMs * 1000L
-        val transitionDurationUs = transitionDurationMs * 1000L
+        // Passthrough mode: 0 transition duration (just show FROM image)
+        val transitionDurationUs = if (isPassthroughMode) 0L else transitionDurationMs * 1000L
 
         // Use pre-processed cache URI
         val mediaItem = MediaItem.Builder()
@@ -683,10 +429,12 @@ class CompositionFactory(private val context: Context) {
         val effects = createEffects(
             settings = settings,
             transition = transition,
-            nextImageBitmap = nextImageBitmap,
+            fromImageBitmap = fromImageBitmap,
+            toImageBitmap = toImageBitmap,
             transitionDurationUs = transitionDurationUs,
             clipDurationUs = totalDurationUs,
-            clipStartTimeUs = clipStartTimeUs
+            clipStartTimeUs = clipStartTimeUs,
+            isPassthroughMode = isPassthroughMode
         )
 
         return EditedMediaItem.Builder(mediaItem)
@@ -701,31 +449,42 @@ class CompositionFactory(private val context: Context) {
      *
      * NO BlurBackgroundEffect - images are pre-processed with blur background
      *
+     * SINGLE SOURCE OF TRUTH: TransitionEffect receives BOTH FROM and TO bitmaps
+     * loaded from the same GPU-cached files. This ensures identical colors because
+     * both textures are loaded using identical methods.
+     *
      * Effect chain:
-     * 1. TransitionEffect - Blend with next image (direct sampling, no UV transform)
+     * 1. TransitionEffect - Blend FROM to TO (both loaded by us, ignores Media3 input)
+     *    - For passthrough mode: renders FROM image only (consistent orientation)
      * 2. FrameOverlayEffect - Overlay frame on top (if selected)
      */
     private fun createEffects(
         settings: ProjectSettings,
         transition: Transition?,
-        nextImageBitmap: Bitmap?,
+        fromImageBitmap: Bitmap?,
+        toImageBitmap: Bitmap?,
         transitionDurationUs: Long,
         clipDurationUs: Long,
-        clipStartTimeUs: Long
+        clipStartTimeUs: Long,
+        isPassthroughMode: Boolean = false
     ): Effects {
         val aspectRatio = settings.aspectRatio.ratio
         val videoEffects = mutableListOf<Effect>()
 
         // NO BlurBackgroundEffect - images are already pre-processed!
 
-        // 1. Transition effect (if there's a next image)
-        // Both FROM and TO are pre-processed identically, just blend directly
-        if (transition != null && nextImageBitmap != null) {
-            android.util.Log.d("CompositionFactory", "Adding TransitionEffect: ${transition.name}, clipStart=${clipStartTimeUs}us")
+        // 1. Transition effect - SINGLE SOURCE OF TRUTH
+        // Both FROM and TO bitmaps are loaded from GPU-cached files using identical methods
+        // TransitionEffect ignores Media3's input texture and uses our textures instead
+        // For passthrough mode (last clip): still uses TransitionEffect to ensure consistent rendering
+        if (transition != null && fromImageBitmap != null && toImageBitmap != null) {
+            val modeDesc = if (isPassthroughMode) "passthrough" else "transition"
+            android.util.Log.d("CompositionFactory", "Adding TransitionEffect ($modeDesc): ${transition.name}, clipStart=${clipStartTimeUs}us, transitionDuration=${transitionDurationUs}us")
             videoEffects.add(
                 TransitionEffect(
                     transition = transition,
-                    toImageBitmap = nextImageBitmap,
+                    fromImageBitmap = fromImageBitmap,
+                    toImageBitmap = toImageBitmap,
                     transitionDurationUs = transitionDurationUs,
                     clipDurationUs = clipDurationUs,
                     clipStartTimeUs = clipStartTimeUs,

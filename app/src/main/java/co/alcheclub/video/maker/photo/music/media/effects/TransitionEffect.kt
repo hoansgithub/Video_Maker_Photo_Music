@@ -16,13 +16,13 @@ import co.alcheclub.video.maker.photo.music.domain.model.Transition
  * TransitionEffect - Applies GL Transitions shaders between two images
  *
  * SINGLE SOURCE OF TRUTH ARCHITECTURE:
- * Both FROM and TO textures are pre-processed with identical blur background effect.
- * This shader just blends between them directly - no UV transformation needed.
+ * Both FROM and TO textures are loaded by US using identical methods.
+ * We IGNORE Media3's input texture to ensure consistent color handling.
  *
  * Pipeline:
- * - FROM texture: Media3 loads pre-processed cache PNG
- * - TO texture: Loaded from same pre-processed cache PNG (flipped for OpenGL)
- * - Shader: Direct sampling, simple blend
+ * - FROM texture: Loaded by us from fromImageBitmap
+ * - TO texture: Loaded by us from toImageBitmap
+ * - Both use identical texture creation → identical colors
  *
  * Timing:
  * - clipStartTimeUs: Global composition time when clip starts
@@ -32,6 +32,7 @@ import co.alcheclub.video.maker.photo.music.domain.model.Transition
  */
 class TransitionEffect(
     private val transition: Transition,
+    private val fromImageBitmap: Bitmap?,
     private val toImageBitmap: Bitmap?,
     private val transitionDurationUs: Long,
     private val clipDurationUs: Long,
@@ -46,6 +47,7 @@ class TransitionEffect(
         return TransitionShaderProgram(
             useHdr = useHdr,
             transition = transition,
+            fromImageBitmap = fromImageBitmap,
             toImageBitmap = toImageBitmap,
             transitionDurationUs = transitionDurationUs,
             clipDurationUs = clipDurationUs,
@@ -55,14 +57,16 @@ class TransitionEffect(
 }
 
 /**
- * TransitionShaderProgram - Simple direct sampling shader
+ * TransitionShaderProgram - Single source of truth for texture loading
  *
- * SIMPLIFIED: Both FROM and TO textures are pre-processed identically.
- * Just sample and blend - no GPU blur processing needed.
+ * CRITICAL: We load BOTH FROM and TO textures ourselves using identical methods.
+ * This guarantees no color difference between them.
+ * Media3's input texture is IGNORED.
  */
 private class TransitionShaderProgram(
     useHdr: Boolean,
     private val transition: Transition,
+    private val fromImageBitmap: Bitmap?,
     private val toImageBitmap: Bitmap?,
     private val transitionDurationUs: Long,
     private val clipDurationUs: Long,
@@ -70,6 +74,7 @@ private class TransitionShaderProgram(
 ) : BaseGlShaderProgram(useHdr, 1) {
 
     private var glProgram: GlProgram? = null
+    private var fromTextureId: Int = -1
     private var toTextureId: Int = -1
     private var inputWidth: Int = 0
     private var inputHeight: Int = 0
@@ -87,6 +92,8 @@ private class TransitionShaderProgram(
         android.util.Log.d("TransitionEffect", "  transitionDurationUs=${transitionDurationUs}us (${transitionDurationUs/1000}ms)")
         android.util.Log.d("TransitionEffect", "  transitionStartTimeUs=${transitionStartTimeUs}us (${transitionStartTimeUs/1000}ms)")
         android.util.Log.d("TransitionEffect", "  transitionEndTimeUs=${transitionEndTimeUs}us (${transitionEndTimeUs/1000}ms)")
+        android.util.Log.d("TransitionEffect", "  fromImageBitmap=${fromImageBitmap?.width}x${fromImageBitmap?.height}")
+        android.util.Log.d("TransitionEffect", "  toImageBitmap=${toImageBitmap?.width}x${toImageBitmap?.height}")
     }
 
     override fun configure(inputWidth: Int, inputHeight: Int): Size {
@@ -115,10 +122,16 @@ private class TransitionShaderProgram(
             }
         }
 
-        // Create TO texture from pre-processed bitmap
+        // Create FROM texture from our bitmap (SINGLE SOURCE OF TRUTH)
+        if (fromTextureId == -1 && fromImageBitmap != null && !fromImageBitmap.isRecycled) {
+            fromTextureId = createTextureFromBitmap(fromImageBitmap)
+            android.util.Log.d("TransitionEffect", "Created FROM texture: $fromTextureId")
+        }
+
+        // Create TO texture from our bitmap (SAME METHOD = SAME COLORS)
         if (toTextureId == -1 && toImageBitmap != null && !toImageBitmap.isRecycled) {
             toTextureId = createTextureFromBitmap(toImageBitmap)
-            android.util.Log.d("TransitionEffect", "Created TO texture: $toTextureId from bitmap ${toImageBitmap.width}x${toImageBitmap.height}")
+            android.util.Log.d("TransitionEffect", "Created TO texture: $toTextureId")
         }
 
         isConfigured = true
@@ -154,11 +167,12 @@ private class TransitionShaderProgram(
 
         program.use()
 
-        // Bind FROM texture (input from Media3 - pre-processed cache PNG)
-        program.setSamplerTexIdUniform("uFromSampler", inputTexId, 0)
-
-        // Bind TO texture (pre-processed cache PNG, flipped for OpenGL)
+        // SINGLE SOURCE OF TRUTH: Use OUR textures, NOT Media3's inputTexId
+        // Both textures are created using identical methods → identical colors
+        val fromTexId = if (fromTextureId != -1) fromTextureId else inputTexId
         val toTexId = if (toTextureId != -1) toTextureId else inputTexId
+
+        program.setSamplerTexIdUniform("uFromSampler", fromTexId, 0)
         program.setSamplerTexIdUniform("uToSampler", toTexId, 1)
 
         // Set uniforms
@@ -189,12 +203,21 @@ private class TransitionShaderProgram(
         glProgram?.delete()
         glProgram = null
 
+        if (fromTextureId != -1) {
+            GLES20.glDeleteTextures(1, intArrayOf(fromTextureId), 0)
+            fromTextureId = -1
+        }
+
         if (toTextureId != -1) {
             GLES20.glDeleteTextures(1, intArrayOf(toTextureId), 0)
             toTextureId = -1
         }
     }
 
+    /**
+     * Create texture from bitmap - SINGLE METHOD FOR BOTH FROM AND TO
+     * This guarantees identical color handling for both textures.
+     */
     private fun createTextureFromBitmap(bitmap: Bitmap): Int {
         return try {
             val textureIds = IntArray(1)
@@ -212,6 +235,7 @@ private class TransitionShaderProgram(
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
 
+            // Simple GLUtils upload - same method for both textures
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
 
             val error = GLES20.glGetError()
@@ -221,7 +245,7 @@ private class TransitionShaderProgram(
                 return -1
             }
 
-            android.util.Log.d("TransitionEffect", "Created texture $textureId from bitmap ${bitmap.width}x${bitmap.height}")
+            android.util.Log.d("TransitionEffect", "Created texture $textureId (${bitmap.width}x${bitmap.height})")
             textureId
         } catch (e: Exception) {
             android.util.Log.e("TransitionEffect", "Failed to create texture from bitmap", e)
@@ -232,8 +256,8 @@ private class TransitionShaderProgram(
     /**
      * Build fragment shader for transition
      *
-     * SIMPLIFIED: Both FROM and TO are pre-processed identically.
-     * Just sample directly - no UV transformation needed.
+     * SINGLE SOURCE OF TRUTH: Both FROM and TO textures are loaded identically.
+     * Both are sampled the same way - no special handling needed.
      */
     private fun buildFragmentShader(transitionCode: String): String {
         return """
@@ -246,23 +270,19 @@ uniform float smoothness;
 uniform vec3 fadeColor;
 varying vec2 vTexCoords;
 
-// SINGLE SOURCE OF TRUTH: Both textures are pre-processed identically
+// SINGLE SOURCE OF TRUTH: Both textures loaded identically, sampled identically
 vec4 getFromColor(vec2 uv) {
     return texture2D(uFromSampler, uv);
 }
 
 vec4 getToColor(vec2 uv) {
-    // Flip Y coordinate for OpenGL texture orientation
-    // This preserves exact color values (no bitmap manipulation)
-    vec2 flippedUV = vec2(uv.x, 1.0 - uv.y);
-    return texture2D(uToSampler, flippedUV);
+    return texture2D(uToSampler, uv);
 }
 
 $transitionCode
 
 void main() {
     vec4 color = transition(vTexCoords);
-    // Force alpha=1.0 for consistent output
     gl_FragColor = vec4(color.rgb, 1.0);
 }
 """
