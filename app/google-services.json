@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "471105442486",
+    "project_id": "ai-music-video-38c29",
+    "storage_bucket": "ai-music-video-38c29.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:471105442486:android:e8f17d244289dc0ab58c17",
+        "android_client_info": {
+          "package_name": "com.aimusic.videoeditor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuG3NSb5EEE-bUSnc1A5clAUO8mpjRjl8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

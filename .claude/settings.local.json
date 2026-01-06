@@ -37,7 +37,8 @@
       "Bash(python3:*)",
       "Bash(./gradlew installDebug:*)",
       "Bash(export:*)",
-      "Bash(timeout 15 adb logcat:*)"
+      "Bash(timeout 15 adb logcat:*)",
+      "Bash(gradle wrapper:*)"
     ]
   }
 }

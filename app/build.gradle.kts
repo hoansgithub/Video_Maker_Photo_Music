@@ -8,15 +8,15 @@ plugins {
     id("kotlin-parcelize")
 
     // ============================================
-    // FIREBASE (Optional - uncomment when needed)
+    // FIREBASE
     // ============================================
-    // id("com.google.gms.google-services")
-    // id("com.google.firebase.crashlytics")
-    // id("com.google.firebase.firebase-perf")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
+    id("com.google.firebase.firebase-perf")
 }
 
 android {
-    namespace = "co.alcheclub.video.maker.photo.music"
+    namespace = "com.aimusic.videoeditor"
     compileSdk = 36
 
     defaultConfig {
@@ -186,7 +186,7 @@ dependencies {
     // ACCCORE - AlcheClub DI & Services
     // ============================================
     implementation(libs.acccore)
-    // implementation(libs.acccore.firebase)    // Uncomment when Firebase needed
+    implementation(libs.acccore.firebase)    // Firebase Analytics, Crashlytics, RemoteConfig, Performance
     // implementation(libs.acccore.revenuecat)  // Uncomment when RevenueCat needed
     // implementation(libs.acccore.ads)         // Uncomment when Ads needed
     // implementation(libs.acccore.appsflyer)   // Uncomment when AppsFlyer needed
