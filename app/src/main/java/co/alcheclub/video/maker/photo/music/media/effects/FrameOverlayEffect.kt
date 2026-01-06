@@ -53,17 +53,18 @@ private class FrameOverlayShaderProgram(
 
         // Initialize shader program
         if (glProgram == null) {
-            glProgram = GlProgram(VERTEX_SHADER, FRAGMENT_SHADER)
-            glProgram!!.setBufferAttribute(
+            val program = GlProgram(VERTEX_SHADER, FRAGMENT_SHADER)
+            program.setBufferAttribute(
                 "aPosition",
                 GlUtil.getNormalizedCoordinateBounds(),
                 GlUtil.HOMOGENEOUS_COORDINATE_VECTOR_SIZE
             )
-            glProgram!!.setBufferAttribute(
+            program.setBufferAttribute(
                 "aTexCoords",
                 GlUtil.getTextureCoordinateBounds(),
                 GlUtil.HOMOGENEOUS_COORDINATE_VECTOR_SIZE
             )
+            glProgram = program
 
             // Create frame texture
             frameBitmap?.let { bitmap ->
@@ -82,8 +83,7 @@ private class FrameOverlayShaderProgram(
                 }
                 BitmapFactory.decodeStream(inputStream, null, options)
             }
-        } catch (e: IOException) {
-            android.util.Log.e("FrameOverlay", "Failed to load frame: $frameAssetPath", e)
+        } catch (_: IOException) {
             null
         }
     }
@@ -93,21 +93,13 @@ private class FrameOverlayShaderProgram(
         GLES20.glGenTextures(1, textureIds, 0)
         val textureId = textureIds[0]
 
-        android.util.Log.d("FrameOverlay", "Creating texture id=$textureId for bitmap ${bitmap.width}x${bitmap.height} hasAlpha=${bitmap.hasAlpha()}")
-
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
 
-        // Use RGBA format explicitly for transparency support
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, bitmap, 0)
-
-        val error = GLES20.glGetError()
-        if (error != GLES20.GL_NO_ERROR) {
-            android.util.Log.e("FrameOverlay", "GL error after texImage2D: $error")
-        }
 
         return textureId
     }

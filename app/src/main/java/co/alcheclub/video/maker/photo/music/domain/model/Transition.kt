@@ -18,18 +18,19 @@ data class Transition(
 
 /**
  * TransitionCategory - Groups transitions by visual style
+ * Order determines display order in UI (Creative, Cinematic, 3D first)
  */
 enum class TransitionCategory(val displayName: String) {
+    CREATIVE("Creative"),
+    CINEMATIC("Cinematic"),
+    THREE_D("3D Effects"),
     FADE("Fade"),
     SLIDE("Slide"),
     WIPE("Wipe"),
     ZOOM("Zoom"),
     ROTATE("Rotate"),
     BLUR("Blur"),
-    GEOMETRIC("Geometric"),
-    CREATIVE("Creative"),
-    CINEMATIC("Cinematic"),
-    THREE_D("3D Effects")
+    GEOMETRIC("Geometric")
 }
 
 /**

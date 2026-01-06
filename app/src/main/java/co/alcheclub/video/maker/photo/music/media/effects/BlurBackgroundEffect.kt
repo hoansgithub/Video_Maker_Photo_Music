@@ -65,17 +65,18 @@ private class BlurBackgroundShaderProgram(
 
         // Initialize shader program here where we have context
         if (glProgram == null) {
-            glProgram = GlProgram(VERTEX_SHADER, FRAGMENT_SHADER)
-            glProgram!!.setBufferAttribute(
+            val program = GlProgram(VERTEX_SHADER, FRAGMENT_SHADER)
+            program.setBufferAttribute(
                 "aPosition",
                 GlUtil.getNormalizedCoordinateBounds(),
                 GlUtil.HOMOGENEOUS_COORDINATE_VECTOR_SIZE
             )
-            glProgram!!.setBufferAttribute(
+            program.setBufferAttribute(
                 "aTexCoords",
                 GlUtil.getTextureCoordinateBounds(),
                 GlUtil.HOMOGENEOUS_COORDINATE_VECTOR_SIZE
             )
+            glProgram = program
         }
 
         return Size(outputWidth, outputHeight)

@@ -154,7 +154,7 @@ class TransitionLoader(private val context: Context) {
     /**
      * Get default transition (crossfade)
      */
-    fun getDefault(): Transition = getById("fade") ?: loadAll().first()
+    fun getDefault(): Transition = getById("rgb_split") ?: loadAll().first()
 
     /**
      * Get transitions grouped by category

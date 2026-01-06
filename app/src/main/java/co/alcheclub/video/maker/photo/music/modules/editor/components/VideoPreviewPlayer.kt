@@ -74,9 +74,7 @@ private fun CompositionPlayer.releaseAsync() {
     GlobalScope.launch(Dispatchers.IO) {
         try {
             playerToRelease.release()
-            android.util.Log.d("VideoPreviewPlayer", "Player released asynchronously")
-        } catch (e: Exception) {
-            android.util.Log.e("VideoPreviewPlayer", "Error releasing player", e)
+        } catch (_: Exception) {
         }
     }
 }
@@ -138,8 +136,7 @@ private suspend fun CompositionPlayer.safePlay(): Boolean {
         } else {
             false
         }
-    } catch (e: Exception) {
-        android.util.Log.e("VideoPreviewPlayer", "Error in safePlay", e)
+    } catch (_: Exception) {
         false
     }
 }
@@ -221,11 +218,8 @@ fun VideoPreviewPlayer(
             player?.let { p ->
                 try {
                     p.seekTo(seekToPosition)
-                    android.util.Log.d("VideoPreviewPlayer", "Seeked to: ${seekToPosition}ms")
-                    // Small delay to let seek complete before resuming
                     kotlinx.coroutines.delay(50)
-                } catch (e: Exception) {
-                    android.util.Log.e("VideoPreviewPlayer", "Error seeking", e)
+                } catch (_: Exception) {
                 }
             }
             onSeekComplete()
@@ -238,8 +232,7 @@ fun VideoPreviewPlayer(
             player?.let { p ->
                 try {
                     p.seekTo(scrubToPosition)
-                } catch (e: Exception) {
-                    android.util.Log.e("VideoPreviewPlayer", "Error scrubbing", e)
+                } catch (_: Exception) {
                 }
             }
             onScrubComplete()
@@ -257,10 +250,6 @@ fun VideoPreviewPlayer(
 
     // Build composition when key changes
     LaunchedEffect(compositionKey) {
-        android.util.Log.d("VideoPreviewPlayer", "=== Rebuilding composition (single-player mode) ===")
-        android.util.Log.d("VideoPreviewPlayer", "Key: $compositionKey")
-        android.util.Log.d("VideoPreviewPlayer", "Assets: ${project.assets.size}, AudioTrack: ${project.settings.audioTrackId}")
-
         // Reset ready state
         playerReadyFlow.value = false
         previewState = PreviewState.Building
@@ -281,20 +270,15 @@ fun VideoPreviewPlayer(
             }
 
             // Create composition on background thread to not block UI
-            android.util.Log.d("VideoPreviewPlayer", "Creating composition with audio...")
             val composition = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
                 compositionFactory.createComposition(project, includeAudio = true)
             }
-            android.util.Log.d("VideoPreviewPlayer", "Composition created")
 
-            // After withContext, we're back on the main thread (LaunchedEffect dispatcher)
             // Create single player for both video and audio (must be on main thread)
-            android.util.Log.d("VideoPreviewPlayer", "Creating CompositionPlayer...")
             val newPlayer = CompositionPlayer.Builder(context).build()
             newPlayer.setComposition(composition)
             newPlayer.repeatMode = Player.REPEAT_MODE_OFF
             newPlayer.prepare()
-            android.util.Log.d("VideoPreviewPlayer", "CompositionPlayer prepared, awaiting ready...")
 
             // Add listener for playback state changes
             newPlayer.addListener(object : Player.Listener {
@@ -303,19 +287,12 @@ fun VideoPreviewPlayer(
                 }
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
-                    android.util.Log.d("VideoPreviewPlayer", "Playback state: $playbackState")
                     when (playbackState) {
                         Player.STATE_READY -> {
-                            android.util.Log.d("VideoPreviewPlayer", "Player STATE_READY")
                             previewState = PreviewState.Ready
-                            // Signal that player is ready - this unblocks any waiting coroutines
                             playerReadyFlow.value = true
                         }
-                        Player.STATE_BUFFERING -> {
-                            android.util.Log.d("VideoPreviewPlayer", "Player STATE_BUFFERING")
-                        }
                         Player.STATE_ENDED -> {
-                            android.util.Log.d("VideoPreviewPlayer", "Player STATE_ENDED, resetting for replay")
                             newPlayer.seekTo(0)
                             onPlaybackStateChange(false)
                         }
@@ -323,7 +300,6 @@ fun VideoPreviewPlayer(
                 }
 
                 override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-                    android.util.Log.e("VideoPreviewPlayer", "Player error: ${error.message}", error)
                     previewState = PreviewState.Error(error.message ?: "Playback error")
                     playerReadyFlow.value = false
                 }
@@ -331,27 +307,19 @@ fun VideoPreviewPlayer(
 
             // Atomically swap player - assign new one first, then release old
             player = newPlayer
-
-            // Release old player asynchronously to avoid blocking main thread
-            android.util.Log.d("VideoPreviewPlayer", "Releasing old player asynchronously...")
             oldPlayer?.releaseAsync()
-            android.util.Log.d("VideoPreviewPlayer", "Player swap complete")
 
             // Await for player to be truly ready using suspend function (no delay!)
             val isReady = newPlayer.awaitReady()
-            android.util.Log.d("VideoPreviewPlayer", "Player await complete, isReady=$isReady")
 
             // Handle autoPlay after player is confirmed ready
             if (isReady && autoPlay) {
-                android.util.Log.d("VideoPreviewPlayer", "Auto-playing...")
                 newPlayer.play()
             }
 
         } catch (e: Exception) {
-            android.util.Log.e("VideoPreviewPlayer", "Failed to build preview", e)
             previewState = PreviewState.Error(e.message ?: "Failed to build preview")
             playerReadyFlow.value = false
-            // Keep old player if new one failed to create
             if (player == null) {
                 player = oldPlayer
             } else {
@@ -361,30 +329,21 @@ fun VideoPreviewPlayer(
     }
 
     // Control playback based on isPlaying state
-    // Uses proper async/await - waits for playerReadyFlow only if not already true
     LaunchedEffect(isPlaying, player) {
         val currentPlayer = player ?: return@LaunchedEffect
 
         if (isPlaying) {
             try {
-                // Only await if player is not ready yet
-                // If playerReadyFlow is already true, first() returns immediately
                 if (!playerReadyFlow.value) {
-                    android.util.Log.d("VideoPreviewPlayer", "Waiting for player to be ready...")
                     playerReadyFlow.first { it }
-                    android.util.Log.d("VideoPreviewPlayer", "Player is now ready")
                 }
-                // Player is ready, play it
-                android.util.Log.d("VideoPreviewPlayer", "Playing video, state=${currentPlayer.playbackState}")
                 currentPlayer.play()
-            } catch (e: Exception) {
-                android.util.Log.e("VideoPreviewPlayer", "Error playing", e)
+            } catch (_: Exception) {
             }
         } else {
             try {
                 currentPlayer.pause()
-            } catch (e: Exception) {
-                android.util.Log.e("VideoPreviewPlayer", "Error pausing", e)
+            } catch (_: Exception) {
             }
         }
     }
@@ -406,14 +365,8 @@ fun VideoPreviewPlayer(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_STOP -> {
-                    // App going to background - pause playback
-                    android.util.Log.d("VideoPreviewPlayer", "ON_STOP: Pausing player")
                     player?.pause()
                     onPlaybackStateChange(false)
-                }
-                Lifecycle.Event.ON_START -> {
-                    // App coming to foreground - player stays paused, user can resume manually
-                    android.util.Log.d("VideoPreviewPlayer", "ON_START: Player ready to resume")
                 }
                 else -> {}
             }

@@ -234,7 +234,8 @@ private fun TransitionSelector(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (isLoading || groupedTransitions == null) {
+        val transitions = groupedTransitions
+        if (isLoading || transitions == null) {
             // Loading placeholder - matches height of actual content
             Box(
                 modifier = Modifier
@@ -249,7 +250,7 @@ private fun TransitionSelector(
             }
         } else {
             TransitionSelectorContent(
-                groupedTransitions = groupedTransitions!!,
+                groupedTransitions = transitions,
                 selectedTransitionId = selectedTransitionId,
                 onTransitionSelect = onTransitionSelect
             )
@@ -447,15 +448,6 @@ private fun TransitionChip(
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center
         )
-
-        if (transition?.isPremium == true) {
-            Text(
-                text = stringResource(R.string.settings_pro),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.tertiary,
-                fontWeight = FontWeight.Bold
-            )
-        }
     }
 }
 

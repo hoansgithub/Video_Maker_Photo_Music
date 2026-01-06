@@ -25,7 +25,7 @@ import android.net.Uri
 data class ProjectSettings(
     val imageDurationMs: Long = 3000L,
     val transitionPercentage: Int = 30, // 30% of image duration for transition
-    val transitionId: String? = "fade", // Default to crossfade transition
+    val transitionId: String? = "rgb_split", // Default to RGB Split transition
     val overlayFrameId: String? = null,
     val audioTrackId: String? = DEFAULT_AUDIO_TRACK_ID,
     val customAudioUri: Uri? = null,

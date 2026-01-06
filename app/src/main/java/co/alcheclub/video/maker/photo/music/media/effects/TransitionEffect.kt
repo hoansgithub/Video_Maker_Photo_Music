@@ -79,22 +79,9 @@ private class TransitionShaderProgram(
     private var inputWidth: Int = 0
     private var inputHeight: Int = 0
     private var isConfigured: Boolean = false
-    private var frameCount: Int = 0
 
     private val transitionStartTimeUs: Long = clipStartTimeUs + clipDurationUs - transitionDurationUs
     private val transitionEndTimeUs: Long = clipStartTimeUs + clipDurationUs
-
-    init {
-        android.util.Log.d("TransitionEffect", "TransitionShaderProgram created:")
-        android.util.Log.d("TransitionEffect", "  transition=${transition.name}")
-        android.util.Log.d("TransitionEffect", "  clipStartTimeUs=${clipStartTimeUs}us (${clipStartTimeUs/1000}ms)")
-        android.util.Log.d("TransitionEffect", "  clipDurationUs=${clipDurationUs}us (${clipDurationUs/1000}ms)")
-        android.util.Log.d("TransitionEffect", "  transitionDurationUs=${transitionDurationUs}us (${transitionDurationUs/1000}ms)")
-        android.util.Log.d("TransitionEffect", "  transitionStartTimeUs=${transitionStartTimeUs}us (${transitionStartTimeUs/1000}ms)")
-        android.util.Log.d("TransitionEffect", "  transitionEndTimeUs=${transitionEndTimeUs}us (${transitionEndTimeUs/1000}ms)")
-        android.util.Log.d("TransitionEffect", "  fromImageBitmap=${fromImageBitmap?.width}x${fromImageBitmap?.height}")
-        android.util.Log.d("TransitionEffect", "  toImageBitmap=${toImageBitmap?.width}x${toImageBitmap?.height}")
-    }
 
     override fun configure(inputWidth: Int, inputHeight: Int): Size {
         this.inputWidth = inputWidth
@@ -104,20 +91,19 @@ private class TransitionShaderProgram(
         if (glProgram == null) {
             try {
                 val fragmentShader = buildFragmentShader(transition.shaderCode)
-                glProgram = GlProgram(VERTEX_SHADER, fragmentShader)
-                glProgram!!.setBufferAttribute(
+                val program = GlProgram(VERTEX_SHADER, fragmentShader)
+                program.setBufferAttribute(
                     "aPosition",
                     GlUtil.getNormalizedCoordinateBounds(),
                     GlUtil.HOMOGENEOUS_COORDINATE_VECTOR_SIZE
                 )
-                glProgram!!.setBufferAttribute(
+                program.setBufferAttribute(
                     "aTexCoords",
                     GlUtil.getTextureCoordinateBounds(),
                     GlUtil.HOMOGENEOUS_COORDINATE_VECTOR_SIZE
                 )
-                android.util.Log.d("TransitionEffect", "Transition shader compiled successfully")
+                glProgram = program
             } catch (e: Exception) {
-                android.util.Log.e("TransitionEffect", "Failed to compile transition shader: ${e.message}", e)
                 throw e
             }
         }
@@ -125,13 +111,11 @@ private class TransitionShaderProgram(
         // Create FROM texture from our bitmap (SINGLE SOURCE OF TRUTH)
         if (fromTextureId == -1 && fromImageBitmap != null && !fromImageBitmap.isRecycled) {
             fromTextureId = createTextureFromBitmap(fromImageBitmap)
-            android.util.Log.d("TransitionEffect", "Created FROM texture: $fromTextureId")
         }
 
         // Create TO texture from our bitmap (SAME METHOD = SAME COLORS)
         if (toTextureId == -1 && toImageBitmap != null && !toImageBitmap.isRecycled) {
             toTextureId = createTextureFromBitmap(toImageBitmap)
-            android.util.Log.d("TransitionEffect", "Created TO texture: $toTextureId")
         }
 
         isConfigured = true
@@ -142,7 +126,6 @@ private class TransitionShaderProgram(
         val program = glProgram ?: return
 
         if (!isConfigured || inputWidth <= 0 || inputHeight <= 0) {
-            android.util.Log.w("TransitionEffect", "drawFrame called before configure, skipping")
             return
         }
 
@@ -159,12 +142,6 @@ private class TransitionShaderProgram(
         // Apply sine ease-out curve for smooth transition
         val progress = kotlin.math.sin(linearProgress * Math.PI.toFloat() / 2f)
 
-        // Logging
-        frameCount++
-        if (frameCount % 30 == 1 || progress > 0.9f) {
-            android.util.Log.d("TransitionEffect", "FRAME #$frameCount: time=${presentationTimeUs/1000}ms, progress=${"%.4f".format(progress)}")
-        }
-
         program.use()
 
         // SINGLE SOURCE OF TRUTH: Use OUR textures, NOT Media3's inputTexId
@@ -178,8 +155,7 @@ private class TransitionShaderProgram(
         // Set uniforms
         try {
             program.setFloatUniform("progress", progress)
-        } catch (e: Exception) {
-            android.util.Log.w("TransitionEffect", "Failed to set progress uniform: ${e.message}")
+        } catch (_: Exception) {
         }
 
         try {
@@ -225,7 +201,6 @@ private class TransitionShaderProgram(
             val textureId = textureIds[0]
 
             if (textureId == 0) {
-                android.util.Log.e("TransitionEffect", "Failed to generate texture ID")
                 return -1
             }
 
@@ -235,20 +210,16 @@ private class TransitionShaderProgram(
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
 
-            // Simple GLUtils upload - same method for both textures
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
 
             val error = GLES20.glGetError()
             if (error != GLES20.GL_NO_ERROR) {
-                android.util.Log.e("TransitionEffect", "GL error creating texture: $error")
                 GLES20.glDeleteTextures(1, textureIds, 0)
                 return -1
             }
 
-            android.util.Log.d("TransitionEffect", "Created texture $textureId (${bitmap.width}x${bitmap.height})")
             textureId
-        } catch (e: Exception) {
-            android.util.Log.e("TransitionEffect", "Failed to create texture from bitmap", e)
+        } catch (_: Exception) {
             -1
         }
     }

@@ -21,7 +21,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import co.alcheclub.lib.acccore.di.ACCDI
 import co.alcheclub.lib.acccore.di.get
-import co.alcheclub.lib.acccore.di.viewModel
 import co.alcheclub.video.maker.photo.music.di.AssetPickerViewModelFactory
 import co.alcheclub.video.maker.photo.music.di.EditorViewModelFactory
 import co.alcheclub.video.maker.photo.music.di.ExportViewModelFactory

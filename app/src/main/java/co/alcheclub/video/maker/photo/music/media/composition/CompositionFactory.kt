@@ -14,6 +14,7 @@ import co.alcheclub.video.maker.photo.music.domain.model.Asset
 import co.alcheclub.video.maker.photo.music.domain.model.Project
 import co.alcheclub.video.maker.photo.music.domain.model.ProjectSettings
 import co.alcheclub.video.maker.photo.music.domain.model.Transition
+import co.alcheclub.video.maker.photo.music.media.audio.VolumeAudioProcessor
 import co.alcheclub.video.maker.photo.music.media.effects.FrameOverlayEffect
 import co.alcheclub.video.maker.photo.music.media.effects.TransitionEffect
 import co.alcheclub.video.maker.photo.music.media.library.AudioTrackLibrary
@@ -73,19 +74,14 @@ class CompositionFactory(private val context: Context) {
         lastTransitionBitmaps = null
 
         if (bitmapPairs != null) {
-            var recycledCount = 0
             bitmapPairs.values.forEach { pair ->
                 if (!pair.fromBitmap.isRecycled) {
                     pair.fromBitmap.recycle()
-                    recycledCount++
                 }
                 if (!pair.toBitmap.isRecycled) {
                     pair.toBitmap.recycle()
-                    recycledCount++
                 }
             }
-            android.util.Log.d("CompositionFactory", "Recycled $recycledCount transition bitmaps (from+to pairs)")
-            // Note: Removed System.gc() - let GC run naturally to avoid jank
         }
     }
 
@@ -97,13 +93,11 @@ class CompositionFactory(private val context: Context) {
         lastCacheFiles = null
 
         if (files != null) {
-            var deletedCount = 0
             files.forEach { file ->
-                if (file.exists() && file.delete()) {
-                    deletedCount++
+                if (file.exists()) {
+                    file.delete()
                 }
             }
-            android.util.Log.d("CompositionFactory", "Deleted $deletedCount cache files")
         }
     }
 
@@ -119,44 +113,31 @@ class CompositionFactory(private val context: Context) {
     suspend fun createComposition(project: Project, includeAudio: Boolean = true, forExport: Boolean = false): Composition {
         val settings = project.settings
         val textureSize = if (forExport) EXPORT_TEXTURE_SIZE else PREVIEW_TEXTURE_SIZE
-        android.util.Log.d("CompositionFactory", "createComposition: ${project.assets.size} assets, includeAudio=$includeAudio, forExport=$forExport, textureSize=$textureSize")
 
         // Clean up previous resources
         recycleBitmaps()
         cleanupCacheFiles()
 
         // STEP 1: Pre-process ALL images with blur background
-        val startTime = System.currentTimeMillis()
-        android.util.Log.d("CompositionFactory", "Pre-processing ALL images...")
         val processedImages = preProcessAllImages(project.assets, settings, textureSize)
-        val preProcessTime = System.currentTimeMillis() - startTime
-        android.util.Log.d("CompositionFactory", "Pre-processed ${processedImages.size} images in ${preProcessTime}ms")
 
         // STEP 2: Load transition TO bitmaps from cache files
-        android.util.Log.d("CompositionFactory", "Loading transition bitmaps from cache...")
         val transitionBitmaps = loadTransitionBitmapsFromCache(processedImages, settings)
         lastTransitionBitmaps = transitionBitmaps
-        val loadTime = System.currentTimeMillis() - startTime
-        android.util.Log.d("CompositionFactory", "Loaded ${transitionBitmaps.size} transition bitmaps in ${loadTime - preProcessTime}ms")
 
         // STEP 3: Create video sequence using cache URIs
-        android.util.Log.d("CompositionFactory", "Creating video sequence...")
         val videoSequence = createVideoSequence(project.assets, settings, processedImages, transitionBitmaps)
-        android.util.Log.d("CompositionFactory", "Video sequence created")
 
         val sequences = mutableListOf(videoSequence)
 
         // Add audio sequence if enabled
         if (includeAudio) {
-            android.util.Log.d("CompositionFactory", "Creating audio sequence...")
             val audioSequence = createAudioSequence(settings, project.totalDurationMs)
             if (audioSequence != null) {
                 sequences.add(audioSequence)
-                android.util.Log.d("CompositionFactory", "Audio sequence added")
             }
         }
 
-        android.util.Log.d("CompositionFactory", "Building composition with ${sequences.size} sequences")
         return Composition.Builder(sequences).build()
     }
 
@@ -193,7 +174,6 @@ class CompositionFactory(private val context: Context) {
         val gpuPreprocessor = GPUImagePreprocessor(context)
         try {
             if (!gpuPreprocessor.initialize()) {
-                android.util.Log.e("CompositionFactory", "Failed to initialize GPU preprocessor")
                 return emptyMap()
             }
 
@@ -212,12 +192,8 @@ class CompositionFactory(private val context: Context) {
                     if (success) {
                         results[index] = ProcessedImage(Uri.fromFile(cacheFile), cacheFile)
                         cacheFiles.add(cacheFile)
-                        android.util.Log.d("CompositionFactory", "GPU pre-processed image $index: ${cacheFile.name}")
-                    } else {
-                        android.util.Log.w("CompositionFactory", "Failed to GPU pre-process image $index")
                     }
-                } catch (e: Exception) {
-                    android.util.Log.e("CompositionFactory", "Failed to pre-process image $index", e)
+                } catch (_: Exception) {
                 }
             }
         } finally {
@@ -273,23 +249,16 @@ class CompositionFactory(private val context: Context) {
 
                             if (toBitmap != null) {
                                 results[index] = TransitionBitmapPair(fromBitmap, toBitmap)
-                                android.util.Log.d("CompositionFactory", "Loaded FROM+TO bitmaps for clip $index")
                             } else {
                                 // Fallback: use FROM as TO (no visible transition but consistent rendering)
                                 results[index] = TransitionBitmapPair(fromBitmap, fromBitmap)
-                                android.util.Log.w("CompositionFactory", "Using FROM as TO for clip $index (fallback)")
                             }
                         } else {
                             // For last clip (no transition): use FROM for both (passthrough mode)
-                            // This ensures consistent rendering through TransitionEffect
                             results[index] = TransitionBitmapPair(fromBitmap, fromBitmap)
-                            android.util.Log.d("CompositionFactory", "Loaded passthrough bitmap for last clip $index")
                         }
-                    } else {
-                        android.util.Log.w("CompositionFactory", "Failed to load FROM bitmap for clip $index")
                     }
-                } catch (e: Exception) {
-                    android.util.Log.e("CompositionFactory", "Failed to load bitmaps for clip $index", e)
+                } catch (_: Exception) {
                 }
             }
         }
@@ -345,13 +314,6 @@ class CompositionFactory(private val context: Context) {
 
             val clipStartTimeUs = cumulativeStartTimeUs
 
-            val logMode = when {
-                hasActualTransition -> "transition=${transition?.name}"
-                usePassthroughMode -> "passthrough"
-                else -> "none"
-            }
-            android.util.Log.d("CompositionFactory", "Clip $index: startTime=${clipStartTimeUs/1000}ms, duration=${totalDurationMs}ms, mode=$logMode")
-
             // Use CACHE URI instead of original asset URI
             val imageUri = processedImages[index]?.cacheUri ?: asset.uri
 
@@ -375,22 +337,13 @@ class CompositionFactory(private val context: Context) {
 
     private fun getTransition(settings: ProjectSettings): Transition? {
         val transitionId = settings.transitionId ?: return null
-
-        val transition = TransitionShaderLibrary.getById(transitionId)
-        if (transition == null) {
-            android.util.Log.w("CompositionFactory", "Transition not found: $transitionId, using default")
-            return TransitionShaderLibrary.getDefault()
-        }
-
-        android.util.Log.d("CompositionFactory", "getTransition: id=$transitionId, name=${transition.name}")
-        return transition
+        return TransitionShaderLibrary.getById(transitionId) ?: TransitionShaderLibrary.getDefault()
     }
 
     companion object {
         private const val DEFAULT_FRAME_RATE = 30
         private const val PREVIEW_TEXTURE_SIZE = 360
         private const val EXPORT_TEXTURE_SIZE = 720
-        private const val MAX_CONCURRENT_LOADS = 4
     }
 
     /**
@@ -478,8 +431,6 @@ class CompositionFactory(private val context: Context) {
         // TransitionEffect ignores Media3's input texture and uses our textures instead
         // For passthrough mode (last clip): still uses TransitionEffect to ensure consistent rendering
         if (transition != null && fromImageBitmap != null && toImageBitmap != null) {
-            val modeDesc = if (isPassthroughMode) "passthrough" else "transition"
-            android.util.Log.d("CompositionFactory", "Adding TransitionEffect ($modeDesc): ${transition.name}, clipStart=${clipStartTimeUs}us, transitionDuration=${transitionDurationUs}us")
             videoEffects.add(
                 TransitionEffect(
                     transition = transition,
@@ -510,14 +461,10 @@ class CompositionFactory(private val context: Context) {
         settings: ProjectSettings,
         totalVideoDurationMs: Long
     ): EditedMediaItemSequence? {
-        val audioUri = getAudioUri(settings)
-        if (audioUri == null) {
-            android.util.Log.d("CompositionFactory", "No audio URI available")
-            return null
-        }
+        val audioUri = getAudioUri(settings) ?: return null
 
         val totalVideoDurationUs = totalVideoDurationMs * 1000L
-        android.util.Log.d("CompositionFactory", "Creating audio sequence with URI: $audioUri, videoDuration: ${totalVideoDurationMs}ms")
+        val volume = settings.audioVolume.coerceIn(0f, 1f)
 
         val audioItem = MediaItem.Builder()
             .setUri(audioUri)
@@ -528,26 +475,35 @@ class CompositionFactory(private val context: Context) {
             )
             .build()
 
+        // Create audio effects with volume processor
+        val audioEffects = if (volume != 1.0f) {
+            Effects(
+                /* audioProcessors= */ listOf(VolumeAudioProcessor(volume)),
+                /* videoEffects= */ emptyList()
+            )
+        } else {
+            Effects(
+                /* audioProcessors= */ emptyList(),
+                /* videoEffects= */ emptyList()
+            )
+        }
+
         val editedAudioItem = EditedMediaItem.Builder(audioItem)
             .setRemoveVideo(true)
             .setDurationUs(totalVideoDurationUs)
+            .setEffects(audioEffects)
             .build()
 
         return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
     }
 
     private fun getAudioUri(settings: ProjectSettings): Uri? {
-        android.util.Log.d("CompositionFactory", "getAudioUri: customAudioUri=${settings.customAudioUri}, audioTrackId=${settings.audioTrackId}")
-
         settings.customAudioUri?.let { return it }
 
         settings.audioTrackId?.let { trackId ->
             val track = AudioTrackLibrary.getById(trackId)
-            android.util.Log.d("CompositionFactory", "Track lookup: trackId=$trackId, found=${track != null}")
             if (track != null) {
-                val uri = copyAssetToCache(track.assetPath)
-                android.util.Log.d("CompositionFactory", "Audio URI from cache: $uri")
-                return uri
+                return copyAssetToCache(track.assetPath)
             }
         }
 
@@ -558,26 +514,18 @@ class CompositionFactory(private val context: Context) {
         return try {
             val fileName = assetPath.substringAfterLast("/")
             val cacheFile = java.io.File(context.cacheDir, "audio/$fileName")
-            android.util.Log.d("CompositionFactory", "Cache file path: ${cacheFile.absolutePath}, exists: ${cacheFile.exists()}")
 
             if (!cacheFile.exists()) {
                 cacheFile.parentFile?.mkdirs()
-                android.util.Log.d("CompositionFactory", "Copying asset: $assetPath")
                 context.assets.open(assetPath).use { input ->
                     cacheFile.outputStream().use { output ->
-                        val bytes = input.copyTo(output)
-                        android.util.Log.d("CompositionFactory", "Copied $bytes bytes to cache")
+                        input.copyTo(output)
                     }
                 }
-            } else {
-                android.util.Log.d("CompositionFactory", "Using cached file: ${cacheFile.length()} bytes")
             }
 
-            val uri = Uri.fromFile(cacheFile)
-            android.util.Log.d("CompositionFactory", "Audio file URI: $uri")
-            uri
-        } catch (e: Exception) {
-            android.util.Log.e("CompositionFactory", "Failed to copy audio asset: $assetPath", e)
+            Uri.fromFile(cacheFile)
+        } catch (_: Exception) {
             null
         }
     }
