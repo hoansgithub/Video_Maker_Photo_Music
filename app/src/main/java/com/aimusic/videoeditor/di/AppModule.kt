@@ -36,6 +36,7 @@ import com.aimusic.videoeditor.modules.onboarding.repository.OnboardingRepositor
 import com.aimusic.videoeditor.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
 import com.aimusic.videoeditor.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import android.content.Context
+import com.aimusic.videoeditor.modules.musicpicker.MusicPickerViewModel
 import com.aimusic.videoeditor.modules.picker.AssetPickerViewModel
 import com.aimusic.videoeditor.modules.projects.ProjectsViewModel
 import com.aimusic.videoeditor.modules.root.RootViewModel
@@ -213,6 +214,21 @@ class ProjectsViewModelFactory(
     }
 }
 
+/**
+ * Factory wrapper for MusicPickerViewModel.
+ *
+ * Uses ContentResolver instead of Context to avoid memory leaks.
+ * ViewModels outlive Activity lifecycles, so holding Context references
+ * would prevent garbage collection.
+ */
+class MusicPickerViewModelFactory(
+    private val contentResolver: android.content.ContentResolver
+) {
+    fun create(): MusicPickerViewModel {
+        return MusicPickerViewModel(contentResolver = contentResolver)
+    }
+}
+
 val presentationModule = module {
     // Root ViewModel for Single-Activity Architecture
     viewModel {
@@ -257,6 +273,14 @@ val presentationModule = module {
         ProjectsViewModelFactory(
             getAllProjectsUseCase = it.get(),
             deleteProjectUseCase = it.get()
+        )
+    }
+
+    // Music Picker ViewModel factory (singleton - stateless factory)
+    // Uses ContentResolver to avoid Context memory leaks in ViewModel
+    single {
+        MusicPickerViewModelFactory(
+            contentResolver = androidContext().contentResolver
         )
     }
 }

@@ -101,6 +101,7 @@ fun SettingsPanel(
     onApplySettings: () -> Unit,
     onDiscardSettings: () -> Unit,
     onClose: () -> Unit,
+    onOpenMusicPicker: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -189,7 +190,8 @@ fun SettingsPanel(
                 audioVolume = settings.audioVolume,
                 onTrackSelect = onAudioTrackChange,
                 onCustomAudioSelect = onCustomAudioChange,
-                onVolumeChange = onAudioVolumeChange
+                onVolumeChange = onAudioVolumeChange,
+                onOpenMusicPicker = onOpenMusicPicker
             )
 
             // Aspect Ratio
@@ -608,7 +610,8 @@ private fun AudioSection(
     audioVolume: Float,
     onTrackSelect: (String?) -> Unit,
     onCustomAudioSelect: (Uri?) -> Unit,
-    onVolumeChange: (Float) -> Unit
+    onVolumeChange: (Float) -> Unit,
+    onOpenMusicPicker: () -> Unit
 ) {
     val tracks = remember { AudioTrackLibrary.getAll() }
     var volumeValue by remember(audioVolume) { mutableFloatStateOf(audioVolume) }
@@ -662,7 +665,7 @@ private fun AudioSection(
                         else MaterialTheme.colorScheme.outline,
                         shape = RoundedCornerShape(8.dp)
                     )
-                    .clickable { /* TODO: Open audio picker */ }
+                    .clickable { onOpenMusicPicker() }
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 Text(

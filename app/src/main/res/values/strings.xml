@@ -111,6 +111,18 @@
     <string name="picker_permission_message">To create videos from your photos, we need permission to access your photo library.</string>
     <string name="picker_allow_access">Allow Access</string>
 
+    <!-- Music Picker -->
+    <string name="music_picker_title">Select Music</string>
+    <string name="music_picker_loading">Loading music…</string>
+    <string name="music_picker_no_music">No music found</string>
+    <string name="music_picker_no_music_hint">Add music files to your device to use them here</string>
+    <string name="music_picker_permission_title">Audio Access Required</string>
+    <string name="music_picker_permission_message">To use your music as background audio, we need permission to access your audio files.</string>
+    <string name="music_picker_allow_access">Allow Access</string>
+    <string name="music_picker_preview">Preview</string>
+    <string name="music_picker_stop_preview">Stop</string>
+    <string name="music_picker_select">Select</string>
+
     <!-- Settings Panel -->
     <string name="settings_panel_title">Settings</string>
     <string name="settings_panel_apply">Apply</string>

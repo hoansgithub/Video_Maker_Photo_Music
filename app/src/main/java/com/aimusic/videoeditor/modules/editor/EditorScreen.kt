@@ -48,12 +48,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.alcheclub.lib.acccore.di.ACCDI
 import com.aimusic.videoeditor.R
+import com.aimusic.videoeditor.di.MusicPickerViewModelFactory
 import com.aimusic.videoeditor.domain.model.Project
 import com.aimusic.videoeditor.modules.editor.components.AssetStrip
 import com.aimusic.videoeditor.modules.editor.components.PlaybackSeekbar
 import com.aimusic.videoeditor.modules.editor.components.SettingsPanel
 import com.aimusic.videoeditor.modules.editor.components.VideoPreviewPlayer
+import com.aimusic.videoeditor.modules.musicpicker.MusicPickerScreen
 
 /**
  * EditorScreen - Main video editor screen
@@ -80,6 +83,13 @@ fun EditorScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showExitConfirmation by remember { mutableStateOf(false) }
+    var showMusicPicker by remember { mutableStateOf(false) }
+
+    // Music Picker ViewModel - created on demand
+    val musicPickerViewModelFactory = remember { ACCDI.get<MusicPickerViewModelFactory>() }
+    val musicPickerViewModel = remember(showMusicPicker) {
+        if (showMusicPicker) musicPickerViewModelFactory.create() else null
+    }
 
     // Handle back button press - show confirmation dialog
     BackHandler {
@@ -175,6 +185,7 @@ fun EditorScreen(
                     onApplySettings = viewModel::applySettings,
                     onDiscardSettings = viewModel::discardPendingSettings,
                     onClose = viewModel::closeSettingsPanel,
+                    onOpenMusicPicker = { showMusicPicker = true },
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -195,6 +206,20 @@ fun EditorScreen(
                 },
                 onCancel = {
                     showExitConfirmation = false
+                }
+            )
+        }
+
+        // Music Picker Bottom Sheet
+        if (showMusicPicker && musicPickerViewModel != null) {
+            MusicPickerScreen(
+                viewModel = musicPickerViewModel,
+                onTrackSelected = { uri ->
+                    viewModel.updateCustomAudio(uri)
+                    showMusicPicker = false
+                },
+                onDismiss = {
+                    showMusicPicker = false
                 }
             )
         }
