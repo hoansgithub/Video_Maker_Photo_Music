@@ -5,71 +5,68 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import co.alcheclub.lib.acccore.di.viewModel
-import com.aimusic.videoeditor.modules.root.RootViewModel
+import co.alcheclub.lib.acccore.di.ACCDI
+import co.alcheclub.lib.acccore.di.get
+import com.aimusic.videoeditor.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import com.aimusic.videoeditor.navigation.AppNavigation
 import com.aimusic.videoeditor.ui.theme.VideoMakerTheme
+import kotlinx.coroutines.launch
 
 /**
- * MainActivity - Single Entry Point for Single-Activity Architecture
+ * MainActivity - Main App Content
  *
- * This is the ONLY Activity in the app.
- * All screens are Composables managed by a single NavHost.
+ * Hosts the main app navigation including:
+ * - Onboarding flow (first-time users after language selection)
+ * - Home screen
+ * - All feature screens (Editor, Preview, Export, etc.)
  *
- * Responsibilities:
- * - Install Android 12+ splash screen
- * - Initialize RootViewModel with Activity context
- * - Host AppNavigation with all app routes
+ * IMPORTANT: Extends AppCompatActivity (not ComponentActivity) to support
+ * AppCompatDelegate.setApplicationLocales() for per-app language changes.
+ *
+ * This Activity is launched by:
+ * - RootViewActivity (after loading/ads) with optional EXTRA_SHOW_ONBOARDING
+ * - LanguageSelectionActivity (after language selection) with EXTRA_SHOW_ONBOARDING=true
+ *
+ * The language is already set BEFORE this Activity starts, so there's no
+ * Activity recreation flicker when changing language.
  *
  * Flow:
- * 1. User taps app icon
- * 2. System shows splash screen (installSplashScreen())
- * 3. RootViewModel checks onboarding status
- * 4. NavHost navigates to appropriate screen:
- *    - Onboarding (first-time user)
- *    - Home (returning user)
+ * 1. Check if EXTRA_SHOW_ONBOARDING is true → start at Onboarding route
+ * 2. Otherwise → start at Home route
  */
 class MainActivity : AppCompatActivity() {
 
-    // Root ViewModel injected via ACCDI
-    private val rootViewModel: RootViewModel by viewModel()
-
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Install splash screen BEFORE super.onCreate()
-        installSplashScreen()
-
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
 
-        // Initialize app (onboarding check)
-        rootViewModel.initializeApp(this)
+        // Check if we should show onboarding
+        val showOnboarding = intent.getBooleanExtra(RootViewActivity.EXTRA_SHOW_ONBOARDING, false)
 
-        // Update Activity reference
-        rootViewModel.updateActivityRef(this)
+        // Get CompleteOnboardingUseCase from ACCDI
+        val completeOnboardingUseCase = ACCDI.get<CompleteOnboardingUseCase>()
 
         setContent {
+            // Use coroutine scope for async operations (avoids blocking main thread)
+            val coroutineScope = rememberCoroutineScope()
+
             VideoMakerTheme {
-                AppNavigation(
-                    rootViewModel = rootViewModel,
-                    modifier = Modifier.fillMaxSize()
-                )
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    AppNavigation(
+                        startWithOnboarding = showOnboarding,
+                        onOnboardingComplete = {
+                            // Mark onboarding as complete in preferences asynchronously
+                            coroutineScope.launch {
+                                completeOnboardingUseCase()
+                            }
+                        }
+                    )
+                }
             }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Update Activity reference in case of recreation
-        rootViewModel.updateActivityRef(this)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        // Always clear Activity reference - WeakReference handles the rest
-        // Previously only cleared when isFinishing, but should always clear
-        rootViewModel.clearActivityRef()
     }
 }

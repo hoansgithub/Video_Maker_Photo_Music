@@ -8,12 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -30,78 +26,37 @@ import com.aimusic.videoeditor.modules.editor.EditorViewModel
 import com.aimusic.videoeditor.modules.export.ExportScreen
 import com.aimusic.videoeditor.modules.export.ExportViewModel
 import com.aimusic.videoeditor.modules.home.HomeScreen
-import com.aimusic.videoeditor.modules.language.LanguageSelectionScreen
-import com.aimusic.videoeditor.modules.language.domain.usecase.ApplyLanguageUseCase
-import com.aimusic.videoeditor.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
-import com.aimusic.videoeditor.modules.language.domain.usecase.GetSelectedLanguageUseCase
-import com.aimusic.videoeditor.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
-import com.aimusic.videoeditor.core.data.local.LanguageManager
 import com.aimusic.videoeditor.modules.onboarding.OnboardingScreen
 import com.aimusic.videoeditor.modules.settings.SettingsScreen
 import com.aimusic.videoeditor.modules.picker.AssetPickerScreen
 import com.aimusic.videoeditor.modules.picker.AssetPickerViewModel
 import com.aimusic.videoeditor.modules.projects.ProjectsScreen
 import com.aimusic.videoeditor.modules.projects.ProjectsViewModel
-import com.aimusic.videoeditor.modules.root.LoadingScreen
-import com.aimusic.videoeditor.modules.root.RootNavigationEvent
-import com.aimusic.videoeditor.modules.root.RootViewModel
 
 /**
  * AppNavigation - Main navigation host for Single-Activity Architecture
  *
  * Handles:
  * - Route setup with slide animations
- * - Navigation event collection from RootViewModel
  * - Screen transitions
+ *
+ * @param startWithOnboarding If true, starts at Onboarding screen; otherwise starts at Home
+ * @param onOnboardingComplete Called when onboarding is completed to mark it in preferences
  */
 @Composable
 fun AppNavigation(
-    rootViewModel: RootViewModel,
+    startWithOnboarding: Boolean,
+    onOnboardingComplete: () -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
-    // Collect navigation events from RootViewModel - StateFlow-based (Google recommended pattern)
-    val navigationEvent by rootViewModel.navigationEvent.collectAsStateWithLifecycle()
-    LaunchedEffect(navigationEvent) {
-        navigationEvent?.let { event ->
-            when (event) {
-                is RootNavigationEvent.NavigateTo -> {
-                    when (event.route) {
-                        is AppRoute.Home -> {
-                            navController.navigate(event.route) {
-                                // Clear entire back stack - prevents going back to Loading or Onboarding
-                                popUpTo(navController.graph.id) { inclusive = true }
-                            }
-                        }
-                        is AppRoute.LanguageSelection -> {
-                            navController.navigate(event.route) {
-                                // Clear Loading from back stack
-                                popUpTo(navController.graph.id) { inclusive = true }
-                            }
-                        }
-                        is AppRoute.Onboarding -> {
-                            navController.navigate(event.route) {
-                                // Clear Language Selection from back stack
-                                popUpTo(navController.graph.id) { inclusive = true }
-                            }
-                        }
-                        else -> {
-                            navController.navigate(event.route)
-                        }
-                    }
-                }
-                is RootNavigationEvent.NavigateBack -> {
-                    navController.popBackStack()
-                }
-            }
-            rootViewModel.onNavigationHandled()
-        }
-    }
+    // Determine start destination based on flag from Intent
+    val startDestination: AppRoute = if (startWithOnboarding) AppRoute.Onboarding else AppRoute.Home
 
     Box(modifier = modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
-            startDestination = AppRoute.Loading,
+            startDestination = startDestination,
             enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Start,
@@ -131,52 +86,15 @@ fun AppNavigation(
             // ROOT LEVEL ROUTES
             // ============================================
 
-            composable<AppRoute.Loading> {
-                val isLoading by rootViewModel.isLoading.collectAsStateWithLifecycle()
-                val loadingMessage by rootViewModel.loadingMessage.collectAsStateWithLifecycle()
-
-                LoadingScreen(
-                    isLoading = isLoading,
-                    message = loadingMessage
-                )
-            }
-
-            composable<AppRoute.LanguageSelection> {
-                val languageManager = remember { ACCDI.get<LanguageManager>() }
-                val getSelectedLanguageUseCase = remember { ACCDI.get<GetSelectedLanguageUseCase>() }
-                val saveLanguagePreferenceUseCase = remember { ACCDI.get<SaveLanguagePreferenceUseCase>() }
-                val applyLanguageUseCase = remember { ACCDI.get<ApplyLanguageUseCase>() }
-                val completeLanguageSelectionUseCase = remember { ACCDI.get<CompleteLanguageSelectionUseCase>() }
-                val currentLanguage = remember { getSelectedLanguageUseCase() }
-
-                LanguageSelectionScreen(
-                    currentLanguage = currentLanguage,
-                    onLanguageSelected = { languageCode ->
-                        // Save preference only, don't apply (no Activity recreation)
-                        saveLanguagePreferenceUseCase(languageCode)
-                    },
-                    onContinue = {
-                        // 1. Mark selection complete FIRST (persists to SharedPreferences)
-                        completeLanguageSelectionUseCase()
-
-                        // 2. Set pending recreation flag (so RootViewModel knows to navigate after recreation)
-                        languageManager.setPendingLocaleRecreation()
-
-                        // 3. Apply language (triggers Activity recreation)
-                        // After recreation, RootViewModel will check pending flag and navigate
-                        applyLanguageUseCase()
-                    },
-                    // Provide localized string preview function
-                    getLocalizedString = { resId, languageCode ->
-                        languageManager.getLocalizedString(resId, languageCode)
-                    }
-                )
-            }
-
             composable<AppRoute.Onboarding> {
                 OnboardingScreen(
                     onComplete = {
-                        rootViewModel.completeOnboarding()
+                        // Mark onboarding as complete in preferences
+                        onOnboardingComplete()
+                        // Navigate to Home, clearing back stack
+                        navController.navigate(AppRoute.Home) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
                     }
                 )
             }
@@ -326,49 +244,8 @@ fun AppNavigation(
             // ============================================
 
             composable<AppRoute.Settings> {
-                val getSelectedLanguageUseCase = remember { ACCDI.get<GetSelectedLanguageUseCase>() }
-                val languageManager = remember { ACCDI.get<LanguageManager>() }
-                val currentLanguageCode = remember { getSelectedLanguageUseCase() }
-                val currentLanguageName = remember(currentLanguageCode) { languageManager.getLanguageDisplayName(currentLanguageCode) }
-
                 SettingsScreen(
-                    currentLanguageName = currentLanguageName,
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToLanguage = {
-                        navController.navigate(AppRoute.LanguageSettings)
-                    }
-                )
-            }
-
-            composable<AppRoute.LanguageSettings> {
-                val languageManager = remember { ACCDI.get<LanguageManager>() }
-                val getSelectedLanguageUseCase = remember { ACCDI.get<GetSelectedLanguageUseCase>() }
-                val saveLanguagePreferenceUseCase = remember { ACCDI.get<SaveLanguagePreferenceUseCase>() }
-                val applyLanguageUseCase = remember { ACCDI.get<ApplyLanguageUseCase>() }
-                val currentLanguage = remember { getSelectedLanguageUseCase() }
-
-                LanguageSelectionScreen(
-                    currentLanguage = currentLanguage,
-                    showBackButton = true,
-                    onLanguageSelected = { languageCode ->
-                        // Save preference only for preview
-                        saveLanguagePreferenceUseCase(languageCode)
-                    },
-                    onContinue = {
-                        // 1. Set pending recreation flag
-                        languageManager.setPendingLocaleRecreation()
-
-                        // 2. Apply language (triggers Activity recreation)
-                        // After recreation, RootViewModel will check pending flag and navigate to Home
-                        applyLanguageUseCase()
-                    },
-                    onBackClick = {
-                        navController.popBackStack()
-                    },
-                    // Provide localized string preview function
-                    getLocalizedString = { resId, languageCode ->
-                        languageManager.getLocalizedString(resId, languageCode)
-                    }
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
         }

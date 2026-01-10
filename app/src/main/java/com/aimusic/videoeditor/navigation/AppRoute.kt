@@ -5,14 +5,18 @@ import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
 /**
- * Single-Activity Navigation Routes
+ * Navigation Routes for MainActivity
  *
- * All routes for the single-activity architecture using Jetpack Navigation Compose.
+ * All routes for the main app content using Jetpack Navigation Compose.
  * Routes are organized by app flow:
  * - Root: Loading, Onboarding
  * - Home: Main screen with Create / My Projects
  * - Create Flow: Asset picker, Editor, Preview, Export
  * - Projects: Project list
+ * - Settings: App settings (About)
+ *
+ * Note: Language selection is handled by LanguageSelectionActivity (separate Activity)
+ *       before the user reaches MainActivity.
  *
  * @Serializable: For Navigation Compose type-safe routing
  * @Parcelize: For Android Parcelable (saved state, process death recovery)
@@ -25,15 +29,15 @@ sealed class AppRoute : Parcelable {
 
     /**
      * Loading screen - Initial app loading
-     * Shows while checking onboarding status
+     * Shows while initializing app (ads, config, status checks)
      */
     @Parcelize
     @Serializable
     data object Loading : AppRoute()
 
     /**
-     * Language Selection screen - First-time user language picker
-     * Shown before onboarding
+     * Language Selection - Route indicator for RootViewActivity
+     * Note: This routes to LanguageSelectionActivity (separate Activity)
      */
     @Parcelize
     @Serializable
@@ -41,6 +45,7 @@ sealed class AppRoute : Parcelable {
 
     /**
      * Onboarding screen - First-time user tutorial
+     * Shown after language is selected
      */
     @Parcelize
     @Serializable
@@ -117,17 +122,10 @@ sealed class AppRoute : Parcelable {
     // ============================================
 
     /**
-     * Settings screen - App settings
+     * Settings screen - App settings (About only)
+     * Note: Language selection removed - handled by LanguageSelectionActivity on first launch
      */
     @Parcelize
     @Serializable
     data object Settings : AppRoute()
-
-    /**
-     * Language Settings screen - Change app language
-     * Reuses LanguageSelectionScreen in settings context
-     */
-    @Parcelize
-    @Serializable
-    data object LanguageSettings : AppRoute()
 }

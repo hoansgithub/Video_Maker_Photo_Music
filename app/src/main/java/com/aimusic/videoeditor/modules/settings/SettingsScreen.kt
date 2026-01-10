@@ -1,6 +1,5 @@
 package com.aimusic.videoeditor.modules.settings
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,7 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -19,7 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Language
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,7 +31,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -47,21 +44,18 @@ import com.aimusic.videoeditor.ui.theme.VideoMakerTheme
  * SettingsScreen - App settings page
  *
  * Features:
- * - Language selection option
  * - App version info
  *
- * @param currentLanguageName Display name of current language (injected from navigation)
+ * Note: Language selection is handled by LanguageSelectionActivity on first launch.
+ *       Language option has been removed from settings for a smoother UX.
+ *
  * @param onNavigateBack Callback to navigate back
- * @param onNavigateToLanguage Callback to navigate to language settings
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    currentLanguageName: String,
-    onNavigateBack: () -> Unit,
-    onNavigateToLanguage: () -> Unit
+    onNavigateBack: () -> Unit
 ) {
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -94,16 +88,6 @@ fun SettingsScreen(
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(16.dp)
         ) {
-            // Language Settings
-            SettingsItem(
-                icon = Icons.Default.Language,
-                title = stringResource(R.string.settings_language),
-                subtitle = currentLanguageName,
-                onClick = onNavigateToLanguage
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             // About Section
             SettingsItem(
                 icon = Icons.Default.Info,
@@ -183,9 +167,7 @@ private fun SettingsItem(
 private fun SettingsScreenPreview() {
     VideoMakerTheme {
         SettingsScreen(
-            currentLanguageName = "English",
-            onNavigateBack = {},
-            onNavigateToLanguage = {}
+            onNavigateBack = {}
         )
     }
 }

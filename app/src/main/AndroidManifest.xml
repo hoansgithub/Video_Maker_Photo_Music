@@ -27,18 +27,33 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VideoMaker">
 
-        <!-- MainActivity - Single Activity Architecture -->
+        <!-- RootViewActivity - Entry Point (Launcher)
+             Applies locale, shows splash, routes to Language or Main -->
         <activity
-            android:name=".MainActivity"
+            android:name=".RootViewActivity"
             android:exported="true"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.App.Starting"
-            android:windowSoftInputMode="adjustResize">
+            android:theme="@style/Theme.App.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- LanguageSelectionActivity - First-time language picker -->
+        <activity
+            android:name=".modules.language.LanguageSelectionActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+
+        <!-- MainActivity - Main app content (no longer launcher) -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker"
+            android:windowSoftInputMode="adjustResize" />
 
         <!-- FileProvider for sharing exported videos -->
         <provider

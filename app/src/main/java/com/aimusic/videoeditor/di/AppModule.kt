@@ -6,8 +6,8 @@ import co.alcheclub.lib.acccore.di.androidContext
 import co.alcheclub.lib.acccore.di.get
 import co.alcheclub.lib.acccore.di.module
 import co.alcheclub.lib.acccore.di.viewModel
-import com.aimusic.videoeditor.core.data.local.LanguageManager
 import com.aimusic.videoeditor.core.data.local.PreferencesManager
+import com.aimusic.videoeditor.core.data.local.LanguageManager
 import com.aimusic.videoeditor.data.local.database.ProjectDatabase
 import com.aimusic.videoeditor.data.repository.ExportRepositoryImpl
 import com.aimusic.videoeditor.data.repository.ProjectRepositoryImpl
@@ -28,6 +28,7 @@ import com.aimusic.videoeditor.modules.language.domain.usecase.GetSelectedLangua
 import com.aimusic.videoeditor.modules.language.domain.usecase.InitializeLanguageUseCase
 import com.aimusic.videoeditor.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
 import com.aimusic.videoeditor.modules.language.domain.usecase.SetLanguageUseCase
+// Note: Language use cases are still registered for LanguageSelectionActivity (ACCDI.get)
 import com.aimusic.videoeditor.media.composition.CompositionFactory
 import com.aimusic.videoeditor.modules.editor.EditorViewModel
 import com.aimusic.videoeditor.modules.export.ExportViewModel
@@ -230,14 +231,11 @@ class MusicPickerViewModelFactory(
 }
 
 val presentationModule = module {
-    // Root ViewModel for Single-Activity Architecture
+    // Root ViewModel for RootViewActivity (handles loading, ads, navigation)
     viewModel {
         RootViewModel(
             checkOnboardingStatusUseCase = it.get<CheckOnboardingStatusUseCase>(),
-            completeOnboardingUseCase = it.get<CompleteOnboardingUseCase>(),
-            checkLanguageSelectedUseCase = it.get<CheckLanguageSelectedUseCase>(),
-            initializeLanguageUseCase = it.get<InitializeLanguageUseCase>(),
-            languageManager = it.get<LanguageManager>()
+            checkLanguageSelectedUseCase = it.get<CheckLanguageSelectedUseCase>()
         )
     }
 

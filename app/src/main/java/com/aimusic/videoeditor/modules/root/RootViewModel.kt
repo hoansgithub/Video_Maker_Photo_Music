@@ -4,11 +4,8 @@ import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import java.lang.ref.WeakReference
-import com.aimusic.videoeditor.core.data.local.LanguageManager
 import com.aimusic.videoeditor.modules.language.domain.usecase.CheckLanguageSelectedUseCase
-import com.aimusic.videoeditor.modules.language.domain.usecase.InitializeLanguageUseCase
 import com.aimusic.videoeditor.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
-import com.aimusic.videoeditor.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import com.aimusic.videoeditor.navigation.AppRoute
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,14 +14,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * RootViewModel - Root state machine for Single-Activity Architecture
+ * RootViewModel - Root state machine for app initialization
  *
- * Manages the entire app state machine:
- * - Loading: Check onboarding status
- * - Onboarding: First-time user flow
+ * Manages the entire app initialization flow:
+ * - Loading: Initialize services, load config, check status
+ * - Language Selection: First-time language picker (separate Activity)
+ * - Onboarding: First-time user tutorial
  * - Home: Main app experience
  *
- * Usage in MainActivity:
+ * Placeholder for future features:
+ * - AdMob initialization
+ * - Firebase Remote Config
+ * - App Open ad presentation
+ *
+ * Usage in RootViewActivity:
  * ```kotlin
  * private val rootViewModel: RootViewModel by viewModel()
  * rootViewModel.initializeApp(this)
@@ -32,10 +35,7 @@ import kotlinx.coroutines.launch
  */
 class RootViewModel(
     private val checkOnboardingStatusUseCase: CheckOnboardingStatusUseCase,
-    private val completeOnboardingUseCase: CompleteOnboardingUseCase,
-    private val checkLanguageSelectedUseCase: CheckLanguageSelectedUseCase,
-    private val initializeLanguageUseCase: InitializeLanguageUseCase,
-    private val languageManager: LanguageManager
+    private val checkLanguageSelectedUseCase: CheckLanguageSelectedUseCase
 ) : ViewModel() {
 
     // ============================================
@@ -59,90 +59,46 @@ class RootViewModel(
     // INTERNAL STATE
     // ============================================
 
-    private var isInitialized = false
+    @Volatile
     private var activityRef: WeakReference<Activity>? = null
+
+    @Volatile
     private var shouldShowLanguageSelection = false
+
+    @Volatile
     private var shouldShowOnboarding = false
+
+    @Volatile
+    private var isInitialized = false
 
     // ============================================
     // PUBLIC API
     // ============================================
 
     /**
-     * Initialize app - MUST be called from Activity onCreate
+     * Initialize app - MUST be called from RootViewActivity onCreate
      *
      * This handles:
-     * 1. Check onboarding status
-     * 2. Navigation to appropriate screen
+     * 1. AdMob initialization (placeholder)
+     * 2. Firebase Remote Config (placeholder)
+     * 3. App Open ad presentation (placeholder)
+     * 4. Language selection status check
+     * 5. Onboarding status check
+     * 6. Navigation to appropriate screen
      *
-     * @param activity Activity context
+     * @param activity Activity context required for ads
      */
     fun initializeApp(activity: Activity) {
         activityRef = WeakReference(activity)
 
-        // Check if this is a recreation due to locale change
-        if (languageManager.isPendingLocaleRecreation()) {
-            languageManager.clearPendingLocaleRecreation()
-
-            // Re-check status and navigate (skip loading delay)
-            viewModelScope.launch {
-                reloadAndNavigate()
-            }
+        if (isInitialized) {
+            // Already initialized, just navigate
+            proceedToNextScreen()
             return
         }
 
-        if (isInitialized) return
-
         isInitialized = true
-
-        viewModelScope.launch {
-            try {
-                loadInitialData()
-            } catch (e: Exception) {
-                proceedToNextScreen()
-            }
-        }
-    }
-
-    /**
-     * Reload status and navigate after locale change (skip delay)
-     */
-    private suspend fun reloadAndNavigate() {
-        // Check if language has been selected
-        val languageResult = checkLanguageSelectedUseCase()
-        shouldShowLanguageSelection = languageResult.getOrNull() ?: false
-
-        // Check onboarding status
-        val onboardingResult = checkOnboardingStatusUseCase()
-        shouldShowOnboarding = onboardingResult.getOrNull() ?: false
-
-        proceedToNextScreen()
-    }
-
-    /**
-     * Called when user completes language selection (presses Continue)
-     * Language is already applied when user tapped an option
-     */
-    fun onLanguageSelectionComplete() {
-        shouldShowLanguageSelection = false
-
-        // After language is selected, check if onboarding is needed
-        if (shouldShowOnboarding) {
-            _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Onboarding)
-        } else {
-            navigateToHome()
-        }
-    }
-
-    /**
-     * Complete onboarding and navigate to home
-     * Called when user finishes onboarding
-     */
-    fun completeOnboarding() {
-        viewModelScope.launch {
-            completeOnboardingUseCase()
-            navigateToHome()
-        }
+        loadInitialData()
     }
 
     /**
@@ -153,7 +109,8 @@ class RootViewModel(
     }
 
     /**
-     * Called by UI after navigation is handled - clears the event
+     * Clear navigation event after it has been handled
+     * MUST be called after processing navigation event
      */
     fun onNavigationHandled() {
         _navigationEvent.value = null
@@ -161,13 +118,11 @@ class RootViewModel(
 
     /**
      * Get Activity reference
-     * Returns null if Activity is not available
      */
     fun getActivityRef(): Activity? = activityRef?.get()
 
     /**
      * Update Activity reference
-     * Called when Activity is recreated
      */
     fun updateActivityRef(activity: Activity) {
         activityRef = WeakReference(activity)
@@ -175,7 +130,6 @@ class RootViewModel(
 
     /**
      * Clear Activity reference
-     * Called when Activity is destroyed
      */
     fun clearActivityRef() {
         activityRef?.clear()
@@ -186,41 +140,88 @@ class RootViewModel(
     // PRIVATE: INITIALIZATION
     // ============================================
 
-    private suspend fun loadInitialData() {
-        _isLoading.value = true
-        _loadingMessage.value = "Loading..."
+    private fun loadInitialData() {
+        viewModelScope.launch {
+            _isLoading.value = true
 
-        try {
-            // Short delay for splash screen display
-            delay(500)
+            try {
+                // Step 1: Initialize AdMob (placeholder)
+                _loadingMessage.value = "Initializing ads..."
+                initializeAds()
 
-            // Initialize language settings (restore previously selected language)
-            initializeLanguageUseCase()
+                // Step 2: Load Remote Config (placeholder)
+                _loadingMessage.value = "Loading configuration..."
+                loadRemoteConfig()
 
-            // Check if language has been selected (first-time user check)
-            val languageResult = checkLanguageSelectedUseCase()
-            shouldShowLanguageSelection = languageResult.getOrNull() ?: false
+                // Step 3: Present App Open Ad (placeholder)
+                _loadingMessage.value = "Loading..."
+                presentAppOpenAd()
 
-            // Check onboarding status
-            val onboardingResult = checkOnboardingStatusUseCase()
-            shouldShowOnboarding = onboardingResult.getOrNull() ?: false
+                // Step 4: Check language selection status
+                val languageResult = checkLanguageSelectedUseCase()
+                shouldShowLanguageSelection = languageResult.getOrNull() ?: false
 
-            proceedToNextScreen()
-        } catch (_: Exception) {
-            proceedToNextScreen()
+                // Step 5: Check onboarding status
+                val onboardingResult = checkOnboardingStatusUseCase()
+                shouldShowOnboarding = onboardingResult.getOrNull() ?: false
+
+                // Step 6: Navigate to appropriate screen
+                proceedToNextScreen()
+
+            } catch (_: Exception) {
+                proceedToNextScreen()
+            }
         }
     }
+
+    // ============================================
+    // PRIVATE: PLACEHOLDERS (for future implementation)
+    // ============================================
+
+    /**
+     * Initialize AdMob SDK
+     * TODO: Implement UMP consent + AdMob initialization
+     */
+    private suspend fun initializeAds() {
+        // Placeholder: Add AdMob initialization here
+        delay(100) // Simulate initialization
+    }
+
+    /**
+     * Load Firebase Remote Config
+     * TODO: Implement Remote Config fetch and activate
+     */
+    private suspend fun loadRemoteConfig() {
+        // Placeholder: Add Remote Config loading here
+        delay(100) // Simulate loading
+    }
+
+    /**
+     * Present App Open Ad
+     * TODO: Implement App Open ad loading and presentation
+     */
+    private suspend fun presentAppOpenAd() {
+        // Placeholder: Add App Open ad presentation here
+        delay(100) // Simulate ad presentation
+    }
+
+    // ============================================
+    // PRIVATE: NAVIGATION
+    // ============================================
 
     private fun proceedToNextScreen() {
         _isLoading.value = false
 
         when {
+            // First priority: Language selection (if not yet selected)
             shouldShowLanguageSelection -> {
                 _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.LanguageSelection)
             }
+            // Second priority: Onboarding (first-time user after language)
             shouldShowOnboarding -> {
                 _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Onboarding)
             }
+            // Default: Go to Home
             else -> {
                 _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Home)
             }

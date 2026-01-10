@@ -23,7 +23,7 @@ android {
         applicationId = "com.aimusic.videoeditor"
         minSdk = 28
         targetSdk = 36
-        versionCode = 2u
+        versionCode = 2
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
