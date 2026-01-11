@@ -271,8 +271,8 @@ class EditorViewModel(
         }
     }
 
-    fun updateTransition(transitionId: String?) {
-        updatePendingSettings { it.copy(transitionId = transitionId) }
+    fun updateEffectSet(effectSetId: String?) {
+        updatePendingSettings { it.copy(effectSetId = effectSetId) }
     }
 
     fun updateImageDuration(durationMs: Long) {

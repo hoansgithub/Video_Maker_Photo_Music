@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "148e0fe9c1bc9bbdfb21e40bd4f50be8",
+    "identityHash": "97a0c508ca7d1c0112b2af3d75298ce4",
     "entities": [
       {
         "tableName": "projects",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `thumbnailUri` TEXT, `imageDurationMs` INTEGER NOT NULL, `transitionPercentage` INTEGER NOT NULL, `transitionId` TEXT, `overlayFrameId` TEXT, `audioTrackId` TEXT, `customAudioUri` TEXT, `audioVolume` REAL NOT NULL, `aspectRatio` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `thumbnailUri` TEXT, `imageDurationMs` INTEGER NOT NULL, `transitionPercentage` INTEGER NOT NULL, `effectSetId` TEXT, `overlayFrameId` TEXT, `audioTrackId` TEXT, `customAudioUri` TEXT, `audioVolume` REAL NOT NULL, `aspectRatio` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -50,8 +50,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "transitionId",
-            "columnName": "transitionId",
+            "fieldPath": "effectSetId",
+            "columnName": "effectSetId",
             "affinity": "TEXT"
           },
           {
@@ -158,7 +158,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '148e0fe9c1bc9bbdfb21e40bd4f50be8')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '97a0c508ca7d1c0112b2af3d75298ce4')"
     ]
   }
 }

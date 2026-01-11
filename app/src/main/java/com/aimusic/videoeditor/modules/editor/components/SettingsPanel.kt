@@ -31,12 +31,10 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -62,11 +60,10 @@ import com.aimusic.videoeditor.domain.model.AspectRatio
 import com.aimusic.videoeditor.domain.model.AudioTrack
 import com.aimusic.videoeditor.domain.model.OverlayFrame
 import com.aimusic.videoeditor.domain.model.ProjectSettings
-import com.aimusic.videoeditor.domain.model.Transition
-import com.aimusic.videoeditor.domain.model.TransitionCategory
+import com.aimusic.videoeditor.domain.model.TransitionSet
 import com.aimusic.videoeditor.media.library.AudioTrackLibrary
 import com.aimusic.videoeditor.media.library.FrameLibrary
-import com.aimusic.videoeditor.media.library.TransitionShaderLibrary
+import com.aimusic.videoeditor.media.library.TransitionSetLibrary
 import coil.compose.AsyncImage
 
 /**
@@ -78,8 +75,9 @@ import coil.compose.AsyncImage
  * - This prevents unnecessary reprocessing while browsing options
  *
  * Settings (user can mix and match):
- * - Transition Effect (individual transition)
+ * - Effect Set (collection of transitions)
  * - Image Duration (2-12 seconds per image)
+ * - Transition Duration (percentage)
  * - Overlay Frame (decorative frame)
  * - Background Music (bundled or custom)
  * - Audio Volume (0-100%)
@@ -90,7 +88,7 @@ import coil.compose.AsyncImage
 fun SettingsPanel(
     settings: ProjectSettings,
     hasPendingChanges: Boolean,
-    onTransitionChange: (String?) -> Unit,
+    onEffectSetChange: (String?) -> Unit,
     onImageDurationChange: (Long) -> Unit,
     onTransitionPercentageChange: (Int) -> Unit,
     onOverlayFrameChange: (String?) -> Unit,
@@ -158,10 +156,10 @@ fun SettingsPanel(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Transition Effect
-            TransitionSelector(
-                selectedTransitionId = settings.transitionId,
-                onTransitionSelect = onTransitionChange
+            // Effect Set Selector
+            EffectSetSelector(
+                selectedEffectSetId = settings.effectSetId,
+                onEffectSetSelect = onEffectSetChange
             )
 
             // Image Duration
@@ -212,37 +210,37 @@ fun SettingsPanel(
 private const val AUTO_SCROLL_DELAY_MS = 400L
 
 @Composable
-private fun TransitionSelector(
-    selectedTransitionId: String?,
-    onTransitionSelect: (String?) -> Unit
+private fun EffectSetSelector(
+    selectedEffectSetId: String?,
+    onEffectSetSelect: (String?) -> Unit
 ) {
-    // Load transitions asynchronously to avoid blocking composition
-    var groupedTransitions by remember { mutableStateOf<Map<TransitionCategory, List<Transition>>?>(null) }
+    // Load effect sets
+    var effectSets by remember { mutableStateOf<List<TransitionSet>?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
     // Load data on background thread
     LaunchedEffect(Unit) {
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            groupedTransitions = TransitionShaderLibrary.getGroupedByCategory()
+            effectSets = TransitionSetLibrary.getAll()
         }
         isLoading = false
     }
 
     Column {
         Text(
-            text = stringResource(R.string.settings_transition_effect),
+            text = stringResource(R.string.settings_effect_set),
             style = MaterialTheme.typography.bodyMedium
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        val transitions = groupedTransitions
-        if (isLoading || transitions == null) {
-            // Loading placeholder - matches height of actual content
+        val sets = effectSets
+        if (isLoading || sets == null) {
+            // Loading placeholder
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(130.dp),
+                    .height(100.dp),
                 contentAlignment = Alignment.Center
             ) {
                 androidx.compose.material3.CircularProgressIndicator(
@@ -251,150 +249,69 @@ private fun TransitionSelector(
                 )
             }
         } else {
-            TransitionSelectorContent(
-                groupedTransitions = transitions,
-                selectedTransitionId = selectedTransitionId,
-                onTransitionSelect = onTransitionSelect
+            EffectSetSelectorContent(
+                effectSets = sets,
+                selectedEffectSetId = selectedEffectSetId,
+                onEffectSetSelect = onEffectSetSelect
             )
         }
     }
 }
 
 @Composable
-private fun TransitionSelectorContent(
-    groupedTransitions: Map<TransitionCategory, List<Transition>>,
-    selectedTransitionId: String?,
-    onTransitionSelect: (String?) -> Unit
+private fun EffectSetSelectorContent(
+    effectSets: List<TransitionSet>,
+    selectedEffectSetId: String?,
+    onEffectSetSelect: (String?) -> Unit
 ) {
-    // Compute categories once
-    val availableCategories = remember(groupedTransitions) {
-        groupedTransitions.keys.toList().sortedBy { it.ordinal }
-    }
+    val listState = rememberLazyListState()
 
-    // Find the initial category based on selected transition
-    val initialCategory = remember(selectedTransitionId) {
-        if (selectedTransitionId == null) null
-        else groupedTransitions.entries.find { (_, transitions) ->
-            transitions.any { it.id == selectedTransitionId }
-        }?.key
-    }
-
-    // Selected category state
-    var selectedCategory by remember { mutableStateOf(initialCategory) }
-
-    // Filter transitions based on selected category
-    val filteredTransitions = remember(selectedCategory, groupedTransitions) {
-        buildList {
-            add(null) // "None" option first
-            if (selectedCategory == null) {
-                groupedTransitions.forEach { (_, transitions) -> addAll(transitions) }
-            } else {
-                groupedTransitions[selectedCategory]?.let { addAll(it) }
-            }
-        }
-    }
-
-    // LazyRow states
-    val categoryListState = rememberLazyListState()
-    val transitionListState = rememberLazyListState()
-
-    // Delayed auto-scroll to let panel animation complete first
+    // Auto-scroll to selected item
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(AUTO_SCROLL_DELAY_MS)
-        // Scroll to selected category
-        val categoryIndex = if (initialCategory == null) 0
-            else availableCategories.indexOf(initialCategory) + 1
-        if (categoryIndex > 0) {
-            categoryListState.animateScrollToItem(categoryIndex)
-        }
-        // Scroll to selected transition
-        val transitionIndex = if (selectedTransitionId == null) 0
-            else filteredTransitions.indexOfFirst { it?.id == selectedTransitionId }.coerceAtLeast(0)
-        if (transitionIndex > 0) {
-            transitionListState.animateScrollToItem(transitionIndex)
+        val selectedIndex = effectSets.indexOfFirst { it.id == selectedEffectSetId }
+        if (selectedIndex > 0) {
+            listState.animateScrollToItem(selectedIndex + 1) // +1 for "None" item
         }
     }
 
-    // Category filter chips
     LazyRow(
-        state = categoryListState,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        state = listState,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item(key = "all") {
-            CategoryChip(
-                text = stringResource(R.string.settings_all),
-                isSelected = selectedCategory == null,
-                onClick = { selectedCategory = null }
+        // None option
+        item(key = "none") {
+            EffectSetChip(
+                effectSet = null,
+                isSelected = selectedEffectSetId == null,
+                onClick = { onEffectSetSelect(null) }
             )
         }
-        items(
-            items = availableCategories,
-            key = { it.name }
-        ) { category ->
-            CategoryChip(
-                text = category.displayName,
-                isSelected = selectedCategory == category,
-                onClick = { selectedCategory = category }
-            )
-        }
-    }
 
-    Spacer(modifier = Modifier.height(12.dp))
-
-    // Transitions LazyRow
-    LazyRow(
-        state = transitionListState,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
+        // Effect sets
         items(
-            items = filteredTransitions,
-            key = { it?.id ?: "none" }
-        ) { transition ->
-            TransitionChip(
-                transition = transition,
-                isSelected = (transition?.id ?: null) == selectedTransitionId,
-                onClick = { onTransitionSelect(transition?.id) }
+            items = effectSets,
+            key = { it.id }
+        ) { effectSet ->
+            EffectSetChip(
+                effectSet = effectSet,
+                isSelected = effectSet.id == selectedEffectSetId,
+                onClick = { onEffectSetSelect(effectSet.id) }
             )
         }
     }
 }
 
 @Composable
-private fun CategoryChip(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(
-                if (isSelected) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.surfaceVariant
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium,
-            color = if (isSelected) MaterialTheme.colorScheme.onPrimary
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-        )
-    }
-}
-
-@Composable
-private fun TransitionChip(
-    transition: Transition?,
+private fun EffectSetChip(
+    effectSet: TransitionSet?,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
-            .width(72.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .width(100.dp)
+            .clip(RoundedCornerShape(12.dp))
             .background(
                 if (isSelected) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.surface
@@ -403,24 +320,24 @@ private fun TransitionChip(
                 width = if (isSelected) 2.dp else 1.dp,
                 color = if (isSelected) MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.outline,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(12.dp)
             )
             .clickable(onClick = onClick)
-            .padding(8.dp),
+            .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Icon/indicator
         Box(
             modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .size(48.dp)
+                .clip(RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
-            if (transition == null) {
+            if (effectSet == null) {
                 Text(
                     text = stringResource(R.string.settings_off),
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
             } else if (isSelected) {
@@ -428,28 +345,42 @@ private fun TransitionChip(
                     imageVector = Icons.Default.Check,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             } else {
-                // Category initial
+                // Show effect count
                 Text(
-                    text = transition.category.displayName.first().toString(),
-                    style = MaterialTheme.typography.labelMedium,
+                    text = "${effectSet.transitions.size}",
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
+        // Name
         Text(
-            text = transition?.name ?: stringResource(R.string.settings_none),
-            style = MaterialTheme.typography.labelSmall,
-            maxLines = 2,
+            text = effectSet?.name ?: stringResource(R.string.settings_none),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center
         )
+
+        // Description (only for effect sets)
+        if (effectSet != null) {
+            Text(
+                text = effectSet.description,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 
@@ -489,7 +420,6 @@ private fun TransitionPercentageSelector(
     onPercentageSelect: (Int) -> Unit
 ) {
     // Calculate actual transition duration for display
-    // Formula: percentage × (imageDuration × 2) / 100
     val transitionDurationSec = (imageDurationMs * 2 * selectedPercentage / 100) / 1000f
 
     Column {

@@ -1,0 +1,128 @@
+[
+  {
+    "id": "kpop",
+    "name": "K-Pop",
+    "description": "Korean pop music",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "jpop",
+    "name": "J-Pop",
+    "description": "Japanese pop music",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "usuk",
+    "name": "US/UK",
+    "description": "American and British hits",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "pop",
+    "name": "Pop",
+    "description": "Popular mainstream music",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "hiphop",
+    "name": "Hip-Hop",
+    "description": "Hip-hop and rap music",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "edm",
+    "name": "EDM",
+    "description": "Electronic dance music",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "rock",
+    "name": "Rock",
+    "description": "Rock and alternative music",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "latin",
+    "name": "Latin",
+    "description": "Latin and Spanish music",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "country",
+    "name": "Country",
+    "description": "Country and western music",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "classical",
+    "name": "Classical",
+    "description": "Classical and orchestral music",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "dance",
+    "name": "Dance",
+    "description": "Dance and club music",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "tiktok",
+    "name": "TikTok",
+    "description": "Trending TikTok sounds",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "ballad",
+    "name": "Ballad",
+    "description": "Slow emotional ballads",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "rnb",
+    "name": "R&B",
+    "description": "Rhythm and blues",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "children",
+    "name": "Children",
+    "description": "Kids and family music",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "xmas",
+    "name": "Christmas",
+    "description": "Holiday and Christmas songs",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "regional",
+    "name": "Regional",
+    "description": "Regional and local music",
+    "thumbnailUrl": "",
+    "isPremium": false
+  },
+  {
+    "id": "others",
+    "name": "Others",
+    "description": "Other genres",
+    "thumbnailUrl": "",
+    "isPremium": false
+  }
+]

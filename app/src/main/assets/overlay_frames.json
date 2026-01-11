@@ -1,0 +1,272 @@
+[
+  {
+    "id": "frame_polaroid",
+    "name": "Polaroid",
+    "description": "Classic instant camera frame",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_film_strip",
+    "name": "Film Strip",
+    "description": "Vintage 35mm film border",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_vhs_retro",
+    "name": "VHS Retro",
+    "description": "90s VHS recording overlay",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_neon_border",
+    "name": "Neon Border",
+    "description": "Glowing neon light frame",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_cinema_bars",
+    "name": "Cinema Bars",
+    "description": "Cinematic letterbox bars",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_torn_paper",
+    "name": "Torn Paper",
+    "description": "Ripped paper edge effect",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_grunge_border",
+    "name": "Grunge Border",
+    "description": "Distressed urban texture",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_floral_elegant",
+    "name": "Floral Elegant",
+    "description": "Beautiful flower ornaments",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_gold_luxury",
+    "name": "Gold Luxury",
+    "description": "Premium golden ornate frame",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": true,
+    "isActive": true
+  },
+  {
+    "id": "frame_hearts_love",
+    "name": "Hearts Love",
+    "description": "Romantic heart decorations",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_sparkle_magic",
+    "name": "Sparkle Magic",
+    "description": "Glittering sparkle overlay",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_comic_pop",
+    "name": "Comic Pop",
+    "description": "Comic book style halftone border",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_glitch_digital",
+    "name": "Glitch Digital",
+    "description": "Digital glitch distortion frame",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_watercolor_soft",
+    "name": "Watercolor Soft",
+    "description": "Soft painted watercolor edges",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_vintage_ornate",
+    "name": "Vintage Ornate",
+    "description": "Classic Victorian style frame",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": true,
+    "isActive": true
+  },
+  {
+    "id": "frame_minimal_line",
+    "name": "Minimal Line",
+    "description": "Clean simple line border",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_birthday_party",
+    "name": "Birthday Party",
+    "description": "Colorful birthday celebration",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_christmas_festive",
+    "name": "Christmas Festive",
+    "description": "Holiday snowflakes and ornaments",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_halloween_spooky",
+    "name": "Halloween Spooky",
+    "description": "Spooky bats and cobwebs",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_new_year",
+    "name": "New Year",
+    "description": "Fireworks and celebration",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_wedding_elegant",
+    "name": "Wedding Elegant",
+    "description": "Elegant wedding decorations",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": true,
+    "isActive": true
+  },
+  {
+    "id": "frame_baby_cute",
+    "name": "Baby Cute",
+    "description": "Adorable baby-themed frame",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_travel_stamps",
+    "name": "Travel Stamps",
+    "description": "Passport stamps and stickers",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_gaming_hud",
+    "name": "Gaming HUD",
+    "description": "Video game interface overlay",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_cyberpunk_tech",
+    "name": "Cyberpunk Tech",
+    "description": "Futuristic tech UI elements",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": true,
+    "isActive": true
+  },
+  {
+    "id": "frame_aesthetic_clouds",
+    "name": "Aesthetic Clouds",
+    "description": "Dreamy cloud border",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_leaf_nature",
+    "name": "Leaf Nature",
+    "description": "Natural leaves and branches",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_gradient_glow",
+    "name": "Gradient Glow",
+    "description": "Colorful gradient border glow",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_brush_stroke",
+    "name": "Brush Stroke",
+    "description": "Artistic paint brush edges",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "frame_diamond_sparkle",
+    "name": "Diamond Sparkle",
+    "description": "Luxurious diamond accents",
+    "thumbnailUrl": "",
+    "frameUrl": "",
+    "isPremium": true,
+    "isActive": true
+  }
+]

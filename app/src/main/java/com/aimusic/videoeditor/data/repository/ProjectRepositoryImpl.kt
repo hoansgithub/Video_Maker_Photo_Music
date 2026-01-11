@@ -82,7 +82,7 @@ class ProjectRepositoryImpl(
             id = projectId,
             imageDurationMs = settings.imageDurationMs,
             transitionPercentage = settings.transitionPercentage,
-            transitionId = settings.transitionId,
+            effectSetId = settings.effectSetId,
             overlayFrameId = settings.overlayFrameId,
             audioTrackId = settings.audioTrackId,
             customAudioUri = settings.customAudioUri?.toString(),

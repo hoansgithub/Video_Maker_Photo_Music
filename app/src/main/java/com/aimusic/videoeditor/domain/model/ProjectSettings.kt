@@ -7,6 +7,11 @@ import android.net.Uri
  *
  * Users can individually select each setting - mix and match as they like.
  *
+ * EFFECT SET:
+ * - effectSetId: ID of selected effect set (collection of transitions)
+ * - Each effect set contains multiple transitions that cycle through images
+ * - This provides variety while maintaining a cohesive visual theme
+ *
  * TRANSITION TIMING:
  * - transitionPercentage: Percentage of image duration used for transition (10-50%)
  * - Example: 30% with 5s image = 1.5s transition
@@ -15,7 +20,7 @@ import android.net.Uri
  *
  * @param imageDurationMs Duration each image is displayed (2-12 seconds)
  * @param transitionPercentage Percentage of image duration for transition (10-50%)
- * @param transitionId ID of selected transition effect (null = no transition)
+ * @param effectSetId ID of selected effect set (null = no transitions)
  * @param overlayFrameId ID of selected overlay frame (null = none)
  * @param audioTrackId ID of bundled audio track (null = none)
  * @param customAudioUri User's custom audio URI (overrides audioTrackId)
@@ -25,7 +30,7 @@ import android.net.Uri
 data class ProjectSettings(
     val imageDurationMs: Long = 3000L,
     val transitionPercentage: Int = 30, // 30% of image duration for transition
-    val transitionId: String? = "rgb_split", // Default to RGB Split transition
+    val effectSetId: String? = "dreamy_vibes", // Default effect set
     val overlayFrameId: String? = null,
     val audioTrackId: String? = DEFAULT_AUDIO_TRACK_ID,
     val customAudioUri: Uri? = null,
@@ -43,13 +48,6 @@ data class ProjectSettings(
      */
     val transitionOverlapMs: Long
         get() = (imageDurationMs * 2 * transitionPercentage / 100)
-
-    /**
-     * Legacy compatibility - maps to imageDurationMs
-     * @deprecated Use imageDurationMs instead
-     */
-    @Deprecated("Use imageDurationMs instead", ReplaceWith("imageDurationMs"))
-    val transitionDurationMs: Long get() = imageDurationMs
 
     companion object {
         const val DEFAULT_AUDIO_TRACK_ID = "track1"

@@ -1,0 +1,311 @@
+[
+  {
+    "id": "tpl_neon_kpop",
+    "name": "Neon K-Pop Vibes",
+    "description": "Energetic K-Pop with glitch effects",
+    "thumbnailUrl": "",
+    "songId": 20112,
+    "effectSetId": "cyberpunk",
+    "aspectRatio": "9:16",
+    "tags": [
+      "trending",
+      "new"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_retro_memories",
+    "name": "Retro Memories",
+    "description": "Nostalgic VHS vibes for throwback moments",
+    "thumbnailUrl": "",
+    "songId": 20284,
+    "effectSetId": "retro_wave",
+    "aspectRatio": "9:16",
+    "tags": [
+      "trending"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_cinema_epic",
+    "name": "Cinema Epic",
+    "description": "Movie-style cinematic storytelling",
+    "thumbnailUrl": "",
+    "songId": 20301,
+    "effectSetId": "cinema_magic",
+    "aspectRatio": "16:9",
+    "tags": [
+      "trending"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_latin_party",
+    "name": "Latin Party",
+    "description": "Hot Latin beats with neon club vibes",
+    "thumbnailUrl": "",
+    "songId": 20262,
+    "effectSetId": "neon_nights",
+    "aspectRatio": "9:16",
+    "tags": [
+      "trending",
+      "new"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_horror_thriller",
+    "name": "Horror Thriller",
+    "description": "Spooky effects for Halloween content",
+    "thumbnailUrl": "",
+    "songId": 20112,
+    "effectSetId": "horror_nights",
+    "aspectRatio": "9:16",
+    "tags": [
+      "seasonal"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_psychedelic_trip",
+    "name": "Psychedelic Trip",
+    "description": "Mind-bending visuals for trippy content",
+    "thumbnailUrl": "",
+    "songId": 20284,
+    "effectSetId": "psychedelic_trip",
+    "aspectRatio": "9:16",
+    "tags": [
+      "new"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_instagram_reel",
+    "name": "Instagram Reel",
+    "description": "Perfect for social media posts",
+    "thumbnailUrl": "",
+    "songId": 20301,
+    "effectSetId": "instagram_ready",
+    "aspectRatio": "9:16",
+    "tags": [
+      "trending",
+      "new"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_wedding_love",
+    "name": "Wedding Love",
+    "description": "Elegant transitions for wedding memories",
+    "thumbnailUrl": "",
+    "songId": 20262,
+    "effectSetId": "wedding_bells",
+    "aspectRatio": "16:9",
+    "tags": [
+      "trending"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_travel_diary",
+    "name": "Travel Diary",
+    "description": "Adventure vibes for travel vlogs",
+    "thumbnailUrl": "",
+    "songId": 20112,
+    "effectSetId": "travel_diary",
+    "aspectRatio": "16:9",
+    "tags": [
+      "new"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_summer_vacation",
+    "name": "Summer Vacation",
+    "description": "Bright, warm vibes for beach photos",
+    "thumbnailUrl": "",
+    "songId": 20284,
+    "effectSetId": "summer_memories",
+    "aspectRatio": "9:16",
+    "tags": [
+      "seasonal"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_birthday_party",
+    "name": "Birthday Party",
+    "description": "Fun celebration effects",
+    "thumbnailUrl": "",
+    "songId": 20301,
+    "effectSetId": "birthday_bash",
+    "aspectRatio": "9:16",
+    "tags": [
+      "trending"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_romantic_sunset",
+    "name": "Romantic Sunset",
+    "description": "Warm, dreamy couple moments",
+    "thumbnailUrl": "",
+    "songId": 20262,
+    "effectSetId": "romantic_sunset",
+    "aspectRatio": "9:16",
+    "tags": [
+      "new"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_music_video",
+    "name": "Music Video",
+    "description": "MTV-style dynamic edits",
+    "thumbnailUrl": "",
+    "songId": 20112,
+    "effectSetId": "music_video",
+    "aspectRatio": "16:9",
+    "tags": [
+      "trending"
+    ],
+    "isPremium": true,
+    "isActive": true
+  },
+  {
+    "id": "tpl_noir_detective",
+    "name": "Noir Detective",
+    "description": "Film noir mystery vibes",
+    "thumbnailUrl": "",
+    "songId": 20284,
+    "effectSetId": "velvet_noir",
+    "aspectRatio": "16:9",
+    "tags": [
+      "new"
+    ],
+    "isPremium": true,
+    "isActive": true
+  },
+  {
+    "id": "tpl_vintage_film",
+    "name": "Vintage Film",
+    "description": "Old movie reel aesthetics",
+    "thumbnailUrl": "",
+    "songId": 20301,
+    "effectSetId": "vintage_film",
+    "aspectRatio": "16:9",
+    "tags": [],
+    "isPremium": true,
+    "isActive": true
+  },
+  {
+    "id": "tpl_space_odyssey",
+    "name": "Space Odyssey",
+    "description": "Cosmic interstellar journey",
+    "thumbnailUrl": "",
+    "songId": 20262,
+    "effectSetId": "space_odyssey",
+    "aspectRatio": "16:9",
+    "tags": [
+      "new"
+    ],
+    "isPremium": true,
+    "isActive": true
+  },
+  {
+    "id": "tpl_fairy_tale",
+    "name": "Fairy Tale",
+    "description": "Magical enchanted story",
+    "thumbnailUrl": "",
+    "songId": 20112,
+    "effectSetId": "fairy_tale",
+    "aspectRatio": "9:16",
+    "tags": [],
+    "isPremium": true,
+    "isActive": true
+  },
+  {
+    "id": "tpl_3d_showcase",
+    "name": "3D Showcase",
+    "description": "Stunning 3D flip and cube effects",
+    "thumbnailUrl": "",
+    "songId": 20284,
+    "effectSetId": "3d_world",
+    "aspectRatio": "9:16",
+    "tags": [
+      "trending",
+      "new"
+    ],
+    "isPremium": true,
+    "isActive": true
+  },
+  {
+    "id": "tpl_wild_party",
+    "name": "Wild Party",
+    "description": "Crazy energetic party chaos",
+    "thumbnailUrl": "",
+    "songId": 20301,
+    "effectSetId": "wild_party",
+    "aspectRatio": "9:16",
+    "tags": [
+      "trending"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_zen_meditation",
+    "name": "Zen Meditation",
+    "description": "Calm, peaceful transitions",
+    "thumbnailUrl": "",
+    "songId": 20262,
+    "effectSetId": "zen_garden",
+    "aspectRatio": "1:1",
+    "tags": [
+      "new"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_christmas_magic",
+    "name": "Christmas Magic",
+    "description": "Festive holiday spirit",
+    "thumbnailUrl": "",
+    "songId": 20112,
+    "effectSetId": "fairy_tale",
+    "aspectRatio": "9:16",
+    "tags": [
+      "seasonal"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "tpl_new_year_party",
+    "name": "New Year Party",
+    "description": "Countdown celebration vibes",
+    "thumbnailUrl": "",
+    "songId": 20284,
+    "effectSetId": "wild_party",
+    "aspectRatio": "9:16",
+    "tags": [
+      "seasonal",
+      "trending"
+    ],
+    "isPremium": false,
+    "isActive": true
+  }
+]

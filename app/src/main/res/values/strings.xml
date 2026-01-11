@@ -128,7 +128,7 @@
     <string name="settings_panel_apply">Apply</string>
     <string name="settings_panel_close">Close</string>
     <string name="settings_apply">Apply</string>
-    <string name="settings_transition_effect">Transition Effect</string>
+    <string name="settings_effect_set">Effect Set</string>
     <string name="settings_all">All</string>
     <string name="settings_off">OFF</string>
     <string name="settings_none">None</string>

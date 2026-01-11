@@ -40,7 +40,7 @@ object ProjectMapper {
         return ProjectSettings(
             imageDurationMs = entity.imageDurationMs,
             transitionPercentage = entity.transitionPercentage,
-            transitionId = entity.transitionId,
+            effectSetId = entity.effectSetId,
             overlayFrameId = entity.overlayFrameId,
             // Apply default audio track if not set (legacy projects)
             audioTrackId = entity.audioTrackId ?: ProjectSettings.DEFAULT_AUDIO_TRACK_ID,
@@ -74,7 +74,7 @@ object ProjectMapper {
             thumbnailUri = project.thumbnailUri?.toString(),
             imageDurationMs = project.settings.imageDurationMs,
             transitionPercentage = project.settings.transitionPercentage,
-            transitionId = project.settings.transitionId,
+            effectSetId = project.settings.effectSetId,
             overlayFrameId = project.settings.overlayFrameId,
             audioTrackId = project.settings.audioTrackId,
             customAudioUri = project.settings.customAudioUri?.toString(),

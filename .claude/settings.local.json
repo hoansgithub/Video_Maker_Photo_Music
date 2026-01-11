@@ -38,7 +38,8 @@
       "Bash(./gradlew installDebug:*)",
       "Bash(export:*)",
       "Bash(timeout 15 adb logcat:*)",
-      "Bash(gradle wrapper:*)"
+      "Bash(gradle wrapper:*)",
+      "Bash(pip3 install:*)"
     ]
   }
 }

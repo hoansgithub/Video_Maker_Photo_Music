@@ -174,7 +174,7 @@ fun EditorScreen(
                 SettingsPanel(
                     settings = successState.displaySettings,
                     hasPendingChanges = successState.hasPendingChanges,
-                    onTransitionChange = viewModel::updateTransition,
+                    onEffectSetChange = viewModel::updateEffectSet,
                     onImageDurationChange = viewModel::updateImageDuration,
                     onTransitionPercentageChange = viewModel::updateTransitionPercentage,
                     onOverlayFrameChange = viewModel::updateOverlayFrame,

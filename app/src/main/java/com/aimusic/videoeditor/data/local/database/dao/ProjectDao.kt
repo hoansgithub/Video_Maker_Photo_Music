@@ -50,7 +50,7 @@ interface ProjectDao {
         UPDATE projects SET
             imageDurationMs = :imageDurationMs,
             transitionPercentage = :transitionPercentage,
-            transitionId = :transitionId,
+            effectSetId = :effectSetId,
             overlayFrameId = :overlayFrameId,
             audioTrackId = :audioTrackId,
             customAudioUri = :customAudioUri,
@@ -63,7 +63,7 @@ interface ProjectDao {
         id: String,
         imageDurationMs: Long,
         transitionPercentage: Int,
-        transitionId: String?,
+        effectSetId: String?,
         overlayFrameId: String?,
         audioTrackId: String?,
         customAudioUri: String?,

@@ -19,6 +19,7 @@ import com.aimusic.videoeditor.media.effects.FrameOverlayEffect
 import com.aimusic.videoeditor.media.effects.TransitionEffect
 import com.aimusic.videoeditor.media.library.AudioTrackLibrary
 import com.aimusic.videoeditor.media.library.FrameLibrary
+import com.aimusic.videoeditor.media.library.TransitionSetLibrary
 import com.aimusic.videoeditor.media.library.TransitionShaderLibrary
 import java.io.File
 
@@ -231,7 +232,7 @@ class CompositionFactory(private val context: Context) {
         sortedIndices.forEach { index ->
             val currentProcessedImage = processedImages[index]
             val isLastClip = index == sortedIndices.last()
-            val hasTransition = !isLastClip && settings.transitionId != null
+            val hasTransition = !isLastClip && settings.effectSetId != null
 
             if (currentProcessedImage != null) {
                 try {
@@ -273,7 +274,7 @@ class CompositionFactory(private val context: Context) {
      * Create video sequence using pre-processed cache URIs
      *
      * IMPORTANT: ALL clips use TransitionEffect for consistent rendering:
-     * - Clips with transition: TransitionEffect with actual transition
+     * - Clips with transition: TransitionEffect with actual transition (cycles through effect set)
      * - Last clip (no transition): TransitionEffect in passthrough mode (shows FROM image)
      *
      * This ensures all images go through our consistent texture loading pipeline,
@@ -285,7 +286,8 @@ class CompositionFactory(private val context: Context) {
         processedImages: Map<Int, ProcessedImage>,
         transitionBitmaps: Map<Int, TransitionBitmapPair>
     ): EditedMediaItemSequence {
-        val selectedTransition = getTransition(settings)
+        // Get all transitions from the effect set - these will be cycled through
+        val effectSetTransitions = getTransitionsFromEffectSet(settings)
         // For passthrough mode on last clip, use crossfade (simplest transition)
         val passthroughTransition = TransitionShaderLibrary.getDefault()
 
@@ -295,8 +297,11 @@ class CompositionFactory(private val context: Context) {
             val bitmapPair = transitionBitmaps[index]
             val isLastClip = index == assets.size - 1
 
+            // Get the transition for this specific image (cycles through effect set)
+            val selectedTransition = getTransitionForIndex(effectSetTransitions, index)
+
             // Determine transition mode:
-            // - Regular clips: use selected transition if available
+            // - Regular clips: use transition from effect set (cycling)
             // - Last clip: use passthrough mode (TransitionEffect with 0 duration)
             val hasActualTransition = !isLastClip && bitmapPair != null && selectedTransition != null
             val usePassthroughMode = isLastClip && bitmapPair != null
@@ -335,9 +340,25 @@ class CompositionFactory(private val context: Context) {
         return EditedMediaItemSequence.Builder(editedItems).build()
     }
 
-    private fun getTransition(settings: ProjectSettings): Transition? {
-        val transitionId = settings.transitionId ?: return null
-        return TransitionShaderLibrary.getById(transitionId) ?: TransitionShaderLibrary.getDefault()
+    /**
+     * Get the list of transitions from the selected effect set
+     * Transitions will be cycled through for each image pair
+     */
+    private fun getTransitionsFromEffectSet(settings: ProjectSettings): List<Transition> {
+        val effectSetId = settings.effectSetId ?: return emptyList()
+        val effectSet = TransitionSetLibrary.getById(effectSetId) ?: return emptyList()
+        return effectSet.transitions.ifEmpty {
+            // Fallback to default if effect set has no transitions
+            listOfNotNull(TransitionShaderLibrary.getDefault())
+        }
+    }
+
+    /**
+     * Get transition for a specific image index by cycling through the effect set
+     */
+    private fun getTransitionForIndex(transitions: List<Transition>, index: Int): Transition? {
+        if (transitions.isEmpty()) return null
+        return transitions[index % transitions.size]
     }
 
     companion object {

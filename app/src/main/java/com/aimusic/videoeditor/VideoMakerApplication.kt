@@ -8,6 +8,7 @@ import co.alcheclub.lib.acccore.firebase.firebaseModule
 import com.aimusic.videoeditor.di.dataModule
 import com.aimusic.videoeditor.di.domainModule
 import com.aimusic.videoeditor.di.presentationModule
+import com.aimusic.videoeditor.media.library.TransitionSetLibrary
 import com.aimusic.videoeditor.media.library.TransitionShaderLibrary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +56,10 @@ class VideoMakerApplication : Application() {
         // Pre-load transitions in background to avoid lag when settings opens
         TransitionShaderLibrary.preload()
         android.util.Log.d("VideoMakerApplication", "✅ TransitionShaderLibrary initialized and preloading")
+
+        // Initialize TransitionSetLibrary (depends on TransitionShaderLibrary)
+        TransitionSetLibrary.init(this)
+        android.util.Log.d("VideoMakerApplication", "✅ TransitionSetLibrary initialized")
     }
 
     override fun onTerminate() {

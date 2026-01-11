@@ -1,15 +1,17 @@
 package com.aimusic.videoeditor.domain.model
 
 /**
- * OverlayFrame - Represents a decorative frame overlay
+ * OverlayFrame - Decorative frame overlay for videos
  *
- * Frames are WebP images with transparency that render on top of the video.
- * They scale-to-fill the video area.
+ * Frames are PNG/WebP images with transparency that are rendered
+ * on top of the video content as a decorative border.
  */
 data class OverlayFrame(
     val id: String,
     val name: String,
-    val assetPath: String,
-    val thumbnailPath: String = assetPath,
-    val isPremium: Boolean = false
+    val description: String = "",
+    val thumbnailUrl: String = "",
+    val frameUrl: String = "",
+    val isPremium: Boolean = false,
+    val isActive: Boolean = true
 )

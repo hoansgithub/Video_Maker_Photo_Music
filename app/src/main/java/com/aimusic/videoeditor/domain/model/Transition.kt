@@ -40,7 +40,8 @@ data class TransitionSet(
     val id: String,
     val name: String,
     val description: String,
-    val thumbnailRes: Int,
+    val thumbnailUrl: String = "",
     val isPremium: Boolean = false,
+    val isActive: Boolean = true,
     val transitions: List<Transition> = emptyList()
 )

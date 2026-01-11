@@ -1,0 +1,808 @@
+[
+  {
+    "id": "cyberpunk",
+    "name": "Cyberpunk",
+    "description": "Futuristic glitch and neon effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "glitch",
+      "rgb_split",
+      "data_mosh",
+      "hologram",
+      "neon_glow",
+      "pixelize"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "retro_wave",
+    "name": "Retro Wave",
+    "description": "Vintage VHS and retro TV effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "vhs",
+      "crt_retro",
+      "chromatic",
+      "glitch_memories",
+      "tv_static",
+      "pixel_glitch"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "cinema_magic",
+    "name": "Cinema Magic",
+    "description": "Movie-style cinematic transitions",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "doorway",
+      "film_burn",
+      "light_leak",
+      "page_flip",
+      "fade_color",
+      "dreamy"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "neon_nights",
+    "name": "Neon Nights",
+    "description": "Vibrant nightlife and club vibes",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "neon_glow",
+      "rgb_split",
+      "chromatic",
+      "glitch",
+      "hologram",
+      "pixelize"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "velvet_noir",
+    "name": "Velvet Noir",
+    "description": "Film noir detective story style",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "fade_grayscale",
+      "doorway",
+      "blinds",
+      "film_burn",
+      "wipe_diagonal",
+      "crossfade"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "music_video",
+    "name": "Music Video",
+    "description": "MTV-style dynamic transitions",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "chromatic",
+      "zoom_rotate",
+      "glitch",
+      "slide_up",
+      "slide_down",
+      "rgb_split",
+      "blur"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "psychedelic_trip",
+    "name": "Psychedelic Trip",
+    "description": "Wild, mind-bending visual journey",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "kaleidoscope",
+      "swirl",
+      "chromatic",
+      "rgb_split",
+      "hologram",
+      "ripple",
+      "neon_glow"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "horror_nights",
+    "name": "Horror Nights",
+    "description": "Spooky, unsettling thriller effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "glitch",
+      "tv_static",
+      "data_mosh",
+      "fade_grayscale",
+      "glitch_memories",
+      "doorway"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "vintage_film",
+    "name": "Vintage Film",
+    "description": "Old movie reel aesthetics",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "film_burn",
+      "fade_grayscale",
+      "crt_retro",
+      "vhs",
+      "crossfade",
+      "page_flip"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "digital_apocalypse",
+    "name": "Digital Apocalypse",
+    "description": "Heavy glitch and digital destruction",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "data_mosh",
+      "glitch",
+      "pixel_glitch",
+      "tv_static",
+      "chromatic",
+      "rgb_split",
+      "glitch_memories"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "instagram_ready",
+    "name": "Instagram Ready",
+    "description": "Perfect for social media reels",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "zoom_in",
+      "slide_up",
+      "fade_color",
+      "blur",
+      "chromatic",
+      "light_leak"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "wild_party",
+    "name": "Wild Party",
+    "description": "Crazy, energetic party chaos",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "glitch",
+      "chromatic",
+      "zoom_rotate",
+      "swirl",
+      "rgb_split",
+      "data_mosh",
+      "neon_glow"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "hypnotic_trance",
+    "name": "Hypnotic Trance",
+    "description": "Mesmerizing, trippy visual effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "kaleidoscope",
+      "swirl",
+      "zoom_rotate",
+      "ripple",
+      "mosaic_tiles",
+      "hologram"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "electric_storm",
+    "name": "Electric Storm",
+    "description": "Energetic, electric chaos",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "glitch",
+      "chromatic",
+      "data_mosh",
+      "wind",
+      "rgb_split",
+      "tv_static"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "disco_fever",
+    "name": "Disco Fever",
+    "description": "70s disco party vibes",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "kaleidoscope",
+      "chromatic",
+      "swirl",
+      "neon_glow",
+      "zoom_rotate",
+      "circle"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "street_graffiti",
+    "name": "Street Graffiti",
+    "description": "Urban, edgy street art style",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "chromatic",
+      "glitch",
+      "pixelize",
+      "rgb_split",
+      "crosshatch",
+      "mosaic_tiles"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "matrix_code",
+    "name": "Matrix Code",
+    "description": "Digital rain hacker aesthetic",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "data_mosh",
+      "pixelize",
+      "glitch",
+      "hologram",
+      "blinds",
+      "pixel_glitch"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "game_over",
+    "name": "Game Over",
+    "description": "Retro gaming arcade effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "pixelize",
+      "crt_retro",
+      "pixel_glitch",
+      "glitch",
+      "squares_wire",
+      "mosaic_tiles"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "artistic_chaos",
+    "name": "Artistic Chaos",
+    "description": "Bold artistic and abstract effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "kaleidoscope",
+      "mosaic_tiles",
+      "crosshatch",
+      "pixelize",
+      "swirl",
+      "luminance_melt"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "pop_art",
+    "name": "Pop Art",
+    "description": "Bold, colorful Andy Warhol style",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "pixelize",
+      "mosaic_tiles",
+      "chromatic",
+      "circle",
+      "diamond",
+      "squares_wire"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "space_odyssey",
+    "name": "Space Odyssey",
+    "description": "Cosmic, interstellar journey effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "hologram",
+      "star",
+      "zoom_rotate",
+      "swirl",
+      "neon_glow",
+      "revolve_3d"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "fairy_tale",
+    "name": "Fairy Tale",
+    "description": "Magical, enchanted story transitions",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "dreamy",
+      "star",
+      "heart",
+      "light_leak",
+      "swirl",
+      "kaleidoscope"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "tokyo_drift",
+    "name": "Tokyo Drift",
+    "description": "Fast, dynamic racing effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "slide_left",
+      "slide_right",
+      "zoom_in",
+      "blur",
+      "wind",
+      "chromatic"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "nature_vibes",
+    "name": "Nature Vibes",
+    "description": "Organic water, wind and ripple effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "water_drop",
+      "ripple",
+      "wind",
+      "swirl",
+      "dreamy",
+      "luminance_melt"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "liquid_gold",
+    "name": "Liquid Gold",
+    "description": "Smooth, flowing luxury effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "ripple",
+      "water_drop",
+      "luminance_melt",
+      "swirl",
+      "blur",
+      "zoom_crossover"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "midnight_fantasy",
+    "name": "Midnight Fantasy",
+    "description": "Dark, mystical transitions for night scenes",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "fade_grayscale",
+      "luminance_melt",
+      "blur",
+      "hologram",
+      "doorway",
+      "swirl"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "shadow_play",
+    "name": "Shadow Play",
+    "description": "Dark, mysterious shadow effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "fade_grayscale",
+      "doorway",
+      "blinds",
+      "wipe_diagonal",
+      "luminance_melt",
+      "crossfade"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "watercolor_dreams",
+    "name": "Watercolor Dreams",
+    "description": "Artistic, painterly brush effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "water_drop",
+      "blur",
+      "dreamy",
+      "luminance_melt",
+      "crosshatch",
+      "fade_color"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "ocean_waves",
+    "name": "Ocean Waves",
+    "description": "Flowing, aquatic, beach vibes",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "water_drop",
+      "ripple",
+      "wind",
+      "blur",
+      "slide_left",
+      "slide_right"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "birthday_bash",
+    "name": "Birthday Bash",
+    "description": "Fun, celebratory party effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "star",
+      "circle",
+      "zoom_in",
+      "chromatic",
+      "light_leak",
+      "swirl"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "wedding_bells",
+    "name": "Wedding Bells",
+    "description": "Elegant transitions for wedding videos",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "heart",
+      "crossfade",
+      "dreamy",
+      "fade_color",
+      "light_leak",
+      "blur",
+      "zoom_crossover"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "romantic_sunset",
+    "name": "Romantic Sunset",
+    "description": "Warm, romantic transitions for couples",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "heart",
+      "fade_color",
+      "dreamy",
+      "crossfade",
+      "light_leak",
+      "blur"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "summer_memories",
+    "name": "Summer Memories",
+    "description": "Bright, warm vibes for vacation photos",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "light_leak",
+      "film_burn",
+      "dreamy",
+      "fade_color",
+      "water_drop",
+      "zoom_crossover"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "travel_diary",
+    "name": "Travel Diary",
+    "description": "Perfect for travel and adventure vlogs",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "slide_left",
+      "slide_right",
+      "zoom_in",
+      "zoom_out",
+      "page_flip",
+      "wipe_diagonal"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "autumn_leaves",
+    "name": "Autumn Leaves",
+    "description": "Warm fall colors and gentle effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "fade_color",
+      "wind",
+      "dreamy",
+      "blur",
+      "crossfade",
+      "luminance_melt"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "polaroid_memories",
+    "name": "Polaroid Memories",
+    "description": "Instant camera nostalgia",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "fade_color",
+      "film_burn",
+      "light_leak",
+      "fade_grayscale",
+      "blur",
+      "vhs"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "geometric_love",
+    "name": "Geometric Love",
+    "description": "Shape-based transitions with hearts and stars",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "circle",
+      "diamond",
+      "heart",
+      "star",
+      "squares_wire",
+      "blinds"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "3d_world",
+    "name": "3D World",
+    "description": "Stunning 3D flip, cube and fold effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "cube_3d",
+      "flip_3d",
+      "fold_3d",
+      "page_curl_3d",
+      "roll_3d",
+      "revolve_3d"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "flip_master",
+    "name": "Flip Master",
+    "description": "Various flip and rotation transitions",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "flip_horizontal",
+      "flip_vertical",
+      "flip_3d",
+      "rotate",
+      "revolve_3d",
+      "cube_3d"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "zoom_mania",
+    "name": "Zoom Mania",
+    "description": "Dynamic zoom and rotation effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "zoom_in",
+      "zoom_out",
+      "zoom_rotate",
+      "zoom_crossover",
+      "blur",
+      "swirl"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "paper_craft",
+    "name": "Paper Craft",
+    "description": "Page-like, origami style transitions",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "page_curl_3d",
+      "page_flip",
+      "fold_3d",
+      "flip_3d",
+      "doorway",
+      "blinds"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "tech_showcase",
+    "name": "Tech Showcase",
+    "description": "Modern product reveal effects",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "cube_3d",
+      "flip_3d",
+      "zoom_in",
+      "slide_up",
+      "hologram",
+      "blur"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "dreamy_vibes",
+    "name": "Dreamy Vibes",
+    "description": "Soft, ethereal transitions for a dreamy aesthetic",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "dreamy",
+      "fade_color",
+      "blur",
+      "crossfade",
+      "fade_grayscale",
+      "light_leak",
+      "zoom_crossover"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "zen_garden",
+    "name": "Zen Garden",
+    "description": "Calm, peaceful, meditative transitions",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "crossfade",
+      "blur",
+      "fade_color",
+      "dreamy",
+      "zoom_crossover",
+      "ripple"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "morning_coffee",
+    "name": "Morning Coffee",
+    "description": "Warm, cozy, relaxed transitions",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "crossfade",
+      "fade_color",
+      "blur",
+      "dreamy",
+      "zoom_crossover",
+      "fade_grayscale"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "motion_flow",
+    "name": "Motion Flow",
+    "description": "Smooth slide and wipe transitions",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "slide_left",
+      "slide_right",
+      "slide_up",
+      "slide_down",
+      "wipe_left",
+      "wipe_right",
+      "wipe_diagonal"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "classic_elegance",
+    "name": "Classic Elegance",
+    "description": "Timeless, sophisticated transitions",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "crossfade",
+      "fade_color",
+      "fade_grayscale",
+      "blur",
+      "wipe_diagonal",
+      "zoom_crossover"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "crystal_clear",
+    "name": "Crystal Clear",
+    "description": "Clean, minimal, professional look",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "crossfade",
+      "wipe_left",
+      "wipe_right",
+      "slide_left",
+      "slide_right",
+      "fade_color"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "minimalist",
+    "name": "Minimalist",
+    "description": "Simple, clean, no-frills transitions",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "crossfade",
+      "wipe_left",
+      "fade_color",
+      "slide_up",
+      "zoom_in"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "newsroom",
+    "name": "Newsroom",
+    "description": "Professional broadcast TV style",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": [
+      "wipe_left",
+      "wipe_right",
+      "slide_left",
+      "slide_right",
+      "blinds",
+      "cube_3d"
+    ],
+    "isActive": true
+  }
+]
