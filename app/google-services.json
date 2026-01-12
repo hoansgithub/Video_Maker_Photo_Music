@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "471105442486",
-    "project_id": "ai-music-video-38c29",
-    "storage_bucket": "ai-music-video-38c29.firebasestorage.app"
+    "project_number": "996026208184",
+    "project_id": "videomaker-aimusic",
+    "storage_bucket": "videomaker-aimusic.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:471105442486:android:e8f17d244289dc0ab58c17",
+        "mobilesdk_app_id": "1:996026208184:android:f5d242f10c055a750d494d",
         "android_client_info": {
-          "package_name": "com.aimusic.videoeditor"
+          "package_name": "com.videomaker.aimusic"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDuG3NSb5EEE-bUSnc1A5clAUO8mpjRjl8"
+          "current_key": "AIzaSyCQ0OvVpJnL_Qp1cB5MgjxNdF65ePalxBc"
         }
       ],
       "services": {

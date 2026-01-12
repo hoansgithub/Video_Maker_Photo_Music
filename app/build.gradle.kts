@@ -16,11 +16,11 @@ plugins {
 }
 
 android {
-    namespace = "com.aimusic.videoeditor"
+    namespace = "com.videomaker.aimusic"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.aimusic.videoeditor"
+        applicationId = "com.videomaker.aimusic"
         minSdk = 28
         targetSdk = 36
         versionCode = 2
