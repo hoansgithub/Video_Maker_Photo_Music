@@ -35,7 +35,22 @@
     <string name="onboarding_page3_feature2_title">Share Anywhere</string>
     <string name="onboarding_page3_feature2_desc">Share directly to social media or save to gallery</string>
 
-    <!-- Home -->
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">Gallery</string>
+    <string name="home_tab_songs">Songs</string>
+    <string name="home_tab_projects">My Projects</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_hot_songs">Hot Songs</string>
+    <string name="gallery_templates">Video Templates</string>
+    <string name="gallery_coming_soon">Coming soon</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">Songs</string>
+    <string name="songs_all">All Songs</string>
+    <string name="songs_categories">Categories</string>
+
+    <!-- Legacy Home (keeping for backwards compatibility) -->
     <string name="home_title">Video Maker</string>
     <string name="home_welcome">What would you like to do?</string>
     <string name="home_create">Create</string>

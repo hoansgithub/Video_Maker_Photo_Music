@@ -37,6 +37,8 @@ import com.aimusic.videoeditor.modules.onboarding.repository.OnboardingRepositor
 import com.aimusic.videoeditor.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
 import com.aimusic.videoeditor.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import android.content.Context
+import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
+import com.aimusic.videoeditor.modules.gallery.GalleryViewModel
 import com.aimusic.videoeditor.modules.musicpicker.MusicPickerViewModel
 import com.aimusic.videoeditor.modules.picker.AssetPickerViewModel
 import com.aimusic.videoeditor.modules.projects.ProjectsViewModel
@@ -89,11 +91,21 @@ val dataModule = module {
  *
  * Contains:
  * - Media processing utilities (CompositionFactory)
+ * - Image loading (Coil ImageLoader)
  *
  * Scope: Singleton - Expensive to create
  */
 val mediaModule = module {
     single { CompositionFactory(androidContext()) }
+
+    // Coil ImageLoader singleton
+    // Gets the ImageLoader from ImageLoaderFactory (VideoMakerApplication)
+    single<coil.ImageLoader> {
+        (androidContext().applicationContext as? coil.ImageLoaderFactory)?.newImageLoader()
+            ?: coil.ImageLoader.Builder(androidContext())
+                .crossfade(true)
+                .build()
+    }
 }
 
 // ========== DOMAIN LAYER MODULE ==========
@@ -230,12 +242,31 @@ class MusicPickerViewModelFactory(
     }
 }
 
+/**
+ * Factory wrapper for GalleryViewModel.
+ *
+ * Uses Application (not Activity) context which is safe in ViewModels.
+ * Application instance lives for the entire app lifetime, so no leak risk.
+ */
+class GalleryViewModelFactory(
+    private val application: android.app.Application,
+    private val imageLoader: coil.ImageLoader
+) {
+    fun create(): GalleryViewModel {
+        return GalleryViewModel(
+            application = application,
+            imageLoader = imageLoader
+        )
+    }
+}
+
 val presentationModule = module {
-    // Root ViewModel for RootViewActivity (handles loading, ads, navigation)
+    // Root ViewModel for RootViewActivity (handles loading, Firebase, navigation)
     viewModel {
         RootViewModel(
             checkOnboardingStatusUseCase = it.get<CheckOnboardingStatusUseCase>(),
-            checkLanguageSelectedUseCase = it.get<CheckLanguageSelectedUseCase>()
+            checkLanguageSelectedUseCase = it.get<CheckLanguageSelectedUseCase>(),
+            remoteConfig = it.get<RemoteConfig>()  // Firebase Remote Config (from firebaseModule)
         )
     }
 
@@ -279,6 +310,15 @@ val presentationModule = module {
     single {
         MusicPickerViewModelFactory(
             contentResolver = androidContext().contentResolver
+        )
+    }
+
+    // Gallery ViewModel factory (singleton - stateless factory)
+    // Uses Application context (safe) + ImageLoader for Coil image preloading
+    single {
+        GalleryViewModelFactory(
+            application = androidContext().applicationContext as android.app.Application,
+            imageLoader = it.get()
         )
     }
 }

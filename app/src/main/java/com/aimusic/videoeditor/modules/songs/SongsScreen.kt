@@ -1,4 +1,4 @@
-package com.aimusic.videoeditor.modules.projects
+package com.aimusic.videoeditor.modules.songs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,21 +17,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aimusic.videoeditor.R
-import com.aimusic.videoeditor.domain.model.Project
+import com.aimusic.videoeditor.ui.theme.VideoMakerTheme
 
 // ============================================
-// PROJECTS SCREEN
+// SONGS SCREEN
 // ============================================
 
 @Composable
-fun ProjectsScreen(
-    viewModel: ProjectsViewModel,
-    onNavigateBack: () -> Unit = {},
-    onNavigateToEditor: (String) -> Unit = {}
+fun SongsScreen(
+    viewModel: SongsViewModel = viewModel(),
+    onNavigateToSongDetail: (Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
@@ -40,8 +41,7 @@ fun ProjectsScreen(
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
-                is ProjectsNavigationEvent.NavigateBack -> onNavigateBack()
-                is ProjectsNavigationEvent.NavigateToEditor -> onNavigateToEditor(event.projectId)
+                is SongsNavigationEvent.NavigateToSongDetail -> onNavigateToSongDetail(event.songId)
             }
             viewModel.onNavigationHandled()
         }
@@ -49,18 +49,18 @@ fun ProjectsScreen(
 
     // UI based on state
     when (val state = uiState) {
-        is ProjectsUiState.Loading -> ProjectsLoadingContent()
-        is ProjectsUiState.Empty -> ProjectsEmptyContent()
-        is ProjectsUiState.Success -> ProjectsListContent(
-            projects = state.projects,
-            onProjectClick = viewModel::onProjectClick
+        is SongsUiState.Loading -> SongsLoadingContent()
+        is SongsUiState.Empty -> SongsEmptyContent()
+        is SongsUiState.Success -> SongsListContent(
+            songs = state.songs,
+            onSongClick = viewModel::onSongClick
         )
-        is ProjectsUiState.Error -> ProjectsErrorContent(message = state.message)
+        is SongsUiState.Error -> SongsErrorContent(message = state.message)
     }
 }
 
 @Composable
-private fun ProjectsLoadingContent() {
+private fun SongsLoadingContent() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -70,7 +70,7 @@ private fun ProjectsLoadingContent() {
 }
 
 @Composable
-private fun ProjectsEmptyContent() {
+private fun SongsEmptyContent() {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -82,7 +82,7 @@ private fun ProjectsEmptyContent() {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = stringResource(R.string.home_tab_projects),
+                text = stringResource(R.string.home_tab_songs),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -98,21 +98,21 @@ private fun ProjectsEmptyContent() {
 }
 
 @Composable
-private fun ProjectsListContent(
-    projects: List<Project>,
-    onProjectClick: (Project) -> Unit
+private fun SongsListContent(
+    songs: List<Song>,
+    onSongClick: (Song) -> Unit
 ) {
-    // TODO: Implement projects list UI
+    // TODO: Implement songs list UI
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = "${projects.size} projects")
+        Text(text = "${songs.size} songs")
     }
 }
 
 @Composable
-private fun ProjectsErrorContent(message: String) {
+private fun SongsErrorContent(message: String) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -121,5 +121,17 @@ private fun ProjectsErrorContent(message: String) {
             text = message,
             color = MaterialTheme.colorScheme.error
         )
+    }
+}
+
+// ============================================
+// PREVIEW
+// ============================================
+
+@Preview(showBackground = true, backgroundColor = 0xFF1A1A1A)
+@Composable
+private fun SongsScreenPreview() {
+    VideoMakerTheme {
+        SongsScreen()
     }
 }

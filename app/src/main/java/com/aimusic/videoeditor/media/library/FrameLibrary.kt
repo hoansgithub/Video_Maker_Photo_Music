@@ -7,6 +7,9 @@ import com.aimusic.videoeditor.domain.model.OverlayFrame
  *
  * WebP frames with transparency that render on top of video.
  * Frames are stored in assets/frames/ directory.
+ *
+ * NOTE: Local frames use frameUrl as the asset path (e.g., "frames/frame1.webp")
+ * Remote frames would use full URLs in frameUrl.
  */
 object FrameLibrary {
 
@@ -14,22 +17,22 @@ object FrameLibrary {
         OverlayFrame(
             id = "frame1",
             name = "Classic Border",
-            assetPath = "frames/frame1.webp",
+            frameUrl = "frames/frame1.webp",
             isPremium = false
         ),
         OverlayFrame(
             id = "frame2",
             name = "Vintage",
-            assetPath = "frames/frame2.webp",
+            frameUrl = "frames/frame2.webp",
             isPremium = false
         )
     )
 
-    fun getAll(): List<OverlayFrame> = frames
+    fun getAll(): List<OverlayFrame> = frames.filter { it.isActive }
 
-    fun getById(id: String): OverlayFrame? = frames.find { it.id == id }
+    fun getById(id: String): OverlayFrame? = frames.find { it.id == id && it.isActive }
 
-    fun getFree(): List<OverlayFrame> = frames.filter { !it.isPremium }
+    fun getFree(): List<OverlayFrame> = frames.filter { !it.isPremium && it.isActive }
 
-    fun getPremium(): List<OverlayFrame> = frames.filter { it.isPremium }
+    fun getPremium(): List<OverlayFrame> = frames.filter { it.isPremium && it.isActive }
 }

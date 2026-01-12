@@ -468,7 +468,7 @@ class CompositionFactory(private val context: Context) {
         // 2. Optional: overlay frame
         settings.overlayFrameId?.let { frameId ->
             FrameLibrary.getById(frameId)?.let { frame ->
-                videoEffects.add(FrameOverlayEffect(context, frame.assetPath))
+                videoEffects.add(FrameOverlayEffect(context, frame.frameUrl))
             }
         }
 

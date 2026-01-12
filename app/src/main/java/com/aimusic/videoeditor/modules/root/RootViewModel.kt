@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import java.lang.ref.WeakReference
+import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.aimusic.videoeditor.modules.language.domain.usecase.CheckLanguageSelectedUseCase
 import com.aimusic.videoeditor.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
 import com.aimusic.videoeditor.navigation.AppRoute
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * RootViewModel - Root state machine for app initialization
@@ -22,9 +24,11 @@ import kotlinx.coroutines.launch
  * - Onboarding: First-time user tutorial
  * - Home: Main app experience
  *
+ * Firebase Integration:
+ * - Remote Config: Fetched and activated during initialization
+ *
  * Placeholder for future features:
  * - AdMob initialization
- * - Firebase Remote Config
  * - App Open ad presentation
  *
  * Usage in RootViewActivity:
@@ -35,7 +39,8 @@ import kotlinx.coroutines.launch
  */
 class RootViewModel(
     private val checkOnboardingStatusUseCase: CheckOnboardingStatusUseCase,
-    private val checkLanguageSelectedUseCase: CheckLanguageSelectedUseCase
+    private val checkLanguageSelectedUseCase: CheckLanguageSelectedUseCase,
+    private val remoteConfig: RemoteConfig
 ) : ViewModel() {
 
     // ============================================
@@ -79,9 +84,9 @@ class RootViewModel(
      * Initialize app - MUST be called from RootViewActivity onCreate
      *
      * This handles:
-     * 1. AdMob initialization (placeholder)
-     * 2. Firebase Remote Config (placeholder)
-     * 3. App Open ad presentation (placeholder)
+     * 1. AdMob initialization (placeholder for future)
+     * 2. Firebase Remote Config fetch and activate
+     * 3. App Open ad presentation (placeholder for future)
      * 4. Language selection status check
      * 5. Onboarding status check
      * 6. Navigation to appropriate screen
@@ -145,15 +150,15 @@ class RootViewModel(
             _isLoading.value = true
 
             try {
-                // Step 1: Initialize AdMob (placeholder)
-                _loadingMessage.value = "Initializing ads..."
+                // Step 1: Initialize AdMob (placeholder for future)
+                _loadingMessage.value = "Initializing..."
                 initializeAds()
 
-                // Step 2: Load Remote Config (placeholder)
+                // Step 2: Load Firebase Remote Config (10s timeout)
                 _loadingMessage.value = "Loading configuration..."
                 loadRemoteConfig()
 
-                // Step 3: Present App Open Ad (placeholder)
+                // Step 3: Present App Open Ad (placeholder for future)
                 _loadingMessage.value = "Loading..."
                 presentAppOpenAd()
 
@@ -168,9 +173,41 @@ class RootViewModel(
                 // Step 6: Navigate to appropriate screen
                 proceedToNextScreen()
 
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                android.util.Log.e("RootViewModel", "Initialization error: ${e.message}")
                 proceedToNextScreen()
             }
+        }
+    }
+
+    // ============================================
+    // PRIVATE: FIREBASE REMOTE CONFIG
+    // ============================================
+
+    /**
+     * Load Firebase Remote Config
+     * Fetches and activates remote config values with a 10-second timeout.
+     * On failure or timeout, continues with cached/default values.
+     */
+    private suspend fun loadRemoteConfig() {
+        try {
+            android.util.Log.d("RootViewModel", "Fetching Remote Config...")
+
+            // Fetch with 10 second timeout to prevent blocking on slow networks
+            val result = withTimeoutOrNull(10_000L) {
+                remoteConfig.fetchAndActivate()
+            }
+
+            // fetchAndActivate returns Result<Boolean>
+            val success = result?.getOrNull() ?: false
+            if (success) {
+                android.util.Log.d("RootViewModel", "Remote Config fetched and activated successfully")
+            } else {
+                android.util.Log.w("RootViewModel", "Remote Config fetch timed out or failed - using cached/default values")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("RootViewModel", "Remote Config error: ${e.message}")
+            // Continue with cached/default values - don't block app startup
         }
     }
 
@@ -185,15 +222,6 @@ class RootViewModel(
     private suspend fun initializeAds() {
         // Placeholder: Add AdMob initialization here
         delay(100) // Simulate initialization
-    }
-
-    /**
-     * Load Firebase Remote Config
-     * TODO: Implement Remote Config fetch and activate
-     */
-    private suspend fun loadRemoteConfig() {
-        // Placeholder: Add Remote Config loading here
-        delay(100) // Simulate loading
     }
 
     /**

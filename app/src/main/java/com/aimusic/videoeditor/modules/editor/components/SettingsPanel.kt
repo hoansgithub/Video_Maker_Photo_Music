@@ -525,7 +525,7 @@ private fun FrameChip(
             )
         } else {
             AsyncImage(
-                model = "file:///android_asset/${frame.assetPath}",
+                model = "file:///android_asset/${frame.frameUrl}",
                 contentDescription = frame.name,
                 modifier = Modifier.size(48.dp)
             )

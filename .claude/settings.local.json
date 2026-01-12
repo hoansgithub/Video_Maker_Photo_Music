@@ -39,7 +39,11 @@
       "Bash(export:*)",
       "Bash(timeout 15 adb logcat:*)",
       "Bash(gradle wrapper:*)",
-      "Bash(pip3 install:*)"
+      "Bash(pip3 install:*)",
+      "Bash(./gradlew :app:compileDebugKotlin:*)",
+      "Bash(/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/java:*)",
+      "Bash(/usr/libexec/java_home:*)",
+      "Bash(JAVA_HOME=/Applications/Android Studio.app/Contents/jbr/Contents/Home ./gradlew:*)"
     ]
   }
 }
