@@ -51,10 +51,7 @@ fun AppNavigation(
     navController: NavHostController = rememberNavController()
 ) {
     // Determine start destination based on flag from Intent
-    // DEMO MODE: Start directly at Projects screen
-    val startDestination: AppRoute = AppRoute.Projects
-    // TODO: Restore after demo
-    // val startDestination: AppRoute = if (startWithOnboarding) AppRoute.Onboarding else AppRoute.Home
+    val startDestination: AppRoute = if (startWithOnboarding) AppRoute.Onboarding else AppRoute.Home
 
     Box(modifier = modifier.fillMaxSize()) {
         NavHost(
