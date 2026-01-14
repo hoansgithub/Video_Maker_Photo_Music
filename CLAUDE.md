@@ -7,7 +7,7 @@
 - **Min SDK**: 28 (Android 9.0)
 - **Target SDK**: 36
 - **Architecture**: Clean Architecture (Data/Domain/Presentation)
-- **Navigation**: Navigation Compose 2.x (type-safe routes)
+- **Navigation**: Navigation 3 (1.0.0-alpha03) - developer-owned back stack
 - **Concurrency**: Coroutines + Flow
 - **DI**: ACCDI (AlcheClub Custom DI) - see di/ module
 - **Build**: KSP2 (not KAPT)
@@ -16,16 +16,17 @@
 
 | Technology | Current | Future Option | Notes |
 |------------|---------|---------------|-------|
-| Navigation | Nav Compose 2.x | Navigation 3 | Nav3 stable as of Nov 2025. Consider for major refactor. |
+| Navigation | Nav3 1.0.0-alpha03 | Latest stable | Update when stable |
 | Compose BOM | 2025.10.01 | Latest stable | Update quarterly |
-| Media3 | 1.9.0 | Latest stable | Update for new features/fixes |
+| Media3 | 1.6.1 | Latest stable | Update for new features/fixes |
 
-**Navigation 3 Migration (When Ready):**
-- Nav3 gives you ownership of the back stack (`SnapshotStateList<T>`)
-- Built from ground up for Compose
-- Migration guide: https://developer.android.com/develop/ui/compose/navigation
-- Recipes: https://github.com/android/nav3-recipes
-- **Recommendation**: Migrate during major version update, not mid-feature
+**Navigation 3 Architecture:**
+- You own the back stack (`SnapshotStateList<AppRoute>`)
+- Navigation = list manipulation (add/remove items)
+- Routes implement `NavKey` interface
+- `NavDisplay` replaces `NavHost`
+- `entry<T>` replaces `composable<T>`
+- Reference: https://developer.android.com/guide/navigation/navigation-3
 
 ---
 
@@ -182,6 +183,167 @@ LaunchedEffect(navigationEvent) {
 - `LaunchedEffect(navigationEvent)` only triggers when event changes
 - No risk of missing events during config changes
 - Consistent with Google's architecture samples (2024+)
+
+### 1b. Navigation 3 Architecture
+
+```kotlin
+// ============================================
+// ROUTES - Must implement NavKey
+// ============================================
+sealed class AppRoute : NavKey, Parcelable {
+    @Parcelize @Serializable
+    data object Home : AppRoute()
+
+    @Parcelize @Serializable
+    data class Editor(val projectId: String) : AppRoute()
+}
+
+// ============================================
+// NAVIGATION STATE - You own the back stack
+// ============================================
+@Stable
+class NavigationState(
+    val backStack: SnapshotStateList<AppRoute>  // You own this!
+) {
+    val currentRoute: AppRoute? get() = backStack.lastOrNull()
+    val canGoBack: Boolean get() = backStack.size > 1
+}
+
+@Composable
+fun rememberNavigationState(startRoute: AppRoute): NavigationState {
+    val backStack = rememberSaveable(saver = backStackSaver()) {
+        mutableStateListOf(startRoute)
+    }
+    return NavigationState(backStack)
+}
+
+// ✅ REQUIRED - Safe cast in saver to prevent crashes
+private fun backStackSaver(): Saver<SnapshotStateList<AppRoute>, Any> {
+    return listSaver(
+        save = { it.toList() },
+        restore = { saved ->
+            // Safe cast - filters to only valid AppRoute instances
+            val list = (saved as? List<*>)?.filterIsInstance<AppRoute>().orEmpty()
+            mutableStateListOf<AppRoute>().apply { addAll(list) }
+        }
+    )
+}
+
+// ============================================
+// NAVIGATOR - Navigation actions
+// LIFECYCLE WARNING: Only instantiate in @Composable with remember()
+// ============================================
+@Stable
+class Navigator(private val state: NavigationState) {
+    fun navigate(route: AppRoute) {
+        state.backStack.add(route)
+    }
+
+    fun goBack(): Boolean {
+        return if (state.canGoBack) {
+            state.backStack.removeLastOrNull() != null  // Check result!
+        } else false
+    }
+
+    fun clearAndNavigate(route: AppRoute) {
+        state.backStack.apply {  // Atomic operation
+            clear()
+            add(route)
+        }
+    }
+}
+
+// ============================================
+// APP NAVIGATION - Using NavDisplay
+// ============================================
+@Composable
+fun AppNavigation(startWithOnboarding: Boolean) {
+    val startRoute = if (startWithOnboarding) AppRoute.Onboarding else AppRoute.Home
+    val navigationState = rememberNavigationState(startRoute)
+    val navigator = remember(navigationState) { Navigator(navigationState) }
+
+    NavDisplay(
+        backStack = navigationState.backStack,
+        onBack = { navigator.goBack() },
+        entryProvider = { route ->
+            NavEntry(route) {
+                RouteContent(route, navigator)
+            }
+        }
+    )
+}
+
+// ============================================
+// VIEWMODEL WITH PARAMETERIZED ROUTES
+// ============================================
+@Composable
+fun RouteContent(route: AppRoute, navigator: Navigator) {
+    when (route) {
+        is AppRoute.Editor -> {
+            // ✅ REQUIRED - Key factory AND viewModel to route parameter
+            val factory = remember(route.projectId) {
+                ACCDI.get<EditorViewModelFactory>()
+            }
+            val viewModel: EditorViewModel = viewModel(
+                key = "editor_${route.projectId}",  // Prevents wrong VM reuse
+                factory = createSafeViewModelFactory { factory.create(route.projectId) }
+            )
+            EditorScreen(viewModel = viewModel, ...)
+        }
+        // ...
+    }
+}
+
+// ✅ REQUIRED - Type-safe ViewModel factory (no unchecked casts!)
+private inline fun <reified VM : ViewModel> createSafeViewModelFactory(
+    crossinline creator: () -> VM
+): ViewModelProvider.Factory {
+    return object : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            val viewModel = creator()
+            if (modelClass.isAssignableFrom(viewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return viewModel as T
+            } else {
+                throw IllegalArgumentException(
+                    "Unknown ViewModel: ${modelClass.name}, expected: ${viewModel::class.java.name}"
+                )
+            }
+        }
+    }
+}
+```
+
+**Key Navigation 3 Differences from Nav2:**
+
+| Aspect | Navigation 2.x | Navigation 3 |
+|--------|---------------|--------------|
+| Back stack | Library-managed | Developer-owned `SnapshotStateList` |
+| Navigate | `navController.navigate()` | `navigator.navigate()` (list.add) |
+| Go back | `navController.popBackStack()` | `navigator.goBack()` (list.remove) |
+| Route access | `backStackEntry.toRoute<T>()` | Direct `key` parameter in entry |
+| Host | `NavHost` | `NavDisplay` |
+| Destinations | `composable<T>` | `entry<T>` in entryProvider |
+| State survival | Automatic | `rememberSaveable` with custom saver |
+
+**Navigation 3 Anti-Patterns to Avoid:**
+
+```kotlin
+// ❌ FORBIDDEN - Unsafe cast in ViewModel factory
+@Suppress("UNCHECKED_CAST")
+return factory.create(projectId) as T  // Can crash!
+
+// ❌ FORBIDDEN - No remember key for parameterized routes
+val factory = remember { ACCDI.get<EditorViewModelFactory>() }  // Wrong VM on route change!
+
+// ❌ FORBIDDEN - Navigator stored outside composition
+class MyViewModel(val navigator: Navigator)  // Memory leak!
+
+// ❌ FORBIDDEN - Unsafe saver cast
+val list = saved as List<AppRoute>  // Crashes on corrupted state!
+
+// ✅ REQUIRED - Safe patterns shown above
+```
 
 ### 2. Never Embed Activities as Composables
 
@@ -469,9 +631,22 @@ private fun FeatureScreenPreview() { ... }
 
 Before EVERY code change:
 
+**Navigation 3:**
+- [ ] Routes implement `NavKey` interface
+- [ ] `SnapshotStateList` for back stack (NOT NavBackStack)
+- [ ] `rememberSaveable` with safe saver for back stack persistence
+- [ ] `remember(route.param)` key for parameterized route factories
+- [ ] `viewModel(key = "...")` for parameterized ViewModels
+- [ ] `createSafeViewModelFactory` (NOT unchecked cast)
+- [ ] Navigator only in `@Composable` with `remember()` (NOT in ViewModel)
+- [ ] Safe cast with `filterIsInstance` in saver restore
+
+**ViewModel Navigation Events:**
 - [ ] `StateFlow<Event?>` for navigation events (NOT state-based)
 - [ ] `LaunchedEffect(navigationEvent)` for event observation
 - [ ] `onNavigationHandled()` callback to clear event after navigating
+
+**General:**
 - [ ] `collectAsStateWithLifecycle()` for StateFlow
 - [ ] `viewModelScope` for coroutines
 - [ ] `finish()` after `startActivity()` for forward nav
@@ -757,6 +932,13 @@ app/src/main/java/co/alcheclub/video/maker/photo/music/
 
 Before EVERY code change:
 
+**Navigation 3 (this project uses Nav3):**
+- [ ] `createSafeViewModelFactory` for all ViewModel creation
+- [ ] `remember(route.projectId)` for Editor/Export/AssetPicker factories
+- [ ] `viewModel(key = "screen_${projectId}")` for parameterized screens
+- [ ] Safe cast in `backStackSaver()` restore
+
+**Media:**
 - [ ] Media3 Transformer for video export (NOT raw MediaCodec)
 - [ ] CompositionPlayer for preview (NOT custom player)
 - [ ] Photo Picker for media selection (NOT MediaStore with permissions)
@@ -956,6 +1138,7 @@ fun EditorScreen(
 |-----------|---------|-------|
 | Kotlin | 2.1.20 | Latest stable |
 | Compose BOM | 2025.10.01 | December 2025 release |
+| Navigation 3 | 1.0.0-alpha03 | Developer-owned back stack |
 | Media3 | 1.6.1 | Stable with Transformer |
 | Room | 2.8.4 | KSP2 + Kotlin 2.0 support |
 | WorkManager | 2.11.0 | Coroutines support |

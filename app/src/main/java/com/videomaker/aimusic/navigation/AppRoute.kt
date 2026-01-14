@@ -1,13 +1,14 @@
 package com.videomaker.aimusic.navigation
 
 import android.os.Parcelable
+import androidx.navigation3.runtime.NavKey
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
 /**
  * Navigation Routes for MainActivity
  *
- * All routes for the main app content using Jetpack Navigation Compose.
+ * All routes for the main app content using Navigation 3.
  * Routes are organized by app flow:
  * - Root: Loading, Onboarding
  * - Home: Main screen with Create / My Projects
@@ -18,10 +19,11 @@ import kotlinx.serialization.Serializable
  * Note: Language selection is handled by LanguageSelectionActivity (separate Activity)
  *       before the user reaches MainActivity.
  *
- * @Serializable: For Navigation Compose type-safe routing
- * @Parcelize: For Android Parcelable (saved state, process death recovery)
+ * @Serializable: For Navigation 3 state serialization (process death recovery)
+ * @Parcelize: For Android Parcelable (saved state)
+ * NavKey: Required interface for Navigation 3 back stack management
  */
-sealed class AppRoute : Parcelable {
+sealed class AppRoute : NavKey, Parcelable {
 
     // ============================================
     // ROOT LEVEL ROUTES (App State Machine)

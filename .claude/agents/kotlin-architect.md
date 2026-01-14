@@ -127,6 +127,16 @@ object FeatureUseCaseModule {
 
 ## Navigation Architecture
 
+### Navigation 3 (STABLE - REQUIRED)
+
+```kotlin
+// Dependencies
+dependencies {
+    implementation("androidx.navigation3:navigation3-runtime:1.0.0")
+    implementation("androidx.navigation3:navigation3-ui:1.0.0")
+}
+```
+
 ### Activity-Based Navigation
 
 ```kotlin
@@ -137,20 +147,38 @@ private fun navigateToFeature(id: String) {
 }
 ```
 
-### Composable Navigation (Within Single Activity)
+### Navigation 3 NavDisplay (Within Single Activity)
 
 ```kotlin
-// For sub-screens within one Activity
+// ✅ REQUIRED: Navigation 3 for sub-screens within one Activity
+@Composable
+fun AppNavigation() {
+    val backStack = rememberNavBackStack(HomeRoute)
+
+    NavDisplay(
+        backStack = backStack,
+        entryProvider = entryProvider {
+            entry<HomeRoute> {
+                HomeScreen(onNavigateToSettings = { backStack.add(SettingsRoute) })
+            }
+            entry<SettingsRoute> {
+                SettingsScreen(onNavigateBack = { backStack.pop() })
+            }
+        },
+        onBack = { backStack.pop() }
+    )
+}
+
+// ❌ DEPRECATED: Navigation 2.x patterns
 NavHost(navController, startDestination = Home) {
     composable<Home> { HomeScreen(...) }
-    composable<Settings> { SettingsScreen(...) }
 }
 ```
 
-### Decision: Activity vs Composable Navigation
+### Decision: Activity vs Navigation 3
 
-| Criteria | Use Activity | Use Composable |
-|----------|--------------|----------------|
+| Criteria | Use Activity | Use Navigation 3 |
+|----------|--------------|------------------|
 | Has own lifecycle needs | ✅ | ❌ |
 | Shows ads on back | ✅ | ❌ |
 | Deep link target | ✅ | ❌ |
