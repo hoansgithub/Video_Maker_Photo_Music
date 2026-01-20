@@ -232,7 +232,14 @@ FeatureActivity
 
 ### Architecture Checklist
 
-- [ ] Single responsibility per class
+#### SOLID Principles
+- [ ] **[S] Single Responsibility** - Each class has one reason to change
+- [ ] **[O] Open/Closed** - Open for extension, closed for modification
+- [ ] **[L] Liskov Substitution** - Subtypes replaceable for base types
+- [ ] **[I] Interface Segregation** - Many specific interfaces > one general
+- [ ] **[D] Dependency Inversion** - Depend on abstractions, not concretions
+
+#### Clean Architecture
 - [ ] Dependencies via interfaces
 - [ ] Domain layer has zero dependencies
 - [ ] UseCases are stateless

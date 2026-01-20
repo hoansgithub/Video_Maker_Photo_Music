@@ -12,6 +12,7 @@ You write production-ready Kotlin and Jetpack Compose code following Google's la
 ## Modern Architecture Checklist
 
 Before writing code, verify you're using:
+- [ ] **JAVA_HOME** set to Android Studio's built-in JDK
 - [ ] **Navigation 3** with NavDisplay and developer-owned back stack (STABLE)
 - [ ] **NavKey** routes with @Serializable
 - [ ] **Channel** for one-time events (Activity launches, toasts)
@@ -20,6 +21,19 @@ Before writing code, verify you're using:
 - [ ] **Hilt** for dependency injection
 - [ ] **Kotlin Coroutines + Flow** (NOT RxJava)
 - [ ] **Jetpack Compose** (NOT XML views)
+
+## Build Environment (CRITICAL)
+
+```bash
+# ✅ REQUIRED - Always set JAVA_HOME before Gradle commands
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+./gradlew build
+
+# Paths by OS:
+# macOS:   /Applications/Android Studio.app/Contents/jbr/Contents/Home
+# Windows: C:\Program Files\Android\Android Studio\jbr
+# Linux:   /opt/android-studio/jbr
+```
 
 ## Navigation 3 (STABLE - REQUIRED)
 
@@ -120,6 +134,74 @@ val value = nullable ?: return
 // 7. NEVER pass backStack to composables
 // ❌ fun MyScreen(backStack: NavBackStack<NavKey>)
 // ✅ fun MyScreen(onNavigate: () -> Unit, onNavigateBack: () -> Unit)
+
+// 8. ALWAYS use @Immutable for UI state data classes
+@Immutable
+data class FeatureUiState(
+    val items: ImmutableList<Item>,  // NOT List<Item>!
+    val isLoading: Boolean
+)
+
+// 9. ALWAYS use method references for lambdas
+// ❌ onItemClick = { id -> viewModel.onItemClick(id) }
+// ✅ onItemClick = viewModel::onItemClick
+
+// 10. ALWAYS use key in LazyColumn/LazyRow
+items(users, key = { it.id }) { user -> UserCard(user) }
+```
+
+## Recomposition Optimization (CRITICAL)
+
+```kotlin
+// ============================================
+// STABLE DATA CLASSES
+// ============================================
+// Add: implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.7")
+
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.persistentListOf
+
+// ❌ UNSTABLE - causes unnecessary recomposition
+data class UsersState(val users: List<User>)
+
+// ✅ STABLE - skips recomposition when unchanged
+@Immutable
+data class UsersState(val users: ImmutableList<User>)
+
+// ============================================
+// LAMBDA STABILITY
+// ============================================
+// ❌ UNSTABLE - new lambda every recomposition
+ItemList(onItemClick = { id -> viewModel.onItemClick(id) })
+
+// ✅ STABLE - method reference
+ItemList(onItemClick = viewModel::onItemClick)
+
+// ============================================
+// LAZYCOLUMN KEYS
+// ============================================
+// ❌ BAD - all items recompose on list change
+LazyColumn {
+    items(users) { UserCard(it) }
+}
+
+// ✅ GOOD - only changed items recompose
+LazyColumn {
+    items(users, key = { it.id }) { UserCard(it) }
+}
+
+// ============================================
+// REMEMBER PATTERNS
+// ============================================
+// Expensive computation - use remember with key
+val sorted = remember(items) { items.sortedBy { it.name } }
+
+// Derived state - only recomputes when result changes
+val showButton by remember { derivedStateOf { items.size > 10 } }
+
+// Object creation - always wrap in remember
+val formatter = remember { DateFormatter() }
 ```
 
 ## ViewModel Template
@@ -469,6 +551,7 @@ fun ProfileScreen(onNavigateToSettings: () -> Unit, onNavigateBack: () -> Unit)
 
 ## Checklist Before Done
 
+### Navigation & Architecture
 - [ ] Navigation 3 with `NavDisplay` and `rememberNavBackStack`
 - [ ] `NavKey` routes with @Serializable
 - [ ] `backStack.add()` / `backStack.pop()` for navigation
@@ -480,5 +563,12 @@ fun ProfileScreen(onNavigateToSettings: () -> Unit, onNavigateBack: () -> Unit)
 - [ ] No `!!` force unwrap
 - [ ] No backStack/NavController passed to composables
 - [ ] Interface dependencies (not concrete)
-- [ ] Kotlin Coroutines + Flow (not RxJava)
-- [ ] Jetpack Compose (not XML)
+
+### Recomposition Optimization
+- [ ] `@Immutable` on data classes with collections
+- [ ] `ImmutableList` instead of `List` in UI state
+- [ ] Method references for lambdas (`viewModel::onClick`)
+- [ ] `key` parameter in `LazyColumn`/`LazyRow` items
+- [ ] `remember` for expensive computations
+- [ ] `derivedStateOf` for derived boolean states
+- [ ] No object creation in composable body without `remember`

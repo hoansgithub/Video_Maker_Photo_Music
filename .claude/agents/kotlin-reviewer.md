@@ -44,12 +44,26 @@ You review Android code for quality, best practices, and Kotlin/Compose conventi
 | Remember usage | Objects in `remember {}` | Objects in composition |
 | State hoisting | State passed as params | ViewModel in child composables |
 
-### 5. Architecture (MEDIUM)
+### 5. Recomposition Optimization (HIGH)
 
 | Check | Pass | Fail |
 |-------|------|------|
-| Interface dependencies | `FeatureRepository` (interface) | `FeatureRepositoryImpl` |
-| Single responsibility | Focused classes | God objects (500+ lines) |
+| Stable data classes | `@Immutable` annotation | Plain data class with List |
+| Collections | `ImmutableList` | `List`, `MutableList` |
+| Lambda stability | `viewModel::onClick` | `{ viewModel.onClick(it) }` |
+| LazyColumn keys | `items(list, key = { it.id })` | `items(list)` without key |
+| Remember with key | `remember(dep) { }` | Expensive op in composition |
+| Derived state | `derivedStateOf { }` | Direct boolean derivation |
+
+### 6. Architecture & SOLID Principles (MEDIUM)
+
+| Check | Pass | Fail |
+|-------|------|------|
+| **[S] Single Responsibility** | Focused classes | God objects (500+ lines) |
+| **[O] Open/Closed** | Extension via inheritance/composition | Modifying existing code for new features |
+| **[L] Liskov Substitution** | Subtypes work as base types | Subtype breaks base type contract |
+| **[I] Interface Segregation** | Specific interfaces | Fat interfaces with unused methods |
+| **[D] Dependency Inversion** | `FeatureRepository` (interface) | `FeatureRepositoryImpl` (concrete) |
 | Layer separation | Domain has no dependencies | Domain imports Data |
 
 ## Review Checklist
@@ -78,10 +92,21 @@ You review Android code for quality, best practices, and Kotlin/Compose conventi
 - [ ] State hoisted properly
 - [ ] Preview functions present
 
-## Architecture
-- [ ] Dependencies via interfaces
+## Recomposition Optimization
+- [ ] Data classes with collections use @Immutable
+- [ ] ImmutableList used instead of List
+- [ ] Lambda stability (method references)
+- [ ] LazyColumn/LazyRow items have key
+- [ ] Expensive operations in remember {}
+- [ ] derivedStateOf for derived state
+
+## Architecture & SOLID
+- [ ] **[S]** Single Responsibility - one reason to change per class
+- [ ] **[O]** Open/Closed - extend without modifying
+- [ ] **[L]** Liskov Substitution - subtypes replaceable
+- [ ] **[I]** Interface Segregation - specific interfaces
+- [ ] **[D]** Dependency Inversion - depend on abstractions
 - [ ] Domain layer has no dependencies
-- [ ] Single responsibility principle
 - [ ] UseCase pattern for business logic
 ```
 
@@ -102,6 +127,11 @@ grep -rn "GlobalScope" --include="*.kt"
 
 # Compose issues
 grep -rn "collectAsState()" --include="*.kt" | grep -v "Lifecycle"
+
+# Recomposition issues
+grep -rn "data class.*List<\|data class.*Map<\|data class.*Set<" --include="*.kt" | grep -v "ImmutableList\|ImmutableMap\|ImmutableSet"
+grep -rn "items(" --include="*.kt" | grep -v "key ="
+grep -rn "onItemClick = {" --include="*.kt"
 ```
 
 ### Step 2: Structure Review
@@ -193,6 +223,55 @@ class ViewModel(
 )
 ```
 
+### Issue: Unstable Collections (Recomposition)
+
+```kotlin
+// ❌ BEFORE - Causes unnecessary recomposition
+data class UsersUiState(
+    val users: List<User>,  // List is unstable!
+    val isLoading: Boolean
+)
+
+// ✅ AFTER - Add @Immutable and use ImmutableList
+@Immutable
+data class UsersUiState(
+    val users: ImmutableList<User>,
+    val isLoading: Boolean
+)
+```
+
+### Issue: Unstable Lambda (Recomposition)
+
+```kotlin
+// ❌ BEFORE - New lambda every recomposition
+ItemList(
+    onItemClick = { id -> viewModel.onItemClick(id) }
+)
+
+// ✅ AFTER - Method reference (stable)
+ItemList(
+    onItemClick = viewModel::onItemClick
+)
+```
+
+### Issue: Missing LazyColumn Key
+
+```kotlin
+// ❌ BEFORE - All items recompose on any change
+LazyColumn {
+    items(users) { user ->
+        UserCard(user)
+    }
+}
+
+// ✅ AFTER - Only changed items recompose
+LazyColumn {
+    items(users, key = { it.id }) { user ->
+        UserCard(user)
+    }
+}
+```
+
 ## Output Format
 
 ### Code Review: [File/PR]
@@ -243,6 +322,7 @@ Things done well:
 | Coroutine Safety | ⭐⭐⭐⭐☆ |
 | Type Safety | ⭐⭐⭐⭐⭐ |
 | Compose Practices | ⭐⭐⭐⭐☆ |
+| Recomposition | ⭐⭐⭐⭐☆ |
 | Architecture | ⭐⭐⭐⭐⭐ |
 
 ---
@@ -254,5 +334,6 @@ Things done well:
 [✓] Coroutine Safety    - All checks passed
 [!] Type Safety         - 1 issue found
 [✓] Compose Practices   - All checks passed
+[!] Recomposition       - 2 issues found (List instead of ImmutableList, missing key)
 [✓] Architecture        - All checks passed
 ```
