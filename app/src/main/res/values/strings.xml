@@ -89,6 +89,7 @@
     <string name="projects_empty">No projects yet</string>
     <string name="projects_empty_description">Create your first project to see it here</string>
     <string name="projects_item_info">%1$d photos • %2$s</string>
+    <string name="projects_create_description">Start a new slideshow project</string>
     <string name="projects_delete_title">Delete Project?</string>
     <string name="projects_delete_message">\"%s\" will be permanently deleted. This action cannot be undone.</string>
 

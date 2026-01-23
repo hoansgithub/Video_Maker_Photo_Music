@@ -275,38 +275,89 @@ private fun SongsTabContent() {
 }
 
 /**
- * Projects Tab - User's saved projects
- * Note: Full ProjectsScreen with DI is accessed via AppRoute.Projects
- * This is a simplified tab placeholder that shows empty state
+ * Projects Tab - User's saved projects with create button
  */
 @Composable
 private fun ProjectsTabContent(
     onCreateClick: () -> Unit,
     onProjectClick: (String) -> Unit
 ) {
-    // Simple placeholder for the tab - full screen accessed via navigation
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
+            .padding(16.dp)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        // Create New Project Card
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .clickable(onClick = onCreateClick)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = stringResource(R.string.home_tab_projects),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.gallery_coming_soon),
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
+            Box(
+                modifier = Modifier
+                    .height(56.dp)
+                    .width(56.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(28.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "+",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column {
+                Text(
+                    text = stringResource(R.string.home_create),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = stringResource(R.string.projects_create_description),
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Empty state message
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.projects_empty),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.projects_empty_description),
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
         }
     }
 }

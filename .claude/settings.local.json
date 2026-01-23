@@ -46,7 +46,10 @@
       "Bash(JAVA_HOME=/Applications/Android Studio.app/Contents/jbr/Contents/Home ./gradlew:*)",
       "WebFetch(domain:proandroiddev.com)",
       "Bash(./gradlew compileDebugKotlin:*)",
-      "Bash(JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ./gradlew assembleDebug:*)"
+      "Bash(JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ./gradlew assembleDebug:*)",
+      "Bash(./gradlew:*)",
+      "WebFetch(domain:mvnrepository.com)",
+      "WebFetch(domain:firebase.google.com)"
     ]
   }
 }

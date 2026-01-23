@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -113,10 +114,11 @@ fun ProjectsScreen(
             // UI based on state
             when (val state = uiState) {
                 is ProjectsUiState.Loading -> ProjectsLoadingContent()
-                is ProjectsUiState.Empty -> ProjectsEmptyContent()
+                is ProjectsUiState.Empty -> ProjectsEmptyContent(onCreateClick = onCreateClick)
                 is ProjectsUiState.Success -> ProjectsListContent(
                     projects = state.projects,
-                    onProjectClick = viewModel::onProjectClick
+                    onProjectClick = viewModel::onProjectClick,
+                    onCreateClick = onCreateClick
                 )
                 is ProjectsUiState.Error -> ProjectsErrorContent(message = state.message)
             }
@@ -135,7 +137,9 @@ private fun ProjectsLoadingContent() {
 }
 
 @Composable
-private fun ProjectsEmptyContent() {
+private fun ProjectsEmptyContent(
+    onCreateClick: () -> Unit = {}
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -165,6 +169,19 @@ private fun ProjectsEmptyContent() {
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = onCreateClick,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = stringResource(R.string.home_create))
+            }
         }
     }
 }
@@ -172,13 +189,19 @@ private fun ProjectsEmptyContent() {
 @Composable
 private fun ProjectsListContent(
     projects: List<Project>,
-    onProjectClick: (Project) -> Unit
+    onProjectClick: (Project) -> Unit,
+    onCreateClick: () -> Unit = {}
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Create New Project Card at the top
+        item(key = "create_new") {
+            CreateNewProjectCard(onClick = onCreateClick)
+        }
+
         items(
             items = projects,
             key = { it.id }
@@ -186,6 +209,52 @@ private fun ProjectsListContent(
             ProjectCard(
                 project = project,
                 onClick = { onProjectClick(project) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun CreateNewProjectCard(
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.size(28.dp),
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column {
+            Text(
+                text = stringResource(R.string.home_create),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Text(
+                text = stringResource(R.string.projects_create_description),
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
             )
         }
     }
