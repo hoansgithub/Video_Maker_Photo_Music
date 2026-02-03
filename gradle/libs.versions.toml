@@ -2,9 +2,10 @@
 # ============================================
 # CORE VERSIONS
 # ============================================
-agp = "9.0.0"
-kotlin = "2.3.0"
-ksp = "2.3.3"
+# Using 8.13.2 for Pangle SDK compatibility (AGP 9.0 has strict namespace validation)
+agp = "8.13.2"
+kotlin = "2.1.0"
+ksp = "2.1.0-1.0.29"
 
 # ============================================
 # ANDROIDX CORE
@@ -52,7 +53,7 @@ workManager = "2.11.0"
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.9"
+acccore = "0.0.10"
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)

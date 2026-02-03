@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
-    // Note: kotlin.android removed - AGP 9.0+ has built-in Kotlin support
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
@@ -87,12 +87,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
-    }
-
     buildFeatures {
         compose = true
         buildConfig = true
@@ -114,6 +108,13 @@ android {
                 "META-INF/LGPL2.1"
             )
         }
+    }
+}
+
+// Kotlin JVM target configuration for AGP 8.x
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 

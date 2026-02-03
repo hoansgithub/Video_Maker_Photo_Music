@@ -1136,13 +1136,13 @@ fun EditorScreen(
 
 | Component | Version | Notes |
 |-----------|---------|-------|
-| Kotlin | 2.1.20 | Latest stable |
+| Kotlin | 2.1.0 | Stable |
 | Compose BOM | 2025.10.01 | December 2025 release |
 | Navigation 3 | 1.0.0-alpha03 | Developer-owned back stack |
 | Media3 | 1.6.1 | Stable with Transformer |
 | Room | 2.8.4 | KSP2 + Kotlin 2.0 support |
 | WorkManager | 2.11.0 | Coroutines support |
-| KSP | 2.1.20-2.0.1 | Matches Kotlin version |
-| AGP | 8.13.2 | Latest stable |
+| KSP | 2.1.0-1.0.29 | Matches Kotlin version |
+| AGP | 8.13.2 | For Pangle SDK compatibility |
 | Target SDK | 36 | Android 15 |
 | Min SDK | 28 | Android 9 (2018+) |
