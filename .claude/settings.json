@@ -1,0 +1,52 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(git:*)",
+      "Bash(./gradlew:*)",
+      "Bash(gradle:*)",
+      "Bash(adb:*)"
+    ],
+    "ask": [
+      "Edit",
+      "Write",
+      "Bash(rm:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-android.sh",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '✅ Code change complete. Run quality-guardian for full verification.'",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  },
+  "model": "sonnet",
+  "env": {
+    "JAVA_HOME": "/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+  }
+}

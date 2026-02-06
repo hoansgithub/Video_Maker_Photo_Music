@@ -3,6 +3,11 @@ name: navigation-guardian
 description: Detects navigation anti-patterns, Navigation 3 issues, state-based navigation bugs, Activity lifecycle issues. Use AFTER implementation. Triggers - navigation, state, LaunchedEffect, back button, lifecycle.
 tools: Read, Grep, Glob, Bash(git diff:*)
 model: sonnet
+hooks:
+  post_tool_use:
+    - tool: Grep
+      script: |
+        echo "Check complete. Review findings for navigation anti-patterns."
 ---
 
 # Android Navigation Guardian
@@ -207,6 +212,42 @@ val item = list.firstOrNull() ?: return
 grep -rn "!!" --include="*.kt" | grep -v "//"
 ```
 
+### 9. WeakReference for Action Callbacks (CRITICAL - APP FREEZE)
+
+```kotlin
+// ❌ DETECT: WeakReference for action callbacks - CAUSES APP FREEZE!
+val weakAction = WeakReference(action)
+onDismissed = {
+    weakAction.get()?.invoke()  // May be null → APP FREEZES!
+}
+
+// ❌ DETECT: WeakReference for navigation callbacks
+val weakNavigate = WeakReference(navigateCallback)
+onComplete = {
+    weakNavigate.get()?.invoke()  // Navigation may never happen!
+}
+
+// ✅ CORRECT: Action callbacks MUST be strong references
+onDismissed = {
+    action()  // MUST execute for navigation/critical flow
+}
+
+// ✅ OK: WeakReference for OPTIONAL callbacks only
+onShown = {
+    weakOnShown.get()?.invoke()  // OK - onShown is optional
+}
+```
+
+**Search Pattern:**
+```bash
+grep -rn 'WeakReference.*action\|WeakReference.*callback\|WeakReference.*navigate\|weakAction\|weakCallback' --include="*.kt"
+```
+
+**Rule**:
+- Action callbacks (navigate, resume, dismiss) MUST be strong references
+- Use WeakReference ONLY for: optional callbacks (onShown), UI element refs
+- NEVER use WeakReference for: critical app flow, navigation, data updates
+
 ---
 
 ## Output Format
@@ -306,6 +347,9 @@ grep -rn "GlobalScope" --include="*.kt"
 
 # Find force unwrap
 grep -rn "!!" --include="*.kt" | grep -v "//"
+
+# Find WeakReference for actions (CRITICAL - causes freezes)
+grep -rn 'WeakReference.*action\|WeakReference.*callback\|WeakReference.*navigate\|weakAction\|weakCallback' --include="*.kt"
 
 # Find missing Channel in ViewModels
 grep -rn "class.*ViewModel" --include="*.kt" | grep -v "Channel"

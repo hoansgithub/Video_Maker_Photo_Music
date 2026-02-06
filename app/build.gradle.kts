@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -15,6 +17,19 @@ plugins {
     id("com.google.firebase.firebase-perf")
 }
 
+// ============================================
+// LOCAL PROPERTIES (Supabase credentials)
+// ============================================
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
+fun getPropertyOrEmpty(name: String): String {
+    return localProperties.getProperty(name) ?: ""
+}
+
 android {
     namespace = "com.videomaker.aimusic"
     compileSdk = 36
@@ -27,6 +42,12 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // ============================================
+        // SUPABASE CONFIGURATION (from local.properties)
+        // ============================================
+        buildConfigField("String", "SUPABASE_URL", "\"${getPropertyOrEmpty("SUPABASE_URL")}\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${getPropertyOrEmpty("SUPABASE_ANON_KEY")}\"")
 
         // ============================================
         // APP THINNING OPTIMIZATION
@@ -184,6 +205,22 @@ dependencies {
     // SERIALIZATION
     // ============================================
     implementation(libs.kotlinx.serialization.json)
+
+    // ============================================
+    // KTOR (HTTP Client for Supabase)
+    // ============================================
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.client.logging)
+
+    // ============================================
+    // SUPABASE
+    // ============================================
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.postgrest)
+    // implementation(libs.supabase.auth)  // Uncomment when auth needed
 
     // ============================================
     // ACCCORE - AlcheClub DI & Services

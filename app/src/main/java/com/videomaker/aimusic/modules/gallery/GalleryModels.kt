@@ -7,7 +7,7 @@ import com.videomaker.aimusic.domain.model.MusicSong
  * Converted from MusicSong for UI display
  */
 data class TrendingSong(
-    val id: Int,
+    val id: Long,
     val name: String,
     val artist: String,
     val coverUrl: String
@@ -18,7 +18,7 @@ data class TrendingSong(
  * Converted from MusicSong for UI display with ranking
  */
 data class TopSong(
-    val id: Int,
+    val id: Long,
     val name: String,
     val artist: String,
     val coverUrl: String,

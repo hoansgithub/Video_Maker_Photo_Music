@@ -3,6 +3,19 @@ name: kotlin-developer
 description: Senior Kotlin/Compose developer. Writes production code with Navigation 3, coroutines, modern Jetpack patterns. Triggers - implement, code, build, create, add.
 tools: Read, Edit, Write, Bash(./gradlew:*)
 model: sonnet
+hooks:
+  pre_tool_use:
+    - tool: Bash
+      script: |
+        # Ensure JAVA_HOME is set before Gradle commands
+        if [ -z "$JAVA_HOME" ]; then
+          export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+        fi
+  post_tool_use:
+    - tool: Write
+      script: |
+        # After writing Kotlin files, remind about patterns
+        echo "Remember: Verify Channel events, collectAsStateWithLifecycle, viewModelScope"
 ---
 
 # Kotlin Developer
@@ -148,6 +161,11 @@ data class FeatureUiState(
 
 // 10. ALWAYS use key in LazyColumn/LazyRow
 items(users, key = { it.id }) { user -> UserCard(user) }
+
+// 11. NEVER use WeakReference for action callbacks
+// ❌ val weakAction = WeakReference(action); onDismissed = { weakAction.get()?.invoke() }
+// ✅ onDismissed = { action() }  // Action MUST execute for navigation/critical flow
+// WeakReference OK for: optional callbacks (onShown), UI elements
 ```
 
 ## Recomposition Optimization (CRITICAL)
@@ -549,6 +567,28 @@ fun ProfileScreen(backStack: NavBackStack<NavKey>)
 fun ProfileScreen(onNavigateToSettings: () -> Unit, onNavigateBack: () -> Unit)
 ```
 
+## Performance Targets
+
+| Metric | Target | Critical | How to Measure |
+|--------|--------|----------|----------------|
+| Cold start | <1.5s | <3s | Android Studio Profiler |
+| Memory baseline | <120MB | <200MB | Memory Profiler |
+| Frame rate | 60 FPS | 30 FPS | GPU Profiler / Macrobenchmark |
+| Battery/hour | <4% | <8% | Battery Historian |
+| Crash rate | <0.1% | <1% | Crashlytics/Sentry |
+| APK size | <40MB | <100MB | APK Analyzer |
+
+### Performance Checklist
+
+- [ ] No I/O on main thread (use `Dispatchers.IO`)
+- [ ] Images loaded with Coil/Glide (not `BitmapFactory` on main)
+- [ ] `LazyColumn`/`LazyRow` with `key` parameter
+- [ ] `@Immutable` data classes with `ImmutableList`
+- [ ] Method references for lambdas (stable)
+- [ ] `remember` for expensive computations
+- [ ] ProGuard/R8 optimization enabled for release
+- [ ] Baseline profiles generated
+
 ## Checklist Before Done
 
 ### Navigation & Architecture
@@ -563,6 +603,7 @@ fun ProfileScreen(onNavigateToSettings: () -> Unit, onNavigateBack: () -> Unit)
 - [ ] No `!!` force unwrap
 - [ ] No backStack/NavController passed to composables
 - [ ] Interface dependencies (not concrete)
+- [ ] Action callbacks are strong refs (NOT WeakReference)
 
 ### Recomposition Optimization
 - [ ] `@Immutable` on data classes with collections

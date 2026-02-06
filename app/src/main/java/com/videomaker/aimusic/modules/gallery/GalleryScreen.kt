@@ -80,7 +80,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun GalleryScreen(
     viewModel: GalleryViewModel = remember { ACCDI.get<GalleryViewModelFactory>().create() },
-    onNavigateToSongDetail: (Int) -> Unit = {},
+    onNavigateToSongDetail: (Long) -> Unit = {},
     onNavigateToTemplateDetail: (String) -> Unit = {},
     onNavigateToAllTopSongs: () -> Unit = {},
     onNavigateToAllTrendingTemplates: () -> Unit = {},

@@ -3,16 +3,29 @@ package com.videomaker.aimusic.domain.model
 /**
  * MusicSong - A song from the music library for video creation
  *
- * Songs are loaded from music_songs.json and displayed in the Gallery tab.
+ * Songs are loaded from Supabase `songs` table and displayed in Gallery/Songs tabs.
  */
 data class MusicSong(
-    val id: Int,
+    val id: Long,
     val name: String,
     val artist: String,
     val mp3Url: String = "",
     val previewUrl: String = "",
     val coverUrl: String = "",
-    val categories: List<String> = emptyList(),
+    val genres: List<String> = emptyList(),
+    val durationMs: Int? = null,
     val isPremium: Boolean = false,
-    val isActive: Boolean = true
-)
+    val isActive: Boolean = true,
+    val sortOrder: Int = 0
+) {
+    /**
+     * Formatted duration string (e.g., "3:45")
+     */
+    val formattedDuration: String
+        get() {
+            val duration = durationMs ?: return ""
+            val minutes = duration / 60000
+            val seconds = (duration % 60000) / 1000
+            return "%d:%02d".format(minutes, seconds)
+        }
+}

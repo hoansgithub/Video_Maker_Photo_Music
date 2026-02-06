@@ -3,6 +3,11 @@ name: quality-guardian
 description: Detects anti-patterns, retain cycles, memory leaks, deprecated code, legacy patterns, unsafe casts, and coupling issues. Use AFTER code changes or for code review. Triggers - review, anti-pattern, memory, leak, deprecated, security, quality.
 tools: Read, Grep, Glob, Bash(git diff:*), Bash(git log:*)
 model: sonnet
+hooks:
+  post_tool_use:
+    - tool: Grep
+      script: |
+        echo "Scan complete. Review findings for anti-patterns and code smells."
 ---
 
 # Quality Guardian
@@ -155,10 +160,11 @@ grep -n "!!" --include="*.kt"
 
 #### Android Unsafe Patterns
 ```kotlin
-// 🔴 CRITICAL: Will Crash
+// 🔴 CRITICAL: Will Crash or Freeze
 □ Force unwrap (!!)
 □ lateinit without initialization check
 □ Uncaught exceptions in coroutines
+□ WeakReference for action callbacks (causes app freeze)
 
 // 🟡 WARNING: Potentially Unsafe
 □ Platform types without null check
@@ -318,8 +324,11 @@ grep -rn "fatalError\|precondition" --include="*.swift"
 # Android: Find GlobalScope
 grep -rn "GlobalScope" --include="*.kt"
 
-# Android: Find force unwraps
+# Android: Find force unwraps (CRITICAL)
 grep -rn "!!" --include="*.kt"
+
+# Android: Find WeakReference for actions (CRITICAL - causes freezes)
+grep -rn 'WeakReference.*action\|WeakReference.*callback\|weakAction\|weakCallback' --include="*.kt"
 
 # Android: Find state-based navigation
 grep -rn "LaunchedEffect.*uiState" --include="*.kt"
@@ -342,6 +351,7 @@ grep -rn "LaunchedEffect.*uiState" --include="*.kt"
 **🔴 Critical** (Block Merge):
 - Memory leaks
 - Crash risks
+- WeakReference for action callbacks (Android - causes freeze)
 - Security vulnerabilities
 - Data loss risks
 

@@ -370,6 +370,57 @@ private fun ProjectsTabContent(
 @Composable
 private fun HomeScreenPreview() {
     VideoMakerTheme {
-        HomeScreen()
+        // Use preview-safe version that doesn't require ACCDI
+        HomeScreenPreviewContent()
+    }
+}
+
+/**
+ * Preview-safe HomeScreen content that doesn't depend on ACCDI/ViewModels
+ */
+@Composable
+private fun HomeScreenPreviewContent() {
+    val tabs = listOf("Gallery", "Songs", "My Videos")
+
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = { tabs.size }
+    )
+    val coroutineScope = rememberCoroutineScope()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+    ) {
+        HomeTopBar(
+            tabs = tabs,
+            selectedTabIndex = pagerState.currentPage,
+            onTabSelected = { index ->
+                coroutineScope.launch {
+                    pagerState.animateScrollToPage(index)
+                }
+            },
+            onSettingsClick = {}
+        )
+
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            // Preview placeholders - no ACCDI dependency
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "${tabs[page]} Content",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+            }
+        }
     }
 }

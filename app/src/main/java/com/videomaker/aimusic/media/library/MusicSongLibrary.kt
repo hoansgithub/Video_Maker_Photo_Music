@@ -46,13 +46,13 @@ object MusicSongLibrary {
             val songsJson = json.decodeFromString<List<MusicSongJson>>(jsonString)
             val songs = songsJson.map { jsonSong ->
                 MusicSong(
-                    id = jsonSong.id,
+                    id = jsonSong.id.toLong(),
                     name = jsonSong.name,
                     artist = jsonSong.artist,
                     mp3Url = jsonSong.mp3Url,
                     previewUrl = jsonSong.previewUrl,
                     coverUrl = jsonSong.coverUrl,
-                    categories = jsonSong.categories,
+                    genres = jsonSong.categories,
                     isPremium = jsonSong.isPremium,
                     isActive = jsonSong.isActive
                 )
@@ -68,10 +68,10 @@ object MusicSongLibrary {
 
     fun getAll(): List<MusicSong> = loadSongs()
 
-    fun getById(id: Int): MusicSong? = loadSongs().find { it.id == id }
+    fun getById(id: Long): MusicSong? = loadSongs().find { it.id == id }
 
-    fun getByCategory(category: String): List<MusicSong> =
-        loadSongs().filter { it.categories.contains(category) }
+    fun getByGenre(genre: String): List<MusicSong> =
+        loadSongs().filter { it.genres.contains(genre) }
 
     fun getFree(): List<MusicSong> = loadSongs().filter { !it.isPremium }
 

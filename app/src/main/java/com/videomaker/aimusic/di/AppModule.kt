@@ -9,10 +9,13 @@ import co.alcheclub.lib.acccore.di.viewModel
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.data.local.database.ProjectDatabase
+import com.videomaker.aimusic.data.remote.SupabaseClientProvider
 import com.videomaker.aimusic.data.repository.ExportRepositoryImpl
 import com.videomaker.aimusic.data.repository.ProjectRepositoryImpl
+import com.videomaker.aimusic.data.repository.SongRepositoryImpl
 import com.videomaker.aimusic.domain.repository.ExportRepository
 import com.videomaker.aimusic.domain.repository.ProjectRepository
+import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import com.videomaker.aimusic.domain.usecase.DeleteProjectUseCase
@@ -79,10 +82,14 @@ val dataModule = module {
     single { it.get<ProjectDatabase>().projectDao() }
     single { it.get<ProjectDatabase>().assetDao() }
 
+    // Supabase client (singleton)
+    single { SupabaseClientProvider.instance }
+
     // Repository implementations
     single<OnboardingRepository> { OnboardingRepositoryImpl(it.get()) }
     single<ProjectRepository> { ProjectRepositoryImpl(it.get(), it.get()) }
     single<ExportRepository> { ExportRepositoryImpl(it.get()) }
+    single<SongRepository> { SongRepositoryImpl(it.get()) }
 }
 
 // ========== MEDIA LAYER MODULE ==========

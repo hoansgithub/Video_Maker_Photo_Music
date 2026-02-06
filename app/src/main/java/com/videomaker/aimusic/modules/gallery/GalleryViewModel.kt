@@ -37,7 +37,7 @@ sealed class GalleryUiState {
 // ============================================
 
 sealed class GalleryNavigationEvent {
-    data class NavigateToSongDetail(val songId: Int) : GalleryNavigationEvent()
+    data class NavigateToSongDetail(val songId: Long) : GalleryNavigationEvent()
     data class NavigateToTemplateDetail(val templateId: String) : GalleryNavigationEvent()
     data object NavigateToAllTopSongs : GalleryNavigationEvent()
     data object NavigateToAllTrendingTemplates : GalleryNavigationEvent()

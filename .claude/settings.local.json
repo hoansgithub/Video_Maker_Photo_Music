@@ -49,7 +49,18 @@
       "Bash(JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ./gradlew assembleDebug:*)",
       "Bash(./gradlew:*)",
       "WebFetch(domain:mvnrepository.com)",
-      "WebFetch(domain:firebase.google.com)"
+      "WebFetch(domain:firebase.google.com)",
+      "Bash(SUPABASE_URL=\"https://zdydtiwglotssklnkwjh.supabase.co\")",
+      "Bash(SUPABASE_KEY=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkeWR0aXdnbG90c3NrbG5rd2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMDk2ODcsImV4cCI6MjA4NTY4NTY4N30.Z5feTHYb2CyooObfZFL8ep16apwd71b_5VxOZvEYQDw\")",
+      "Bash(__NEW_LINE_efef9d2a5a62885c__ echo \"=== GENRES TABLE ===\")",
+      "Bash(__NEW_LINE_614fd2e3d0d30ea1__ echo \"=== SONGS TABLE ===\")",
+      "Bash(__NEW_LINE_f317f771295db77d__ echo \"=== SAMPLE SONGS ===\")",
+      "Bash(__NEW_LINE_63203b3bb88c5913__ echo \"\")",
+      "Bash(__NEW_LINE_bf97ec1629b3972d__ echo \"\")",
+      "Bash(__NEW_LINE_aacd05a0836eb8a7__ echo \"=== TRANSITIONS IN DB ===\")",
+      "Bash(__NEW_LINE_4c021ff777819ff4__ echo \"\")",
+      "Bash(jar xf:*)",
+      "Bash(jar:*)"
     ]
   }
 }

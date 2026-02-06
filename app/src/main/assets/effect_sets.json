@@ -75,7 +75,7 @@
       "blinds",
       "film_burn",
       "wipe_diagonal",
-      "crossfade"
+      "fade"
     ],
     "isActive": true
   },
@@ -140,7 +140,7 @@
       "fade_grayscale",
       "crt_retro",
       "vhs",
-      "crossfade",
+      "fade",
       "page_flip"
     ],
     "isActive": true
@@ -431,7 +431,7 @@
       "blinds",
       "wipe_diagonal",
       "luminance_melt",
-      "crossfade"
+      "fade"
     ],
     "isActive": true
   },
@@ -491,7 +491,7 @@
     "isPremium": false,
     "transitionIds": [
       "heart",
-      "crossfade",
+      "fade",
       "dreamy",
       "fade_color",
       "light_leak",
@@ -510,7 +510,7 @@
       "heart",
       "fade_color",
       "dreamy",
-      "crossfade",
+      "fade",
       "light_leak",
       "blur"
     ],
@@ -559,7 +559,7 @@
       "wind",
       "dreamy",
       "blur",
-      "crossfade",
+      "fade",
       "luminance_melt"
     ],
     "isActive": true
@@ -686,7 +686,7 @@
       "dreamy",
       "fade_color",
       "blur",
-      "crossfade",
+      "fade",
       "fade_grayscale",
       "light_leak",
       "zoom_crossover"
@@ -700,7 +700,7 @@
     "thumbnailUrl": "",
     "isPremium": false,
     "transitionIds": [
-      "crossfade",
+      "fade",
       "blur",
       "fade_color",
       "dreamy",
@@ -716,7 +716,7 @@
     "thumbnailUrl": "",
     "isPremium": false,
     "transitionIds": [
-      "crossfade",
+      "fade",
       "fade_color",
       "blur",
       "dreamy",
@@ -749,7 +749,7 @@
     "thumbnailUrl": "",
     "isPremium": false,
     "transitionIds": [
-      "crossfade",
+      "fade",
       "fade_color",
       "fade_grayscale",
       "blur",
@@ -765,7 +765,7 @@
     "thumbnailUrl": "",
     "isPremium": false,
     "transitionIds": [
-      "crossfade",
+      "fade",
       "wipe_left",
       "wipe_right",
       "slide_left",
@@ -781,7 +781,7 @@
     "thumbnailUrl": "",
     "isPremium": false,
     "transitionIds": [
-      "crossfade",
+      "fade",
       "wipe_left",
       "fade_color",
       "slide_up",
