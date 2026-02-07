@@ -16,10 +16,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.videomaker.aimusic.ui.theme.AppDimens
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.videomaker.aimusic.R
@@ -71,10 +70,12 @@ private fun SongsLoadingContent() {
 
 @Composable
 private fun SongsEmptyContent() {
+    val dimens = AppDimens.current
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(dimens.spaceLg),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -83,14 +84,13 @@ private fun SongsEmptyContent() {
         ) {
             Text(
                 text = stringResource(R.string.home_tab_songs),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(dimens.spaceSm))
             Text(
                 text = stringResource(R.string.gallery_coming_soon),
-                fontSize = 16.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }

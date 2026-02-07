@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
+    <!-- Brand colors (from Figma) -->
+    <color name="primary">#FFCCFF00</color>
+    <color name="primary_light">#FFD6FF33</color>
+    <color name="primary_dark">#FFB8E600</color>
+
+    <!-- Neutral -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- App background (from Figma) -->
+    <color name="background_dark">#FF101313</color>
+    <color name="surface_dark">#FF1A1D1D</color>
 </resources>

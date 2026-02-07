@@ -60,7 +60,8 @@
       "Bash(__NEW_LINE_aacd05a0836eb8a7__ echo \"=== TRANSITIONS IN DB ===\")",
       "Bash(__NEW_LINE_4c021ff777819ff4__ echo \"\")",
       "Bash(jar xf:*)",
-      "Bash(jar:*)"
+      "Bash(jar:*)",
+      "WebFetch(domain:zdydtiwglotssklnkwjh.supabase.co)"
     ]
   }
 }

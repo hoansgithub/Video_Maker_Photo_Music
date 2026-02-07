@@ -30,6 +30,9 @@ import com.videomaker.aimusic.di.AssetPickerViewModelFactory
 import com.videomaker.aimusic.di.EditorViewModelFactory
 import com.videomaker.aimusic.di.ExportViewModelFactory
 import com.videomaker.aimusic.di.ProjectsViewModelFactory
+import com.videomaker.aimusic.di.GallerySearchViewModelFactory
+import com.videomaker.aimusic.modules.gallerysearch.GallerySearchScreen
+import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
 import com.videomaker.aimusic.modules.editor.EditorScreen
 import com.videomaker.aimusic.modules.editor.EditorViewModel
 import com.videomaker.aimusic.modules.export.ExportScreen
@@ -170,7 +173,26 @@ private fun RouteContent(
                 },
                 onSettingsClick = {
                     navigator.navigate(AppRoute.Settings)
+                },
+                onNavigateToSearch = {
+                    navigator.navigate(AppRoute.Search)
                 }
+            )
+        }
+
+        is AppRoute.Search -> {
+            val factory = remember { ACCDI.get<GallerySearchViewModelFactory>() }
+            val searchViewModel: GallerySearchViewModel = viewModel(
+                key = "gallery_search",
+                factory = createSafeViewModelFactory { factory.create() }
+            )
+
+            GallerySearchScreen(
+                viewModel = searchViewModel,
+                onNavigateToTemplateDetail = { templateId ->
+                    // TODO: Navigate to template detail
+                },
+                onNavigateBack = { navigator.goBack() }
             )
         }
 

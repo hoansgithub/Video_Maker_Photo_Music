@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.videomaker.aimusic.ui.theme.AppDimens
 
 /**
  * Ranking badge with gold/silver/bronze colors for top 3
@@ -38,15 +38,17 @@ fun RankingTag(
         else -> MaterialTheme.colorScheme.onSurface
     }
 
+    val dimens = AppDimens.current
+
     Box(
         modifier = modifier
             .background(backgroundColor, RoundedCornerShape(6.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = dimens.spaceSm, vertical = dimens.spaceXs),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = "#$ranking",
-            fontSize = 11.sp,
+            fontSize = dimens.fontXs,
             fontWeight = FontWeight.Bold,
             color = textColor
         )

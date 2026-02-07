@@ -1,7 +1,5 @@
 package com.videomaker.aimusic.modules.home
 
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -14,9 +12,11 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -30,21 +30,25 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.theme.AppDimens
+import com.videomaker.aimusic.ui.theme.PrimaryDark
+import com.videomaker.aimusic.ui.theme.TextInactive
 import com.videomaker.aimusic.modules.gallery.GalleryScreen
 import com.videomaker.aimusic.modules.songs.SongsScreen
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
@@ -68,7 +72,8 @@ fun HomeScreen(
     onSettingsClick: () -> Unit = {},
     onCreateClick: () -> Unit = {},
     onMyProjectsClick: () -> Unit = {},
-    onProjectClick: (String) -> Unit = {}
+    onProjectClick: (String) -> Unit = {},
+    onNavigateToSearch: () -> Unit = {}
 ) {
     val tabs = listOf(
         stringResource(R.string.home_tab_gallery),
@@ -81,38 +86,68 @@ fun HomeScreen(
         pageCount = { tabs.size }
     )
     val coroutineScope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    var topBarHeightPx by remember { mutableIntStateOf(0) }
+    val topBarHeight = with(density) { topBarHeightPx.toDp() }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
-            .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
-        // Top Bar with Tabs and Settings
-        HomeTopBar(
-            tabs = tabs,
-            selectedTabIndex = pagerState.currentPage,
-            onTabSelected = { index ->
-                coroutineScope.launch {
-                    pagerState.animateScrollToPage(index)
-                }
-            },
-            onSettingsClick = onSettingsClick
-        )
-
-        // Pager Content
+        // Pager Content — full-bleed so each page can draw its own background
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
         ) { page ->
             when (page) {
-                0 -> GalleryTabContent(onCreateClick = onCreateClick)
-                1 -> SongsTabContent()
+                0 -> GalleryTabContent(
+                    onCreateClick = onCreateClick,
+                    onNavigateToSearch = onNavigateToSearch,
+                    topBarHeight = topBarHeight
+                )
+                1 -> SongsTabContent(topBarHeight = topBarHeight)
                 2 -> ProjectsTabContent(
                     onCreateClick = onCreateClick,
-                    onProjectClick = onProjectClick
+                    onProjectClick = onProjectClick,
+                    topBarHeight = topBarHeight
                 )
             }
+        }
+
+        // Top Bar with Tabs and Settings — on top, respecting system bars
+        // onGloballyPositioned BEFORE windowInsetsPadding to measure full height including status bar
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned { coordinates ->
+                    topBarHeightPx = coordinates.size.height
+                }
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.background,
+                            Color.Transparent
+                        ),
+                        startY = 0f,
+                        endY = Float.POSITIVE_INFINITY
+                    )
+                )
+        ) {
+            HomeTopBar(
+                tabs = tabs,
+                selectedTabIndex = pagerState.currentPage,
+                onTabSelected = { index ->
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(index)
+                    }
+                },
+                onSettingsClick = onSettingsClick,
+                modifier = Modifier.windowInsetsPadding(
+                    WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
+                )
+            )
         }
     }
 }
@@ -125,66 +160,69 @@ private fun HomeTopBar(
     tabs: List<String>,
     selectedTabIndex: Int,
     onTabSelected: (Int) -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val density = LocalDensity.current
-
-    // Track tab positions and widths for indicator animation
-    val tabPositions = remember { mutableMapOf<Int, Pair<Dp, Dp>>() }
+    val dimens = AppDimens.current
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(top = 8.dp)
+            .padding(top = dimens.spaceSm)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = dimens.spaceLg),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             // Tab Titles on the left
             Row(
                 horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
                 tabs.forEachIndexed { index, title ->
                     val isSelected = index == selectedTabIndex
 
-                    Box(
+                    // Each tab: title + indicator stacked vertically
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .onGloballyPositioned { coordinates ->
-                                val position = with(density) {
-                                    coordinates.positionInParent().x.toDp()
-                                }
-                                val width = with(density) {
-                                    coordinates.size.width.toDp()
-                                }
-                                tabPositions[index] = Pair(position, width)
-                            }
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null
                             ) {
                                 onTabSelected(index)
                             }
-                            .padding(vertical = 12.dp)
+                            .padding(vertical = dimens.spaceMd)
                     ) {
                         Text(
                             text = title,
-                            fontSize = if (isSelected) 20.sp else 16.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            style = MaterialTheme.typography.headlineSmall,
                             color = if (isSelected) {
                                 MaterialTheme.colorScheme.onSurface
                             } else {
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                TextInactive
                             }
+                        )
+
+                        Spacer(modifier = Modifier.height(dimens.spaceSm))
+
+                        // Indicator — always present, invisible when not selected
+                        Box(
+                            modifier = Modifier
+                                .width(32.dp)
+                                .height(4.dp)
+                                .background(
+                                    color = if (isSelected) PrimaryDark else Color.Transparent,
+                                    shape = RoundedCornerShape(2.dp)
+                                )
                         )
                     }
 
                     if (index < tabs.lastIndex) {
-                        Spacer(modifier = Modifier.width(24.dp))
+                        Spacer(modifier = Modifier.width(dimens.spaceXxl))
                     }
                 }
             }
@@ -198,36 +236,6 @@ private fun HomeTopBar(
                 )
             }
         }
-
-        // White Indicator Bar
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-        ) {
-            // Animate indicator position and width
-            val indicatorOffset by animateDpAsState(
-                targetValue = tabPositions[selectedTabIndex]?.first ?: 0.dp,
-                animationSpec = tween(durationMillis = 250),
-                label = "indicatorOffset"
-            )
-            val indicatorWidth by animateDpAsState(
-                targetValue = tabPositions[selectedTabIndex]?.second ?: 0.dp,
-                animationSpec = tween(durationMillis = 250),
-                label = "indicatorWidth"
-            )
-
-            Box(
-                modifier = Modifier
-                    .offset(x = indicatorOffset)
-                    .width(indicatorWidth)
-                    .height(3.dp)
-                    .background(
-                        color = Color.White,
-                        shape = RoundedCornerShape(1.5.dp)
-                    )
-            )
-        }
     }
 }
 
@@ -240,9 +248,12 @@ private fun HomeTopBar(
  */
 @Composable
 private fun GalleryTabContent(
-    onCreateClick: () -> Unit
+    onCreateClick: () -> Unit,
+    onNavigateToSearch: () -> Unit = {},
+    topBarHeight: Dp = 0.dp
 ) {
     GalleryScreen(
+        topBarHeight = topBarHeight,
         onNavigateToCreate = onCreateClick,
         onNavigateToSongDetail = { songId ->
             // TODO: Navigate to song detail
@@ -258,7 +269,8 @@ private fun GalleryTabContent(
         },
         onNavigateToAllPopularTemplates = {
             // TODO: Navigate to all popular templates
-        }
+        },
+        onNavigateToSearch = onNavigateToSearch
     )
 }
 
@@ -266,7 +278,7 @@ private fun GalleryTabContent(
  * Songs Tab - Browse all songs
  */
 @Composable
-private fun SongsTabContent() {
+private fun SongsTabContent(topBarHeight: Dp = 0.dp) {
     SongsScreen(
         onNavigateToSongDetail = { songId ->
             // TODO: Navigate to song detail
@@ -280,12 +292,16 @@ private fun SongsTabContent() {
 @Composable
 private fun ProjectsTabContent(
     onCreateClick: () -> Unit,
-    onProjectClick: (String) -> Unit
+    onProjectClick: (String) -> Unit,
+    topBarHeight: Dp = 0.dp
 ) {
+    val dimens = AppDimens.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(top = topBarHeight)
+            .padding(dimens.spaceLg)
     ) {
         // Create New Project Card
         Row(
@@ -293,16 +309,15 @@ private fun ProjectsTabContent(
                 .fillMaxWidth()
                 .background(
                     color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(dimens.radiusLg)
                 )
                 .clickable(onClick = onCreateClick)
-                .padding(16.dp),
+                .padding(dimens.spaceLg),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .height(56.dp)
-                    .width(56.dp)
+                    .size(56.dp)
                     .background(
                         color = MaterialTheme.colorScheme.primary,
                         shape = RoundedCornerShape(28.dp)
@@ -311,30 +326,29 @@ private fun ProjectsTabContent(
             ) {
                 Text(
                     text = "+",
-                    fontSize = 28.sp,
+                    fontSize = dimens.font3Xl,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(dimens.spaceLg))
 
             Column {
                 Text(
                     text = stringResource(R.string.home_create),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
                     text = stringResource(R.string.projects_create_description),
-                    fontSize = 13.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(dimens.spaceXxl))
 
         // Empty state message
         Box(
@@ -347,14 +361,13 @@ private fun ProjectsTabContent(
             ) {
                 Text(
                     text = stringResource(R.string.projects_empty),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(dimens.spaceSm))
                 Text(
                     text = stringResource(R.string.projects_empty_description),
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
@@ -412,7 +425,7 @@ private fun HomeScreenPreviewContent() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .padding(AppDimens.current.spaceLg),
                 contentAlignment = Alignment.Center
             ) {
                 Text(

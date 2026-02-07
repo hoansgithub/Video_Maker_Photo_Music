@@ -42,8 +42,10 @@
 
     <!-- Gallery Tab -->
     <string name="gallery_hot_songs">Hot Songs</string>
-    <string name="gallery_templates">Video Templates</string>
+    <string name="gallery_templates">Templates</string>
     <string name="gallery_coming_soon">Coming soon</string>
+    <string name="gallery_search_hint">search your styles</string>
+    <string name="gallery_create_new_video">Create New Video</string>
 
     <!-- Songs Tab -->
     <string name="songs_title">Songs</string>
@@ -162,6 +164,14 @@
     <string name="settings_transition_effect">Transition Effect</string>
     <string name="settings_transition_duration">Transition Duration</string>
     <string name="settings_transition_duration_value">%.1fs</string>
+
+    <!-- Search -->
+    <string name="search_hint">search your styles</string>
+    <string name="search_recent">Recent Searches</string>
+    <string name="search_clear_all">Clear All</string>
+    <string name="search_no_results">No results found</string>
+    <string name="search_no_results_hint">Try a different keyword</string>
+    <string name="search_suggestions">Suggestions</string>
 
     <!-- Common -->
     <string name="cancel">Cancel</string>

@@ -64,6 +64,13 @@ sealed class AppRoute : NavKey, Parcelable {
     @Serializable
     data object Home : AppRoute()
 
+    /**
+     * Search screen - Full-text search for templates and songs
+     */
+    @Parcelize
+    @Serializable
+    data object Search : AppRoute()
+
     // ============================================
     // CREATE FLOW ROUTES
     // ============================================

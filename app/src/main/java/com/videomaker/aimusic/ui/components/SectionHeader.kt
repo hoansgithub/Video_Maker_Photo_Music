@@ -16,9 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.videomaker.aimusic.ui.theme.AppDimens
 
 /**
  * Reusable section header with icon, title, and optional "See All" action
@@ -39,21 +38,22 @@ fun SectionHeader(
     seeAllText: String = "See All",
     modifier: Modifier = Modifier
 ) {
+    val dimens = AppDimens.current
+
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = dimens.spaceLg),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = title,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(dimens.spaceSm))
             Icon(
                 imageVector = icon,
                 contentDescription = null,
@@ -66,7 +66,7 @@ fun SectionHeader(
             TextButton(onClick = onSeeAllClick) {
                 Text(
                     text = seeAllText,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
             }

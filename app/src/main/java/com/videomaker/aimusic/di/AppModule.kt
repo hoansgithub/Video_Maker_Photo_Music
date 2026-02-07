@@ -46,6 +46,7 @@ import com.videomaker.aimusic.modules.musicpicker.MusicPickerViewModel
 import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.root.RootViewModel
+import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
 
 /**
  * ACCDI Dependency Injection Modules
@@ -167,13 +168,13 @@ val domainModule = module {
  * - projectId = "...": Add to existing project mode
  */
 class AssetPickerViewModelFactory(
-    private val context: Context,
+    private val application: android.app.Application,
     private val createProjectUseCase: CreateProjectUseCase,
     private val addAssetsUseCase: AddAssetsUseCase
 ) {
     fun create(projectId: String? = null): AssetPickerViewModel {
         return AssetPickerViewModel(
-            context = context,
+            context = application,
             createProjectUseCase = createProjectUseCase,
             addAssetsUseCase = addAssetsUseCase,
             projectId = projectId
@@ -267,6 +268,17 @@ class GalleryViewModelFactory(
     }
 }
 
+/**
+ * Factory wrapper for SearchViewModel.
+ */
+class GallerySearchViewModelFactory(
+    private val preferencesManager: PreferencesManager
+) {
+    fun create(): GallerySearchViewModel {
+        return GallerySearchViewModel(preferencesManager = preferencesManager)
+    }
+}
+
 val presentationModule = module {
     // Root ViewModel for RootViewActivity (handles loading, Firebase, navigation)
     viewModel {
@@ -280,7 +292,7 @@ val presentationModule = module {
     // Asset Picker ViewModel factory (needs projectId parameter)
     single {
         AssetPickerViewModelFactory(
-            context = androidContext(),
+            application = androidContext().applicationContext as android.app.Application,
             createProjectUseCase = it.get(),
             addAssetsUseCase = it.get()
         )
@@ -326,6 +338,13 @@ val presentationModule = module {
         GalleryViewModelFactory(
             application = androidContext().applicationContext as android.app.Application,
             imageLoader = it.get()
+        )
+    }
+
+    // Gallery Search ViewModel factory (singleton - stateless factory)
+    single {
+        GallerySearchViewModelFactory(
+            preferencesManager = it.get()
         )
     }
 }

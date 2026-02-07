@@ -19,6 +19,9 @@ class PreferencesManager(context: Context) {
         private const val PREFS_NAME = "video_maker_prefs"
         private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
         private const val KEY_FIRST_LAUNCH = "first_launch"
+        private const val KEY_RECENT_SEARCHES = "recent_searches"
+        private const val RECENT_SEARCHES_DELIMITER = "\u001F" // Unit Separator
+        private const val MAX_RECENT_SEARCHES = 10
     }
 
     /**
@@ -44,6 +47,52 @@ class PreferencesManager(context: Context) {
             prefs.edit { putBoolean(KEY_FIRST_LAUNCH, false) }
         }
         return isFirst
+    }
+
+    /**
+     * Get recent search queries (most recent first)
+     */
+    fun getRecentSearches(): List<String> {
+        val raw = prefs.getString(KEY_RECENT_SEARCHES, null) ?: return emptyList()
+        return raw.split(RECENT_SEARCHES_DELIMITER).filter { it.isNotBlank() }
+    }
+
+    /**
+     * Add a search query to recent searches (most recent first, max 10)
+     */
+    @Synchronized
+    fun addRecentSearch(query: String) {
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) return
+
+        val current = getRecentSearches().toMutableList()
+        current.remove(trimmed) // Remove duplicate if exists
+        current.add(0, trimmed) // Add to front
+
+        val capped = current.take(MAX_RECENT_SEARCHES)
+        prefs.edit {
+            putString(KEY_RECENT_SEARCHES, capped.joinToString(RECENT_SEARCHES_DELIMITER))
+        }
+    }
+
+    /**
+     * Remove a specific search query from recent searches
+     */
+    @Synchronized
+    fun removeRecentSearch(query: String) {
+        val current = getRecentSearches().toMutableList()
+        current.remove(query)
+        prefs.edit {
+            putString(KEY_RECENT_SEARCHES, current.joinToString(RECENT_SEARCHES_DELIMITER))
+        }
+    }
+
+    /**
+     * Clear all recent searches
+     */
+    @Synchronized
+    fun clearRecentSearches() {
+        prefs.edit { remove(KEY_RECENT_SEARCHES) }
     }
 
     /**

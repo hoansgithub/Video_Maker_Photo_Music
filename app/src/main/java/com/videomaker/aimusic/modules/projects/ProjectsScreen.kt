@@ -45,7 +45,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.videomaker.aimusic.ui.theme.AppDimens
+import com.videomaker.aimusic.ui.theme.TextBright
+import com.videomaker.aimusic.ui.theme.TextSecondary
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.videomaker.aimusic.R
@@ -105,10 +107,9 @@ fun ProjectsScreen(
             // Title Header
             Text(
                 text = stringResource(R.string.projects_title),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+                modifier = Modifier.padding(horizontal = AppDimens.current.spaceLg, vertical = AppDimens.current.spaceLg)
             )
 
             // UI based on state
@@ -140,10 +141,12 @@ private fun ProjectsLoadingContent() {
 private fun ProjectsEmptyContent(
     onCreateClick: () -> Unit = {}
 ) {
+    val dimens = AppDimens.current
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(dimens.spaceLg),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -156,30 +159,29 @@ private fun ProjectsEmptyContent(
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dimens.spaceLg))
             Text(
                 text = stringResource(R.string.projects_empty),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(dimens.spaceSm))
             Text(
                 text = stringResource(R.string.projects_empty_description),
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(dimens.spaceXxl))
             Button(
                 onClick = onCreateClick,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(dimens.radiusLg)
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(dimens.spaceSm))
                 Text(text = stringResource(R.string.home_create))
             }
         }
@@ -192,10 +194,12 @@ private fun ProjectsListContent(
     onProjectClick: (Project) -> Unit,
     onCreateClick: () -> Unit = {}
 ) {
+    val dimens = AppDimens.current
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentPadding = PaddingValues(dimens.spaceLg),
+        verticalArrangement = Arrangement.spacedBy(dimens.spaceMd)
     ) {
         // Create New Project Card at the top
         item(key = "create_new") {
@@ -218,13 +222,15 @@ private fun ProjectsListContent(
 private fun CreateNewProjectCard(
     onClick: () -> Unit
 ) {
+    val dimens = AppDimens.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(dimens.radiusLg))
             .background(MaterialTheme.colorScheme.primaryContainer)
             .clickable(onClick = onClick)
-            .padding(16.dp),
+            .padding(dimens.spaceLg),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -242,18 +248,17 @@ private fun CreateNewProjectCard(
             )
         }
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(dimens.spaceLg))
 
         Column {
             Text(
                 text = stringResource(R.string.home_create),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             Text(
                 text = stringResource(R.string.projects_create_description),
-                fontSize = 13.sp,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
             )
         }
@@ -265,20 +270,22 @@ private fun ProjectCard(
     project: Project,
     onClick: () -> Unit
 ) {
+    val dimens = AppDimens.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(dimens.radiusLg))
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable(onClick = onClick)
-            .padding(12.dp),
+            .padding(dimens.spaceMd),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Thumbnail
         Box(
             modifier = Modifier
                 .size(80.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(dimens.radiusMd))
                 .background(MaterialTheme.colorScheme.surface),
             contentAlignment = Alignment.Center
         ) {
@@ -311,23 +318,23 @@ private fun ProjectCard(
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(4.dp)
+                        .padding(dimens.spaceXs)
                         .background(
                             color = Color.Black.copy(alpha = 0.7f),
-                            shape = RoundedCornerShape(4.dp)
+                            shape = RoundedCornerShape(dimens.radiusSm)
                         )
-                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                        .padding(horizontal = dimens.spaceXs, vertical = dimens.spaceXxs)
                 ) {
                     Text(
                         text = project.formattedDuration,
-                        fontSize = 10.sp,
-                        color = Color.White
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextBright
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(dimens.spaceMd))
 
         // Project Info
         Column(
@@ -335,26 +342,25 @@ private fun ProjectCard(
         ) {
             Text(
                 text = project.name,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium),
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(dimens.spaceXs))
             Text(
                 text = stringResource(
                     R.string.projects_item_info,
                     project.assets.size,
                     project.formattedDuration
                 ),
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(dimens.spaceXs))
             Text(
                 text = formatDate(project.updatedAt),
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
             )
         }

@@ -2,8 +2,9 @@ package com.videomaker.aimusic.modules.gallery
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,20 +12,27 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Whatshot
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -34,39 +42,54 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.theme.AppDimens
+import com.videomaker.aimusic.ui.theme.SearchFieldBackground
+import com.videomaker.aimusic.ui.theme.SearchFieldBorder
+import com.videomaker.aimusic.ui.theme.TextBright
+import com.videomaker.aimusic.ui.theme.TextSecondary
+import com.videomaker.aimusic.ui.theme.TextTertiary
+import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.TextOnPrimary
+import com.videomaker.aimusic.ui.theme.Black24
+import com.videomaker.aimusic.ui.theme.ChipBorderInactive
+import com.videomaker.aimusic.ui.theme.Gray450
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import co.alcheclub.lib.acccore.di.ACCDI
 import co.alcheclub.lib.acccore.di.get
 import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter
-import coil.compose.SubcomposeAsyncImage
 import com.videomaker.aimusic.di.GalleryViewModelFactory
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
 import com.videomaker.aimusic.domain.model.VideoTemplate
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.videomaker.aimusic.ui.components.PageIndicator
-import com.videomaker.aimusic.ui.components.RankingTag
 import com.videomaker.aimusic.ui.components.SectionHeader
-import com.videomaker.aimusic.ui.components.ShimmerBox
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.components.StaggeredGrid
 import com.videomaker.aimusic.ui.components.bottomGradientOverlay
@@ -79,14 +102,29 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun GalleryScreen(
-    viewModel: GalleryViewModel = remember { ACCDI.get<GalleryViewModelFactory>().create() },
+    topBarHeight: Dp = 0.dp,
     onNavigateToSongDetail: (Long) -> Unit = {},
     onNavigateToTemplateDetail: (String) -> Unit = {},
     onNavigateToAllTopSongs: () -> Unit = {},
     onNavigateToAllTrendingTemplates: () -> Unit = {},
     onNavigateToAllPopularTemplates: () -> Unit = {},
-    onNavigateToCreate: () -> Unit = {}
+    onNavigateToCreate: () -> Unit = {},
+    onNavigateToSearch: () -> Unit = {}
 ) {
+    val factory = remember { ACCDI.get<GalleryViewModelFactory>() }
+    val viewModel: GalleryViewModel = viewModel(
+        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                val vm = factory.create()
+                if (modelClass.isAssignableFrom(vm::class.java)) {
+                    @Suppress("UNCHECKED_CAST")
+                    return vm as T
+                }
+                throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
+            }
+        }
+    )
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
 
@@ -105,126 +143,69 @@ fun GalleryScreen(
         }
     }
 
-    // UI based on state
-    when (val state = uiState) {
-        is GalleryUiState.Loading -> GalleryLoadingContent()
-        is GalleryUiState.Success -> GalleryContent(
-            trendingSongs = state.trendingSongs,
-            topSongs = state.topSongs,
-            trendingTemplates = state.trendingTemplates,
-            popularTemplates = state.popularTemplates,
-            onTrendingSongClick = viewModel::onTrendingSongClick,
-            onTopSongClick = viewModel::onTopSongClick,
-            onTemplateClick = viewModel::onTemplateClick,
-            onSeeAllTopSongs = viewModel::onSeeAllTopSongsClick,
-            onSeeAllTrendingTemplates = viewModel::onSeeAllTrendingTemplatesClick,
-            onSeeAllPopularTemplates = viewModel::onSeeAllPopularTemplatesClick
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background image — edge-to-edge, behind everything
+        Image(
+            painter = painterResource(id = R.drawable.bg_home),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
-        is GalleryUiState.Error -> GalleryErrorContent(message = state.message)
+
+        // UI based on state
+        when (val state = uiState) {
+            is GalleryUiState.Loading -> GalleryLoadingContent()
+            is GalleryUiState.Success -> GalleryContent(
+                topBarHeight = topBarHeight,
+                trendingTemplates = state.trendingTemplates,
+                popularTemplates = state.popularTemplates,
+                onTemplateClick = viewModel::onTemplateClick,
+                onSeeAllTrendingTemplates = viewModel::onSeeAllTrendingTemplatesClick,
+                onSeeAllPopularTemplates = viewModel::onSeeAllPopularTemplatesClick,
+                onCreateClick = viewModel::onCreateClick,
+                onSearchClick = onNavigateToSearch
+            )
+            is GalleryUiState.Error -> GalleryErrorContent(message = state.message)
+        }
     }
 }
 
 /**
- * Shimmer skeleton loading for gallery content
- * Mimics the actual layout structure for smooth transition
+ * Shimmer skeleton loading for gallery content.
  */
 @Composable
 private fun GalleryLoadingContent() {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 32.dp),
-        userScrollEnabled = false
+    val dimens = AppDimens.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = dimens.spaceLg),
+        verticalArrangement = Arrangement.spacedBy(dimens.spaceMd)
     ) {
-        // Shimmer Banner
-        item {
-            ShimmerPlaceholder(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .aspectRatio(16f / 9f),
-                cornerRadius = 16.dp
-            )
-        }
+        // Search field shimmer
+        ShimmerPlaceholder(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            cornerRadius = 999.dp
+        )
 
-        item { Spacer(modifier = Modifier.height(12.dp)) }
+        // Featured effects shimmer
+        ShimmerPlaceholder(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            cornerRadius = dimens.radiusLg
+        )
 
-        // Shimmer Top Songs Section
-        item {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                // Section header shimmer
-                ShimmerBox(
-                    modifier = Modifier
-                        .width(100.dp)
-                        .height(18.dp),
-                    cornerRadius = 4.dp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                // Song items shimmer
-                repeat(4) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 3.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ShimmerBox(
-                            modifier = Modifier.size(44.dp),
-                            cornerRadius = 6.dp
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            ShimmerBox(
-                                modifier = Modifier
-                                    .fillMaxWidth(0.6f)
-                                    .height(14.dp),
-                                cornerRadius = 4.dp
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            ShimmerBox(
-                                modifier = Modifier
-                                    .width(50.dp)
-                                    .height(10.dp),
-                                cornerRadius = 4.dp
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        item { Spacer(modifier = Modifier.height(12.dp)) }
-
-        // Shimmer Templates Section
-        item {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                // Section header shimmer
-                ShimmerBox(
-                    modifier = Modifier
-                        .width(140.dp)
-                        .height(18.dp),
-                    cornerRadius = 4.dp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                // Template grid shimmer (2 columns)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    ShimmerPlaceholder(
-                        modifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(9f / 16f),
-                        cornerRadius = 12.dp
-                    )
-                    ShimmerPlaceholder(
-                        modifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(9f / 16f),
-                        cornerRadius = 12.dp
-                    )
-                }
-            }
-        }
+        // Templates shimmer
+        ShimmerPlaceholder(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            cornerRadius = dimens.radiusLg
+        )
     }
 }
 
@@ -247,85 +228,413 @@ private fun GalleryErrorContent(message: String) {
 
 @Composable
 private fun GalleryContent(
-    trendingSongs: List<TrendingSong>,
-    topSongs: List<TopSong>,
+    topBarHeight: Dp = 0.dp,
     trendingTemplates: List<VideoTemplate>,
     popularTemplates: List<VideoTemplate>,
-    onTrendingSongClick: (TrendingSong) -> Unit,
-    onTopSongClick: (TopSong) -> Unit,
     onTemplateClick: (VideoTemplate) -> Unit,
-    onSeeAllTopSongs: () -> Unit,
     onSeeAllTrendingTemplates: () -> Unit,
-    onSeeAllPopularTemplates: () -> Unit
+    onSeeAllPopularTemplates: () -> Unit,
+    onCreateClick: () -> Unit,
+    onSearchClick: () -> Unit
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 32.dp)
+    val dimens = AppDimens.current
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                top = (topBarHeight - dimens.spaceLg).coerceAtLeast(0.dp),
+                bottom = dimens.space3Xl + dimens.space2Xl
+            )
+        ) {
+            // Section 1: Search Field
+            item(key = "search", contentType = "search") {
+                GallerySearchField(
+                    onClick = onSearchClick,
+                    modifier = Modifier.padding(
+                        horizontal = dimens.spaceLg,
+                        vertical = dimens.spaceMd
+                    )
+                )
+            }
+
+            // Section 2: Featured Effects Showcase
+            item(key = "featured_effects", contentType = "effects_showcase") {
+                FeaturedEffectsShowcase()
+            }
+
+            item(key = "spacer1", contentType = "spacer") {
+                Spacer(modifier = Modifier.height(dimens.spaceMd))
+            }
+
+            // Section 3: Templates header + tag chips
+            item(key = "templates_header", contentType = "templates_header") {
+                SectionHeader(
+                    title = stringResource(R.string.gallery_templates),
+                    icon = Icons.Default.Star,
+                    iconTint = Color(0xFFFFD700),
+                    onSeeAllClick = onSeeAllTrendingTemplates
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceSm))
+                TagChipRow(
+                    tags = sampleTags,
+                    modifier = Modifier.padding(bottom = dimens.spaceSm)
+                )
+            }
+
+            // Trending templates grid
+            item(key = "trending_grid", contentType = "template_grid") {
+                StaggeredTemplateGrid(
+                    templates = trendingTemplates,
+                    onTemplateClick = onTemplateClick,
+                    spacing = dimens.spaceSm,
+                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                )
+            }
+
+            item(key = "spacer2", contentType = "spacer") {
+                Spacer(modifier = Modifier.height(dimens.spaceMd))
+            }
+
+            // Popular templates grid
+            item(key = "popular_grid", contentType = "template_grid") {
+                StaggeredTemplateGrid(
+                    templates = popularTemplates,
+                    onTemplateClick = onTemplateClick,
+                    spacing = dimens.spaceSm,
+                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                )
+            }
+        }
+
+        // Bottom gradient fade — dark to transparent, behind the button
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(120.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            MaterialTheme.colorScheme.background
+                        )
+                    )
+                )
+        )
+
+        // Floating Create button
+        CreateNewVideoButton(
+            onClick = onCreateClick,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(bottom = dimens.spaceLg)
+        )
+    }
+}
+
+// ============================================
+// CREATE NEW VIDEO BUTTON
+// ============================================
+
+@Composable
+private fun CreateNewVideoButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+
+    Button(
+        onClick = onClick,
+        shape = RoundedCornerShape(dimens.radiusFull),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Primary
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp
+        ),
+        contentPadding = PaddingValues(
+            horizontal = dimens.spaceXl,
+            vertical = dimens.spaceMd
+        ),
+        modifier = modifier
+            .shadow(
+                elevation = 12.dp,
+                shape = RoundedCornerShape(dimens.radiusFull),
+                ambientColor = Primary,
+                spotColor = Primary
+            )
     ) {
-        // Section 1: Trending Banner - contentType helps recycling
-        item(key = "banner", contentType = "banner") {
-            TrendingBanner(
-                songs = trendingSongs,
-                onSongClick = onTrendingSongClick
+            Icon(
+                painter = painterResource(id = R.drawable.ic_circle_plus),
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(dimens.spaceSm))
+            Text(
+                text = stringResource(R.string.gallery_create_new_video),
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = TextOnPrimary
             )
         }
+}
 
-        item(key = "spacer1", contentType = "spacer") {
-            Spacer(modifier = Modifier.height(12.dp))
-        }
+// ============================================
+// SEARCH FIELD
+// ============================================
 
-        // Section 2: Top Songs
-        item(key = "top_songs", contentType = "songs_section") {
-            TopSongsSection(
-                songs = topSongs,
-                onSongClick = onTopSongClick,
-                onSeeAllClick = onSeeAllTopSongs
+@Composable
+private fun GallerySearchField(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                color = SearchFieldBackground,
+                shape = RoundedCornerShape(dimens.radiusXl)
             )
-        }
-
-        item(key = "spacer2", contentType = "spacer") {
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        // Section 3: Trending Templates
-        item(key = "trending_section", contentType = "template_grid") {
-            SectionHeader(
-                title = "Trending Templates",
-                icon = Icons.Default.Whatshot,
-                iconTint = Color(0xFFFF6B6B),
-                onSeeAllClick = onSeeAllTrendingTemplates
+            .border(
+                width = 1.dp,
+                color = SearchFieldBorder,
+                shape = RoundedCornerShape(dimens.radiusXl)
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            StaggeredTemplateGrid(
-                templates = trendingTemplates,
-                onTemplateClick = onTemplateClick,
-                spacing = 8.dp,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = dimens.spaceMd, vertical = dimens.spaceMd),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_lead_search),
+            contentDescription = null,
+            tint = Color.Unspecified,
+            modifier = Modifier.size(24.dp)
+        )
+
+        Spacer(modifier = Modifier.width(dimens.spaceSm))
+
+        Text(
+            text = stringResource(R.string.gallery_search_hint),
+            style = MaterialTheme.typography.titleSmall,
+            color = TextTertiary,
+            modifier = Modifier.weight(1f)
+        )
+
+        Icon(
+            imageVector = Icons.Default.Search,
+            contentDescription = "Search",
+            tint = TextTertiary
+        )
+    }
+}
+
+// ============================================
+// FEATURED EFFECTS SHOWCASE
+// ============================================
+
+private data class FeaturedEffect(
+    val name: String,
+    val description: String,
+    val accentColor: Color
+)
+
+private val sampleEffects = listOf(
+    FeaturedEffect("Dreamy Vibes", "Soft glow & pastel tones", Color(0xFFE8A0BF)),
+    FeaturedEffect("Cyberpunk", "Neon lights & glitch effects", Color(0xFF00F0FF)),
+    FeaturedEffect("Vintage Film", "Retro grain & warm hues", Color(0xFFD4A574)),
+    FeaturedEffect("Ocean Breeze", "Cool blue gradients", Color(0xFF4FC3F7)),
+    FeaturedEffect("Golden Hour", "Warm sunset overlay", Color(0xFFFFB74D)),
+    FeaturedEffect("Noir", "High contrast B&W", Color(0xFFB0BEC5)),
+    FeaturedEffect("Sakura", "Cherry blossom pink", Color(0xFFF48FB1)),
+    FeaturedEffect("Aurora", "Northern lights shimmer", Color(0xFF69F0AE))
+)
+
+@Composable
+private fun FeaturedEffectsShowcase(
+    autoSlideIntervalMs: Long = 4000L,
+    modifier: Modifier = Modifier
+) {
+    val infinitePageCount = Int.MAX_VALUE
+    val initialPage = infinitePageCount / 2
+
+    val pagerState = rememberPagerState(
+        initialPage = initialPage,
+        pageCount = { infinitePageCount }
+    )
+
+    val isDragged by pagerState.interactionSource.collectIsDraggedAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Lifecycle-aware auto-slide
+    LaunchedEffect(isDragged) {
+        if (!isDragged) {
+            lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                while (true) {
+                    delay(autoSlideIntervalMs)
+                    if (!pagerState.isScrollInProgress) {
+                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                    }
+                }
+            }
+        }
+    }
+
+    val dimens = AppDimens.current
+
+    Column(modifier = modifier) {
+        HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = dimens.spaceLg),
+            pageSpacing = dimens.spaceMd,
+            modifier = Modifier.fillMaxWidth()
+        ) { page ->
+            val actualIndex = page.mod(sampleEffects.size)
+            FeaturedEffectCard(effect = sampleEffects[actualIndex])
         }
 
-        item(key = "spacer3", contentType = "spacer") {
-            Spacer(modifier = Modifier.height(12.dp))
-        }
+        Spacer(modifier = Modifier.height(dimens.spaceMd))
 
-        // Section 4: Popular Templates
-        item(key = "popular_section", contentType = "template_grid") {
-            SectionHeader(
-                title = "Popular Templates",
-                icon = Icons.Default.Star,
-                iconTint = Color(0xFFFFD700),
-                onSeeAllClick = onSeeAllPopularTemplates
+        PageIndicator(
+            pageCount = sampleEffects.size,
+            currentPage = pagerState.currentPage.mod(sampleEffects.size)
+        )
+    }
+}
+
+@Composable
+private fun FeaturedEffectCard(
+    effect: FeaturedEffect,
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(16f / 9f),
+        shape = RoundedCornerShape(dimens.radiusXl),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            effect.accentColor.copy(alpha = 0.6f),
+                            effect.accentColor.copy(alpha = 0.15f),
+                            Color(0xFF1A1D1D)
+                        )
+                    )
+                )
+        ) {
+            // Decorative icon
+            Icon(
+                imageVector = Icons.Default.AutoAwesome,
+                contentDescription = null,
+                tint = effect.accentColor.copy(alpha = 0.2f),
+                modifier = Modifier
+                    .size(120.dp)
+                    .align(Alignment.TopEnd)
+                    .padding(dimens.spaceLg)
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            StaggeredTemplateGrid(
-                templates = popularTemplates,
-                onTemplateClick = onTemplateClick,
-                spacing = 8.dp,
-                modifier = Modifier.padding(horizontal = 16.dp)
+
+            // Effect info
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(dimens.spaceLg)
+            ) {
+                Text(
+                    text = effect.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = TextBright,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceXs))
+                Text(
+                    text = effect.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextBright.copy(alpha = 0.8f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+// ============================================
+// TAG CHIP ROW
+// ============================================
+
+private val sampleTags = listOf("For you", "Lovely", "Birthday", "Travel", "Aesthetic", "Vintage")
+
+@Composable
+private fun TagChipRow(
+    tags: List<String>,
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+    var selectedTag by rememberSaveable { mutableStateOf(tags.firstOrNull().orEmpty()) }
+
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = dimens.spaceLg),
+        horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+    ) {
+        items(tags, key = { it }) { tag ->
+            TagChip(
+                label = tag,
+                isSelected = tag == selectedTag,
+                onClick = { selectedTag = tag }
             )
         }
     }
 }
+
+@Composable
+private fun TagChip(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+    val borderColor = if (isSelected) Primary else ChipBorderInactive
+    val textColor = if (isSelected) Primary else Gray450
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(dimens.radiusFull))
+            .background(Black24)
+            .border(
+                width = 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(dimens.radiusFull)
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = dimens.spaceMd, vertical = dimens.spaceSm),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+            color = textColor
+        )
+    }
+}
+
+// ============================================
+// TEMPLATE GRID (kept as-is)
+// ============================================
 
 /**
  * Template grid using reusable StaggeredGrid component
@@ -363,330 +672,11 @@ private fun StaggeredTemplateGrid(
 }
 
 // ============================================
-// TRENDING BANNER
-// ============================================
-
-@Composable
-private fun TrendingBanner(
-    songs: List<TrendingSong>,
-    onSongClick: (TrendingSong) -> Unit,
-    autoSlideIntervalMs: Long = 5000L,
-    modifier: Modifier = Modifier
-) {
-    if (songs.isEmpty()) return
-
-    val infinitePageCount = Int.MAX_VALUE
-    val initialPage = infinitePageCount / 2
-
-    val pagerState = rememberPagerState(
-        initialPage = initialPage,
-        pageCount = { infinitePageCount }
-    )
-
-    val isDragged by pagerState.interactionSource.collectIsDraggedAsState()
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    // Lifecycle-aware auto-slide
-    LaunchedEffect(isDragged) {
-        if (!isDragged) {
-            lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                while (true) {
-                    delay(autoSlideIntervalMs)
-                    if (!pagerState.isScrollInProgress) {
-                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                    }
-                }
-            }
-        }
-    }
-
-    Column(modifier = modifier) {
-        HorizontalPager(
-            state = pagerState,
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            pageSpacing = 12.dp,
-            modifier = Modifier.fillMaxWidth()
-        ) { page ->
-            val actualIndex = page.mod(songs.size)
-            TrendingBannerItem(
-                song = songs[actualIndex],
-                onClick = { onSongClick(songs[actualIndex]) }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Page Indicator
-        PageIndicator(
-            pageCount = songs.size,
-            currentPage = pagerState.currentPage.mod(songs.size)
-        )
-    }
-}
-
-@Composable
-private fun TrendingBannerItem(
-    song: TrendingSong,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-
-    // Remember ImageRequest to avoid re-creation on every recomposition
-    val imageRequest = remember(song.coverUrl, song.id) {
-        ImageRequest.Builder(context)
-            .data(song.coverUrl)
-            .size(Size(720, 405)) // 16:9 at reasonable resolution
-            .bitmapConfig(Bitmap.Config.RGB_565)
-            .precision(Precision.INEXACT)
-            .memoryCachePolicy(CachePolicy.ENABLED)
-            .diskCachePolicy(CachePolicy.ENABLED)
-            .memoryCacheKey("banner_${song.id}")
-            .diskCacheKey("banner_${song.id}")
-            .crossfade(150)
-            .allowHardware(true)
-            .build()
-    }
-
-    Card(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(16f / 9f),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Banner uses SubcomposeAsyncImage for shimmer during load (important for carousel)
-            if (song.coverUrl.isNotEmpty()) {
-                SubcomposeAsyncImage(
-                    model = imageRequest,
-                    contentDescription = song.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                    loading = {
-                        ShimmerPlaceholder(
-                            modifier = Modifier.fillMaxSize(),
-                            cornerRadius = 0.dp
-                        )
-                    },
-                    error = {
-                        ShimmerPlaceholder(
-                            modifier = Modifier.fillMaxSize(),
-                            cornerRadius = 0.dp
-                        )
-                    }
-                )
-            } else {
-                ShimmerPlaceholder(
-                    modifier = Modifier.fillMaxSize(),
-                    cornerRadius = 0.dp
-                )
-            }
-
-            // Gradient overlay for text readability
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .bottomGradientOverlay()
-            )
-
-            // #trending tag
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(12.dp)
-                    .background(
-                        color = Color(0xFFFF4757),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
-            ) {
-                Text(
-                    text = "#trending",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White
-                )
-            }
-
-            // Song info
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = song.name,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = song.artist,
-                    fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.8f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-    }
-}
-
-// ============================================
-// TOP SONGS SECTION
-// ============================================
-
-@Composable
-private fun TopSongsSection(
-    songs: List<TopSong>,
-    onSongClick: (TopSong) -> Unit,
-    onSeeAllClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    if (songs.isEmpty()) return
-
-    val itemsPerPage = 4
-    val pageCount = (songs.size + itemsPerPage - 1) / itemsPerPage
-
-    val pagerState = rememberPagerState(
-        initialPage = 0,
-        pageCount = { pageCount }
-    )
-
-    Column(modifier = modifier) {
-        SectionHeader(
-            title = "Top Songs",
-            icon = Icons.Default.Whatshot,
-            iconTint = Color(0xFFFF6B6B),
-            onSeeAllClick = onSeeAllClick
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        HorizontalPager(
-            state = pagerState,
-            contentPadding = PaddingValues(start = 16.dp, end = 48.dp),
-            pageSpacing = 12.dp,
-            modifier = Modifier.fillMaxWidth()
-        ) { page ->
-            val startIndex = page * itemsPerPage
-            val endIndex = minOf(startIndex + itemsPerPage, songs.size)
-            val pageSongs = songs.subList(startIndex, endIndex)
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                pageSongs.forEach { song ->
-                    TopSongItem(
-                        song = song,
-                        onClick = { onSongClick(song) }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TopSongItem(
-    song: TopSong,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    val density = LocalDensity.current
-    val thumbnailSizePx = remember(density) { with(density) { 44.dp.roundToPx() } }
-
-    // Remember ImageRequest to avoid re-creation on every recomposition
-    val imageRequest = remember(song.coverUrl, song.id, thumbnailSizePx) {
-        ImageRequest.Builder(context)
-            .data(song.coverUrl)
-            .size(Size(thumbnailSizePx, thumbnailSizePx))
-            .bitmapConfig(Bitmap.Config.RGB_565)
-            .precision(Precision.INEXACT)
-            .memoryCachePolicy(CachePolicy.ENABLED)
-            .diskCachePolicy(CachePolicy.ENABLED)
-            .memoryCacheKey("song_thumb_${song.id}")
-            .crossfade(100)
-            .allowHardware(true)
-            .build()
-    }
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .clickable(onClick = onClick)
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Optimized thumbnail with AsyncImage (lighter than SubcomposeAsyncImage)
-        if (song.coverUrl.isNotEmpty()) {
-            AsyncImage(
-                model = imageRequest,
-                contentDescription = song.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(6.dp))
-            )
-        } else {
-            ShimmerBox(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(6.dp)),
-                cornerRadius = 6.dp
-            )
-        }
-
-        Spacer(modifier = Modifier.width(10.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = song.name,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Favorite,
-                    contentDescription = null,
-                    tint = Color(0xFFFF6B6B),
-                    modifier = Modifier.size(12.dp)
-                )
-                Spacer(modifier = Modifier.width(3.dp))
-                Text(
-                    text = formatLikes(song.likes),
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        RankingTag(ranking = song.ranking)
-    }
-}
-
-// ============================================
-// VIDEO TEMPLATE HELPERS
+// VIDEO TEMPLATE HELPERS (kept as-is)
 // ============================================
 
 /**
  * Parse aspect ratio string (e.g., "9:16", "16:9", "1:1") to float
- * Memoized via remember {} at call site to avoid recalculation
  */
 private fun parseAspectRatio(aspectRatio: String): Float {
     return try {
@@ -703,14 +693,6 @@ private fun parseAspectRatio(aspectRatio: String): Float {
     }
 }
 
-/**
- * Optimized VideoTemplateItem with:
- * - AsyncImage (lighter than SubcomposeAsyncImage, fewer recompositions)
- * - RGB_565 bitmap config (50% memory savings)
- * - drawWithCache for gradient overlay (cached between recompositions)
- * - Remembered ImageRequest to avoid re-allocation
- * - Aspect ratio support for staggered grid
- */
 @Composable
 private fun VideoTemplateItem(
     template: VideoTemplate,
@@ -720,7 +702,6 @@ private fun VideoTemplateItem(
 ) {
     val context = LocalContext.current
 
-    // Remember ImageRequest to avoid re-creation on every recomposition
     val imageRequest = remember(template.thumbnailUrl, template.id) {
         ImageRequest.Builder(context)
             .data(template.thumbnailUrl)
@@ -736,16 +717,17 @@ private fun VideoTemplateItem(
             .build()
     }
 
+    val dimens = AppDimens.current
+
     Card(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(aspectRatio),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(dimens.radiusLg),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Thumbnail with AsyncImage (lighter weight than SubcomposeAsyncImage)
             if (template.thumbnailUrl.isNotEmpty()) {
                 AsyncImage(
                     model = imageRequest,
@@ -754,7 +736,6 @@ private fun VideoTemplateItem(
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
-                // Animated shimmer for items without thumbnail
                 ShimmerPlaceholder(
                     modifier = Modifier.fillMaxSize(),
                     cornerRadius = 0.dp
@@ -773,17 +754,16 @@ private fun VideoTemplateItem(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(8.dp)
+                        .padding(dimens.spaceSm)
                         .background(
                             color = Color(0xFFFFD700),
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(dimens.radiusMd)
                         )
                         .padding(horizontal = 6.dp, vertical = 3.dp)
                 ) {
                     Text(
                         text = "PRO",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                         color = Color.Black
                     )
                 }
@@ -797,9 +777,8 @@ private fun VideoTemplateItem(
             ) {
                 Text(
                     text = template.name,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White,
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = TextBright,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -808,22 +787,60 @@ private fun VideoTemplateItem(
     }
 }
 
-private fun formatLikes(likes: Int): String {
-    return when {
-        likes >= 1_000_000 -> String.format("%.1fM", likes / 1_000_000.0)
-        likes >= 1_000 -> String.format("%.1fK", likes / 1_000.0)
-        else -> likes.toString()
-    }
-}
-
 // ============================================
 // PREVIEW
 // ============================================
 
-@Preview(showBackground = true, backgroundColor = 0xFF1A1A1A)
+private val previewTemplates = listOf(
+    VideoTemplate(id = "1", name = "Summer Vibes", description = "", songId = 1, effectSetId = "e1", aspectRatio = "9:16", isPremium = true),
+    VideoTemplate(id = "2", name = "Chill Lofi", description = "", songId = 2, effectSetId = "e2", aspectRatio = "1:1"),
+    VideoTemplate(id = "3", name = "Retro Wave", description = "", songId = 3, effectSetId = "e3", aspectRatio = "9:16", isPremium = true),
+    VideoTemplate(id = "4", name = "Birthday Bash", description = "", songId = 4, effectSetId = "e4", aspectRatio = "4:5"),
+    VideoTemplate(id = "5", name = "Travel Diary", description = "", songId = 5, effectSetId = "e5", aspectRatio = "9:16"),
+    VideoTemplate(id = "6", name = "Neon Nights", description = "", songId = 6, effectSetId = "e6", aspectRatio = "1:1"),
+    VideoTemplate(id = "7", name = "Aesthetic Mood", description = "", songId = 7, effectSetId = "e7", aspectRatio = "9:16"),
+    VideoTemplate(id = "8", name = "Cinematic", description = "", songId = 8, effectSetId = "e8", aspectRatio = "4:5", isPremium = true),
+    VideoTemplate(id = "9", name = "Golden Hour", description = "", songId = 9, effectSetId = "e9", aspectRatio = "9:16"),
+    VideoTemplate(id = "10", name = "Vintage Love", description = "", songId = 10, effectSetId = "e10", aspectRatio = "1:1"),
+)
+
+@Preview(widthDp = 375, heightDp = 812)
 @Composable
-private fun GalleryScreenPreview() {
+private fun GalleryContentPreview() {
     VideoMakerTheme {
-        GalleryScreen()
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = R.drawable.bg_home),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            GalleryContent(
+                topBarHeight = 56.dp,
+                trendingTemplates = previewTemplates.take(6),
+                popularTemplates = previewTemplates.drop(6),
+                onTemplateClick = {},
+                onSeeAllTrendingTemplates = {},
+                onSeeAllPopularTemplates = {},
+                onCreateClick = {},
+                onSearchClick = {}
+            )
+        }
+    }
+}
+
+@Preview(widthDp = 375, heightDp = 812)
+@Composable
+private fun GalleryLoadingPreview() {
+    VideoMakerTheme {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = R.drawable.bg_home),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            GalleryLoadingContent()
+        }
     }
 }
