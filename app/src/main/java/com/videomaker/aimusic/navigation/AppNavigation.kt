@@ -267,6 +267,7 @@ private fun RouteContent(
         is AppRoute.Projects -> {
             val factory = remember { ACCDI.get<ProjectsViewModelFactory>() }
             val projectsViewModel: ProjectsViewModel = viewModel(
+                key = "projects",
                 factory = createSafeViewModelFactory { factory.create() }
             )
 
@@ -293,33 +294,6 @@ private fun RouteContent(
     }
 }
 
-/**
- * Creates a type-safe ViewModelProvider.Factory.
- *
- * Uses type validation to prevent ClassCastException at runtime.
- * Throws IllegalArgumentException with helpful message if type mismatch.
- *
- * @param creator Lambda that creates the ViewModel instance
- */
-private inline fun <reified VM : androidx.lifecycle.ViewModel> createSafeViewModelFactory(
-    crossinline creator: () -> VM
-): androidx.lifecycle.ViewModelProvider.Factory {
-    return object : androidx.lifecycle.ViewModelProvider.Factory {
-        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-            val viewModel = creator()
-
-            // Type-safe cast with validation
-            if (modelClass.isAssignableFrom(viewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return viewModel as T
-            } else {
-                throw IllegalArgumentException(
-                    "Unknown ViewModel class: ${modelClass.name}, expected: ${viewModel::class.java.name}"
-                )
-            }
-        }
-    }
-}
 
 /**
  * Placeholder screen for routes not yet implemented

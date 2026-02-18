@@ -16,7 +16,7 @@ import com.videomaker.aimusic.data.local.database.entity.ProjectEntity
  */
 @Database(
     entities = [ProjectEntity::class, AssetEntity::class],
-    version = 4, // Bumped for transitionOverlapMs -> transitionPercentage change
+    version = 5, // Bumped for audioTrackId -> musicSongId + musicSongUrl (Supabase songs)
     exportSchema = true
 )
 abstract class ProjectDatabase : RoomDatabase() {

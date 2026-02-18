@@ -14,346 +14,165 @@ hooks:
 
 You detect navigation anti-patterns and ensure proper Navigation 3 usage with event-based patterns.
 
-## Navigation 3 Verification
+## Detection Checklist
 
-### 1. Verify Navigation 3 Usage (CRITICAL)
+### 1. Navigation 2.x Patterns (CRITICAL — DEPRECATED)
 
-```kotlin
-// ❌ DETECT: Navigation 2.x patterns (DEPRECATED)
-NavHost(navController, startDestination = HomeRoute) { }
-navController.navigate(ProfileRoute(userId))
-navController.popBackStack()
-composable<ProfileRoute> { }
+- ❌ `NavHost(navController, ...)` / `navController.navigate(...)` / `navController.popBackStack()` / `composable<Route> { }`
+- ✅ `NavDisplay(backStack, entryProvider = entryProvider { entry<Route> { } }, onBack = { backStack.pop() })` + `backStack.add(route)` / `backStack.pop()`
 
-// ✅ CORRECT: Navigation 3 patterns
-val backStack = rememberNavBackStack(HomeRoute)
-NavDisplay(
-    backStack = backStack,
-    entryProvider = entryProvider {
-        entry<ProfileRoute> { key -> ProfileScreen(key.userId) }
-    },
-    onBack = { backStack.pop() }
-)
-backStack.add(ProfileRoute(userId))
-backStack.pop()
-```
-
-**Search Pattern:**
 ```bash
 grep -rn "NavHost\|navController\|composable<" --include="*.kt"
 ```
 
-## Detection Checklist
-
 ### 2. State-Based Navigation (CRITICAL BUG)
 
-```kotlin
-// ❌ DETECT: LaunchedEffect watching state for navigation
-LaunchedEffect(uiState) {
-    if (uiState is Success) navigateNext()  // BUG! Re-triggers on back/rotation!
-}
+- ❌ `LaunchedEffect(uiState) { if (uiState is Success) navigate() }` — re-triggers on back/rotation!
+- ❌ `LaunchedEffect(viewModel.state) { when (state) { is Done -> navigate() } }`
+- ✅ `LaunchedEffect(Unit) { viewModel.oneTimeEvent.collect { event -> when (event) { ... } } }`
 
-LaunchedEffect(viewModel.state) {
-    when (state) {
-        is Done -> navigate()  // BUG!
-    }
-}
-
-// ✅ CORRECT: Channel + LaunchedEffect(Unit) for one-time events
-LaunchedEffect(Unit) {
-    viewModel.oneTimeEvent.collect { event ->
-        when (event) {
-            is LaunchActivity -> launchActivity(event.intent)
-            is ShowToast -> showToast(event.message)
-        }
-    }
-}
-```
-
-**Search Pattern:**
 ```bash
 grep -rn "LaunchedEffect.*uiState\|LaunchedEffect.*state\|LaunchedEffect.*viewModel\." --include="*.kt" | grep -v "Unit"
 ```
 
 ### 3. Navigation Data in UI State (CRITICAL)
 
-```kotlin
-// ❌ DETECT: Navigation mixed with UI state
-sealed class UiState {
-    data class Success(
-        val data: Data,
-        val shouldNavigate: Boolean = false  // BUG!
-    ) : UiState()
-}
+- ❌ `shouldNavigate: Boolean` / `navigateToNext: Boolean` in UiState data class
+- ✅ Separate `sealed class OneTimeEvent { NavigateNext, ShowToast, ... }`
 
-data class FeatureState(
-    val isLoading: Boolean,
-    val navigateToNext: Boolean = false  // BUG!
-)
-
-// ✅ CORRECT: Separate one-time events
-sealed class OneTimeEvent {
-    data object NavigateNext : OneTimeEvent()
-}
-```
-
-**Search Pattern:**
 ```bash
 grep -rn "shouldNavigate\|navigateTo\|hasNavigated" --include="*.kt"
 ```
 
 ### 4. Passing BackStack to Composables (CRITICAL)
 
-```kotlin
-// ❌ DETECT: BackStack passed to composables
-@Composable
-fun FeatureScreen(backStack: NavBackStack<NavKey>) {
-    // Direct manipulation inside composable - BAD!
-    backStack.add(NextRoute)
-}
+- ❌ `fun FeatureScreen(backStack: NavBackStack<NavKey>)` — direct manipulation inside composable
+- ✅ `fun FeatureScreen(onNavigateToNext: () -> Unit, onNavigateBack: () -> Unit)` — callback-based
 
-// ✅ CORRECT: Callback-based navigation
-@Composable
-fun FeatureScreen(
-    onNavigateToNext: () -> Unit,
-    onNavigateBack: () -> Unit
-) {
-    Button(onClick = onNavigateToNext) { Text("Next") }
-}
-```
-
-**Search Pattern:**
 ```bash
 grep -rn "backStack.*:.*NavBackStack\|navController.*:.*NavController" --include="*.kt"
 ```
 
 ### 5. Activity Embedded as Composable (CRITICAL)
 
-```kotlin
-// ❌ DETECT: Activity's screen in NavDisplay
-entry<FeatureRoute> {
-    FeatureScreen()  // If FeatureActivity exists, this is WRONG!
-}
+- ❌ `entry<FeatureRoute> { FeatureScreen() }` when `FeatureActivity.kt` exists — Activity lifecycle bypassed!
+- ✅ Use `startActivity(Intent(this, FeatureActivity::class.java))` + `finish()`
 
-// Check: Does FeatureActivity.kt exist?
-// If yes → BUG! Activity lifecycle bypassed!
+### 6. collectAsState vs collectAsStateWithLifecycle (HIGH)
 
-// ✅ CORRECT: Use startActivity()
-private fun navigateToFeature() {
-    startActivity(Intent(this, FeatureActivity::class.java))
-}
-```
+- ❌ `viewModel.uiState.collectAsState()` → ✅ `collectAsStateWithLifecycle()`
 
-### 5. collectAsState Instead of collectAsStateWithLifecycle (HIGH)
-
-```kotlin
-// ❌ DETECT: collectAsState (not lifecycle-aware)
-val uiState by viewModel.uiState.collectAsState()
-
-// ✅ CORRECT: Lifecycle-aware
-val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-```
-
-**Search Pattern:**
 ```bash
 grep -rn "collectAsState()" --include="*.kt" | grep -v "Lifecycle"
 ```
 
-### 6. Missing finish() After startActivity (HIGH)
+### 7. Missing finish() After startActivity (HIGH)
 
-```kotlin
-// ❌ DETECT: startActivity without finish
-startActivity(Intent(this, NextActivity::class.java))
-// Missing: finish()
+- ❌ `startActivity(intent)` without `finish()` for forward navigation
+- ✅ `startActivity(intent)` + `finish()`
 
-// ✅ CORRECT: For forward navigation
-startActivity(Intent(this, NextActivity::class.java))
-finish()
-```
-
-**Search Pattern:**
 ```bash
 grep -B1 -A1 "startActivity" --include="*.kt" | grep -v "finish()"
 ```
 
-### 7. GlobalScope Usage (HIGH)
+### 8. GlobalScope Usage (HIGH)
 
-```kotlin
-// ❌ DETECT: GlobalScope (never cancelled)
-GlobalScope.launch {
-    doSomething()
-}
+- ❌ `GlobalScope.launch { }` → ✅ `viewModelScope.launch { }`
 
-// ✅ CORRECT: viewModelScope
-viewModelScope.launch {
-    doSomething()  // Auto-cancelled with ViewModel
-}
-```
-
-**Search Pattern:**
 ```bash
 grep -rn "GlobalScope" --include="*.kt"
 ```
 
-### 8. Force Unwrap (CRASH RISK)
+### 9. Force Unwrap (CRASH RISK)
 
-```kotlin
-// ❌ DETECT: Force unwrap
-val value = nullable!!
-val item = list.first()!!
+- ❌ `nullable!!` / `list.first()!!` → ✅ `nullable ?: return` / `list.firstOrNull() ?: return`
 
-// ✅ CORRECT: Safe handling
-val value = nullable ?: return
-val item = list.firstOrNull() ?: return
-```
-
-**Search Pattern:**
 ```bash
 grep -rn "!!" --include="*.kt" | grep -v "//"
 ```
 
-### 9. WeakReference for Action Callbacks (CRITICAL - APP FREEZE)
+### 10. WeakReference for Action Callbacks (CRITICAL — APP FREEZE)
 
-```kotlin
-// ❌ DETECT: WeakReference for action callbacks - CAUSES APP FREEZE!
-val weakAction = WeakReference(action)
-onDismissed = {
-    weakAction.get()?.invoke()  // May be null → APP FREEZES!
-}
+- ❌ `WeakReference(action).get()?.invoke()` — may be null, app freezes!
+- ❌ `WeakReference(navigateCallback).get()?.invoke()` — navigation may never happen!
+- ✅ `action()` — action callbacks MUST be strong references
+- OK: WeakReference for optional callbacks (onShown), UI element refs only
 
-// ❌ DETECT: WeakReference for navigation callbacks
-val weakNavigate = WeakReference(navigateCallback)
-onComplete = {
-    weakNavigate.get()?.invoke()  // Navigation may never happen!
-}
-
-// ✅ CORRECT: Action callbacks MUST be strong references
-onDismissed = {
-    action()  // MUST execute for navigation/critical flow
-}
-
-// ✅ OK: WeakReference for OPTIONAL callbacks only
-onShown = {
-    weakOnShown.get()?.invoke()  // OK - onShown is optional
-}
-```
-
-**Search Pattern:**
 ```bash
 grep -rn 'WeakReference.*action\|WeakReference.*callback\|WeakReference.*navigate\|weakAction\|weakCallback' --include="*.kt"
 ```
 
-**Rule**:
-- Action callbacks (navigate, resume, dismiss) MUST be strong references
-- Use WeakReference ONLY for: optional callbacks (onShown), UI element refs
-- NEVER use WeakReference for: critical app flow, navigation, data updates
+### 11. ANR Risks — Main Thread Blocking (CRITICAL)
 
----
+- ❌ `viewModelScope.launch { repository.fetchData() }` without `withContext(Dispatchers.IO)`
+- ❌ `runBlocking { }` / `Thread.sleep()` on main
+- ❌ `prefs.edit().putString("key", "value").commit()` (sync write)
+- ❌ Heavy `BroadcastReceiver.onReceive()` without `goAsync()`
+- ✅ `withContext(Dispatchers.IO) { }` for I/O, `.apply()` for prefs, `goAsync()` for receivers
 
-## Output Format
-
-### Navigation Scan: [File/Commit]
-
-**Risk Level**: Critical / High / Medium / Low
-
-### 🔴 Critical Issues
-
-#### Issue 1: State-Based Navigation
-**File**: `FeatureScreen.kt:45`
-```kotlin
-LaunchedEffect(uiState) {
-    if (uiState is Success) navigate()  // BUG!
-}
-```
-**Problem**: Triggers navigation on every recomposition when state is Success
-**Fix**:
-```kotlin
-// In ViewModel
-private val _navigationEvent = Channel<NavigationEvent>(Channel.BUFFERED)
-val navigationEvent = _navigationEvent.receiveAsFlow()
-
-// In Composable
-LaunchedEffect(Unit) {
-    viewModel.navigationEvent.collect { event ->
-        when (event) {
-            is NavigateNext -> navigate()
-        }
-    }
-}
-```
-
-#### Issue 2: Activity Embedded as Composable
-**File**: `HomeActivity.kt:78`
-```kotlin
-composable<AppDestination.Feature> {
-    FeatureScreen()  // FeatureActivity.kt exists!
-}
-```
-**Problem**: FeatureActivity's lifecycle (onBackPressed, ads, etc.) bypassed
-**Fix**: Remove composable route, use `startActivity(FeatureActivity::class.java)`
-
----
-
-### 🟡 Warnings
-
-- `DataScreen.kt:23` - Uses collectAsState instead of collectAsStateWithLifecycle
-- `SettingsViewModel.kt:56` - startActivity without finish()
-
----
-
-### ✅ Good Patterns
-
-- Proper Channel pattern in `HomeViewModel.kt`
-- LaunchedEffect(Unit) in `ProfileScreen.kt`
-- collectAsStateWithLifecycle in `DashboardScreen.kt`
-
----
-
-### Navigation Safety Summary
-
-```
-ViewModels Scanned: X
-Navigation 3 Used:         ✅ / ❌
-NavDisplay + entryProvider: ✅ / ❌
-No Nav2 Patterns:          ✅ / ❌
-Channel Pattern:           ✅ / ❌
-LaunchedEffect(Unit):      ✅ / ❌
-No State-Based Nav:        ✅ / ❌
-No BackStack in Composables: ✅ / ❌
-collectAsStateWithLifecycle: ✅ / ❌
-Activity vs Composable:    ✅ / ❌
+```bash
+grep -rn "runBlocking\|Thread.sleep" --include="*.kt"
+grep -rn "\.commit()" --include="*.kt" | grep -i "pref\|shared"
+grep -rn "BitmapFactory.decode" --include="*.kt"
+grep -rn "synchronized" --include="*.kt"
 ```
 
 ## Quick Scan Commands
 
 ```bash
-# Find Navigation 2.x patterns (DEPRECATED - migrate to Navigation 3)
+# Navigation 2.x (DEPRECATED)
 grep -rn "NavHost\|navController\|composable<" --include="*.kt"
 
-# Find state-based navigation (CRITICAL)
+# State-based navigation (CRITICAL)
 grep -rn "LaunchedEffect.*uiState\|LaunchedEffect.*state" --include="*.kt"
-
-# Find navigation in state
 grep -rn "shouldNavigate\|navigateTo" --include="*.kt"
 
-# Find backStack/NavController passed to composables (BAD)
+# BackStack/NavController in composables
 grep -rn "backStack.*:.*NavBackStack\|navController.*:.*NavController" --include="*.kt"
 
-# Find missing lifecycle collection
+# Lifecycle collection
 grep -rn "collectAsState()" --include="*.kt" | grep -v "Lifecycle"
 
-# Find GlobalScope
+# GlobalScope / Force unwrap
 grep -rn "GlobalScope" --include="*.kt"
-
-# Find force unwrap
 grep -rn "!!" --include="*.kt" | grep -v "//"
 
-# Find WeakReference for actions (CRITICAL - causes freezes)
+# WeakReference for actions
 grep -rn 'WeakReference.*action\|WeakReference.*callback\|WeakReference.*navigate\|weakAction\|weakCallback' --include="*.kt"
 
-# Find missing Channel in ViewModels
+# ANR risks
+grep -rn "runBlocking\|Thread.sleep" --include="*.kt"
+grep -rn "\.commit()" --include="*.kt" | grep -i "pref\|shared"
+grep -rn "BitmapFactory.decode" --include="*.kt"
+grep -rn "synchronized" --include="*.kt"
+
+# Missing Channel in ViewModels
 grep -rn "class.*ViewModel" --include="*.kt" | grep -v "Channel"
 
 # Verify Navigation 3 usage
 grep -rn "NavDisplay\|rememberNavBackStack\|entryProvider" --include="*.kt"
+```
+
+## Output Format
+
+**Risk Level**: Critical / High / Medium / Low
+
+**Critical Issues**: File:line → problem → fix
+
+**Warnings**: File:line — description
+
+**Good Patterns**: What's correct
+
+**Navigation Safety Summary**:
+```
+Navigation 3 Used:           ✅/❌
+NavDisplay + entryProvider:  ✅/❌
+No Nav2 Patterns:            ✅/❌
+Channel Pattern:             ✅/❌
+LaunchedEffect(Unit):        ✅/❌
+No State-Based Nav:          ✅/❌
+No BackStack in Composables: ✅/❌
+collectAsStateWithLifecycle: ✅/❌
+Activity vs Composable:      ✅/❌
+No ANR Risks:                ✅/❌
 ```

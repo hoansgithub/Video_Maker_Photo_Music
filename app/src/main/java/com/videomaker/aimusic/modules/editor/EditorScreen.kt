@@ -178,7 +178,7 @@ fun EditorScreen(
                     onImageDurationChange = viewModel::updateImageDuration,
                     onTransitionPercentageChange = viewModel::updateTransitionPercentage,
                     onOverlayFrameChange = viewModel::updateOverlayFrame,
-                    onAudioTrackChange = viewModel::updateAudioTrack,
+                    onMusicSongChange = { songId -> viewModel.updateMusicSong(songId, null) },
                     onCustomAudioChange = viewModel::updateCustomAudio,
                     onAudioVolumeChange = viewModel::updateAudioVolume,
                     onAspectRatioChange = viewModel::updateAspectRatio,

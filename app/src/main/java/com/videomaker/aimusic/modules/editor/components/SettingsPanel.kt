@@ -92,7 +92,7 @@ fun SettingsPanel(
     onImageDurationChange: (Long) -> Unit,
     onTransitionPercentageChange: (Int) -> Unit,
     onOverlayFrameChange: (String?) -> Unit,
-    onAudioTrackChange: (String?) -> Unit,
+    onMusicSongChange: (Long?) -> Unit,
     onCustomAudioChange: (Uri?) -> Unit,
     onAudioVolumeChange: (Float) -> Unit,
     onAspectRatioChange: (AspectRatio) -> Unit,
@@ -183,10 +183,10 @@ fun SettingsPanel(
 
             // Background Music
             AudioSection(
-                selectedTrackId = settings.audioTrackId,
+                selectedSongId = settings.musicSongId,
                 customAudioUri = settings.customAudioUri,
                 audioVolume = settings.audioVolume,
-                onTrackSelect = onAudioTrackChange,
+                onSongSelect = onMusicSongChange,
                 onCustomAudioSelect = onCustomAudioChange,
                 onVolumeChange = onAudioVolumeChange,
                 onOpenMusicPicker = onOpenMusicPicker
@@ -535,17 +535,17 @@ private fun FrameChip(
 
 @Composable
 private fun AudioSection(
-    selectedTrackId: String?,
+    selectedSongId: Long?,
     customAudioUri: Uri?,
     audioVolume: Float,
-    onTrackSelect: (String?) -> Unit,
+    onSongSelect: (Long?) -> Unit,
     onCustomAudioSelect: (Uri?) -> Unit,
     onVolumeChange: (Float) -> Unit,
     onOpenMusicPicker: () -> Unit
 ) {
     val tracks = remember { AudioTrackLibrary.getAll() }
     var volumeValue by remember(audioVolume) { mutableFloatStateOf(audioVolume) }
-    val hasAudio = selectedTrackId != null || customAudioUri != null
+    val hasAudio = selectedSongId != null || customAudioUri != null
 
     Column {
         Text(
@@ -562,9 +562,9 @@ private fun AudioSection(
             // None option
             AudioChip(
                 track = null,
-                isSelected = selectedTrackId == null && customAudioUri == null,
+                isSelected = selectedSongId == null && customAudioUri == null,
                 onClick = {
-                    onTrackSelect(null)
+                    onSongSelect(null)
                     onCustomAudioSelect(null)
                 }
             )
@@ -573,9 +573,9 @@ private fun AudioSection(
             tracks.forEach { track ->
                 AudioChip(
                     track = track,
-                    isSelected = track.id == selectedTrackId,
+                    isSelected = track.id.toLongOrNull() == selectedSongId,
                     onClick = {
-                        onTrackSelect(track.id)
+                        onSongSelect(track.id.toLongOrNull())
                         onCustomAudioSelect(null)
                     }
                 )

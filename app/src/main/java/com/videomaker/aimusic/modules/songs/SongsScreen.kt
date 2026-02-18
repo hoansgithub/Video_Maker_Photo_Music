@@ -1,28 +1,84 @@
 package com.videomaker.aimusic.modules.songs
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Radio
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.videomaker.aimusic.ui.theme.AppDimens
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import co.alcheclub.lib.acccore.di.ACCDI
+import co.alcheclub.lib.acccore.di.get
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.di.SongsViewModelFactory
+import com.videomaker.aimusic.domain.model.MusicSong
+import com.videomaker.aimusic.navigation.createSafeViewModelFactory
+import com.videomaker.aimusic.ui.components.AppAsyncImage
+import com.videomaker.aimusic.ui.components.PageIndicator
+import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
+import com.videomaker.aimusic.ui.components.SectionHeader
+import com.videomaker.aimusic.ui.components.ShimmerBox
+import com.videomaker.aimusic.ui.theme.AppDimens
+import com.videomaker.aimusic.ui.theme.Black24
+import com.videomaker.aimusic.ui.theme.CardDark
+import com.videomaker.aimusic.ui.theme.ChipBorderInactive
+import com.videomaker.aimusic.ui.theme.GoldAccent
+import com.videomaker.aimusic.ui.theme.PlaceholderBackground
+import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.SearchFieldBackground
+import com.videomaker.aimusic.ui.theme.SearchFieldBorder
+import com.videomaker.aimusic.ui.theme.TextBright
+import com.videomaker.aimusic.ui.theme.TextSecondary
+import com.videomaker.aimusic.ui.theme.TextTertiary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+import com.videomaker.aimusic.ui.theme.Gray450
 
 // ============================================
 // SONGS SCREEN
@@ -30,13 +86,23 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
 @Composable
 fun SongsScreen(
-    viewModel: SongsViewModel = viewModel(),
-    onNavigateToSongDetail: (Int) -> Unit = {}
+    topBarHeight: Dp = 0.dp,
+    onNavigateToSongDetail: (Long) -> Unit = {},
+    onNavigateToSearch: () -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val factory = remember { ACCDI.get<SongsViewModelFactory>() }
+    val viewModel: SongsViewModel = viewModel(
+        factory = createSafeViewModelFactory { factory.create() }
+    )
+
+    val suggestedState by viewModel.suggestedState.collectAsStateWithLifecycle()
+    val rankingState by viewModel.rankingState.collectAsStateWithLifecycle()
+    val stationState by viewModel.stationState.collectAsStateWithLifecycle()
+    val genresState by viewModel.genresState.collectAsStateWithLifecycle()
+    val selectedGenre by viewModel.selectedGenre.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
 
-    // Handle navigation events
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
@@ -46,92 +112,981 @@ fun SongsScreen(
         }
     }
 
-    // UI based on state
-    when (val state = uiState) {
-        is SongsUiState.Loading -> SongsLoadingContent()
-        is SongsUiState.Empty -> SongsEmptyContent()
-        is SongsUiState.Success -> SongsListContent(
-            songs = state.songs,
-            onSongClick = viewModel::onSongClick
-        )
-        is SongsUiState.Error -> SongsErrorContent(message = state.message)
+    // Single shimmer animation instance shared by all placeholders in this screen
+    ProvideShimmerEffect {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Background image
+            Image(
+                painter = painterResource(id = R.drawable.bg_home),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            SongsContent(
+                topBarHeight = topBarHeight,
+                suggestedState = suggestedState,
+                rankingState = rankingState,
+                stationState = stationState,
+                genresState = genresState,
+                selectedGenre = selectedGenre,
+                onGenreSelected = viewModel::onGenreSelected,
+                isRefreshing = isRefreshing,
+                onRefresh = viewModel::refresh,
+                onSongClick = viewModel::onSongClick,
+                onSearchClick = onNavigateToSearch
+            )
+        }
     }
 }
 
-@Composable
-private fun SongsLoadingContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
-}
+// ============================================
+// SONGS CONTENT
+// ============================================
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SongsEmptyContent() {
+private fun SongsContent(
+    topBarHeight: Dp = 0.dp,
+    suggestedState: SectionState<List<MusicSong>>,
+    rankingState: SectionState<List<MusicSong>>,
+    stationState: SectionState<List<MusicSong>>,
+    genresState: SectionState<List<String>>,
+    selectedGenre: String?,
+    onGenreSelected: (String?) -> Unit,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    onSongClick: (MusicSong) -> Unit,
+    onSearchClick: () -> Unit
+) {
     val dimens = AppDimens.current
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(dimens.spaceLg),
-        contentAlignment = Alignment.Center
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize()
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = stringResource(R.string.home_tab_songs),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                top = topBarHeight + dimens.spaceLg,
+                bottom = dimens.space3Xl + dimens.space2Xl
             )
-            Spacer(modifier = Modifier.height(dimens.spaceSm))
-            Text(
-                text = stringResource(R.string.gallery_coming_soon),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        ) {
+            // Section 1: Search Field
+            item(key = "search", contentType = "search") {
+                SongsSearchField(
+                    onClick = onSearchClick,
+                    hint = stringResource(R.string.songs_search_hint),
+                    modifier = Modifier.padding(
+                        horizontal = dimens.spaceLg,
+                        vertical = dimens.spaceMd
+                    )
+                )
+            }
+
+            // Section 2: Suggested For You
+            item(key = "suggest_header", contentType = "section_header") {
+                SectionHeader(
+                    title = stringResource(R.string.songs_suggest_for_you),
+                    icon = Icons.Default.Favorite,
+                    iconTint = Primary,
+                    onSeeAllClick = { /* TODO: Navigate to all suggestions */ }
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceSm))
+            }
+
+            item(key = "suggest_list", contentType = "horizontal_list") {
+                SuggestSongsList(
+                    state = suggestedState,
+                    onSongClick = onSongClick
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceMd))
+            }
+
+            // Section 3: Weekly Ranking
+            item(key = "ranking_header", contentType = "section_header") {
+                SectionHeader(
+                    title = stringResource(R.string.songs_weekly_ranking),
+                    icon = Icons.Default.LocalFireDepartment,
+                    iconTint = GoldAccent,
+                    onSeeAllClick = { /* TODO: Navigate to all rankings */ }
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceSm))
+            }
+
+            item(key = "ranking_pager", contentType = "pager") {
+                WeeklyRankingSection(
+                    state = rankingState,
+                    onSongClick = onSongClick
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceMd))
+            }
+
+            // Section 4: Stations with tag filters
+            item(key = "station_header", contentType = "section_header") {
+                SectionHeader(
+                    title = stringResource(R.string.songs_station),
+                    icon = Icons.Default.Radio,
+                    iconTint = MaterialTheme.colorScheme.secondary
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceSm))
+            }
+
+            item(key = "station_tags", contentType = "tags") {
+                GenreTagChipRow(
+                    state = genresState,
+                    selectedGenre = selectedGenre,
+                    onGenreSelected = onGenreSelected,
+                    modifier = Modifier.padding(bottom = dimens.spaceSm)
+                )
+            }
+
+            item(key = "station_songs", contentType = "station_songs") {
+                StationSongsSection(
+                    state = stationState,
+                    onSongClick = onSongClick
+                )
+            }
+        }
+    }
+}
+
+// ============================================
+// SEARCH FIELD
+// ============================================
+
+@Composable
+private fun SongsSearchField(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    hint: String = "Search songs"
+) {
+    val dimens = AppDimens.current
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                color = SearchFieldBackground,
+                shape = RoundedCornerShape(dimens.radiusXl)
+            )
+            .border(
+                width = 1.dp,
+                color = SearchFieldBorder,
+                shape = RoundedCornerShape(dimens.radiusXl)
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = dimens.spaceMd, vertical = dimens.spaceMd),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_music_note),
+            contentDescription = null,
+            tint = Color.Unspecified,
+            modifier = Modifier.size(24.dp)
+        )
+
+        Spacer(modifier = Modifier.width(dimens.spaceSm))
+
+        Text(
+            text = hint,
+            style = MaterialTheme.typography.titleSmall,
+            color = TextTertiary,
+            modifier = Modifier.weight(1f)
+        )
+
+        Icon(
+            imageVector = Icons.Default.Search,
+            contentDescription = "Search",
+            tint = TextTertiary
+        )
+    }
+}
+
+// ============================================
+// SUGGEST SONGS LIST (horizontal, ratio 162:207)
+// Shows shimmer placeholders while data loads.
+// ============================================
+
+private const val SUGGEST_PLACEHOLDER_COUNT = 5
+
+@Composable
+private fun SuggestSongsList(
+    state: SectionState<List<MusicSong>>,
+    onSongClick: (MusicSong) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+
+    Row(
+        modifier = modifier
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = dimens.spaceLg),
+        horizontalArrangement = Arrangement.spacedBy(dimens.spaceMd)
+    ) {
+        when (state) {
+            is SectionState.Loading -> {
+                repeat(SUGGEST_PLACEHOLDER_COUNT) {
+                    SuggestSongCardPlaceholder()
+                }
+            }
+            is SectionState.Success -> {
+                state.data.forEach { song ->
+                    SuggestSongCard(
+                        song = song,
+                        onClick = { onSongClick(song) }
+                    )
+                }
+            }
+            is SectionState.Error -> {
+                // Inline error — keep the row visible but show a message
+                Box(
+                    modifier = Modifier
+                        .width(200.dp)
+                        .height(60.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.error_load_failed),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Shimmer skeleton that matches the real [SuggestSongCard] dimensions. */
+@Composable
+private fun SuggestSongCardPlaceholder() {
+    val dimens = AppDimens.current
+
+    Column(modifier = Modifier.width(162.dp)) {
+        // Cover image area
+        ShimmerBox(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(162f / 207f)
+                .clip(RoundedCornerShape(topStart = dimens.radiusLg, topEnd = dimens.radiusLg))
+        )
+        // Title + artist text area
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = PlaceholderBackground,
+                    shape = RoundedCornerShape(
+                        bottomStart = dimens.radiusLg,
+                        bottomEnd = dimens.radiusLg
+                    )
+                )
+                .padding(dimens.spaceSm),
+            verticalArrangement = Arrangement.spacedBy(dimens.spaceXxs)
+        ) {
+            ShimmerBox(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
+            ShimmerBox(
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(12.dp)
+                    .clip(RoundedCornerShape(4.dp))
             )
         }
     }
 }
 
 @Composable
-private fun SongsListContent(
-    songs: List<Song>,
-    onSongClick: (Song) -> Unit
+private fun SuggestSongCard(
+    song: MusicSong,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    // TODO: Implement songs list UI
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+    val dimens = AppDimens.current
+
+    Card(
+        onClick = onClick,
+        modifier = modifier.width(162.dp),
+        shape = RoundedCornerShape(dimens.radiusLg),
+        colors = CardDefaults.cardColors(containerColor = CardDark)
     ) {
-        Text(text = "${songs.size} songs")
+        Column {
+            // Cover image (ratio 162:207)
+            AppAsyncImage(
+                imageUrl = song.coverUrl,
+                contentDescription = song.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(162f / 207f)
+            )
+
+            // Song info
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(dimens.spaceSm)
+            ) {
+                Text(
+                    text = song.name,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = TextBright,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceXxs))
+                Text(
+                    text = song.artist,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+// ============================================
+// WEEKLY RANKING SECTION (pager or shimmer)
+// ============================================
+
+private const val RANKING_PLACEHOLDER_COUNT = 3
+
+@Composable
+private fun WeeklyRankingSection(
+    state: SectionState<List<MusicSong>>,
+    onSongClick: (MusicSong) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+
+    when (state) {
+        is SectionState.Loading -> {
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimens.spaceLg),
+                verticalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+            ) {
+                repeat(RANKING_PLACEHOLDER_COUNT) {
+                    RankingSongItemPlaceholder()
+                }
+            }
+        }
+        is SectionState.Success -> {
+            WeeklyRankingPager(
+                songs = state.data,
+                onSongClick = onSongClick,
+                modifier = modifier
+            )
+        }
+        is SectionState.Error -> {
+            Box(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimens.spaceLg)
+                    .height(60.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.error_load_failed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+/** Shimmer skeleton matching [RankingSongItem] dimensions. */
+@Composable
+private fun RankingSongItemPlaceholder() {
+    val dimens = AppDimens.current
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(dimens.radiusLg))
+            .background(CardDark)
+            .padding(dimens.spaceSm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Rank number box
+        ShimmerBox(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(dimens.radiusMd))
+        )
+        Spacer(modifier = Modifier.width(dimens.spaceSm))
+        // Cover image
+        ShimmerBox(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(RoundedCornerShape(dimens.radiusMd))
+        )
+        Spacer(modifier = Modifier.width(dimens.spaceSm))
+        // Text lines
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(dimens.spaceXxs)
+        ) {
+            ShimmerBox(
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
+            ShimmerBox(
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .height(12.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
+        }
     }
 }
 
 @Composable
-private fun SongsErrorContent(message: String) {
+private fun WeeklyRankingPager(
+    songs: List<MusicSong>,
+    onSongClick: (MusicSong) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+    val pages = remember(songs) { songs.chunked(3) }
+    val pageCount = remember(songs) { pages.size.coerceAtMost(3) }
+    val pagerState = rememberPagerState(pageCount = { pageCount })
+
+    Column(modifier = modifier) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth()
+        ) { pageIndex ->
+            RankingPageContent(
+                songs = pages.getOrNull(pageIndex) ?: emptyList(),
+                pageIndex = pageIndex,
+                onSongClick = onSongClick
+            )
+        }
+
+        if (pageCount > 1) {
+            Spacer(modifier = Modifier.height(dimens.spaceMd))
+            PageIndicator(
+                pageCount = pageCount,
+                currentPage = pagerState.currentPage
+            )
+        }
+    }
+}
+
+@Composable
+private fun RankingPageContent(
+    songs: List<MusicSong>,
+    pageIndex: Int,
+    onSongClick: (MusicSong) -> Unit
+) {
+    val dimens = AppDimens.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = dimens.spaceLg),
+        verticalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+    ) {
+        songs.forEachIndexed { index, song ->
+            RankingSongItem(
+                song = song,
+                ranking = pageIndex * 3 + index + 1,
+                onClick = { onSongClick(song) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun RankingSongItem(
+    song: MusicSong,
+    ranking: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(dimens.radiusLg),
+        colors = CardDefaults.cardColors(containerColor = CardDark)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dimens.spaceSm),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Ranking number
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(
+                        color = if (ranking <= 3) GoldAccent else Black24,
+                        shape = RoundedCornerShape(dimens.radiusMd)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = ranking.toString(),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = if (ranking <= 3) Color.Black else TextBright
+                )
+            }
+
+            Spacer(modifier = Modifier.width(dimens.spaceSm))
+
+            // Cover image
+            AppAsyncImage(
+                imageUrl = song.coverUrl,
+                contentDescription = song.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(dimens.radiusMd))
+            )
+
+            Spacer(modifier = Modifier.width(dimens.spaceSm))
+
+            // Song info
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = song.name,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = TextBright,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceXxs))
+                Text(
+                    text = song.artist,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+// ============================================
+// STATION SONGS SECTION (vertical list or shimmer)
+// ============================================
+
+private const val STATION_PLACEHOLDER_COUNT = 5
+
+@Composable
+private fun StationSongsSection(
+    state: SectionState<List<MusicSong>>,
+    onSongClick: (MusicSong) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+
+    when (state) {
+        is SectionState.Loading -> {
+            Column(modifier = modifier) {
+                repeat(STATION_PLACEHOLDER_COUNT) {
+                    StationSongItemPlaceholder(
+                        modifier = Modifier.padding(
+                            horizontal = dimens.spaceLg,
+                            vertical = dimens.spaceXs
+                        )
+                    )
+                }
+            }
+        }
+        is SectionState.Success -> {
+            Column(modifier = modifier) {
+                state.data.forEach { song ->
+                    StationSongItem(
+                        song = song,
+                        onSongClick = { onSongClick(song) },
+                        modifier = Modifier.padding(
+                            horizontal = dimens.spaceLg,
+                            vertical = dimens.spaceXs
+                        )
+                    )
+                }
+            }
+        }
+        is SectionState.Error -> {
+            Box(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimens.spaceLg)
+                    .height(60.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.error_load_failed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+/** Shimmer skeleton matching [StationSongItem] dimensions. */
+@Composable
+private fun StationSongItemPlaceholder(modifier: Modifier = Modifier) {
+    val dimens = AppDimens.current
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(dimens.radiusLg))
+            .background(CardDark)
+            .padding(dimens.spaceSm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Cover image
+        ShimmerBox(
+            modifier = Modifier
+                .size(64.dp)
+                .clip(RoundedCornerShape(dimens.radiusMd))
+        )
+        Spacer(modifier = Modifier.width(dimens.spaceMd))
+        // Text lines
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(dimens.spaceXxs)
+        ) {
+            ShimmerBox(
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
+            ShimmerBox(
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .height(12.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
+            ShimmerBox(
+                modifier = Modifier
+                    .fillMaxWidth(0.3f)
+                    .height(11.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
+        }
+    }
+}
+
+@Composable
+private fun StationSongItem(
+    song: MusicSong,
+    onSongClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+
+    Card(
+        onClick = onSongClick,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(dimens.radiusLg),
+        colors = CardDefaults.cardColors(containerColor = CardDark)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dimens.spaceSm),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Cover image
+            AppAsyncImage(
+                imageUrl = song.coverUrl,
+                contentDescription = song.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(dimens.radiusMd))
+            )
+
+            Spacer(modifier = Modifier.width(dimens.spaceMd))
+
+            // Song info
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = song.name,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = TextBright,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceXxs))
+                Text(
+                    text = song.artist,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceXxs))
+                Text(
+                    text = song.formattedDuration,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextTertiary
+                )
+            }
+        }
+    }
+}
+
+// ============================================
+// GENRE TAG CHIP ROW — dynamic, driven by VM state
+// ============================================
+
+/** Sentinel value representing "All genres" (no filter). */
+private const val ALL_GENRE = ""
+
+@Composable
+private fun GenreTagChipRow(
+    state: SectionState<List<String>>,
+    selectedGenre: String?,
+    onGenreSelected: (String?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+
+    when (state) {
+        is SectionState.Loading -> {
+            // Shimmer placeholder chips
+            Row(
+                modifier = modifier
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = dimens.spaceLg),
+                horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+            ) {
+                repeat(5) {
+                    ShimmerBox(
+                        modifier = Modifier
+                            .width(64.dp)
+                            .height(32.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                    )
+                }
+            }
+        }
+
+        is SectionState.Success -> {
+            if (state.data.isEmpty()) return
+
+            // Prepend "All" as the first chip (maps to null selection)
+            val genres = remember(state.data) { listOf(ALL_GENRE) + state.data }
+
+            Row(
+                modifier = modifier
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = dimens.spaceLg),
+                horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+            ) {
+                genres.forEach { genre ->
+                    val isAll = genre == ALL_GENRE
+                    val isSelected = if (isAll) selectedGenre == null else selectedGenre == genre
+                    GenreChip(
+                        text = if (isAll) "All" else genre,
+                        isSelected = isSelected,
+                        onClick = { onGenreSelected(if (isAll) null else genre) }
+                    )
+                }
+            }
+        }
+
+        is SectionState.Error -> {
+            // Genre load failure is non-critical — show nothing, station songs still visible
+        }
+    }
+}
+
+@Composable
+private fun GenreChip(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier
+            .background(
+                color = if (isSelected) Black24 else Color.Transparent,
+                shape = RoundedCornerShape(999.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = if (isSelected) Primary else ChipBorderInactive,
+                shape = RoundedCornerShape(999.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceSm),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = message,
-            color = MaterialTheme.colorScheme.error
+            text = text.uppercase(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (isSelected) Primary else Gray450
         )
     }
 }
 
 // ============================================
+// SAMPLE DATA
+// ============================================
+
+private val previewGenres = listOf("Pop", "Rock", "Jazz", "Classical", "Hip Hop", "Electronic")
+
+private val previewSongs = listOf(
+    MusicSong(1L, "Blinding Lights", "The Weeknd", durationMs = 200000),
+    MusicSong(2L, "Levitating", "Dua Lipa", durationMs = 203000),
+    MusicSong(3L, "Save Your Tears", "The Weeknd", durationMs = 215000),
+    MusicSong(4L, "Peaches", "Justin Bieber", durationMs = 198000),
+    MusicSong(5L, "Good 4 U", "Olivia Rodrigo", durationMs = 178000),
+    MusicSong(6L, "Montero", "Lil Nas X", durationMs = 137000),
+    MusicSong(7L, "Stay", "The Kid LAROI", durationMs = 141000),
+    MusicSong(8L, "Heat Waves", "Glass Animals", durationMs = 239000),
+    MusicSong(9L, "Shivers", "Ed Sheeran", durationMs = 207000),
+    MusicSong(10L, "Industry Baby", "Lil Nas X", durationMs = 212000)
+)
+
+// ============================================
 // PREVIEW
 // ============================================
 
-@Preview(showBackground = true, backgroundColor = 0xFF1A1A1A)
+@Preview(name = "Songs Screen – All Loaded", widthDp = 375, heightDp = 812)
 @Composable
-private fun SongsScreenPreview() {
+private fun SongsContentLoadedPreview() {
     VideoMakerTheme {
-        SongsScreen()
+        ProvideShimmerEffect {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Image(
+                    painter = painterResource(id = R.drawable.bg_home),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+                SongsContent(
+                    topBarHeight = 56.dp,
+                    suggestedState = SectionState.Success(previewSongs),
+                    rankingState = SectionState.Success(previewSongs.take(9)),
+                    stationState = SectionState.Success(previewSongs),
+                    genresState = SectionState.Success(previewGenres),
+                    selectedGenre = null,
+                    onGenreSelected = {},
+                    isRefreshing = false,
+                    onRefresh = {},
+                    onSongClick = {},
+                    onSearchClick = {}
+                )
+            }
+        }
+    }
+}
+
+@Preview(name = "Songs Screen – All Loading", widthDp = 375, heightDp = 812)
+@Composable
+private fun SongsContentLoadingPreview() {
+    VideoMakerTheme {
+        ProvideShimmerEffect {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Image(
+                    painter = painterResource(id = R.drawable.bg_home),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+                SongsContent(
+                    topBarHeight = 56.dp,
+                    suggestedState = SectionState.Loading,
+                    rankingState = SectionState.Loading,
+                    stationState = SectionState.Loading,
+                    genresState = SectionState.Loading,
+                    selectedGenre = null,
+                    onGenreSelected = {},
+                    isRefreshing = false,
+                    onRefresh = {},
+                    onSongClick = {},
+                    onSearchClick = {}
+                )
+            }
+        }
+    }
+}
+
+@Preview(name = "Suggest Song Card", widthDp = 162, heightDp = 280)
+@Composable
+private fun SuggestSongCardPreview() {
+    VideoMakerTheme {
+        SuggestSongCard(song = previewSongs[0], onClick = {})
+    }
+}
+
+@Preview(name = "Suggest Song Card – Placeholder", widthDp = 162, heightDp = 280)
+@Composable
+private fun SuggestSongCardPlaceholderPreview() {
+    VideoMakerTheme {
+        ProvideShimmerEffect {
+            SuggestSongCardPlaceholder()
+        }
+    }
+}
+
+@Preview(name = "Ranking Song Item", widthDp = 375)
+@Composable
+private fun RankingSongItemPreview() {
+    VideoMakerTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                RankingSongItem(song = previewSongs[0], ranking = 1, onClick = {})
+                RankingSongItem(song = previewSongs[1], ranking = 2, onClick = {})
+                RankingSongItem(song = previewSongs[2], ranking = 5, onClick = {})
+            }
+        }
+    }
+}
+
+@Preview(name = "Station Song Item", widthDp = 375)
+@Composable
+private fun StationSongItemPreview() {
+    VideoMakerTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                StationSongItem(song = previewSongs[0], onSongClick = {})
+                StationSongItem(song = previewSongs[1], onSongClick = {})
+            }
+        }
+    }
+}
+
+@Preview(name = "Songs Search Field", widthDp = 375)
+@Composable
+private fun SongsSearchFieldPreview() {
+    VideoMakerTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            SongsSearchField(onClick = {}, modifier = Modifier.padding(16.dp))
+        }
     }
 }

@@ -20,15 +20,32 @@ You review Android code for quality, best practices, and Kotlin/Compose conventi
 | No nav in state | Separate sealed class | `shouldNavigate` in state |
 | Activity vs Composable | Proper usage | Activity embedded in NavHost |
 
-### 2. Coroutine Safety (HIGH)
+### 2. ANR Prevention (CRITICAL)
+
+| Check | Pass | Fail |
+|-------|------|------|
+| No I/O on main thread | `withContext(Dispatchers.IO)` | Direct I/O in ViewModel/UI |
+| No network on main | Suspend + IO dispatcher | API call without dispatcher |
+| No DB on main | Room suspend functions + IO | Synchronous DB query on main |
+| SharedPreferences | `.apply()` | `.commit()` on main thread |
+| BroadcastReceiver | `goAsync()` + coroutine | Long work in `onReceive()` |
+| Service lifecycle | `startForeground()` < 5s | Heavy work in `onCreate()`/`onStartCommand()` |
+| No blocking calls | Coroutines/suspend | `Thread.sleep()`, `runBlocking` on main |
+| Lock safety | `Mutex` / no main-thread locks | `synchronized` blocking main thread |
+| StrictMode | Enabled in debug builds | No StrictMode setup |
+| Binder calls | Background thread / batched | Synchronous binder loop on main |
+
+### 3. Coroutine Safety (HIGH)
 
 | Check | Pass | Fail |
 |-------|------|------|
 | viewModelScope | `viewModelScope.launch` | `GlobalScope.launch` |
 | Exception handling | try-catch or Result | Unhandled exceptions |
 | Dispatchers | Explicit when needed | Wrong dispatcher |
+| IO operations | `Dispatchers.IO` | Default dispatcher for I/O |
+| CPU-intensive | `Dispatchers.Default` | Main dispatcher for computation |
 
-### 3. Type Safety (HIGH)
+### 4. Type Safety (HIGH)
 
 | Check | Pass | Fail |
 |-------|------|------|
@@ -36,7 +53,7 @@ You review Android code for quality, best practices, and Kotlin/Compose conventi
 | Null safety | Safe calls `?.` | Direct access on nullable |
 | Sealed exhaustive | All branches handled | Missing when branch |
 
-### 4. Compose Best Practices (MEDIUM)
+### 5. Compose Best Practices (MEDIUM)
 
 | Check | Pass | Fail |
 |-------|------|------|
@@ -44,7 +61,7 @@ You review Android code for quality, best practices, and Kotlin/Compose conventi
 | Remember usage | Objects in `remember {}` | Objects in composition |
 | State hoisting | State passed as params | ViewModel in child composables |
 
-### 5. Recomposition Optimization (HIGH)
+### 6. Recomposition Optimization (HIGH)
 
 | Check | Pass | Fail |
 |-------|------|------|
@@ -55,7 +72,7 @@ You review Android code for quality, best practices, and Kotlin/Compose conventi
 | Remember with key | `remember(dep) { }` | Expensive op in composition |
 | Derived state | `derivedStateOf { }` | Direct boolean derivation |
 
-### 6. Architecture & SOLID Principles (MEDIUM)
+### 7. Architecture & SOLID Principles (MEDIUM)
 
 | Check | Pass | Fail |
 |-------|------|------|
@@ -73,8 +90,16 @@ You review Android code for quality, best practices, and Kotlin/Compose conventi
 - [ ] Channel pattern for navigation events
 - [ ] LaunchedEffect(Unit) for event collection
 - [ ] No navigation data in UI state
-- [ ] No LaunchedEffect(uiState) for navigation
 - [ ] Activities not embedded as composables
+
+## ANR Prevention
+- [ ] No I/O on main thread
+- [ ] SharedPreferences uses apply() not commit()
+- [ ] BroadcastReceivers use goAsync()
+- [ ] Services call startForeground() within 5s
+- [ ] No Thread.sleep() or runBlocking on main
+- [ ] No synchronized locks blocking main thread
+- [ ] StrictMode enabled in debug builds
 
 ## Coroutine Safety
 - [ ] viewModelScope used (not GlobalScope)
@@ -83,29 +108,17 @@ You review Android code for quality, best practices, and Kotlin/Compose conventi
 
 ## Type Safety
 - [ ] No `!!` force unwrap
-- [ ] Null handling with `?.` or `?:`
 - [ ] Sealed class when expressions exhaustive
 
-## Compose Best Practices
-- [ ] collectAsStateWithLifecycle() used
-- [ ] Objects in remember {}
-- [ ] State hoisted properly
-- [ ] Preview functions present
-
-## Recomposition Optimization
-- [ ] Data classes with collections use @Immutable
-- [ ] ImmutableList used instead of List
-- [ ] Lambda stability (method references)
-- [ ] LazyColumn/LazyRow items have key
+## Compose & Recomposition
+- [ ] collectAsStateWithLifecycle()
+- [ ] @Immutable + ImmutableList for data classes
+- [ ] Method references for lambdas
+- [ ] LazyColumn items have key
 - [ ] Expensive operations in remember {}
-- [ ] derivedStateOf for derived state
 
 ## Architecture & SOLID
-- [ ] **[S]** Single Responsibility - one reason to change per class
-- [ ] **[O]** Open/Closed - extend without modifying
-- [ ] **[L]** Liskov Substitution - subtypes replaceable
-- [ ] **[I]** Interface Segregation - specific interfaces
-- [ ] **[D]** Dependency Inversion - depend on abstractions
+- [ ] Single Responsibility, Dependency Inversion
 - [ ] Domain layer has no dependencies
 - [ ] UseCase pattern for business logic
 ```
@@ -119,221 +132,55 @@ You review Android code for quality, best practices, and Kotlin/Compose conventi
 grep -rn "LaunchedEffect.*uiState\|LaunchedEffect.*state" --include="*.kt"
 grep -rn "shouldNavigate\|navigateTo" --include="*.kt"
 
+# ANR risks
+grep -rn "runBlocking\|Thread.sleep" --include="*.kt"
+grep -rn "\.commit()" --include="*.kt" | grep -i "pref\|shared"
+grep -rn "synchronized" --include="*.kt"
+grep -rn "BitmapFactory.decode" --include="*.kt"
+
 # Type safety
 grep -rn "!!" --include="*.kt" | grep -v "//"
-
-# Coroutine issues
 grep -rn "GlobalScope" --include="*.kt"
-
-# Compose issues
 grep -rn "collectAsState()" --include="*.kt" | grep -v "Lifecycle"
 
-# Recomposition issues
+# Recomposition
 grep -rn "data class.*List<\|data class.*Map<\|data class.*Set<" --include="*.kt" | grep -v "ImmutableList\|ImmutableMap\|ImmutableSet"
 grep -rn "items(" --include="*.kt" | grep -v "key ="
 grep -rn "onItemClick = {" --include="*.kt"
 ```
 
-### Step 2: Structure Review
+### Step 2-4: Structure → Logic → Performance
 
-- Is the file organized with clear sections?
-- Are public APIs at the top?
-- Are sealed classes properly defined?
+- File organized with clear sections? Public APIs at top? Sealed classes defined?
+- Code does what it claims? Edge cases handled? Error handling appropriate?
+- Objects created in composition body? Unnecessary recompositions? Heavy ops on main thread?
 
-### Step 3: Logic Review
+## Common Issues (Quick Reference)
 
-- Does the code do what it claims?
-- Are edge cases handled?
-- Is error handling appropriate?
-
-### Step 4: Performance Review
-
-- Objects created in composition body?
-- Unnecessary recompositions?
-- Heavy operations on main thread?
-
-## Common Issues
-
-### Issue: State-Based Navigation
-
-```kotlin
-// ❌ BEFORE
-LaunchedEffect(uiState) {
-    if (uiState is Success) navigate()
-}
-
-// ✅ AFTER
-LaunchedEffect(Unit) {
-    viewModel.navigationEvent.collect { event ->
-        when (event) {
-            is NavigateNext -> navigate()
-        }
-    }
-}
-```
-
-### Issue: Force Unwrap
-
-```kotlin
-// ❌ BEFORE
-val user = nullable!!
-
-// ✅ AFTER
-val user = nullable ?: run {
-    Logger.e("User was null")
-    return
-}
-```
-
-### Issue: collectAsState
-
-```kotlin
-// ❌ BEFORE
-val uiState by viewModel.uiState.collectAsState()
-
-// ✅ AFTER
-val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-```
-
-### Issue: GlobalScope
-
-```kotlin
-// ❌ BEFORE
-GlobalScope.launch {
-    fetchData()
-}
-
-// ✅ AFTER
-viewModelScope.launch {
-    fetchData()
-}
-```
-
-### Issue: Concrete Dependency
-
-```kotlin
-// ❌ BEFORE
-class ViewModel(
-    private val repository: FeatureRepositoryImpl  // Concrete!
-)
-
-// ✅ AFTER
-class ViewModel(
-    private val repository: FeatureRepository  // Interface!
-)
-```
-
-### Issue: Unstable Collections (Recomposition)
-
-```kotlin
-// ❌ BEFORE - Causes unnecessary recomposition
-data class UsersUiState(
-    val users: List<User>,  // List is unstable!
-    val isLoading: Boolean
-)
-
-// ✅ AFTER - Add @Immutable and use ImmutableList
-@Immutable
-data class UsersUiState(
-    val users: ImmutableList<User>,
-    val isLoading: Boolean
-)
-```
-
-### Issue: Unstable Lambda (Recomposition)
-
-```kotlin
-// ❌ BEFORE - New lambda every recomposition
-ItemList(
-    onItemClick = { id -> viewModel.onItemClick(id) }
-)
-
-// ✅ AFTER - Method reference (stable)
-ItemList(
-    onItemClick = viewModel::onItemClick
-)
-```
-
-### Issue: Missing LazyColumn Key
-
-```kotlin
-// ❌ BEFORE - All items recompose on any change
-LazyColumn {
-    items(users) { user ->
-        UserCard(user)
-    }
-}
-
-// ✅ AFTER - Only changed items recompose
-LazyColumn {
-    items(users, key = { it.id }) { user ->
-        UserCard(user)
-    }
-}
-```
+| Issue | Bad | Good |
+|-------|-----|------|
+| State-based nav | `LaunchedEffect(uiState) { navigate() }` | `LaunchedEffect(Unit) { event.collect { } }` |
+| Force unwrap | `nullable!!` | `nullable ?: run { Logger.e(...); return }` |
+| collectAsState | `collectAsState()` | `collectAsStateWithLifecycle()` |
+| GlobalScope | `GlobalScope.launch { }` | `viewModelScope.launch { }` |
+| I/O on main | `launch { db.getUsers() }` | `launch { withContext(IO) { db.getUsers() } }` |
+| Blocking main | `runBlocking { }` / `Thread.sleep()` | `launch { }` / `delay()` |
+| SharedPrefs | `.commit()` | `.apply()` |
+| Concrete dep | `FeatureRepositoryImpl` | `FeatureRepository` (interface) |
+| Unstable collection | `data class State(val items: List<T>)` | `@Immutable data class State(val items: ImmutableList<T>)` |
+| Unstable lambda | `onItemClick = { viewModel.onClick(it) }` | `onItemClick = viewModel::onClick` |
+| Missing key | `items(users) { }` | `items(users, key = { it.id }) { }` |
 
 ## Output Format
 
-### Code Review: [File/PR]
-
 **Overall**: Approved / Changes Requested / Needs Discussion
 
-### Summary
-[1-2 sentence overview]
+**Summary**: [1-2 sentences]
 
----
+**Critical Issues**: Location (`File.kt:line`) → Problem → Fix
 
-### 🔴 Critical Issues
+**Suggestions**: `File.kt:line` - [Suggestion]
 
-Must fix before merge:
+**Good Practices**: [What's done well]
 
-#### Issue 1: [Title]
-**Location**: `File.kt:line`
-**Problem**: [Description]
-**Fix**:
-```kotlin
-// Fixed code
-```
-
----
-
-### 🟡 Suggestions
-
-Recommended improvements:
-
-- `File.kt:line` - [Suggestion]
-- `File.kt:line` - [Suggestion]
-
----
-
-### ✅ Good Practices
-
-Things done well:
-- [What's good]
-- [What's good]
-
----
-
-### Review Score
-
-| Category | Score |
-|----------|-------|
-| Navigation Safety | ⭐⭐⭐⭐⭐ |
-| Coroutine Safety | ⭐⭐⭐⭐☆ |
-| Type Safety | ⭐⭐⭐⭐⭐ |
-| Compose Practices | ⭐⭐⭐⭐☆ |
-| Recomposition | ⭐⭐⭐⭐☆ |
-| Architecture | ⭐⭐⭐⭐⭐ |
-
----
-
-### Checklist Result
-
-```
-[✓] Navigation Safety   - All checks passed
-[✓] Coroutine Safety    - All checks passed
-[!] Type Safety         - 1 issue found
-[✓] Compose Practices   - All checks passed
-[!] Recomposition       - 2 issues found (List instead of ImmutableList, missing key)
-[✓] Architecture        - All checks passed
-```
+**Score**: Navigation | ANR | Coroutines | Type Safety | Compose | Recomposition | Architecture

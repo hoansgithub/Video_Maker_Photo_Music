@@ -23,7 +23,8 @@ data class ProjectEntity(
     val transitionPercentage: Int = 30, // Percentage of image duration for transition (10-50%)
     val effectSetId: String? = "dreamy_vibes",
     val overlayFrameId: String? = null,
-    val audioTrackId: String? = null,
+    val musicSongId: Long? = null,
+    val musicSongUrl: String? = null,
     val customAudioUri: String? = null,
     val audioVolume: Float = 1.0f,
     val aspectRatio: String = "RATIO_9_16"

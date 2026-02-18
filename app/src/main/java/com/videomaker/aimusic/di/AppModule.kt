@@ -17,6 +17,11 @@ import com.videomaker.aimusic.domain.repository.ExportRepository
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
+import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
+import com.videomaker.aimusic.domain.usecase.GetSongsByGenreUseCase
+import com.videomaker.aimusic.domain.usecase.GetStationSongsUseCase
+import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
+import com.videomaker.aimusic.domain.usecase.GetWeeklyRankingSongsUseCase
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import com.videomaker.aimusic.domain.usecase.DeleteProjectUseCase
 import com.videomaker.aimusic.domain.usecase.GetAllProjectsUseCase
@@ -43,6 +48,7 @@ import android.content.Context
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
 import com.videomaker.aimusic.modules.musicpicker.MusicPickerViewModel
+import com.videomaker.aimusic.modules.songs.SongsViewModel
 import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.root.RootViewModel
@@ -149,6 +155,14 @@ val domainModule = module {
     factory { AddAssetsUseCase(it.get()) }
     factory { RemoveAssetUseCase(it.get()) }
     factory { DeleteProjectUseCase(it.get()) }
+
+    // Song use cases — single because they are stateless; factory instances held by singleton
+    // factories would violate the factory lifecycle contract if use cases ever become stateful
+    single { GetSuggestedSongsUseCase(it.get()) }
+    single { GetWeeklyRankingSongsUseCase(it.get()) }
+    single { GetStationSongsUseCase(it.get()) }
+    single { GetGenresUseCase(it.get()) }
+    single { GetSongsByGenreUseCase(it.get()) }
 }
 
 // ========== PRESENTATION LAYER MODULE ==========
@@ -269,6 +283,25 @@ class GalleryViewModelFactory(
 }
 
 /**
+ * Factory wrapper for SongsViewModel.
+ */
+class SongsViewModelFactory(
+    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
+    private val getWeeklyRankingSongsUseCase: GetWeeklyRankingSongsUseCase,
+    private val getStationSongsUseCase: GetStationSongsUseCase,
+    private val getGenresUseCase: GetGenresUseCase,
+    private val getSongsByGenreUseCase: GetSongsByGenreUseCase
+) {
+    fun create(): SongsViewModel = SongsViewModel(
+        getSuggestedSongsUseCase = getSuggestedSongsUseCase,
+        getWeeklyRankingSongsUseCase = getWeeklyRankingSongsUseCase,
+        getStationSongsUseCase = getStationSongsUseCase,
+        getGenresUseCase = getGenresUseCase,
+        getSongsByGenreUseCase = getSongsByGenreUseCase
+    )
+}
+
+/**
  * Factory wrapper for SearchViewModel.
  */
 class GallerySearchViewModelFactory(
@@ -292,7 +325,8 @@ val presentationModule = module {
     // Asset Picker ViewModel factory (needs projectId parameter)
     single {
         AssetPickerViewModelFactory(
-            application = androidContext().applicationContext as android.app.Application,
+            application = (androidContext().applicationContext as? android.app.Application)
+                ?: error("applicationContext is not an Application instance"),
             createProjectUseCase = it.get(),
             addAssetsUseCase = it.get()
         )
@@ -336,7 +370,8 @@ val presentationModule = module {
     // Uses Application context (safe) + ImageLoader for Coil image preloading
     single {
         GalleryViewModelFactory(
-            application = androidContext().applicationContext as android.app.Application,
+            application = (androidContext().applicationContext as? android.app.Application)
+                ?: error("applicationContext is not an Application instance"),
             imageLoader = it.get()
         )
     }
@@ -345,6 +380,17 @@ val presentationModule = module {
     single {
         GallerySearchViewModelFactory(
             preferencesManager = it.get()
+        )
+    }
+
+    // Songs ViewModel factory (singleton - stateless factory)
+    single {
+        SongsViewModelFactory(
+            getSuggestedSongsUseCase = it.get(),
+            getWeeklyRankingSongsUseCase = it.get(),
+            getStationSongsUseCase = it.get(),
+            getGenresUseCase = it.get(),
+            getSongsByGenreUseCase = it.get()
         )
     }
 }

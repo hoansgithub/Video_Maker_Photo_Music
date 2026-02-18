@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -206,14 +205,15 @@ private fun ProjectsListContent(
             CreateNewProjectCard(onClick = onCreateClick)
         }
 
-        items(
-            items = projects,
-            key = { it.id }
-        ) { project ->
-            ProjectCard(
-                project = project,
-                onClick = { onProjectClick(project) }
-            )
+        item(key = "projects_list") {
+            Column(verticalArrangement = Arrangement.spacedBy(dimens.spaceMd)) {
+                projects.forEach { project ->
+                    ProjectCard(
+                        project = project,
+                        onClick = { onProjectClick(project) }
+                    )
+                }
+            }
         }
     }
 }
@@ -375,10 +375,9 @@ private fun ProjectCard(
     }
 }
 
-private fun formatDate(timestamp: Long): String {
-    val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-    return sdf.format(Date(timestamp))
-}
+private val projectDateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+
+private fun formatDate(timestamp: Long): String = projectDateFormatter.format(Date(timestamp))
 
 @Composable
 private fun ProjectsErrorContent(message: String) {

@@ -30,6 +30,9 @@ You identify edge cases, boundary conditions, and failure scenarios in Android c
 | Back from result | What if returning from another activity? |
 | Deep link | What if entering from deep link? |
 | Process death | What if app is killed and restored? |
+| VM scoping | Is ViewModel scoped to NavEntry key (not Activity)? |
+| VM on pop | Does ViewModel get cleared when screen is popped? |
+| VM shared | Are two screens accidentally sharing the same VM? |
 
 ### 3. Data Edge Cases
 
@@ -50,229 +53,108 @@ You identify edge cases, boundary conditions, and failure scenarios in Android c
 | Low memory | What if system kills the process? |
 | Slow start | What if Activity creation is slow? |
 
-## Edge Case Analysis Framework
+### 5. ANR Edge Cases
 
-### For Each Feature, Check:
+| Condition | Questions to Ask |
+|-----------|------------------|
+| Slow I/O | What if disk read/write takes >5s on main thread? |
+| Network on main | Is any API call happening without Dispatchers.IO? |
+| Heavy computation | Is sorting/filtering done on main thread? |
+| Lock contention | Does main thread wait on a lock held by worker? |
+| Slow BroadcastReceiver | Does onReceive() do heavy work? (10s timeout) |
+| Slow Service start | Does Service call startForeground() within 5s? |
+| SharedPreferences commit | Is .commit() used instead of .apply()? |
+| ContentProvider query | Do ContentProvider queries block main thread? |
+| Binder calls | Are there sequential binder/IPC calls on main? |
+| App cold start | Does Application.onCreate() do heavy initialization? |
+| Bitmap decode | Is BitmapFactory.decode*() called on main thread? |
+| Database on main | Are Room/SQLite queries running without IO dispatcher? |
+
+## Edge Case Analysis Framework
 
 ```
 NAVIGATION
-──────────
-□ What if user presses back immediately?
-□ What if navigation is triggered twice?
-□ What if device rotates during navigation?
-□ What if back is pressed during operation?
-□ What if deep link bypasses normal flow?
+□ Back pressed immediately? Navigation triggered twice? Rotation during navigation?
+□ Back pressed during operation? Deep link bypasses normal flow?
 
 CONFIGURATION CHANGES
-─────────────────────
-□ What happens on device rotation?
-□ What if theme changes (dark/light)?
-□ What if locale changes?
-□ What if font size changes?
+□ Rotation? Theme change (dark/light)? Locale change? Font size change?
 
 DATA INPUTS
-───────────
-□ What if input is empty string?
-□ What if input is null?
-□ What if input has special characters?
-□ What if input exceeds length limit?
+□ Empty string? Null? Special characters? Exceeds length limit?
 
 LISTS/COLLECTIONS
-─────────────────
-□ What if list is empty?
-□ What if list has one item?
-□ What if list has thousands of items?
-□ What if items change during display?
+□ Empty list? Single item? Thousands of items? Items change during display?
 
 NETWORK
-───────
-□ What if request times out?
-□ What if response is empty?
-□ What if response is malformed JSON?
-□ What if no internet connection?
-□ What if connection drops mid-request?
+□ Timeout? Empty response? Malformed JSON? No internet? Connection drops mid-request?
 
 COROUTINES
-──────────
-□ What if operation is cancelled?
-□ What if Activity is destroyed mid-operation?
-□ What if two operations race?
-□ What if ViewModel is cleared?
+□ Operation cancelled? Activity destroyed mid-operation? Two operations race? ViewModel cleared?
 
 USER ACTIONS
-────────────
-□ What if user taps button twice quickly?
-□ What if user navigates back immediately?
-□ What if user force quits app?
-□ What if user changes settings mid-operation?
+□ Double tap? Navigate back immediately? Force quit? Change settings mid-operation?
+
+COMPOSE SIDE-EFFECTS
+□ LaunchedEffects interact with view hierarchy (focus, scroll, animation)?
+□ View interactions wrapped in delay + try-catch?
+□ View removed before side effect completes? Recomposition during side effect?
+
+MANIFEST & SDK CONFIG
+□ All declared activities in dependencies? SDK activities we don't use?
+□ 3rd-party SDK updates remove/rename classes?
+
+DATA FILTERING
+□ ALL queries filter by status (active/published/visible)?
+□ Inactive content via direct ID lookup? Related entity queries filtered?
+
+ANR RISKS
+□ I/O on main thread? Repository methods use withContext(Dispatchers.IO)?
+□ BroadcastReceiver.onReceive() uses goAsync()? Service startForeground() within 5s?
+□ SharedPreferences .apply() not .commit()? No synchronized blocking main?
+□ Application.onCreate() fast? ContentProvider queries on background thread?
+□ No sequential binder/IPC calls on main? StrictMode in debug builds?
+□ Database migration on update? Large file parse on first launch?
 ```
 
 ## Code Analysis Patterns
 
-### Check for Missing Null Handling
+**Missing null handling**: ❌ `cache.get("user")!!` → ✅ `cache.get("user") ?: run { Logger.w("..."); null }`
 
-```kotlin
-// ❌ MISSING EDGE CASE: Null value
-fun getUser(): User {
-    return cache.get("user")!!  // Crashes if null!
-}
+**ViewModel scoping**: ❌ `by viewModels()` at Activity level / ❌ NavDisplay without `rememberViewModelStoreNavEntryDecorator()` → ✅ `viewModel()` inside `entry<Route>` with decorator
 
-// ✅ HANDLES EDGE CASE
-fun getUser(): User? {
-    return cache.get("user") ?: run {
-        Logger.w("User not in cache")
-        null
-    }
-}
-```
+**Navigation race conditions**: ❌ `onButtonClick` sends event without guard → ✅ Add `if (isNavigating) return` guard
 
-### Check for Navigation Race Conditions
+**Configuration change survival**: ❌ `var data: Data? = null` in Activity → ✅ `MutableStateFlow<Data?>` in ViewModel
 
-```kotlin
-// ❌ RACE CONDITION: Multiple navigations
-fun onButtonClick() {
-    viewModelScope.launch {
-        _navigationEvent.send(NavigateNext)  // What if called twice?
-    }
-}
+**Empty state**: ❌ `is Success -> ItemsList(items)` without empty check → ✅ Check `items.isEmpty()` → show EmptyStateContent
 
-// ✅ HANDLES RACE CONDITION
-private var isNavigating = false
+**Compose side-effects**: ❌ `LaunchedEffect(trigger) { focusRequester.requestFocus() }` → ✅ Wrap in `try { delay(100); ... } catch (e: Exception) { }`
 
-fun onButtonClick() {
-    if (isNavigating) return
-    isNavigating = true
-    viewModelScope.launch {
-        _navigationEvent.send(NavigateNext)
-    }
-}
-```
+**Phantom manifest activities**: ❌ `<activity android:name="com.thirdparty.SomeActivity" />` (may not exist) → ✅ Only `<meta-data>` for analytics-only SDKs
 
-### Check for Configuration Change Survival
+**ANR risks**:
+- ❌ `viewModelScope.launch { repository.fetchData() }` without dispatcher → ✅ `withContext(Dispatchers.IO) { ... }`
+- ❌ Heavy work in `BroadcastReceiver.onReceive()` → ✅ `goAsync()` + IO coroutine + `pendingResult.finish()`
+- ❌ `synchronized(lock) { heavyWork() }` blocks main → ✅ `Mutex().withLock { }`
+- ❌ Heavy `Application.onCreate()` → ✅ Defer to `CoroutineScope(Dispatchers.IO + SupervisorJob()).launch { }`
 
-```kotlin
-// ❌ LOSES DATA on rotation
-class FeatureActivity : ComponentActivity() {
-    private var data: Data? = null  // Lost on rotation!
-}
+**Missing query filters**: ❌ `repository.getById(id)` without status filter → ✅ Always include active/published/visible check; related entities need own filters
 
-// ✅ SURVIVES configuration changes
-class FeatureViewModel : ViewModel() {
-    private val _data = MutableStateFlow<Data?>(null)  // Survives!
-    val data = _data.asStateFlow()
-}
-```
-
-### Check for Empty State
-
-```kotlin
-// ❌ MISSING: Empty state
-when (uiState) {
-    is Loading -> LoadingContent()
-    is Success -> ItemsList(uiState.items)  // What if items.isEmpty()?
-    is Error -> ErrorContent()
-}
-
-// ✅ HANDLES empty state
-when (uiState) {
-    is Loading -> LoadingContent()
-    is Success -> {
-        if (uiState.items.isEmpty()) {
-            EmptyStateContent()
-        } else {
-            ItemsList(uiState.items)
-        }
-    }
-    is Error -> ErrorContent()
-}
-```
-
-### Check for Process Death
-
-```kotlin
-// ❌ LOSES STATE: On process death
-class FeatureViewModel : ViewModel() {
-    var selectedId: String? = null  // Lost on process death!
-}
-
-// ✅ SURVIVES process death
-class FeatureViewModel(
-    private val savedStateHandle: SavedStateHandle
-) : ViewModel() {
-    var selectedId: String?
-        get() = savedStateHandle["selectedId"]
-        set(value) { savedStateHandle["selectedId"] = value }
-}
-```
+**Process death**: ❌ `var selectedId: String?` in ViewModel → ✅ Use `SavedStateHandle["selectedId"]`
 
 ## Output Format
 
-### Edge Case Analysis: [Feature/Component]
+**Component**: [Name] | **Risk Level**: High/Medium/Low
 
-**Component**: [Name]
-**Risk Level**: High / Medium / Low
+**Critical**: Must handle to avoid crashes/data loss — Scenario → Risk → Mitigation
 
----
+**Important**: Should handle for good UX — table of edge case, scenario, suggestion
 
-### 🔴 Critical Edge Cases
+**Minor**: Nice to handle — bullet list
 
-Must handle to avoid crashes/data loss:
+**Test Scenarios**: table of test, input, expected
 
-#### Edge Case 1: [Name]
-**Scenario**: [Description]
-**Current Behavior**: [What happens now]
-**Risk**: [Potential impact]
-**Mitigation**:
-```kotlin
-// How to handle this case
-```
+**Coverage Matrix**: Category | Covered | Missing
 
----
-
-### 🟡 Important Edge Cases
-
-Should handle for good UX:
-
-| # | Edge Case | Scenario | Suggestion |
-|---|-----------|----------|------------|
-| 1 | Empty list | No data returned | Show empty state |
-| 2 | Double tap | Button pressed twice | Disable after first tap |
-| 3 | Rotation | During network call | Preserve ViewModel state |
-
----
-
-### 🟢 Minor Edge Cases
-
-Nice to handle:
-
-- [Edge case description]
-- [Edge case description]
-
----
-
-### Test Scenarios
-
-| # | Test | Input | Expected |
-|---|------|-------|----------|
-| 1 | Empty list | `[]` | Empty state shown |
-| 2 | Network error | Timeout | Error message shown |
-| 3 | Rotation | During load | Loading continues |
-
----
-
-### Edge Case Coverage Matrix
-
-| Category | Covered | Missing |
-|----------|---------|---------|
-| Empty data | ✅ | - |
-| Null values | ✅ | - |
-| Configuration changes | ⚠️ | Font scale |
-| Navigation | ❌ | Double tap |
-
----
-
-### Recommendations
-
-1. **Immediate**: [Critical fix needed]
-2. **Short-term**: [Important improvement]
-3. **Future**: [Nice to have]
+**Recommendations**: Immediate (critical) → Short-term (important) → Future (nice to have)

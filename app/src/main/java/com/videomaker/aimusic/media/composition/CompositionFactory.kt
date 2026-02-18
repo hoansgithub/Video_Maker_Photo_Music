@@ -17,7 +17,6 @@ import com.videomaker.aimusic.domain.model.Transition
 import com.videomaker.aimusic.media.audio.VolumeAudioProcessor
 import com.videomaker.aimusic.media.effects.FrameOverlayEffect
 import com.videomaker.aimusic.media.effects.TransitionEffect
-import com.videomaker.aimusic.media.library.AudioTrackLibrary
 import com.videomaker.aimusic.media.library.FrameLibrary
 import com.videomaker.aimusic.media.library.TransitionSetLibrary
 import com.videomaker.aimusic.media.library.TransitionShaderLibrary
@@ -521,11 +520,8 @@ class CompositionFactory(private val context: Context) {
     private fun getAudioUri(settings: ProjectSettings): Uri? {
         settings.customAudioUri?.let { return it }
 
-        settings.audioTrackId?.let { trackId ->
-            val track = AudioTrackLibrary.getById(trackId)
-            if (track != null) {
-                return copyAssetToCache(track.assetPath)
-            }
+        settings.musicSongUrl?.let { url ->
+            return Uri.parse(url)
         }
 
         return null

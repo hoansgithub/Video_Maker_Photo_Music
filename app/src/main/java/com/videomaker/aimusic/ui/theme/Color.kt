@@ -70,6 +70,19 @@ val ErrorDestructive = Color(0xFFEA4335)
 val Success = Color(0xFF4CAF50)
 val Warning = Color(0xFFFF9800)
 
+// Accent colors for effects and decorative elements
+val GoldAccent = Color(0xFFFFD700)         // Gold for star/premium icons
+val MintAccent = Color(0xFF04FFB1)         // Mint (same as Secondary)
+val CoralAccent = Color(0xFFFF6B9D)        // Coral/pink accent
+val TealAccent = Color(0xFF4FC3F7)         // Teal/cyan accent
+val RoseAccent = Color(0xFFE8A0BF)         // Rose/dreamy pink
+val CyanAccent = Color(0xFF00F0FF)         // Bright cyan/electric blue
+val AmberAccent = Color(0xFFD4A574)        // Amber/vintage gold
+val OrangeAccent = Color(0xFFFFB74D)       // Warm orange
+val SlateAccent = Color(0xFFB0BEC5)        // Cool slate/gray-blue
+val PinkAccent = Color(0xFFF48FB1)         // Soft pink
+val GreenAccent = Color(0xFF69F0AE)        // Bright green/aurora
+
 // Component-specific colors
 val SearchFieldBackground = Color(0x1AFFFFFF) // 10% white
 val SearchFieldBorder = Color(0x29FFFFFF)      // 16% white

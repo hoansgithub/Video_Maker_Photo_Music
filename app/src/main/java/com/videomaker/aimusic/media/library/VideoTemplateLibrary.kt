@@ -106,7 +106,7 @@ private data class VideoTemplateJson(
     val name: String,
     val description: String,
     val thumbnailUrl: String = "",
-    val songId: Int,
+    val songId: Long,
     val effectSetId: String,
     val aspectRatio: String = "9:16",
     val tags: List<String> = emptyList(),

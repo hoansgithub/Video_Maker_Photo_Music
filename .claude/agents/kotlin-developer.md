@@ -38,534 +38,93 @@ Before writing code, verify you're using:
 ## Build Environment (CRITICAL)
 
 ```bash
-# ✅ REQUIRED - Always set JAVA_HOME before Gradle commands
+# ALWAYS set JAVA_HOME before Gradle commands
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ./gradlew build
-
-# Paths by OS:
-# macOS:   /Applications/Android Studio.app/Contents/jbr/Contents/Home
+# macOS: /Applications/Android Studio.app/Contents/jbr/Contents/Home
 # Windows: C:\Program Files\Android\Android Studio\jbr
-# Linux:   /opt/android-studio/jbr
+# Linux: /opt/android-studio/jbr
 ```
 
 ## Navigation 3 (STABLE - REQUIRED)
 
-```kotlin
-// ============================================
-// DEPENDENCIES
-// ============================================
-dependencies {
-    implementation("androidx.navigation3:navigation3-runtime:1.0.0")
-    implementation("androidx.navigation3:navigation3-ui:1.0.0")
-}
+Dependencies: `androidx.navigation3:navigation3-runtime:1.0.0` + `navigation3-ui:1.0.0`
 
-// ============================================
-// ROUTE DEFINITIONS (NavKey)
-// ============================================
-@Serializable
-object HomeRoute : NavKey
+**Route definitions**: `@Serializable object HomeRoute : NavKey` / `@Serializable data class ProfileRoute(val userId: String) : NavKey`
 
-@Serializable
-data class ProfileRoute(val userId: String) : NavKey
+**NavDisplay setup**: `val backStack = rememberNavBackStack(HomeRoute)` → `NavDisplay(backStack, entryProvider = entryProvider { entry<HomeRoute> { ... } }, onBack = { backStack.pop() })`
 
-@Serializable
-data class SettingsRoute(val section: String? = null) : NavKey
-
-// ============================================
-// NAVDISPLAY SETUP
-// ============================================
-@Composable
-fun AppNavigation() {
-    // Developer-owned back stack - YOU control it!
-    val backStack = rememberNavBackStack(HomeRoute)
-
-    NavDisplay(
-        backStack = backStack,
-        entryProvider = entryProvider {
-            entry<HomeRoute> {
-                HomeScreen(
-                    onNavigateToProfile = { userId ->
-                        backStack.add(ProfileRoute(userId))
-                    }
-                )
-            }
-            entry<ProfileRoute> { key ->
-                ProfileScreen(
-                    userId = key.userId,
-                    onNavigateBack = { backStack.pop() }
-                )
-            }
-        },
-        onBack = { backStack.pop() }
-    )
-}
-
-// ============================================
-// NAVIGATION OPERATIONS
-// ============================================
-backStack.add(ProfileRoute(userId))    // Push
-backStack.pop()                         // Pop
-backStack.replace(HomeRoute)            // Replace top
-```
+**Operations**: `backStack.add(route)` = push, `backStack.pop()` = pop, `backStack.replace(route)` = replace top
 
 ## Non-Negotiable Rules
 
-```kotlin
-// 1. NAVIGATION 3 with NavDisplay (NOT NavHost/NavController)
-// ❌ DEPRECATED
-navController.navigate("profile/123")
-navController.navigate(ProfileRoute(userId = "123"))
-
-// ✅ REQUIRED - Navigation 3
-backStack.add(ProfileRoute(userId = "123"))
-
-// 2. Channel for ONE-TIME EVENTS (Activity launches, toasts)
-private val _oneTimeEvent = Channel<OneTimeEvent>(Channel.BUFFERED)
-val oneTimeEvent = _oneTimeEvent.receiveAsFlow()
-
-// 3. ALWAYS LaunchedEffect(Unit) for one-time events
-LaunchedEffect(Unit) {
-    viewModel.oneTimeEvent.collect { event ->
-        when (event) {
-            is ShowToast -> showToast(event.message)
-            is LaunchActivity -> launchActivity(event.intent)
-        }
-    }
-}
-
-// 4. ALWAYS collectAsStateWithLifecycle
-val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-// 5. ALWAYS viewModelScope
-viewModelScope.launch {
-    // Auto-cancelled with ViewModel
-}
-
-// 6. NEVER force unwrap
-val value = nullable ?: return
-
-// 7. NEVER pass backStack to composables
-// ❌ fun MyScreen(backStack: NavBackStack<NavKey>)
-// ✅ fun MyScreen(onNavigate: () -> Unit, onNavigateBack: () -> Unit)
-
-// 8. ALWAYS use @Immutable for UI state data classes
-@Immutable
-data class FeatureUiState(
-    val items: ImmutableList<Item>,  // NOT List<Item>!
-    val isLoading: Boolean
-)
-
-// 9. ALWAYS use method references for lambdas
-// ❌ onItemClick = { id -> viewModel.onItemClick(id) }
-// ✅ onItemClick = viewModel::onItemClick
-
-// 10. ALWAYS use key in LazyColumn/LazyRow
-items(users, key = { it.id }) { user -> UserCard(user) }
-
-// 11. NEVER use WeakReference for action callbacks
-// ❌ val weakAction = WeakReference(action); onDismissed = { weakAction.get()?.invoke() }
-// ✅ onDismissed = { action() }  // Action MUST execute for navigation/critical flow
-// WeakReference OK for: optional callbacks (onShown), UI elements
-```
+1. **Navigation 3 only**: ❌ `navController.navigate(...)` / `NavHost(...)` → ✅ `backStack.add(route)` / `NavDisplay(...)`
+2. **Channel for one-time events**: `Channel<Event>(Channel.BUFFERED)` + `.receiveAsFlow()`
+3. **LaunchedEffect(Unit)** for event collection: ❌ `LaunchedEffect(uiState)` → ✅ `LaunchedEffect(Unit) { viewModel.event.collect { ... } }`
+4. **collectAsStateWithLifecycle**: ❌ `collectAsState()` → ✅ `collectAsStateWithLifecycle()`
+5. **viewModelScope**: ❌ `GlobalScope` / custom `CoroutineScope` → ✅ `viewModelScope.launch { }`
+6. **No force unwrap**: ❌ `nullable!!` → ✅ `nullable ?: return`
+7. **No backStack in composables**: ❌ `fun MyScreen(backStack: NavBackStack<NavKey>)` → ✅ `fun MyScreen(onNavigate: () -> Unit)`
+8. **@Immutable for UI state**: `@Immutable data class State(val items: ImmutableList<Item>)` — NOT `List<Item>`
+9. **Method references**: ❌ `{ id -> viewModel.onClick(id) }` → ✅ `viewModel::onClick`
+10. **LazyColumn keys**: `items(users, key = { it.id }) { ... }`
+11. **No WeakReference for actions**: ❌ `WeakReference(action).get()?.invoke()` → ✅ `action()` — WeakRef OK only for optional callbacks (onShown)
 
 ## Recomposition Optimization (CRITICAL)
 
-```kotlin
-// ============================================
-// STABLE DATA CLASSES
-// ============================================
-// Add: implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.7")
-
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.persistentListOf
-
-// ❌ UNSTABLE - causes unnecessary recomposition
-data class UsersState(val users: List<User>)
-
-// ✅ STABLE - skips recomposition when unchanged
-@Immutable
-data class UsersState(val users: ImmutableList<User>)
-
-// ============================================
-// LAMBDA STABILITY
-// ============================================
-// ❌ UNSTABLE - new lambda every recomposition
-ItemList(onItemClick = { id -> viewModel.onItemClick(id) })
-
-// ✅ STABLE - method reference
-ItemList(onItemClick = viewModel::onItemClick)
-
-// ============================================
-// LAZYCOLUMN KEYS
-// ============================================
-// ❌ BAD - all items recompose on list change
-LazyColumn {
-    items(users) { UserCard(it) }
-}
-
-// ✅ GOOD - only changed items recompose
-LazyColumn {
-    items(users, key = { it.id }) { UserCard(it) }
-}
-
-// ============================================
-// REMEMBER PATTERNS
-// ============================================
-// Expensive computation - use remember with key
-val sorted = remember(items) { items.sortedBy { it.name } }
-
-// Derived state - only recomputes when result changes
-val showButton by remember { derivedStateOf { items.size > 10 } }
-
-// Object creation - always wrap in remember
-val formatter = remember { DateFormatter() }
-```
-
-## ViewModel Template
-
-```kotlin
-// ============================================
-// UI STATE
-// ============================================
-sealed class FeatureUiState {
-    data object Loading : FeatureUiState()
-    data class Success(val data: FeatureData) : FeatureUiState()
-    data class Error(val message: String) : FeatureUiState()
-}
-
-// ============================================
-// NAVIGATION EVENTS
-// ============================================
-sealed class FeatureNavigationEvent {
-    data object NavigateBack : FeatureNavigationEvent()
-    data class NavigateToDetail(val id: String) : FeatureNavigationEvent()
-}
-
-// ============================================
-// VIEW MODEL
-// ============================================
-@HiltViewModel
-class FeatureViewModel @Inject constructor(
-    private val fetchDataUseCase: FetchDataUseCase
-) : ViewModel() {
-
-    // UI State - what to display
-    private val _uiState = MutableStateFlow<FeatureUiState>(FeatureUiState.Loading)
-    val uiState: StateFlow<FeatureUiState> = _uiState.asStateFlow()
-
-    // Navigation Events - one-time actions
-    private val _navigationEvent = Channel<FeatureNavigationEvent>(Channel.BUFFERED)
-    val navigationEvent = _navigationEvent.receiveAsFlow()
-
-    init {
-        loadData()
-    }
-
-    // ============================================
-    // PUBLIC METHODS
-    // ============================================
-
-    fun onItemClick(id: String) {
-        viewModelScope.launch {
-            _navigationEvent.send(FeatureNavigationEvent.NavigateToDetail(id))
-        }
-    }
-
-    fun onBackClick() {
-        viewModelScope.launch {
-            _navigationEvent.send(FeatureNavigationEvent.NavigateBack)
-        }
-    }
-
-    fun onRetry() {
-        loadData()
-    }
-
-    // ============================================
-    // PRIVATE METHODS
-    // ============================================
-
-    private fun loadData() {
-        viewModelScope.launch {
-            _uiState.value = FeatureUiState.Loading
-
-            when (val result = fetchDataUseCase()) {
-                is Result.Success -> {
-                    _uiState.value = FeatureUiState.Success(result.data)
-                }
-                is Result.Error -> {
-                    _uiState.value = FeatureUiState.Error(result.message)
-                }
-            }
-        }
-    }
-}
-```
-
-## Activity Template
-
-```kotlin
-class FeatureActivity : ComponentActivity() {
-
-    private val viewModel: FeatureViewModel by viewModels()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        setContent {
-            AppTheme {
-                FeatureScreen(
-                    viewModel = viewModel,
-                    onNavigateToDetail = { id ->
-                        startActivity(DetailActivity.intent(this, id))
-                    },
-                    onNavigateBack = {
-                        finish()
-                    }
-                )
-            }
-        }
-    }
-}
-```
-
-## Composable Screen Template
-
-```kotlin
-@Composable
-fun FeatureScreen(
-    viewModel: FeatureViewModel,
-    onNavigateToDetail: (String) -> Unit,
-    onNavigateBack: () -> Unit
-) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    // Handle navigation events - LaunchedEffect(Unit) = one-time
-    LaunchedEffect(Unit) {
-        viewModel.navigationEvent.collect { event ->
-            when (event) {
-                is FeatureNavigationEvent.NavigateToDetail -> onNavigateToDetail(event.id)
-                is FeatureNavigationEvent.NavigateBack -> onNavigateBack()
-            }
-        }
-    }
-
-    // UI based on state
-    FeatureContent(
-        uiState = uiState,
-        onItemClick = viewModel::onItemClick,
-        onRetry = viewModel::onRetry
-    )
-}
-
-@Composable
-private fun FeatureContent(
-    uiState: FeatureUiState,
-    onItemClick: (String) -> Unit,
-    onRetry: () -> Unit
-) {
-    when (uiState) {
-        is FeatureUiState.Loading -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        }
-        is FeatureUiState.Success -> {
-            LazyColumn {
-                items(uiState.data.items) { item ->
-                    ItemCard(
-                        item = item,
-                        onClick = { onItemClick(item.id) }
-                    )
-                }
-            }
-        }
-        is FeatureUiState.Error -> {
-            ErrorContent(
-                message = uiState.message,
-                onRetry = onRetry
-            )
-        }
-    }
-}
-```
-
-## Repository Template
-
-```kotlin
-// Interface in Domain layer
-interface FeatureRepository {
-    suspend fun getData(): Result<FeatureData>
-}
-
-// Implementation in Data layer
-class FeatureRepositoryImpl @Inject constructor(
-    private val apiService: ApiService,
-    private val localCache: FeatureLocalCache
-) : FeatureRepository {
-
-    override suspend fun getData(): Result<FeatureData> {
-        return try {
-            val response = apiService.fetchData()
-            val data = response.toDomain()
-            localCache.save(data)
-            Result.Success(data)
-        } catch (e: Exception) {
-            Logger.e("FeatureRepository", "Fetch failed: ${e.message}")
-            Result.Error(e.message ?: "Unknown error")
-        }
-    }
-}
-```
-
-## Use Case Template
-
-```kotlin
-class FetchFeatureUseCase @Inject constructor(
-    private val repository: FeatureRepository
-) {
-    suspend operator fun invoke(): Result<FeatureData> {
-        return repository.getData()
-    }
-}
-```
-
-## Result Wrapper
-
-```kotlin
-sealed class Result<out T> {
-    data class Success<T>(val data: T) : Result<T>()
-    data class Error(val message: String) : Result<Nothing>()
-}
-```
-
-## Navigation 3 Setup (STABLE)
-
-```kotlin
-// ============================================
-// ROUTE DEFINITIONS (NavKey)
-// ============================================
-@Serializable
-object HomeRoute : NavKey
-
-@Serializable
-data class ProfileRoute(val userId: String) : NavKey
-
-@Serializable
-data class ProductRoute(
-    val productId: String,
-    val source: String? = null  // Optional with default
-) : NavKey
-
-// ============================================
-// NAVDISPLAY SETUP (Navigation 3)
-// ============================================
-@Composable
-fun AppNavigation() {
-    // Developer-owned back stack - YOU control it!
-    val backStack = rememberNavBackStack(HomeRoute)
-
-    NavDisplay(
-        backStack = backStack,
-        entryProvider = entryProvider {
-            entry<HomeRoute> {
-                HomeScreen(
-                    onNavigateToProfile = { userId ->
-                        backStack.add(ProfileRoute(userId))
-                    }
-                )
-            }
-
-            entry<ProfileRoute> { key ->
-                ProfileScreen(
-                    userId = key.userId,
-                    onNavigateBack = { backStack.pop() }
-                )
-            }
-
-            entry<ProductRoute> { key ->
-                ProductScreen(
-                    productId = key.productId,
-                    source = key.source,
-                    onNavigateBack = { backStack.pop() }
-                )
-            }
-        },
-        onBack = { backStack.pop() }
-    )
-}
-
-// ============================================
-// CUSTOM TRANSITIONS (Optional)
-// ============================================
-NavDisplay(
-    backStack = backStack,
-    transitionSpec = { _, _ ->
-        slideInHorizontally { -it } with slideOutHorizontally { it }
-    },
-    entryProvider = entryProvider { /* ... */ },
-    onBack = { backStack.pop() }
-)
-```
-
-## Deprecated Patterns to Avoid
-
-```kotlin
-// ❌ DEPRECATED: Navigation 2.x NavHost/NavController
-NavHost(navController, startDestination = HomeRoute) { }
-navController.navigate(ProfileRoute(userId = "123"))
-navController.popBackStack()
-
-// ✅ MODERN: Navigation 3 with NavDisplay
-NavDisplay(
-    backStack = backStack,
-    entryProvider = entryProvider { /* ... */ },
-    onBack = { backStack.pop() }
-)
-backStack.add(ProfileRoute(userId = "123"))
-backStack.pop()
-
-// ❌ DEPRECATED: String-based routes
-composable("profile/{userId}") { }
-navController.navigate("profile/123")
-
-// ✅ MODERN: NavKey routes
-entry<ProfileRoute> { key -> ProfileScreen(key.userId) }
-backStack.add(ProfileRoute(userId = "123"))
-
-// ❌ DEPRECATED: RxJava
-Observable.just(data).subscribeOn(Schedulers.io())
-
-// ✅ MODERN: Kotlin Coroutines + Flow
-flow { emit(data) }.flowOn(Dispatchers.IO)
-
-// ❌ DEPRECATED: XML Views
-setContentView(R.layout.activity_main)
-
-// ✅ MODERN: Jetpack Compose
-setContent { AppTheme { MainScreen() } }
-
-// ❌ DEPRECATED: LiveData (for new code)
-val data: LiveData<User> = MutableLiveData()
-
-// ✅ MODERN: StateFlow
-val data: StateFlow<User> = MutableStateFlow(User())
-
-// ❌ DEPRECATED: Passing NavController/backStack to composables
-@Composable
-fun ProfileScreen(navController: NavController)
-@Composable
-fun ProfileScreen(backStack: NavBackStack<NavKey>)
-
-// ✅ MODERN: Callback-based navigation
-@Composable
-fun ProfileScreen(onNavigateToSettings: () -> Unit, onNavigateBack: () -> Unit)
-```
+- **Stable data classes**: Add `kotlinx-collections-immutable:0.3.7` → use `@Immutable` + `ImmutableList` instead of `List`
+- **Lambda stability**: ❌ `onItemClick = { id -> viewModel.onItemClick(id) }` → ✅ `onItemClick = viewModel::onItemClick`
+- **LazyColumn keys**: ❌ `items(users) { ... }` → ✅ `items(users, key = { it.id }) { ... }`
+- **Remember expensive computations**: `val sorted = remember(items) { items.sortedBy { it.name } }`
+- **Derived state**: `val showButton by remember { derivedStateOf { items.size > 10 } }`
+- **Object creation**: Always wrap in `remember {}` — ❌ `DateFormatter()` in composable body
+
+## Deprecated Patterns
+
+| Deprecated | Modern Replacement |
+|---|---|
+| `NavHost(navController, ...) { composable<Route> { } }` | `NavDisplay(backStack, entryProvider = entryProvider { entry<Route> { } })` |
+| `navController.navigate(route)` / `.popBackStack()` | `backStack.add(route)` / `.pop()` |
+| `composable("profile/{userId}")` (string routes) | `entry<ProfileRoute> { key -> ... }` (NavKey) |
+| `Observable.just(data).subscribeOn(Schedulers.io())` (RxJava) | `flow { emit(data) }.flowOn(Dispatchers.IO)` |
+| `setContentView(R.layout.activity_main)` (XML) | `setContent { AppTheme { MainScreen() } }` |
+| `LiveData<User>` | `StateFlow<User>` |
+| `fun Screen(navController: NavController)` | `fun Screen(onNavigate: () -> Unit, onBack: () -> Unit)` |
+
+## ANR Prevention (CRITICAL)
+
+ANR triggers when main thread blocked >5s. Google Play penalizes ≥0.47% ANR rate.
+
+### ANR Timeout Thresholds
+
+| Component | Timeout | Severity |
+|-----------|---------|----------|
+| Input dispatch (touch/key) | 5 seconds | Critical |
+| Foreground BroadcastReceiver | 10-20 seconds | High |
+| Background BroadcastReceiver | 60-120 seconds | Medium |
+| Foreground Service startForeground() | 5 seconds | Critical |
+| Service onCreate/onStart/onBind | 20 seconds | High |
+| JobService onStartJob/onStopJob | System-defined | High (Android 14+) |
+
+### Dispatcher Rules (MANDATORY)
+
+- **Main thread**: UI updates only (default for `viewModelScope`)
+- **Dispatchers.IO**: Network, database, file I/O, SharedPreferences
+- **Dispatchers.Default**: CPU-intensive computation (sorting, parsing)
+
+### ANR Rules
+
+- ❌ `viewModelScope.launch { repository.fetchData() }` (no dispatcher = main thread!) → ✅ `withContext(Dispatchers.IO) { repository.fetchData() }`
+- ❌ `runBlocking { }` / `Thread.sleep()` on main → ✅ coroutines + `delay()`
+- ❌ `prefs.edit().putString("key", "value").commit()` → ✅ `.apply()` (async write)
+- ❌ Heavy work in `BroadcastReceiver.onReceive()` → ✅ `goAsync()` + `CoroutineScope(Dispatchers.IO).launch { try { work() } finally { pendingResult.finish() } }`
+- ❌ Heavy work before `startForeground()` → ✅ Call `startForeground()` immediately, heavy work in IO coroutine
+- ❌ `synchronized(lock) { updateUI() }` on main → ✅ `Mutex().withLock { }` (suspends, doesn't block)
+- ❌ Sequential binder/IPC calls in loop → ✅ Batch operations + background thread
+- ❌ `BitmapFactory.decodeFile(path)` on main → ✅ Use Coil/Glide or `withContext(Dispatchers.IO)`
+- Repository methods: always `suspend` + `withContext(ioDispatcher)` internally
+- StrictMode: enable `detectDiskReads/Writes/Network + penaltyDeath` in debug builds
+- ANR monitoring (API 30+): `ActivityManager.getHistoricalProcessExitReasons()` → filter `REASON_ANR`
 
 ## Performance Targets
 
@@ -576,12 +135,21 @@ fun ProfileScreen(onNavigateToSettings: () -> Unit, onNavigateBack: () -> Unit)
 | Frame rate | 60 FPS | 30 FPS | GPU Profiler / Macrobenchmark |
 | Battery/hour | <4% | <8% | Battery Historian |
 | Crash rate | <0.1% | <1% | Crashlytics/Sentry |
+| ANR rate | <0.47% | <1% | Android Vitals / Play Console |
+| Main thread ops | <100ms | <400ms | StrictMode / Perfetto |
 | APK size | <40MB | <100MB | APK Analyzer |
 
 ### Performance Checklist
 
 - [ ] No I/O on main thread (use `Dispatchers.IO`)
+- [ ] No network/database calls on main thread
+- [ ] `SharedPreferences.apply()` not `commit()`
+- [ ] BroadcastReceiver uses `goAsync()` for heavy work
+- [ ] Service calls `startForeground()` within 5s
+- [ ] StrictMode enabled in debug builds
 - [ ] Images loaded with Coil/Glide (not `BitmapFactory` on main)
+- [ ] No `Thread.sleep()` or `runBlocking` on main thread
+- [ ] No synchronized locks blocking main thread
 - [ ] `LazyColumn`/`LazyRow` with `key` parameter
 - [ ] `@Immutable` data classes with `ImmutableList`
 - [ ] Method references for lambdas (stable)

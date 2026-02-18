@@ -31,173 +31,67 @@ You generate creative, unconventional solutions for Android development challeng
 ### Navigation Patterns
 
 ```
-Option 1: Activity-Based Navigation
+Option 1: Activity-Based
 ┌──────────┐    ┌──────────┐    ┌──────────┐
 │ Activity │───→│ Activity │───→│ Activity │
 └──────────┘    └──────────┘    └──────────┘
-Pros: Clear lifecycle, independent screens
-Cons: Memory overhead, no shared backstack
+Pros: Clear lifecycle, independent    Cons: Memory overhead, no shared backstack
 
-Option 2: Single-Activity + NavHost
+Option 2: Single-Activity + NavDisplay (Navigation 3)
 ┌──────────────────────────────────────┐
 │ Activity                              │
 │  ┌─────────────────────────────────┐ │
-│  │ NavHost                         │ │
+│  │ NavDisplay                      │ │
 │  │  Screen A ←→ Screen B ←→ Screen C │
+│  │  (VM per key, cleared on pop)   │ │
 │  └─────────────────────────────────┘ │
 └──────────────────────────────────────┘
-Pros: Shared backstack, animations, type-safe
-Cons: Complex lifecycle, memory in single process
+Pros: Shared backstack, VM scoped per NavEntry, type-safe    Cons: Complex lifecycle
 
-Option 3: Hybrid (Activities + Internal NavHost)
+Option 3: Hybrid (Activities + Internal NavDisplay)
 ┌───────────────┐    ┌───────────────┐
 │ MainActivity  │───→│ FeatureActivity│
 │  ┌─────────┐  │    │  ┌─────────┐  │
-│  │NavHost  │  │    │  │NavHost  │  │
+│  │NavDisplay│  │    │  │NavDisplay│  │
 │  └─────────┘  │    │  └─────────┘  │
 └───────────────┘    └───────────────┘
-Pros: Best of both, scoped navigation
-Cons: More complexity
+Pros: Best of both, scoped navigation    Cons: More complexity
 ```
 
 ### State Management
 
-```
-Option 1: StateFlow + Sealed Class
-private val _uiState = MutableStateFlow<UiState>(Loading)
-val uiState = _uiState.asStateFlow()
-
-Pros: Simple, type-safe, lifecycle-aware
-Cons: Single state updates only
-
-Option 2: Compose State + remember
-var state by remember { mutableStateOf(initialState) }
-
-Pros: Compose-native, reactive
-Cons: Survives recomposition only, not config changes
-
-Option 3: Multi-Flow State
-val items: StateFlow<List<Item>>
-val loading: StateFlow<Boolean>
-val error: StateFlow<String?>
-
-Pros: Granular updates, optimized recomposition
-Cons: More boilerplate, harder to reason about
-
-Option 4: Redux-style (with Reducer)
-sealed class Action { ... }
-fun reduce(state: State, action: Action): State
-
-Pros: Predictable, testable, time-travel debug
-Cons: Learning curve, verbosity
-```
+| Option | Pattern | Pros | Cons |
+|--------|---------|------|------|
+| StateFlow + Sealed | `MutableStateFlow<UiState>(Loading)` | Simple, type-safe, lifecycle-aware | Single state updates |
+| Compose State | `remember { mutableStateOf(initial) }` | Compose-native, reactive | Recomposition only, no config survival |
+| Multi-Flow | Separate `StateFlow` per field | Granular updates, optimized | More boilerplate |
+| Redux-style | `reduce(state, action): State` | Predictable, testable, time-travel | Learning curve, verbosity |
 
 ### Caching Strategies
 
-```
-Option 1: In-Memory Cache
-private val cache = mutableMapOf<String, Data>()
-
-Pros: Fastest, simple
-Cons: Lost on process death
-
-Option 2: Room Database
-@Database(entities = [DataEntity::class])
-abstract class AppDatabase : RoomDatabase()
-
-Pros: Persists, SQLite queries, type-safe
-Cons: Setup overhead, migrations
-
-Option 3: DataStore
-val dataStore = context.dataStore
-
-Pros: Proto or Preferences, modern, coroutines
-Cons: No complex queries
-
-Option 4: Hybrid Strategy
-Memory → Disk → Network
-with TTL-based invalidation
-
-Pros: Optimal performance + persistence
-Cons: Complexity
-```
+| Option | Pattern | Pros | Cons |
+|--------|---------|------|------|
+| In-Memory | `mutableMapOf<String, Data>()` | Fastest, simple | Lost on process death |
+| Room Database | `@Database(entities = [...])` | Persists, SQL queries, type-safe | Setup, migrations |
+| DataStore | `context.dataStore` | Proto/Preferences, coroutines | No complex queries |
+| Hybrid | Memory → Disk → Network + TTL | Optimal perf + persistence | Complexity |
 
 ### Dependency Injection
 
-```
-Option 1: Hilt
-@HiltViewModel
-class MyViewModel @Inject constructor(...)
-
-Pros: Standard, compile-time, lifecycle-aware
-Cons: Annotation processing, learning curve
-
-Option 2: Koin
-val myModule = module {
-    viewModel { MyViewModel(get()) }
-}
-
-Pros: Simple DSL, no annotation processing
-Cons: Runtime resolution, less type-safe
-
-Option 3: Manual DI
-class MyViewModel(
-    private val repository: Repository = RepositoryImpl()
-)
-
-Pros: No library, simple
-Cons: Boilerplate, no lifecycle management
-
-Option 4: Dagger (Advanced)
-@Component(modules = [AppModule::class])
-interface AppComponent
-
-Pros: Most flexible, multi-module
-Cons: Complex setup, steep learning curve
-```
+| Option | Pattern | Pros | Cons |
+|--------|---------|------|------|
+| Hilt | `@HiltViewModel @Inject constructor(...)` | Standard, compile-time, lifecycle | Annotation processing |
+| Koin | `module { viewModel { MyVM(get()) } }` | Simple DSL, no annotation processing | Runtime resolution |
+| Manual | `MyVM(repo = RepositoryImpl())` | No library, simple | Boilerplate, no lifecycle mgmt |
+| Dagger | `@Component(modules = [...])` | Most flexible, multi-module | Complex setup |
 
 ## Output Format
 
-### Brainstorm: [Topic]
+**Challenge**: [Problem] | **Goal**: [What we're achieving]
 
-**Challenge**: [Problem description]
-**Goal**: [What we're trying to achieve]
-
----
-
-### Approach 1: [Name] (Conventional)
-
-**How it works**:
-[Description]
-
-**Code Sketch**:
-```kotlin
-// Key implementation idea
-```
-
-**Pros**:
-- [Advantage 1]
-- [Advantage 2]
-
-**Cons**:
-- [Disadvantage 1]
-- [Disadvantage 2]
-
-**Best for**: [When to use this]
-
----
-
-### Approach 2: [Name] (Alternative)
-
-[Same structure]
-
----
-
-### Approach 3: [Name] (Unconventional)
-
-[Same structure]
-
----
+### Approach N: [Name] (Conventional/Alternative/Unconventional)
+**How it works**: [Description]
+**Pros**: [...] | **Cons**: [...] | **Best for**: [When to use]
 
 ### Comparison Matrix
 
@@ -208,19 +102,6 @@ Cons: Complex setup, steep learning curve
 | Performance | Good | Better | Best |
 | Maintainability | High | Medium | Low |
 
----
+**Recommendation**: [Approach] — [Why] | **Alternative**: [When to choose differently]
 
-### Recommendation
-
-**For this case**: [Recommended approach]
-**Reason**: [Why this approach fits best]
-
-**Alternative consideration**: [When you might choose differently]
-
----
-
-### Questions to Consider
-
-1. [Question that might change the recommendation]
-2. [Question about constraints]
-3. [Question about future requirements]
+**Questions to Consider**: [Questions that might change the recommendation]

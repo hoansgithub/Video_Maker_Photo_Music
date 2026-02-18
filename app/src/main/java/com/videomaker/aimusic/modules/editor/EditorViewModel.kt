@@ -287,14 +287,14 @@ class EditorViewModel(
         updatePendingSettings { it.copy(overlayFrameId = frameId) }
     }
 
-    fun updateAudioTrack(trackId: String?) {
-        android.util.Log.d("EditorViewModel", "updateAudioTrack called with: $trackId")
-        updatePendingSettings { it.copy(audioTrackId = trackId, customAudioUri = null) }
+    fun updateMusicSong(songId: Long?, songUrl: String?) {
+        android.util.Log.d("EditorViewModel", "updateMusicSong called with id: $songId")
+        updatePendingSettings { it.copy(musicSongId = songId, musicSongUrl = songUrl, customAudioUri = null) }
     }
 
     fun updateCustomAudio(uri: Uri?) {
         if (uri != null) {
-            updatePendingSettings { it.copy(customAudioUri = uri, audioTrackId = null) }
+            updatePendingSettings { it.copy(customAudioUri = uri, musicSongId = null, musicSongUrl = null) }
         } else {
             updatePendingSettings { it.copy(customAudioUri = null) }
         }

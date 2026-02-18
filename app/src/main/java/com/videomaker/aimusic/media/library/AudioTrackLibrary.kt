@@ -3,28 +3,16 @@ package com.videomaker.aimusic.media.library
 import com.videomaker.aimusic.domain.model.AudioTrack
 
 /**
- * AudioTrackLibrary - Provides all available bundled audio tracks
+ * AudioTrackLibrary - Registry for audio tracks available in the editor
  *
- * Sample background music tracks bundled with the app.
+ * Bundled asset tracks have been removed. Songs are now sourced from Supabase
+ * via MusicSong and the SongRepository. This library remains as an empty
+ * stub so call sites in CompositionFactory and SettingsPanel compile without
+ * changes while the migration to remote tracks is completed.
  */
 object AudioTrackLibrary {
 
-    private val tracks = listOf(
-        AudioTrack(
-            id = "track1",
-            name = "Track 1",
-            assetPath = "audio/track1.mp3",
-            durationMs = 0L, // TODO: Get actual duration
-            isPremium = false
-        ),
-        AudioTrack(
-            id = "track2",
-            name = "Track 2",
-            assetPath = "audio/track2.mp3",
-            durationMs = 0L,
-            isPremium = false
-        )
-    )
+    private val tracks = emptyList<AudioTrack>()
 
     fun getAll(): List<AudioTrack> = tracks
 

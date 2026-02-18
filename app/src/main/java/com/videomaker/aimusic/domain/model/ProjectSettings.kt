@@ -22,8 +22,9 @@ import android.net.Uri
  * @param transitionPercentage Percentage of image duration for transition (10-50%)
  * @param effectSetId ID of selected effect set (null = no transitions)
  * @param overlayFrameId ID of selected overlay frame (null = none)
- * @param audioTrackId ID of bundled audio track (null = none)
- * @param customAudioUri User's custom audio URI (overrides audioTrackId)
+ * @param musicSongId ID of Supabase MusicSong selected for this project (null = none)
+ * @param musicSongUrl Supabase song mp3 URL stored for offline composition (null = none)
+ * @param customAudioUri User's custom audio URI from device (overrides musicSongId)
  * @param audioVolume Music volume (0.0 to 1.0)
  * @param aspectRatio Output video aspect ratio
  */
@@ -32,7 +33,8 @@ data class ProjectSettings(
     val transitionPercentage: Int = 30, // 30% of image duration for transition
     val effectSetId: String? = "dreamy_vibes", // Default effect set
     val overlayFrameId: String? = null,
-    val audioTrackId: String? = DEFAULT_AUDIO_TRACK_ID,
+    val musicSongId: Long? = null,
+    val musicSongUrl: String? = null,
     val customAudioUri: Uri? = null,
     val audioVolume: Float = 1.0f,
     val aspectRatio: AspectRatio = AspectRatio.RATIO_9_16
@@ -50,8 +52,6 @@ data class ProjectSettings(
         get() = (imageDurationMs * 2 * transitionPercentage / 100)
 
     companion object {
-        const val DEFAULT_AUDIO_TRACK_ID = "track1"
-
         val DEFAULT = ProjectSettings()
 
         // Available image durations (in seconds): 2, 3, 4, 5, 6, 8, 10, 12

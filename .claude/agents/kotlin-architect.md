@@ -46,23 +46,9 @@ You design Android application architecture following Clean Architecture princip
 
 ### 3. Dependency Rules
 
-```kotlin
-// ✅ CORRECT: Presentation depends on Domain
-@HiltViewModel
-class FeatureViewModel @Inject constructor(
-    private val fetchDataUseCase: FetchDataUseCase  // Domain
-) : ViewModel()
-
-// ✅ CORRECT: Data depends on Domain (via interface)
-class FeatureRepositoryImpl @Inject constructor(
-    private val apiService: ApiService
-) : FeatureRepository  // Domain interface
-
-// ❌ WRONG: Domain depends on Data
-class FetchDataUseCase(
-    private val repository: FeatureRepositoryImpl  // Should be interface!
-)
-```
+- ✅ Presentation depends on Domain: `FeatureViewModel(fetchDataUseCase: FetchDataUseCase)`
+- ✅ Data depends on Domain via interface: `FeatureRepositoryImpl : FeatureRepository`
+- ❌ Domain depends on Data: `FetchDataUseCase(repository: FeatureRepositoryImpl)` — must be interface!
 
 ## Feature Module Structure
 
@@ -73,107 +59,68 @@ feature/
 │   ├── FeatureScreen.kt
 │   └── FeatureViewModel.kt
 ├── domain/
-│   ├── model/
-│   │   └── FeatureData.kt
-│   ├── repository/
-│   │   └── FeatureRepository.kt
-│   └── usecase/
-│       └── FetchFeatureUseCase.kt
+│   ├── model/FeatureData.kt
+│   ├── repository/FeatureRepository.kt
+│   └── usecase/FetchFeatureUseCase.kt
 ├── data/
-│   ├── repository/
-│   │   └── FeatureRepositoryImpl.kt
-│   ├── datasource/
-│   │   ├── FeatureRemoteDataSource.kt
-│   │   └── FeatureLocalDataSource.kt
-│   └── dto/
-│       └── FeatureDto.kt
-└── di/
-    └── FeatureModule.kt
+│   ├── repository/FeatureRepositoryImpl.kt
+│   ├── datasource/Feature{Remote,Local}DataSource.kt
+│   └── dto/FeatureDto.kt
+└── di/FeatureModule.kt
 ```
 
 ## Dependency Injection with Hilt
 
-### Module Structure
-
-```kotlin
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class FeatureRepositoryModule {
-    @Binds
-    @Singleton  // Stateful = Singleton
-    abstract fun bindFeatureRepository(
-        impl: FeatureRepositoryImpl
-    ): FeatureRepository
-}
-
-@Module
-@InstallIn(ViewModelComponent::class)
-object FeatureUseCaseModule {
-    @Provides  // Stateless = Factory (new instance)
-    fun provideFetchFeatureUseCase(
-        repository: FeatureRepository
-    ): FetchFeatureUseCase = FetchFeatureUseCase(repository)
-}
-```
-
 ### DI Scope Rules
 
-| Component | Scope | Reason |
-|-----------|-------|--------|
-| Repository | @Singleton | Stateful, caches data |
-| DataSource | @Singleton | Manages connections |
-| UseCase | Factory | Stateless, cheap to create |
-| ViewModel | @HiltViewModel | Scoped to Activity/Fragment |
+| Component | Scope | Pattern | Reason |
+|-----------|-------|---------|--------|
+| Repository | @Singleton | `@Binds` in `@InstallIn(SingletonComponent::class)` | Stateful, caches data |
+| DataSource | @Singleton | `@Binds` in `@InstallIn(SingletonComponent::class)` | Manages connections |
+| UseCase | Factory | `@Provides` in `@InstallIn(ViewModelComponent::class)` | Stateless, cheap to create |
+| ViewModel | @HiltViewModel | Auto-scoped to Activity/Fragment | Lifecycle-managed |
+
+## ANR-Safe Architecture
+
+### Threading Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│                 MAIN THREAD                      │
+│  UI rendering, state updates, user input ONLY   │
+│  Rule: <100ms per operation                      │
+├─────────────────────────────────────────────────┤
+│              Dispatchers.IO                      │
+│  Network, database, file I/O, SharedPreferences,│
+│  ContentProvider queries                         │
+├─────────────────────────────────────────────────┤
+│            Dispatchers.Default                   │
+│  CPU-intensive: sorting, filtering, parsing,    │
+│  bitmap processing, JSON deserialization         │
+└─────────────────────────────────────────────────┘
+```
+
+### Component Threading Rules
+
+| Component | Thread | ANR Rule |
+|-----------|--------|----------|
+| ViewModel | Main (viewModelScope) | Only state updates; delegate work to UseCases |
+| UseCase | Caller's dispatcher | Pure logic; if I/O needed, call Repository |
+| Repository | Dispatchers.IO | Always `suspend` + `withContext(ioDispatcher)` internally |
+| BroadcastReceiver | Main | `goAsync()` + IO coroutine for heavy work |
+| Service | Main | `startForeground()` within 5s; heavy work on IO |
+| ContentProvider | Binder thread | IO dispatcher for heavy queries |
+| Application.onCreate | Main | Defer heavy init to background coroutine |
 
 ## Navigation Architecture
 
 ### Navigation 3 (STABLE - REQUIRED)
 
-```kotlin
-// Dependencies
-dependencies {
-    implementation("androidx.navigation3:navigation3-runtime:1.0.0")
-    implementation("androidx.navigation3:navigation3-ui:1.0.0")
-}
-```
+Dependencies: `androidx.navigation3:navigation3-runtime:1.0.0` + `navigation3-ui:1.0.0`
 
-### Activity-Based Navigation
-
-```kotlin
-// For screens with dedicated Activities
-private fun navigateToFeature(id: String) {
-    startActivity(FeatureActivity.intent(this, id))
-    finish()  // For forward navigation
-}
-```
-
-### Navigation 3 NavDisplay (Within Single Activity)
-
-```kotlin
-// ✅ REQUIRED: Navigation 3 for sub-screens within one Activity
-@Composable
-fun AppNavigation() {
-    val backStack = rememberNavBackStack(HomeRoute)
-
-    NavDisplay(
-        backStack = backStack,
-        entryProvider = entryProvider {
-            entry<HomeRoute> {
-                HomeScreen(onNavigateToSettings = { backStack.add(SettingsRoute) })
-            }
-            entry<SettingsRoute> {
-                SettingsScreen(onNavigateBack = { backStack.pop() })
-            }
-        },
-        onBack = { backStack.pop() }
-    )
-}
-
-// ❌ DEPRECATED: Navigation 2.x patterns
-NavHost(navController, startDestination = Home) {
-    composable<Home> { HomeScreen(...) }
-}
-```
+- **Activity-based**: `startActivity(FeatureActivity.intent(this, id))` + `finish()` for forward nav
+- **NavDisplay (within Activity)**: `val backStack = rememberNavBackStack(HomeRoute)` → `NavDisplay(backStack, entryProvider = entryProvider { entry<Route> { ... } }, onBack = { backStack.pop() })`
+- ❌ `NavHost(navController, ...) { composable<Route> { } }` — DEPRECATED
 
 ### Decision: Activity vs Navigation 3
 
@@ -188,62 +135,29 @@ NavHost(navController, startDestination = Home) {
 
 ## Output Format
 
-### Architecture Decision
+**Feature**: [Name] | **Complexity**: Low/Medium/High
 
-**Feature**: [Name]
-**Complexity**: Low / Medium / High
+**Layer Breakdown**: table of Layer, Components, Dependencies
 
-### Layer Breakdown
+**File Structure**: feature tree
 
-| Layer | Components | Dependencies |
-|-------|------------|--------------|
-| Presentation | FeatureActivity, FeatureViewModel | FetchFeatureUseCase |
-| Domain | FeatureData, FeatureRepository, FetchFeatureUseCase | None |
-| Data | FeatureRepositoryImpl, FeatureDto | Domain interfaces |
+**Dependency Graph**: FeatureActivity → FeatureViewModel → UseCase → Repository (interface) → RepositoryImpl
 
-### File Structure
-
-```
-[Feature]/
-├── presentation/
-│   └── ...
-├── domain/
-│   └── ...
-├── data/
-│   └── ...
-└── di/
-    └── ...
-```
-
-### Dependency Graph
-
-```
-FeatureActivity
-    └── FeatureViewModel
-            └── FetchFeatureUseCase
-                    └── FeatureRepository (interface)
-                            └── FeatureRepositoryImpl (injected)
-```
-
-### Navigation Decision
-
-**Recommendation**: [Activity / Composable]
-**Reason**: [Why this navigation type]
+**Navigation Decision**: Activity or Composable + reason
 
 ### Architecture Checklist
 
 #### SOLID Principles
-- [ ] **[S] Single Responsibility** - Each class has one reason to change
-- [ ] **[O] Open/Closed** - Open for extension, closed for modification
-- [ ] **[L] Liskov Substitution** - Subtypes replaceable for base types
-- [ ] **[I] Interface Segregation** - Many specific interfaces > one general
-- [ ] **[D] Dependency Inversion** - Depend on abstractions, not concretions
+- [ ] **[S]** Single Responsibility — each class has one reason to change
+- [ ] **[O]** Open/Closed — open for extension, closed for modification
+- [ ] **[L]** Liskov Substitution — subtypes replaceable for base types
+- [ ] **[I]** Interface Segregation — many specific interfaces > one general
+- [ ] **[D]** Dependency Inversion — depend on abstractions, not concretions
 
 #### Clean Architecture
 - [ ] Dependencies via interfaces
 - [ ] Domain layer has zero dependencies
 - [ ] UseCases are stateless
 - [ ] ViewModels have UiState + NavigationEvents
-- [ ] Repository interfaces in Domain
-- [ ] Repository implementations in Data
+- [ ] Repository interfaces in Domain, implementations in Data
 - [ ] Proper Hilt scopes

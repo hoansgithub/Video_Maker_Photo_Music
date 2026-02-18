@@ -21,9 +21,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -62,23 +62,34 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.theme.AmberAccent
 import com.videomaker.aimusic.ui.theme.AppDimens
-import com.videomaker.aimusic.ui.theme.SearchFieldBackground
-import com.videomaker.aimusic.ui.theme.SearchFieldBorder
-import com.videomaker.aimusic.ui.theme.TextBright
-import com.videomaker.aimusic.ui.theme.TextSecondary
-import com.videomaker.aimusic.ui.theme.TextTertiary
-import com.videomaker.aimusic.ui.theme.Primary
-import com.videomaker.aimusic.ui.theme.TextOnPrimary
 import com.videomaker.aimusic.ui.theme.Black24
 import com.videomaker.aimusic.ui.theme.ChipBorderInactive
+import com.videomaker.aimusic.ui.theme.CyanAccent
+import com.videomaker.aimusic.ui.theme.GoldAccent
 import com.videomaker.aimusic.ui.theme.Gray450
+import com.videomaker.aimusic.ui.theme.GreenAccent
+import com.videomaker.aimusic.ui.theme.OrangeAccent
+import com.videomaker.aimusic.ui.theme.PinkAccent
+import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.RoseAccent
+import com.videomaker.aimusic.ui.theme.SearchFieldBackground
+import com.videomaker.aimusic.ui.theme.SearchFieldBorder
+import com.videomaker.aimusic.ui.theme.SlateAccent
+import com.videomaker.aimusic.ui.theme.SurfaceDark
+import com.videomaker.aimusic.ui.theme.TealAccent
+import com.videomaker.aimusic.ui.theme.TextBright
+import com.videomaker.aimusic.ui.theme.TextOnPrimary
+import com.videomaker.aimusic.ui.theme.TextSecondary
+import com.videomaker.aimusic.ui.theme.TextTertiary
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import co.alcheclub.lib.acccore.di.ACCDI
 import co.alcheclub.lib.acccore.di.get
 import coil.compose.AsyncImage
 import com.videomaker.aimusic.di.GalleryViewModelFactory
+import com.videomaker.aimusic.navigation.createSafeViewModelFactory
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
@@ -113,16 +124,7 @@ fun GalleryScreen(
 ) {
     val factory = remember { ACCDI.get<GalleryViewModelFactory>() }
     val viewModel: GalleryViewModel = viewModel(
-        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
-            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                val vm = factory.create()
-                if (modelClass.isAssignableFrom(vm::class.java)) {
-                    @Suppress("UNCHECKED_CAST")
-                    return vm as T
-                }
-                throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
-            }
-        }
+        factory = createSafeViewModelFactory { factory.create() }
     )
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -243,7 +245,7 @@ private fun GalleryContent(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                top = (topBarHeight - dimens.spaceLg).coerceAtLeast(0.dp),
+                top = topBarHeight + dimens.spaceLg,
                 bottom = dimens.space3Xl + dimens.space2Xl
             )
         ) {
@@ -272,7 +274,7 @@ private fun GalleryContent(
                 SectionHeader(
                     title = stringResource(R.string.gallery_templates),
                     icon = Icons.Default.Star,
-                    iconTint = Color(0xFFFFD700),
+                    iconTint = GoldAccent,
                     onSeeAllClick = onSeeAllTrendingTemplates
                 )
                 Spacer(modifier = Modifier.height(dimens.spaceSm))
@@ -443,15 +445,48 @@ private data class FeaturedEffect(
     val accentColor: Color
 )
 
-private val sampleEffects = listOf(
-    FeaturedEffect("Dreamy Vibes", "Soft glow & pastel tones", Color(0xFFE8A0BF)),
-    FeaturedEffect("Cyberpunk", "Neon lights & glitch effects", Color(0xFF00F0FF)),
-    FeaturedEffect("Vintage Film", "Retro grain & warm hues", Color(0xFFD4A574)),
-    FeaturedEffect("Ocean Breeze", "Cool blue gradients", Color(0xFF4FC3F7)),
-    FeaturedEffect("Golden Hour", "Warm sunset overlay", Color(0xFFFFB74D)),
-    FeaturedEffect("Noir", "High contrast B&W", Color(0xFFB0BEC5)),
-    FeaturedEffect("Sakura", "Cherry blossom pink", Color(0xFFF48FB1)),
-    FeaturedEffect("Aurora", "Northern lights shimmer", Color(0xFF69F0AE))
+@Composable
+private fun getSampleEffects() = listOf(
+    FeaturedEffect(
+        stringResource(R.string.effect_dreamy_vibes_title),
+        stringResource(R.string.effect_dreamy_vibes_desc),
+        RoseAccent
+    ),
+    FeaturedEffect(
+        stringResource(R.string.effect_cyberpunk_title),
+        stringResource(R.string.effect_cyberpunk_desc),
+        CyanAccent
+    ),
+    FeaturedEffect(
+        stringResource(R.string.effect_vintage_film_title),
+        stringResource(R.string.effect_vintage_film_desc),
+        AmberAccent
+    ),
+    FeaturedEffect(
+        stringResource(R.string.effect_ocean_breeze_title),
+        stringResource(R.string.effect_ocean_breeze_desc),
+        TealAccent
+    ),
+    FeaturedEffect(
+        stringResource(R.string.effect_golden_hour_title),
+        stringResource(R.string.effect_golden_hour_desc),
+        OrangeAccent
+    ),
+    FeaturedEffect(
+        stringResource(R.string.effect_noir_title),
+        stringResource(R.string.effect_noir_desc),
+        SlateAccent
+    ),
+    FeaturedEffect(
+        stringResource(R.string.effect_sakura_title),
+        stringResource(R.string.effect_sakura_desc),
+        PinkAccent
+    ),
+    FeaturedEffect(
+        stringResource(R.string.effect_aurora_title),
+        stringResource(R.string.effect_aurora_desc),
+        GreenAccent
+    )
 )
 
 @Composable
@@ -459,6 +494,7 @@ private fun FeaturedEffectsShowcase(
     autoSlideIntervalMs: Long = 4000L,
     modifier: Modifier = Modifier
 ) {
+    val sampleEffects = getSampleEffects()
     val infinitePageCount = Int.MAX_VALUE
     val initialPage = infinitePageCount / 2
 
@@ -470,15 +506,14 @@ private fun FeaturedEffectsShowcase(
     val isDragged by pagerState.interactionSource.collectIsDraggedAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Lifecycle-aware auto-slide
-    LaunchedEffect(isDragged) {
-        if (!isDragged) {
-            lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                while (true) {
-                    delay(autoSlideIntervalMs)
-                    if (!pagerState.isScrollInProgress) {
-                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                    }
+    // Lifecycle-aware auto-slide — single coroutine, checks isDragged inside loop to
+    // avoid multiple competing coroutines from repeated drag/release interactions
+    LaunchedEffect(Unit) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                delay(autoSlideIntervalMs)
+                if (!isDragged && !pagerState.isScrollInProgress) {
+                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
                 }
             }
         }
@@ -529,7 +564,7 @@ private fun FeaturedEffectCard(
                         colors = listOf(
                             effect.accentColor.copy(alpha = 0.6f),
                             effect.accentColor.copy(alpha = 0.15f),
-                            Color(0xFF1A1D1D)
+                            SurfaceDark
                         )
                     )
                 )
@@ -585,12 +620,14 @@ private fun TagChipRow(
     val dimens = AppDimens.current
     var selectedTag by rememberSaveable { mutableStateOf(tags.firstOrNull().orEmpty()) }
 
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = dimens.spaceLg),
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = dimens.spaceLg),
         horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
     ) {
-        items(tags, key = { it }) { tag ->
+        tags.forEach { tag ->
             TagChip(
                 label = tag,
                 isSelected = tag == selectedTag,
@@ -756,7 +793,7 @@ private fun VideoTemplateItem(
                         .align(Alignment.TopEnd)
                         .padding(dimens.spaceSm)
                         .background(
-                            color = Color(0xFFFFD700),
+                            color = GoldAccent,
                             shape = RoundedCornerShape(dimens.radiusMd)
                         )
                         .padding(horizontal = 6.dp, vertical = 3.dp)

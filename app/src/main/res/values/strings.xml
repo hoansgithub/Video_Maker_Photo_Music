@@ -30,10 +30,10 @@
     <string name="onboarding_page2_feature2_desc">Beautiful transitions between your photos and clips</string>
     <!-- Page 3 -->
     <string name="onboarding_page3_title">Export &amp;\nShare</string>
-    <string name="onboarding_page3_feature1_title">High Quality Export</string>
+    <string name="onboarding_page3_feature1_title">High-Quality Export</string>
     <string name="onboarding_page3_feature1_desc">Export your videos in HD quality up to 4K</string>
     <string name="onboarding_page3_feature2_title">Share Anywhere</string>
-    <string name="onboarding_page3_feature2_desc">Share directly to social media or save to gallery</string>
+    <string name="onboarding_page3_feature2_desc">Share directly to social media or save to your gallery</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Gallery</string>
@@ -43,14 +43,18 @@
     <!-- Gallery Tab -->
     <string name="gallery_hot_songs">Hot Songs</string>
     <string name="gallery_templates">Templates</string>
-    <string name="gallery_coming_soon">Coming soon</string>
-    <string name="gallery_search_hint">search your styles</string>
+    <string name="gallery_coming_soon">Coming Soon</string>
+    <string name="gallery_search_hint">Search your styles</string>
     <string name="gallery_create_new_video">Create New Video</string>
 
     <!-- Songs Tab -->
     <string name="songs_title">Songs</string>
     <string name="songs_all">All Songs</string>
     <string name="songs_categories">Categories</string>
+    <string name="songs_search_hint">Search songs</string>
+    <string name="songs_suggest_for_you">Suggested For You</string>
+    <string name="songs_weekly_ranking">Weekly Ranking</string>
+    <string name="songs_station">Stations</string>
 
     <!-- Legacy Home (keeping for backwards compatibility) -->
     <string name="home_title">Video Maker</string>
@@ -63,7 +67,7 @@
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_language">Language</string>
-    <string name="settings_language_description">Change app language</string>
+    <string name="settings_language_description">Change the app language</string>
     <string name="settings_about">About</string>
     <string name="settings_version">Version</string>
 
@@ -166,12 +170,30 @@
     <string name="settings_transition_duration_value">%.1fs</string>
 
     <!-- Search -->
-    <string name="search_hint">search your styles</string>
+    <string name="search_hint">Search your styles</string>
     <string name="search_recent">Recent Searches</string>
     <string name="search_clear_all">Clear All</string>
     <string name="search_no_results">No results found</string>
     <string name="search_no_results_hint">Try a different keyword</string>
     <string name="search_suggestions">Suggestions</string>
+
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">Dreamy Vibes</string>
+    <string name="effect_dreamy_vibes_desc">Soft glow &amp; pastel tones</string>
+    <string name="effect_cyberpunk_title">Cyberpunk</string>
+    <string name="effect_cyberpunk_desc">Neon lights &amp; glitch effects</string>
+    <string name="effect_vintage_film_title">Vintage Film</string>
+    <string name="effect_vintage_film_desc">Retro grain &amp; warm hues</string>
+    <string name="effect_ocean_breeze_title">Ocean Breeze</string>
+    <string name="effect_ocean_breeze_desc">Cool blue gradients</string>
+    <string name="effect_golden_hour_title">Golden Hour</string>
+    <string name="effect_golden_hour_desc">Warm sunset overlay</string>
+    <string name="effect_noir_title">Noir</string>
+    <string name="effect_noir_desc">High contrast B&amp;W</string>
+    <string name="effect_sakura_title">Sakura</string>
+    <string name="effect_sakura_desc">Cherry blossom pink</string>
+    <string name="effect_aurora_title">Aurora</string>
+    <string name="effect_aurora_desc">Northern lights shimmer</string>
 
     <!-- Common -->
     <string name="cancel">Cancel</string>
@@ -186,4 +208,7 @@
     <string name="none">None</string>
     <string name="close">Close</string>
     <string name="settings">Settings</string>
+
+    <!-- Error states -->
+    <string name="error_load_failed">Failed to load. Pull down to retry.</string>
 </resources>

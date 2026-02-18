@@ -60,7 +60,7 @@ class VideoExportWorker(
             val project = projectRepository.getProject(projectId)
                 ?: return Result.failure(workDataOf(KEY_ERROR to "Project not found"))
 
-            android.util.Log.d(TAG, "Project loaded: ${project.assets.size} assets, audio: ${project.settings.audioTrackId}")
+            android.util.Log.d(TAG, "Project loaded: ${project.assets.size} assets, musicSongId: ${project.settings.musicSongId}")
 
             if (project.assets.isEmpty()) {
                 return Result.failure(workDataOf(KEY_ERROR to "Project has no assets"))

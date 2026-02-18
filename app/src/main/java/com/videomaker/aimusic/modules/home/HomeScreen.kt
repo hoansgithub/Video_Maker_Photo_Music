@@ -106,7 +106,10 @@ fun HomeScreen(
                     onNavigateToSearch = onNavigateToSearch,
                     topBarHeight = topBarHeight
                 )
-                1 -> SongsTabContent(topBarHeight = topBarHeight)
+                1 -> SongsTabContent(
+                    topBarHeight = topBarHeight,
+                    onNavigateToSearch = onNavigateToSearch
+                )
                 2 -> ProjectsTabContent(
                     onCreateClick = onCreateClick,
                     onProjectClick = onProjectClick,
@@ -278,11 +281,16 @@ private fun GalleryTabContent(
  * Songs Tab - Browse all songs
  */
 @Composable
-private fun SongsTabContent(topBarHeight: Dp = 0.dp) {
+private fun SongsTabContent(
+    topBarHeight: Dp = 0.dp,
+    onNavigateToSearch: () -> Unit = {}
+) {
     SongsScreen(
+        topBarHeight = topBarHeight,
         onNavigateToSongDetail = { songId ->
             // TODO: Navigate to song detail
-        }
+        },
+        onNavigateToSearch = onNavigateToSearch
     )
 }
 

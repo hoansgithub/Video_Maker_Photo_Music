@@ -42,8 +42,8 @@ object ProjectMapper {
             transitionPercentage = entity.transitionPercentage,
             effectSetId = entity.effectSetId,
             overlayFrameId = entity.overlayFrameId,
-            // Apply default audio track if not set (legacy projects)
-            audioTrackId = entity.audioTrackId ?: ProjectSettings.DEFAULT_AUDIO_TRACK_ID,
+            musicSongId = entity.musicSongId,
+            musicSongUrl = entity.musicSongUrl,
             customAudioUri = entity.customAudioUri?.let { Uri.parse(it) },
             audioVolume = entity.audioVolume,
             aspectRatio = AspectRatio.fromString(entity.aspectRatio)
@@ -76,7 +76,8 @@ object ProjectMapper {
             transitionPercentage = project.settings.transitionPercentage,
             effectSetId = project.settings.effectSetId,
             overlayFrameId = project.settings.overlayFrameId,
-            audioTrackId = project.settings.audioTrackId,
+            musicSongId = project.settings.musicSongId,
+            musicSongUrl = project.settings.musicSongUrl,
             customAudioUri = project.settings.customAudioUri?.toString(),
             audioVolume = project.settings.audioVolume,
             aspectRatio = project.settings.aspectRatio.name

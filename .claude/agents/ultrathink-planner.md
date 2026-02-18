@@ -13,71 +13,50 @@ You plan Android features with deep reasoning, considering Kotlin coroutines, Co
 
 ```
 APPROACHES
-□ What are 3 ways to implement this in Kotlin/Compose?
-□ Which approach fits existing Android patterns?
-□ Trade-offs of each (performance, complexity, testability)?
+□ 3 implementation approaches? Which fits existing patterns? Trade-offs?
 
 KOTLIN COROUTINES
-□ Which operations need suspend functions?
-□ Where should viewModelScope be used?
-□ Background vs Main dispatcher decisions?
-□ Exception handling strategy?
+□ Which operations need suspend? viewModelScope used?
+□ Dispatcher decisions (IO/Default/Main)? Exception handling strategy?
 
 NAVIGATION SAFETY
-□ Using Channel for navigation events? (MANDATORY)
-□ Avoiding LaunchedEffect(uiState) for navigation?
-□ Activity vs Composable screen decision?
-□ Proper finish() after startActivity()?
+□ Channel for navigation events? No LaunchedEffect(uiState) for nav?
+□ Activity vs Composable decision? finish() after startActivity()?
+□ NavDisplay has rememberViewModelStoreNavEntryDecorator()?
+□ ViewModels scoped per NavEntry key (NOT Activity)?
 
 COMPOSE LIFECYCLE
-□ LaunchedEffect(Unit) for one-time events?
-□ collectAsStateWithLifecycle() for StateFlow?
-□ remember {} for expensive objects?
-□ Recomposition optimization needed?
+□ LaunchedEffect(Unit) for one-time events? collectAsStateWithLifecycle()?
+□ remember {} for expensive objects? Recomposition optimization needed?
+□ ViewModel created via viewModel() inside NavEntry content?
+
+ANR PREVENTION
+□ All I/O via withContext(Dispatchers.IO)? CPU work on Dispatchers.Default?
+□ Repository methods suspend + IO internally? goAsync() in BroadcastReceivers?
+□ startForeground() within 5s? SharedPreferences .apply() not .commit()?
+□ No Thread.sleep()/runBlocking/synchronized blocking main?
+□ Application.onCreate() defers heavy init? StrictMode in debug?
 
 EDGE CASES
-□ Empty/null data handling?
-□ Network failure handling?
-□ Back button behavior?
-□ Configuration changes (rotation)?
+□ Empty/null data? Network failure? Back button? Rotation?
+
+MANIFEST & SDK SAFETY
+□ All declared activities backed by real classes? Side-effects wrapped in delay + try-catch?
+
+DATA SAFETY
+□ All queries filtered by status? ID lookups and related entities filtered?
 ```
 
 ## Output Format
 
-### Summary
-[2-3 sentences on approach]
+**Summary**: [2-3 sentences on approach]
 
-### Files to Create/Modify
+**Files to Create/Modify**: table of File, Action, Purpose
 
-| File | Action | Purpose |
-|------|--------|---------|\
-| `feature/FeatureActivity.kt` | Create | Activity entry point |
-| `feature/FeatureViewModel.kt` | Create | State + navigation events |
+**Implementation Steps**: Step N: What, Why, Navigation pattern
 
-### Implementation Steps
+**Navigation Safety Plan**: Pattern, ViewModel Scoping, Activity Launch, Back Button
 
-#### Step 1: [Title]
-- **What**: Create FeatureViewModel with sealed UiState
-- **Why**: Single source of truth for UI state
-- **Navigation**: Channel for one-time events
+**Testing Strategy**: table of Test, Coverage type
 
-### Navigation Safety Plan
-
-- **Pattern**: Channel<NavigationEvent> + LaunchedEffect(Unit)
-- **Activity Launch**: startActivity() + finish()
-- **Back Button**: Let Activity handle it naturally
-
-### Testing Strategy
-
-| Test | Coverage |
-|------|----------|
-| ViewModel state transitions | Unit |
-| UseCase error handling | Unit |
-| Compose UI rendering | Compose Test |
-
-### Risks
-
-| Risk | Mitigation |
-|------|------------|
-| State-based navigation | Use Channel pattern only |
-| Activity not finished | Add finish() after startActivity() |
+**Risks**: table of Risk, Mitigation

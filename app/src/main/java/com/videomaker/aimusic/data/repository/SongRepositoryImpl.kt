@@ -12,6 +12,7 @@ import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.TextSearchType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 
 /**
  * Implementation of SongRepository using Supabase Postgrest.
@@ -159,6 +160,30 @@ class SongRepositoryImpl(
         }
     }
 
+    /**
+     * Fetches only the genres column from all active songs, flattens and deduplicates client-side.
+     * Uses a minimal DTO to avoid transferring unnecessary data.
+     */
+    override suspend fun getGenres(): Result<List<String>> = withContext(Dispatchers.IO) {
+        try {
+            val rows = supabaseClient.from(TABLE_SONGS)
+                .select(Columns.raw("genres")) {
+                    filter { eq("is_active", true) }
+                }
+                .decodeList<SongGenresDto>()
+
+            val genres = rows.flatMap { it.genres }
+                .filter { it.isNotBlank() }
+                .map { it.trim() }
+                .distinct()
+                .sorted()
+
+            Result.success(genres)
+        } catch (e: Exception) {
+            Result.failure(Exception(ERROR_LOAD_FAILED, e))
+        }
+    }
+
     override suspend fun getSongsByGenre(genre: String, limit: Int): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
         try {
             // Filter by genre array contains
@@ -192,6 +217,35 @@ class SongRepositoryImpl(
                 .decodeList<SongDto>()
 
             Result.success(songs.toMusicSongs())
+        } catch (e: Exception) {
+            Result.failure(Exception(ERROR_LOAD_FAILED, e))
+        }
+    }
+
+    /** Minimal DTO for genres-only queries — avoids transferring full song rows. */
+    @Serializable
+    private data class SongGenresDto(
+        val genres: List<String> = emptyList()
+    )
+
+    /**
+     * Over-fetches (limit × 5, max 50) then shuffles client-side.
+     * Avoids a custom DB function while still feeling random across sessions.
+     */
+    override suspend fun getRandomSongs(limit: Int): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
+        try {
+            val fetchCount = (limit * 5L).coerceAtMost(50L)
+            val songs = supabaseClient.from(TABLE_SONGS)
+                .select {
+                    filter {
+                        eq("is_active", true)
+                    }
+                    order("sort_order", Order.DESCENDING)
+                    limit(fetchCount)
+                }
+                .decodeList<SongDto>()
+
+            Result.success(songs.shuffled().take(limit).toMusicSongs())
         } catch (e: Exception) {
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
