@@ -42,7 +42,19 @@ interface SongRepository {
     suspend fun getSongsPaged(offset: Int, limit: Int): Result<List<MusicSong>>
 
     /**
+     * Get suggested songs personalised by [preferredGenres].
+     * Falls back to top songs by sort_order when no genres are provided.
+     */
+    suspend fun getSuggestedSongs(preferredGenres: List<String>, limit: Int = 10): Result<List<MusicSong>>
+
+    /**
      * Get a random selection of songs (over-fetches then shuffles client-side)
      */
     suspend fun getRandomSongs(limit: Int = 10): Result<List<MusicSong>>
+
+    /**
+     * Clears all cached song data from disk.
+     * Call before pull-to-refresh to force fresh network fetches.
+     */
+    suspend fun clearCache()
 }

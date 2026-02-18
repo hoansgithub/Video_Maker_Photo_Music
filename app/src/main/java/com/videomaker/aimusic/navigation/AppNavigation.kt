@@ -1,14 +1,12 @@
 package com.videomaker.aimusic.navigation
 
-import androidx.compose.animation.ContentTransform
+import android.app.Activity
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,301 +18,206 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import co.alcheclub.lib.acccore.di.ACCDI
 import co.alcheclub.lib.acccore.di.get
 import com.videomaker.aimusic.di.AssetPickerViewModelFactory
 import com.videomaker.aimusic.di.EditorViewModelFactory
 import com.videomaker.aimusic.di.ExportViewModelFactory
-import com.videomaker.aimusic.di.ProjectsViewModelFactory
 import com.videomaker.aimusic.di.GallerySearchViewModelFactory
-import com.videomaker.aimusic.modules.gallerysearch.GallerySearchScreen
-import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
+import com.videomaker.aimusic.di.ProjectsViewModelFactory
 import com.videomaker.aimusic.modules.editor.EditorScreen
 import com.videomaker.aimusic.modules.editor.EditorViewModel
 import com.videomaker.aimusic.modules.export.ExportScreen
 import com.videomaker.aimusic.modules.export.ExportViewModel
+import com.videomaker.aimusic.modules.gallerysearch.GallerySearchScreen
+import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
 import com.videomaker.aimusic.modules.home.HomeScreen
-import com.videomaker.aimusic.modules.onboarding.OnboardingScreen
 import com.videomaker.aimusic.modules.picker.AssetPickerScreen
 import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
 import com.videomaker.aimusic.modules.projects.ProjectsScreen
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.settings.SettingsScreen
 
+private val slideAnimSpec = tween<IntOffset>(300)
+
 /**
- * AppNavigation - Main navigation host for Single-Activity Architecture
+ * AppNavigation — Navigation 3 (1.0.0 stable) host for MainActivity
  *
- * Navigation 3 Implementation:
- * - Uses NavDisplay instead of NavHost
- * - Back stack is a SnapshotStateList owned by NavigationState
- * - Navigator class handles all navigation events
- * - Entry provider resolves routes to composables
+ * Architecture matches android-short-drama-app:
+ * - rememberNavBackStack: Navigation 3 built-in back stack (handles serialization + config changes)
+ * - entryProvider { entry<T> }: Type-safe DSL replaces manual NavEntry when-blocks
+ * - rememberSaveableStateHolderNavEntryDecorator: Preserves rememberSaveable state
+ *   (scroll position, pager index, etc.) when navigating back
+ * - predictivePopTransitionSpec: Supports Android 14+ predictive-back gesture
  *
- * Key differences from Navigation 2.x:
- * - You own the back stack (not the library)
- * - Navigation = list manipulation (add/remove)
- * - Route arguments accessed directly from key parameter
- * - No toRoute<T>() needed - key IS the route
- *
- * @param startWithOnboarding If true, starts at Onboarding; otherwise Home
- * @param onOnboardingComplete Called when onboarding is completed
+ * Onboarding is NOT a route here — it lives in OnboardingActivity (separate one-time flow).
  */
 @Composable
-fun AppNavigation(
-    startWithOnboarding: Boolean,
-    onOnboardingComplete: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // Determine start destination
-    val startRoute: AppRoute = if (startWithOnboarding) {
-        AppRoute.Onboarding
-    } else {
-        AppRoute.Home
-    }
+fun AppNavigation(modifier: Modifier = Modifier) {
+    val activity = LocalContext.current as? Activity
+    val backStack = rememberNavBackStack(AppRoute.Home)
 
-    // Create navigation state with persistent back stack
-    val navigationState = rememberNavigationState(startRoute = startRoute)
-
-    // Create navigator for handling navigation events
-    val navigator = remember(navigationState) {
-        Navigator(navigationState)
-    }
-
-    // Animation specs matching Nav2 behavior (300ms slide + fade)
-    val forwardTransition: ContentTransform = (
-        slideInHorizontally(
-            animationSpec = tween(300),
-            initialOffsetX = { it }
-        ) + fadeIn(animationSpec = tween(300))
-    ) togetherWith (
-        slideOutHorizontally(
-            animationSpec = tween(300),
-            targetOffsetX = { -it / 3 }
-        ) + fadeOut(animationSpec = tween(300))
-    )
-
-    val backTransition: ContentTransform = (
-        slideInHorizontally(
-            animationSpec = tween(300),
-            initialOffsetX = { -it / 3 }
-        ) + fadeIn(animationSpec = tween(300))
-    ) togetherWith (
-        slideOutHorizontally(
-            animationSpec = tween(300),
-            targetOffsetX = { it }
-        ) + fadeOut(animationSpec = tween(300))
-    )
-
-    Box(modifier = modifier.fillMaxSize()) {
-        NavDisplay(
-            backStack = navigationState.backStack,
-            onBack = { navigator.goBack() },
-            transitionSpec = { forwardTransition },
-            popTransitionSpec = { backTransition },
-            entryProvider = { route ->
-                // NavEntry's content block is @Composable
-                NavEntry(route) {
-                    RouteContent(
-                        route = route,
-                        navigator = navigator,
-                        onOnboardingComplete = onOnboardingComplete
-                    )
-                }
+    NavDisplay(
+        modifier = modifier.fillMaxSize(),
+        backStack = backStack,
+        onBack = {
+            // At root (Home) — exit the app; otherwise pop
+            if (backStack.size > 1) {
+                backStack.removeLastOrNull()
+            } else {
+                activity?.finish()
             }
-        )
-    }
+        },
+        // Push: new screen slides in from right, current shifts left
+        transitionSpec = {
+            slideInHorizontally(initialOffsetX = { it }, animationSpec = slideAnimSpec) togetherWith
+                slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = slideAnimSpec)
+        },
+        // Pop: current screen slides out to right, previous slides in from left
+        popTransitionSpec = {
+            slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = slideAnimSpec) togetherWith
+                slideOutHorizontally(targetOffsetX = { it }, animationSpec = slideAnimSpec)
+        },
+        // Android 14+ predictive back gesture — same as pop
+        predictivePopTransitionSpec = {
+            slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = slideAnimSpec) togetherWith
+                slideOutHorizontally(targetOffsetX = { it }, animationSpec = slideAnimSpec)
+        },
+        entryProvider = entryProvider {
+
+            // ============================================
+            // HOME LEVEL
+            // ============================================
+            entry<AppRoute.Home> {
+                HomeScreen(
+                    onCreateClick = { backStack.add(AppRoute.AssetPicker()) },
+                    onMyProjectsClick = { backStack.add(AppRoute.Projects) },
+                    onSettingsClick = { backStack.add(AppRoute.Settings) },
+                    onNavigateToSearch = { backStack.add(AppRoute.Search) }
+                )
+            }
+
+            entry<AppRoute.Search> {
+                val factory = remember { ACCDI.get<GallerySearchViewModelFactory>() }
+                val searchViewModel: GallerySearchViewModel = viewModel(
+                    key = "gallery_search",
+                    factory = createSafeViewModelFactory { factory.create() }
+                )
+                GallerySearchScreen(
+                    viewModel = searchViewModel,
+                    onNavigateToTemplateDetail = { /* TODO */ },
+                    onNavigateBack = { backStack.removeLastOrNull() }
+                )
+            }
+
+            // ============================================
+            // CREATE FLOW
+            // ============================================
+            entry<AppRoute.AssetPicker> { route ->
+                val factory = remember(route.projectId) { ACCDI.get<AssetPickerViewModelFactory>() }
+                val pickerViewModel: AssetPickerViewModel = viewModel(
+                    key = "asset_picker_${route.projectId}",
+                    factory = createSafeViewModelFactory { factory.create(route.projectId) }
+                )
+                AssetPickerScreen(
+                    viewModel = pickerViewModel,
+                    onNavigateToEditor = { projectId ->
+                        // Pop back to Home then push Editor
+                        while (backStack.size > 1 && backStack.lastOrNull() !is AppRoute.Home) {
+                            backStack.removeLastOrNull()
+                        }
+                        backStack.add(AppRoute.Editor(projectId))
+                    },
+                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onAssetsAdded = { backStack.removeLastOrNull() }
+                )
+            }
+
+            entry<AppRoute.Editor> { route ->
+                val factory = remember(route.projectId) { ACCDI.get<EditorViewModelFactory>() }
+                val editorViewModel: EditorViewModel = viewModel(
+                    key = "editor_${route.projectId}",
+                    factory = createSafeViewModelFactory { factory.create(route.projectId) }
+                )
+                EditorScreen(
+                    viewModel = editorViewModel,
+                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateToPreview = { projectId ->
+                        backStack.add(AppRoute.Preview(projectId))
+                    },
+                    onNavigateToExport = { projectId ->
+                        backStack.add(AppRoute.Export(projectId))
+                    },
+                    onNavigateToAddAssets = { projectId ->
+                        backStack.add(AppRoute.AssetPicker(projectId))
+                    }
+                )
+            }
+
+            entry<AppRoute.Preview> { route ->
+                PlaceholderScreen(
+                    title = "Preview: ${route.projectId}",
+                    onBack = { backStack.removeLastOrNull() }
+                )
+            }
+
+            entry<AppRoute.Export> { route ->
+                val factory = remember(route.projectId) { ACCDI.get<ExportViewModelFactory>() }
+                val exportViewModel: ExportViewModel = viewModel(
+                    key = "export_${route.projectId}",
+                    factory = createSafeViewModelFactory { factory.create(route.projectId) }
+                )
+                ExportScreen(
+                    viewModel = exportViewModel,
+                    onNavigateBack = { backStack.removeLastOrNull() }
+                )
+            }
+
+            // ============================================
+            // PROJECTS
+            // ============================================
+            entry<AppRoute.Projects> {
+                val factory = remember { ACCDI.get<ProjectsViewModelFactory>() }
+                val projectsViewModel: ProjectsViewModel = viewModel(
+                    key = "projects",
+                    factory = createSafeViewModelFactory { factory.create() }
+                )
+                ProjectsScreen(
+                    viewModel = projectsViewModel,
+                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateToEditor = { projectId -> backStack.add(AppRoute.Editor(projectId)) },
+                    onCreateClick = { backStack.add(AppRoute.AssetPicker()) }
+                )
+            }
+
+            // ============================================
+            // SETTINGS
+            // ============================================
+            entry<AppRoute.Settings> {
+                SettingsScreen(onNavigateBack = { backStack.removeLastOrNull() })
+            }
+        }
+    )
 }
-
-/**
- * Renders the content for a given route.
- * This is a @Composable function that handles all route-specific rendering.
- */
-@Composable
-private fun RouteContent(
-    route: AppRoute,
-    navigator: Navigator,
-    onOnboardingComplete: () -> Unit
-) {
-    when (route) {
-        // ============================================
-        // ROOT LEVEL ROUTES
-        // ============================================
-        is AppRoute.Loading -> {
-            // Loading screen - typically handled by splash
-        }
-
-        is AppRoute.LanguageSelection -> {
-            // Handled by separate Activity
-        }
-
-        is AppRoute.Onboarding -> {
-            OnboardingScreen(
-                onComplete = {
-                    onOnboardingComplete()
-                    navigator.clearAndNavigate(AppRoute.Home)
-                }
-            )
-        }
-
-        // ============================================
-        // HOME LEVEL ROUTES
-        // ============================================
-        is AppRoute.Home -> {
-            HomeScreen(
-                onCreateClick = {
-                    navigator.navigate(AppRoute.AssetPicker())
-                },
-                onMyProjectsClick = {
-                    navigator.navigate(AppRoute.Projects)
-                },
-                onSettingsClick = {
-                    navigator.navigate(AppRoute.Settings)
-                },
-                onNavigateToSearch = {
-                    navigator.navigate(AppRoute.Search)
-                }
-            )
-        }
-
-        is AppRoute.Search -> {
-            val factory = remember { ACCDI.get<GallerySearchViewModelFactory>() }
-            val searchViewModel: GallerySearchViewModel = viewModel(
-                key = "gallery_search",
-                factory = createSafeViewModelFactory { factory.create() }
-            )
-
-            GallerySearchScreen(
-                viewModel = searchViewModel,
-                onNavigateToTemplateDetail = { templateId ->
-                    // TODO: Navigate to template detail
-                },
-                onNavigateBack = { navigator.goBack() }
-            )
-        }
-
-        // ============================================
-        // CREATE FLOW ROUTES
-        // ============================================
-        is AppRoute.AssetPicker -> {
-            // Key factory and ViewModel to projectId for proper lifecycle
-            val factory = remember(route.projectId) { ACCDI.get<AssetPickerViewModelFactory>() }
-            val pickerViewModel: AssetPickerViewModel = viewModel(
-                key = "asset_picker_${route.projectId}",
-                factory = createSafeViewModelFactory { factory.create(route.projectId) }
-            )
-
-            AssetPickerScreen(
-                viewModel = pickerViewModel,
-                onNavigateToEditor = { projectId ->
-                    navigator.navigatePopToHome(AppRoute.Editor(projectId))
-                },
-                onNavigateBack = { navigator.goBack() },
-                onAssetsAdded = { navigator.goBack() }
-            )
-        }
-
-        is AppRoute.Editor -> {
-            // Key factory and ViewModel to projectId for proper lifecycle
-            val factory = remember(route.projectId) { ACCDI.get<EditorViewModelFactory>() }
-            val editorViewModel: EditorViewModel = viewModel(
-                key = "editor_${route.projectId}",
-                factory = createSafeViewModelFactory { factory.create(route.projectId) }
-            )
-
-            EditorScreen(
-                viewModel = editorViewModel,
-                onNavigateBack = { navigator.goBack() },
-                onNavigateToPreview = { projectId ->
-                    navigator.navigate(AppRoute.Preview(projectId))
-                },
-                onNavigateToExport = { projectId ->
-                    navigator.navigate(AppRoute.Export(projectId))
-                },
-                onNavigateToAddAssets = { projectId ->
-                    navigator.navigate(AppRoute.AssetPicker(projectId))
-                }
-            )
-        }
-
-        is AppRoute.Preview -> {
-            PlaceholderScreen(
-                title = "Preview: ${route.projectId}",
-                onBack = { navigator.goBack() }
-            )
-        }
-
-        is AppRoute.Export -> {
-            // Key factory and ViewModel to projectId for proper lifecycle
-            val factory = remember(route.projectId) { ACCDI.get<ExportViewModelFactory>() }
-            val exportViewModel: ExportViewModel = viewModel(
-                key = "export_${route.projectId}",
-                factory = createSafeViewModelFactory { factory.create(route.projectId) }
-            )
-
-            ExportScreen(
-                viewModel = exportViewModel,
-                onNavigateBack = { navigator.goBack() }
-            )
-        }
-
-        // ============================================
-        // PROJECTS ROUTES
-        // ============================================
-        is AppRoute.Projects -> {
-            val factory = remember { ACCDI.get<ProjectsViewModelFactory>() }
-            val projectsViewModel: ProjectsViewModel = viewModel(
-                key = "projects",
-                factory = createSafeViewModelFactory { factory.create() }
-            )
-
-            ProjectsScreen(
-                viewModel = projectsViewModel,
-                onNavigateBack = { navigator.goBack() },
-                onNavigateToEditor = { projectId ->
-                    navigator.navigate(AppRoute.Editor(projectId))
-                },
-                onCreateClick = {
-                    navigator.navigate(AppRoute.AssetPicker())
-                }
-            )
-        }
-
-        // ============================================
-        // SETTINGS ROUTES
-        // ============================================
-        is AppRoute.Settings -> {
-            SettingsScreen(
-                onNavigateBack = { navigator.goBack() }
-            )
-        }
-    }
-}
-
 
 /**
  * Placeholder screen for routes not yet implemented
  */
 @Composable
-private fun PlaceholderScreen(
-    title: String,
-    onBack: () -> Unit
-) {
+private fun PlaceholderScreen(title: String, onBack: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium
-        )
+        Text(text = title, style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onBack) {
-            Text("Go Back")
-        }
+        Button(onClick = onBack) { Text("Go Back") }
     }
 }

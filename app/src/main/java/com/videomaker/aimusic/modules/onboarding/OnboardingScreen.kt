@@ -21,6 +21,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,9 +32,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import androidx.compose.runtime.mutableStateListOf
+import co.alcheclub.lib.acccore.di.ACCDI
 import com.videomaker.aimusic.modules.onboarding.pages.OnboardingPage1
 import com.videomaker.aimusic.modules.onboarding.pages.OnboardingPage2
 import com.videomaker.aimusic.modules.onboarding.pages.OnboardingPage3
+import com.videomaker.aimusic.modules.onboarding.pages.OnboardingPage4
+import com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepository
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.launch
 
@@ -49,11 +54,13 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun OnboardingScreen(
-    onComplete: () -> Unit
+    onComplete: () -> Unit,
+    onboardingRepository: OnboardingRepository = remember { ACCDI.get() }
 ) {
-    val pageCount = 3
+    val pageCount = 4
     val pagerState = rememberPagerState(pageCount = { pageCount })
     val coroutineScope = rememberCoroutineScope()
+    val selectedGenres = remember { mutableStateListOf<String>() }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -66,6 +73,13 @@ fun OnboardingScreen(
                 0 -> OnboardingPage1()
                 1 -> OnboardingPage2()
                 2 -> OnboardingPage3()
+                3 -> OnboardingPage4(
+                    selectedGenres = selectedGenres,
+                    onGenreToggle = { genre ->
+                        if (selectedGenres.contains(genre)) selectedGenres.remove(genre)
+                        else selectedGenres.add(genre)
+                    }
+                )
             }
         }
 
@@ -108,6 +122,7 @@ fun OnboardingScreen(
                             pagerState.animateScrollToPage(pagerState.currentPage + 1)
                         }
                     } else {
+                        onboardingRepository.savePreferredGenres(selectedGenres.toList())
                         onComplete()
                     }
                 },

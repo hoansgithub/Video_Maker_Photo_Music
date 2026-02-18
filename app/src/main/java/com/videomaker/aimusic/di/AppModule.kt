@@ -6,8 +6,9 @@ import co.alcheclub.lib.acccore.di.androidContext
 import co.alcheclub.lib.acccore.di.get
 import co.alcheclub.lib.acccore.di.module
 import co.alcheclub.lib.acccore.di.viewModel
-import com.videomaker.aimusic.core.data.local.PreferencesManager
+import com.videomaker.aimusic.core.data.local.ApiCacheManager
 import com.videomaker.aimusic.core.data.local.LanguageManager
+import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.data.local.database.ProjectDatabase
 import com.videomaker.aimusic.data.remote.SupabaseClientProvider
 import com.videomaker.aimusic.data.repository.ExportRepositoryImpl
@@ -17,6 +18,7 @@ import com.videomaker.aimusic.domain.repository.ExportRepository
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
+import com.videomaker.aimusic.domain.usecase.ClearSongCacheUseCase
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
 import com.videomaker.aimusic.domain.usecase.GetSongsByGenreUseCase
 import com.videomaker.aimusic.domain.usecase.GetStationSongsUseCase
@@ -78,6 +80,7 @@ import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
  */
 val dataModule = module {
     // Shared data sources
+    single { ApiCacheManager(androidContext()) }
     single { PreferencesManager(androidContext()) }
     single { LanguageManager(androidContext()) }
 
@@ -96,7 +99,7 @@ val dataModule = module {
     single<OnboardingRepository> { OnboardingRepositoryImpl(it.get()) }
     single<ProjectRepository> { ProjectRepositoryImpl(it.get(), it.get()) }
     single<ExportRepository> { ExportRepositoryImpl(it.get()) }
-    single<SongRepository> { SongRepositoryImpl(it.get()) }
+    single<SongRepository> { SongRepositoryImpl(it.get(), it.get()) }
 }
 
 // ========== MEDIA LAYER MODULE ==========
@@ -158,11 +161,12 @@ val domainModule = module {
 
     // Song use cases — single because they are stateless; factory instances held by singleton
     // factories would violate the factory lifecycle contract if use cases ever become stateful
-    single { GetSuggestedSongsUseCase(it.get()) }
+    single { GetSuggestedSongsUseCase(it.get(), it.get()) }
     single { GetWeeklyRankingSongsUseCase(it.get()) }
     single { GetStationSongsUseCase(it.get()) }
     single { GetGenresUseCase(it.get()) }
     single { GetSongsByGenreUseCase(it.get()) }
+    single { ClearSongCacheUseCase(it.get()) }
 }
 
 // ========== PRESENTATION LAYER MODULE ==========
@@ -290,14 +294,16 @@ class SongsViewModelFactory(
     private val getWeeklyRankingSongsUseCase: GetWeeklyRankingSongsUseCase,
     private val getStationSongsUseCase: GetStationSongsUseCase,
     private val getGenresUseCase: GetGenresUseCase,
-    private val getSongsByGenreUseCase: GetSongsByGenreUseCase
+    private val getSongsByGenreUseCase: GetSongsByGenreUseCase,
+    private val clearSongCacheUseCase: ClearSongCacheUseCase
 ) {
     fun create(): SongsViewModel = SongsViewModel(
         getSuggestedSongsUseCase = getSuggestedSongsUseCase,
         getWeeklyRankingSongsUseCase = getWeeklyRankingSongsUseCase,
         getStationSongsUseCase = getStationSongsUseCase,
         getGenresUseCase = getGenresUseCase,
-        getSongsByGenreUseCase = getSongsByGenreUseCase
+        getSongsByGenreUseCase = getSongsByGenreUseCase,
+        clearSongCacheUseCase = clearSongCacheUseCase
     )
 }
 
@@ -390,7 +396,8 @@ val presentationModule = module {
             getWeeklyRankingSongsUseCase = it.get(),
             getStationSongsUseCase = it.get(),
             getGenresUseCase = it.get(),
-            getSongsByGenreUseCase = it.get()
+            getSongsByGenreUseCase = it.get(),
+            clearSongCacheUseCase = it.get()
         )
     }
 }

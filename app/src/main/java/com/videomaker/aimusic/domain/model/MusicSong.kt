@@ -1,10 +1,13 @@
 package com.videomaker.aimusic.domain.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * MusicSong - A song from the music library for video creation
  *
  * Songs are loaded from Supabase `songs` table and displayed in Gallery/Songs tabs.
  */
+@Serializable
 data class MusicSong(
     val id: Long,
     val name: String,

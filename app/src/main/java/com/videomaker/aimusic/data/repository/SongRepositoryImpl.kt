@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.data.repository
 
+import com.videomaker.aimusic.core.data.local.ApiCacheManager
 import com.videomaker.aimusic.data.mapper.toMusicSong
 import com.videomaker.aimusic.data.mapper.toMusicSongs
 import com.videomaker.aimusic.data.remote.dto.SongDto
@@ -18,7 +19,8 @@ import kotlinx.serialization.Serializable
  * Implementation of SongRepository using Supabase Postgrest.
  */
 class SongRepositoryImpl(
-    private val supabaseClient: SupabaseClient
+    private val supabaseClient: SupabaseClient,
+    private val apiCacheManager: ApiCacheManager
 ) : SongRepository {
 
     companion object {
@@ -45,19 +47,25 @@ class SongRepositoryImpl(
     }
 
     override suspend fun getFeaturedSongs(limit: Int): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
+        val cacheKey = ApiCacheManager.KEY_SONGS_WEEKLY_RANKING
+        apiCacheManager.get<List<MusicSong>>(cacheKey)
+            ?.let { return@withContext Result.success(it) }
+
         try {
             val songs = supabaseClient.from(TABLE_SONGS)
                 .select {
-                    filter {
-                        eq("is_active", true)
-                    }
+                    filter { eq("is_active", true) }
                     order("sort_order", Order.DESCENDING)
                     limit(limit.toLong())
                 }
                 .decodeList<SongDto>()
+                .toMusicSongs()
 
-            Result.success(songs.toMusicSongs())
+            apiCacheManager.put(cacheKey, songs)
+            Result.success(songs)
         } catch (e: Exception) {
+            apiCacheManager.getStale<List<MusicSong>>(cacheKey)
+                ?.let { return@withContext Result.success(it) }
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
     }
@@ -165,6 +173,10 @@ class SongRepositoryImpl(
      * Uses a minimal DTO to avoid transferring unnecessary data.
      */
     override suspend fun getGenres(): Result<List<String>> = withContext(Dispatchers.IO) {
+        val cacheKey = ApiCacheManager.KEY_SONGS_GENRES
+        apiCacheManager.get<List<String>>(cacheKey)
+            ?.let { return@withContext Result.success(it) }
+
         try {
             val rows = supabaseClient.from(TABLE_SONGS)
                 .select(Columns.raw("genres")) {
@@ -178,15 +190,21 @@ class SongRepositoryImpl(
                 .distinct()
                 .sorted()
 
+            apiCacheManager.put(cacheKey, genres)
             Result.success(genres)
         } catch (e: Exception) {
+            apiCacheManager.getStale<List<String>>(cacheKey)
+                ?.let { return@withContext Result.success(it) }
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
     }
 
     override suspend fun getSongsByGenre(genre: String, limit: Int): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
+        val cacheKey = ApiCacheManager.keySongsGenre(genre)
+        apiCacheManager.get<List<MusicSong>>(cacheKey)
+            ?.let { return@withContext Result.success(it) }
+
         try {
-            // Filter by genre array contains
             val songs = supabaseClient.from(TABLE_SONGS)
                 .select {
                     filter {
@@ -197,9 +215,13 @@ class SongRepositoryImpl(
                     limit(limit.toLong())
                 }
                 .decodeList<SongDto>()
+                .toMusicSongs()
 
-            Result.success(songs.toMusicSongs())
+            apiCacheManager.put(cacheKey, songs)
+            Result.success(songs)
         } catch (e: Exception) {
+            apiCacheManager.getStale<List<MusicSong>>(cacheKey)
+                ?.let { return@withContext Result.success(it) }
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
     }
@@ -229,8 +251,61 @@ class SongRepositoryImpl(
     )
 
     /**
+     * Cache key: songs_suggested
+     * Genre-aware: filters by preferredGenres overlap when provided,
+     * otherwise falls back to top songs by sort_order.
+     */
+    override suspend fun getSuggestedSongs(
+        preferredGenres: List<String>,
+        limit: Int
+    ): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
+        val cacheKey = ApiCacheManager.KEY_SONGS_SUGGESTED
+        apiCacheManager.get<List<MusicSong>>(cacheKey)
+            ?.let { return@withContext Result.success(it) }
+
+        try {
+            // DB stores genres in lowercase (e.g. "pop", "hip-hop") — normalise before querying
+            val normalised = preferredGenres.map { it.lowercase() }
+            val songs = if (normalised.isNotEmpty()) {
+                supabaseClient.from(TABLE_SONGS)
+                    .select {
+                        filter {
+                            eq("is_active", true)
+                            overlaps("genres", normalised)
+                        }
+                        order("sort_order", Order.DESCENDING)
+                        limit(limit.toLong())
+                    }
+                    .decodeList<SongDto>()
+                    .toMusicSongs()
+            } else {
+                supabaseClient.from(TABLE_SONGS)
+                    .select {
+                        filter { eq("is_active", true) }
+                        order("sort_order", Order.DESCENDING)
+                        limit(limit.toLong())
+                    }
+                    .decodeList<SongDto>()
+                    .toMusicSongs()
+            }
+
+            apiCacheManager.put(cacheKey, songs)
+            Result.success(songs)
+        } catch (e: Exception) {
+            apiCacheManager.getStale<List<MusicSong>>(cacheKey)
+                ?.let { return@withContext Result.success(it) }
+            Result.failure(Exception(ERROR_LOAD_FAILED, e))
+        }
+    }
+
+    override suspend fun clearCache() {
+        apiCacheManager.clearSongCache()
+    }
+
+    /**
      * Over-fetches (limit × 5, max 50) then shuffles client-side.
      * Avoids a custom DB function while still feeling random across sessions.
+     * NOT cached — randomness is the point.
      */
     override suspend fun getRandomSongs(limit: Int): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
         try {

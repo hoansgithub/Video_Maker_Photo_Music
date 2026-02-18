@@ -16,4 +16,10 @@ interface OnboardingRepository {
      * Mark onboarding as completed
      */
     suspend fun completeOnboarding(): Result<Unit>
+
+    /** Save genre preferences selected on the onboarding genre step. */
+    fun savePreferredGenres(genres: List<String>)
+
+    /** Returns genres saved during onboarding. Empty list = no preference. */
+    fun getPreferredGenres(): List<String>
 }

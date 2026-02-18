@@ -18,6 +18,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.alcheclub.lib.acccore.di.viewModel
 import com.videomaker.aimusic.modules.language.LanguageSelectionActivity
+import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
 import com.videomaker.aimusic.modules.root.LoadingScreen
 import com.videomaker.aimusic.modules.root.RootNavigationEvent
 import com.videomaker.aimusic.modules.root.RootViewModel
@@ -43,7 +44,7 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
  * 5. Check language selection status:
  *    - If NOT selected → Launch LanguageSelectionActivity
  *    - If selected → Check onboarding:
- *      - If needed → Launch MainActivity with onboarding flag
+ *      - If needed → Launch OnboardingActivity (separate one-time flow)
  *      - If done → Launch MainActivity (Home)
  *
  * This architecture prevents Activity recreation flicker when changing language,
@@ -108,11 +109,8 @@ class RootViewActivity : AppCompatActivity() {
                 finish()
             }
             is AppRoute.Onboarding -> {
-                // Navigate to MainActivity with onboarding flag
-                val intent = Intent(this, MainActivity::class.java).apply {
-                    putExtra(EXTRA_SHOW_ONBOARDING, true)
-                }
-                startActivity(intent)
+                // Navigate to OnboardingActivity (separate one-time flow)
+                startActivity(Intent(this, OnboardingActivity::class.java))
                 applyDefaultTransition()
                 finish()
             }
@@ -178,7 +176,4 @@ class RootViewActivity : AppCompatActivity() {
         }
     }
 
-    companion object {
-        const val EXTRA_SHOW_ONBOARDING = "extra_show_onboarding"
-    }
 }

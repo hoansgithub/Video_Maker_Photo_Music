@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.domain.model.MusicSong
+import com.videomaker.aimusic.domain.usecase.ClearSongCacheUseCase
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
 import com.videomaker.aimusic.domain.usecase.GetSongsByGenreUseCase
 import com.videomaker.aimusic.domain.usecase.GetStationSongsUseCase
@@ -33,6 +34,7 @@ sealed class SectionState<out T> {
 
 sealed class SongsNavigationEvent {
     data class NavigateToSongDetail(val songId: Long) : SongsNavigationEvent()
+    data object NavigateToSuggestedAll : SongsNavigationEvent()
 }
 
 // ============================================
@@ -44,7 +46,8 @@ class SongsViewModel(
     private val getWeeklyRankingSongsUseCase: GetWeeklyRankingSongsUseCase,
     private val getStationSongsUseCase: GetStationSongsUseCase,
     private val getGenresUseCase: GetGenresUseCase,
-    private val getSongsByGenreUseCase: GetSongsByGenreUseCase
+    private val getSongsByGenreUseCase: GetSongsByGenreUseCase,
+    private val clearSongCacheUseCase: ClearSongCacheUseCase
 ) : ViewModel() {
 
     private val _suggestedState =
@@ -87,16 +90,21 @@ class SongsViewModel(
     }
 
     fun refresh() {
-        if (_isRefreshing.value) return
-        _isRefreshing.value = true
         viewModelScope.launch {
-            coroutineScope {
-                launch(Dispatchers.Default) { loadSuggested() }
-                launch(Dispatchers.Default) { loadRanking() }
-                launch(Dispatchers.Default) { loadStations() }
-                launch(Dispatchers.Default) { loadGenres() }
+            // compareAndSet is atomic — prevents double-refresh race when refresh()
+            // is called rapidly (e.g. double-tap / pull-to-refresh + button tap)
+            if (!_isRefreshing.compareAndSet(false, true)) return@launch
+            try {
+                clearSongCacheUseCase()  // wipe disk cache before re-fetching
+                coroutineScope {
+                    launch(Dispatchers.Default) { loadSuggested() }
+                    launch(Dispatchers.Default) { loadRanking() }
+                    launch(Dispatchers.Default) { loadStations() }
+                    launch(Dispatchers.Default) { loadGenres() }
+                }
+            } finally {
+                _isRefreshing.value = false
             }
-            _isRefreshing.value = false
         }
     }
 
@@ -144,6 +152,10 @@ class SongsViewModel(
 
     fun onSongClick(song: MusicSong) {
         _navigationEvent.value = SongsNavigationEvent.NavigateToSongDetail(song.id)
+    }
+
+    fun onSeeMoreSuggestedClick() {
+        _navigationEvent.value = SongsNavigationEvent.NavigateToSuggestedAll
     }
 
     fun onNavigationHandled() {

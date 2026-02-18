@@ -32,4 +32,11 @@ class OnboardingRepositoryImpl(
             Result.failure(e)
         }
     }
+
+    override fun savePreferredGenres(genres: List<String>) {
+        preferencesManager.setPreferredGenres(genres)
+    }
+
+    override fun getPreferredGenres(): List<String> =
+        preferencesManager.getPreferredGenres()
 }

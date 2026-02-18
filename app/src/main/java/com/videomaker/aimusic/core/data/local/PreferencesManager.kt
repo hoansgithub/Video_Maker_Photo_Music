@@ -20,8 +20,20 @@ class PreferencesManager(context: Context) {
         private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
         private const val KEY_FIRST_LAUNCH = "first_launch"
         private const val KEY_RECENT_SEARCHES = "recent_searches"
+        private const val KEY_PREFERRED_GENRES = "preferred_genres"
         private const val RECENT_SEARCHES_DELIMITER = "\u001F" // Unit Separator
+        private const val GENRES_DELIMITER = ","
         private const val MAX_RECENT_SEARCHES = 10
+    }
+
+    /** Music genre preferences selected during onboarding. Empty = no preference set. */
+    fun getPreferredGenres(): List<String> {
+        val raw = prefs.getString(KEY_PREFERRED_GENRES, null) ?: return emptyList()
+        return raw.split(GENRES_DELIMITER).filter { it.isNotBlank() }
+    }
+
+    fun setPreferredGenres(genres: List<String>) {
+        prefs.edit { putString(KEY_PREFERRED_GENRES, genres.joinToString(GENRES_DELIMITER)) }
     }
 
     /**

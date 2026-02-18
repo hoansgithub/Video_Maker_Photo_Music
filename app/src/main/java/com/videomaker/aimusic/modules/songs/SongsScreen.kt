@@ -52,6 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import co.alcheclub.lib.acccore.di.ACCDI
@@ -75,6 +76,7 @@ import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
 import com.videomaker.aimusic.ui.theme.SearchFieldBorder
 import com.videomaker.aimusic.ui.theme.TextBright
+import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.theme.TextTertiary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
@@ -88,6 +90,7 @@ import com.videomaker.aimusic.ui.theme.Gray450
 fun SongsScreen(
     topBarHeight: Dp = 0.dp,
     onNavigateToSongDetail: (Long) -> Unit = {},
+    onNavigateToSuggestedAll: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {}
 ) {
     val factory = remember { ACCDI.get<SongsViewModelFactory>() }
@@ -107,6 +110,7 @@ fun SongsScreen(
         navigationEvent?.let { event ->
             when (event) {
                 is SongsNavigationEvent.NavigateToSongDetail -> onNavigateToSongDetail(event.songId)
+                is SongsNavigationEvent.NavigateToSuggestedAll -> onNavigateToSuggestedAll()
             }
             viewModel.onNavigationHandled()
         }
@@ -134,6 +138,7 @@ fun SongsScreen(
                 isRefreshing = isRefreshing,
                 onRefresh = viewModel::refresh,
                 onSongClick = viewModel::onSongClick,
+                onSeeMoreSuggested = viewModel::onSeeMoreSuggestedClick,
                 onSearchClick = onNavigateToSearch
             )
         }
@@ -157,6 +162,7 @@ private fun SongsContent(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onSongClick: (MusicSong) -> Unit,
+    onSeeMoreSuggested: () -> Unit,
     onSearchClick: () -> Unit
 ) {
     val dimens = AppDimens.current
@@ -191,7 +197,7 @@ private fun SongsContent(
                     title = stringResource(R.string.songs_suggest_for_you),
                     icon = Icons.Default.Favorite,
                     iconTint = Primary,
-                    onSeeAllClick = { /* TODO: Navigate to all suggestions */ }
+                    onSeeAllClick = onSeeMoreSuggested
                 )
                 Spacer(modifier = Modifier.height(dimens.spaceSm))
             }
@@ -358,43 +364,52 @@ private fun SuggestSongsList(
     }
 }
 
-/** Shimmer skeleton that matches the real [SuggestSongCard] dimensions. */
+/** Shimmer skeleton that matches the real [SuggestSongCard] layout (162dp wide, 1:1 thumb + info). */
 @Composable
 private fun SuggestSongCardPlaceholder() {
     val dimens = AppDimens.current
 
-    Column(modifier = Modifier.width(162.dp)) {
-        // Cover image area
+    Column(
+        modifier = Modifier
+            .width(162.dp)
+            .clip(RoundedCornerShape(dimens.radiusLg))
+            .background(PlaceholderBackground)
+    ) {
+        // 1:1 thumbnail shimmer
         ShimmerBox(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(162f / 207f)
-                .clip(RoundedCornerShape(topStart = dimens.radiusLg, topEnd = dimens.radiusLg))
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(16.dp))
         )
-        // Title + artist text area
-        Column(
+        // Title row + artist shimmer
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    color = PlaceholderBackground,
-                    shape = RoundedCornerShape(
-                        bottomStart = dimens.radiusLg,
-                        bottomEnd = dimens.radiusLg
-                    )
-                )
-                .padding(dimens.spaceSm),
-            verticalArrangement = Arrangement.spacedBy(dimens.spaceXxs)
+                .padding(vertical = dimens.spaceSm),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(dimens.spaceXxs)
+            ) {
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(15.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                )
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .height(13.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                )
+            }
+            Spacer(modifier = Modifier.width(dimens.spaceXs))
             ShimmerBox(
                 modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(14.dp)
-                    .clip(RoundedCornerShape(4.dp))
-            )
-            ShimmerBox(
-                modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(12.dp)
+                    .size(36.dp)
                     .clip(RoundedCornerShape(4.dp))
             )
         }
@@ -411,41 +426,61 @@ private fun SuggestSongCard(
 
     Card(
         onClick = onClick,
-        modifier = modifier.width(162.dp),
+        modifier = modifier
+            .width(162.dp),
         shape = RoundedCornerShape(dimens.radiusLg),
         colors = CardDefaults.cardColors(containerColor = CardDark)
     ) {
         Column {
-            // Cover image (ratio 162:207)
+            // Cover image — 1:1, 16dp corner radius
             AppAsyncImage(
                 imageUrl = song.coverUrl,
                 contentDescription = song.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(162f / 207f)
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(16.dp))
             )
 
-            // Song info
-            Column(
+            // Song info: [name + artist column] | [start-project button]
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(dimens.spaceSm)
+                    .padding(vertical = dimens.spaceSm),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = song.name,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                    color = TextBright,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(dimens.spaceXxs))
-                Text(
-                    text = song.artist,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = song.name,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 15.sp
+                        ),
+                        color = TextPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(dimens.spaceXxs))
+                    Text(
+                        text = song.artist,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 13.sp
+                        ),
+                        color = TextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Spacer(modifier = Modifier.width(dimens.spaceXs))
+                Icon(
+                    painter = painterResource(R.drawable.ic_start_project),
+                    contentDescription = stringResource(R.string.start_project),
+                    tint = Color.Unspecified,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clickable(onClick = onClick)
                 )
             }
         }
@@ -993,6 +1028,7 @@ private fun SongsContentLoadedPreview() {
                     isRefreshing = false,
                     onRefresh = {},
                     onSongClick = {},
+                    onSeeMoreSuggested = {},
                     onSearchClick = {}
                 )
             }
@@ -1023,6 +1059,7 @@ private fun SongsContentLoadingPreview() {
                     isRefreshing = false,
                     onRefresh = {},
                     onSongClick = {},
+                    onSeeMoreSuggested = {},
                     onSearchClick = {}
                 )
             }
@@ -1030,7 +1067,7 @@ private fun SongsContentLoadingPreview() {
     }
 }
 
-@Preview(name = "Suggest Song Card", widthDp = 162, heightDp = 280)
+@Preview(name = "Suggest Song Card", widthDp = 162)
 @Composable
 private fun SuggestSongCardPreview() {
     VideoMakerTheme {
@@ -1038,7 +1075,7 @@ private fun SuggestSongCardPreview() {
     }
 }
 
-@Preview(name = "Suggest Song Card – Placeholder", widthDp = 162, heightDp = 280)
+@Preview(name = "Suggest Song Card – Placeholder", widthDp = 162)
 @Composable
 private fun SuggestSongCardPlaceholderPreview() {
     VideoMakerTheme {

@@ -9,8 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import co.alcheclub.lib.acccore.di.ACCDI
 import co.alcheclub.lib.acccore.di.get
-import com.videomaker.aimusic.MainActivity
-import com.videomaker.aimusic.RootViewActivity
+import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
@@ -85,16 +84,11 @@ class LanguageSelectionActivity : AppCompatActivity() {
     }
 
     /**
-     * Navigate to MainActivity with onboarding flag.
-     *
-     * After language selection, user should see onboarding flow.
-     * MainActivity will start fresh with correct locale already applied.
+     * After language selection, launch OnboardingActivity.
+     * Language is already applied so OnboardingActivity starts with the correct locale.
      */
     private fun navigateToMain() {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            putExtra(RootViewActivity.EXTRA_SHOW_ONBOARDING, true)
-        }
-        startActivity(intent)
+        startActivity(Intent(this, OnboardingActivity::class.java))
         applyDefaultTransition()
         finish()
     }

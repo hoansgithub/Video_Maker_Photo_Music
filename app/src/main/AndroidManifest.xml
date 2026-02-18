@@ -40,6 +40,13 @@
             </intent-filter>
         </activity>
 
+        <!-- OnboardingActivity - First-time user onboarding (separate one-time flow) -->
+        <activity
+            android:name=".modules.onboarding.OnboardingActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+
         <!-- LanguageSelectionActivity - First-time language picker -->
         <activity
             android:name=".modules.language.LanguageSelectionActivity"
