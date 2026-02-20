@@ -17,7 +17,8 @@ fun SongDto.toMusicSong(): MusicSong = MusicSong(
     durationMs = durationMs,
     isPremium = isPremium,
     isActive = isActive,
-    sortOrder = sortOrder
+    sortOrder = sortOrder,
+    usageCount = usageCount
 )
 
 fun List<SongDto>.toMusicSongs(): List<MusicSong> = map { it.toMusicSong() }

@@ -13,6 +13,7 @@ import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.TextSearchType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -25,6 +26,7 @@ class SongRepositoryImpl(
 
     companion object {
         private const val TABLE_SONGS = "songs"
+        private const val TABLE_GENRES = "genres"
         private const val ERROR_LOAD_FAILED = "Failed to load songs"
         private const val ERROR_NOT_FOUND = "Song not found"
     }
@@ -169,8 +171,8 @@ class SongRepositoryImpl(
     }
 
     /**
-     * Fetches only the genres column from all active songs, flattens and deduplicates client-side.
-     * Uses a minimal DTO to avoid transferring unnecessary data.
+     * Fetches genres from the `genres` table, filtered by type = "genre" to exclude
+     * country codes and tags. Returns only active genre IDs, sorted by popularity (sort_order DESC).
      */
     override suspend fun getGenres(): Result<List<String>> = withContext(Dispatchers.IO) {
         val cacheKey = ApiCacheManager.KEY_SONGS_GENRES
@@ -178,17 +180,16 @@ class SongRepositoryImpl(
             ?.let { return@withContext Result.success(it) }
 
         try {
-            val rows = supabaseClient.from(TABLE_SONGS)
-                .select(Columns.raw("genres")) {
-                    filter { eq("is_active", true) }
+            val genres = supabaseClient.from(TABLE_GENRES)
+                .select(Columns.raw("id")) {
+                    filter {
+                        eq("type", "genre")
+                        eq("is_active", true)
+                    }
+                    order("sort_order", Order.DESCENDING)
                 }
-                .decodeList<SongGenresDto>()
-
-            val genres = rows.flatMap { it.genres }
-                .filter { it.isNotBlank() }
-                .map { it.trim() }
-                .distinct()
-                .sorted()
+                .decodeList<GenreDto>()
+                .map { it.id }
 
             apiCacheManager.put(cacheKey, genres)
             Result.success(genres)
@@ -248,6 +249,19 @@ class SongRepositoryImpl(
     @Serializable
     private data class SongGenresDto(
         val genres: List<String> = emptyList()
+    )
+
+    /** DTO for genres table row (id, display_name, type, sort_order, is_active). */
+    @Serializable
+    private data class GenreDto(
+        val id: String,
+        @SerialName("display_name")
+        val displayName: String = "",
+        val type: String = "",
+        @SerialName("sort_order")
+        val sortOrder: Int = 0,
+        @SerialName("is_active")
+        val isActive: Boolean = true
     )
 
     /**
