@@ -30,9 +30,14 @@ import com.videomaker.aimusic.di.AssetPickerViewModelFactory
 import com.videomaker.aimusic.di.EditorViewModelFactory
 import com.videomaker.aimusic.di.ExportViewModelFactory
 import com.videomaker.aimusic.di.GallerySearchViewModelFactory
+import com.videomaker.aimusic.di.GalleryViewModelFactory
+import com.videomaker.aimusic.di.MusicPickerViewModelFactory
 import com.videomaker.aimusic.di.ProjectsViewModelFactory
+import com.videomaker.aimusic.di.SongsViewModelFactory
 import com.videomaker.aimusic.modules.editor.EditorScreen
 import com.videomaker.aimusic.modules.editor.EditorViewModel
+import com.videomaker.aimusic.modules.gallery.GalleryViewModel
+import com.videomaker.aimusic.modules.songs.SongsViewModel
 import com.videomaker.aimusic.modules.export.ExportScreen
 import com.videomaker.aimusic.modules.export.ExportViewModel
 import com.videomaker.aimusic.modules.gallerysearch.GallerySearchScreen
@@ -95,7 +100,19 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             // HOME LEVEL
             // ============================================
             entry<AppRoute.Home> {
+                val galleryFactory = remember { ACCDI.get<GalleryViewModelFactory>() }
+                val galleryViewModel: GalleryViewModel = viewModel(
+                    key = "gallery",
+                    factory = createSafeViewModelFactory { galleryFactory.create() }
+                )
+                val songsFactory = remember { ACCDI.get<SongsViewModelFactory>() }
+                val songsViewModel: SongsViewModel = viewModel(
+                    key = "songs",
+                    factory = createSafeViewModelFactory { songsFactory.create() }
+                )
                 HomeScreen(
+                    galleryViewModel = galleryViewModel,
+                    songsViewModel = songsViewModel,
                     onCreateClick = { backStack.add(AppRoute.AssetPicker()) },
                     onMyProjectsClick = { backStack.add(AppRoute.Projects) },
                     onSettingsClick = { backStack.add(AppRoute.Settings) },
@@ -141,12 +158,14 @@ fun AppNavigation(modifier: Modifier = Modifier) {
 
             entry<AppRoute.Editor> { route ->
                 val factory = remember(route.projectId) { ACCDI.get<EditorViewModelFactory>() }
+                val musicPickerFactory = remember { ACCDI.get<MusicPickerViewModelFactory>() }
                 val editorViewModel: EditorViewModel = viewModel(
                     key = "editor_${route.projectId}",
                     factory = createSafeViewModelFactory { factory.create(route.projectId) }
                 )
                 EditorScreen(
                     viewModel = editorViewModel,
+                    musicPickerViewModelFactory = musicPickerFactory,
                     onNavigateBack = { backStack.removeLastOrNull() },
                     onNavigateToPreview = { projectId ->
                         backStack.add(AppRoute.Preview(projectId))

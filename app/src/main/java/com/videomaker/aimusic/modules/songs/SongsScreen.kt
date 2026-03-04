@@ -56,13 +56,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import co.alcheclub.lib.acccore.di.ACCDI
-import co.alcheclub.lib.acccore.di.get
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.di.SongsViewModelFactory
 import com.videomaker.aimusic.domain.model.MusicSong
-import com.videomaker.aimusic.navigation.createSafeViewModelFactory
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.SectionHeader
@@ -89,15 +84,12 @@ import com.videomaker.aimusic.ui.theme.Gray450
 
 @Composable
 fun SongsScreen(
+    viewModel: SongsViewModel,
     topBarHeight: Dp = 0.dp,
     onNavigateToSongDetail: (Long) -> Unit = {},
     onNavigateToSuggestedAll: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {}
 ) {
-    val factory = remember { ACCDI.get<SongsViewModelFactory>() }
-    val viewModel: SongsViewModel = viewModel(
-        factory = createSafeViewModelFactory { factory.create() }
-    )
 
     val suggestedState by viewModel.suggestedState.collectAsStateWithLifecycle()
     val rankingState by viewModel.rankingState.collectAsStateWithLifecycle()

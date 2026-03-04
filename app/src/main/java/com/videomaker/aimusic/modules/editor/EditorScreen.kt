@@ -48,7 +48,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import co.alcheclub.lib.acccore.di.ACCDI
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.di.MusicPickerViewModelFactory
 import com.videomaker.aimusic.domain.model.Project
@@ -76,6 +75,7 @@ import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen
 @Composable
 fun EditorScreen(
     viewModel: EditorViewModel,
+    musicPickerViewModelFactory: MusicPickerViewModelFactory,
     onNavigateBack: () -> Unit,
     onNavigateToPreview: (String) -> Unit,
     onNavigateToExport: (String) -> Unit,
@@ -86,7 +86,6 @@ fun EditorScreen(
     var showMusicPicker by remember { mutableStateOf(false) }
 
     // Music Picker ViewModel - created on demand
-    val musicPickerViewModelFactory = remember { ACCDI.get<MusicPickerViewModelFactory>() }
     val musicPickerViewModel = remember(showMusicPicker) {
         if (showMusicPicker) musicPickerViewModelFactory.create() else null
     }

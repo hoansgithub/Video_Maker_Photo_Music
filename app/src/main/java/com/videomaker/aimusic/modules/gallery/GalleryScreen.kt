@@ -84,12 +84,7 @@ import com.videomaker.aimusic.ui.theme.TextOnPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.theme.TextTertiary
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import co.alcheclub.lib.acccore.di.ACCDI
-import co.alcheclub.lib.acccore.di.get
 import coil.compose.AsyncImage
-import com.videomaker.aimusic.di.GalleryViewModelFactory
-import com.videomaker.aimusic.navigation.createSafeViewModelFactory
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
@@ -113,6 +108,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun GalleryScreen(
+    viewModel: GalleryViewModel,
     topBarHeight: Dp = 0.dp,
     onNavigateToSongDetail: (Long) -> Unit = {},
     onNavigateToTemplateDetail: (String) -> Unit = {},
@@ -122,11 +118,6 @@ fun GalleryScreen(
     onNavigateToCreate: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {}
 ) {
-    val factory = remember { ACCDI.get<GalleryViewModelFactory>() }
-    val viewModel: GalleryViewModel = viewModel(
-        factory = createSafeViewModelFactory { factory.create() }
-    )
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
 

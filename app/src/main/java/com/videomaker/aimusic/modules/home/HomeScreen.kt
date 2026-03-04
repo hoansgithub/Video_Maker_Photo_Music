@@ -46,11 +46,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.modules.gallery.GalleryScreen
+import com.videomaker.aimusic.modules.gallery.GalleryViewModel
+import com.videomaker.aimusic.modules.songs.SongsScreen
+import com.videomaker.aimusic.modules.songs.SongsViewModel
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.PrimaryDark
 import com.videomaker.aimusic.ui.theme.TextInactive
-import com.videomaker.aimusic.modules.gallery.GalleryScreen
-import com.videomaker.aimusic.modules.songs.SongsScreen
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.launch
 
@@ -69,6 +71,8 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun HomeScreen(
+    galleryViewModel: GalleryViewModel,
+    songsViewModel: SongsViewModel,
     onSettingsClick: () -> Unit = {},
     onCreateClick: () -> Unit = {},
     onMyProjectsClick: () -> Unit = {},
@@ -102,11 +106,13 @@ fun HomeScreen(
         ) { page ->
             when (page) {
                 0 -> GalleryTabContent(
+                    viewModel = galleryViewModel,
                     onCreateClick = onCreateClick,
                     onNavigateToSearch = onNavigateToSearch,
                     topBarHeight = topBarHeight
                 )
                 1 -> SongsTabContent(
+                    viewModel = songsViewModel,
                     topBarHeight = topBarHeight,
                     onNavigateToSearch = onNavigateToSearch
                 )
@@ -251,11 +257,13 @@ private fun HomeTopBar(
  */
 @Composable
 private fun GalleryTabContent(
+    viewModel: GalleryViewModel,
     onCreateClick: () -> Unit,
     onNavigateToSearch: () -> Unit = {},
     topBarHeight: Dp = 0.dp
 ) {
     GalleryScreen(
+        viewModel = viewModel,
         topBarHeight = topBarHeight,
         onNavigateToCreate = onCreateClick,
         onNavigateToSongDetail = { songId ->
@@ -282,10 +290,12 @@ private fun GalleryTabContent(
  */
 @Composable
 private fun SongsTabContent(
+    viewModel: SongsViewModel,
     topBarHeight: Dp = 0.dp,
     onNavigateToSearch: () -> Unit = {}
 ) {
     SongsScreen(
+        viewModel = viewModel,
         topBarHeight = topBarHeight,
         onNavigateToSongDetail = { songId ->
             // TODO: Navigate to song detail

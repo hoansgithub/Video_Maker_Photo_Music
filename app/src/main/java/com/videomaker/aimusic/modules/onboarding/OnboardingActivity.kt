@@ -8,11 +8,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import co.alcheclub.lib.acccore.di.ACCDI
 import co.alcheclub.lib.acccore.di.get
 import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
+import com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepository
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.launch
 
@@ -34,6 +36,16 @@ class OnboardingActivity : AppCompatActivity() {
 
     private val completeOnboardingUseCase by lazy { ACCDI.get<CompleteOnboardingUseCase>() }
 
+    private val onboardingViewModel: OnboardingViewModel by lazy {
+        val repository = ACCDI.get<OnboardingRepository>()
+        ViewModelProvider(this, object : ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return OnboardingViewModel(repository) as T
+            }
+        })[OnboardingViewModel::class.java]
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -42,6 +54,7 @@ class OnboardingActivity : AppCompatActivity() {
             VideoMakerTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     OnboardingScreen(
+                        viewModel = onboardingViewModel,
                         onComplete = { completeOnboardingAndNavigate() }
                     )
                 }
