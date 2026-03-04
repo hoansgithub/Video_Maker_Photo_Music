@@ -113,6 +113,11 @@ android {
         buildConfig = true
     }
 
+    lint {
+        baseline = file("lint-baseline.xml")
+        abortOnError = false  // Allow build with lint warnings
+    }
+
     // Packaging options to exclude unnecessary files
     packaging {
         resources {

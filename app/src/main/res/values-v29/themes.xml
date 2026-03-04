@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- API 29+ (Android 10+) specific theme attributes -->
+    <style name="Theme.VideoMaker" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <!-- API 29+ only: Remove navigation bar contrast enforcement -->
+        <item name="android:enforceNavigationBarContrast">false</item>
+    </style>
+
+</resources>
