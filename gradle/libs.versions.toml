@@ -53,7 +53,7 @@ workManager = "2.11.0"
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.10"
+acccore = "0.0.15"  # From GitHub Packages
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)
@@ -88,11 +88,12 @@ espressoCore = "3.7.0"
 # ============================================
 # ACCCORE - AlcheClub Custom DI & Services
 # ============================================
-acccore = { module = "com.github.hoansgithub.ACCCoreAndroid:ACCCore", version.ref = "acccore" }
-acccore-firebase = { module = "com.github.hoansgithub.ACCCoreAndroid:ACCCore-Firebase", version.ref = "acccore" }
-acccore-revenuecat = { module = "com.github.hoansgithub.ACCCoreAndroid:ACCCore-RevenueCat", version.ref = "acccore" }
-acccore-ads = { module = "com.github.hoansgithub.ACCCoreAndroid:ACCCore-Ads", version.ref = "acccore" }
-acccore-appsflyer = { module = "com.github.hoansgithub.ACCCoreAndroid:ACCCore-AppsFlyer", version.ref = "acccore" }
+# GitHub Packages - co.alcheclub.lib group
+acccore = { module = "co.alcheclub.lib:acccore", version.ref = "acccore" }
+acccore-firebase = { module = "co.alcheclub.lib:acccore-firebase", version.ref = "acccore" }
+acccore-revenuecat = { module = "co.alcheclub.lib:acccore-revenuecat", version.ref = "acccore" }
+acccore-ads = { module = "co.alcheclub.lib:acccore-ads", version.ref = "acccore" }
+acccore-appsflyer = { module = "co.alcheclub.lib:acccore-appsflyer", version.ref = "acccore" }
 
 # ============================================
 # ANDROIDX CORE

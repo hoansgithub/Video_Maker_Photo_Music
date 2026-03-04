@@ -18,9 +18,21 @@ dependencyResolutionManagement {
         mavenCentral()
 
         // ============================================
-        // JITPACK - ACCCore Library
+        // GITHUB PACKAGES - ACCCore Library (Private)
+        // Requires credentials in ~/.gradle/gradle.properties:
+        //   gpr.user=YOUR_GITHUB_USERNAME
+        //   gpr.key=YOUR_GITHUB_PAT_TOKEN
         // ============================================
-        maven { url = uri("https://jitpack.io") }
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/hoansgithub/ACCCoreAndroid")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                    ?: providers.gradleProperty("gpr.user").orNull
+                password = System.getenv("GITHUB_TOKEN")
+                    ?: providers.gradleProperty("gpr.key").orNull
+            }
+        }
     }
 }
 
@@ -28,21 +40,6 @@ rootProject.name = "VideoMaker"
 include(":app")
 
 // ============================================
-// LOCAL DEVELOPMENT
-// Using composite build for local ACCCore library
-// To use remote JitPack: make repo public, then comment out this block
+// REMOVED: Local composite build
+// Now using GitHub Packages for ACCCore library
 // ============================================
-includeBuild("/Users/hoanl/Documents/alcheclub-android/ACCCoreAndroid") {
-    dependencySubstitution {
-        substitute(module("com.github.hoansgithub.ACCCoreAndroid:ACCCore"))
-            .using(project(":ACCCore"))
-        substitute(module("com.github.hoansgithub.ACCCoreAndroid:ACCCore-Firebase"))
-            .using(project(":ACCCore-Firebase"))
-        substitute(module("com.github.hoansgithub.ACCCoreAndroid:ACCCore-RevenueCat"))
-            .using(project(":ACCCore-RevenueCat"))
-        substitute(module("com.github.hoansgithub.ACCCoreAndroid:ACCCore-Ads"))
-            .using(project(":ACCCore-Ads"))
-        substitute(module("com.github.hoansgithub.ACCCoreAndroid:ACCCore-AppsFlyer"))
-            .using(project(":ACCCore-AppsFlyer"))
-    }
-}
