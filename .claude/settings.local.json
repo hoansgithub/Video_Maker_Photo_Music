@@ -61,7 +61,13 @@
       "Bash(__NEW_LINE_4c021ff777819ff4__ echo \"\")",
       "Bash(jar xf:*)",
       "Bash(jar:*)",
-      "WebFetch(domain:zdydtiwglotssklnkwjh.supabase.co)"
+      "WebFetch(domain:zdydtiwglotssklnkwjh.supabase.co)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run watch:*)",
+      "Bash(gh api:*)",
+      "Bash(test:*)",
+      "Bash(tee:*)"
     ]
   }
 }

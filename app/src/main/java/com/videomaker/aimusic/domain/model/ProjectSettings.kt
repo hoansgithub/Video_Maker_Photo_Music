@@ -51,6 +51,38 @@ data class ProjectSettings(
     val transitionOverlapMs: Long
         get() = (imageDurationMs * 2 * transitionPercentage / 100)
 
+    /**
+     * Validate and correct settings to ensure they match available options
+     * @return Validated ProjectSettings with corrected values
+     */
+    fun validate(): ProjectSettings {
+        val validImageDurations = IMAGE_DURATION_OPTIONS.map { it * 1000L }
+        val validTransitionPercentages = TRANSITION_PERCENTAGE_OPTIONS
+
+        return copy(
+            // Ensure image duration is one of the valid options
+            imageDurationMs = if (imageDurationMs in validImageDurations) {
+                imageDurationMs
+            } else {
+                // Find closest valid option
+                validImageDurations.minByOrNull {
+                    kotlin.math.abs(it - imageDurationMs)
+                } ?: 3000L
+            },
+            // Ensure transition percentage is one of the valid options
+            transitionPercentage = if (transitionPercentage in validTransitionPercentages) {
+                transitionPercentage
+            } else {
+                // Find closest valid option
+                validTransitionPercentages.minByOrNull {
+                    kotlin.math.abs(it - transitionPercentage)
+                } ?: 30
+            },
+            // Ensure audio volume is in valid range
+            audioVolume = audioVolume.coerceIn(0f, 1f)
+        )
+    }
+
     companion object {
         val DEFAULT = ProjectSettings()
 

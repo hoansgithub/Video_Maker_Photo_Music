@@ -216,22 +216,30 @@ class AssetPickerViewModel(
         val currentState = _uiState.value
         if (currentState is AssetPickerUiState.Success && currentState.selectedAssets.isNotEmpty()) {
             viewModelScope.launch {
-                try {
-                    val uris = currentState.selectedAssets.map { it.uri }
+                val uris = currentState.selectedAssets.map { it.uri }
 
-                    if (projectId != null) {
-                        // Add mode - add to existing project
-                        addAssetsUseCase(projectId, uris)
-                        _navigationEvent.value = AssetPickerNavigationEvent.AssetsAdded
-                    } else {
-                        // Create mode - create new project
-                        val project = createProjectUseCase(uris)
-                        _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditor(project.id)
-                    }
-                } catch (e: Exception) {
-                    _uiState.value = AssetPickerUiState.Error(
-                        e.message ?: if (projectId != null) "Failed to add assets" else "Failed to create project"
-                    )
+                if (projectId != null) {
+                    // Add mode - add to existing project
+                    addAssetsUseCase(projectId, uris)
+                        .onSuccess {
+                            _navigationEvent.value = AssetPickerNavigationEvent.AssetsAdded
+                        }
+                        .onFailure { error ->
+                            _uiState.value = AssetPickerUiState.Error(
+                                error.message ?: "Failed to add assets"
+                            )
+                        }
+                } else {
+                    // Create mode - create new project
+                    createProjectUseCase(uris)
+                        .onSuccess { project ->
+                            _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditor(project.id)
+                        }
+                        .onFailure { error ->
+                            _uiState.value = AssetPickerUiState.Error(
+                                error.message ?: "Failed to create project"
+                            )
+                        }
                 }
             }
         }

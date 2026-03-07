@@ -15,31 +15,36 @@ class RemoveAssetUseCase(
         const val MIN_ASSETS = 2
     }
 
+    sealed class RemoveResult {
+        data object Success : RemoveResult()
+        data object BlockedByMinimum : RemoveResult()
+        data object ProjectNotFound : RemoveResult()
+    }
+
     /**
      * Remove an asset from a project
      * @param projectId Project ID
      * @param assetId Asset ID to remove
-     * @param currentAssetCount Current number of assets in the project
-     * @return true if asset was removed, false if blocked by minimum constraint
+     * @return Result containing RemoveResult indicating success or reason for failure
      */
     suspend operator fun invoke(
         projectId: String,
-        assetId: String,
-        currentAssetCount: Int
-    ): Boolean {
-        // Enforce minimum 2 images constraint
-        if (currentAssetCount <= MIN_ASSETS) {
-            return false
+        assetId: String
+    ): Result<RemoveResult> {
+        return try {
+            // Fetch project to check asset count
+            val project = projectRepository.getProject(projectId)
+                ?: return Result.success(RemoveResult.ProjectNotFound)
+
+            // Enforce minimum 2 images constraint
+            if (project.assets.size <= MIN_ASSETS) {
+                return Result.success(RemoveResult.BlockedByMinimum)
+            }
+
+            projectRepository.removeAsset(projectId, assetId)
+            Result.success(RemoveResult.Success)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
-
-        projectRepository.removeAsset(projectId, assetId)
-        return true
-    }
-
-    /**
-     * Check if an asset can be removed (won't violate minimum constraint)
-     */
-    fun canRemove(currentAssetCount: Int): Boolean {
-        return currentAssetCount > MIN_ASSETS
     }
 }

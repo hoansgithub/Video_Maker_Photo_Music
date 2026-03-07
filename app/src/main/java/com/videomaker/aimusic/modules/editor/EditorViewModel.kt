@@ -177,27 +177,14 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
             viewModelScope.launch {
-                val newAssets = reorderAssetsUseCase.move(
-                    projectId = projectId,
-                    assets = currentState.project.assets,
-                    fromIndex = fromIndex,
-                    toIndex = toIndex
-                )
+                // Perform the move operation on the list
+                val assets = currentState.project.assets.toMutableList()
+                val asset = assets.removeAt(fromIndex)
+                assets.add(toIndex, asset)
 
-                // Update selected index if needed
-                val newSelectedIndex = when {
-                    currentState.selectedAssetIndex == fromIndex -> toIndex
-                    fromIndex < currentState.selectedAssetIndex && toIndex >= currentState.selectedAssetIndex ->
-                        currentState.selectedAssetIndex - 1
-                    fromIndex > currentState.selectedAssetIndex && toIndex <= currentState.selectedAssetIndex ->
-                        currentState.selectedAssetIndex + 1
-                    else -> currentState.selectedAssetIndex
-                }
-
-                _uiState.value = currentState.copy(
-                    project = currentState.project.copy(assets = newAssets),
-                    selectedAssetIndex = newSelectedIndex
-                )
+                // Call UseCase to persist the new order
+                reorderAssetsUseCase(projectId, assets)
+                // Project will be updated via Flow observation
             }
         }
     }
@@ -227,13 +214,14 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState !is EditorUiState.Success) return false
 
+        // Check minimum constraint (2 images required)
         val assetCount = currentState.project.assets.size
-        if (!removeAssetUseCase.canRemove(assetCount)) {
+        if (assetCount <= 2) {
             return false
         }
 
         viewModelScope.launch {
-            removeAssetUseCase(projectId, assetId, assetCount)
+            removeAssetUseCase(projectId, assetId)
             // Project will be updated via Flow observation
         }
         return true
@@ -245,7 +233,7 @@ class EditorViewModel(
     fun canRemoveAssets(): Boolean {
         val currentState = _uiState.value
         if (currentState !is EditorUiState.Success) return false
-        return removeAssetUseCase.canRemove(currentState.project.assets.size)
+        return currentState.project.assets.size > 2
     }
 
     // ============================================
