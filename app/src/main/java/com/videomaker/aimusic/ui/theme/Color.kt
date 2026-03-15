@@ -3,52 +3,56 @@ package com.videomaker.aimusic.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // ============================================
-// PRIMARY COLORS - From App Icon Gradient
+// PRIMARY COLORS - App Tint Color
 // ============================================
 
-val Primary = Color(0xFFFF8E05)         // Vibrant Orange (main brand color)
-val PrimaryVariant = Color(0xFFFF850D)  // Red-Orange
-val PrimaryLight = Color(0xFFFFBD77)    // Light Orange (for hover/pressed states)
-val PrimaryDark = Color(0xFFC86F04)     // Dark Orange
+val Primary = Color(0xFFCCFF00)         // App tint color (bright yellow-lime)
+val PrimaryVariant = Color(0xFFAACC00)  // Darker variant (80% brightness)
+val PrimaryLight = Color(0xFFE6FF66)    // Lighter variant (40% white mix)
+val PrimaryDark = Color(0xFF99CC00)     // Darkest variant (60% brightness)
 
-val Secondary = Color(0xFF62E1CF)       // Bright Cyan (complementary)
-val SecondaryVariant = Color(0xFF67DABD) // Green-Cyan
-val SecondaryLight = Color(0xFF8AE8D8)  // Light Cyan
-val SecondaryDark = Color(0xFF4CB3A5)   // Dark Cyan
+val Secondary = Color(0xFFEA580C)       // Orange-600 (accent gradient start)
+val SecondaryVariant = Color(0xFFF472B6) // Pink-400 (accent gradient end)
+val SecondaryLight = Color(0xFFFB923C)  // Orange-400 (lighter orange)
+val SecondaryDark = Color(0xFFC2410C)   // Orange-700 (darker orange)
 
-val Tertiary = Color(0xFFFF2D73)        // Hot Pink (accent)
-val TertiaryVariant = Color(0xFFFF3164) // Pink variant
-val TertiaryLight = Color(0xFFFF6B9D)   // Light Pink
-val TertiaryDark = Color(0xFFCC2459)    // Dark Pink
+val Tertiary = Color(0xFF1D4ED8)        // Blue-700 (purple gradient start)
+val TertiaryVariant = Color(0xFF8B5CF6) // Violet-500 (purple gradient end)
+val TertiaryLight = Color(0xFF60A5FA)   // Blue-400 (lighter blue)
+val TertiaryDark = Color(0xFF1E3A8A)    // Blue-900 (darkest blue)
 
 // ============================================
-// GRADIENT COLORS - Full Spectrum from Icon
+// GRADIENT COLORS - From Figma Design
 // ============================================
 
-val GradientRed = Color(0xFFFF5F2A)     // 14° Red
-val GradientYellow = Color(0xFFC8A63D)  // 45° Yellow
+// Red/Warm gradient (used for accent tags)
+val GradientOrangeStart = Color(0xFFEA580C)  // Orange-600 (from-orange-600)
+val GradientOrangeEnd = Color(0xFFF472B6)    // Pink-400 (to-pink-400)
 
-// Gradient aliases for consistency
-val GradientOrange = Primary            // 32° Orange
-val GradientCyan = Secondary            // 171° Cyan
-val GradientAqua = SecondaryVariant     // 164° Aqua/Green-Cyan
-val GradientPink = Tertiary             // 340° Pink
-val GradientMagenta = TertiaryVariant   // 345° Magenta
+// Purple/Cool gradient (used for accent tags)
+val GradientPurpleStart = Color(0xFF1D4ED8)  // Blue-700 (from-blue-700)
+val GradientPurpleEnd = Color(0xFF8B5CF6)    // Violet-500 (to-violet-500)
+
+// Gradient aliases for backwards compatibility
+val GradientOrange = GradientOrangeStart
+val GradientPink = GradientOrangeEnd
+val GradientBlue = GradientPurpleStart
+val GradientViolet = GradientPurpleEnd
 
 // Gradient collections for easy use
-val WarmGradient = listOf(GradientOrange, GradientRed, GradientPink)
-val CoolGradient = listOf(GradientCyan, GradientAqua, GradientOrange)
-val FullGradient = listOf(GradientOrange, GradientYellow, GradientCyan, GradientPink)
+val WarmGradient = listOf(GradientOrangeStart, GradientOrangeEnd)
+val CoolGradient = listOf(GradientPurpleStart, GradientPurpleEnd)
+val FullGradient = listOf(GradientOrangeStart, GradientOrangeEnd, GradientPurpleStart, GradientPurpleEnd)
 
 // ============================================
-// BACKGROUND COLORS - Dark Theme (Primary)
+// BACKGROUND COLORS - Dark Theme (From Figma)
 // ============================================
 
-val BackgroundDark = Color(0xFF101010)      // Pure dark (from icon background)
-val BackgroundDarkElevated = Color(0xFF1A1A1A) // Slightly elevated
-val SurfaceDark = Color(0xFF252525)         // Card/container surface
-val SurfaceDarkVariant = Color(0xFF2A2A2A)  // Alternative surface / Divider / Shimmer base
-val CardDark = Color(0xFF1C1C1C)            // Card background
+val BackgroundDark = Color(0xFF09090B)      // Zinc-950 (Figma background)
+val BackgroundDarkElevated = Color(0xFF18181B) // Zinc-900 (elevated surface)
+val SurfaceDark = Color(0xFF27272A)         // Zinc-800 (card/container surface)
+val SurfaceDarkVariant = Color(0xFF3F3F46)  // Zinc-700 (alternative surface)
+val CardDark = Color(0xFF18181B)            // Zinc-900 (card background)
 
 // ============================================
 // BACKGROUND COLORS - Light Theme (Alternative)
@@ -77,26 +81,26 @@ val TextTertiaryLight = Color(0xFF999999)   // Tertiary/hint text on light
 val TextDisabledLight = Color(0xFFCCCCCC)   // Disabled text on light
 
 // Text on colored backgrounds
-val TextOnPrimary = Color(0xFFFFFFFF)       // White text on orange
-val TextOnSecondary = Color(0xFF000000)     // Black text on cyan
-val TextOnTertiary = Color(0xFFFFFFFF)      // White text on pink
+val TextOnPrimary = Color(0xFF09090B)       // Dark text on lime (Zinc-950/Neutral-N1000)
+val TextOnSecondary = Color(0xFFFFFFFF)     // White text on orange gradient
+val TextOnTertiary = Color(0xFFFFFFFF)      // White text on blue gradient
 
 // ============================================
-// GRAY SCALE
+// GRAY SCALE - Zinc/Neutral from Figma
 // ============================================
 
-val Gray50 = Color(0xFFFAFAFA)
-val Gray100 = Color(0xFFF5F5F5)
-val Gray200 = Color(0xFFEEEEEE)
-val Gray300 = Color(0xFFE0E0E0)
-val Gray400 = Color(0xFFBDBDBD)
+val Gray50 = Color(0xFFFAFAFA)          // Neutral-50
+val Gray100 = Color(0xFFF5F5F5)         // Neutral-100
+val Gray200 = Color(0xFFE5E5E5)         // Neutral-200
+val Gray300 = Color(0xFFD4D4D8)         // Zinc-300
+val Gray400 = Color(0xFFA1A1AA)         // Zinc-400
 val Gray450 = Color(0xFF8E8E93)         // Mid-gray for inactive elements
-val Gray500 = Color(0xFF999999)
+val Gray500 = Color(0xFF71717A)         // Zinc-500
 val Gray550 = Color(0xFF8C8C8C)         // Slightly darker mid-gray
-val Gray600 = Color(0xFF757575)
-val Gray700 = Color(0xFF5A5A5A)
-val Gray800 = Color(0xFF3A3A3A)
-val Gray900 = Color(0xFF1C1C1C)
+val Gray600 = Color(0xFF52525B)         // Zinc-600
+val Gray700 = Color(0xFF3F3F46)         // Zinc-700
+val Gray800 = Color(0xFF27272A)         // Zinc-800
+val Gray900 = Color(0xFF18181B)         // Zinc-900
 
 // ============================================
 // OVERLAY COLORS - Transparency variants

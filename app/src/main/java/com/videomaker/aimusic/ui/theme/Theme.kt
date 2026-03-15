@@ -15,17 +15,20 @@ import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
  * Background: 0xFF101313
  */
 private val DarkColorScheme = darkColorScheme(
-    primary = Primary,
-    onPrimary = TextOnPrimary,              // White icons/text on orange
-    onPrimaryContainer = TextOnPrimary,     // White text on primary container
-    primaryContainer = PrimaryOverlay20,    // Translucent orange background
-    secondary = Secondary,
-    background = BackgroundDark,
+    primary = Primary,                      // Lime #A3E635 (from Figma)
+    onPrimary = TextOnPrimary,              // Dark text on lime (Zinc-950)
+    onPrimaryContainer = TextOnPrimary,     // Dark text on primary container
+    primaryContainer = White10,             // 5-10% white overlay (from Figma button inner bg)
+    secondary = Secondary,                  // Orange-600 (accent gradient)
+    onSecondary = TextOnSecondary,          // White text on orange
+    background = BackgroundDark,            // Zinc-950 #09090B
     onBackground = TextPrimary,
-    surface = SurfaceDark,
+    surface = SurfaceDark,                  // Zinc-800 #27272A
     onSurface = TextPrimary,
-    surfaceVariant = Gray800,
-    onSurfaceVariant = Gray300,
+    surfaceVariant = Gray800,               // Zinc-800
+    onSurfaceVariant = Gray300,             // Zinc-300
+    tertiary = Tertiary,                    // Blue-700 (purple gradient)
+    onTertiary = TextOnTertiary,            // White text on blue
     error = Error
 )
 
