@@ -66,8 +66,7 @@ class RootViewActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         // 3. Initialize app (ads, remote config, status checks)
-        rootViewModel.initializeApp(this)
-        rootViewModel.updateActivityRef(this)
+        rootViewModel.initializeApp()
 
         setContent {
             val isLoading by rootViewModel.isLoading.collectAsStateWithLifecycle()
@@ -162,18 +161,6 @@ class RootViewActivity : AppCompatActivity() {
             }
         }
         // If locales already set by autoStoreLocales, nothing needed - AppCompat handles it
-    }
-
-    override fun onResume() {
-        super.onResume()
-        rootViewModel.updateActivityRef(this)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (isFinishing) {
-            rootViewModel.clearActivityRef()
-        }
     }
 
 }

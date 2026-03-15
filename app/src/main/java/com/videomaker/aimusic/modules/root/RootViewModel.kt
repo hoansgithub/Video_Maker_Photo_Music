@@ -1,9 +1,7 @@
 package com.videomaker.aimusic.modules.root
 
-import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import java.lang.ref.WeakReference
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.modules.language.domain.usecase.CheckLanguageSelectedUseCase
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
@@ -65,9 +63,6 @@ class RootViewModel(
     // ============================================
 
     @Volatile
-    private var activityRef: WeakReference<Activity>? = null
-
-    @Volatile
     private var shouldShowLanguageSelection = false
 
     @Volatile
@@ -90,12 +85,8 @@ class RootViewModel(
      * 4. Language selection status check
      * 5. Onboarding status check
      * 6. Navigation to appropriate screen
-     *
-     * @param activity Activity context required for ads
      */
-    fun initializeApp(activity: Activity) {
-        activityRef = WeakReference(activity)
-
+    fun initializeApp() {
         if (isInitialized) {
             // Already initialized, just navigate
             proceedToNextScreen()
@@ -119,26 +110,6 @@ class RootViewModel(
      */
     fun onNavigationHandled() {
         _navigationEvent.value = null
-    }
-
-    /**
-     * Get Activity reference
-     */
-    fun getActivityRef(): Activity? = activityRef?.get()
-
-    /**
-     * Update Activity reference
-     */
-    fun updateActivityRef(activity: Activity) {
-        activityRef = WeakReference(activity)
-    }
-
-    /**
-     * Clear Activity reference
-     */
-    fun clearActivityRef() {
-        activityRef?.clear()
-        activityRef = null
     }
 
     // ============================================
@@ -254,16 +225,6 @@ class RootViewModel(
                 _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Home)
             }
         }
-    }
-
-    // ============================================
-    // CLEANUP
-    // ============================================
-
-    override fun onCleared() {
-        super.onCleared()
-        activityRef?.clear()
-        activityRef = null
     }
 }
 

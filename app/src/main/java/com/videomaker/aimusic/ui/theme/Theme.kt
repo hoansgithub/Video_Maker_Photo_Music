@@ -16,8 +16,9 @@ import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
  */
 private val DarkColorScheme = darkColorScheme(
     primary = Primary,
-    onPrimary = Color.Black,
-    primaryContainer = PrimaryDark,
+    onPrimary = TextOnPrimary,              // White icons/text on orange
+    onPrimaryContainer = TextOnPrimary,     // White text on primary container
+    primaryContainer = PrimaryOverlay20,    // Translucent orange background
     secondary = Secondary,
     background = BackgroundDark,
     onBackground = TextPrimary,
