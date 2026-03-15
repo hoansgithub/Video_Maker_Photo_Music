@@ -26,11 +26,11 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
--keep,includedescriptorclasses class com.aimusic.videoeditor.**$$serializer { *; }
--keepclassmembers class com.aimusic.videoeditor.** {
+-keep,includedescriptorclasses class com.videomaker.aimusic.**$$serializer { *; }
+-keepclassmembers class com.videomaker.aimusic.** {
     *** Companion;
 }
--keepclasseswithmembers class com.aimusic.videoeditor.** {
+-keepclasseswithmembers class com.videomaker.aimusic.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 
@@ -48,13 +48,13 @@
 }
 
 # Keep Room Database class and its DAOs
--keep class com.aimusic.videoeditor.data.local.database.ProjectDatabase {
+-keep class com.videomaker.aimusic.data.local.database.ProjectDatabase {
     <methods>;
 }
--keep class com.aimusic.videoeditor.data.local.database.dao.** {
+-keep class com.videomaker.aimusic.data.local.database.dao.** {
     <methods>;
 }
--keep class com.aimusic.videoeditor.data.local.database.entity.** {
+-keep class com.videomaker.aimusic.data.local.database.entity.** {
     <fields>;
     <init>(...);
 }
@@ -92,7 +92,7 @@
 # ========== MEDIA3 ==========
 # Media3 provides its own ProGuard rules via consumerProguardFiles
 # Keep custom effects if using reflection
--keep class com.aimusic.videoeditor.media.effects.** { *; }
+-keep class com.videomaker.aimusic.media.effects.** { *; }
 
 # ========== NAVIGATION ==========
 # Navigation Compose handles its own ProGuard rules automatically
@@ -120,4 +120,4 @@
 
 # ========== WORKMANAGER ==========
 # Keep Worker classes
--keep class com.aimusic.videoeditor.media.export.VideoExportWorker { *; }
+-keep class com.videomaker.aimusic.media.export.VideoExportWorker { *; }

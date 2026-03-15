@@ -2,87 +2,251 @@ package com.videomaker.aimusic.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary colors (lime/neon green from Figma)
-val Primary = Color(0xFFCCFF00)        // Main lime green - active chips, ranking numbers
-val PrimaryLight = Color(0xFFD6FF33)   // Lighter lime
-val PrimaryDark = Color(0xFFB8E600)    // Tab indicator underline
-val Primary50 = Color(0x80CCFF00)      // 50% opacity
-val Secondary = Color(0xFF04FFB1)      // Mint green accent
+// ============================================
+// PRIMARY COLORS - From App Icon Gradient
+// ============================================
 
-// Gradient colors - "Hot" badge (125deg)
-val GradientStart = Color(0xFFED4523)  // Red
-val GradientEnd = Color(0xFFF751C8)    // Pink
+val Primary = Color(0xFFFF8E05)         // Vibrant Orange (main brand color)
+val PrimaryVariant = Color(0xFFFF850D)  // Red-Orange
+val PrimaryLight = Color(0xFFFFBD77)    // Light Orange (for hover/pressed states)
+val PrimaryDark = Color(0xFFC86F04)     // Dark Orange
 
-// Hero overlay
-val HeroOverlay = Color(0xFFEE9126)    // Orange tint (50% opacity, soft-light)
+val Secondary = Color(0xFF62E1CF)       // Bright Cyan (complementary)
+val SecondaryVariant = Color(0xFF67DABD) // Green-Cyan
+val SecondaryLight = Color(0xFF8AE8D8)  // Light Cyan
+val SecondaryDark = Color(0xFF4CB3A5)   // Dark Cyan
 
-// Gray scale (dark theme)
-val Gray100 = Color(0xFFE6E6E6)
-val Gray200 = Color(0xFFB3B3B3)
+val Tertiary = Color(0xFFFF2D73)        // Hot Pink (accent)
+val TertiaryVariant = Color(0xFFFF3164) // Pink variant
+val TertiaryLight = Color(0xFFFF6B9D)   // Light Pink
+val TertiaryDark = Color(0xFFCC2459)    // Dark Pink
+
+// ============================================
+// GRADIENT COLORS - Full Spectrum from Icon
+// ============================================
+
+val GradientRed = Color(0xFFFF5F2A)     // 14° Red
+val GradientYellow = Color(0xFFC8A63D)  // 45° Yellow
+
+// Gradient aliases for consistency
+val GradientOrange = Primary            // 32° Orange
+val GradientCyan = Secondary            // 171° Cyan
+val GradientAqua = SecondaryVariant     // 164° Aqua/Green-Cyan
+val GradientPink = Tertiary             // 340° Pink
+val GradientMagenta = TertiaryVariant   // 345° Magenta
+
+// Gradient collections for easy use
+val WarmGradient = listOf(GradientOrange, GradientRed, GradientPink)
+val CoolGradient = listOf(GradientCyan, GradientAqua, GradientOrange)
+val FullGradient = listOf(GradientOrange, GradientYellow, GradientCyan, GradientPink)
+
+// ============================================
+// BACKGROUND COLORS - Dark Theme (Primary)
+// ============================================
+
+val BackgroundDark = Color(0xFF101010)      // Pure dark (from icon background)
+val BackgroundDarkElevated = Color(0xFF1A1A1A) // Slightly elevated
+val SurfaceDark = Color(0xFF252525)         // Card/container surface
+val SurfaceDarkVariant = Color(0xFF2A2A2A)  // Alternative surface / Divider / Shimmer base
+val CardDark = Color(0xFF1C1C1C)            // Card background
+
+// ============================================
+// BACKGROUND COLORS - Light Theme (Alternative)
+// ============================================
+
+val BackgroundLight = Color(0xFFFFFFFF)     // Pure white
+val BackgroundLightVariant = Color(0xFFF5F5F5) // Off-white
+val SurfaceLight = Color(0xFFE3E3E3)        // Light surface (from icon)
+val SurfaceLightVariant = Color(0xFFEEEEEE) // Alternative light surface
+val CardLight = Color(0xFFFAFAFA)           // Light card background
+
+// ============================================
+// TEXT COLORS
+// ============================================
+
+// Dark theme text
+val TextPrimaryDark = Color(0xFFF8FAFC)     // Near white (primary text on dark)
+val TextSecondaryDark = Color(0xFFB3B3B3)   // Secondary text on dark
+val TextTertiaryDark = Color(0xFF8C8C8C)    // Tertiary/hint text on dark
+val TextDisabledDark = Color(0xFF666666)    // Disabled text on dark
+
+// Light theme text
+val TextPrimaryLight = Color(0xFF1C1C1C)    // Near black (primary text on light)
+val TextSecondaryLight = Color(0xFF5A5A5A)  // Secondary text on light
+val TextTertiaryLight = Color(0xFF999999)   // Tertiary/hint text on light
+val TextDisabledLight = Color(0xFFCCCCCC)   // Disabled text on light
+
+// Text on colored backgrounds
+val TextOnPrimary = Color(0xFFFFFFFF)       // White text on orange
+val TextOnSecondary = Color(0xFF000000)     // Black text on cyan
+val TextOnTertiary = Color(0xFFFFFFFF)      // White text on pink
+
+// ============================================
+// GRAY SCALE
+// ============================================
+
+val Gray50 = Color(0xFFFAFAFA)
+val Gray100 = Color(0xFFF5F5F5)
+val Gray200 = Color(0xFFEEEEEE)
 val Gray300 = Color(0xFFE0E0E0)
-val Gray400 = Color(0xFF999999)        // Neutral-N500 (search hint)
-val Gray450 = Color(0xFF8E8E93)        // Grays-Gray (inactive chip text)
-val Gray500 = Color(0xFF8C8C8C)        // Secondary text (artist, metadata)
-val Gray550 = Color(0xFF5A5A5A)
-val Gray600 = Color(0xFF666666)
-val Gray650 = Color(0xFF4D4D4D)
-val Gray700 = Color(0xFF3A3A3A)
-val Gray800 = Color(0xFF2E2E2E)        // Camera punch hole
-val Gray850 = Color(0xFF333333)
-val Gray900 = Color(0xFF2A2A2A)
+val Gray400 = Color(0xFFBDBDBD)
+val Gray450 = Color(0xFF8E8E93)         // Mid-gray for inactive elements
+val Gray500 = Color(0xFF999999)
+val Gray550 = Color(0xFF8C8C8C)         // Slightly darker mid-gray
+val Gray600 = Color(0xFF757575)
+val Gray700 = Color(0xFF5A5A5A)
+val Gray800 = Color(0xFF3A3A3A)
+val Gray900 = Color(0xFF1C1C1C)
 
-// App colors (dark theme only - from Figma)
-val BackgroundDark = Color(0xFF101313) // Main background
-val SurfaceDark = Color(0xFF1A1D1D)   // Slightly lighter than background
-val CardDark = Color(0xFF050505)       // Card/image background
+// ============================================
+// OVERLAY COLORS - Transparency variants
+// ============================================
 
-// Text colors (from Figma)
-val TextPrimary = Color(0xFFF8FAFC)    // Near white (slate-50)
-val TextBright = Color(0xFFFFFFFF)     // Pure white
-val TextSecondary = Color(0xFF8C8C8C)  // Artist name, metadata
-val TextTertiary = Color(0xFF999999)   // Hint/placeholder (Neutral-N500)
-val TextHint = Color(0xFF8E8E93)       // Inactive chip text (Grays-Gray)
-val TextInactive = Color(0x85F8FAFC)   // Inactive tab title (52% opacity)
-val TextOnPrimary = Color(0xFF151515)  // Dark text on primary (lime) buttons
+val White8 = Color(0x14FFFFFF)      // 8% white overlay
+val White10 = Color(0x1AFFFFFF)     // 10% white overlay
+val White12 = Color(0x1FFFFFFF)     // 12% white overlay
+val White16 = Color(0x29FFFFFF)     // 16% white overlay
+val White20 = Color(0x33FFFFFF)     // 20% white overlay
+val White40 = Color(0x66FFFFFF)     // 40% white overlay
+val White60 = Color(0x99FFFFFF)     // 60% white overlay
+val White80 = Color(0xCCFFFFFF)     // 80% white overlay
 
-// Component colors
-val ShimmerLight = Color(0xFF3A3A3A)
-val ShimmerDark = Color(0xFF2A2A2A)
-val PlaceholderBackground = Color(0xFF2A2A2A)
+val Black8 = Color(0x14000000)      // 8% black overlay
+val Black12 = Color(0x1F000000)     // 12% black overlay
+val Black16 = Color(0x29000000)     // 16% black overlay
+val Black20 = Color(0x33000000)     // 20% black overlay
+val Black24 = Color(0x3D000000)     // 24% black overlay
+val Black40 = Color(0x66000000)     // 40% black overlay
+val Black60 = Color(0x99000000)     // 60% black overlay
+val Black80 = Color(0xCC000000)     // 80% black overlay
 
-// Overlay/glass colors (from Figma)
-val White8 = Color(0x14FFFFFF)         // Content sheet bg (8% white)
-val White10 = Color(0x1AFFFFFF)        // Search field bg (10% white)
-val White12 = Color(0x1FFFFFFF)        // Glass border, chip border (12% white)
-val White16 = Color(0x29FFFFFF)        // Search field border (16% white)
-val White56 = Color(0x8FFFFFFF)        // Hot badge border (56% white)
-val Black12 = Color(0x1F000000)        // More button bg (12% black)
-val Black24 = Color(0x3D000000)        // Active chip bg (24% black)
-val Black40 = Color(0x66000000)        // Play button bg (40% black)
-val Black60 = Color(0x99000000)        // Dark overlay
+// Primary color overlays
+val PrimaryOverlay20 = Color(0x33FF8E05)    // 20% orange overlay
+val PrimaryOverlay40 = Color(0x66FF8E05)    // 40% orange overlay
+val SecondaryOverlay20 = Color(0x3362E1CF)  // 20% cyan overlay
+val SecondaryOverlay40 = Color(0x6662E1CF)  // 40% cyan overlay
 
-// Chip border (inactive) - from Figma rgba(242, 242, 247, 0.12)
-val ChipBorderInactive = Color(0x1FF2F2F7)
+// ============================================
+// SEMANTIC COLORS
+// ============================================
 
-// Semantic colors
-val Error = Color(0xFFF44336)
-val ErrorDestructive = Color(0xFFEA4335)
-val Success = Color(0xFF4CAF50)
-val Warning = Color(0xFFFF9800)
+val Success = Color(0xFF4CAF50)         // Green for success states
+val SuccessLight = Color(0xFF81C784)    // Light success
+val SuccessDark = Color(0xFF388E3C)     // Dark success
 
-// Accent colors for effects and decorative elements
-val GoldAccent = Color(0xFFFFD700)         // Gold for star/premium icons
-val MintAccent = Color(0xFF04FFB1)         // Mint (same as Secondary)
-val CoralAccent = Color(0xFFFF6B9D)        // Coral/pink accent
-val TealAccent = Color(0xFF4FC3F7)         // Teal/cyan accent
-val RoseAccent = Color(0xFFE8A0BF)         // Rose/dreamy pink
-val CyanAccent = Color(0xFF00F0FF)         // Bright cyan/electric blue
-val AmberAccent = Color(0xFFD4A574)        // Amber/vintage gold
-val OrangeAccent = Color(0xFFFFB74D)       // Warm orange
-val SlateAccent = Color(0xFFB0BEC5)        // Cool slate/gray-blue
-val PinkAccent = Color(0xFFF48FB1)         // Soft pink
-val GreenAccent = Color(0xFF69F0AE)        // Bright green/aurora
+val Error = Color(0xFFF44336)           // Red for errors
+val ErrorLight = Color(0xFFE57373)      // Light error
+val ErrorDark = Color(0xFFD32F2F)       // Dark error
 
-// Component-specific colors
-val SearchFieldBackground = Color(0x1AFFFFFF) // 10% white
-val SearchFieldBorder = Color(0x29FFFFFF)      // 16% white
+val Warning = Color(0xFFFF9800)         // Orange for warnings
+val WarningLight = Color(0xFFFFB74D)    // Light warning
+val WarningDark = Color(0xFFF57C00)     // Dark warning
+
+val Info = Color(0xFF2196F3)            // Blue for info
+val InfoLight = Color(0xFF64B5F6)       // Light info
+val InfoDark = Color(0xFF1976D2)        // Dark info
+
+// ============================================
+// COMPONENT-SPECIFIC COLORS
+// ============================================
+
+// Buttons
+val ButtonPrimary = Primary                     // Orange button
+val ButtonSecondary = Secondary                 // Cyan button
+val ButtonTertiary = Tertiary                   // Pink button
+val ButtonOutline = Gray800                     // Outlined button border
+val ButtonDisabled = Gray600                    // Disabled button
+
+// Input fields
+val InputBackground = White10                   // Input background (dark theme)
+val InputBackgroundLight = Gray100              // Input background (light theme)
+val InputBorder = White16                       // Input border (dark theme)
+val InputBorderLight = Gray300                  // Input border (light theme)
+val InputFocused = Primary                      // Focused input border
+val InputError = Error                          // Error state border
+
+// Cards & Containers
+val CardBackground = SurfaceDark                // Card background (dark)
+val CardBackgroundLight = SurfaceLight          // Card background (light)
+val CardBorder = White12                        // Card border (dark)
+val CardBorderLight = Gray200                   // Card border (light)
+val CardHover = White8                          // Card hover overlay
+val CardPressed = White16                       // Card pressed overlay
+
+// Dividers
+val DividerDark = SurfaceDarkVariant            // Divider on dark background
+val DividerLight = Gray200                      // Divider on light background
+val DividerPrimary = PrimaryOverlay20           // Accent divider
+
+// Chips & Tags
+val ChipBackground = Black24                    // Chip background (dark)
+val ChipBackgroundLight = Gray200               // Chip background (light)
+val ChipBorder = White12                        // Chip border (dark)
+val ChipBorderLight = Gray300                   // Chip border (light)
+val ChipSelected = Primary                      // Selected chip
+val ChipSelectedBackground = PrimaryOverlay20   // Selected chip background
+
+// Loading & Shimmer
+val ShimmerLight = Gray800                      // Shimmer highlight (dark theme)
+val ShimmerDark = SurfaceDarkVariant            // Shimmer base (dark theme)
+val ShimmerLightTheme = Gray200                 // Shimmer highlight (light theme)
+val ShimmerDarkTheme = Gray100                  // Shimmer base (light theme)
+
+// ============================================
+// SPECIAL EFFECT COLORS
+// ============================================
+
+// Glass morphism effect
+val GlassBackground = White10                   // Glass background
+val GlassBorder = White12                       // Glass border
+val GlassHighlight = White20                    // Glass highlight
+
+// Music visualizer / Audio waveform colors
+val WaveformPrimary = Primary
+val WaveformSecondary = Secondary
+val WaveformTertiary = Tertiary
+val WaveformGradient = FullGradient
+
+// Video timeline colors
+val TimelineBackground = SurfaceDark
+val TimelineCursor = Primary
+val TimelineSelection = PrimaryOverlay40
+val TimelineSegment = Secondary
+
+// ============================================
+// BACKWARDS COMPATIBILITY ALIASES
+// ============================================
+// Aliases for existing code that uses old color names
+
+// Text aliases (commonly used in existing code)
+val TextPrimary = TextPrimaryDark           // Alias for dark theme primary text
+val TextSecondary = TextSecondaryDark       // Alias for dark theme secondary text
+val TextTertiary = TextTertiaryDark         // Alias for dark theme tertiary text
+val TextBright = TextOnPrimary              // Pure white
+val TextHint = TextTertiaryDark             // Hint text
+val TextInactive = TextDisabledDark         // Inactive text
+val TextOnBackground = TextPrimaryDark      // Text on dark background
+val TextOnSurface = TextPrimaryLight        // Text on light surface
+
+// Component aliases
+val PlaceholderBackground = SurfaceDarkVariant  // Placeholder/loading background
+val ChipBorderInactive = ChipBorder             // Inactive chip border
+val SearchFieldBackground = InputBackground      // Search field background
+val SearchFieldBorder = InputBorder              // Search field border
+
+// Accent color aliases (keeping old names for compatibility)
+val GoldAccent = Color(0xFFFFD700)              // Gold for premium/star icons
+val MintAccent = Color(0xFF04FFB1)              // Mint green accent
+val CoralAccent = TertiaryLight                 // Coral pink accent
+val TealAccent = SecondaryLight                 // Teal/cyan accent
+val OrangeAccent = PrimaryLight                 // Orange accent
+val SlateAccent = Gray500                       // Slate gray accent
+val PinkAccent = TertiaryLight                  // Pink accent
+val GreenAccent = SecondaryVariant              // Green accent
+val RoseAccent = Color(0xFFE8A0BF)              // Rose pink
+val CyanAccent = Secondary                      // Cyan accent
+val AmberAccent = Color(0xFFD4A574)             // Amber/vintage gold
+
+// Music note colors (from icon)
+val MusicNoteWhite = TextOnPrimary              // White music note
+val MusicNoteGray = SurfaceLight                // Gray variant
