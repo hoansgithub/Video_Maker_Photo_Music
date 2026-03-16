@@ -928,6 +928,15 @@ app/src/main/java/co/alcheclub/video/maker/photo/music/
 
 ---
 
+## Git Workflow
+
+⚠️ **NEVER commit automatically. Always wait for the user's explicit instruction before running git commit.**
+
+- Commit format: `<type>: <description>`
+  - `feat:` new feature | `fix:` bug fix | `refactor:` code restructure | `ui:` UI/UX improvements
+
+---
+
 ## Emergency Checklist for Video Maker
 
 Before EVERY code change:
