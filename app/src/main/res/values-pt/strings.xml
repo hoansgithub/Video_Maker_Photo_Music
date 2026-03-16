@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Video Maker</string>
+
+    <!-- Loading -->
+    <string name="loading">Carregando…</string>
+
+    <!-- Language Selection -->
+    <string name="language_select_title">Selecionar Idioma</string>
+    <string name="language_select_subtitle">Escolha seu idioma preferido</string>
+    <string name="language_continue">Continuar</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Próximo</string>
+    <string name="onboarding_get_started">Começar</string>
+    <!-- Page 1 -->
+    <string name="onboarding_page1_title">Transforme Fotos em\nBelos Vídeos</string>
+    <string name="onboarding_page1_feature1_title">Selecionar Fotos</string>
+    <string name="onboarding_page1_feature1_desc">Escolha suas fotos favoritas da galeria</string>
+    <string name="onboarding_page1_feature2_title">Criar Slideshow</string>
+    <string name="onboarding_page1_feature2_desc">Transforme suas fotos em slideshows incríveis</string>
+    <!-- Page 2 -->
+    <string name="onboarding_page2_title">Adicionar Música\ne Efeitos</string>
+    <string name="onboarding_page2_feature1_title">Música de Fundo</string>
+    <string name="onboarding_page2_feature1_desc">Adicione sua música favorita ou escolha da nossa biblioteca</string>
+    <string name="onboarding_page2_feature2_title">Transições Suaves</string>
+    <string name="onboarding_page2_feature2_desc">Transições bonitas entre suas fotos e clipes</string>
+    <!-- Page 3 -->
+    <string name="onboarding_page3_title">Exportar e\nCompartilhar</string>
+    <string name="onboarding_page3_feature1_title">Exportação em Alta Qualidade</string>
+    <string name="onboarding_page3_feature1_desc">Exporte seus vídeos em qualidade HD até 4K</string>
+    <string name="onboarding_page3_feature2_title">Compartilhe em Qualquer Lugar</string>
+    <string name="onboarding_page3_feature2_desc">Compartilhe diretamente nas redes sociais ou salve na galeria</string>
+
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">Galeria</string>
+    <string name="home_tab_songs">Músicas</string>
+    <string name="home_tab_projects">Meus Projetos</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_hot_songs">Músicas em Alta</string>
+    <string name="gallery_templates">Modelos</string>
+    <string name="gallery_coming_soon">Em Breve</string>
+    <string name="gallery_search_hint">Pesquise seus estilos</string>
+    <string name="gallery_create_new_video">Criar Novo Vídeo</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">Músicas</string>
+    <string name="songs_all">Todas as Músicas</string>
+    <string name="songs_categories">Categorias</string>
+    <string name="songs_search_hint">Pesquisar músicas</string>
+    <string name="songs_suggest_for_you">Sugeridas para Você</string>
+    <string name="songs_weekly_ranking">Ranking Semanal</string>
+    <string name="songs_station">Estações</string>
+
+    <!-- Home -->
+    <string name="home_title">Video Maker</string>
+    <string name="home_welcome">O que você gostaria de fazer?</string>
+    <string name="home_create">Criar</string>
+    <string name="home_create_description">Crie um slideshow com suas fotos</string>
+    <string name="home_my_projects">Meus Projetos</string>
+    <string name="home_my_projects_description">Ver seus projetos salvos</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Configurações</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_language_description">Alterar o idioma do aplicativo</string>
+    <string name="settings_about">Sobre</string>
+    <string name="settings_version">Versão</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Editar Projeto</string>
+    <string name="editor_add_photos">Adicionar Fotos</string>
+    <string name="editor_settings">Configurações</string>
+    <string name="editor_preview">Visualizar</string>
+    <string name="editor_export">Exportar</string>
+    <string name="editor_transition">Transição</string>
+    <string name="editor_duration">Duração</string>
+    <string name="editor_music">Música</string>
+    <string name="editor_frame">Moldura</string>
+    <string name="editor_aspect_ratio">Proporção</string>
+    <string name="editor_volume">Volume</string>
+    <string name="editor_duration_format">Duração: %s</string>
+    <string name="editor_photos_count">%d fotos</string>
+    <string name="editor_save_dialog_title">Salvar Projeto?</string>
+    <string name="editor_save_dialog_message">Seu projeto será salvo e ficará disponível em Meus Projetos.</string>
+    <string name="editor_save_and_exit">Salvar e Sair</string>
+    <string name="editor_discard_changes">Descartar Alterações</string>
+
+    <!-- Projects -->
+    <string name="projects_title">Meus Projetos</string>
+    <string name="projects_empty">Nenhum projeto ainda</string>
+    <string name="projects_empty_description">Crie seu primeiro projeto para vê-lo aqui</string>
+    <string name="projects_item_info">%1$d fotos • %2$s</string>
+    <string name="projects_create_description">Iniciar um novo projeto de slideshow</string>
+    <string name="projects_delete_title">Excluir Projeto?</string>
+    <string name="projects_delete_message">\"%s\" será excluído permanentemente. Esta ação não pode ser desfeita.</string>
+
+    <!-- Export -->
+    <string name="export_title">Exportar Vídeo</string>
+    <string name="export_processing">Processando…</string>
+    <string name="export_complete">Exportação Concluída!</string>
+    <string name="export_share">Compartilhar</string>
+    <string name="export_save">Salvar na Galeria</string>
+    <string name="export_preparing">Preparando exportação…</string>
+    <string name="export_exporting">Exportando vídeo…</string>
+    <string name="export_dont_close">Por favor, não feche o aplicativo</string>
+    <string name="export_video_saved">Seu vídeo foi salvo</string>
+    <string name="export_saved_to_gallery">Salvo na Galeria</string>
+    <string name="export_share_video">Compartilhar Vídeo</string>
+    <string name="export_failed">Falha na Exportação</string>
+    <string name="export_try_again">Tentar Novamente</string>
+    <string name="export_go_back">Voltar</string>
+    <string name="export_cancelled">Exportação Cancelada</string>
+    <string name="export_cancelled_message">A exportação do vídeo foi cancelada</string>
+    <string name="export_back_to_editor">Voltar ao Editor</string>
+    <string name="export_cancel_title">Cancelar Exportação?</string>
+    <string name="export_cancel_message">Tem certeza que deseja cancelar a exportação? Todo o progresso será perdido.</string>
+    <string name="export_continue">Continuar</string>
+    <string name="export_cancel_export">Cancelar Exportação</string>
+
+    <!-- Asset Picker -->
+    <string name="picker_title">Selecionar Fotos</string>
+    <string name="picker_done">Concluído (%d)</string>
+    <string name="picker_close">Fechar</string>
+    <string name="picker_selected">Selecionado</string>
+    <string name="picker_no_photos">Nenhuma foto encontrada</string>
+    <string name="picker_no_photos_hint">Tire algumas fotos para começar</string>
+    <string name="picker_permission_title">Acesso às Fotos Necessário</string>
+    <string name="picker_permission_message">Para criar vídeos com suas fotos, precisamos de permissão para acessar sua biblioteca de fotos.</string>
+    <string name="picker_allow_access">Permitir Acesso</string>
+
+    <!-- Music Picker -->
+    <string name="music_picker_title">Selecionar Música</string>
+    <string name="music_picker_loading">Carregando músicas…</string>
+    <string name="music_picker_no_music">Nenhuma música encontrada</string>
+    <string name="music_picker_no_music_hint">Adicione arquivos de música ao seu dispositivo para usá-los aqui</string>
+    <string name="music_picker_permission_title">Acesso ao Áudio Necessário</string>
+    <string name="music_picker_permission_message">Para usar sua música como áudio de fundo, precisamos de permissão para acessar seus arquivos de áudio.</string>
+    <string name="music_picker_allow_access">Permitir Acesso</string>
+    <string name="music_picker_preview">Visualizar</string>
+    <string name="music_picker_stop_preview">Parar</string>
+    <string name="music_picker_select">Selecionar</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">Configurações</string>
+    <string name="settings_panel_apply">Aplicar</string>
+    <string name="settings_panel_close">Fechar</string>
+    <string name="settings_apply">Aplicar</string>
+    <string name="settings_effect_set">Conjunto de Efeitos</string>
+    <string name="settings_all">Todos</string>
+    <string name="settings_off">DESLIGADO</string>
+    <string name="settings_none">Nenhum</string>
+    <string name="settings_pro">PRO</string>
+    <string name="settings_duration_per_image">Duração por Imagem</string>
+    <string name="settings_seconds_format">%ds</string>
+    <string name="settings_duration_seconds">%ds</string>
+    <string name="settings_overlay_frame">Moldura Sobreposta</string>
+    <string name="settings_background_music">Música de Fundo</string>
+    <string name="settings_custom">Personalizado</string>
+    <string name="settings_add">+ Adicionar</string>
+    <string name="settings_add_audio">+ Adicionar</string>
+    <string name="settings_volume">Volume</string>
+    <string name="settings_aspect_ratio">Proporção</string>
+    <string name="settings_transition_effect">Efeito de Transição</string>
+    <string name="settings_transition_duration">Duração da Transição</string>
+    <string name="settings_transition_duration_value">%.1fs</string>
+
+    <!-- Search -->
+    <string name="search_hint">Pesquise seus estilos</string>
+    <string name="search_recent">Pesquisas Recentes</string>
+    <string name="search_clear_all">Limpar Tudo</string>
+    <string name="search_no_results">Nenhum resultado encontrado</string>
+    <string name="search_no_results_hint">Tente uma palavra-chave diferente</string>
+    <string name="search_suggestions">Sugestões</string>
+    <string name="search_tag_aesthetic">Estético</string>
+    <string name="search_tag_birthday">Aniversário</string>
+    <string name="search_tag_travel">Viagem</string>
+    <string name="search_tag_lofi">Lofi</string>
+    <string name="search_tag_cinematic">Cinematográfico</string>
+    <string name="search_tag_vintage">Vintage</string>
+
+    <!-- Common -->
+    <string name="cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="delete">Excluir</string>
+    <string name="save">Salvar</string>
+    <string name="back">Voltar</string>
+    <string name="done">Concluído</string>
+    <string name="error">Erro</string>
+    <string name="retry">Tentar Novamente</string>
+    <string name="seconds">%d segundos</string>
+    <string name="none">Nenhum</string>
+    <string name="close">Fechar</string>
+    <string name="settings">Configurações</string>
+
+    <!-- Error states -->
+    <string name="error_load_failed">Falha ao carregar. Puxe para baixo para tentar novamente.</string>
+
+    <!-- Songs -->
+    <string name="start_project">Iniciar projeto</string>
+
+    <!-- Onboarding Page 4 — Genre Selection -->
+    <string name="onboarding_page4_title">Que música você\ngosta?</string>
+    <string name="onboarding_page4_subtitle">Escolha seus gêneros favoritos. Vamos personalizar suas sugestões musicais.</string>
+
+    <!-- Music Genres -->
+    <string name="genre_pop">Pop</string>
+    <string name="genre_rock">Rock</string>
+    <string name="genre_hiphop">Hip-Hop</string>
+    <string name="genre_rnb">R&amp;B</string>
+    <string name="genre_electronic">Eletrônico</string>
+    <string name="genre_jazz">Jazz</string>
+    <string name="genre_classical">Clássico</string>
+    <string name="genre_country">Country</string>
+    <string name="genre_latin">Latino</string>
+    <string name="genre_kpop">K-Pop</string>
+    <string name="genre_dance">Dance</string>
+    <string name="genre_edm">EDM</string>
+    <string name="genre_blues">Blues</string>
+    <string name="genre_metal">Metal</string>
+    <string name="genre_soul">Soul</string>
+</resources>

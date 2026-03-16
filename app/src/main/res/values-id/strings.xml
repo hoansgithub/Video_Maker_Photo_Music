@@ -133,6 +133,88 @@
     <string name="settings_volume">Volume</string>
     <string name="settings_aspect_ratio">Rasio Aspek</string>
 
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">Galeri</string>
+    <string name="home_tab_songs">Lagu</string>
+    <string name="home_tab_projects">Proyek Saya</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_hot_songs">Lagu Populer</string>
+    <string name="gallery_templates">Template</string>
+    <string name="gallery_coming_soon">Segera Hadir</string>
+    <string name="gallery_search_hint">Cari gaya Anda</string>
+    <string name="gallery_create_new_video">Buat Video Baru</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">Lagu</string>
+    <string name="songs_all">Semua Lagu</string>
+    <string name="songs_categories">Kategori</string>
+    <string name="songs_search_hint">Cari lagu</string>
+    <string name="songs_suggest_for_you">Disarankan untuk Anda</string>
+    <string name="songs_weekly_ranking">Peringkat Mingguan</string>
+    <string name="songs_station">Stasiun</string>
+
+    <!-- Music Picker -->
+    <string name="music_picker_title">Pilih Musik</string>
+    <string name="music_picker_loading">Memuat…</string>
+    <string name="music_picker_no_music">Tidak ada musik</string>
+    <string name="music_picker_no_music_hint">Tambahkan file musik ke perangkat Anda untuk menggunakannya di sini</string>
+    <string name="music_picker_permission_title">Akses Audio Diperlukan</string>
+    <string name="music_picker_permission_message">Untuk menggunakan musik Anda sebagai audio latar, kami memerlukan izin untuk mengakses file audio Anda.</string>
+    <string name="music_picker_allow_access">Izinkan Akses</string>
+    <string name="music_picker_preview">Pratinjau</string>
+    <string name="music_picker_stop_preview">Berhenti</string>
+    <string name="music_picker_select">Pilih</string>
+
+    <!-- Search -->
+    <string name="search_hint">Cari gaya Anda</string>
+    <string name="search_recent">Pencarian Terbaru</string>
+    <string name="search_clear_all">Hapus Semua</string>
+    <string name="search_no_results">Tidak ada hasil</string>
+    <string name="search_no_results_hint">Coba kata kunci lain</string>
+    <string name="search_suggestions">Saran</string>
+    <string name="search_tag_aesthetic">Estetik</string>
+    <string name="search_tag_birthday">Ulang Tahun</string>
+    <string name="search_tag_travel">Perjalanan</string>
+    <string name="search_tag_lofi">Lofi</string>
+    <string name="search_tag_cinematic">Sinematik</string>
+    <string name="search_tag_vintage">Vintage</string>
+
+    <!-- Settings Panel (additional) -->
+    <string name="settings_effect_set">Set Efek</string>
+    <string name="settings_transition_duration">Durasi Transisi</string>
+    <string name="settings_transition_duration_value">%.1fd</string>
+
+    <!-- Projects (additional) -->
+    <string name="projects_create_description">Mulai proyek slideshow baru</string>
+
+    <!-- Error states -->
+    <string name="error_load_failed">Gagal memuat. Tarik ke bawah untuk mencoba lagi.</string>
+
+    <!-- Songs -->
+    <string name="start_project">Mulai proyek</string>
+
+    <!-- Onboarding Page 4 -->
+    <string name="onboarding_page4_title">Musik apa yang\nAnda sukai?</string>
+    <string name="onboarding_page4_subtitle">Pilih genre favorit Anda. Kami akan menyesuaikan saran musik Anda.</string>
+
+    <!-- Music Genres -->
+    <string name="genre_pop">Pop</string>
+    <string name="genre_rock">Rock</string>
+    <string name="genre_hiphop">Hip-Hop</string>
+    <string name="genre_rnb">R&amp;B</string>
+    <string name="genre_electronic">Elektronik</string>
+    <string name="genre_jazz">Jazz</string>
+    <string name="genre_classical">Klasik</string>
+    <string name="genre_country">Country</string>
+    <string name="genre_latin">Latin</string>
+    <string name="genre_kpop">K-Pop</string>
+    <string name="genre_dance">Dance</string>
+    <string name="genre_edm">EDM</string>
+    <string name="genre_blues">Blues</string>
+    <string name="genre_metal">Metal</string>
+    <string name="genre_soul">Soul</string>
+
     <!-- Common -->
     <string name="cancel">Batal</string>
     <string name="confirm">Konfirmasi</string>

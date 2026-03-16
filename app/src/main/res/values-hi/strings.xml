@@ -133,6 +133,88 @@
     <string name="settings_volume">वॉल्यूम</string>
     <string name="settings_aspect_ratio">आस्पेक्ट रेश्यो</string>
 
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">गैलरी</string>
+    <string name="home_tab_songs">गाने</string>
+    <string name="home_tab_projects">मेरे प्रोजेक्ट्स</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_hot_songs">हॉट गाने</string>
+    <string name="gallery_templates">टेम्पलेट</string>
+    <string name="gallery_coming_soon">जल्द आ रहा है</string>
+    <string name="gallery_search_hint">अपनी स्टाइल खोजें</string>
+    <string name="gallery_create_new_video">नया वीडियो बनाएं</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">गाने</string>
+    <string name="songs_all">सभी गाने</string>
+    <string name="songs_categories">श्रेणियां</string>
+    <string name="songs_search_hint">गाने खोजें</string>
+    <string name="songs_suggest_for_you">आपके लिए सुझाए गए</string>
+    <string name="songs_weekly_ranking">साप्ताहिक रैंकिंग</string>
+    <string name="songs_station">स्टेशन</string>
+
+    <!-- Music Picker -->
+    <string name="music_picker_title">संगीत चुनें</string>
+    <string name="music_picker_loading">लोड हो रहा है…</string>
+    <string name="music_picker_no_music">कोई संगीत नहीं मिला</string>
+    <string name="music_picker_no_music_hint">यहां उपयोग करने के लिए अपने डिवाइस में संगीत फ़ाइलें जोड़ें</string>
+    <string name="music_picker_permission_title">ऑडियो एक्सेस आवश्यक</string>
+    <string name="music_picker_permission_message">अपने संगीत को बैकग्राउंड ऑडियो के रूप में उपयोग करने के लिए, हमें आपकी ऑडियो फ़ाइलों तक पहुंच की अनुमति चाहिए।</string>
+    <string name="music_picker_allow_access">एक्सेस की अनुमति दें</string>
+    <string name="music_picker_preview">प्रीव्यू</string>
+    <string name="music_picker_stop_preview">रोकें</string>
+    <string name="music_picker_select">चुनें</string>
+
+    <!-- Search -->
+    <string name="search_hint">अपनी स्टाइल खोजें</string>
+    <string name="search_recent">हाल की खोजें</string>
+    <string name="search_clear_all">सभी साफ़ करें</string>
+    <string name="search_no_results">कोई परिणाम नहीं मिला</string>
+    <string name="search_no_results_hint">कोई अलग कीवर्ड आज़माएं</string>
+    <string name="search_suggestions">सुझाव</string>
+    <string name="search_tag_aesthetic">एस्थेटिक</string>
+    <string name="search_tag_birthday">जन्मदिन</string>
+    <string name="search_tag_travel">यात्रा</string>
+    <string name="search_tag_lofi">लोफ़ी</string>
+    <string name="search_tag_cinematic">सिनेमाई</string>
+    <string name="search_tag_vintage">विंटेज</string>
+
+    <!-- Settings Panel (additional) -->
+    <string name="settings_effect_set">इफेक्ट सेट</string>
+    <string name="settings_transition_duration">ट्रांज़िशन अवधि</string>
+    <string name="settings_transition_duration_value">%.1fस</string>
+
+    <!-- Projects (additional) -->
+    <string name="projects_create_description">नया स्लाइडशो प्रोजेक्ट शुरू करें</string>
+
+    <!-- Error states -->
+    <string name="error_load_failed">लोड करने में विफल। पुनः प्रयास के लिए नीचे खींचें।</string>
+
+    <!-- Songs -->
+    <string name="start_project">प्रोजेक्ट शुरू करें</string>
+
+    <!-- Onboarding Page 4 — Genre Selection -->
+    <string name="onboarding_page4_title">आप कौन सा संगीत\nपसंद करते हैं?</string>
+    <string name="onboarding_page4_subtitle">अपनी पसंदीदा शैलियां चुनें। हम आपके संगीत सुझाव अनुकूलित करेंगे।</string>
+
+    <!-- Music Genres -->
+    <string name="genre_pop">पॉप</string>
+    <string name="genre_rock">रॉक</string>
+    <string name="genre_hiphop">हिप-हॉप</string>
+    <string name="genre_rnb">आर एंड बी</string>
+    <string name="genre_electronic">इलेक्ट्रॉनिक</string>
+    <string name="genre_jazz">जैज़</string>
+    <string name="genre_classical">क्लासिकल</string>
+    <string name="genre_country">कंट्री</string>
+    <string name="genre_latin">लैटिन</string>
+    <string name="genre_kpop">के-पॉप</string>
+    <string name="genre_dance">डांस</string>
+    <string name="genre_edm">ईडीएम</string>
+    <string name="genre_blues">ब्लूज़</string>
+    <string name="genre_metal">मेटल</string>
+    <string name="genre_soul">सोल</string>
+
     <!-- Common -->
     <string name="cancel">रद्द करें</string>
     <string name="confirm">पुष्टि करें</string>

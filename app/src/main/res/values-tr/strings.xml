@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Video Maker</string>
+
+    <!-- Loading -->
+    <string name="loading">Yükleniyor…</string>
+
+    <!-- Language Selection -->
+    <string name="language_select_title">Dil Seçin</string>
+    <string name="language_select_subtitle">Tercih ettiğiniz dili seçin</string>
+    <string name="language_continue">Devam Et</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">İleri</string>
+    <string name="onboarding_get_started">Başla</string>
+    <!-- Page 1 -->
+    <string name="onboarding_page1_title">Fotoğrafları\nGüzel Videolara Dönüştür</string>
+    <string name="onboarding_page1_feature1_title">Fotoğraf Seç</string>
+    <string name="onboarding_page1_feature1_desc">Galerinizden favori fotoğraflarınızı seçin</string>
+    <string name="onboarding_page1_feature2_title">Slayt Gösterisi Oluştur</string>
+    <string name="onboarding_page1_feature2_desc">Fotoğraflarınızı etkileyici video slayt gösterilerine dönüştürün</string>
+    <!-- Page 2 -->
+    <string name="onboarding_page2_title">Müzik ve\nEfekt Ekle</string>
+    <string name="onboarding_page2_feature1_title">Arka Plan Müziği</string>
+    <string name="onboarding_page2_feature1_desc">Favori müziğinizi ekleyin veya kütüphanemizden seçin</string>
+    <string name="onboarding_page2_feature2_title">Yumuşak Geçişler</string>
+    <string name="onboarding_page2_feature2_desc">Fotoğraf ve kliplleriniz arasında güzel geçişler</string>
+    <!-- Page 3 -->
+    <string name="onboarding_page3_title">Dışa Aktar ve\nPaylaş</string>
+    <string name="onboarding_page3_feature1_title">Yüksek Kaliteli Dışa Aktarma</string>
+    <string name="onboarding_page3_feature1_desc">Videolarınızı HD kalitede 4K\'ya kadar dışa aktarın</string>
+    <string name="onboarding_page3_feature2_title">Her Yerde Paylaş</string>
+    <string name="onboarding_page3_feature2_desc">Sosyal medyada doğrudan paylaşın veya galerinize kaydedin</string>
+
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">Galeri</string>
+    <string name="home_tab_songs">Şarkılar</string>
+    <string name="home_tab_projects">Projelerim</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_hot_songs">Popüler Şarkılar</string>
+    <string name="gallery_templates">Şablonlar</string>
+    <string name="gallery_coming_soon">Yakında</string>
+    <string name="gallery_search_hint">Stilinizi arayın</string>
+    <string name="gallery_create_new_video">Yeni Video Oluştur</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">Şarkılar</string>
+    <string name="songs_all">Tüm Şarkılar</string>
+    <string name="songs_categories">Kategoriler</string>
+    <string name="songs_search_hint">Şarkı ara</string>
+    <string name="songs_suggest_for_you">Size Önerilen</string>
+    <string name="songs_weekly_ranking">Haftalık Sıralama</string>
+    <string name="songs_station">İstasyonlar</string>
+
+    <!-- Home -->
+    <string name="home_title">Video Maker</string>
+    <string name="home_welcome">Ne yapmak istersiniz?</string>
+    <string name="home_create">Oluştur</string>
+    <string name="home_create_description">Fotoğraflarınızdan slayt gösterisi oluşturun</string>
+    <string name="home_my_projects">Projelerim</string>
+    <string name="home_my_projects_description">Kayıtlı projelerinizi görüntüleyin</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Ayarlar</string>
+    <string name="settings_language">Dil</string>
+    <string name="settings_language_description">Uygulama dilini değiştir</string>
+    <string name="settings_about">Hakkında</string>
+    <string name="settings_version">Sürüm</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Projeyi Düzenle</string>
+    <string name="editor_add_photos">Fotoğraf Ekle</string>
+    <string name="editor_settings">Ayarlar</string>
+    <string name="editor_preview">Önizleme</string>
+    <string name="editor_export">Dışa Aktar</string>
+    <string name="editor_transition">Geçiş</string>
+    <string name="editor_duration">Süre</string>
+    <string name="editor_music">Müzik</string>
+    <string name="editor_frame">Çerçeve</string>
+    <string name="editor_aspect_ratio">En-Boy Oranı</string>
+    <string name="editor_volume">Ses</string>
+    <string name="editor_duration_format">Süre: %s</string>
+    <string name="editor_photos_count">%d fotoğraf</string>
+    <string name="editor_save_dialog_title">Proje Kaydedilsin mi?</string>
+    <string name="editor_save_dialog_message">Projeniz kaydedilecek ve Projelerim bölümünde kullanılabilir olacak.</string>
+    <string name="editor_save_and_exit">Kaydet ve Çık</string>
+    <string name="editor_discard_changes">Değişiklikleri At</string>
+
+    <!-- Projects -->
+    <string name="projects_title">Projelerim</string>
+    <string name="projects_empty">Henüz proje yok</string>
+    <string name="projects_empty_description">İlk projenizi oluşturun ve burada görün</string>
+    <string name="projects_item_info">%1$d fotoğraf • %2$s</string>
+    <string name="projects_create_description">Yeni bir slayt gösterisi projesi başlat</string>
+    <string name="projects_delete_title">Proje Silinsin mi?</string>
+    <string name="projects_delete_message">\"%s\" kalıcı olarak silinecek. Bu işlem geri alınamaz.</string>
+
+    <!-- Export -->
+    <string name="export_title">Videoyu Dışa Aktar</string>
+    <string name="export_processing">İşleniyor…</string>
+    <string name="export_complete">Dışa Aktarma Tamamlandı!</string>
+    <string name="export_share">Paylaş</string>
+    <string name="export_save">Galeriye Kaydet</string>
+    <string name="export_preparing">Dışa aktarma hazırlanıyor…</string>
+    <string name="export_exporting">Video dışa aktarılıyor…</string>
+    <string name="export_dont_close">Lütfen uygulamayı kapatmayın</string>
+    <string name="export_video_saved">Videonuz kaydedildi</string>
+    <string name="export_saved_to_gallery">Galeriye Kaydedildi</string>
+    <string name="export_share_video">Videoyu Paylaş</string>
+    <string name="export_failed">Dışa Aktarma Başarısız</string>
+    <string name="export_try_again">Tekrar Dene</string>
+    <string name="export_go_back">Geri Dön</string>
+    <string name="export_cancelled">Dışa Aktarma İptal Edildi</string>
+    <string name="export_cancelled_message">Video dışa aktarma işlemi iptal edildi</string>
+    <string name="export_back_to_editor">Düzenleyiciye Dön</string>
+    <string name="export_cancel_title">Dışa Aktarma İptal Edilsin mi?</string>
+    <string name="export_cancel_message">Dışa aktarmayı iptal etmek istediğinizden emin misiniz? Tüm ilerleme kaybolacak.</string>
+    <string name="export_continue">Devam Et</string>
+    <string name="export_cancel_export">Dışa Aktarmayı İptal Et</string>
+
+    <!-- Asset Picker -->
+    <string name="picker_title">Fotoğraf Seç</string>
+    <string name="picker_done">Bitti (%d)</string>
+    <string name="picker_close">Kapat</string>
+    <string name="picker_selected">Seçildi</string>
+    <string name="picker_no_photos">Fotoğraf bulunamadı</string>
+    <string name="picker_no_photos_hint">Başlamak için biraz fotoğraf çekin</string>
+    <string name="picker_permission_title">Fotoğraf Erişimi Gerekli</string>
+    <string name="picker_permission_message">Fotoğraflarınızdan video oluşturmak için fotoğraf kütüphanenize erişim iznine ihtiyacımız var.</string>
+    <string name="picker_allow_access">Erişime İzin Ver</string>
+
+    <!-- Music Picker -->
+    <string name="music_picker_title">Müzik Seç</string>
+    <string name="music_picker_loading">Müzik yükleniyor…</string>
+    <string name="music_picker_no_music">Müzik bulunamadı</string>
+    <string name="music_picker_no_music_hint">Burada kullanmak için cihazınıza müzik dosyaları ekleyin</string>
+    <string name="music_picker_permission_title">Ses Erişimi Gerekli</string>
+    <string name="music_picker_permission_message">Müziğinizi arka plan sesi olarak kullanmak için ses dosyalarınıza erişim iznine ihtiyacımız var.</string>
+    <string name="music_picker_allow_access">Erişime İzin Ver</string>
+    <string name="music_picker_preview">Önizleme</string>
+    <string name="music_picker_stop_preview">Durdur</string>
+    <string name="music_picker_select">Seç</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">Ayarlar</string>
+    <string name="settings_panel_apply">Uygula</string>
+    <string name="settings_panel_close">Kapat</string>
+    <string name="settings_apply">Uygula</string>
+    <string name="settings_effect_set">Efekt Seti</string>
+    <string name="settings_all">Tümü</string>
+    <string name="settings_off">KAPALI</string>
+    <string name="settings_none">Hiçbiri</string>
+    <string name="settings_pro">PRO</string>
+    <string name="settings_duration_per_image">Görüntü Başına Süre</string>
+    <string name="settings_seconds_format">%ds</string>
+    <string name="settings_duration_seconds">%ds</string>
+    <string name="settings_overlay_frame">Üst Katman Çerçeve</string>
+    <string name="settings_background_music">Arka Plan Müziği</string>
+    <string name="settings_custom">Özel</string>
+    <string name="settings_add">+ Ekle</string>
+    <string name="settings_add_audio">+ Ekle</string>
+    <string name="settings_volume">Ses</string>
+    <string name="settings_aspect_ratio">En-Boy Oranı</string>
+    <string name="settings_transition_effect">Geçiş Efekti</string>
+    <string name="settings_transition_duration">Geçiş Süresi</string>
+    <string name="settings_transition_duration_value">%.1fs</string>
+
+    <!-- Search -->
+    <string name="search_hint">Stilinizi arayın</string>
+    <string name="search_recent">Son Aramalar</string>
+    <string name="search_clear_all">Tümünü Temizle</string>
+    <string name="search_no_results">Sonuç bulunamadı</string>
+    <string name="search_no_results_hint">Farklı bir anahtar kelime deneyin</string>
+    <string name="search_suggestions">Öneriler</string>
+    <string name="search_tag_aesthetic">Estetik</string>
+    <string name="search_tag_birthday">Doğum Günü</string>
+    <string name="search_tag_travel">Seyahat</string>
+    <string name="search_tag_lofi">Lofi</string>
+    <string name="search_tag_cinematic">Sinematik</string>
+    <string name="search_tag_vintage">Vintage</string>
+
+    <!-- Common -->
+    <string name="cancel">İptal</string>
+    <string name="confirm">Onayla</string>
+    <string name="delete">Sil</string>
+    <string name="save">Kaydet</string>
+    <string name="back">Geri</string>
+    <string name="done">Bitti</string>
+    <string name="error">Hata</string>
+    <string name="retry">Tekrar Dene</string>
+    <string name="seconds">%d saniye</string>
+    <string name="none">Hiçbiri</string>
+    <string name="close">Kapat</string>
+    <string name="settings">Ayarlar</string>
+
+    <!-- Error states -->
+    <string name="error_load_failed">Yüklenemedi. Yeniden denemek için aşağı çekin.</string>
+
+    <!-- Songs -->
+    <string name="start_project">Projeyi başlat</string>
+
+    <!-- Onboarding Page 4 — Genre Selection -->
+    <string name="onboarding_page4_title">Hangi müziği\nseversiniz?</string>
+    <string name="onboarding_page4_subtitle">Favori türlerinizi seçin. Müzik önerilerinizi kişiselleştireceğiz.</string>
+
+    <!-- Music Genres -->
+    <string name="genre_pop">Pop</string>
+    <string name="genre_rock">Rock</string>
+    <string name="genre_hiphop">Hip-Hop</string>
+    <string name="genre_rnb">R&amp;B</string>
+    <string name="genre_electronic">Elektronik</string>
+    <string name="genre_jazz">Caz</string>
+    <string name="genre_classical">Klasik</string>
+    <string name="genre_country">Country</string>
+    <string name="genre_latin">Latin</string>
+    <string name="genre_kpop">K-Pop</string>
+    <string name="genre_dance">Dans</string>
+    <string name="genre_edm">EDM</string>
+    <string name="genre_blues">Blues</string>
+    <string name="genre_metal">Metal</string>
+    <string name="genre_soul">Soul</string>
+</resources>

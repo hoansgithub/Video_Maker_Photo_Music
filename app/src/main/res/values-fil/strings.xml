@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Video Maker</string>
+
+    <!-- Loading -->
+    <string name="loading">Naglo-load…</string>
+
+    <!-- Language Selection -->
+    <string name="language_select_title">Pumili ng Wika</string>
+    <string name="language_select_subtitle">Piliin ang iyong gustong wika</string>
+    <string name="language_continue">Magpatuloy</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Susunod</string>
+    <string name="onboarding_get_started">Magsimula</string>
+    <!-- Page 1 -->
+    <string name="onboarding_page1_title">Gawing Magandang\nVideo ang mga Larawan</string>
+    <string name="onboarding_page1_feature1_title">Pumili ng Larawan</string>
+    <string name="onboarding_page1_feature1_desc">Piliin ang iyong mga paboritong larawan mula sa iyong gallery</string>
+    <string name="onboarding_page1_feature2_title">Gumawa ng Slideshow</string>
+    <string name="onboarding_page1_feature2_desc">Gawing kamangha-manghang video slideshow ang iyong mga larawan</string>
+    <!-- Page 2 -->
+    <string name="onboarding_page2_title">Magdagdag ng Musika\nat Epekto</string>
+    <string name="onboarding_page2_feature1_title">Background na Musika</string>
+    <string name="onboarding_page2_feature1_desc">Idagdag ang iyong paboritong musika o pumili mula sa aming library</string>
+    <string name="onboarding_page2_feature2_title">Maayos na Transition</string>
+    <string name="onboarding_page2_feature2_desc">Magagandang transition sa pagitan ng iyong mga larawan at clip</string>
+    <!-- Page 3 -->
+    <string name="onboarding_page3_title">I-export at\nIbahagi</string>
+    <string name="onboarding_page3_feature1_title">Mataas na Kalidad na Export</string>
+    <string name="onboarding_page3_feature1_desc">I-export ang iyong mga video sa HD quality hanggang 4K</string>
+    <string name="onboarding_page3_feature2_title">Ibahagi Kahit Saan</string>
+    <string name="onboarding_page3_feature2_desc">Ibahagi direkta sa social media o i-save sa iyong gallery</string>
+
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">Gallery</string>
+    <string name="home_tab_songs">Mga Kanta</string>
+    <string name="home_tab_projects">Aking mga Proyekto</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_hot_songs">Mga Sikat na Kanta</string>
+    <string name="gallery_templates">Mga Template</string>
+    <string name="gallery_coming_soon">Malapit na</string>
+    <string name="gallery_search_hint">Hanapin ang iyong estilo</string>
+    <string name="gallery_create_new_video">Gumawa ng Bagong Video</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">Mga Kanta</string>
+    <string name="songs_all">Lahat ng Kanta</string>
+    <string name="songs_categories">Mga Kategorya</string>
+    <string name="songs_search_hint">Maghanap ng mga kanta</string>
+    <string name="songs_suggest_for_you">Inirerekomenda Para sa Iyo</string>
+    <string name="songs_weekly_ranking">Lingguhang Ranggo</string>
+    <string name="songs_station">Mga Istasyon</string>
+
+    <!-- Home -->
+    <string name="home_title">Video Maker</string>
+    <string name="home_welcome">Ano ang gusto mong gawin?</string>
+    <string name="home_create">Gumawa</string>
+    <string name="home_create_description">Gumawa ng slideshow mula sa iyong mga larawan</string>
+    <string name="home_my_projects">Aking mga Proyekto</string>
+    <string name="home_my_projects_description">Tingnan ang iyong mga naka-save na proyekto</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Mga Setting</string>
+    <string name="settings_language">Wika</string>
+    <string name="settings_language_description">Baguhin ang wika ng app</string>
+    <string name="settings_about">Tungkol sa</string>
+    <string name="settings_version">Bersyon</string>
+
+    <!-- Editor -->
+    <string name="editor_title">I-edit ang Proyekto</string>
+    <string name="editor_add_photos">Magdagdag ng Larawan</string>
+    <string name="editor_settings">Mga Setting</string>
+    <string name="editor_preview">Preview</string>
+    <string name="editor_export">I-export</string>
+    <string name="editor_transition">Transition</string>
+    <string name="editor_duration">Tagal</string>
+    <string name="editor_music">Musika</string>
+    <string name="editor_frame">Frame</string>
+    <string name="editor_aspect_ratio">Aspect Ratio</string>
+    <string name="editor_volume">Volume</string>
+    <string name="editor_duration_format">Tagal: %s</string>
+    <string name="editor_photos_count">%d larawan</string>
+    <string name="editor_save_dialog_title">I-save ang Proyekto?</string>
+    <string name="editor_save_dialog_message">Mase-save ang iyong proyekto at makikita sa Aking mga Proyekto.</string>
+    <string name="editor_save_and_exit">I-save at Lumabas</string>
+    <string name="editor_discard_changes">Itapon ang mga Pagbabago</string>
+
+    <!-- Projects -->
+    <string name="projects_title">Aking mga Proyekto</string>
+    <string name="projects_empty">Wala pang proyekto</string>
+    <string name="projects_empty_description">Gumawa ng iyong unang proyekto para makita ito dito</string>
+    <string name="projects_item_info">%1$d larawan • %2$s</string>
+    <string name="projects_create_description">Magsimula ng bagong slideshow na proyekto</string>
+    <string name="projects_delete_title">Tanggalin ang Proyekto?</string>
+    <string name="projects_delete_message">Permanenteng matatanggal ang \"%s\". Hindi ito mababawi.</string>
+
+    <!-- Export -->
+    <string name="export_title">I-export ang Video</string>
+    <string name="export_processing">Pinoproseso…</string>
+    <string name="export_complete">Tapos na ang Export!</string>
+    <string name="export_share">Ibahagi</string>
+    <string name="export_save">I-save sa Gallery</string>
+    <string name="export_preparing">Inihahanda ang export…</string>
+    <string name="export_exporting">Ine-export ang video…</string>
+    <string name="export_dont_close">Huwag isara ang app</string>
+    <string name="export_video_saved">Na-save na ang iyong video</string>
+    <string name="export_saved_to_gallery">Na-save sa Gallery</string>
+    <string name="export_share_video">Ibahagi ang Video</string>
+    <string name="export_failed">Nabigo ang Export</string>
+    <string name="export_try_again">Subukan Muli</string>
+    <string name="export_go_back">Bumalik</string>
+    <string name="export_cancelled">Kinansela ang Export</string>
+    <string name="export_cancelled_message">Kinansela ang pag-export ng video</string>
+    <string name="export_back_to_editor">Bumalik sa Editor</string>
+    <string name="export_cancel_title">Kanselahin ang Export?</string>
+    <string name="export_cancel_message">Sigurado ka bang gusto mong kanselahin ang export? Mawawala ang lahat ng progreso.</string>
+    <string name="export_continue">Magpatuloy</string>
+    <string name="export_cancel_export">Kanselahin ang Export</string>
+
+    <!-- Asset Picker -->
+    <string name="picker_title">Pumili ng Larawan</string>
+    <string name="picker_done">Tapos (%d)</string>
+    <string name="picker_close">Isara</string>
+    <string name="picker_selected">Napili</string>
+    <string name="picker_no_photos">Walang larawan na nahanap</string>
+    <string name="picker_no_photos_hint">Kumuha ng mga larawan para magsimula</string>
+    <string name="picker_permission_title">Kailangan ang Access sa Larawan</string>
+    <string name="picker_permission_message">Para gumawa ng mga video mula sa iyong mga larawan, kailangan namin ng pahintulot na ma-access ang iyong library ng larawan.</string>
+    <string name="picker_allow_access">Payagan ang Access</string>
+
+    <!-- Music Picker -->
+    <string name="music_picker_title">Pumili ng Musika</string>
+    <string name="music_picker_loading">Naglo-load ng musika…</string>
+    <string name="music_picker_no_music">Walang nahanap na musika</string>
+    <string name="music_picker_no_music_hint">Magdagdag ng mga music file sa iyong device para magamit dito</string>
+    <string name="music_picker_permission_title">Kailangan ang Access sa Audio</string>
+    <string name="music_picker_permission_message">Para gamitin ang iyong musika bilang background audio, kailangan namin ng pahintulot na ma-access ang iyong mga audio file.</string>
+    <string name="music_picker_allow_access">Payagan ang Access</string>
+    <string name="music_picker_preview">Preview</string>
+    <string name="music_picker_stop_preview">Itigil</string>
+    <string name="music_picker_select">Piliin</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">Mga Setting</string>
+    <string name="settings_panel_apply">Ilapat</string>
+    <string name="settings_panel_close">Isara</string>
+    <string name="settings_apply">Ilapat</string>
+    <string name="settings_effect_set">Set ng Epekto</string>
+    <string name="settings_all">Lahat</string>
+    <string name="settings_off">OFF</string>
+    <string name="settings_none">Wala</string>
+    <string name="settings_pro">PRO</string>
+    <string name="settings_duration_per_image">Tagal bawat Larawan</string>
+    <string name="settings_seconds_format">%ds</string>
+    <string name="settings_duration_seconds">%ds</string>
+    <string name="settings_overlay_frame">Overlay Frame</string>
+    <string name="settings_background_music">Background na Musika</string>
+    <string name="settings_custom">Custom</string>
+    <string name="settings_add">+ Idagdag</string>
+    <string name="settings_add_audio">+ Idagdag</string>
+    <string name="settings_volume">Volume</string>
+    <string name="settings_aspect_ratio">Aspect Ratio</string>
+    <string name="settings_transition_effect">Transition Effect</string>
+    <string name="settings_transition_duration">Tagal ng Transition</string>
+    <string name="settings_transition_duration_value">%.1fs</string>
+
+    <!-- Search -->
+    <string name="search_hint">Hanapin ang iyong estilo</string>
+    <string name="search_recent">Mga Kamakailang Paghahanap</string>
+    <string name="search_clear_all">I-clear Lahat</string>
+    <string name="search_no_results">Walang nahanap na resulta</string>
+    <string name="search_no_results_hint">Subukan ang ibang keyword</string>
+    <string name="search_suggestions">Mga Mungkahi</string>
+    <string name="search_tag_aesthetic">Aesthetic</string>
+    <string name="search_tag_birthday">Kaarawan</string>
+    <string name="search_tag_travel">Paglalakbay</string>
+    <string name="search_tag_lofi">Lofi</string>
+    <string name="search_tag_cinematic">Sinematiko</string>
+    <string name="search_tag_vintage">Vintage</string>
+
+    <!-- Common -->
+    <string name="cancel">Kanselahin</string>
+    <string name="confirm">Kumpirmahin</string>
+    <string name="delete">Tanggalin</string>
+    <string name="save">I-save</string>
+    <string name="back">Bumalik</string>
+    <string name="done">Tapos</string>
+    <string name="error">Error</string>
+    <string name="retry">Subukan Muli</string>
+    <string name="seconds">%d segundo</string>
+    <string name="none">Wala</string>
+    <string name="close">Isara</string>
+    <string name="settings">Mga Setting</string>
+
+    <!-- Error states -->
+    <string name="error_load_failed">Nabigo ang pag-load. Mag-swipe pababa para subukan muli.</string>
+
+    <!-- Songs -->
+    <string name="start_project">Simulan ang proyekto</string>
+
+    <!-- Onboarding Page 4 — Genre Selection -->
+    <string name="onboarding_page4_title">Anong musika ang\niyong gusto?</string>
+    <string name="onboarding_page4_subtitle">Piliin ang iyong mga paboritong genre. Iae-adjust namin ang iyong mga mungkahi sa musika.</string>
+
+    <!-- Music Genres -->
+    <string name="genre_pop">Pop</string>
+    <string name="genre_rock">Rock</string>
+    <string name="genre_hiphop">Hip-Hop</string>
+    <string name="genre_rnb">R&amp;B</string>
+    <string name="genre_electronic">Electronic</string>
+    <string name="genre_jazz">Jazz</string>
+    <string name="genre_classical">Klasikal</string>
+    <string name="genre_country">Country</string>
+    <string name="genre_latin">Latin</string>
+    <string name="genre_kpop">K-Pop</string>
+    <string name="genre_dance">Dance</string>
+    <string name="genre_edm">EDM</string>
+    <string name="genre_blues">Blues</string>
+    <string name="genre_metal">Metal</string>
+    <string name="genre_soul">Soul</string>
+</resources>
