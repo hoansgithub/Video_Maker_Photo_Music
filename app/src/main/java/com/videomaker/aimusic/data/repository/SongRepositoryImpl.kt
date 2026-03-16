@@ -5,16 +5,19 @@ import com.videomaker.aimusic.data.mapper.toMusicSong
 import com.videomaker.aimusic.data.mapper.toMusicSongs
 import com.videomaker.aimusic.data.remote.dto.SongDto
 import com.videomaker.aimusic.domain.model.MusicSong
+import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.domain.repository.SongRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
-import io.github.jan.supabase.postgrest.query.filter.TextSearchType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /**
  * Implementation of SongRepository using Supabase Postgrest.
@@ -27,26 +30,11 @@ class SongRepositoryImpl(
     companion object {
         private const val TABLE_SONGS = "songs"
         private const val TABLE_GENRES = "genres"
+        private const val FN_SEARCH_SONGS = "search_songs"
         private const val ERROR_LOAD_FAILED = "Failed to load songs"
         private const val ERROR_NOT_FOUND = "Song not found"
     }
 
-    override suspend fun getAllSongs(): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
-        try {
-            val songs = supabaseClient.from(TABLE_SONGS)
-                .select {
-                    filter {
-                        eq("is_active", true)
-                    }
-                    order("sort_order", Order.DESCENDING)
-                }
-                .decodeList<SongDto>()
-
-            Result.success(songs.toMusicSongs())
-        } catch (e: Exception) {
-            Result.failure(Exception(ERROR_LOAD_FAILED, e))
-        }
-    }
 
     override suspend fun getFeaturedSongs(limit: Int): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
         val cacheKey = ApiCacheManager.KEY_SONGS_WEEKLY_RANKING
@@ -94,77 +82,23 @@ class SongRepositoryImpl(
     }
 
     /**
-     * Multi-tier search:
-     * Tier 1: Full-text search (fast, GIN index, English/Latin)
-     * Tier 2: ILIKE fallback (slower, all languages incl. CJK)
-     * Deduplicates results across tiers.
+     * Delegates to the `search_songs` Supabase function.
+     *
+     * The DB function runs FTS (GIN index) + ILIKE + genre-contains in a single
+     * query with server-side dedup and ranking — 1 round trip instead of 3.
      */
     override suspend fun searchSongs(query: String): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
+        val q = query.trim()
+        if (q.isEmpty()) return@withContext Result.success(emptyList())
+
         try {
-            val searchQuery = query.trim()
-            if (searchQuery.isEmpty()) {
-                return@withContext Result.success(emptyList())
-            }
-
-            val escapedQuery = searchQuery.replace("'", "''")
-            val seenIds = mutableSetOf<Long>()
-            val results = mutableListOf<MusicSong>()
-
-            // Tier 1: Full-text search with OR logic (fast, uses GIN index)
-            // "love story" → "love:* | story:*"
-            val tsQuery = searchQuery
-                .split("\\s+".toRegex())
-                .filter { it.isNotBlank() }
-                .joinToString(" | ") { "${it.replace("'", "''")}:*" }
-
-            try {
-                val ftsResults = supabaseClient.from(TABLE_SONGS)
-                    .select {
-                        filter {
-                            eq("is_active", true)
-                            textSearch("search_vector", tsQuery, TextSearchType.NONE, "simple")
-                        }
-                        order("sort_order", Order.DESCENDING)
-                        limit(30)
-                    }
-                    .decodeList<SongDto>()
-
-                ftsResults.forEach { dto ->
-                    val song = dto.toMusicSong()
-                    if (seenIds.add(song.id)) {
-                        results.add(song)
-                    }
-                }
-            } catch (_: Exception) {
-                // FTS may fail for some queries, continue to Tier 2
-            }
-
-            // Tier 2: ILIKE fallback (all languages, CJK support)
-            if (results.size < 30) {
-                val remaining = 30 - results.size
-                val ilikeResults = supabaseClient.from(TABLE_SONGS)
-                    .select {
-                        filter {
-                            eq("is_active", true)
-                            or {
-                                ilike("name", "%$escapedQuery%")
-                                ilike("artist", "%$escapedQuery%")
-                            }
-                        }
-                        order("sort_order", Order.DESCENDING)
-                        limit(remaining.toLong())
-                    }
-                    .decodeList<SongDto>()
-
-                ilikeResults.forEach { dto ->
-                    val song = dto.toMusicSong()
-                    if (seenIds.add(song.id)) {
-                        results.add(song)
-                    }
-                }
-            }
-
-            Result.success(results)
+            val songs = supabaseClient.postgrest
+                .rpc(FN_SEARCH_SONGS, buildJsonObject {
+                    put("search_query", q)
+                    put("result_limit", 30)
+                })
+                .decodeList<SongDto>()
+            Result.success(songs.toMusicSongs())
         } catch (e: Exception) {
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
@@ -172,16 +106,20 @@ class SongRepositoryImpl(
 
     /**
      * Fetches genres from the `genres` table, filtered by type = "genre" to exclude
-     * country codes and tags. Returns only active genre IDs, sorted by popularity (sort_order DESC).
+     * country codes and tags. Returns active genres as SongGenre objects (id + displayName),
+     * sorted by popularity (sort_order DESC).
+     *
+     * Note: display_name is used as the human-readable label.
+     * TODO: When label_i18n column is populated in DB, use label_i18n[locale] instead of display_name.
      */
-    override suspend fun getGenres(): Result<List<String>> = withContext(Dispatchers.IO) {
+    override suspend fun getGenres(): Result<List<SongGenre>> = withContext(Dispatchers.IO) {
         val cacheKey = ApiCacheManager.KEY_SONGS_GENRES
-        apiCacheManager.get<List<String>>(cacheKey)
+        apiCacheManager.get<List<SongGenre>>(cacheKey)
             ?.let { return@withContext Result.success(it) }
 
         try {
             val genres = supabaseClient.from(TABLE_GENRES)
-                .select(Columns.raw("id")) {
+                .select(Columns.raw("id, display_name")) {
                     filter {
                         eq("type", "genre")
                         eq("is_active", true)
@@ -189,12 +127,12 @@ class SongRepositoryImpl(
                     order("sort_order", Order.DESCENDING)
                 }
                 .decodeList<GenreDto>()
-                .map { it.id }
+                .map { SongGenre(id = it.id, displayName = it.displayName.ifEmpty { it.id }) }
 
             apiCacheManager.put(cacheKey, genres)
             Result.success(genres)
         } catch (e: Exception) {
-            apiCacheManager.getStale<List<String>>(cacheKey)
+            apiCacheManager.getStale<List<SongGenre>>(cacheKey)
                 ?.let { return@withContext Result.success(it) }
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }

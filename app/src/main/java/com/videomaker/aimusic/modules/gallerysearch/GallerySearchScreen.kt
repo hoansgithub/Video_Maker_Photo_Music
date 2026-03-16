@@ -33,7 +33,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -61,6 +60,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.domain.model.SongGenre
+import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
+import com.videomaker.aimusic.ui.components.SongListItem
+import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Black24
 import com.videomaker.aimusic.ui.theme.ChipBorderInactive
@@ -86,6 +89,7 @@ fun GallerySearchScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
+    val suggestionGenres by viewModel.suggestionGenres.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
 
     // Handle navigation events
@@ -119,6 +123,7 @@ fun GallerySearchScreen(
         when (val state = uiState) {
             is GallerySearchUiState.Idle -> GallerySearchIdleContent(
                 recentSearches = recentSearches,
+                suggestionGenres = suggestionGenres,
                 onRecentClick = viewModel::onRecentSearchClick,
                 onRemoveRecent = viewModel::onRemoveRecentSearch,
                 onClearAllRecents = viewModel::onClearAllRecents,
@@ -128,6 +133,8 @@ fun GallerySearchScreen(
                 }
             )
 
+            is GallerySearchUiState.Loading -> GallerySearchLoadingContent()
+
             is GallerySearchUiState.Results -> GallerySearchResultsContent(
                 templates = state.templates,
                 songs = state.songs,
@@ -135,6 +142,8 @@ fun GallerySearchScreen(
             )
 
             is GallerySearchUiState.Empty -> GallerySearchEmptyContent(query = state.query)
+
+            is GallerySearchUiState.Error -> GallerySearchErrorContent(message = state.message)
         }
     }
 }
@@ -255,11 +264,10 @@ private fun GallerySearchTopBar(
 // IDLE CONTENT (recents + suggestions)
 // ============================================
 
-private val suggestionTags = listOf("Aesthetic", "Birthday", "Travel", "Lofi", "Cinematic", "Vintage")
-
 @Composable
 private fun GallerySearchIdleContent(
     recentSearches: List<String>,
+    suggestionGenres: List<SongGenre>,
     onRecentClick: (String) -> Unit,
     onRemoveRecent: (String) -> Unit,
     onClearAllRecents: () -> Unit,
@@ -328,10 +336,11 @@ private fun GallerySearchIdleContent(
                 contentPadding = PaddingValues(horizontal = dimens.spaceLg),
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
             ) {
-                items(suggestionTags, key = { it }) { tag ->
+                items(suggestionGenres, key = { it.id }) { genre ->
                     SuggestionChip(
-                        label = tag,
-                        onClick = { onSuggestionClick(tag) }
+                        // TODO: Use label_i18n[locale] when the column is populated in DB
+                        label = genre.displayName,
+                        onClick = { onSuggestionClick(genre.id) }
                     )
                 }
             }
@@ -459,9 +468,15 @@ private fun GallerySearchResultsContent(
 
             items(
                 items = songs,
-                key = { "song_${it.id}" }
+                key = { "song_${it.id}" },
+                contentType = { "song" }
             ) { song ->
-                GallerySearchSongRow(song = song)
+                SongListItem(
+                    name = song.name,
+                    artist = song.artist,
+                    coverUrl = song.coverUrl,
+                    onSongClick = {}
+                )
             }
         }
     }
@@ -567,61 +582,23 @@ private fun GallerySearchTemplateCard(
     }
 }
 
+// ============================================
+// LOADING CONTENT
+// ============================================
+
 @Composable
-private fun GallerySearchSongRow(song: GallerySearchSongItem) {
+private fun GallerySearchLoadingContent() {
     val dimens = AppDimens.current
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { /* TODO: Navigate to song detail */ }
-            .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceMd),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Song icon placeholder
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .background(
-                    color = Primary.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(dimens.radiusMd)
-                ),
-            contentAlignment = Alignment.Center
+    ProvideShimmerEffect {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = dimens.spaceMd),
+            userScrollEnabled = false
         ) {
-            Icon(
-                imageVector = Icons.Default.MusicNote,
-                contentDescription = null,
-                tint = Primary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(dimens.spaceMd))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = song.name,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = song.artist,
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        // Genre tags
-        if (song.genres.isNotEmpty()) {
-            Text(
-                text = song.genres.first(),
-                style = MaterialTheme.typography.labelSmall,
-                color = TextTertiary
-            )
+            items(6, contentType = { "song_placeholder" }) {
+                SongListItemPlaceholder()
+            }
         }
     }
 }
@@ -645,6 +622,26 @@ private fun GallerySearchEmptyContent(query: String) {
             Spacer(modifier = Modifier.height(AppDimens.current.spaceSm))
             Text(
                 text = stringResource(R.string.search_no_results_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary
+            )
+        }
+    }
+}
+
+// ============================================
+// ERROR CONTENT
+// ============================================
+
+@Composable
+private fun GallerySearchErrorContent(message: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = message,
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary
             )
@@ -709,6 +706,12 @@ private fun GallerySearchIdlePreview() {
             )
             GallerySearchIdleContent(
                 recentSearches = listOf("birthday", "aesthetic", "travel vlog"),
+                suggestionGenres = listOf(
+                    SongGenre("aesthetic", "Aesthetic"),
+                    SongGenre("birthday", "Birthday"),
+                    SongGenre("lofi", "Lofi"),
+                    SongGenre("cinematic", "Cinematic"),
+                ),
                 onRecentClick = {},
                 onRemoveRecent = {},
                 onClearAllRecents = {},

@@ -4,12 +4,18 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.core.data.local.PreferencesManager
+import com.videomaker.aimusic.domain.model.SongGenre
+import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
+import com.videomaker.aimusic.domain.usecase.SearchSongsUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 // ============================================
@@ -18,12 +24,14 @@ import kotlinx.coroutines.launch
 
 sealed class GallerySearchUiState {
     data object Idle : GallerySearchUiState()
+    data object Loading : GallerySearchUiState()
     data class Results(
         val query: String,
         val templates: List<GallerySearchTemplateItem>,
         val songs: List<GallerySearchSongItem>
     ) : GallerySearchUiState()
     data class Empty(val query: String) : GallerySearchUiState()
+    data class Error(val message: String) : GallerySearchUiState()
 }
 
 @Immutable
@@ -40,7 +48,8 @@ data class GallerySearchSongItem(
     val id: Long,
     val name: String,
     val artist: String,
-    val genres: List<String>
+    val genres: List<String>,
+    val coverUrl: String = ""
 )
 
 // ============================================
@@ -56,9 +65,11 @@ sealed class GallerySearchNavigationEvent {
 // VIEW MODEL
 // ============================================
 
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class GallerySearchViewModel(
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val searchSongsUseCase: SearchSongsUseCase,
+    private val getGenresUseCase: GetGenresUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GallerySearchUiState>(GallerySearchUiState.Idle)
@@ -70,23 +81,40 @@ class GallerySearchViewModel(
     private val _recentSearches = MutableStateFlow<List<String>>(emptyList())
     val recentSearches: StateFlow<List<String>> = _recentSearches.asStateFlow()
 
+    private val _suggestionGenres = MutableStateFlow<List<SongGenre>>(emptyList())
+    val suggestionGenres: StateFlow<List<SongGenre>> = _suggestionGenres.asStateFlow()
+
     private val _navigationEvent = MutableStateFlow<GallerySearchNavigationEvent?>(null)
     val navigationEvent: StateFlow<GallerySearchNavigationEvent?> = _navigationEvent.asStateFlow()
+
+    // Tracks the explicit search job (keyboard Search button / recent tap) so it can be cancelled
+    // when the debounce flow fires a newer query.
+    private var explicitSearchJob: Job? = null
 
     init {
         _recentSearches.value = preferencesManager.getRecentSearches()
 
         viewModelScope.launch {
+            getGenresUseCase().onSuccess { _suggestionGenres.value = it }
+        }
+
+        // distinctUntilChanged BEFORE debounce: suppresses duplicate emissions before the timer
+        // flatMapLatest: cancels the previous search coroutine when a new query arrives
+        viewModelScope.launch {
             _query
                 .debounce(300L)
-                .distinctUntilChanged()
-                .collect { query ->
-                    if (query.isBlank()) {
-                        _uiState.value = GallerySearchUiState.Idle
-                    } else {
-                        performSearch(query)
+                .flatMapLatest { query ->
+                    flow {
+                        if (query.isBlank()) {
+                            emit(GallerySearchUiState.Idle)
+                        } else {
+                            emit(GallerySearchUiState.Loading)
+                            val result = searchSongsUseCase(query)
+                            emit(buildResultState(query, result))
+                        }
                     }
                 }
+                .collect { state -> _uiState.value = state }
         }
     }
 
@@ -99,11 +127,12 @@ class GallerySearchViewModel(
         if (q.isNotBlank()) {
             preferencesManager.addRecentSearch(q)
             _recentSearches.value = preferencesManager.getRecentSearches()
-            performSearch(q)
+            launchExplicitSearch(q)
         }
     }
 
     fun onClearQuery() {
+        explicitSearchJob?.cancel()
         _query.value = ""
         _uiState.value = GallerySearchUiState.Idle
     }
@@ -112,7 +141,7 @@ class GallerySearchViewModel(
         _query.value = query
         preferencesManager.addRecentSearch(query)
         _recentSearches.value = preferencesManager.getRecentSearches()
-        performSearch(query)
+        launchExplicitSearch(query)
     }
 
     fun onRemoveRecentSearch(query: String) {
@@ -137,57 +166,34 @@ class GallerySearchViewModel(
         _navigationEvent.value = null
     }
 
-    private fun performSearch(query: String) {
-        // Mock search — will be replaced with real data later
-        val q = query.lowercase()
-
-        val templateResults = mockTemplates.filter { t ->
-            t.name.lowercase().contains(q) ||
-                t.tags.any { it.lowercase().contains(q) }
-        }
-
-        val songResults = mockSongs.filter { s ->
-            s.name.lowercase().contains(q) ||
-                s.artist.lowercase().contains(q) ||
-                s.genres.any { it.lowercase().contains(q) }
-        }
-
-        if (templateResults.isEmpty() && songResults.isEmpty()) {
-            _uiState.value = GallerySearchUiState.Empty(query)
-        } else {
-            _uiState.value = GallerySearchUiState.Results(
-                query = query,
-                templates = templateResults,
-                songs = songResults
-            )
+    /** Explicit search (keyboard Search / recent tap) — cancels any previous explicit job. */
+    private fun launchExplicitSearch(query: String) {
+        explicitSearchJob?.cancel()
+        _uiState.value = GallerySearchUiState.Loading
+        explicitSearchJob = viewModelScope.launch {
+            _uiState.value = buildResultState(query, searchSongsUseCase(query))
         }
     }
+
+    private fun buildResultState(
+        query: String,
+        result: Result<List<com.videomaker.aimusic.domain.model.MusicSong>>
+    ): GallerySearchUiState {
+        return result.fold(
+            onSuccess = { songs ->
+                val items = songs.map { song ->
+                    GallerySearchSongItem(
+                        id = song.id,
+                        name = song.name,
+                        artist = song.artist,
+                        genres = song.genres,
+                        coverUrl = song.coverUrl
+                    )
+                }
+                if (items.isEmpty()) GallerySearchUiState.Empty(query)
+                else GallerySearchUiState.Results(query = query, templates = emptyList(), songs = items)
+            },
+            onFailure = { GallerySearchUiState.Error("Search failed. Please try again.") }
+        )
+    }
 }
-
-// ============================================
-// MOCK DATA (preview only — no real data yet)
-// ============================================
-
-private val mockTemplates = listOf(
-    GallerySearchTemplateItem("1", "Summer Vibes", listOf("travel", "aesthetic"), "9:16", true),
-    GallerySearchTemplateItem("2", "Chill Lofi", listOf("lofi", "aesthetic"), "1:1", false),
-    GallerySearchTemplateItem("3", "Retro Wave", listOf("retro", "vintage"), "9:16", true),
-    GallerySearchTemplateItem("4", "Birthday Bash", listOf("birthday", "party"), "4:5", false),
-    GallerySearchTemplateItem("5", "Travel Diary", listOf("travel", "vlog"), "9:16", false),
-    GallerySearchTemplateItem("6", "Neon Nights", listOf("neon", "cyberpunk"), "1:1", false),
-    GallerySearchTemplateItem("7", "Aesthetic Mood", listOf("aesthetic", "pastel"), "9:16", false),
-    GallerySearchTemplateItem("8", "Cinematic", listOf("cinematic", "film"), "16:9", true),
-    GallerySearchTemplateItem("9", "Golden Hour", listOf("golden", "sunset"), "9:16", false),
-    GallerySearchTemplateItem("10", "Vintage Love", listOf("vintage", "lovely"), "1:1", false),
-)
-
-private val mockSongs = listOf(
-    GallerySearchSongItem(1, "Sunset Drive", "Chill Beats", listOf("lofi", "chill")),
-    GallerySearchSongItem(2, "Neon Dreams", "Synthwave", listOf("electronic", "synthwave")),
-    GallerySearchSongItem(3, "Ocean Breeze", "Nature Sounds", listOf("ambient", "nature")),
-    GallerySearchSongItem(4, "Birthday Song", "Happy Tunes", listOf("party", "birthday")),
-    GallerySearchSongItem(5, "Travel Along", "Adventure", listOf("travel", "acoustic")),
-    GallerySearchSongItem(6, "Retro Funk", "Old School", listOf("retro", "funk")),
-    GallerySearchSongItem(7, "Aesthetic Vibes", "Lo-Fi Girl", listOf("lofi", "aesthetic")),
-    GallerySearchSongItem(8, "Cinematic Score", "Epic Music", listOf("cinematic", "epic")),
-)

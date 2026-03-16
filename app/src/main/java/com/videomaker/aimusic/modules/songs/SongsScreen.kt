@@ -58,10 +58,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.MusicSong
+import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.SectionHeader
 import com.videomaker.aimusic.ui.components.ShimmerBox
+import com.videomaker.aimusic.ui.components.SongListItem
+import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Black24
 import com.videomaker.aimusic.ui.theme.Black40
@@ -149,7 +152,7 @@ private fun SongsContent(
     suggestedState: SectionState<List<MusicSong>>,
     rankingState: SectionState<List<MusicSong>>,
     stationState: SectionState<List<MusicSong>>,
-    genresState: SectionState<List<String>>,
+    genresState: SectionState<List<SongGenre>>,
     selectedGenre: String?,
     onGenreSelected: (String?) -> Unit,
     isRefreshing: Boolean,
@@ -805,49 +808,7 @@ private fun StationSongsSection(
 /** Shimmer skeleton matching [StationSongItem] dimensions. */
 @Composable
 private fun StationSongItemPlaceholder(modifier: Modifier = Modifier) {
-    val dimens = AppDimens.current
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(dimens.radiusLg))
-            .background(Color.Transparent)
-            .padding(dimens.spaceSm),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Square thumbnail
-        ShimmerBox(
-            modifier = Modifier
-                .size(64.dp)
-                .clip(RoundedCornerShape(dimens.radiusMd))
-        )
-        Spacer(modifier = Modifier.width(dimens.spaceMd))
-        // Name + artist lines
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(dimens.spaceXxs)
-        ) {
-            ShimmerBox(
-                modifier = Modifier
-                    .fillMaxWidth(0.7f)
-                    .height(15.dp)
-                    .clip(RoundedCornerShape(4.dp))
-            )
-            ShimmerBox(
-                modifier = Modifier
-                    .fillMaxWidth(0.5f)
-                    .height(13.dp)
-                    .clip(RoundedCornerShape(4.dp))
-            )
-        }
-        Spacer(modifier = Modifier.width(dimens.spaceXs))
-        // Start project button
-        ShimmerBox(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(4.dp))
-        )
-    }
+    SongListItemPlaceholder(modifier = modifier)
 }
 
 @Composable
@@ -856,97 +817,22 @@ private fun StationSongItem(
     onSongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dimens = AppDimens.current
-
-    Card(
-        onClick = onSongClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(dimens.radiusLg),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(dimens.spaceSm),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Thumbnail with centered play button overlay (same as SuggestSongCard)
-            Box {
-                AppAsyncImage(
-                    imageUrl = song.coverUrl,
-                    contentDescription = song.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(dimens.radiusMd))
-                )
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .align(Alignment.Center)
-                        .background(Black40, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(dimens.spaceMd))
-
-            // Name + artist (same styles as SuggestSongCard)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = song.name,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 15.sp
-                    ),
-                    color = TextPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(dimens.spaceXxs))
-                Text(
-                    text = song.artist,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 13.sp
-                    ),
-                    color = TextSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            Spacer(modifier = Modifier.width(dimens.spaceXs))
-
-            Icon(
-                painter = painterResource(R.drawable.ic_start_project),
-                contentDescription = stringResource(R.string.start_project),
-                tint = Color.Unspecified,
-                modifier = Modifier
-                    .size(36.dp)
-                    .clickable(onClick = onSongClick)
-            )
-        }
-    }
+    SongListItem(
+        name = song.name,
+        artist = song.artist,
+        coverUrl = song.coverUrl,
+        onSongClick = onSongClick,
+        modifier = modifier
+    )
 }
 
 // ============================================
 // GENRE TAG CHIP ROW — dynamic, driven by VM state
 // ============================================
 
-/** Sentinel value representing "All genres" (no filter). */
-private const val ALL_GENRE = ""
-
 @Composable
 private fun GenreTagChipRow(
-    state: SectionState<List<String>>,
+    state: SectionState<List<SongGenre>>,
     selectedGenre: String?,
     onGenreSelected: (String?) -> Unit,
     modifier: Modifier = Modifier
@@ -976,22 +862,23 @@ private fun GenreTagChipRow(
         is SectionState.Success -> {
             if (state.data.isEmpty()) return
 
-            // Prepend "All" as the first chip (maps to null selection)
-            val genres = remember(state.data) { listOf(ALL_GENRE) + state.data }
-
             Row(
                 modifier = modifier
                     .horizontalScroll(rememberScrollState())
                     .padding(horizontal = dimens.spaceLg),
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
             ) {
-                genres.forEach { genre ->
-                    val isAll = genre == ALL_GENRE
-                    val isSelected = if (isAll) selectedGenre == null else selectedGenre == genre
+                // "All" chip — maps to null selection
+                GenreChip(
+                    text = "All",
+                    isSelected = selectedGenre == null,
+                    onClick = { onGenreSelected(null) }
+                )
+                state.data.forEach { genre ->
                     GenreChip(
-                        text = if (isAll) "All" else genre,
-                        isSelected = isSelected,
-                        onClick = { onGenreSelected(if (isAll) null else genre) }
+                        text = genre.displayName,
+                        isSelected = selectedGenre == genre.id,
+                        onClick = { onGenreSelected(genre.id) }
                     )
                 }
             }
@@ -1039,7 +926,14 @@ private fun GenreChip(
 // SAMPLE DATA
 // ============================================
 
-private val previewGenres = listOf("Pop", "Rock", "Jazz", "Classical", "Hip Hop", "Electronic")
+private val previewGenres = listOf(
+    SongGenre("pop", "Pop"),
+    SongGenre("rock", "Rock"),
+    SongGenre("jazz", "Jazz"),
+    SongGenre("classical", "Classical"),
+    SongGenre("hip-hop", "Hip Hop"),
+    SongGenre("electronic", "Electronic")
+)
 
 private val previewSongs = listOf(
     MusicSong(1L,  "Blinding Lights",  "The Weeknd",     durationMs = 200000, usageCount = 1850000),

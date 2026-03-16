@@ -1,6 +1,5 @@
 package com.videomaker.aimusic.modules.language
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,6 +17,8 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -54,22 +55,15 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 /**
  * LanguageSelectionScreen - Language picker for onboarding and settings
  *
- * Features:
- * - Grid of language options with flags
- * - Visual selection indicator
- * - Preview mode: shows localized text without Activity recreation
- * - Continue button to proceed to next screen
- *
- * Usage:
- * - In onboarding: Preview text dynamically, apply language on Continue
- * - In settings: Apply language and navigate to Home
+ * Tapping a language immediately applies the locale via AppCompatDelegate.
+ * On Android 13+ the UI updates in place; on older versions the Activity
+ * recreates and restores with the selected language already saved.
  *
  * @param currentLanguage The currently selected language code
- * @param onLanguageSelected Callback when user taps a language (saves preference only)
+ * @param onLanguageSelected Callback when user taps a language (applies locale immediately)
  * @param onContinue Callback when user presses Continue button
  * @param showBackButton Whether to show back button (true in settings, false in onboarding)
  * @param onBackClick Callback for back button
- * @param getLocalizedString Function to get localized string for preview (null = use default stringResource)
  */
 @Composable
 fun LanguageSelectionScreen(
@@ -77,17 +71,10 @@ fun LanguageSelectionScreen(
     onLanguageSelected: (String) -> Unit,
     onContinue: () -> Unit,
     showBackButton: Boolean = false,
-    onBackClick: () -> Unit = {},
-    getLocalizedString: ((Int, String) -> String)? = null
+    onBackClick: () -> Unit = {}
 ) {
-    var selectedLanguage by remember { mutableStateOf(currentLanguage) }
+    var selectedLanguage by remember(currentLanguage) { mutableStateOf(currentLanguage) }
     val languages = remember { LanguageManager.getAllLanguages() }
-
-    // Helper to get string - uses preview function if available, otherwise default
-    @Composable
-    fun getString(@StringRes resId: Int): String {
-        return getLocalizedString?.invoke(resId, selectedLanguage) ?: stringResource(resId)
-    }
 
     Box(
         modifier = Modifier
@@ -98,6 +85,7 @@ fun LanguageSelectionScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -110,7 +98,7 @@ fun LanguageSelectionScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = getString(R.string.back),
+                            contentDescription = stringResource(R.string.back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -122,7 +110,7 @@ fun LanguageSelectionScreen(
 
             // Title
             Text(
-                text = getString(R.string.language_select_title),
+                text = stringResource(R.string.language_select_title),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -133,7 +121,7 @@ fun LanguageSelectionScreen(
 
             // Subtitle
             Text(
-                text = getString(R.string.language_select_subtitle),
+                text = stringResource(R.string.language_select_subtitle),
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -158,7 +146,7 @@ fun LanguageSelectionScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Continue button
             Button(
@@ -173,7 +161,7 @@ fun LanguageSelectionScreen(
                 )
             ) {
                 Text(
-                    text = getString(R.string.language_continue),
+                    text = stringResource(R.string.language_continue),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )

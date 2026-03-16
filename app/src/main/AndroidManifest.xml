@@ -51,9 +51,13 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.VideoMaker" />
 
-        <!-- LanguageSelectionActivity - First-time language picker -->
+        <!-- LanguageSelectionActivity - First-time language picker
+             configChanges: handle locale/layoutDirection ourselves so the Activity is NOT
+             recreated when AppCompatDelegate.setApplicationLocales() is called on Continue.
+             The Activity finishes immediately after, so no UI refresh is needed. -->
         <activity
             android:name=".modules.language.LanguageSelectionActivity"
+            android:configChanges="locale|layoutDirection"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.VideoMaker" />

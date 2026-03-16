@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.domain.model.MusicSong
+import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.domain.usecase.ClearSongCacheUseCase
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
 import com.videomaker.aimusic.domain.usecase.GetSongsByGenreUseCase
@@ -64,8 +65,8 @@ class SongsViewModel(
 
     // Genres for the station tag chips
     private val _genresState =
-        MutableStateFlow<SectionState<List<String>>>(SectionState.Loading)
-    val genresState: StateFlow<SectionState<List<String>>> = _genresState.asStateFlow()
+        MutableStateFlow<SectionState<List<SongGenre>>>(SectionState.Loading)
+    val genresState: StateFlow<SectionState<List<SongGenre>>> = _genresState.asStateFlow()
 
     // Currently active genre filter (null = show all / unfiltered)
     private val _selectedGenre = MutableStateFlow<String?>(null)

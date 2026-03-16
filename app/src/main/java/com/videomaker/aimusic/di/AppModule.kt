@@ -30,14 +30,13 @@ import com.videomaker.aimusic.domain.usecase.GetAllProjectsUseCase
 import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
 import com.videomaker.aimusic.domain.usecase.ReorderAssetsUseCase
+import com.videomaker.aimusic.domain.usecase.SearchSongsUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CheckLanguageSelectedUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.GetSelectedLanguageUseCase
-import com.videomaker.aimusic.modules.language.domain.usecase.InitializeLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
-import com.videomaker.aimusic.modules.language.domain.usecase.SetLanguageUseCase
 // Note: Language use cases are still registered for LanguageSelectionActivity (ACCDI.get)
 import com.videomaker.aimusic.media.composition.CompositionFactory
 import com.videomaker.aimusic.modules.editor.EditorViewModel
@@ -144,10 +143,8 @@ val domainModule = module {
     factory { CheckLanguageSelectedUseCase(it.get()) }
     factory { CompleteLanguageSelectionUseCase(it.get()) }
     factory { GetSelectedLanguageUseCase(it.get()) }
-    factory { SetLanguageUseCase(it.get()) }
     factory { SaveLanguagePreferenceUseCase(it.get()) }
     factory { ApplyLanguageUseCase(it.get()) }
-    factory { InitializeLanguageUseCase(it.get()) }
 
     // Project use cases
     factory { CreateProjectUseCase(it.get()) }
@@ -167,6 +164,7 @@ val domainModule = module {
     single { GetGenresUseCase(it.get()) }
     single { GetSongsByGenreUseCase(it.get()) }
     single { ClearSongCacheUseCase(it.get()) }
+    single { SearchSongsUseCase(it.get()) }
 }
 
 // ========== PRESENTATION LAYER MODULE ==========
@@ -311,10 +309,16 @@ class SongsViewModelFactory(
  * Factory wrapper for SearchViewModel.
  */
 class GallerySearchViewModelFactory(
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val searchSongsUseCase: SearchSongsUseCase,
+    private val getGenresUseCase: GetGenresUseCase
 ) {
     fun create(): GallerySearchViewModel {
-        return GallerySearchViewModel(preferencesManager = preferencesManager)
+        return GallerySearchViewModel(
+            preferencesManager = preferencesManager,
+            searchSongsUseCase = searchSongsUseCase,
+            getGenresUseCase = getGenresUseCase
+        )
     }
 }
 
@@ -385,7 +389,9 @@ val presentationModule = module {
     // Gallery Search ViewModel factory (singleton - stateless factory)
     single {
         GallerySearchViewModelFactory(
-            preferencesManager = it.get()
+            preferencesManager = it.get(),
+            searchSongsUseCase = it.get(),
+            getGenresUseCase = it.get()
         )
     }
 

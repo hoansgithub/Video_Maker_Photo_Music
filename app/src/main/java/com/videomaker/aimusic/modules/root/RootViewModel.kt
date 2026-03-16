@@ -134,8 +134,7 @@ class RootViewModel(
                 presentAppOpenAd()
 
                 // Step 4: Check language selection status
-                val languageResult = checkLanguageSelectedUseCase()
-                shouldShowLanguageSelection = languageResult.getOrNull() ?: false
+                shouldShowLanguageSelection = checkLanguageSelectedUseCase()
 
                 // Step 5: Check onboarding status
                 val onboardingResult = checkOnboardingStatusUseCase()

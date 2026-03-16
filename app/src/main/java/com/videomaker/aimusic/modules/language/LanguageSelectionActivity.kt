@@ -2,6 +2,7 @@ package com.videomaker.aimusic.modules.language
 
 import android.app.Activity
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -10,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity
 import co.alcheclub.lib.acccore.di.ACCDI
 import co.alcheclub.lib.acccore.di.get
 import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
-import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.GetSelectedLanguageUseCase
@@ -25,13 +25,12 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
  *
  * Flow:
  * 1. User sees language options grid
- * 2. User taps a language (saves preference for preview, no recreation)
- * 3. UI updates to show localized strings in selected language (preview mode)
- * 4. User taps Continue
- * 5. Language preference is marked as complete
- * 6. Language is applied (may trigger recreation, but we navigate away immediately)
- * 7. Navigate to MainActivity with CLEAR_TASK flag (clears entire Activity stack)
- * 8. This Activity finishes
+ * 2. User taps a language → preference saved (no recreation, just UI selection state)
+ * 3. User taps Continue:
+ *    a. Mark selection as complete
+ *    b. Apply locale via AppCompatDelegate.setApplicationLocales()
+ *    c. Navigate to OnboardingActivity → starts fresh with the new locale auto-applied
+ *    d. This Activity finishes
  *
  * Why a separate Activity?
  * - Language is applied BEFORE MainActivity loads
@@ -46,7 +45,6 @@ class LanguageSelectionActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         // Get dependencies from ACCDI
-        val languageManager = ACCDI.get<LanguageManager>()
         val getSelectedLanguageUseCase = ACCDI.get<GetSelectedLanguageUseCase>()
         val saveLanguagePreferenceUseCase = ACCDI.get<SaveLanguagePreferenceUseCase>()
         val applyLanguageUseCase = ACCDI.get<ApplyLanguageUseCase>()
@@ -58,29 +56,31 @@ class LanguageSelectionActivity : AppCompatActivity() {
             VideoMakerTheme {
                 LanguageSelectionScreen(
                     currentLanguage = currentLanguage,
-                    showBackButton = false, // No back button for first-time selection
+                    showBackButton = false,
                     onLanguageSelected = { languageCode ->
-                        // Save preference only (for preview) - does NOT trigger Activity recreation
+                        // Save preference only — no Activity recreation while browsing
                         saveLanguagePreferenceUseCase(languageCode)
                     },
                     onContinue = {
-                        // 1. Mark language selection as complete
+                        // 1. Mark complete
                         completeLanguageSelectionUseCase()
-
-                        // 2. Apply language - this sets the locale
-                        // MainActivity will start fresh with correct locale
+                        // 2. Apply locale — OnboardingActivity will start with the new locale
                         applyLanguageUseCase()
-
-                        // 3. Navigate to MainActivity
+                        // 3. Navigate
                         navigateToMain()
-                    },
-                    getLocalizedString = { resId, languageCode ->
-                        // Provide live preview of strings in selected language
-                        languageManager.getLocalizedString(resId, languageCode)
                     }
                 )
             }
         }
+    }
+
+    /**
+     * Suppress locale/layoutDirection changes — we declared configChanges so the system
+     * won't recreate the Activity. We're finishing it right after applying the locale anyway.
+     */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // No-op: Activity is finishing immediately after locale is applied
     }
 
     /**
