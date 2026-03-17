@@ -48,7 +48,8 @@ import kotlin.coroutines.resume
 import android.os.Handler
 import android.os.Looper
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
 /**
@@ -64,18 +65,16 @@ sealed class PreviewState {
  * Release a CompositionPlayer asynchronously to avoid blocking the main thread.
  * CompositionPlayer.release() can block for 10+ seconds causing ANR.
  *
- * Note: GlobalScope is used here intentionally for fire-and-forget cleanup.
- * The player must be released even if the composable is disposed, and we don't
- * have access to a ViewModel scope in this extension function.
+ * Use ProcessLifecycleOwner scope instead of GlobalScope.
+ * ProcessLifecycleOwner is tied to the process lifetime (not Activity),
+ * so release() completes even after the composable is disposed.
  */
-@Suppress("OPT_IN_USAGE")
 private fun CompositionPlayer.releaseAsync() {
     val playerToRelease = this
-    GlobalScope.launch(Dispatchers.IO) {
-        try {
-            playerToRelease.release()
-        } catch (_: Exception) {
-        }
+    // CompositionPlayer.release() must be called on the main thread (Media3 threading contract).
+    // Post via Handler so it runs on main without blocking the calling thread.
+    android.os.Handler(android.os.Looper.getMainLooper()).post {
+        runCatching { playerToRelease.release() }
     }
 }
 
@@ -183,7 +182,7 @@ fun VideoPreviewPlayer(
     val playerReadyFlow = remember { MutableStateFlow(false) }
 
     // Create composition factory
-    val compositionFactory = remember { CompositionFactory(context) }
+    val compositionFactory = remember { co.alcheclub.lib.acccore.di.ACCDI.get<CompositionFactory>() }
 
     // Handler for periodic position updates
     val positionHandler = remember { Handler(Looper.getMainLooper()) }
@@ -197,7 +196,10 @@ fun VideoPreviewPlayer(
                         onPositionUpdate(currentPos, duration)
                     }
                 }
-                positionHandler.postDelayed(this, POSITION_UPDATE_INTERVAL_MS)
+                // Only re-schedule while a player exists — stops ghost ticks when player is null
+                if (player != null) {
+                    positionHandler.postDelayed(this, POSITION_UPDATE_INTERVAL_MS)
+                }
             }
         }
     }
@@ -242,10 +244,10 @@ fun VideoPreviewPlayer(
     // Key that changes when project or settings change
     val compositionKey = remember(
         project.id,
-        project.assets.map { it.id },
+        project.assets.joinToString(",") { it.id },
         project.settings
     ) {
-        "${project.id}_${project.assets.hashCode()}_${project.settings.hashCode()}"
+        "${project.id}_${project.assets.joinToString(",") { it.id }}_${project.settings.hashCode()}"
     }
 
     // Build composition when key changes

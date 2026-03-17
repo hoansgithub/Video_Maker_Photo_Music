@@ -17,6 +17,7 @@ import com.videomaker.aimusic.domain.repository.ProjectRepository
 import com.videomaker.aimusic.media.composition.CompositionFactory
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -48,43 +49,31 @@ class VideoExportWorker(
         val projectId = inputData.getString(KEY_PROJECT_ID)
             ?: return Result.failure(workDataOf(KEY_ERROR to "Missing project ID"))
 
-        android.util.Log.d(TAG, "Starting export for project: $projectId")
-
         return try {
-            // Get dependencies via ACCDI
             val projectRepository: ProjectRepository = ACCDI.get()
-            val compositionFactory = CompositionFactory(applicationContext)
+            val compositionFactory = ACCDI.get<CompositionFactory>()
 
-            // Load project
-            android.util.Log.d(TAG, "Loading project...")
             val project = projectRepository.getProject(projectId)
                 ?: return Result.failure(workDataOf(KEY_ERROR to "Project not found"))
-
-            android.util.Log.d(TAG, "Project loaded: ${project.assets.size} assets, musicSongId: ${project.settings.musicSongId}")
 
             if (project.assets.isEmpty()) {
                 return Result.failure(workDataOf(KEY_ERROR to "Project has no assets"))
             }
 
-            // Create output file
             val outputFile = createOutputFile(projectId)
-            android.util.Log.d(TAG, "Output file: ${outputFile.absolutePath}")
-
-            // Build composition
-            android.util.Log.d(TAG, "Building composition...")
             val composition = compositionFactory.createComposition(project)
-            android.util.Log.d(TAG, "Composition built successfully")
 
-            // Export video
-            android.util.Log.d(TAG, "Starting video export...")
-            exportVideo(composition, outputFile.absolutePath)
-            android.util.Log.d(TAG, "Export completed successfully")
-
-            // Return success with output path
-            Result.success(workDataOf(KEY_OUTPUT_PATH to outputFile.absolutePath))
+            try {
+                exportVideo(composition, outputFile.absolutePath)
+                Result.success(workDataOf(KEY_OUTPUT_PATH to outputFile.absolutePath))
+            } catch (e: Exception) {
+                Result.failure(workDataOf(KEY_ERROR to (e.message ?: "Export failed")))
+            } finally {
+                // Clean up preprocessed image PNGs created by this local CompositionFactory instance
+                compositionFactory.recycleBitmaps()
+            }
 
         } catch (e: Exception) {
-            android.util.Log.e(TAG, "Export failed", e)
             Result.failure(workDataOf(KEY_ERROR to (e.message ?: "Export failed")))
         }
     }
@@ -101,6 +90,7 @@ class VideoExportWorker(
         suspendCancellableCoroutine { continuation ->
             val mainHandler = Handler(Looper.getMainLooper())
             progressHandler = mainHandler
+            val isCancelled = AtomicBoolean(false)
 
             // Transformer must be created and started on the main thread
             mainHandler.post {
@@ -130,8 +120,10 @@ class VideoExportWorker(
                         .build()
 
                     // Start progress tracking
+
                     val runnable = object : Runnable {
                         override fun run() {
+                            if (isCancelled.get()) return
                             val progressHolder = ProgressHolder()
                             transformer?.getProgress(progressHolder)
 
@@ -140,7 +132,7 @@ class VideoExportWorker(
                                 setProgressAsync(workDataOf(KEY_PROGRESS to progress))
                             }
 
-                            if (progress < 100 && !isStopped) {
+                            if (progress < 100 && !isStopped && !isCancelled.get()) {
                                 mainHandler.postDelayed(this, 500)
                             }
                         }
@@ -161,11 +153,11 @@ class VideoExportWorker(
 
             // Handle cancellation
             continuation.invokeOnCancellation {
+                isCancelled.set(true)   // Immediate flag — runnable checks this before re-posting
                 mainHandler.post {
                     transformer?.cancel()
                     stopProgressTracking()
                 }
-                // Delete partial file
                 File(outputPath).delete()
             }
         }

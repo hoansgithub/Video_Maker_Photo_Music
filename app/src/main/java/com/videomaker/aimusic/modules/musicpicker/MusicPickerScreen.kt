@@ -63,6 +63,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import java.util.concurrent.atomic.AtomicBoolean
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.DeviceAudioTrack
@@ -95,9 +96,13 @@ fun MusicPickerScreen(
     // Media player for preview - use remember to survive recomposition
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
 
-    // Cleanup media player on dispose
+    // isDisposed guards async MediaPlayer callbacks (prepareAsync fires on background thread)
+    // from calling into a ViewModel that may have been GC'd after composable disposal.
+    val isDisposed = remember { AtomicBoolean(false) }
+
     DisposableEffect(Unit) {
         onDispose {
+            isDisposed.set(true)
             mediaPlayer?.let { player ->
                 try {
                     if (player.isPlaying) player.stop()
@@ -135,12 +140,11 @@ fun MusicPickerScreen(
                             // Use prepareAsync to avoid blocking main thread
                             setOnPreparedListener { start() }
                             setOnCompletionListener { _ ->
-                                viewModel.stopPreview()
+                                if (!isDisposed.get()) viewModel.stopPreview()
                             }
                             setOnErrorListener { _, what, extra ->
-                                android.util.Log.e("MusicPickerScreen", "MediaPlayer error: what=$what, extra=$extra")
-                                viewModel.stopPreview()
-                                true // Return true to indicate error was handled
+                                if (!isDisposed.get()) viewModel.stopPreview()
+                                true
                             }
                             prepareAsync() // Non-blocking!
                         }

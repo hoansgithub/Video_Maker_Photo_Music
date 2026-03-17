@@ -56,7 +56,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
+import co.alcheclub.lib.acccore.di.ACCDI
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.ui.components.AppAsyncImage
@@ -85,6 +88,7 @@ import com.videomaker.aimusic.ui.theme.Gray450
 // SONGS SCREEN
 // ============================================
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun SongsScreen(
     viewModel: SongsViewModel,
@@ -101,6 +105,8 @@ fun SongsScreen(
     val selectedGenre by viewModel.selectedGenre.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
+    val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
+    val audioPreviewCache = remember { ACCDI.get<AudioPreviewCache>() }
 
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
@@ -138,6 +144,16 @@ fun SongsScreen(
                 onSearchClick = onNavigateToSearch
             )
         }
+    }
+
+    // Music player bottom sheet — shown when a song is tapped
+    selectedSong?.let { song ->
+        MusicPlayerBottomSheet(
+            song = song,
+            cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+            onDismiss = viewModel::onDismissPlayer,
+            onUseToCreate = { viewModel.onUseToCreateVideo(song) }
+        )
     }
 }
 

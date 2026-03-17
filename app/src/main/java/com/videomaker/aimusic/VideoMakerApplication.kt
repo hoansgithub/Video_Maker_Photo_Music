@@ -26,7 +26,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 /**
  * Application class for Video Maker App
@@ -150,16 +149,12 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
         android.util.Log.d("VideoMakerApplication", "App terminating - cleaning up resources")
 
-        // Close coordinators to cancel all jobs
-        runBlocking {
-            try {
-                ACCDI.getOrNull<AnalyticsCoordinator>()?.close()
-                ACCDI.getOrNull<RemoteConfigCoordinator>()?.close()
-                android.util.Log.d("VideoMakerApplication", "Coordinators closed")
-            } catch (e: Exception) {
-                android.util.Log.e("VideoMakerApplication", "Error closing coordinators: ${e.message}")
-            }
-        }
+        // Close coordinators (fire-and-forget — OS kills process shortly after onTerminate)
+        runCatching { ACCDI.getOrNull<AnalyticsCoordinator>()?.close() }
+        runCatching { ACCDI.getOrNull<RemoteConfigCoordinator>()?.close() }
+
+        // Release SimpleCache SQLite connection for clean shutdown
+        runCatching { ACCDI.getOrNull<com.videomaker.aimusic.media.audio.AudioPreviewCache>()?.simpleCache?.release() }
 
         // Cancel application scope (cancels all coroutines)
         applicationScope.cancel()

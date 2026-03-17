@@ -95,9 +95,8 @@ fun EditorScreen(
         showExitConfirmation = true
     }
 
-    // Handle navigation events - StateFlow-based (Google recommended pattern)
-    // Observe navigationEvent from uiState and call onNavigationHandled() after navigating
-    val navigationEvent = (uiState as? EditorUiState.Success)?.navigationEvent
+    // Navigation events live in their own StateFlow — decoupled from high-frequency UI state
+    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {

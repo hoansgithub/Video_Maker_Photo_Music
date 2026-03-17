@@ -109,6 +109,9 @@ class ExportViewModel(
     // ============================================
 
     private var workId: UUID? = null
+    // Single job for export + progress observation — cancelled on retry to prevent
+    // parallel observers watching different work items simultaneously.
+    private var exportJob: kotlinx.coroutines.Job? = null
 
     // ============================================
     // INITIALIZATION
@@ -119,16 +122,12 @@ class ExportViewModel(
     }
 
     private fun startExport() {
-        viewModelScope.launch {
-            workId = exportRepository.startExport(projectId)
-            observeProgress()
-        }
-    }
-
-    private fun observeProgress() {
-        viewModelScope.launch {
-            val id = workId ?: return@launch
-
+        exportJob?.cancel()
+        exportJob = viewModelScope.launch {
+            // startExport and observeProgress run sequentially in one coroutine —
+            // workId is guaranteed to be set before observeProgress reads it.
+            val id = exportRepository.startExport(projectId)
+            workId = id
             exportRepository.observeExportProgress(id).collect { progress ->
                 _uiState.value = when (progress) {
                     is ExportProgress.Preparing -> ExportUiState.Preparing
@@ -182,10 +181,14 @@ class ExportViewModel(
         if (currentState !is ExportUiState.Success) return
         if (currentState.savedToGallery) return // Already saved
 
+        // Resolve applicationContext immediately — do NOT capture the Activity context
+        // inside the IO coroutine, which may outlive the Activity on rotation.
+        val appContext = context.applicationContext
+
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
                 MediaStoreHelper.saveVideoToGallery(
-                    context = context,
+                    context = appContext,
                     videoFile = File(currentState.outputPath),
                     displayName = MediaStoreHelper.generateDisplayName(projectId)
                 )

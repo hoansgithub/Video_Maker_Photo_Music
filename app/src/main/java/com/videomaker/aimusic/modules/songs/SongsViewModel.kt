@@ -78,16 +78,20 @@ class SongsViewModel(
     private val _navigationEvent = MutableStateFlow<SongsNavigationEvent?>(null)
     val navigationEvent: StateFlow<SongsNavigationEvent?> = _navigationEvent.asStateFlow()
 
+    // Song currently shown in the player bottom sheet (null = sheet closed)
+    private val _selectedSong = MutableStateFlow<MusicSong?>(null)
+    val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
+
     init {
         loadAll()
     }
 
     // Each section loads independently — UI shows shimmer per section
     private fun loadAll() {
-        viewModelScope.launch(Dispatchers.Default) { loadSuggested() }
-        viewModelScope.launch(Dispatchers.Default) { loadRanking() }
-        viewModelScope.launch(Dispatchers.Default) { loadStations() }
-        viewModelScope.launch(Dispatchers.Default) { loadGenres() }
+        viewModelScope.launch(Dispatchers.IO) { loadSuggested() }
+        viewModelScope.launch(Dispatchers.IO) { loadRanking() }
+        viewModelScope.launch(Dispatchers.IO) { loadStations() }
+        viewModelScope.launch(Dispatchers.IO) { loadGenres() }
     }
 
     fun refresh() {
@@ -98,10 +102,10 @@ class SongsViewModel(
             try {
                 clearSongCacheUseCase()  // wipe disk cache before re-fetching
                 coroutineScope {
-                    launch(Dispatchers.Default) { loadSuggested() }
-                    launch(Dispatchers.Default) { loadRanking() }
-                    launch(Dispatchers.Default) { loadStations() }
-                    launch(Dispatchers.Default) { loadGenres() }
+                    launch(Dispatchers.IO) { loadSuggested() }
+                    launch(Dispatchers.IO) { loadRanking() }
+                    launch(Dispatchers.IO) { loadStations() }
+                    launch(Dispatchers.IO) { loadGenres() }
                 }
             } finally {
                 _isRefreshing.value = false
@@ -113,7 +117,7 @@ class SongsViewModel(
     fun onGenreSelected(genre: String?) {
         if (_selectedGenre.value == genre) return
         _selectedGenre.value = genre
-        viewModelScope.launch(Dispatchers.Default) { loadStations() }
+        viewModelScope.launch(Dispatchers.IO) { loadStations() }
     }
 
     private suspend fun loadSuggested() {
@@ -151,7 +155,19 @@ class SongsViewModel(
             .onFailure { _genresState.value = SectionState.Success(emptyList()) }
     }
 
+    /** Opens the music player bottom sheet for the given song. */
     fun onSongClick(song: MusicSong) {
+        _selectedSong.value = song
+    }
+
+    /** Dismisses the player bottom sheet without any further action. */
+    fun onDismissPlayer() {
+        _selectedSong.value = null
+    }
+
+    /** Called when user taps "Use to Create Video" — closes sheet and navigates. */
+    fun onUseToCreateVideo(song: MusicSong) {
+        _selectedSong.value = null
         _navigationEvent.value = SongsNavigationEvent.NavigateToSongDetail(song.id)
     }
 

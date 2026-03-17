@@ -38,6 +38,7 @@ import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSe
 import com.videomaker.aimusic.modules.language.domain.usecase.GetSelectedLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
 // Note: Language use cases are still registered for LanguageSelectionActivity (ACCDI.get)
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.media.composition.CompositionFactory
 import com.videomaker.aimusic.modules.editor.EditorViewModel
 import com.videomaker.aimusic.modules.export.ExportViewModel
@@ -113,6 +114,7 @@ val dataModule = module {
  */
 val mediaModule = module {
     single { CompositionFactory(androidContext()) }
+    single { AudioPreviewCache(androidContext()) }
 
     // Coil ImageLoader singleton
     // Gets the ImageLoader from ImageLoaderFactory (VideoMakerApplication)

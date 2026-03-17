@@ -12,6 +12,7 @@ import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
 import com.videomaker.aimusic.domain.usecase.ReorderAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,9 +23,6 @@ import kotlinx.coroutines.launch
 // UI STATE
 // ============================================
 
-/**
- * EditorUiState - Sealed class state machine for editor screen
- */
 sealed class EditorUiState {
     data object Loading : EditorUiState()
 
@@ -33,26 +31,14 @@ sealed class EditorUiState {
         val selectedAssetIndex: Int = 0,
         val isPlaying: Boolean = false,
         val showSettingsPanel: Boolean = false,
-        // Pending settings - changes made but not yet applied
-        // When null, no pending changes exist
         val pendingSettings: ProjectSettings? = null,
-        // Navigation event - StateFlow-based (Google recommended pattern)
-        // UI observes this and calls onNavigationHandled() after navigating
-        val navigationEvent: EditorNavigationEvent? = null,
-        // Playback position tracking for seekbar
         val currentPositionMs: Long = 0L,
         val durationMs: Long = 0L,
-        // Pending seek request (null = no pending seek)
         val seekToPosition: Long? = null,
-        // Scrub position for frame preview while dragging (no resume after)
         val scrubToPosition: Long? = null,
-        // Track if video was playing before seek (to restore after)
         val wasPlayingBeforeSeek: Boolean = false
     ) : EditorUiState() {
-        /** True if there are uncommitted setting changes */
         val hasPendingChanges: Boolean get() = pendingSettings != null
-
-        /** Settings to display in UI (pending if exists, otherwise current) */
         val displaySettings: ProjectSettings get() = pendingSettings ?: project.settings
     }
 
@@ -63,10 +49,6 @@ sealed class EditorUiState {
 // NAVIGATION EVENTS
 // ============================================
 
-/**
- * EditorNavigationEvent - StateFlow-based navigation events (Google recommended)
- * UI observes navigationEvent in UiState and calls onNavigationHandled() after navigating
- */
 sealed class EditorNavigationEvent {
     data object NavigateBack : EditorNavigationEvent()
     data class NavigateToPreview(val projectId: String) : EditorNavigationEvent()
@@ -77,14 +59,6 @@ sealed class EditorNavigationEvent {
 // VIEW MODEL
 // ============================================
 
-/**
- * EditorViewModel - Manages video editor state and actions
- *
- * Follows CLAUDE.md patterns:
- * - Sealed class state machine
- * - StateFlow-based navigation events (Google recommended)
- * - viewModelScope for coroutines
- */
 class EditorViewModel(
     private val projectId: String,
     private val getProjectUseCase: GetProjectUseCase,
@@ -94,16 +68,12 @@ class EditorViewModel(
     private val removeAssetUseCase: RemoveAssetUseCase
 ) : ViewModel() {
 
-    // ============================================
-    // STATE
-    // ============================================
-
     private val _uiState = MutableStateFlow<EditorUiState>(EditorUiState.Loading)
     val uiState: StateFlow<EditorUiState> = _uiState.asStateFlow()
 
-    // ============================================
-    // INITIALIZATION
-    // ============================================
+    // Navigation events are separate from UI state — never embedded in high-frequency state
+    private val _navigationEvent = MutableStateFlow<EditorNavigationEvent?>(null)
+    val navigationEvent: StateFlow<EditorNavigationEvent?> = _navigationEvent.asStateFlow()
 
     init {
         loadProject()
@@ -112,19 +82,24 @@ class EditorViewModel(
     private fun loadProject() {
         viewModelScope.launch {
             _uiState.value = EditorUiState.Loading
-
             try {
                 getProjectUseCase.observe(projectId).collect { project ->
                     if (project != null) {
                         val currentState = _uiState.value
-                        val selectedIndex = if (currentState is EditorUiState.Success) {
-                            currentState.selectedAssetIndex.coerceIn(0, project.assets.lastIndex.coerceAtLeast(0))
-                        } else {
-                            0
-                        }
+                        val prev = currentState as? EditorUiState.Success
+                        val selectedIndex = prev?.selectedAssetIndex
+                            ?.coerceIn(0, project.assets.lastIndex.coerceAtLeast(0)) ?: 0
                         _uiState.value = EditorUiState.Success(
                             project = project,
-                            selectedAssetIndex = selectedIndex
+                            selectedAssetIndex = selectedIndex,
+                            isPlaying = prev?.isPlaying ?: false,
+                            showSettingsPanel = prev?.showSettingsPanel ?: false,
+                            pendingSettings = prev?.pendingSettings,
+                            currentPositionMs = prev?.currentPositionMs ?: 0L,
+                            durationMs = prev?.durationMs ?: 0L,
+                            seekToPosition = prev?.seekToPosition,
+                            scrubToPosition = prev?.scrubToPosition,
+                            wasPlayingBeforeSeek = prev?.wasPlayingBeforeSeek ?: false,
                         )
                     } else {
                         _uiState.value = EditorUiState.Error("Project not found")
@@ -135,10 +110,6 @@ class EditorViewModel(
             }
         }
     }
-
-    // ============================================
-    // ASSET SELECTION
-    // ============================================
 
     fun selectAsset(index: Int) {
         val currentState = _uiState.value
@@ -169,89 +140,53 @@ class EditorViewModel(
         }
     }
 
-    // ============================================
-    // ASSET REORDERING
-    // ============================================
-
     fun moveAsset(fromIndex: Int, toIndex: Int) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
             viewModelScope.launch {
-                // Perform the move operation on the list
                 val assets = currentState.project.assets.toMutableList()
                 val asset = assets.removeAt(fromIndex)
                 assets.add(toIndex, asset)
-
-                // Call UseCase to persist the new order
                 reorderAssetsUseCase(projectId, assets)
-                // Project will be updated via Flow observation
             }
         }
     }
 
-    // ============================================
-    // ASSET ADD/REMOVE
-    // ============================================
-
-    /**
-     * Add new assets to the project
-     */
     fun addAssets(uris: List<Uri>) {
         if (uris.isEmpty()) return
-
         viewModelScope.launch {
             addAssetsUseCase(projectId, uris)
-            // Project will be updated via Flow observation
         }
     }
 
     /**
-     * Remove an asset from the project
-     * Enforces minimum 2 images constraint
-     * @return true if removed, false if blocked by constraint
+     * Remove an asset from the project.
+     * Enforces minimum 2-image constraint. Returns false if blocked.
+     * Note: the actual DB removal is async; Room Flow will push the updated project.
      */
     fun removeAsset(assetId: String): Boolean {
         val currentState = _uiState.value
         if (currentState !is EditorUiState.Success) return false
-
-        // Check minimum constraint (2 images required)
-        val assetCount = currentState.project.assets.size
-        if (assetCount <= 2) {
-            return false
-        }
-
+        if (currentState.project.assets.size <= 2) return false
         viewModelScope.launch {
             removeAssetUseCase(projectId, assetId)
-            // Project will be updated via Flow observation
         }
         return true
     }
 
-    /**
-     * Check if assets can be removed (more than minimum)
-     */
     fun canRemoveAssets(): Boolean {
         val currentState = _uiState.value
         if (currentState !is EditorUiState.Success) return false
         return currentState.project.assets.size > 2
     }
 
-    // ============================================
-    // SETTINGS (Pending pattern - changes are staged until Apply)
-    // ============================================
-
     fun toggleSettingsPanel() {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
-            _uiState.value = currentState.copy(
-                showSettingsPanel = !currentState.showSettingsPanel
-            )
+            _uiState.value = currentState.copy(showSettingsPanel = !currentState.showSettingsPanel)
         }
     }
 
-    /**
-     * Close settings panel (used when settings handles its own discard/apply)
-     */
     fun closeSettingsPanel() {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
@@ -276,7 +211,6 @@ class EditorViewModel(
     }
 
     fun updateMusicSong(songId: Long?, songUrl: String?) {
-        android.util.Log.d("EditorViewModel", "updateMusicSong called with id: $songId")
         updatePendingSettings { it.copy(musicSongId = songId, musicSongUrl = songUrl, customAudioUri = null) }
     }
 
@@ -296,65 +230,33 @@ class EditorViewModel(
         updatePendingSettings { it.copy(aspectRatio = ratio) }
     }
 
-    /**
-     * Stage a setting change (does NOT trigger reprocessing)
-     * Changes are only applied when applySettings() is called
-     */
     private fun updatePendingSettings(update: (ProjectSettings) -> ProjectSettings) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
-            // Start from current pending settings, or current project settings if no pending
             val baseSettings = currentState.pendingSettings ?: currentState.project.settings
-            val newPendingSettings = update(baseSettings)
-
-            android.util.Log.d("EditorViewModel", "Staging setting change (pending)")
-            _uiState.value = currentState.copy(pendingSettings = newPendingSettings)
+            _uiState.value = currentState.copy(pendingSettings = update(baseSettings))
         }
     }
 
-    /**
-     * Apply all pending settings - triggers video reprocessing
-     * Called when user taps "Apply" button
-     */
     fun applySettings() {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success && currentState.pendingSettings != null) {
             val newSettings = currentState.pendingSettings
-            android.util.Log.d("EditorViewModel", "Applying settings: $newSettings")
-
-            // Update project with new settings and clear pending
             val updatedProject = currentState.project.copy(settings = newSettings)
-            _uiState.value = currentState.copy(
-                project = updatedProject,
-                pendingSettings = null  // Clear pending after apply
-            )
-
-            // Persist to database
+            _uiState.value = currentState.copy(project = updatedProject, pendingSettings = null)
             viewModelScope.launch {
                 updateSettingsUseCase(projectId, newSettings)
-                android.util.Log.d("EditorViewModel", "Settings applied and saved to database")
             }
         }
     }
 
-    /**
-     * Discard pending settings and revert to current project settings
-     */
     fun discardPendingSettings() {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
-            android.util.Log.d("EditorViewModel", "Discarding pending settings")
             _uiState.value = currentState.copy(pendingSettings = null)
         }
     }
 
-    // ============================================
-    // PLAYBACK (Real-time preview with CompositionPlayer)
-    // ============================================
-
-    /**
-     * Toggle playback state - triggers play/pause on CompositionPlayer
-     */
     fun togglePlayback() {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
@@ -362,10 +264,6 @@ class EditorViewModel(
         }
     }
 
-    /**
-     * Set playback state from player callback
-     * Called when CompositionPlayer's playback state changes
-     */
     fun setPlaybackState(isPlaying: Boolean) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
@@ -373,10 +271,6 @@ class EditorViewModel(
         }
     }
 
-    /**
-     * Stop playback (used during seeking)
-     * Saves current playing state to restore after seek
-     */
     fun stopPlayback() {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
@@ -387,40 +281,22 @@ class EditorViewModel(
         }
     }
 
-    /**
-     * Resume playback after seeking if video was playing before
-     */
     fun resumePlaybackAfterSeek() {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success && currentState.wasPlayingBeforeSeek) {
-            _uiState.value = currentState.copy(
-                isPlaying = true,
-                wasPlayingBeforeSeek = false
-            )
+            _uiState.value = currentState.copy(isPlaying = true, wasPlayingBeforeSeek = false)
         }
     }
 
-    /**
-     * Update playback position from player callback
-     * Called periodically by VideoPreviewPlayer's position tracker
-     */
     fun updatePlaybackPosition(currentMs: Long, durationMs: Long) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
-            // Only update if values actually changed (avoid unnecessary recomposition)
             if (currentState.currentPositionMs != currentMs || currentState.durationMs != durationMs) {
-                _uiState.value = currentState.copy(
-                    currentPositionMs = currentMs,
-                    durationMs = durationMs
-                )
+                _uiState.value = currentState.copy(currentPositionMs = currentMs, durationMs = durationMs)
             }
         }
     }
 
-    /**
-     * Request seek to a specific position
-     * VideoPreviewPlayer will handle the actual seek and call clearSeekRequest
-     */
     fun seekTo(positionMs: Long) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
@@ -428,10 +304,6 @@ class EditorViewModel(
         }
     }
 
-    /**
-     * Scrub to a position for frame preview while dragging
-     * Unlike seekTo, this doesn't trigger resume after completion
-     */
     fun scrubTo(positionMs: Long) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
@@ -439,10 +311,6 @@ class EditorViewModel(
         }
     }
 
-    /**
-     * Clear scrub request after it's been handled by the player
-     * No resume logic - just clears the position
-     */
     fun clearScrubRequest() {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
@@ -450,72 +318,36 @@ class EditorViewModel(
         }
     }
 
-    /**
-     * Clear pending seek request after it's been handled by the player
-     * Also resumes playback if the video was playing before the seek
-     */
     fun clearSeekRequest() {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
-            // Resume playback if video was playing before seek
             val shouldResume = currentState.wasPlayingBeforeSeek
             _uiState.value = currentState.copy(
                 seekToPosition = null,
                 isPlaying = if (shouldResume) true else currentState.isPlaying,
                 wasPlayingBeforeSeek = false
             )
-            if (shouldResume) {
-                android.util.Log.d("EditorViewModel", "Resuming playback after seek complete")
-            }
         }
     }
 
     // ============================================
-    // NAVIGATION (StateFlow-based - Google recommended)
+    // NAVIGATION — separate StateFlow, never in UI state
     // ============================================
 
-    /**
-     * Trigger navigation back - UI will observe and navigate
-     */
     fun navigateBack() {
-        _uiState.update { state ->
-            if (state is EditorUiState.Success) {
-                state.copy(navigationEvent = EditorNavigationEvent.NavigateBack)
-            } else state
-        }
+        _navigationEvent.value = EditorNavigationEvent.NavigateBack
     }
 
-    /**
-     * Trigger navigation to preview - UI will observe and navigate
-     */
     fun navigateToPreview() {
-        _uiState.update { state ->
-            if (state is EditorUiState.Success) {
-                state.copy(navigationEvent = EditorNavigationEvent.NavigateToPreview(projectId))
-            } else state
-        }
+        _navigationEvent.value = EditorNavigationEvent.NavigateToPreview(projectId)
     }
 
-    /**
-     * Trigger navigation to export - UI will observe and navigate
-     */
     fun navigateToExport() {
-        _uiState.update { state ->
-            if (state is EditorUiState.Success) {
-                state.copy(navigationEvent = EditorNavigationEvent.NavigateToExport(projectId))
-            } else state
-        }
+        _navigationEvent.value = EditorNavigationEvent.NavigateToExport(projectId)
     }
 
-    /**
-     * Called by UI after navigation is handled - clears the event
-     * This prevents re-navigation on configuration changes
-     */
+    /** Called by UI after navigation is handled — clears the event. */
     fun onNavigationHandled() {
-        _uiState.update { state ->
-            if (state is EditorUiState.Success) {
-                state.copy(navigationEvent = null)
-            } else state
-        }
+        _navigationEvent.value = null
     }
 }

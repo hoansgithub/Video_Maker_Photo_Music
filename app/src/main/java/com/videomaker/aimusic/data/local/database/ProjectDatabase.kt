@@ -42,8 +42,10 @@ abstract class ProjectDatabase : RoomDatabase() {
                 ProjectDatabase::class.java,
                 DATABASE_NAME
             )
-                // TODO: Replace with proper migration before production release
-                .fallbackToDestructiveMigration(dropAllTables = true)
+                // IMPORTANT: Add proper migrations before production release.
+                // fallbackToDestructiveMigration without dropAllTables only drops
+                // tables with schema changes, preserving unaffected user data.
+                .fallbackToDestructiveMigration(dropAllTables = false)
                 .build()
         }
     }
