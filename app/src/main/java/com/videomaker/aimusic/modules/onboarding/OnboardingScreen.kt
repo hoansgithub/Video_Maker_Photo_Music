@@ -1,81 +1,88 @@
 package com.videomaker.aimusic.modules.onboarding
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.modules.onboarding.pages.OnboardingPage1
-import com.videomaker.aimusic.modules.onboarding.pages.OnboardingPage2
-import com.videomaker.aimusic.modules.onboarding.pages.OnboardingPage3
 import com.videomaker.aimusic.modules.onboarding.pages.OnboardingPage4
-import com.videomaker.aimusic.ui.theme.VideoMakerTheme
-import kotlinx.coroutines.launch
+import com.videomaker.aimusic.modules.onboarding.pages.WelcomeStep
 
 /**
- * Onboarding Screen
+ * OnboardingScreen — routes between WELCOME and GENRE_SELECTION steps
+ * using AnimatedContent with slide+fade transitions.
  *
- * Main composable for onboarding flow with:
- * - 3 pages showcasing app features
- * - Page indicators
- * - Next/Get Started button
- *
- * @param onComplete Callback when onboarding is complete
+ * Back handling: GENRE_SELECTION → WELCOME → exits via [onExitRequested].
  */
 @Composable
 fun OnboardingScreen(
     viewModel: OnboardingViewModel,
+    onExitRequested: () -> Unit,
     onComplete: () -> Unit
 ) {
-    val pageCount = 4
-    val pagerState = rememberPagerState(pageCount = { pageCount })
-    val coroutineScope = rememberCoroutineScope()
+    val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize()
-        ) { page ->
-            when (page) {
-                0 -> OnboardingPage1()
-                1 -> OnboardingPage2()
-                2 -> OnboardingPage3()
-                3 -> OnboardingPage4(
-                    selectedGenres = viewModel.selectedGenres,
-                    onGenreToggle = viewModel::toggleGenre
-                )
-            }
+    BackHandler {
+        if (!viewModel.onBack()) {
+            onExitRequested()
         }
+    }
 
-        // Bottom section with indicators and button
+    AnimatedContent(
+        targetState = currentStep,
+        transitionSpec = {
+            val forward = targetState.ordinal > initialState.ordinal
+            (slideInHorizontally(tween(300)) { if (forward) it else -it } + fadeIn(tween(300))) togetherWith
+                    (slideOutHorizontally(tween(300)) { if (forward) -it else it } + fadeOut(tween(300)))
+        },
+        label = "onboarding_step"
+    ) { step ->
+        when (step) {
+            OnboardingStep.WELCOME -> WelcomeStep(onComplete = viewModel::onWelcomeComplete)
+            OnboardingStep.GENRE_SELECTION -> GenreSelectionStep(
+                viewModel = viewModel,
+                onComplete = onComplete
+            )
+        }
+    }
+}
+
+@Composable
+private fun GenreSelectionStep(
+    viewModel: OnboardingViewModel,
+    onComplete: () -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        OnboardingPage4(
+            selectedGenres = viewModel.selectedGenres,
+            onGenreToggle = viewModel::toggleGenre
+        )
+
+        // Bottom button overlay
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -83,40 +90,10 @@ fun OnboardingScreen(
                 .padding(horizontal = 32.dp, vertical = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Page Indicators
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(bottom = 32.dp)
-            ) {
-                repeat(pageCount) { index ->
-                    Box(
-                        modifier = Modifier
-                            .size(if (index == pagerState.currentPage) 10.dp else 8.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (index == pagerState.currentPage)
-                                    MaterialTheme.colorScheme.primary
-                                else
-                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                            )
-                    )
-                    if (index < pageCount - 1) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                }
-            }
-
-            // Next/Get Started Button
             Button(
                 onClick = {
-                    if (pagerState.currentPage < pageCount - 1) {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        }
-                    } else {
-                        viewModel.saveGenres()
-                        onComplete()
-                    }
+                    viewModel.saveGenres()
+                    onComplete()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -128,29 +105,11 @@ fun OnboardingScreen(
                 )
             ) {
                 Text(
-                    text = if (pagerState.currentPage < pageCount - 1) {
-                        stringResource(R.string.onboarding_next)
-                    } else {
-                        stringResource(R.string.onboarding_get_started)
-                    },
+                    text = stringResource(R.string.onboarding_get_started),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun OnboardingScreenPreview() {
-    val previewRepo = object : com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepository {
-        override suspend fun shouldShowOnboarding() = Result.success(false)
-        override suspend fun completeOnboarding() = Result.success(Unit)
-        override fun savePreferredGenres(genres: List<String>) = Unit
-        override fun getPreferredGenres() = emptyList<String>()
-    }
-    VideoMakerTheme {
-        OnboardingScreen(viewModel = OnboardingViewModel(previewRepo), onComplete = {})
     }
 }
