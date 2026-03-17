@@ -13,7 +13,6 @@ import co.alcheclub.lib.acccore.di.get
 import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
-import com.videomaker.aimusic.modules.language.domain.usecase.GetSelectedLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
@@ -40,22 +39,17 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
  */
 class LanguageSelectionActivity : AppCompatActivity() {
 
+    private val saveLanguagePreferenceUseCase by lazy { ACCDI.get<SaveLanguagePreferenceUseCase>() }
+    private val applyLanguageUseCase by lazy { ACCDI.get<ApplyLanguageUseCase>() }
+    private val completeLanguageSelectionUseCase by lazy { ACCDI.get<CompleteLanguageSelectionUseCase>() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Get dependencies from ACCDI
-        val getSelectedLanguageUseCase = ACCDI.get<GetSelectedLanguageUseCase>()
-        val saveLanguagePreferenceUseCase = ACCDI.get<SaveLanguagePreferenceUseCase>()
-        val applyLanguageUseCase = ACCDI.get<ApplyLanguageUseCase>()
-        val completeLanguageSelectionUseCase = ACCDI.get<CompleteLanguageSelectionUseCase>()
-
-        val currentLanguage = getSelectedLanguageUseCase()
-
         setContent {
             VideoMakerTheme {
                 LanguageSelectionScreen(
-                    currentLanguage = currentLanguage,
                     showBackButton = false,
                     onLanguageSelected = { languageCode ->
                         // Save preference only — no Activity recreation while browsing

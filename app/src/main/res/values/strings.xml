@@ -17,23 +17,14 @@
     <string name="onboarding_next">Next</string>
     <string name="onboarding_get_started">Get Started</string>
     <!-- Page 1 -->
-    <string name="onboarding_page1_title">Turn Photos Into\nBeautiful Videos</string>
-    <string name="onboarding_page1_feature1_title">Select Photos</string>
-    <string name="onboarding_page1_feature1_desc">Choose your favorite photos from your gallery</string>
-    <string name="onboarding_page1_feature2_title">Create Slideshow</string>
-    <string name="onboarding_page1_feature2_desc">Transform your photos into stunning video slideshows</string>
+    <string name="onboarding_page1_title">Create Magic in Seconds</string>
+    <string name="onboarding_page1_subtitle">Stunning Video in a few taps. Simple and fast</string>
     <!-- Page 2 -->
-    <string name="onboarding_page2_title">Add Music &amp;\nEffects</string>
-    <string name="onboarding_page2_feature1_title">Background Music</string>
-    <string name="onboarding_page2_feature1_desc">Add your favorite music or choose from our library</string>
-    <string name="onboarding_page2_feature2_title">Smooth Transitions</string>
-    <string name="onboarding_page2_feature2_desc">Beautiful transitions between your photos and clips</string>
+    <string name="onboarding_page2_title">Find Your Rhythm</string>
+    <string name="onboarding_page2_subtitle">Trending sounds for every mood</string>
     <!-- Page 3 -->
-    <string name="onboarding_page3_title">Export &amp;\nShare</string>
-    <string name="onboarding_page3_feature1_title">High-Quality Export</string>
-    <string name="onboarding_page3_feature1_desc">Export your videos in HD quality up to 4K</string>
-    <string name="onboarding_page3_feature2_title">Share Anywhere</string>
-    <string name="onboarding_page3_feature2_desc">Share directly to social media or save to your gallery</string>
+    <string name="onboarding_page3_title">Better Together!</string>
+    <string name="onboarding_page3_subtitle">Better together. Invite friends to share the fun</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Gallery</string>

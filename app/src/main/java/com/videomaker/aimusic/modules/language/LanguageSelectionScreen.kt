@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
@@ -66,13 +67,12 @@ import com.videomaker.aimusic.ui.theme.White40
  */
 @Composable
 fun LanguageSelectionScreen(
-    currentLanguage: String = LanguageManager.LANGUAGE_ENGLISH,
     onLanguageSelected: (String) -> Unit,
     onContinue: () -> Unit,
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {}
 ) {
-    var selectedLanguage by remember(currentLanguage) { mutableStateOf(currentLanguage) }
+    var selectedLanguage by remember { mutableStateOf<String?>(null) }
     val languages = remember { LanguageManager.getAllLanguages() }
 
     Box(
@@ -110,7 +110,7 @@ fun LanguageSelectionScreen(
 
             Text(
                 text = stringResource(R.string.language_select_title),
-                fontSize = 34.sp,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Start,
@@ -121,10 +121,9 @@ fun LanguageSelectionScreen(
 
             Text(
                 text = stringResource(R.string.language_select_subtitle),
-                fontSize = 15.sp,
+                fontSize = 17.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Start,
-                lineHeight = 22.sp,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -144,6 +143,7 @@ fun LanguageSelectionScreen(
                         }
                     )
                 }
+
             }
         }
 
@@ -156,7 +156,8 @@ fun LanguageSelectionScreen(
         ) {
             OnboardingCtaButton(
                 text = stringResource(R.string.language_continue),
-                onClick = onContinue
+                onClick = onContinue,
+                enabled = selectedLanguage != null
             )
         }
     }
@@ -237,7 +238,8 @@ private fun LanguageCard(
 @Composable
 internal fun OnboardingCtaButton(
     text: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean = true
 ) {
     val shape = RoundedCornerShape(50)
     val baseColor = MaterialTheme.colorScheme.primaryContainer
@@ -247,6 +249,7 @@ internal fun OnboardingCtaButton(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
+            .alpha(if (enabled) 1f else 0.35f)
             .clip(shape)
             .drawBehind {
                 // 1. Base glass fill
@@ -269,7 +272,7 @@ internal fun OnboardingCtaButton(
                 )
             }
             .border(1.dp, White20, shape)
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
     ) {
         Text(
             text = text,
@@ -285,7 +288,6 @@ internal fun OnboardingCtaButton(
 private fun LanguageSelectionScreenPreview() {
     VideoMakerTheme {
         LanguageSelectionScreen(
-            currentLanguage = LanguageManager.LANGUAGE_ENGLISH,
             onLanguageSelected = {},
             onContinue = {}
         )

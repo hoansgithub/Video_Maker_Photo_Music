@@ -48,8 +48,9 @@ class OnboardingViewModel(
     }
 
     fun toggleFeature(feature: String) {
-        if (selectedFeatures.contains(feature)) selectedFeatures.remove(feature)
-        else selectedFeatures.add(feature)
+        val alreadySelected = selectedFeatures.contains(feature)
+        selectedFeatures.clear()
+        if (!alreadySelected) selectedFeatures.add(feature)
     }
 
     fun saveFeatures(onSaved: () -> Unit) {

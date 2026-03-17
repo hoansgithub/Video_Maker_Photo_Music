@@ -56,23 +56,11 @@ internal val featureItems = listOf(
 )
 
 // ============================================
-// PAGE (public alias for OnboardingScreen)
+// PAGE
 // ============================================
 
 @Composable
 fun FeatureSurveyPage(
-    selectedFeatures: List<String>,
-    onFeatureToggle: (String) -> Unit
-) {
-    OnboardingPage4(selectedFeatures = selectedFeatures, onFeatureToggle = onFeatureToggle)
-}
-
-// ============================================
-// INTERNAL PAGE
-// ============================================
-
-@Composable
-internal fun OnboardingPage4(
     selectedFeatures: List<String>,
     onFeatureToggle: (String) -> Unit
 ) {
@@ -100,19 +88,17 @@ internal fun OnboardingPage4(
     ) {
         Text(
             text = stringResource(R.string.onboarding_page4_title),
-            fontSize = 34.sp,
+            fontSize = 32.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onBackground,
-            lineHeight = 42.sp
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(Modifier.height(10.dp))
 
         Text(
             text = stringResource(R.string.onboarding_page4_subtitle),
-            fontSize = 15.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            lineHeight = 22.sp
+            fontSize = 17.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(Modifier.height(36.dp))
@@ -124,7 +110,7 @@ internal fun OnboardingPage4(
             FeatureCard(
                 item = item,
                 isSelected = isSelected,
-                onClick = { onFeatureToggle(item.id) },
+                onFeatureToggle = onFeatureToggle,
                 modifier = Modifier
                     .alpha(alpha.value)
                     .graphicsLayer { translationY = translateY.value }
@@ -142,8 +128,7 @@ internal fun OnboardingPage4(
 @Composable
 private fun FeatureCard(
     item: FeatureItem,
-    isSelected: Boolean,
-    onClick: () -> Unit,
+    isSelected: Boolean, onFeatureToggle: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val cardShape = RoundedCornerShape(16.dp)
@@ -162,7 +147,7 @@ private fun FeatureCard(
                 color = if (isSelected) selectedColor else White20,
                 shape = cardShape
             )
-            .clickable(onClick = onClick)
+            .clickable { onFeatureToggle(item.id) }
             .padding(horizontal = 20.dp, vertical = 18.dp)
     ) {
         Text(
@@ -196,9 +181,9 @@ private fun FeatureCard(
 
 @Preview(showBackground = true, widthDp = 375, heightDp = 812)
 @Composable
-private fun OnboardingPage4Preview() {
+private fun FeatureSurveyPagePreview() {
     VideoMakerTheme {
-        OnboardingPage4(
+        FeatureSurveyPage(
             selectedFeatures = listOf("photos_to_video", "trending_music"),
             onFeatureToggle = {}
         )

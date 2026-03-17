@@ -1,31 +1,28 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
-
-# ========== DEBUGGING / CRASHLYTICS ==========
-# Keep line numbers for crash reports (required for readable Crashlytics stack traces)
--keepattributes SourceFile,LineNumberTable
+# ========== ATTRIBUTES ==========
+# Merged into a single line to avoid partial overrides.
+# Signature  — required for Ktor TypeInfo / kotlinx.serialization generic type tokens
+# Exceptions — keeps checked exception metadata for correct error handling
+-keepattributes SourceFile,LineNumberTable,*Annotation*,InnerClasses,Signature,Exceptions
+# Renames source file attribute to "SourceFile" while keeping line numbers — standard Crashlytics setup
 -renamesourcefileattribute SourceFile
 
 # ========== KOTLIN ==========
-# Keep Kotlin metadata for reflection
--keepattributes *Annotation*
 -keep class kotlin.Metadata { *; }
+# Suppress noisy notes from Kotlin stdlib internals
+-dontnote kotlin.**
+-dontwarn kotlin.**
 
-# Kotlin Serialization
--keepattributes *Annotation*, InnerClasses
+# ========== KOTLINX SERIALIZATION ==========
 -dontnote kotlinx.serialization.AnnotationsKt
-
+# Suppress warnings from internal serialization classes
+-dontwarn kotlinx.serialization.**
 -keepclassmembers class kotlinx.serialization.json.** {
     *** Companion;
 }
 -keepclasseswithmembers class kotlinx.serialization.json.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
-
+# Keep generated $$serializer classes and Companion serializers for all app models
 -keep,includedescriptorclasses class com.videomaker.aimusic.**$$serializer { *; }
 -keepclassmembers class com.videomaker.aimusic.** {
     *** Companion;
@@ -34,90 +31,86 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
-# ========== ANDROID ROOM DATABASE ==========
-# Keep Room entities - Room uses annotation processing
+# ========== ROOM DATABASE ==========
+# Room uses KSP-generated code at compile time — keep base class for runtime
 -keep class * extends androidx.room.RoomDatabase
--keep @androidx.room.Entity class * {
-    <fields>;
-}
+-keep @androidx.room.Entity class * { <fields>; }
 -dontwarn androidx.room.paging.**
-
-# Keep Room DAOs - interfaces with SQL queries
--keep interface * extends androidx.room.Dao {
-    <methods>;
-}
-
-# Keep Room Database class and its DAOs
--keep class com.videomaker.aimusic.data.local.database.ProjectDatabase {
-    <methods>;
-}
--keep class com.videomaker.aimusic.data.local.database.dao.** {
-    <methods>;
-}
+# Keep DAO interfaces — Room generates implementations via KSP, accessed by interface type at runtime
+-keep interface * extends androidx.room.Dao { <methods>; }
+# Keep concrete database + DAO + entity classes
+-keep class com.videomaker.aimusic.data.local.database.ProjectDatabase { <methods>; }
+-keep class com.videomaker.aimusic.data.local.database.dao.** { <methods>; }
 -keep class com.videomaker.aimusic.data.local.database.entity.** {
     <fields>;
     <init>(...);
 }
 
 # ========== PARCELIZE ==========
-# Keep Parcelable classes
 -keep @kotlinx.parcelize.Parcelize class * { *; }
 -keep class * implements android.os.Parcelable {
     public static final android.os.Parcelable$Creator *;
 }
 
+# ========== WORKMANAGER ==========
+# WorkManager instantiates workers via reflection using the (Context, WorkerParameters) constructor.
+# Keeping { *; } is too broad — keep only what WorkManager needs.
+-keep class com.videomaker.aimusic.media.export.VideoExportWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
+
+# ========== KTOR ==========
+# Ktor ships its own consumer ProGuard rules.
+# Signature attribute (kept above) covers TypeInfo generics used by content negotiation.
+-dontwarn io.ktor.**
+
+# ========== SUPABASE ==========
+# Supabase Kotlin SDK ships its own consumer ProGuard rules.
+# App-side @Serializable models (SongDto, etc.) are covered by kotlinx.serialization rules above.
+-dontwarn io.github.jan.supabase.**
+
+# ========== COIL ==========
+# Coil ships its own consumer ProGuard rules.
+# coil-video (VideoFrameDecoder) uses MediaMetadataRetriever — no extra rules needed.
+-dontwarn coil.**
+
 # ========== FIREBASE ==========
-# Firebase SDKs handle their own ProGuard rules via consumerProguardFiles
-# No additional rules needed
+# Firebase SDKs (Analytics, Crashlytics, RemoteConfig, Performance) ship their own
+# consumer ProGuard rules via the google-services and firebase plugins.
 
 # ========== COMPOSE ==========
-# Compose handles its own ProGuard rules
--keep @androidx.compose.runtime.Composable class * {
-    <methods>;
-}
+# Compose ships its own consumer ProGuard rules via the BOM.
+# Do NOT add @Composable keep rules here — the compiler plugin handles them.
 
-# ========== ACCDI (Custom DI Framework) ==========
-# Keep ACCDI public API and reflection-based components
--keep class co.alcheclub.lib.acccore.di.ACCDI {
-    public <methods>;
-}
--keep @co.alcheclub.lib.acccore.di.* class * {
-    <init>(...);
-}
+# ========== MEDIA3 ==========
+# Media3 ships its own consumer ProGuard rules.
+# Keep custom GlEffect/GlShaderProgram subclasses — Media3 may load them by class name.
+-keep class com.videomaker.aimusic.media.effects.** { *; }
+
+# ========== ACCDI (AlcheClub Custom DI) ==========
+# ACCDI resolves dependencies via reified inline functions (inlined at compile time).
+# Keep the public API and any annotation-driven injection points.
+-keep class co.alcheclub.lib.acccore.di.ACCDI { public <methods>; }
+-keep @co.alcheclub.lib.acccore.di.* class * { <init>(...); }
 -keepclassmembers class * {
     @co.alcheclub.lib.acccore.di.* <methods>;
     @co.alcheclub.lib.acccore.di.* <fields>;
 }
 
-# ========== MEDIA3 ==========
-# Media3 provides its own ProGuard rules via consumerProguardFiles
-# Keep custom effects if using reflection
--keep class com.videomaker.aimusic.media.effects.** { *; }
-
-# ========== NAVIGATION ==========
-# Navigation Compose handles its own ProGuard rules automatically
-# Type-safe navigation with Kotlin Serialization doesn't require additional rules
-
 # ========== GENERAL ==========
-# Keep native methods
+# Keep JNI entry points
 -keepclasseswithmembernames class * {
     native <methods>;
 }
-
-# Keep custom views
+# Keep custom View constructors for XML inflation
 -keep public class * extends android.view.View {
     public <init>(android.content.Context);
     public <init>(android.content.Context, android.util.AttributeSet);
     public <init>(android.content.Context, android.util.AttributeSet, int);
     public void set*(...);
 }
-
-# Keep enums
+# Keep enum members accessed via reflection (e.g. valueOf in switch expressions)
 -keepclassmembers enum * {
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
-
-# ========== WORKMANAGER ==========
-# Keep Worker classes
--keep class com.videomaker.aimusic.media.export.VideoExportWorker { *; }
