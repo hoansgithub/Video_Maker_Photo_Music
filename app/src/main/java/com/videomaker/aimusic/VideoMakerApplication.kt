@@ -84,7 +84,7 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         // 3. Other modules - Can use coordinators
         ACCDI.start(this) {
             modules(
-                firebaseModule,                                   // Firebase Analytics, Crashlytics, RemoteConfig, Performance
+                firebaseModule(manualAdImpressionTracking = true),  // Firebase Analytics, Crashlytics, RemoteConfig, Performance
                 coreModuleFromDI(
                     applicationScope = applicationScope,
                     enableAnalyticsTracking = !BuildConfig.DEBUG, // Disable tracking in debug

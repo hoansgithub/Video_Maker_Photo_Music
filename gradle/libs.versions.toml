@@ -53,7 +53,7 @@ workManager = "2.11.0"
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.15"  # From GitHub Packages
+acccore = "0.0.18"  # From GitHub Packages
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)
