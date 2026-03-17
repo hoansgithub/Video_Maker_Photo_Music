@@ -82,7 +82,7 @@ import kotlinx.coroutines.delay
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun MusicPlayerBottomSheet(
+fun MusicPlayerBottomSheet(
     song: MusicSong,
     cacheDataSourceFactory: CacheDataSource.Factory,
     onDismiss: () -> Unit,

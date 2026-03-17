@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -43,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -59,8 +61,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
+import co.alcheclub.lib.acccore.di.ACCDI
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
+import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
@@ -80,10 +87,12 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 // GALLERY SEARCH SCREEN
 // ============================================
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun GallerySearchScreen(
     viewModel: GallerySearchViewModel,
     onNavigateToTemplateDetail: (String) -> Unit = {},
+    onNavigateToSongDetail: (Long) -> Unit = {},
     onNavigateBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -91,6 +100,9 @@ fun GallerySearchScreen(
     val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
     val suggestionGenres by viewModel.suggestionGenres.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
+    val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val audioPreviewCache = remember { ACCDI.get<AudioPreviewCache>() }
 
     // Handle navigation events
     LaunchedEffect(navigationEvent) {
@@ -99,6 +111,8 @@ fun GallerySearchScreen(
                 is GallerySearchNavigationEvent.NavigateBack -> onNavigateBack()
                 is GallerySearchNavigationEvent.NavigateToTemplateDetail ->
                     onNavigateToTemplateDetail(event.templateId)
+                is GallerySearchNavigationEvent.NavigateToSongDetail ->
+                    onNavigateToSongDetail(event.songId)
             }
             viewModel.onNavigationHandled()
         }
@@ -138,13 +152,28 @@ fun GallerySearchScreen(
             is GallerySearchUiState.Results -> GallerySearchResultsContent(
                 templates = state.templates,
                 songs = state.songs,
-                onTemplateClick = viewModel::onTemplateClick
+                onTemplateClick = viewModel::onTemplateClick,
+                onSongClick = { song ->
+                    keyboardController?.hide()
+                    viewModel.onSongClick(song)
+                },
+                onScrollStarted = { keyboardController?.hide() }
             )
 
             is GallerySearchUiState.Empty -> GallerySearchEmptyContent(query = state.query)
 
             is GallerySearchUiState.Error -> GallerySearchErrorContent(message = state.message)
         }
+    }
+
+    // Music player bottom sheet
+    selectedSong?.let { song ->
+        MusicPlayerBottomSheet(
+            song = song,
+            cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+            onDismiss = viewModel::onDismissPlayer,
+            onUseToCreate = { viewModel.onUseToCreateVideo(song) }
+        )
     }
 }
 
@@ -422,12 +451,22 @@ private fun SuggestionChip(
 @Composable
 private fun GallerySearchResultsContent(
     templates: List<GallerySearchTemplateItem>,
-    songs: List<GallerySearchSongItem>,
-    onTemplateClick: (String) -> Unit
+    songs: List<MusicSong>,
+    onTemplateClick: (String) -> Unit,
+    onSongClick: (MusicSong) -> Unit,
+    onScrollStarted: () -> Unit
 ) {
     val dimens = AppDimens.current
+    val listState = rememberLazyListState()
+
+    // Dismiss keyboard when user starts scrolling
+    LaunchedEffect(Unit) {
+        snapshotFlow { listState.isScrollInProgress }
+            .collect { scrolling -> if (scrolling) onScrollStarted() }
+    }
 
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = dimens.spaceMd)
     ) {
@@ -475,7 +514,7 @@ private fun GallerySearchResultsContent(
                     name = song.name,
                     artist = song.artist,
                     coverUrl = song.coverUrl,
-                    onSongClick = {}
+                    onSongClick = { onSongClick(song) }
                 )
             }
         }
@@ -743,9 +782,11 @@ private fun GallerySearchResultsPreview() {
                     GallerySearchTemplateItem("2", "Chill Lofi", listOf("lofi", "aesthetic"), "1:1", true),
                 ),
                 songs = listOf(
-                    GallerySearchSongItem(1, "Aesthetic Vibes", "Lo-Fi Girl", listOf("lofi")),
+                    MusicSong(id = 1, name = "Aesthetic Vibes", artist = "Lo-Fi Girl"),
                 ),
-                onTemplateClick = {}
+                onTemplateClick = {},
+                onSongClick = {},
+                onScrollStarted = {}
             )
         }
     }

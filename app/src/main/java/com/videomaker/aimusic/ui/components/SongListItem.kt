@@ -1,7 +1,6 @@
 package com.videomaker.aimusic.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -123,9 +122,7 @@ fun SongListItem(
                 painter = painterResource(R.drawable.ic_start_project),
                 contentDescription = stringResource(R.string.start_project),
                 tint = Color.Unspecified,
-                modifier = Modifier
-                    .size(36.dp)
-                    .clickable(onClick = onSongClick)
+                modifier = Modifier.size(36.dp)
             )
         }
     }

@@ -129,6 +129,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 GallerySearchScreen(
                     viewModel = searchViewModel,
                     onNavigateToTemplateDetail = { /* TODO */ },
+                    onNavigateToSongDetail = { /* TODO */ },
                     onNavigateBack = { backStack.removeLastOrNull() }
                 )
             }

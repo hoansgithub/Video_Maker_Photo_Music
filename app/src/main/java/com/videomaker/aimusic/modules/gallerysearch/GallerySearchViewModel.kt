@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.core.data.local.PreferencesManager
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
 import com.videomaker.aimusic.domain.usecase.SearchSongsUseCase
@@ -25,10 +26,10 @@ import kotlinx.coroutines.launch
 sealed class GallerySearchUiState {
     data object Idle : GallerySearchUiState()
     data object Loading : GallerySearchUiState()
-    data class Results(
+    @Immutable data class Results(
         val query: String,
         val templates: List<GallerySearchTemplateItem>,
-        val songs: List<GallerySearchSongItem>
+        val songs: List<MusicSong>
     ) : GallerySearchUiState()
     data class Empty(val query: String) : GallerySearchUiState()
     data class Error(val message: String) : GallerySearchUiState()
@@ -43,15 +44,6 @@ data class GallerySearchTemplateItem(
     val isPremium: Boolean
 )
 
-@Immutable
-data class GallerySearchSongItem(
-    val id: Long,
-    val name: String,
-    val artist: String,
-    val genres: List<String>,
-    val coverUrl: String = ""
-)
-
 // ============================================
 // NAVIGATION EVENTS
 // ============================================
@@ -59,6 +51,7 @@ data class GallerySearchSongItem(
 sealed class GallerySearchNavigationEvent {
     data object NavigateBack : GallerySearchNavigationEvent()
     data class NavigateToTemplateDetail(val templateId: String) : GallerySearchNavigationEvent()
+    data class NavigateToSongDetail(val songId: Long) : GallerySearchNavigationEvent()
 }
 
 // ============================================
@@ -86,6 +79,10 @@ class GallerySearchViewModel(
 
     private val _navigationEvent = MutableStateFlow<GallerySearchNavigationEvent?>(null)
     val navigationEvent: StateFlow<GallerySearchNavigationEvent?> = _navigationEvent.asStateFlow()
+
+    // Song currently shown in the player bottom sheet (null = sheet closed)
+    private val _selectedSong = MutableStateFlow<MusicSong?>(null)
+    val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
 
     // Tracks the explicit search job (keyboard Search button / recent tap) so it can be cancelled
     // when the debounce flow fires a newer query.
@@ -154,6 +151,19 @@ class GallerySearchViewModel(
         _recentSearches.value = emptyList()
     }
 
+    fun onSongClick(song: MusicSong) {
+        _selectedSong.value = song
+    }
+
+    fun onDismissPlayer() {
+        _selectedSong.value = null
+    }
+
+    fun onUseToCreateVideo(song: MusicSong) {
+        _selectedSong.value = null
+        _navigationEvent.value = GallerySearchNavigationEvent.NavigateToSongDetail(song.id)
+    }
+
     fun onTemplateClick(templateId: String) {
         _navigationEvent.value = GallerySearchNavigationEvent.NavigateToTemplateDetail(templateId)
     }
@@ -177,21 +187,12 @@ class GallerySearchViewModel(
 
     private fun buildResultState(
         query: String,
-        result: Result<List<com.videomaker.aimusic.domain.model.MusicSong>>
+        result: Result<List<MusicSong>>
     ): GallerySearchUiState {
         return result.fold(
             onSuccess = { songs ->
-                val items = songs.map { song ->
-                    GallerySearchSongItem(
-                        id = song.id,
-                        name = song.name,
-                        artist = song.artist,
-                        genres = song.genres,
-                        coverUrl = song.coverUrl
-                    )
-                }
-                if (items.isEmpty()) GallerySearchUiState.Empty(query)
-                else GallerySearchUiState.Results(query = query, templates = emptyList(), songs = items)
+                if (songs.isEmpty()) GallerySearchUiState.Empty(query)
+                else GallerySearchUiState.Results(query = query, templates = emptyList(), songs = songs)
             },
             onFailure = { GallerySearchUiState.Error("Search failed. Please try again.") }
         )
