@@ -1,3 +1,3 @@
 package com.videomaker.aimusic.modules.onboarding
 
-enum class OnboardingStep { WELCOME, GENRE_SELECTION }
+enum class OnboardingStep { WELCOME_1, WELCOME_2, WELCOME_3, GENRE_SELECTION }

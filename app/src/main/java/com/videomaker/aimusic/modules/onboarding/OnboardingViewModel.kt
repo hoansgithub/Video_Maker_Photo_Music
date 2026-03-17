@@ -10,30 +10,39 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * OnboardingViewModel — manages step navigation and genre selection state.
  *
- * Steps: WELCOME (pages 1-3 via HorizontalPager) → GENRE_SELECTION
+ * Steps: WELCOME_1 → WELCOME_2 → WELCOME_3 → GENRE_SELECTION
  */
 class OnboardingViewModel(
     private val onboardingRepository: OnboardingRepository
 ) : ViewModel() {
 
-    private val _currentStep = MutableStateFlow(OnboardingStep.WELCOME)
+    private val _currentStep = MutableStateFlow(OnboardingStep.WELCOME_1)
     val currentStep: StateFlow<OnboardingStep> = _currentStep.asStateFlow()
 
     val selectedGenres = mutableStateListOf<String>()
 
-    fun onWelcomeComplete() {
-        _currentStep.value = OnboardingStep.GENRE_SELECTION
+    fun onNext() {
+        _currentStep.value = when (_currentStep.value) {
+            OnboardingStep.WELCOME_1 -> OnboardingStep.WELCOME_2
+            OnboardingStep.WELCOME_2 -> OnboardingStep.WELCOME_3
+            OnboardingStep.WELCOME_3 -> OnboardingStep.GENRE_SELECTION
+            OnboardingStep.GENRE_SELECTION -> OnboardingStep.GENRE_SELECTION
+        }
     }
 
     /**
-     * Returns true if stepped back to WELCOME, false if already at first step
-     * (caller should handle exit in that case).
+     * Returns true if stepped back, false if already at first step
+     * (caller should show exit dialog).
      */
     fun onBack(): Boolean {
-        return if (_currentStep.value != OnboardingStep.WELCOME) {
-            _currentStep.value = OnboardingStep.WELCOME
-            true
-        } else false
+        val previous = when (_currentStep.value) {
+            OnboardingStep.WELCOME_1 -> return false
+            OnboardingStep.WELCOME_2 -> OnboardingStep.WELCOME_1
+            OnboardingStep.WELCOME_3 -> OnboardingStep.WELCOME_2
+            OnboardingStep.GENRE_SELECTION -> OnboardingStep.WELCOME_3
+        }
+        _currentStep.value = previous
+        return true
     }
 
     fun toggleGenre(genre: String) {
