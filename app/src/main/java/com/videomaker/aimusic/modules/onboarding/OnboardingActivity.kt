@@ -76,7 +76,8 @@ class OnboardingActivity : AppCompatActivity() {
 
     private fun completeOnboardingAndNavigate() {
         lifecycleScope.launch {
-            completeOnboardingUseCase()
+            // Failure is non-fatal: persist flag best-effort, always navigate
+            completeOnboardingUseCase().getOrNull()
             navigateToMain()
         }
     }

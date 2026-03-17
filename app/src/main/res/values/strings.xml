@@ -221,9 +221,13 @@
     <!-- Songs -->
     <string name="start_project">Start project</string>
 
-    <!-- Onboarding Page 4 — Genre Selection -->
-    <string name="onboarding_page4_title">What music do\nyou love?</string>
-    <string name="onboarding_page4_subtitle">Pick your favourite genres. We\'ll tailor your music suggestions.</string>
+    <!-- Onboarding Page 4 — Feature Survey -->
+    <string name="onboarding_page4_title">Start your journey</string>
+    <string name="onboarding_page4_subtitle">This helps us recommend the most relevant content for you.</string>
+    <string name="feature_music_video_instant">Make a music video instantly</string>
+    <string name="feature_photos_to_video">Turn photos into a music video</string>
+    <string name="feature_trending_templates">Use trending templates</string>
+    <string name="feature_trending_music">Add trending music</string>
 
     <!-- Music Genres -->
     <string name="genre_pop">Pop</string>

@@ -18,9 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,10 +32,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.modules.language.OnboardingCtaButton
+import com.videomaker.aimusic.modules.onboarding.pages.FeatureSurveyPage
 import com.videomaker.aimusic.modules.onboarding.pages.OnboardingPage1
 import com.videomaker.aimusic.modules.onboarding.pages.OnboardingPage2
 import com.videomaker.aimusic.modules.onboarding.pages.OnboardingPage3
-import com.videomaker.aimusic.modules.onboarding.pages.OnboardingPage4
 
 private val welcomeSteps = listOf(
     OnboardingStep.WELCOME_1,
@@ -82,7 +81,7 @@ fun OnboardingScreen(
                 onNext = viewModel::onNext
             )
 
-            OnboardingStep.GENRE_SELECTION -> GenreSelectionStep(
+            OnboardingStep.GENRE_SELECTION -> SurveyStep(
                 viewModel = viewModel,
                 onComplete = onComplete
             )
@@ -99,7 +98,6 @@ private fun WelcomePageStep(
     val isLastPage = step == OnboardingStep.WELCOME_3
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Page content
         when (step) {
             OnboardingStep.WELCOME_1 -> OnboardingPage1()
             OnboardingStep.WELCOME_2 -> OnboardingPage2()
@@ -107,18 +105,17 @@ private fun WelcomePageStep(
             else -> Unit
         }
 
-        // Bottom overlay: capsule indicator + button
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(horizontal = 32.dp, vertical = 48.dp),
+                .padding(horizontal = 24.dp, vertical = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Capsule/dot indicator
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(bottom = 32.dp)
+                modifier = Modifier.padding(bottom = 24.dp)
             ) {
                 welcomeSteps.forEachIndexed { index, _ ->
                     val isActive = index == pageIndex
@@ -126,7 +123,7 @@ private fun WelcomePageStep(
                         modifier = Modifier
                             .height(8.dp)
                             .width(if (isActive) 32.dp else 8.dp)
-                            .clip(RoundedCornerShape(50))
+                            .clip(CircleShape)
                             .background(
                                 if (isActive) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
@@ -135,66 +132,36 @@ private fun WelcomePageStep(
                 }
             }
 
-            Button(
-                onClick = onNext,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Text(
-                    text = if (isLastPage) stringResource(R.string.onboarding_get_started)
-                    else stringResource(R.string.onboarding_next),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+            OnboardingCtaButton(
+                text = if (isLastPage) stringResource(R.string.onboarding_get_started)
+                       else stringResource(R.string.onboarding_next),
+                onClick = onNext
+            )
         }
     }
 }
 
 @Composable
-private fun GenreSelectionStep(
+private fun SurveyStep(
     viewModel: OnboardingViewModel,
     onComplete: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        OnboardingPage4(
-            selectedGenres = viewModel.selectedGenres,
-            onGenreToggle = viewModel::toggleGenre
+        FeatureSurveyPage(
+            selectedFeatures = viewModel.selectedFeatures,
+            onFeatureToggle = viewModel::toggleFeature
         )
 
-        Column(
+        Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(horizontal = 32.dp, vertical = 48.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 24.dp, vertical = 48.dp)
         ) {
-            Button(
-                onClick = {
-                    viewModel.saveGenres()
-                    onComplete()
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Text(
-                    text = stringResource(R.string.onboarding_get_started),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+            OnboardingCtaButton(
+                text = stringResource(R.string.onboarding_get_started),
+                onClick = { viewModel.saveFeatures(onSaved = onComplete) }
+            )
         }
     }
 }

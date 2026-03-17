@@ -6,19 +6,21 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,8 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -37,181 +37,156 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+import com.videomaker.aimusic.ui.theme.White12
+import com.videomaker.aimusic.ui.theme.White20
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // ============================================
-// GENRE DATA
+// FEATURE DATA
 // ============================================
 
-internal data class MusicGenreItem(
-    val id: String,
-    val emoji: String,
-    val nameResId: Int
-)
+internal data class FeatureItem(val id: String, val emoji: String, val nameResId: Int)
 
-internal val musicGenreItems = listOf(
-    MusicGenreItem("pop",        "🎵", R.string.genre_pop),
-    MusicGenreItem("rock",       "🎸", R.string.genre_rock),
-    MusicGenreItem("hip-hop",    "🎤", R.string.genre_hiphop),
-    MusicGenreItem("r&b",        "💎", R.string.genre_rnb),
-    MusicGenreItem("electronic", "⚡", R.string.genre_electronic),
-    MusicGenreItem("jazz",       "🎷", R.string.genre_jazz),
-    MusicGenreItem("classical",  "🎻", R.string.genre_classical),
-    MusicGenreItem("country",    "🤠", R.string.genre_country),
-    MusicGenreItem("latin",      "💃", R.string.genre_latin),
-    MusicGenreItem("k-pop",      "⭐", R.string.genre_kpop),
-    MusicGenreItem("dance",      "💃", R.string.genre_dance),
-    MusicGenreItem("edm",        "⚡", R.string.genre_edm),
-    MusicGenreItem("blues",      "🎶", R.string.genre_blues),
-    MusicGenreItem("metal",      "🔥", R.string.genre_metal),
-    MusicGenreItem("soul",       "✨", R.string.genre_soul),
+internal val featureItems = listOf(
+    FeatureItem("music_video_instant",  "🎬", R.string.feature_music_video_instant),
+    FeatureItem("photos_to_video",      "📸", R.string.feature_photos_to_video),
+    FeatureItem("trending_templates",   "✨", R.string.feature_trending_templates),
+    FeatureItem("trending_music",       "🎵", R.string.feature_trending_music),
 )
 
 // ============================================
-// PAGE
+// PAGE (public alias for OnboardingScreen)
 // ============================================
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun OnboardingPage4(
-    selectedGenres: List<String>,
-    onGenreToggle: (String) -> Unit
+fun FeatureSurveyPage(
+    selectedFeatures: List<String>,
+    onFeatureToggle: (String) -> Unit
 ) {
-    // Per-chip entrance animations (fade + scale + translateY)
-    val chipAnimations = remember {
-        musicGenreItems.map {
-            Triple(Animatable(0f), Animatable(0.7f), Animatable(24f))
-        }
+    OnboardingPage4(selectedFeatures = selectedFeatures, onFeatureToggle = onFeatureToggle)
+}
+
+// ============================================
+// INTERNAL PAGE
+// ============================================
+
+@Composable
+internal fun OnboardingPage4(
+    selectedFeatures: List<String>,
+    onFeatureToggle: (String) -> Unit
+) {
+    val cardAnimations = remember {
+        featureItems.map { Pair(Animatable(0f), Animatable(32f)) }
     }
 
     LaunchedEffect(Unit) {
-        chipAnimations.forEachIndexed { index, (alpha, scale, translateY) ->
+        cardAnimations.forEachIndexed { index, (alpha, translateY) ->
             launch {
-                delay(index * 40L)
-                launch {
-                    alpha.animateTo(
-                        1f, spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
-                        )
-                    )
-                }
-                launch {
-                    scale.animateTo(
-                        1f, spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
-                        )
-                    )
-                }
-                launch {
-                    translateY.animateTo(
-                        0f, spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
-                        )
-                    )
-                }
+                delay(index * 80L)
+                launch { alpha.animateTo(1f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium)) }
+                launch { translateY.animateTo(0f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium)) }
             }
         }
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF1a1a2e), Color(0xFF16213e))
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp)
+            .padding(top = 120.dp, bottom = 200.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 32.dp)
-                .padding(top = 120.dp, bottom = 200.dp),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Text(
-                text = stringResource(R.string.onboarding_page4_title),
-                fontSize = 36.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
-                lineHeight = 44.sp
+        Text(
+            text = stringResource(R.string.onboarding_page4_title),
+            fontSize = 34.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            lineHeight = 42.sp
+        )
+
+        Spacer(Modifier.height(10.dp))
+
+        Text(
+            text = stringResource(R.string.onboarding_page4_subtitle),
+            fontSize = 15.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            lineHeight = 22.sp
+        )
+
+        Spacer(Modifier.height(36.dp))
+
+        featureItems.forEachIndexed { index, item ->
+            val (alpha, translateY) = cardAnimations[index]
+            val isSelected = selectedFeatures.contains(item.id)
+
+            FeatureCard(
+                item = item,
+                isSelected = isSelected,
+                onClick = { onFeatureToggle(item.id) },
+                modifier = Modifier
+                    .alpha(alpha.value)
+                    .graphicsLayer { translationY = translateY.value }
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = stringResource(R.string.onboarding_page4_subtitle),
-                fontSize = 15.sp,
-                color = Color.White.copy(alpha = 0.6f),
-                lineHeight = 22.sp
-            )
-
-            Spacer(modifier = Modifier.height(36.dp))
-
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                musicGenreItems.forEachIndexed { index, genreItem ->
-                    val (alpha, scale, translateY) = chipAnimations[index]
-                    Box(
-                        modifier = Modifier
-                            .alpha(alpha.value)
-                            .graphicsLayer {
-                                scaleX = scale.value
-                                scaleY = scale.value
-                                translationY = translateY.value
-                            }
-                    ) {
-                        MusicGenreChip(
-                            genreItem = genreItem,
-                            isSelected = selectedGenres.contains(genreItem.id),
-                            onClick = { onGenreToggle(genreItem.id) }
-                        )
-                    }
-                }
-            }
+            if (index < featureItems.lastIndex) Spacer(Modifier.height(12.dp))
         }
     }
 }
 
 // ============================================
-// CHIP
+// CARD
 // ============================================
 
 @Composable
-private fun MusicGenreChip(
-    genreItem: MusicGenreItem,
+private fun FeatureCard(
+    item: FeatureItem,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val chipShape = RoundedCornerShape(20.dp)
-    Box(
-        modifier = Modifier
-            .clip(chipShape)
+    val cardShape = RoundedCornerShape(16.dp)
+    val selectedColor = MaterialTheme.colorScheme.primary
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(cardShape)
             .background(
-                if (isSelected) Color.White
-                else Color.White.copy(alpha = 0.08f)
+                if (isSelected) selectedColor.copy(alpha = 0.15f) else White12
             )
-            .then(
-                if (isSelected) Modifier
-                else Modifier.border(1.dp, Color.White.copy(alpha = 0.2f), chipShape)
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = if (isSelected) selectedColor else White20,
+                shape = cardShape
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp)
+            .padding(horizontal = 20.dp, vertical = 18.dp)
     ) {
         Text(
-            text = "${genreItem.emoji} ${stringResource(genreItem.nameResId)}",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = if (isSelected) Color(0xFF1a1a2e) else Color.White
+            text = item.emoji,
+            fontSize = 26.sp,
+            modifier = Modifier.padding(end = 16.dp)
         )
+
+        Text(
+            text = stringResource(item.nameResId),
+            fontSize = 16.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f)
+        )
+
+        if (isSelected) {
+            Icon(
+                imageVector = Icons.Filled.CheckCircle,
+                contentDescription = null,
+                tint = selectedColor,
+                modifier = Modifier.size(22.dp)
+            )
+        }
     }
 }
 
@@ -224,8 +199,8 @@ private fun MusicGenreChip(
 private fun OnboardingPage4Preview() {
     VideoMakerTheme {
         OnboardingPage4(
-            selectedGenres = listOf("pop", "jazz", "k-pop"),
-            onGenreToggle = {}
+            selectedFeatures = listOf("photos_to_video", "trending_music"),
+            onFeatureToggle = {}
         )
     }
 }

@@ -2,10 +2,12 @@ package com.videomaker.aimusic.modules.onboarding
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 /**
  * OnboardingViewModel — manages step navigation and genre selection state.
@@ -19,7 +21,7 @@ class OnboardingViewModel(
     private val _currentStep = MutableStateFlow(OnboardingStep.WELCOME_1)
     val currentStep: StateFlow<OnboardingStep> = _currentStep.asStateFlow()
 
-    val selectedGenres = mutableStateListOf<String>()
+    val selectedFeatures = mutableStateListOf<String>()
 
     fun onNext() {
         _currentStep.value = when (_currentStep.value) {
@@ -45,12 +47,15 @@ class OnboardingViewModel(
         return true
     }
 
-    fun toggleGenre(genre: String) {
-        if (selectedGenres.contains(genre)) selectedGenres.remove(genre)
-        else selectedGenres.add(genre)
+    fun toggleFeature(feature: String) {
+        if (selectedFeatures.contains(feature)) selectedFeatures.remove(feature)
+        else selectedFeatures.add(feature)
     }
 
-    fun saveGenres() {
-        onboardingRepository.savePreferredGenres(selectedGenres.toList())
+    fun saveFeatures(onSaved: () -> Unit) {
+        viewModelScope.launch {
+            onboardingRepository.savePreferredFeatures(selectedFeatures.toList())
+            onSaved()
+        }
     }
 }

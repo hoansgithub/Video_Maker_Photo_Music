@@ -39,4 +39,11 @@ class OnboardingRepositoryImpl(
 
     override fun getPreferredGenres(): List<String> =
         preferencesManager.getPreferredGenres()
+
+    override suspend fun savePreferredFeatures(features: List<String>) = withContext(Dispatchers.IO) {
+        preferencesManager.setPreferredFeatures(features)
+    }
+
+    override fun getPreferredFeatures(): List<String> =
+        preferencesManager.getPreferredFeatures()
 }

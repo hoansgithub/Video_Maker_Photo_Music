@@ -18,16 +18,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +36,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -51,19 +50,19 @@ import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.SupportedLanguage
 import com.videomaker.aimusic.core.data.local.getAllLanguages
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+import com.videomaker.aimusic.ui.theme.Black12
+import com.videomaker.aimusic.ui.theme.Black20
+import com.videomaker.aimusic.ui.theme.Gray700
+import com.videomaker.aimusic.ui.theme.White20
+import com.videomaker.aimusic.ui.theme.White40
 
 /**
- * LanguageSelectionScreen - Language picker for onboarding and settings
+ * LanguageSelectionScreen - Language picker for onboarding and settings.
  *
- * Tapping a language immediately applies the locale via AppCompatDelegate.
- * On Android 13+ the UI updates in place; on older versions the Activity
- * recreates and restores with the selected language already saved.
- *
- * @param currentLanguage The currently selected language code
- * @param onLanguageSelected Callback when user taps a language (applies locale immediately)
- * @param onContinue Callback when user presses Continue button
- * @param showBackButton Whether to show back button (true in settings, false in onboarding)
- * @param onBackClick Callback for back button
+ * Styled to match standard onboarding elements:
+ * - Background: colorScheme.background
+ * - CTA: glass capsule (primaryContainer bg + White40 border)
+ * - Language cards: flat dark style matching feature cards
  */
 @Composable
 fun LanguageSelectionScreen(
@@ -79,17 +78,18 @@ fun LanguageSelectionScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
+        // Scrollable content
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp),
+                .padding(horizontal = 24.dp)
+                .padding(top = 16.dp, bottom = 120.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Back button row (only shown in settings context)
             if (showBackButton) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -99,7 +99,7 @@ fun LanguageSelectionScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back),
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
@@ -108,34 +108,34 @@ fun LanguageSelectionScreen(
                 Spacer(modifier = Modifier.height(48.dp))
             }
 
-            // Title
             Text(
                 text = stringResource(R.string.language_select_title),
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
+                fontSize = 34.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Subtitle
             Text(
                 text = stringResource(R.string.language_select_subtitle),
-                fontSize = 16.sp,
+                fontSize = 15.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Start,
+                lineHeight = 22.sp,
+                modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(36.dp))
 
-            // Language options
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 languages.forEach { language ->
-                    LanguageOptionCard(
+                    LanguageCard(
                         language = language,
                         isSelected = selectedLanguage == language.code,
                         onClick = {
@@ -145,113 +145,138 @@ fun LanguageSelectionScreen(
                     )
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Continue button
-            Button(
-                onClick = onContinue,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Text(
-                    text = stringResource(R.string.language_continue),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
+        // Fixed CTA at bottom
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 48.dp)
+        ) {
+            OnboardingCtaButton(
+                text = stringResource(R.string.language_continue),
+                onClick = onContinue
+            )
         }
     }
 }
 
+// ============================================
+// LANGUAGE CARD — flat dark style
+// ============================================
+
 @Composable
-private fun LanguageOptionCard(
+private fun LanguageCard(
     language: SupportedLanguage,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val borderColor = if (isSelected) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.outlineVariant
-    }
+    val cardShape = RoundedCornerShape(50)
+    val accentColor = MaterialTheme.colorScheme.primary
 
-    val backgroundColor = if (isSelected) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-    }
-
-    Card(
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clip(cardShape)
+            .background(if (isSelected) accentColor.copy(alpha = 0.15f) else Black20)
             .border(
-                width = if (isSelected) 2.dp else 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(16.dp)
-            ),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = backgroundColor
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isSelected) 4.dp else 0.dp
-        )
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = if (isSelected) accentColor else Gray700,
+                shape = cardShape
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Flag emoji
-            Text(
-                text = language.flag,
-                fontSize = 32.sp
-            )
+        Text(
+            text = language.flag,
+            fontSize = 20.sp,
+            modifier = Modifier.padding(end = 14.dp)
+        )
 
-            Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = language.displayName,
+            fontSize = 16.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f)
+        )
 
-            // Language name
-            Text(
-                text = language.displayName,
-                fontSize = 18.sp,
-                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
-                modifier = Modifier.weight(1f)
-            )
-
-            // Selection indicator
-            if (isSelected) {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+        if (isSelected) {
+            Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .background(accentColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(14.dp)
+                )
             }
+        } else {
+            Spacer(modifier = Modifier.width(22.dp))
         }
+    }
+}
+
+// ============================================
+// SHARED CTA BUTTON — iOS glassmorphism style
+//
+// Layers (inside capsule clip):
+//   1. Base fill      — primaryContainer (~10% white)
+//   2. Top highlight  — White40 → transparent over top 45% (specular reflection)
+//   3. Bottom shadow  — transparent → Black12 over bottom 35% (depth)
+//   4. Outer stroke   — White20 border (surface edge)
+// ============================================
+
+@Composable
+internal fun OnboardingCtaButton(
+    text: String,
+    onClick: () -> Unit
+) {
+    val shape = RoundedCornerShape(50)
+    val baseColor = MaterialTheme.colorScheme.primaryContainer
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .clip(shape)
+            .drawBehind {
+                // 1. Base glass fill
+                drawRect(baseColor)
+                // 2. Top inner highlight — light catching the top of the glass
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(White40, Color.Transparent),
+                        startY = 0f,
+                        endY = size.height * 0.45f
+                    )
+                )
+                // 3. Bottom inner shadow — subtle depth below the glass
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color.Transparent, Black12),
+                        startY = size.height * 0.65f,
+                        endY = size.height
+                    )
+                )
+            }
+            .border(1.dp, White20, shape)
+            .clickable(onClick = onClick)
+    ) {
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
     }
 }
 

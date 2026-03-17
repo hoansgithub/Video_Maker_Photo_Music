@@ -22,4 +22,10 @@ interface OnboardingRepository {
 
     /** Returns genres saved during onboarding. Empty list = no preference. */
     fun getPreferredGenres(): List<String>
+
+    /** Save feature interests selected on the onboarding survey step. */
+    suspend fun savePreferredFeatures(features: List<String>)
+
+    /** Returns feature interests saved during onboarding. Empty list = no preference. */
+    fun getPreferredFeatures(): List<String>
 }
