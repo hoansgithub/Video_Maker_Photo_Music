@@ -18,25 +18,37 @@
     <string name="onboarding_next">التالي</string>
     <string name="onboarding_get_started">ابدأ الآن</string>
     <!-- Page 1 -->
-    <string name="onboarding_page1_title">حوّل الصور إلى\nفيديوهات جميلة</string>
-    <string name="onboarding_page1_feature1_title">اختر الصور</string>
-    <string name="onboarding_page1_feature1_desc">اختر صورك المفضلة من معرض الصور</string>
-    <string name="onboarding_page1_feature2_title">أنشئ عرض شرائح</string>
-    <string name="onboarding_page1_feature2_desc">حوّل صورك إلى فيديوهات عرض شرائح مذهلة</string>
+    <string name="onboarding_page1_title">اصنع السحر في ثوانٍ</string>
+    <string name="onboarding_page1_subtitle">فيديو مذهل بنقرات قليلة. سهل وسريع</string>
     <!-- Page 2 -->
-    <string name="onboarding_page2_title">أضف موسيقى\nوتأثيرات</string>
-    <string name="onboarding_page2_feature1_title">موسيقى خلفية</string>
-    <string name="onboarding_page2_feature1_desc">أضف موسيقاك المفضلة أو اختر من مكتبتنا</string>
-    <string name="onboarding_page2_feature2_title">انتقالات سلسة</string>
-    <string name="onboarding_page2_feature2_desc">انتقالات جميلة بين صورك ومقاطعك</string>
+    <string name="onboarding_page2_title">ابحث عن إيقاعك</string>
+    <string name="onboarding_page2_subtitle">أصوات رائجة لكل مزاج</string>
     <!-- Page 3 -->
-    <string name="onboarding_page3_title">صدّر\nوشارك</string>
-    <string name="onboarding_page3_feature1_title">تصدير عالي الجودة</string>
-    <string name="onboarding_page3_feature1_desc">صدّر فيديوهاتك بجودة HD حتى 4K</string>
-    <string name="onboarding_page3_feature2_title">شارك في أي مكان</string>
-    <string name="onboarding_page3_feature2_desc">شارك مباشرة على وسائل التواصل أو احفظ في المعرض</string>
+    <string name="onboarding_page3_title">معاً نكون أفضل!</string>
+    <string name="onboarding_page3_subtitle">معاً نكون أفضل. ادعُ أصدقاءك لمشاركة المتعة</string>
 
-    <!-- Home -->
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">معرض</string>
+    <string name="home_tab_songs">أغاني</string>
+    <string name="home_tab_projects">مشاريعي</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_hot_songs">أغاني رائجة</string>
+    <string name="gallery_templates">قوالب</string>
+    <string name="gallery_coming_soon">قريباً</string>
+    <string name="gallery_search_hint">ابحث عن أسلوبك</string>
+    <string name="gallery_create_new_video">إنشاء فيديو جديد</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">أغاني</string>
+    <string name="songs_all">كل الأغاني</string>
+    <string name="songs_categories">التصنيفات</string>
+    <string name="songs_search_hint">ابحث عن أغاني</string>
+    <string name="songs_suggest_for_you">مقترحة لك</string>
+    <string name="songs_weekly_ranking">الترتيب الأسبوعي</string>
+    <string name="songs_station">المحطات</string>
+
+    <!-- Legacy Home -->
     <string name="home_title">صانع الفيديو</string>
     <string name="home_welcome">ماذا تريد أن تفعل؟</string>
     <string name="home_create">إنشاء</string>
@@ -75,6 +87,7 @@
     <string name="projects_empty">لا توجد مشاريع بعد</string>
     <string name="projects_empty_description">أنشئ مشروعك الأول لتراه هنا</string>
     <string name="projects_item_info">%1$d صور • %2$s</string>
+    <string name="projects_create_description">ابدأ مشروع عرض شرائح جديد</string>
     <string name="projects_delete_title">حذف المشروع؟</string>
     <string name="projects_delete_message">سيتم حذف \"%s\" نهائياً. لا يمكن التراجع عن هذا الإجراء.</string>
 
@@ -112,12 +125,24 @@
     <string name="picker_permission_message">لإنشاء فيديوهات من صورك، نحتاج إذن الوصول إلى مكتبة الصور.</string>
     <string name="picker_allow_access">السماح بالوصول</string>
 
+    <!-- Music Picker -->
+    <string name="music_picker_title">اختر الموسيقى</string>
+    <string name="music_picker_loading">جاري التحميل…</string>
+    <string name="music_picker_no_music">لم يتم العثور على موسيقى</string>
+    <string name="music_picker_no_music_hint">أضف ملفات موسيقى إلى جهازك لاستخدامها هنا</string>
+    <string name="music_picker_permission_title">مطلوب الوصول للصوت</string>
+    <string name="music_picker_permission_message">لاستخدام موسيقاك كصوت خلفية، نحتاج إذن الوصول إلى ملفاتك الصوتية.</string>
+    <string name="music_picker_allow_access">السماح بالوصول</string>
+    <string name="music_picker_preview">معاينة</string>
+    <string name="music_picker_stop_preview">إيقاف</string>
+    <string name="music_picker_select">اختيار</string>
+
     <!-- Settings Panel -->
     <string name="settings_panel_title">الإعدادات</string>
     <string name="settings_panel_apply">تطبيق</string>
     <string name="settings_panel_close">إغلاق</string>
     <string name="settings_apply">تطبيق</string>
-    <string name="settings_transition_effect">تأثير الانتقال</string>
+    <string name="settings_effect_set">مجموعة التأثيرات</string>
     <string name="settings_all">الكل</string>
     <string name="settings_off">إيقاف</string>
     <string name="settings_none">بدون</string>
@@ -132,39 +157,9 @@
     <string name="settings_add_audio">+ إضافة</string>
     <string name="settings_volume">مستوى الصوت</string>
     <string name="settings_aspect_ratio">نسبة العرض</string>
-
-    <!-- Home Tabs -->
-    <string name="home_tab_gallery">معرض</string>
-    <string name="home_tab_songs">أغاني</string>
-    <string name="home_tab_projects">مشاريعي</string>
-
-    <!-- Gallery Tab -->
-    <string name="gallery_hot_songs">أغاني رائجة</string>
-    <string name="gallery_templates">قوالب</string>
-    <string name="gallery_coming_soon">قريباً</string>
-    <string name="gallery_search_hint">ابحث عن أسلوبك</string>
-    <string name="gallery_create_new_video">إنشاء فيديو جديد</string>
-
-    <!-- Songs Tab -->
-    <string name="songs_title">أغاني</string>
-    <string name="songs_all">كل الأغاني</string>
-    <string name="songs_categories">التصنيفات</string>
-    <string name="songs_search_hint">ابحث عن أغاني</string>
-    <string name="songs_suggest_for_you">مقترحة لك</string>
-    <string name="songs_weekly_ranking">الترتيب الأسبوعي</string>
-    <string name="songs_station">المحطات</string>
-
-    <!-- Music Picker -->
-    <string name="music_picker_title">اختر الموسيقى</string>
-    <string name="music_picker_loading">جاري التحميل…</string>
-    <string name="music_picker_no_music">لم يتم العثور على موسيقى</string>
-    <string name="music_picker_no_music_hint">أضف ملفات موسيقى إلى جهازك لاستخدامها هنا</string>
-    <string name="music_picker_permission_title">مطلوب الوصول للصوت</string>
-    <string name="music_picker_permission_message">لاستخدام موسيقاك كصوت خلفية، نحتاج إذن الوصول إلى ملفاتك الصوتية.</string>
-    <string name="music_picker_allow_access">السماح بالوصول</string>
-    <string name="music_picker_preview">معاينة</string>
-    <string name="music_picker_stop_preview">إيقاف</string>
-    <string name="music_picker_select">اختيار</string>
+    <string name="settings_transition_effect">تأثير الانتقال</string>
+    <string name="settings_transition_duration">مدة الانتقال</string>
+    <string name="settings_transition_duration_value">%.1fث</string>
 
     <!-- Search -->
     <string name="search_hint">ابحث عن أسلوبك</string>
@@ -180,13 +175,37 @@
     <string name="search_tag_cinematic">سينمائي</string>
     <string name="search_tag_vintage">كلاسيكي</string>
 
-    <!-- Settings Panel (additional) -->
-    <string name="settings_effect_set">مجموعة التأثيرات</string>
-    <string name="settings_transition_duration">مدة الانتقال</string>
-    <string name="settings_transition_duration_value">%.1fث</string>
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">أجواء الأحلام</string>
+    <string name="effect_dreamy_vibes_desc">توهج ناعم وألوان باستيل</string>
+    <string name="effect_cyberpunk_title">سايبربانك</string>
+    <string name="effect_cyberpunk_desc">أضواء نيون وتأثيرات خلل</string>
+    <string name="effect_vintage_film_title">فيلم كلاسيكي</string>
+    <string name="effect_vintage_film_desc">حبوب ريترو وألوان دافئة</string>
+    <string name="effect_ocean_breeze_title">نسيم المحيط</string>
+    <string name="effect_ocean_breeze_desc">تدرجات زرقاء باردة</string>
+    <string name="effect_golden_hour_title">الساعة الذهبية</string>
+    <string name="effect_golden_hour_desc">طبقة غروب دافئة</string>
+    <string name="effect_noir_title">نوار</string>
+    <string name="effect_noir_desc">أبيض وأسود بتباين عالٍ</string>
+    <string name="effect_sakura_title">ساكورا</string>
+    <string name="effect_sakura_desc">وردي أزهار الكرز</string>
+    <string name="effect_aurora_title">أورورا</string>
+    <string name="effect_aurora_desc">بريق الشفق القطبي</string>
 
-    <!-- Projects (additional) -->
-    <string name="projects_create_description">ابدأ مشروع عرض شرائح جديد</string>
+    <!-- Common -->
+    <string name="cancel">إلغاء</string>
+    <string name="confirm">تأكيد</string>
+    <string name="delete">حذف</string>
+    <string name="save">حفظ</string>
+    <string name="back">رجوع</string>
+    <string name="done">تم</string>
+    <string name="error">خطأ</string>
+    <string name="retry">إعادة المحاولة</string>
+    <string name="seconds">%d ثواني</string>
+    <string name="none">بدون</string>
+    <string name="close">إغلاق</string>
+    <string name="settings">الإعدادات</string>
 
     <!-- Error states -->
     <string name="error_load_failed">فشل التحميل. اسحب للأسفل للمحاولة مجدداً.</string>
@@ -194,9 +213,13 @@
     <!-- Songs -->
     <string name="start_project">بدء المشروع</string>
 
-    <!-- Onboarding Page 4 — Genre Selection -->
-    <string name="onboarding_page4_title">ما الموسيقى\nالتي تحبها؟</string>
-    <string name="onboarding_page4_subtitle">اختر أنواعك المفضلة. سنخصص اقتراحاتك الموسيقية.</string>
+    <!-- Onboarding Page 4 — Feature Survey -->
+    <string name="onboarding_page4_title">ابدأ رحلتك</string>
+    <string name="onboarding_page4_subtitle">هذا يساعدنا على اقتراح المحتوى الأكثر ملاءمة لك.</string>
+    <string name="feature_music_video_instant">اصنع فيديو موسيقي فوراً</string>
+    <string name="feature_photos_to_video">حوّل الصور إلى فيديو موسيقي</string>
+    <string name="feature_trending_templates">استخدم القوالب الرائجة</string>
+    <string name="feature_trending_music">أضف موسيقى رائجة</string>
 
     <!-- Music Genres -->
     <string name="genre_pop">بوب</string>
@@ -214,18 +237,4 @@
     <string name="genre_blues">بلوز</string>
     <string name="genre_metal">ميتال</string>
     <string name="genre_soul">سول</string>
-
-    <!-- Common -->
-    <string name="cancel">إلغاء</string>
-    <string name="confirm">تأكيد</string>
-    <string name="delete">حذف</string>
-    <string name="save">حفظ</string>
-    <string name="back">رجوع</string>
-    <string name="done">تم</string>
-    <string name="error">خطأ</string>
-    <string name="retry">إعادة المحاولة</string>
-    <string name="seconds">%d ثواني</string>
-    <string name="none">بدون</string>
-    <string name="close">إغلاق</string>
-    <string name="settings">الإعدادات</string>
 </resources>

@@ -9,28 +9,23 @@
     <string name="language_select_title">Seleccionar Idioma</string>
     <string name="language_select_subtitle">Elige tu idioma preferido</string>
     <string name="language_continue">Continuar</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
 
     <!-- Onboarding -->
     <string name="onboarding_next">Siguiente</string>
     <string name="onboarding_get_started">Empezar</string>
     <!-- Page 1 -->
-    <string name="onboarding_page1_title">Convierte Fotos en\nBellos Vídeos</string>
-    <string name="onboarding_page1_feature1_title">Seleccionar Fotos</string>
-    <string name="onboarding_page1_feature1_desc">Elige tus fotos favoritas de tu galería</string>
-    <string name="onboarding_page1_feature2_title">Crear Presentación</string>
-    <string name="onboarding_page1_feature2_desc">Transforma tus fotos en impresionantes presentaciones de vídeo</string>
+    <string name="onboarding_page1_title">Crea Magia en Segundos</string>
+    <string name="onboarding_page1_subtitle">Videos increíbles en pocos clics. Fácil y rápido.</string>
     <!-- Page 2 -->
-    <string name="onboarding_page2_title">Añadir Música\ny Efectos</string>
-    <string name="onboarding_page2_feature1_title">Música de Fondo</string>
-    <string name="onboarding_page2_feature1_desc">Añade tu música favorita o elige de nuestra biblioteca</string>
-    <string name="onboarding_page2_feature2_title">Transiciones Suaves</string>
-    <string name="onboarding_page2_feature2_desc">Hermosas transiciones entre tus fotos y clips</string>
+    <string name="onboarding_page2_title">Encuentra Tu Ritmo</string>
+    <string name="onboarding_page2_subtitle">Sonidos en tendencia para cada estado de ánimo.</string>
     <!-- Page 3 -->
-    <string name="onboarding_page3_title">Exportar y\nCompartir</string>
-    <string name="onboarding_page3_feature1_title">Exportación en Alta Calidad</string>
-    <string name="onboarding_page3_feature1_desc">Exporta tus vídeos en calidad HD hasta 4K</string>
-    <string name="onboarding_page3_feature2_title">Comparte en Cualquier Lugar</string>
-    <string name="onboarding_page3_feature2_desc">Comparte directamente en redes sociales o guarda en tu galería</string>
+    <string name="onboarding_page3_title">¡Juntos es Mejor!</string>
+    <string name="onboarding_page3_subtitle">Juntos es mejor. Invita a tus amigos a compartir la diversión.</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galería</string>
@@ -53,7 +48,7 @@
     <string name="songs_weekly_ranking">Ranking Semanal</string>
     <string name="songs_station">Estaciones</string>
 
-    <!-- Home -->
+    <!-- Legacy Home -->
     <string name="home_title">Video Maker</string>
     <string name="home_welcome">¿Qué te gustaría hacer?</string>
     <string name="home_create">Crear</string>
@@ -149,9 +144,9 @@
     <string name="settings_apply">Aplicar</string>
     <string name="settings_effect_set">Conjunto de Efectos</string>
     <string name="settings_all">Todos</string>
-    <string name="settings_off">APAGADO</string>
+    <string name="settings_off">Apagado</string>
     <string name="settings_none">Ninguno</string>
-    <string name="settings_pro">PRO</string>
+    <string name="settings_pro">Pro</string>
     <string name="settings_duration_per_image">Duración por Imagen</string>
     <string name="settings_seconds_format">%ds</string>
     <string name="settings_duration_seconds">%ds</string>
@@ -180,6 +175,24 @@
     <string name="search_tag_cinematic">Cinematográfico</string>
     <string name="search_tag_vintage">Vintage</string>
 
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">Vibes Soñadoras</string>
+    <string name="effect_dreamy_vibes_desc">Brillo suave y colores pastel</string>
+    <string name="effect_cyberpunk_title">Cyberpunk</string>
+    <string name="effect_cyberpunk_desc">Luces de neón y efectos glitch</string>
+    <string name="effect_vintage_film_title">Película Vintage</string>
+    <string name="effect_vintage_film_desc">Grano retro y colores cálidos</string>
+    <string name="effect_ocean_breeze_title">Brisa del Océano</string>
+    <string name="effect_ocean_breeze_desc">Degradados azules fríos</string>
+    <string name="effect_golden_hour_title">Hora Dorada</string>
+    <string name="effect_golden_hour_desc">Superposición de atardecer cálido</string>
+    <string name="effect_noir_title">Noir</string>
+    <string name="effect_noir_desc">Blanco y negro de alto contraste</string>
+    <string name="effect_sakura_title">Sakura</string>
+    <string name="effect_sakura_desc">Rosa flor de cerezo</string>
+    <string name="effect_aurora_title">Aurora</string>
+    <string name="effect_aurora_desc">Brillo de aurora boreal</string>
+
     <!-- Common -->
     <string name="cancel">Cancelar</string>
     <string name="confirm">Confirmar</string>
@@ -200,9 +213,13 @@
     <!-- Songs -->
     <string name="start_project">Iniciar proyecto</string>
 
-    <!-- Onboarding Page 4 — Genre Selection -->
-    <string name="onboarding_page4_title">¿Qué música\nte gusta?</string>
-    <string name="onboarding_page4_subtitle">Elige tus géneros favoritos. Adaptaremos tus sugerencias musicales.</string>
+    <!-- Onboarding Page 4 — Feature Survey -->
+    <string name="onboarding_page4_title">Comienza Tu Viaje</string>
+    <string name="onboarding_page4_subtitle">Esto nos ayuda a recomendarte el contenido más relevante para ti.</string>
+    <string name="feature_music_video_instant">Crea un video musical al instante</string>
+    <string name="feature_photos_to_video">Convierte fotos en video musical</string>
+    <string name="feature_trending_templates">Usa plantillas en tendencia</string>
+    <string name="feature_trending_music">Añade música en tendencia</string>
 
     <!-- Music Genres -->
     <string name="genre_pop">Pop</string>

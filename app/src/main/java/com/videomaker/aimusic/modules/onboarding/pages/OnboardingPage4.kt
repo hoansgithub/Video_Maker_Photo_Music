@@ -18,8 +18,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,8 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
-import com.videomaker.aimusic.ui.theme.White12
-import com.videomaker.aimusic.ui.theme.White20
+import com.videomaker.aimusic.ui.theme.Black20
+import com.videomaker.aimusic.ui.theme.Gray700
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -46,13 +51,13 @@ import kotlinx.coroutines.launch
 // FEATURE DATA
 // ============================================
 
-internal data class FeatureItem(val id: String, val emoji: String, val nameResId: Int)
+internal data class FeatureItem(val id: String, val icon: ImageVector, val nameResId: Int)
 
 internal val featureItems = listOf(
-    FeatureItem("music_video_instant",  "🎬", R.string.feature_music_video_instant),
-    FeatureItem("photos_to_video",      "📸", R.string.feature_photos_to_video),
-    FeatureItem("trending_templates",   "✨", R.string.feature_trending_templates),
-    FeatureItem("trending_music",       "🎵", R.string.feature_trending_music),
+    FeatureItem("music_video_instant", Icons.Default.Videocam,     R.string.feature_music_video_instant),
+    FeatureItem("photos_to_video",     Icons.Default.PhotoLibrary, R.string.feature_photos_to_video),
+    FeatureItem("trending_templates",  Icons.Default.AutoAwesome,  R.string.feature_trending_templates),
+    FeatureItem("trending_music",      Icons.Default.MusicNote,    R.string.feature_trending_music),
 )
 
 // ============================================
@@ -131,7 +136,7 @@ private fun FeatureCard(
     isSelected: Boolean, onFeatureToggle: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardShape = RoundedCornerShape(16.dp)
+    val cardShape = RoundedCornerShape(50)
     val selectedColor = MaterialTheme.colorScheme.primary
 
     Row(
@@ -139,21 +144,22 @@ private fun FeatureCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(cardShape)
-            .background(
-                if (isSelected) selectedColor.copy(alpha = 0.15f) else White12
-            )
+            .background(if (isSelected) selectedColor.copy(alpha = 0.15f) else Black20)
             .border(
                 width = if (isSelected) 1.5.dp else 1.dp,
-                color = if (isSelected) selectedColor else White20,
+                color = if (isSelected) selectedColor else Gray700,
                 shape = cardShape
             )
             .clickable { onFeatureToggle(item.id) }
             .padding(horizontal = 20.dp, vertical = 18.dp)
     ) {
-        Text(
-            text = item.emoji,
-            fontSize = 26.sp,
-            modifier = Modifier.padding(end = 16.dp)
+        Icon(
+            imageVector = item.icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier
+                .padding(end = 16.dp)
+                .size(26.dp)
         )
 
         Text(

@@ -9,28 +9,23 @@
     <string name="language_select_title">Pumili ng Wika</string>
     <string name="language_select_subtitle">Piliin ang iyong gustong wika</string>
     <string name="language_continue">Magpatuloy</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
 
     <!-- Onboarding -->
     <string name="onboarding_next">Susunod</string>
     <string name="onboarding_get_started">Magsimula</string>
     <!-- Page 1 -->
-    <string name="onboarding_page1_title">Gawing Magandang\nVideo ang mga Larawan</string>
-    <string name="onboarding_page1_feature1_title">Pumili ng Larawan</string>
-    <string name="onboarding_page1_feature1_desc">Piliin ang iyong mga paboritong larawan mula sa iyong gallery</string>
-    <string name="onboarding_page1_feature2_title">Gumawa ng Slideshow</string>
-    <string name="onboarding_page1_feature2_desc">Gawing kamangha-manghang video slideshow ang iyong mga larawan</string>
+    <string name="onboarding_page1_title">Gumawa ng Mahika sa Ilang Segundo</string>
+    <string name="onboarding_page1_subtitle">Kamangha-manghang video sa ilang click. Madali at mabilis.</string>
     <!-- Page 2 -->
-    <string name="onboarding_page2_title">Magdagdag ng Musika\nat Epekto</string>
-    <string name="onboarding_page2_feature1_title">Background na Musika</string>
-    <string name="onboarding_page2_feature1_desc">Idagdag ang iyong paboritong musika o pumili mula sa aming library</string>
-    <string name="onboarding_page2_feature2_title">Maayos na Transition</string>
-    <string name="onboarding_page2_feature2_desc">Magagandang transition sa pagitan ng iyong mga larawan at clip</string>
+    <string name="onboarding_page2_title">Hanapin ang Iyong Ritmo</string>
+    <string name="onboarding_page2_subtitle">Mga trending na tunog para sa bawat mood.</string>
     <!-- Page 3 -->
-    <string name="onboarding_page3_title">I-export at\nIbahagi</string>
-    <string name="onboarding_page3_feature1_title">Mataas na Kalidad na Export</string>
-    <string name="onboarding_page3_feature1_desc">I-export ang iyong mga video sa HD quality hanggang 4K</string>
-    <string name="onboarding_page3_feature2_title">Ibahagi Kahit Saan</string>
-    <string name="onboarding_page3_feature2_desc">Ibahagi direkta sa social media o i-save sa iyong gallery</string>
+    <string name="onboarding_page3_title">Mas Maganda Kapag Magkasama!</string>
+    <string name="onboarding_page3_subtitle">Mas maganda kapag magkasama. Imbitahan ang iyong mga kaibigan para magsaya.</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Gallery</string>
@@ -53,7 +48,7 @@
     <string name="songs_weekly_ranking">Lingguhang Ranggo</string>
     <string name="songs_station">Mga Istasyon</string>
 
-    <!-- Home -->
+    <!-- Legacy Home -->
     <string name="home_title">Video Maker</string>
     <string name="home_welcome">Ano ang gusto mong gawin?</string>
     <string name="home_create">Gumawa</string>
@@ -149,9 +144,9 @@
     <string name="settings_apply">Ilapat</string>
     <string name="settings_effect_set">Set ng Epekto</string>
     <string name="settings_all">Lahat</string>
-    <string name="settings_off">OFF</string>
+    <string name="settings_off">Off</string>
     <string name="settings_none">Wala</string>
-    <string name="settings_pro">PRO</string>
+    <string name="settings_pro">Pro</string>
     <string name="settings_duration_per_image">Tagal bawat Larawan</string>
     <string name="settings_seconds_format">%ds</string>
     <string name="settings_duration_seconds">%ds</string>
@@ -180,6 +175,24 @@
     <string name="search_tag_cinematic">Sinematiko</string>
     <string name="search_tag_vintage">Vintage</string>
 
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">Dreamy Vibes</string>
+    <string name="effect_dreamy_vibes_desc">Malambot na glow at pastel na kulay</string>
+    <string name="effect_cyberpunk_title">Cyberpunk</string>
+    <string name="effect_cyberpunk_desc">Neon na ilaw at glitch effects</string>
+    <string name="effect_vintage_film_title">Vintage Film</string>
+    <string name="effect_vintage_film_desc">Retro grain at maingat na kulay</string>
+    <string name="effect_ocean_breeze_title">Ocean Breeze</string>
+    <string name="effect_ocean_breeze_desc">Malamig na asul na gradient</string>
+    <string name="effect_golden_hour_title">Golden Hour</string>
+    <string name="effect_golden_hour_desc">Mainit na sunset overlay</string>
+    <string name="effect_noir_title">Noir</string>
+    <string name="effect_noir_desc">Mataas na contrast na itim at puti</string>
+    <string name="effect_sakura_title">Sakura</string>
+    <string name="effect_sakura_desc">Cherry blossom pink</string>
+    <string name="effect_aurora_title">Aurora</string>
+    <string name="effect_aurora_desc">Northern lights glitter</string>
+
     <!-- Common -->
     <string name="cancel">Kanselahin</string>
     <string name="confirm">Kumpirmahin</string>
@@ -200,9 +213,13 @@
     <!-- Songs -->
     <string name="start_project">Simulan ang proyekto</string>
 
-    <!-- Onboarding Page 4 — Genre Selection -->
-    <string name="onboarding_page4_title">Anong musika ang\niyong gusto?</string>
-    <string name="onboarding_page4_subtitle">Piliin ang iyong mga paboritong genre. Iae-adjust namin ang iyong mga mungkahi sa musika.</string>
+    <!-- Onboarding Page 4 — Feature Survey -->
+    <string name="onboarding_page4_title">Simulan ang Iyong Paglalakbay</string>
+    <string name="onboarding_page4_subtitle">Nakakatulong ito sa amin para mairekomenda ang pinaka-angkop na nilalaman para sa iyo.</string>
+    <string name="feature_music_video_instant">Gumawa ng music video agad</string>
+    <string name="feature_photos_to_video">Gawing music video ang mga larawan</string>
+    <string name="feature_trending_templates">Gamitin ang mga trending na template</string>
+    <string name="feature_trending_music">Magdagdag ng trending na musika</string>
 
     <!-- Music Genres -->
     <string name="genre_pop">Pop</string>

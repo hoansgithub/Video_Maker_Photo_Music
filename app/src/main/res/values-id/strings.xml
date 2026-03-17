@@ -18,25 +18,37 @@
     <string name="onboarding_next">Berikutnya</string>
     <string name="onboarding_get_started">Mulai</string>
     <!-- Page 1 -->
-    <string name="onboarding_page1_title">Ubah Foto Menjadi\nVideo Indah</string>
-    <string name="onboarding_page1_feature1_title">Pilih Foto</string>
-    <string name="onboarding_page1_feature1_desc">Pilih foto favorit Anda dari galeri</string>
-    <string name="onboarding_page1_feature2_title">Buat Slideshow</string>
-    <string name="onboarding_page1_feature2_desc">Ubah foto Anda menjadi video slideshow yang menakjubkan</string>
+    <string name="onboarding_page1_title">Buat Keajaiban dalam Hitungan Detik</string>
+    <string name="onboarding_page1_subtitle">Video menakjubkan dalam beberapa klik. Mudah dan cepat.</string>
     <!-- Page 2 -->
-    <string name="onboarding_page2_title">Tambahkan Musik\n&amp; Efek</string>
-    <string name="onboarding_page2_feature1_title">Musik Latar</string>
-    <string name="onboarding_page2_feature1_desc">Tambahkan musik favorit atau pilih dari perpustakaan kami</string>
-    <string name="onboarding_page2_feature2_title">Transisi Halus</string>
-    <string name="onboarding_page2_feature2_desc">Transisi indah antar foto dan klip Anda</string>
+    <string name="onboarding_page2_title">Temukan Ritme Anda</string>
+    <string name="onboarding_page2_subtitle">Suara trending untuk setiap suasana hati.</string>
     <!-- Page 3 -->
-    <string name="onboarding_page3_title">Ekspor &amp;\nBagikan</string>
-    <string name="onboarding_page3_feature1_title">Ekspor Kualitas Tinggi</string>
-    <string name="onboarding_page3_feature1_desc">Ekspor video Anda dalam kualitas HD hingga 4K</string>
-    <string name="onboarding_page3_feature2_title">Bagikan di Mana Saja</string>
-    <string name="onboarding_page3_feature2_desc">Bagikan langsung ke media sosial atau simpan ke galeri</string>
+    <string name="onboarding_page3_title">Lebih Baik Bersama!</string>
+    <string name="onboarding_page3_subtitle">Lebih baik bersama. Ajak teman-temanmu untuk berbagi kesenangan.</string>
 
-    <!-- Home -->
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">Galeri</string>
+    <string name="home_tab_songs">Lagu</string>
+    <string name="home_tab_projects">Proyek Saya</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_hot_songs">Lagu Populer</string>
+    <string name="gallery_templates">Template</string>
+    <string name="gallery_coming_soon">Segera Hadir</string>
+    <string name="gallery_search_hint">Cari gaya Anda</string>
+    <string name="gallery_create_new_video">Buat Video Baru</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">Lagu</string>
+    <string name="songs_all">Semua Lagu</string>
+    <string name="songs_categories">Kategori</string>
+    <string name="songs_search_hint">Cari lagu</string>
+    <string name="songs_suggest_for_you">Disarankan untuk Anda</string>
+    <string name="songs_weekly_ranking">Peringkat Mingguan</string>
+    <string name="songs_station">Stasiun</string>
+
+    <!-- Legacy Home -->
     <string name="home_title">Video Maker</string>
     <string name="home_welcome">Apa yang ingin Anda lakukan?</string>
     <string name="home_create">Buat</string>
@@ -75,6 +87,7 @@
     <string name="projects_empty">Belum ada proyek</string>
     <string name="projects_empty_description">Buat proyek pertama Anda untuk melihatnya di sini</string>
     <string name="projects_item_info">%1$d foto • %2$s</string>
+    <string name="projects_create_description">Mulai proyek slideshow baru</string>
     <string name="projects_delete_title">Hapus Proyek?</string>
     <string name="projects_delete_message">\"%s\" akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.</string>
 
@@ -112,48 +125,6 @@
     <string name="picker_permission_message">Untuk membuat video dari foto Anda, kami memerlukan izin untuk mengakses perpustakaan foto Anda.</string>
     <string name="picker_allow_access">Izinkan Akses</string>
 
-    <!-- Settings Panel -->
-    <string name="settings_panel_title">Pengaturan</string>
-    <string name="settings_panel_apply">Terapkan</string>
-    <string name="settings_panel_close">Tutup</string>
-    <string name="settings_apply">Terapkan</string>
-    <string name="settings_transition_effect">Efek Transisi</string>
-    <string name="settings_all">Semua</string>
-    <string name="settings_off">MATI</string>
-    <string name="settings_none">Tidak ada</string>
-    <string name="settings_pro">PRO</string>
-    <string name="settings_duration_per_image">Durasi per Gambar</string>
-    <string name="settings_seconds_format">%dd</string>
-    <string name="settings_duration_seconds">%dd</string>
-    <string name="settings_overlay_frame">Bingkai Overlay</string>
-    <string name="settings_background_music">Musik Latar</string>
-    <string name="settings_custom">Kustom</string>
-    <string name="settings_add">+ Tambah</string>
-    <string name="settings_add_audio">+ Tambah</string>
-    <string name="settings_volume">Volume</string>
-    <string name="settings_aspect_ratio">Rasio Aspek</string>
-
-    <!-- Home Tabs -->
-    <string name="home_tab_gallery">Galeri</string>
-    <string name="home_tab_songs">Lagu</string>
-    <string name="home_tab_projects">Proyek Saya</string>
-
-    <!-- Gallery Tab -->
-    <string name="gallery_hot_songs">Lagu Populer</string>
-    <string name="gallery_templates">Template</string>
-    <string name="gallery_coming_soon">Segera Hadir</string>
-    <string name="gallery_search_hint">Cari gaya Anda</string>
-    <string name="gallery_create_new_video">Buat Video Baru</string>
-
-    <!-- Songs Tab -->
-    <string name="songs_title">Lagu</string>
-    <string name="songs_all">Semua Lagu</string>
-    <string name="songs_categories">Kategori</string>
-    <string name="songs_search_hint">Cari lagu</string>
-    <string name="songs_suggest_for_you">Disarankan untuk Anda</string>
-    <string name="songs_weekly_ranking">Peringkat Mingguan</string>
-    <string name="songs_station">Stasiun</string>
-
     <!-- Music Picker -->
     <string name="music_picker_title">Pilih Musik</string>
     <string name="music_picker_loading">Memuat…</string>
@@ -165,6 +136,30 @@
     <string name="music_picker_preview">Pratinjau</string>
     <string name="music_picker_stop_preview">Berhenti</string>
     <string name="music_picker_select">Pilih</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">Pengaturan</string>
+    <string name="settings_panel_apply">Terapkan</string>
+    <string name="settings_panel_close">Tutup</string>
+    <string name="settings_apply">Terapkan</string>
+    <string name="settings_effect_set">Set Efek</string>
+    <string name="settings_all">Semua</string>
+    <string name="settings_off">Mati</string>
+    <string name="settings_none">Tidak ada</string>
+    <string name="settings_pro">Pro</string>
+    <string name="settings_duration_per_image">Durasi per Gambar</string>
+    <string name="settings_seconds_format">%dd</string>
+    <string name="settings_duration_seconds">%dd</string>
+    <string name="settings_overlay_frame">Bingkai Overlay</string>
+    <string name="settings_background_music">Musik Latar</string>
+    <string name="settings_custom">Kustom</string>
+    <string name="settings_add">+ Tambah</string>
+    <string name="settings_add_audio">+ Tambah</string>
+    <string name="settings_volume">Volume</string>
+    <string name="settings_aspect_ratio">Rasio Aspek</string>
+    <string name="settings_transition_effect">Efek Transisi</string>
+    <string name="settings_transition_duration">Durasi Transisi</string>
+    <string name="settings_transition_duration_value">%.1fd</string>
 
     <!-- Search -->
     <string name="search_hint">Cari gaya Anda</string>
@@ -180,13 +175,37 @@
     <string name="search_tag_cinematic">Sinematik</string>
     <string name="search_tag_vintage">Vintage</string>
 
-    <!-- Settings Panel (additional) -->
-    <string name="settings_effect_set">Set Efek</string>
-    <string name="settings_transition_duration">Durasi Transisi</string>
-    <string name="settings_transition_duration_value">%.1fd</string>
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">Dreamy Vibes</string>
+    <string name="effect_dreamy_vibes_desc">Cahaya lembut dan warna pastel</string>
+    <string name="effect_cyberpunk_title">Cyberpunk</string>
+    <string name="effect_cyberpunk_desc">Lampu neon dan efek glitch</string>
+    <string name="effect_vintage_film_title">Film Vintage</string>
+    <string name="effect_vintage_film_desc">Butiran retro dan warna hangat</string>
+    <string name="effect_ocean_breeze_title">Ocean Breeze</string>
+    <string name="effect_ocean_breeze_desc">Gradasi biru dingin</string>
+    <string name="effect_golden_hour_title">Golden Hour</string>
+    <string name="effect_golden_hour_desc">Lapisan matahari terbenam yang hangat</string>
+    <string name="effect_noir_title">Noir</string>
+    <string name="effect_noir_desc">Hitam putih kontras tinggi</string>
+    <string name="effect_sakura_title">Sakura</string>
+    <string name="effect_sakura_desc">Merah muda bunga sakura</string>
+    <string name="effect_aurora_title">Aurora</string>
+    <string name="effect_aurora_desc">Kilau cahaya utara</string>
 
-    <!-- Projects (additional) -->
-    <string name="projects_create_description">Mulai proyek slideshow baru</string>
+    <!-- Common -->
+    <string name="cancel">Batal</string>
+    <string name="confirm">Konfirmasi</string>
+    <string name="delete">Hapus</string>
+    <string name="save">Simpan</string>
+    <string name="back">Kembali</string>
+    <string name="done">Selesai</string>
+    <string name="error">Kesalahan</string>
+    <string name="retry">Coba Lagi</string>
+    <string name="seconds">%d detik</string>
+    <string name="none">Tidak ada</string>
+    <string name="close">Tutup</string>
+    <string name="settings">Pengaturan</string>
 
     <!-- Error states -->
     <string name="error_load_failed">Gagal memuat. Tarik ke bawah untuk mencoba lagi.</string>
@@ -194,9 +213,13 @@
     <!-- Songs -->
     <string name="start_project">Mulai proyek</string>
 
-    <!-- Onboarding Page 4 -->
-    <string name="onboarding_page4_title">Musik apa yang\nAnda sukai?</string>
-    <string name="onboarding_page4_subtitle">Pilih genre favorit Anda. Kami akan menyesuaikan saran musik Anda.</string>
+    <!-- Onboarding Page 4 — Feature Survey -->
+    <string name="onboarding_page4_title">Mulai Perjalanan Anda</string>
+    <string name="onboarding_page4_subtitle">Ini membantu kami merekomendasikan konten yang paling relevan untuk Anda.</string>
+    <string name="feature_music_video_instant">Buat video musik secara instan</string>
+    <string name="feature_photos_to_video">Ubah foto menjadi video musik</string>
+    <string name="feature_trending_templates">Gunakan template trending</string>
+    <string name="feature_trending_music">Tambahkan musik trending</string>
 
     <!-- Music Genres -->
     <string name="genre_pop">Pop</string>
@@ -214,18 +237,4 @@
     <string name="genre_blues">Blues</string>
     <string name="genre_metal">Metal</string>
     <string name="genre_soul">Soul</string>
-
-    <!-- Common -->
-    <string name="cancel">Batal</string>
-    <string name="confirm">Konfirmasi</string>
-    <string name="delete">Hapus</string>
-    <string name="save">Simpan</string>
-    <string name="back">Kembali</string>
-    <string name="done">Selesai</string>
-    <string name="error">Kesalahan</string>
-    <string name="retry">Coba Lagi</string>
-    <string name="seconds">%d detik</string>
-    <string name="none">Tidak ada</string>
-    <string name="close">Tutup</string>
-    <string name="settings">Pengaturan</string>
 </resources>

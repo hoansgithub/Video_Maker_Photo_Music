@@ -9,28 +9,23 @@
     <string name="language_select_title">Dil Seçin</string>
     <string name="language_select_subtitle">Tercih ettiğiniz dili seçin</string>
     <string name="language_continue">Devam Et</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
 
     <!-- Onboarding -->
     <string name="onboarding_next">İleri</string>
     <string name="onboarding_get_started">Başla</string>
     <!-- Page 1 -->
-    <string name="onboarding_page1_title">Fotoğrafları\nGüzel Videolara Dönüştür</string>
-    <string name="onboarding_page1_feature1_title">Fotoğraf Seç</string>
-    <string name="onboarding_page1_feature1_desc">Galerinizden favori fotoğraflarınızı seçin</string>
-    <string name="onboarding_page1_feature2_title">Slayt Gösterisi Oluştur</string>
-    <string name="onboarding_page1_feature2_desc">Fotoğraflarınızı etkileyici video slayt gösterilerine dönüştürün</string>
+    <string name="onboarding_page1_title">Saniyeler İçinde Sihir Yarat</string>
+    <string name="onboarding_page1_subtitle">Birkaç tıklamayla etkileyici videolar. Kolay ve hızlı.</string>
     <!-- Page 2 -->
-    <string name="onboarding_page2_title">Müzik ve\nEfekt Ekle</string>
-    <string name="onboarding_page2_feature1_title">Arka Plan Müziği</string>
-    <string name="onboarding_page2_feature1_desc">Favori müziğinizi ekleyin veya kütüphanemizden seçin</string>
-    <string name="onboarding_page2_feature2_title">Yumuşak Geçişler</string>
-    <string name="onboarding_page2_feature2_desc">Fotoğraf ve kliplleriniz arasında güzel geçişler</string>
+    <string name="onboarding_page2_title">Ritminizi Bulun</string>
+    <string name="onboarding_page2_subtitle">Her ruh hali için trend sesler.</string>
     <!-- Page 3 -->
-    <string name="onboarding_page3_title">Dışa Aktar ve\nPaylaş</string>
-    <string name="onboarding_page3_feature1_title">Yüksek Kaliteli Dışa Aktarma</string>
-    <string name="onboarding_page3_feature1_desc">Videolarınızı HD kalitede 4K\'ya kadar dışa aktarın</string>
-    <string name="onboarding_page3_feature2_title">Her Yerde Paylaş</string>
-    <string name="onboarding_page3_feature2_desc">Sosyal medyada doğrudan paylaşın veya galerinize kaydedin</string>
+    <string name="onboarding_page3_title">Birlikte Daha İyi!</string>
+    <string name="onboarding_page3_subtitle">Birlikte daha iyi. Arkadaşlarınızı eğlenceyi paylaşmaya davet edin.</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galeri</string>
@@ -53,7 +48,7 @@
     <string name="songs_weekly_ranking">Haftalık Sıralama</string>
     <string name="songs_station">İstasyonlar</string>
 
-    <!-- Home -->
+    <!-- Legacy Home -->
     <string name="home_title">Video Maker</string>
     <string name="home_welcome">Ne yapmak istersiniz?</string>
     <string name="home_create">Oluştur</string>
@@ -149,9 +144,9 @@
     <string name="settings_apply">Uygula</string>
     <string name="settings_effect_set">Efekt Seti</string>
     <string name="settings_all">Tümü</string>
-    <string name="settings_off">KAPALI</string>
+    <string name="settings_off">Kapalı</string>
     <string name="settings_none">Hiçbiri</string>
-    <string name="settings_pro">PRO</string>
+    <string name="settings_pro">Pro</string>
     <string name="settings_duration_per_image">Görüntü Başına Süre</string>
     <string name="settings_seconds_format">%ds</string>
     <string name="settings_duration_seconds">%ds</string>
@@ -180,6 +175,24 @@
     <string name="search_tag_cinematic">Sinematik</string>
     <string name="search_tag_vintage">Vintage</string>
 
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">Rüyamsı Titreşimler</string>
+    <string name="effect_dreamy_vibes_desc">Yumuşak parıltı ve pastel renkler</string>
+    <string name="effect_cyberpunk_title">Cyberpunk</string>
+    <string name="effect_cyberpunk_desc">Neon ışıklar ve glitch efektleri</string>
+    <string name="effect_vintage_film_title">Vintage Film</string>
+    <string name="effect_vintage_film_desc">Retro tanecik ve sıcak renkler</string>
+    <string name="effect_ocean_breeze_title">Okyanus Esintisi</string>
+    <string name="effect_ocean_breeze_desc">Soğuk mavi gradyanlar</string>
+    <string name="effect_golden_hour_title">Altın Saat</string>
+    <string name="effect_golden_hour_desc">Sıcak gün batımı katmanı</string>
+    <string name="effect_noir_title">Noir</string>
+    <string name="effect_noir_desc">Yüksek kontrastlı siyah-beyaz</string>
+    <string name="effect_sakura_title">Sakura</string>
+    <string name="effect_sakura_desc">Kiraz çiçeği pembesi</string>
+    <string name="effect_aurora_title">Aurora</string>
+    <string name="effect_aurora_desc">Kuzey ışıkları parıltısı</string>
+
     <!-- Common -->
     <string name="cancel">İptal</string>
     <string name="confirm">Onayla</string>
@@ -200,9 +213,13 @@
     <!-- Songs -->
     <string name="start_project">Projeyi başlat</string>
 
-    <!-- Onboarding Page 4 — Genre Selection -->
-    <string name="onboarding_page4_title">Hangi müziği\nseversiniz?</string>
-    <string name="onboarding_page4_subtitle">Favori türlerinizi seçin. Müzik önerilerinizi kişiselleştireceğiz.</string>
+    <!-- Onboarding Page 4 — Feature Survey -->
+    <string name="onboarding_page4_title">Yolculuğunuza Başlayın</string>
+    <string name="onboarding_page4_subtitle">Bu, sizin için en uygun içeriği önermemize yardımcı olur.</string>
+    <string name="feature_music_video_instant">Anında müzik videosu oluşturun</string>
+    <string name="feature_photos_to_video">Fotoğrafları müzik videosuna dönüştürün</string>
+    <string name="feature_trending_templates">Trend şablonları kullanın</string>
+    <string name="feature_trending_music">Trend müzik ekleyin</string>
 
     <!-- Music Genres -->
     <string name="genre_pop">Pop</string>

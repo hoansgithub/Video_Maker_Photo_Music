@@ -188,7 +188,7 @@ private fun LanguageCard(
                 shape = cardShape
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 14.dp)
+            .padding(horizontal = 20.dp, vertical = 18.dp)
     ) {
         Text(
             text = language.flag,

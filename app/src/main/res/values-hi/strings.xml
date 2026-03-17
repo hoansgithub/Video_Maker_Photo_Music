@@ -18,25 +18,37 @@
     <string name="onboarding_next">अगला</string>
     <string name="onboarding_get_started">शुरू करें</string>
     <!-- Page 1 -->
-    <string name="onboarding_page1_title">फ़ोटो को\nसुंदर वीडियो में बदलें</string>
-    <string name="onboarding_page1_feature1_title">फ़ोटो चुनें</string>
-    <string name="onboarding_page1_feature1_desc">अपनी गैलरी से अपनी पसंदीदा फ़ोटो चुनें</string>
-    <string name="onboarding_page1_feature2_title">स्लाइडशो बनाएं</string>
-    <string name="onboarding_page1_feature2_desc">अपनी फ़ोटो को शानदार वीडियो स्लाइडशो में बदलें</string>
+    <string name="onboarding_page1_title">सेकंड में जादू बनाएं</string>
+    <string name="onboarding_page1_subtitle">कुछ क्लिक में शानदार वीडियो। आसान और तेज़।</string>
     <!-- Page 2 -->
-    <string name="onboarding_page2_title">संगीत और\nइफेक्ट्स जोड़ें</string>
-    <string name="onboarding_page2_feature1_title">बैकग्राउंड म्यूज़िक</string>
-    <string name="onboarding_page2_feature1_desc">अपना पसंदीदा संगीत जोड़ें या हमारी लाइब्रेरी से चुनें</string>
-    <string name="onboarding_page2_feature2_title">स्मूथ ट्रांज़िशन</string>
-    <string name="onboarding_page2_feature2_desc">आपकी फ़ोटो और क्लिप्स के बीच सुंदर ट्रांज़िशन</string>
+    <string name="onboarding_page2_title">अपनी धुन खोजें</string>
+    <string name="onboarding_page2_subtitle">हर मूड के लिए ट्रेंडिंग साउंड।</string>
     <!-- Page 3 -->
-    <string name="onboarding_page3_title">एक्सपोर्ट और\nशेयर करें</string>
-    <string name="onboarding_page3_feature1_title">हाई क्वालिटी एक्सपोर्ट</string>
-    <string name="onboarding_page3_feature1_desc">अपने वीडियो को HD क्वालिटी में 4K तक एक्सपोर्ट करें</string>
-    <string name="onboarding_page3_feature2_title">कहीं भी शेयर करें</string>
-    <string name="onboarding_page3_feature2_desc">सोशल मीडिया पर सीधे शेयर करें या गैलरी में सेव करें</string>
+    <string name="onboarding_page3_title">मिलकर बेहतर!</string>
+    <string name="onboarding_page3_subtitle">मिलकर बेहतर। अपने दोस्तों को मज़े में शामिल करें।</string>
 
-    <!-- Home -->
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">गैलरी</string>
+    <string name="home_tab_songs">गाने</string>
+    <string name="home_tab_projects">मेरे प्रोजेक्ट्स</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_hot_songs">हॉट गाने</string>
+    <string name="gallery_templates">टेम्पलेट</string>
+    <string name="gallery_coming_soon">जल्द आ रहा है</string>
+    <string name="gallery_search_hint">अपनी स्टाइल खोजें</string>
+    <string name="gallery_create_new_video">नया वीडियो बनाएं</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">गाने</string>
+    <string name="songs_all">सभी गाने</string>
+    <string name="songs_categories">श्रेणियां</string>
+    <string name="songs_search_hint">गाने खोजें</string>
+    <string name="songs_suggest_for_you">आपके लिए सुझाए गए</string>
+    <string name="songs_weekly_ranking">साप्ताहिक रैंकिंग</string>
+    <string name="songs_station">स्टेशन</string>
+
+    <!-- Legacy Home -->
     <string name="home_title">वीडियो मेकर</string>
     <string name="home_welcome">आप क्या करना चाहते हैं?</string>
     <string name="home_create">बनाएं</string>
@@ -75,6 +87,7 @@
     <string name="projects_empty">अभी कोई प्रोजेक्ट नहीं</string>
     <string name="projects_empty_description">यहां देखने के लिए अपना पहला प्रोजेक्ट बनाएं</string>
     <string name="projects_item_info">%1$d फ़ोटो • %2$s</string>
+    <string name="projects_create_description">नया स्लाइडशो प्रोजेक्ट शुरू करें</string>
     <string name="projects_delete_title">प्रोजेक्ट हटाएं?</string>
     <string name="projects_delete_message">\"%s\" स्थायी रूप से हटा दिया जाएगा। यह क्रिया वापस नहीं की जा सकती।</string>
 
@@ -112,12 +125,24 @@
     <string name="picker_permission_message">आपकी फ़ोटो से वीडियो बनाने के लिए, हमें आपकी फ़ोटो लाइब्रेरी तक पहुंच की अनुमति चाहिए।</string>
     <string name="picker_allow_access">एक्सेस की अनुमति दें</string>
 
+    <!-- Music Picker -->
+    <string name="music_picker_title">संगीत चुनें</string>
+    <string name="music_picker_loading">लोड हो रहा है…</string>
+    <string name="music_picker_no_music">कोई संगीत नहीं मिला</string>
+    <string name="music_picker_no_music_hint">यहां उपयोग करने के लिए अपने डिवाइस में संगीत फ़ाइलें जोड़ें</string>
+    <string name="music_picker_permission_title">ऑडियो एक्सेस आवश्यक</string>
+    <string name="music_picker_permission_message">अपने संगीत को बैकग्राउंड ऑडियो के रूप में उपयोग करने के लिए, हमें आपकी ऑडियो फ़ाइलों तक पहुंच की अनुमति चाहिए।</string>
+    <string name="music_picker_allow_access">एक्सेस की अनुमति दें</string>
+    <string name="music_picker_preview">प्रीव्यू</string>
+    <string name="music_picker_stop_preview">रोकें</string>
+    <string name="music_picker_select">चुनें</string>
+
     <!-- Settings Panel -->
     <string name="settings_panel_title">सेटिंग्स</string>
     <string name="settings_panel_apply">लागू करें</string>
     <string name="settings_panel_close">बंद करें</string>
     <string name="settings_apply">लागू करें</string>
-    <string name="settings_transition_effect">ट्रांज़िशन इफेक्ट</string>
+    <string name="settings_effect_set">इफेक्ट सेट</string>
     <string name="settings_all">सभी</string>
     <string name="settings_off">बंद</string>
     <string name="settings_none">कोई नहीं</string>
@@ -132,39 +157,9 @@
     <string name="settings_add_audio">+ जोड़ें</string>
     <string name="settings_volume">वॉल्यूम</string>
     <string name="settings_aspect_ratio">आस्पेक्ट रेश्यो</string>
-
-    <!-- Home Tabs -->
-    <string name="home_tab_gallery">गैलरी</string>
-    <string name="home_tab_songs">गाने</string>
-    <string name="home_tab_projects">मेरे प्रोजेक्ट्स</string>
-
-    <!-- Gallery Tab -->
-    <string name="gallery_hot_songs">हॉट गाने</string>
-    <string name="gallery_templates">टेम्पलेट</string>
-    <string name="gallery_coming_soon">जल्द आ रहा है</string>
-    <string name="gallery_search_hint">अपनी स्टाइल खोजें</string>
-    <string name="gallery_create_new_video">नया वीडियो बनाएं</string>
-
-    <!-- Songs Tab -->
-    <string name="songs_title">गाने</string>
-    <string name="songs_all">सभी गाने</string>
-    <string name="songs_categories">श्रेणियां</string>
-    <string name="songs_search_hint">गाने खोजें</string>
-    <string name="songs_suggest_for_you">आपके लिए सुझाए गए</string>
-    <string name="songs_weekly_ranking">साप्ताहिक रैंकिंग</string>
-    <string name="songs_station">स्टेशन</string>
-
-    <!-- Music Picker -->
-    <string name="music_picker_title">संगीत चुनें</string>
-    <string name="music_picker_loading">लोड हो रहा है…</string>
-    <string name="music_picker_no_music">कोई संगीत नहीं मिला</string>
-    <string name="music_picker_no_music_hint">यहां उपयोग करने के लिए अपने डिवाइस में संगीत फ़ाइलें जोड़ें</string>
-    <string name="music_picker_permission_title">ऑडियो एक्सेस आवश्यक</string>
-    <string name="music_picker_permission_message">अपने संगीत को बैकग्राउंड ऑडियो के रूप में उपयोग करने के लिए, हमें आपकी ऑडियो फ़ाइलों तक पहुंच की अनुमति चाहिए।</string>
-    <string name="music_picker_allow_access">एक्सेस की अनुमति दें</string>
-    <string name="music_picker_preview">प्रीव्यू</string>
-    <string name="music_picker_stop_preview">रोकें</string>
-    <string name="music_picker_select">चुनें</string>
+    <string name="settings_transition_effect">ट्रांज़िशन इफेक्ट</string>
+    <string name="settings_transition_duration">ट्रांज़िशन अवधि</string>
+    <string name="settings_transition_duration_value">%.1fस</string>
 
     <!-- Search -->
     <string name="search_hint">अपनी स्टाइल खोजें</string>
@@ -180,13 +175,37 @@
     <string name="search_tag_cinematic">सिनेमाई</string>
     <string name="search_tag_vintage">विंटेज</string>
 
-    <!-- Settings Panel (additional) -->
-    <string name="settings_effect_set">इफेक्ट सेट</string>
-    <string name="settings_transition_duration">ट्रांज़िशन अवधि</string>
-    <string name="settings_transition_duration_value">%.1fस</string>
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">ड्रीमी वाइब्स</string>
+    <string name="effect_dreamy_vibes_desc">सॉफ्ट ग्लो और पेस्टल रंग</string>
+    <string name="effect_cyberpunk_title">साइबरपंक</string>
+    <string name="effect_cyberpunk_desc">नियॉन लाइट्स और ग्लिच इफेक्ट्स</string>
+    <string name="effect_vintage_film_title">विंटेज फिल्म</string>
+    <string name="effect_vintage_film_desc">रेट्रो ग्रेन और गर्म रंग</string>
+    <string name="effect_ocean_breeze_title">ओशन ब्रीज़</string>
+    <string name="effect_ocean_breeze_desc">ठंडे नीले रंग के ग्रेडिएंट</string>
+    <string name="effect_golden_hour_title">गोल्डन ऑवर</string>
+    <string name="effect_golden_hour_desc">गर्म सनसेट ओवरले</string>
+    <string name="effect_noir_title">नॉयर</string>
+    <string name="effect_noir_desc">हाई कॉन्ट्रास्ट ब्लैक एंड व्हाइट</string>
+    <string name="effect_sakura_title">सकुरा</string>
+    <string name="effect_sakura_desc">चेरी ब्लॉसम पिंक</string>
+    <string name="effect_aurora_title">ऑरोरा</string>
+    <string name="effect_aurora_desc">नॉर्दर्न लाइट्स ग्लिटर</string>
 
-    <!-- Projects (additional) -->
-    <string name="projects_create_description">नया स्लाइडशो प्रोजेक्ट शुरू करें</string>
+    <!-- Common -->
+    <string name="cancel">रद्द करें</string>
+    <string name="confirm">पुष्टि करें</string>
+    <string name="delete">हटाएं</string>
+    <string name="save">सहेजें</string>
+    <string name="back">वापस</string>
+    <string name="done">हो गया</string>
+    <string name="error">त्रुटि</string>
+    <string name="retry">पुनः प्रयास करें</string>
+    <string name="seconds">%d सेकंड</string>
+    <string name="none">कोई नहीं</string>
+    <string name="close">बंद करें</string>
+    <string name="settings">सेटिंग्स</string>
 
     <!-- Error states -->
     <string name="error_load_failed">लोड करने में विफल। पुनः प्रयास के लिए नीचे खींचें।</string>
@@ -194,9 +213,13 @@
     <!-- Songs -->
     <string name="start_project">प्रोजेक्ट शुरू करें</string>
 
-    <!-- Onboarding Page 4 — Genre Selection -->
-    <string name="onboarding_page4_title">आप कौन सा संगीत\nपसंद करते हैं?</string>
-    <string name="onboarding_page4_subtitle">अपनी पसंदीदा शैलियां चुनें। हम आपके संगीत सुझाव अनुकूलित करेंगे।</string>
+    <!-- Onboarding Page 4 — Feature Survey -->
+    <string name="onboarding_page4_title">अपनी यात्रा शुरू करें</string>
+    <string name="onboarding_page4_subtitle">इससे हमें आपके लिए सबसे प्रासंगिक कंटेंट सुझाने में मदद मिलती है।</string>
+    <string name="feature_music_video_instant">फ़ौरन म्यूज़िक वीडियो बनाएं</string>
+    <string name="feature_photos_to_video">फ़ोटो को म्यूज़िक वीडियो में बदलें</string>
+    <string name="feature_trending_templates">ट्रेंडिंग टेम्पलेट्स उपयोग करें</string>
+    <string name="feature_trending_music">ट्रेंडिंग म्यूज़िक जोड़ें</string>
 
     <!-- Music Genres -->
     <string name="genre_pop">पॉप</string>
@@ -214,18 +237,4 @@
     <string name="genre_blues">ब्लूज़</string>
     <string name="genre_metal">मेटल</string>
     <string name="genre_soul">सोल</string>
-
-    <!-- Common -->
-    <string name="cancel">रद्द करें</string>
-    <string name="confirm">पुष्टि करें</string>
-    <string name="delete">हटाएं</string>
-    <string name="save">सहेजें</string>
-    <string name="back">वापस</string>
-    <string name="done">हो गया</string>
-    <string name="error">त्रुटि</string>
-    <string name="retry">पुनः प्रयास करें</string>
-    <string name="seconds">%d सेकंड</string>
-    <string name="none">कोई नहीं</string>
-    <string name="close">बंद करें</string>
-    <string name="settings">सेटिंग्स</string>
 </resources>
