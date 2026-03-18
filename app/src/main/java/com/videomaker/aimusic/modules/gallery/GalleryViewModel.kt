@@ -7,9 +7,11 @@ import coil.ImageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Size
+import androidx.compose.runtime.Immutable
+import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.media.library.MusicSongLibrary
-import com.videomaker.aimusic.media.library.VideoTemplateLibrary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,13 +23,20 @@ import kotlin.random.Random
 // UI STATE
 // ============================================
 
+sealed class TemplateListState {
+    data object Loading : TemplateListState()
+    data class Success(val templates: List<VideoTemplate>) : TemplateListState()
+}
+
 sealed class GalleryUiState {
     data object Loading : GalleryUiState()
+    @Immutable
     data class Success(
         val trendingSongs: List<TrendingSong>,
         val topSongs: List<TopSong>,
-        val trendingTemplates: List<VideoTemplate>,
-        val popularTemplates: List<VideoTemplate>
+        val vibeTags: List<VibeTag>,
+        val selectedVibeTagId: String?,       // null = "All"
+        val templateListState: TemplateListState
     ) : GalleryUiState()
     data class Error(val message: String) : GalleryUiState()
 }
@@ -40,8 +49,7 @@ sealed class GalleryNavigationEvent {
     data class NavigateToSongDetail(val songId: Long) : GalleryNavigationEvent()
     data class NavigateToTemplateDetail(val templateId: String) : GalleryNavigationEvent()
     data object NavigateToAllTopSongs : GalleryNavigationEvent()
-    data object NavigateToAllTrendingTemplates : GalleryNavigationEvent()
-    data object NavigateToAllPopularTemplates : GalleryNavigationEvent()
+    data object NavigateToAllTemplates : GalleryNavigationEvent()
     data object NavigateToCreate : GalleryNavigationEvent()
 }
 
@@ -49,16 +57,10 @@ sealed class GalleryNavigationEvent {
 // VIEW MODEL
 // ============================================
 
-/**
- * GalleryViewModel with optimized image preloading
- *
- * @param application Application instance for Coil ImageRequest context
- *                    Note: Application context is safe in ViewModels (lives for app lifetime)
- * @param imageLoader Coil ImageLoader for image preloading (injected via ACCDI)
- */
 class GalleryViewModel(
     private val application: Application,
-    private val imageLoader: ImageLoader
+    private val imageLoader: ImageLoader,
+    private val templateRepository: TemplateRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GalleryUiState>(GalleryUiState.Loading)
@@ -74,55 +76,64 @@ class GalleryViewModel(
     private fun loadGalleryData() {
         viewModelScope.launch {
             try {
-                // Load songs from library
-                val trendingSongs = MusicSongLibrary.getTrending(3)
-                    .map { it.toTrendingSong() }
-
-                val topSongs = MusicSongLibrary.getTop(12)
-                    .mapIndexed { index, song ->
-                        song.toTopSong(
-                            ranking = index + 1,
-                            likes = Random.nextInt(10000, 150000)
-                        )
-                    }
-
-                // Load templates from library
-                val trendingTemplates = VideoTemplateLibrary.getTrending().take(6)
-                val popularTemplates = VideoTemplateLibrary.getFree().take(6)
+                val trendingSongs = MusicSongLibrary.getTrending(3).map { it.toTrendingSong() }
+                val topSongs = MusicSongLibrary.getTop(12).mapIndexed { index, song ->
+                    song.toTopSong(ranking = index + 1, likes = Random.nextInt(10000, 150000))
+                }
+                val vibeTags = templateRepository.getVibeTags().getOrElse { emptyList() }
+                val templates = templateRepository.getTemplates(limit = 20, offset = 0)
+                    .getOrElse { emptyList() }
 
                 _uiState.value = GalleryUiState.Success(
                     trendingSongs = trendingSongs,
                     topSongs = topSongs,
-                    trendingTemplates = trendingTemplates,
-                    popularTemplates = popularTemplates
+                    vibeTags = vibeTags,
+                    selectedVibeTagId = null,
+                    templateListState = TemplateListState.Success(templates)
                 )
 
-                // Preload carousel images AFTER UI is shown (non-blocking)
                 preloadCarouselImages(trendingSongs)
-
             } catch (e: Exception) {
                 _uiState.value = GalleryUiState.Error(e.message ?: "Failed to load gallery data")
             }
         }
     }
 
-    /**
-     * Preload carousel images for smooth auto-sliding transitions
-     * Runs on IO dispatcher to avoid blocking main thread
-     */
+    fun onVibeTagSelected(tagId: String?) {
+        val current = _uiState.value as? GalleryUiState.Success ?: return
+        // Don't re-fetch if already selected
+        if (current.selectedVibeTagId == tagId) return
+
+        _uiState.value = current.copy(
+            selectedVibeTagId = tagId,
+            templateListState = TemplateListState.Loading
+        )
+
+        viewModelScope.launch {
+            val result = if (tagId == null) {
+                templateRepository.getTemplates(limit = 20, offset = 0)
+            } else {
+                templateRepository.getTemplatesByVibeTag(tag = tagId, limit = 20, offset = 0)
+            }
+            val templates = result.getOrElse { emptyList() }
+            val updated = _uiState.value as? GalleryUiState.Success ?: return@launch
+            _uiState.value = updated.copy(
+                templateListState = TemplateListState.Success(templates)
+            )
+        }
+    }
+
     private fun preloadCarouselImages(songs: List<TrendingSong>) {
         viewModelScope.launch(Dispatchers.IO) {
             songs.forEach { song ->
                 val request = ImageRequest.Builder(application)
                     .data(song.coverUrl)
-                    .size(Size(720, 405)) // Match banner display size
+                    .size(Size(720, 405))
                     .memoryCachePolicy(CachePolicy.ENABLED)
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .memoryCacheKey("banner_${song.id}")
                     .diskCacheKey("banner_${song.id}")
                     .build()
-
-                // Enqueue low-priority preload (doesn't block UI)
                 imageLoader.enqueue(request)
             }
         }
@@ -144,12 +155,8 @@ class GalleryViewModel(
         _navigationEvent.value = GalleryNavigationEvent.NavigateToAllTopSongs
     }
 
-    fun onSeeAllTrendingTemplatesClick() {
-        _navigationEvent.value = GalleryNavigationEvent.NavigateToAllTrendingTemplates
-    }
-
-    fun onSeeAllPopularTemplatesClick() {
-        _navigationEvent.value = GalleryNavigationEvent.NavigateToAllPopularTemplates
+    fun onSeeAllTemplatesClick() {
+        _navigationEvent.value = GalleryNavigationEvent.NavigateToAllTemplates
     }
 
     fun onCreateClick() {

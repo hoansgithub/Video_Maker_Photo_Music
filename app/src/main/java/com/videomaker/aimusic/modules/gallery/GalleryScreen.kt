@@ -89,6 +89,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
+import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.lifecycle.Lifecycle
@@ -113,8 +114,7 @@ fun GalleryScreen(
     onNavigateToSongDetail: (Long) -> Unit = {},
     onNavigateToTemplateDetail: (String) -> Unit = {},
     onNavigateToAllTopSongs: () -> Unit = {},
-    onNavigateToAllTrendingTemplates: () -> Unit = {},
-    onNavigateToAllPopularTemplates: () -> Unit = {},
+    onNavigateToAllTemplates: () -> Unit = {},
     onNavigateToCreate: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {}
 ) {
@@ -128,8 +128,7 @@ fun GalleryScreen(
                 is GalleryNavigationEvent.NavigateToSongDetail -> onNavigateToSongDetail(event.songId)
                 is GalleryNavigationEvent.NavigateToTemplateDetail -> onNavigateToTemplateDetail(event.templateId)
                 is GalleryNavigationEvent.NavigateToAllTopSongs -> onNavigateToAllTopSongs()
-                is GalleryNavigationEvent.NavigateToAllTrendingTemplates -> onNavigateToAllTrendingTemplates()
-                is GalleryNavigationEvent.NavigateToAllPopularTemplates -> onNavigateToAllPopularTemplates()
+                is GalleryNavigationEvent.NavigateToAllTemplates -> onNavigateToAllTemplates()
                 is GalleryNavigationEvent.NavigateToCreate -> onNavigateToCreate()
             }
             viewModel.onNavigationHandled()
@@ -150,11 +149,12 @@ fun GalleryScreen(
             is GalleryUiState.Loading -> GalleryLoadingContent()
             is GalleryUiState.Success -> GalleryContent(
                 topBarHeight = topBarHeight,
-                trendingTemplates = state.trendingTemplates,
-                popularTemplates = state.popularTemplates,
+                vibeTags = state.vibeTags,
+                selectedVibeTagId = state.selectedVibeTagId,
+                templateListState = state.templateListState,
+                onVibeTagSelected = viewModel::onVibeTagSelected,
                 onTemplateClick = viewModel::onTemplateClick,
-                onSeeAllTrendingTemplates = viewModel::onSeeAllTrendingTemplatesClick,
-                onSeeAllPopularTemplates = viewModel::onSeeAllPopularTemplatesClick,
+                onSeeAllTemplates = viewModel::onSeeAllTemplatesClick,
                 onCreateClick = viewModel::onCreateClick,
                 onSearchClick = onNavigateToSearch
             )
@@ -222,11 +222,12 @@ private fun GalleryErrorContent(message: String) {
 @Composable
 private fun GalleryContent(
     topBarHeight: Dp = 0.dp,
-    trendingTemplates: List<VideoTemplate>,
-    popularTemplates: List<VideoTemplate>,
+    vibeTags: List<VibeTag>,
+    selectedVibeTagId: String?,
+    templateListState: TemplateListState,
+    onVibeTagSelected: (String?) -> Unit,
     onTemplateClick: (VideoTemplate) -> Unit,
-    onSeeAllTrendingTemplates: () -> Unit,
-    onSeeAllPopularTemplates: () -> Unit,
+    onSeeAllTemplates: () -> Unit,
     onCreateClick: () -> Unit,
     onSearchClick: () -> Unit
 ) {
@@ -266,37 +267,34 @@ private fun GalleryContent(
                     title = stringResource(R.string.gallery_templates),
                     icon = Icons.Default.Star,
                     iconTint = GoldAccent,
-                    onSeeAllClick = onSeeAllTrendingTemplates
+                    onSeeAllClick = onSeeAllTemplates
                 )
                 Spacer(modifier = Modifier.height(dimens.spaceSm))
                 TagChipRow(
-                    tags = sampleTags,
+                    vibeTags = vibeTags,
+                    selectedTagId = selectedVibeTagId,
+                    onTagSelected = onVibeTagSelected,
                     modifier = Modifier.padding(bottom = dimens.spaceSm)
                 )
             }
 
-            // Trending templates grid
-            item(key = "trending_grid", contentType = "template_grid") {
-                StaggeredTemplateGrid(
-                    templates = trendingTemplates,
-                    onTemplateClick = onTemplateClick,
-                    spacing = dimens.spaceSm,
-                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
-                )
-            }
-
-            item(key = "spacer2", contentType = "spacer") {
-                Spacer(modifier = Modifier.height(dimens.spaceMd))
-            }
-
-            // Popular templates grid
-            item(key = "popular_grid", contentType = "template_grid") {
-                StaggeredTemplateGrid(
-                    templates = popularTemplates,
-                    onTemplateClick = onTemplateClick,
-                    spacing = dimens.spaceSm,
-                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
-                )
+            // Templates grid — shows loading shimmer or results
+            item(key = "template_grid", contentType = "template_grid") {
+                when (templateListState) {
+                    is TemplateListState.Loading -> ShimmerPlaceholder(
+                        modifier = Modifier
+                            .padding(horizontal = dimens.spaceLg)
+                            .fillMaxWidth()
+                            .height(320.dp),
+                        cornerRadius = dimens.radiusLg
+                    )
+                    is TemplateListState.Success -> StaggeredTemplateGrid(
+                        templates = templateListState.templates,
+                        onTemplateClick = onTemplateClick,
+                        spacing = dimens.spaceSm,
+                        modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                    )
+                }
             }
         }
 
@@ -436,48 +434,15 @@ private data class FeaturedEffect(
     val accentColor: Color
 )
 
-@Composable
-private fun getSampleEffects() = listOf(
-    FeaturedEffect(
-        stringResource(R.string.effect_dreamy_vibes_title),
-        stringResource(R.string.effect_dreamy_vibes_desc),
-        RoseAccent
-    ),
-    FeaturedEffect(
-        stringResource(R.string.effect_cyberpunk_title),
-        stringResource(R.string.effect_cyberpunk_desc),
-        CyanAccent
-    ),
-    FeaturedEffect(
-        stringResource(R.string.effect_vintage_film_title),
-        stringResource(R.string.effect_vintage_film_desc),
-        AmberAccent
-    ),
-    FeaturedEffect(
-        stringResource(R.string.effect_ocean_breeze_title),
-        stringResource(R.string.effect_ocean_breeze_desc),
-        TealAccent
-    ),
-    FeaturedEffect(
-        stringResource(R.string.effect_golden_hour_title),
-        stringResource(R.string.effect_golden_hour_desc),
-        OrangeAccent
-    ),
-    FeaturedEffect(
-        stringResource(R.string.effect_noir_title),
-        stringResource(R.string.effect_noir_desc),
-        SlateAccent
-    ),
-    FeaturedEffect(
-        stringResource(R.string.effect_sakura_title),
-        stringResource(R.string.effect_sakura_desc),
-        PinkAccent
-    ),
-    FeaturedEffect(
-        stringResource(R.string.effect_aurora_title),
-        stringResource(R.string.effect_aurora_desc),
-        GreenAccent
-    )
+private fun buildSampleEffects(context: android.content.Context) = listOf(
+    FeaturedEffect(context.getString(R.string.effect_dreamy_vibes_title), context.getString(R.string.effect_dreamy_vibes_desc), RoseAccent),
+    FeaturedEffect(context.getString(R.string.effect_cyberpunk_title), context.getString(R.string.effect_cyberpunk_desc), CyanAccent),
+    FeaturedEffect(context.getString(R.string.effect_vintage_film_title), context.getString(R.string.effect_vintage_film_desc), AmberAccent),
+    FeaturedEffect(context.getString(R.string.effect_ocean_breeze_title), context.getString(R.string.effect_ocean_breeze_desc), TealAccent),
+    FeaturedEffect(context.getString(R.string.effect_golden_hour_title), context.getString(R.string.effect_golden_hour_desc), OrangeAccent),
+    FeaturedEffect(context.getString(R.string.effect_noir_title), context.getString(R.string.effect_noir_desc), SlateAccent),
+    FeaturedEffect(context.getString(R.string.effect_sakura_title), context.getString(R.string.effect_sakura_desc), PinkAccent),
+    FeaturedEffect(context.getString(R.string.effect_aurora_title), context.getString(R.string.effect_aurora_desc), GreenAccent),
 )
 
 @Composable
@@ -485,7 +450,8 @@ private fun FeaturedEffectsShowcase(
     autoSlideIntervalMs: Long = 4000L,
     modifier: Modifier = Modifier
 ) {
-    val sampleEffects = getSampleEffects()
+    val context = LocalContext.current
+    val sampleEffects = remember(context) { buildSampleEffects(context) }
     val infinitePageCount = Int.MAX_VALUE
     val initialPage = infinitePageCount / 2
 
@@ -601,15 +567,14 @@ private fun FeaturedEffectCard(
 // TAG CHIP ROW
 // ============================================
 
-private val sampleTags = listOf("For you", "Lovely", "Birthday", "Travel", "Aesthetic", "Vintage")
-
 @Composable
 private fun TagChipRow(
-    tags: List<String>,
+    vibeTags: List<VibeTag>,
+    selectedTagId: String?,
+    onTagSelected: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
-    var selectedTag by rememberSaveable { mutableStateOf(tags.firstOrNull().orEmpty()) }
 
     Row(
         modifier = modifier
@@ -618,11 +583,17 @@ private fun TagChipRow(
             .padding(horizontal = dimens.spaceLg),
         horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
     ) {
-        tags.forEach { tag ->
+        // "All" chip — clears filter
+        TagChip(
+            label = "All",
+            isSelected = selectedTagId == null,
+            onClick = { onTagSelected(null) }
+        )
+        vibeTags.forEach { tag ->
             TagChip(
-                label = tag,
-                isSelected = tag == selectedTag,
-                onClick = { selectedTag = tag }
+                label = if (tag.emoji.isNotEmpty()) "${tag.emoji} ${tag.displayName}" else tag.displayName,
+                isSelected = tag.id == selectedTagId,
+                onClick = { onTagSelected(tag.id) }
             )
         }
     }
@@ -820,16 +791,16 @@ private fun VideoTemplateItem(
 // ============================================
 
 private val previewTemplates = listOf(
-    VideoTemplate(id = "1", name = "Summer Vibes", description = "", songId = 1, effectSetId = "e1", aspectRatio = "9:16", isPremium = true),
-    VideoTemplate(id = "2", name = "Chill Lofi", description = "", songId = 2, effectSetId = "e2", aspectRatio = "1:1"),
-    VideoTemplate(id = "3", name = "Retro Wave", description = "", songId = 3, effectSetId = "e3", aspectRatio = "9:16", isPremium = true),
-    VideoTemplate(id = "4", name = "Birthday Bash", description = "", songId = 4, effectSetId = "e4", aspectRatio = "4:5"),
-    VideoTemplate(id = "5", name = "Travel Diary", description = "", songId = 5, effectSetId = "e5", aspectRatio = "9:16"),
-    VideoTemplate(id = "6", name = "Neon Nights", description = "", songId = 6, effectSetId = "e6", aspectRatio = "1:1"),
-    VideoTemplate(id = "7", name = "Aesthetic Mood", description = "", songId = 7, effectSetId = "e7", aspectRatio = "9:16"),
-    VideoTemplate(id = "8", name = "Cinematic", description = "", songId = 8, effectSetId = "e8", aspectRatio = "4:5", isPremium = true),
-    VideoTemplate(id = "9", name = "Golden Hour", description = "", songId = 9, effectSetId = "e9", aspectRatio = "9:16"),
-    VideoTemplate(id = "10", name = "Vintage Love", description = "", songId = 10, effectSetId = "e10", aspectRatio = "1:1"),
+    VideoTemplate(id = "1", name = "Summer Vibes", songId = 1, effectSetId = "e1", aspectRatio = "9:16", isPremium = true),
+    VideoTemplate(id = "2", name = "Chill Lofi", songId = 2, effectSetId = "e2", aspectRatio = "1:1"),
+    VideoTemplate(id = "3", name = "Retro Wave", songId = 3, effectSetId = "e3", aspectRatio = "9:16", isPremium = true),
+    VideoTemplate(id = "4", name = "Birthday Bash", songId = 4, effectSetId = "e4", aspectRatio = "4:5"),
+    VideoTemplate(id = "5", name = "Travel Diary", songId = 5, effectSetId = "e5", aspectRatio = "9:16"),
+    VideoTemplate(id = "6", name = "Neon Nights", songId = 6, effectSetId = "e6", aspectRatio = "1:1"),
+    VideoTemplate(id = "7", name = "Aesthetic Mood", songId = 7, effectSetId = "e7", aspectRatio = "9:16"),
+    VideoTemplate(id = "8", name = "Cinematic", songId = 8, effectSetId = "e8", aspectRatio = "4:5", isPremium = true),
+    VideoTemplate(id = "9", name = "Golden Hour", songId = 9, effectSetId = "e9", aspectRatio = "9:16"),
+    VideoTemplate(id = "10", name = "Vintage Love", songId = 10, effectSetId = "e10", aspectRatio = "1:1"),
 )
 
 @Preview(widthDp = 375, heightDp = 812)
@@ -845,11 +816,16 @@ private fun GalleryContentPreview() {
             )
             GalleryContent(
                 topBarHeight = 56.dp,
-                trendingTemplates = previewTemplates.take(6),
-                popularTemplates = previewTemplates.drop(6),
+                vibeTags = listOf(
+                    VibeTag("birthday", "Birthday", "🎂"),
+                    VibeTag("travel", "Travel", "✈️"),
+                    VibeTag("wedding", "Wedding", "💒")
+                ),
+                selectedVibeTagId = null,
+                templateListState = TemplateListState.Success(previewTemplates),
+                onVibeTagSelected = {},
                 onTemplateClick = {},
-                onSeeAllTrendingTemplates = {},
-                onSeeAllPopularTemplates = {},
+                onSeeAllTemplates = {},
                 onCreateClick = {},
                 onSearchClick = {}
             )

@@ -14,9 +14,11 @@ import com.videomaker.aimusic.data.remote.SupabaseClientProvider
 import com.videomaker.aimusic.data.repository.ExportRepositoryImpl
 import com.videomaker.aimusic.data.repository.ProjectRepositoryImpl
 import com.videomaker.aimusic.data.repository.SongRepositoryImpl
+import com.videomaker.aimusic.data.repository.TemplateRepositoryImpl
 import com.videomaker.aimusic.domain.repository.ExportRepository
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import com.videomaker.aimusic.domain.repository.SongRepository
+import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.ClearSongCacheUseCase
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
@@ -100,6 +102,7 @@ val dataModule = module {
     single<ProjectRepository> { ProjectRepositoryImpl(it.get(), it.get()) }
     single<ExportRepository> { ExportRepositoryImpl(it.get()) }
     single<SongRepository> { SongRepositoryImpl(it.get(), it.get()) }
+    single<TemplateRepository> { TemplateRepositoryImpl(it.get(), it.get()) }
 }
 
 // ========== MEDIA LAYER MODULE ==========
@@ -276,12 +279,14 @@ class MusicPickerViewModelFactory(
  */
 class GalleryViewModelFactory(
     private val application: android.app.Application,
-    private val imageLoader: coil.ImageLoader
+    private val imageLoader: coil.ImageLoader,
+    private val templateRepository: TemplateRepository
 ) {
     fun create(): GalleryViewModel {
         return GalleryViewModel(
             application = application,
-            imageLoader = imageLoader
+            imageLoader = imageLoader,
+            templateRepository = templateRepository
         )
     }
 }
@@ -384,7 +389,8 @@ val presentationModule = module {
         GalleryViewModelFactory(
             application = (androidContext().applicationContext as? android.app.Application)
                 ?: error("applicationContext is not an Application instance"),
-            imageLoader = it.get()
+            imageLoader = it.get(),
+            templateRepository = it.get()
         )
     }
 

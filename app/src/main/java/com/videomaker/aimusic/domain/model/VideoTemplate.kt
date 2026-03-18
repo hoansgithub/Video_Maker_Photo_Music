@@ -1,25 +1,26 @@
 package com.videomaker.aimusic.domain.model
 
+import androidx.compose.runtime.Immutable
+
 /**
  * VideoTemplate - A preset combining song + effect set for quick video creation
  *
  * Templates are showcased on the home screen to help users quickly
  * create videos with curated combinations of music and effects.
  *
- * Tags:
- * - trending: Popular/viral templates
- * - new: Recently added templates
- * - seasonal: Holiday/seasonal content (Halloween, Christmas, Summer, etc.)
+ * vibeTags: from vibe_tags table (e.g. birthday, wedding, travel, party, love, ...)
  */
+@Immutable
 data class VideoTemplate(
     val id: String,
     val name: String,
-    val description: String,
     val thumbnailUrl: String = "",
     val songId: Long,
     val effectSetId: String,
     val aspectRatio: String = "9:16",
-    val tags: List<String> = emptyList(),
+    val imageDurationMs: Int = 3000,
+    val transitionPct: Int = 30,
+    val vibeTags: List<String> = emptyList(),
     val isPremium: Boolean = false,
     val isActive: Boolean = true
 )

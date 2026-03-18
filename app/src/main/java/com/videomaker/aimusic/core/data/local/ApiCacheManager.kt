@@ -91,6 +91,14 @@ class ApiCacheManager(context: Context) {
         }
     }
 
+    /** Deletes all cache files whose names start with "templates_". */
+    suspend fun clearTemplateCache() {
+        withContext(Dispatchers.IO) {
+            cacheDir.listFiles { file -> file.name.startsWith("templates_") }
+                ?.forEach { it.delete() }
+        }
+    }
+
     /** Deletes every file in the cache directory. */
     suspend fun clearAll() {
         withContext(Dispatchers.IO) {
@@ -110,5 +118,11 @@ class ApiCacheManager(context: Context) {
         /** Dynamic key per genre — safe for use as a filename. */
         fun keySongsGenre(genre: String): String =
             "songs_genre_${genre.lowercase().replace(' ', '_')}"
+
+        // ── Template cache keys ──────────────────────────────────────────────
+        const val KEY_VIBE_TAGS = "vibe_tags_theme"
+        fun keyTemplates(limit: Int, offset: Int): String = "templates_${limit}_${offset}"
+        fun keyTemplatesByTag(tag: String, limit: Int, offset: Int): String =
+            "templates_tag_${tag}_${limit}_${offset}"
     }
 }

@@ -627,6 +627,15 @@ private fun FeatureScreenPreview() { ... }
 
 ---
 
+### Database Query Safety (CRITICAL) @.claude/rules/database-safety.md
+- NEVER fetch all records from a database (assume billions of rows)
+- ALL queries MUST have LIMIT / pagination
+- ALL filtering MUST be in the query (WHERE clauses), NOT client-side
+- ALL sorting MUST be in the query (ORDER BY), NOT client-side
+- Applies to: Room, Supabase, Firebase, SQL, MongoDB, etc.
+
+---
+
 ## Emergency Checklist
 
 Before EVERY code change:
@@ -655,6 +664,12 @@ Before EVERY code change:
 - [ ] No Activities embedded as composables
 - [ ] Ads destroyed only on `ON_DESTROY`
 - [ ] Protocol dependencies (not concrete)
+
+### Database Queries
+- [ ] Every query has LIMIT / pagination
+- [ ] Filtering done in query (WHERE), NOT client-side
+- [ ] Sorting done in query (ORDER BY), NOT client-side
+- [ ] No unbounded fetches (SELECT * without LIMIT)
 
 ---
 

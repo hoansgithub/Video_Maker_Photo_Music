@@ -1,309 +1,1728 @@
 [
   {
-    "id": "tpl_neon_kpop",
-    "name": "Neon K-Pop Vibes",
-    "description": "Energetic K-Pop with glitch effects",
+    "id": "033da62c-c1bd-4d37-817a-740836b8ecb4",
+    "name": "Wild Party Night",
+    "nameI18n": {
+      "en": "Wild Party Night"
+    },
     "thumbnailUrl": "",
-    "songId": 20112,
-    "effectSetId": "cyberpunk",
+    "songId": 15302,
+    "effectSetId": "wild_party",
     "aspectRatio": "9:16",
-    "tags": [
-      "trending",
-      "new"
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "party"
     ],
     "isPremium": false,
     "isActive": true
   },
   {
-    "id": "tpl_retro_memories",
-    "name": "Retro Memories",
-    "description": "Nostalgic VHS vibes for throwback moments",
+    "id": "049fe644-1453-48ee-84b7-be874b33428d",
+    "name": "Viral Selfie Reel",
+    "nameI18n": {
+      "en": "Viral Selfie Reel"
+    },
     "thumbnailUrl": "",
-    "songId": 20284,
-    "effectSetId": "retro_wave",
-    "aspectRatio": "9:16",
-    "tags": [
-      "trending"
-    ],
-    "isPremium": false,
-    "isActive": true
-  },
-  {
-    "id": "tpl_cinema_epic",
-    "name": "Cinema Epic",
-    "description": "Movie-style cinematic storytelling",
-    "thumbnailUrl": "",
-    "songId": 20301,
-    "effectSetId": "cinema_magic",
-    "aspectRatio": "16:9",
-    "tags": [
-      "trending"
-    ],
-    "isPremium": false,
-    "isActive": true
-  },
-  {
-    "id": "tpl_latin_party",
-    "name": "Latin Party",
-    "description": "Hot Latin beats with neon club vibes",
-    "thumbnailUrl": "",
-    "songId": 20262,
-    "effectSetId": "neon_nights",
-    "aspectRatio": "9:16",
-    "tags": [
-      "trending",
-      "new"
-    ],
-    "isPremium": false,
-    "isActive": true
-  },
-  {
-    "id": "tpl_horror_thriller",
-    "name": "Horror Thriller",
-    "description": "Spooky effects for Halloween content",
-    "thumbnailUrl": "",
-    "songId": 20112,
-    "effectSetId": "horror_nights",
-    "aspectRatio": "9:16",
-    "tags": [
-      "seasonal"
-    ],
-    "isPremium": false,
-    "isActive": true
-  },
-  {
-    "id": "tpl_psychedelic_trip",
-    "name": "Psychedelic Trip",
-    "description": "Mind-bending visuals for trippy content",
-    "thumbnailUrl": "",
-    "songId": 20284,
-    "effectSetId": "psychedelic_trip",
-    "aspectRatio": "9:16",
-    "tags": [
-      "new"
-    ],
-    "isPremium": false,
-    "isActive": true
-  },
-  {
-    "id": "tpl_instagram_reel",
-    "name": "Instagram Reel",
-    "description": "Perfect for social media posts",
-    "thumbnailUrl": "",
-    "songId": 20301,
+    "songId": 3427,
     "effectSetId": "instagram_ready",
     "aspectRatio": "9:16",
-    "tags": [
-      "trending",
-      "new"
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "selfie"
     ],
     "isPremium": false,
     "isActive": true
   },
   {
-    "id": "tpl_wedding_love",
-    "name": "Wedding Love",
-    "description": "Elegant transitions for wedding memories",
+    "id": "0c570237-7a0b-4258-86d7-e7c783d6fd9b",
+    "name": "Rebel Celebration",
+    "nameI18n": {
+      "en": "Rebel Celebration"
+    },
     "thumbnailUrl": "",
-    "songId": 20262,
+    "songId": 16045,
+    "effectSetId": "street_graffiti",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "celebration"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "0d48995f-6ef5-4b7f-8d22-c8e527c7bb9b",
+    "name": "Birthday wish",
+    "nameI18n": {
+      "en": "Birthday wish"
+    },
+    "thumbnailUrl": "",
+    "songId": 16074,
+    "effectSetId": "street_graffiti",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "birthday"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "0f5fae46-d576-43e5-9e22-28bb1d7e8128",
+    "name": "Street Attitude",
+    "nameI18n": {
+      "en": "Street Attitude"
+    },
+    "thumbnailUrl": "",
+    "songId": 20521,
+    "effectSetId": "street_graffiti",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "fashion"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "10200566-a20c-4d93-b34f-8e7601dee512",
+    "name": "Electric Night",
+    "nameI18n": {
+      "en": "Electric Night"
+    },
+    "thumbnailUrl": "",
+    "songId": 20229,
+    "effectSetId": "electric_storm",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "party"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "15bd346e-7dd1-48cd-95e9-a07a1f740104",
+    "name": "Nature Travel Moments",
+    "nameI18n": {
+      "en": "Nature Travel Moments"
+    },
+    "thumbnailUrl": "",
+    "songId": 2037,
+    "effectSetId": "nature_vibes",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "travel"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "17284858-d5a1-431d-a697-d7d6ad8bc88d",
+    "name": "Endless Love",
+    "nameI18n": {
+      "en": "Endless Love"
+    },
+    "thumbnailUrl": "",
+    "songId": 16070,
     "effectSetId": "wedding_bells",
-    "aspectRatio": "16:9",
-    "tags": [
-      "trending"
-    ],
-    "isPremium": false,
-    "isActive": true
-  },
-  {
-    "id": "tpl_travel_diary",
-    "name": "Travel Diary",
-    "description": "Adventure vibes for travel vlogs",
-    "thumbnailUrl": "",
-    "songId": 20112,
-    "effectSetId": "travel_diary",
-    "aspectRatio": "16:9",
-    "tags": [
-      "new"
-    ],
-    "isPremium": false,
-    "isActive": true
-  },
-  {
-    "id": "tpl_summer_vacation",
-    "name": "Summer Vacation",
-    "description": "Bright, warm vibes for beach photos",
-    "thumbnailUrl": "",
-    "songId": 20284,
-    "effectSetId": "summer_memories",
     "aspectRatio": "9:16",
-    "tags": [
-      "seasonal"
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "love"
     ],
     "isPremium": false,
     "isActive": true
   },
   {
-    "id": "tpl_birthday_party",
-    "name": "Birthday Party",
-    "description": "Fun celebration effects",
+    "id": "1d5577fa-e943-4d2f-937b-86956eca66e3",
+    "name": "Story of Us",
+    "nameI18n": {
+      "en": "Story of Us"
+    },
     "thumbnailUrl": "",
-    "songId": 20301,
-    "effectSetId": "birthday_bash",
+    "songId": 16052,
+    "effectSetId": "vintage_film",
     "aspectRatio": "9:16",
-    "tags": [
-      "trending"
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "family"
     ],
     "isPremium": false,
     "isActive": true
   },
   {
-    "id": "tpl_romantic_sunset",
-    "name": "Romantic Sunset",
-    "description": "Warm, dreamy couple moments",
+    "id": "2911dc21-e8a5-49ff-bc10-4d9ac1923712",
+    "name": "Maybe Love Story",
+    "nameI18n": {
+      "en": "Maybe Love Story"
+    },
     "thumbnailUrl": "",
-    "songId": 20262,
+    "songId": 16066,
+    "effectSetId": "dreamy_vibes",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "love"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "2be049b5-314c-40e8-b549-08fa63007280",
+    "name": "Dark Story Edit",
+    "nameI18n": {
+      "en": "Dark Story Edit"
+    },
+    "thumbnailUrl": "",
+    "songId": 20521,
+    "effectSetId": "horror_nights",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "fashion"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "30c14814-9081-4cd7-8b4b-b47e399211bb",
+    "name": "Deep Love Moments",
+    "nameI18n": {
+      "en": "Deep Love Moments"
+    },
+    "thumbnailUrl": "",
+    "songId": 16058,
     "effectSetId": "romantic_sunset",
     "aspectRatio": "9:16",
-    "tags": [
-      "new"
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
     ],
     "isPremium": false,
     "isActive": true
   },
   {
-    "id": "tpl_music_video",
-    "name": "Music Video",
-    "description": "MTV-style dynamic edits",
+    "id": "352b676a-6505-4e8d-9a25-2f2db93bc16b",
+    "name": "Love Story Edit",
+    "nameI18n": {
+      "en": "Love Story Edit"
+    },
     "thumbnailUrl": "",
-    "songId": 20112,
-    "effectSetId": "music_video",
-    "aspectRatio": "16:9",
-    "tags": [
-      "trending"
+    "songId": 3416,
+    "effectSetId": "newsroom",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "couple"
     ],
-    "isPremium": true,
+    "isPremium": false,
     "isActive": true
   },
   {
-    "id": "tpl_noir_detective",
-    "name": "Noir Detective",
-    "description": "Film noir mystery vibes",
+    "id": "36f91409-1a01-4182-b9ff-a80b2a793874",
+    "name": "Dark Street Story",
+    "nameI18n": {
+      "en": "Dark Street Story"
+    },
     "thumbnailUrl": "",
-    "songId": 20284,
+    "songId": 20521,
     "effectSetId": "velvet_noir",
-    "aspectRatio": "16:9",
-    "tags": [
-      "new"
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "fashion"
     ],
-    "isPremium": true,
+    "isPremium": false,
     "isActive": true
   },
   {
-    "id": "tpl_vintage_film",
-    "name": "Vintage Film",
-    "description": "Old movie reel aesthetics",
+    "id": "3a1a4435-b3f4-4faf-9477-71babf4fea5f",
+    "name": "Epic Love Story",
+    "nameI18n": {
+      "en": "Epic Love Story"
+    },
     "thumbnailUrl": "",
-    "songId": 20301,
-    "effectSetId": "vintage_film",
-    "aspectRatio": "16:9",
-    "tags": [],
-    "isPremium": true,
+    "songId": 20002,
+    "effectSetId": "cinema_magic",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "couple"
+    ],
+    "isPremium": false,
     "isActive": true
   },
   {
-    "id": "tpl_space_odyssey",
-    "name": "Space Odyssey",
-    "description": "Cosmic interstellar journey",
+    "id": "3bc62838-d5dc-4290-a0fd-198fad6f2b5d",
+    "name": "Retro Memories",
+    "nameI18n": {
+      "en": "Retro Memories"
+    },
     "thumbnailUrl": "",
-    "songId": 20262,
+    "songId": 15205,
+    "effectSetId": "summer_memories",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "memories"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "3f0eadaa-755f-4a72-af90-9b4adc59734e",
+    "name": "Romantic Shadows",
+    "nameI18n": {
+      "en": "Romantic Shadows"
+    },
+    "thumbnailUrl": "",
+    "songId": 20213,
+    "effectSetId": "shadow_play",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "couple"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "3f698224-1558-4b0d-9fcb-27c111b9bdd2",
+    "name": "Cosmic Aesthetic",
+    "nameI18n": {
+      "en": "Cosmic Aesthetic"
+    },
+    "thumbnailUrl": "",
+    "songId": 20229,
     "effectSetId": "space_odyssey",
-    "aspectRatio": "16:9",
-    "tags": [
-      "new"
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "selfie"
     ],
-    "isPremium": true,
+    "isPremium": false,
     "isActive": true
   },
   {
-    "id": "tpl_fairy_tale",
-    "name": "Fairy Tale",
-    "description": "Magical enchanted story",
+    "id": "3f8cc2e7-209e-45a1-85e3-bcf7e8ed218f",
+    "name": "Fun Dance Celebration",
+    "nameI18n": {
+      "en": "Fun Dance Celebration"
+    },
     "thumbnailUrl": "",
-    "songId": 20112,
+    "songId": 16044,
+    "effectSetId": "wild_party",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "celebration"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "447ff82e-579e-44d3-b4f1-ee394f16e9d2",
+    "name": "Ocean Love",
+    "nameI18n": {
+      "en": "Ocean Love"
+    },
+    "thumbnailUrl": "",
+    "songId": 20213,
+    "effectSetId": "ocean_waves",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "couple"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "4accb452-1f69-451a-a8ba-b4307dc264e7",
+    "name": "Celebration With Friends",
+    "nameI18n": {
+      "en": "Celebration With Friends"
+    },
+    "thumbnailUrl": "",
+    "songId": 16040,
+    "effectSetId": "zoom_mania",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "celebration"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "4b6fc098-702a-49c2-a3ee-b612c2c817df",
+    "name": "Vintage Love Story",
+    "nameI18n": {
+      "en": "Vintage Love Story"
+    },
+    "thumbnailUrl": "",
+    "songId": 20395,
+    "effectSetId": "vintage_film",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "couple"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "4cc23c4c-b48a-4c57-9515-57188e1527af",
+    "name": "Love & Memories",
+    "nameI18n": {
+      "en": "Love & Memories"
+    },
+    "thumbnailUrl": "",
+    "songId": 16046,
+    "effectSetId": "paper_craft",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "family"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "52f0ca2a-5f0c-435c-a6b6-cb871ba0964c",
+    "name": "Street Style Edit",
+    "nameI18n": {
+      "en": "Street Style Edit"
+    },
+    "thumbnailUrl": "",
+    "songId": 20521,
+    "effectSetId": "tokyo_drift",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "fashion"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "553ef79b-d475-437b-922a-f0ced35167f3",
+    "name": "Zoom Party Energy",
+    "nameI18n": {
+      "en": "Zoom Party Energy"
+    },
+    "thumbnailUrl": "",
+    "songId": 20397,
+    "effectSetId": "zoom_mania",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "party"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "58448a57-0f3e-48a6-98be-abe53bcad3dc",
+    "name": "Cute Couple Memories",
+    "nameI18n": {
+      "en": "Cute Couple Memories"
+    },
+    "thumbnailUrl": "",
+    "songId": 16042,
+    "effectSetId": "polaroid_memories",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "5c1976e8-3042-4650-8d8c-a865f0a0a8be",
+    "name": "Christmas Romance",
+    "nameI18n": {
+      "en": "Christmas Romance"
+    },
+    "thumbnailUrl": "",
+    "songId": 20395,
+    "effectSetId": "cinema_magic",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "couple"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "5da23cca-7a25-458e-9b19-c30caa0c6551",
+    "name": "Pop Art Selfie",
+    "nameI18n": {
+      "en": "Pop Art Selfie"
+    },
+    "thumbnailUrl": "",
+    "songId": 3427,
+    "effectSetId": "pop_art",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "selfie"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "5e965bf6-4dd1-4cc7-972b-88cd603f2245",
+    "name": "New Year Celebration",
+    "nameI18n": {
+      "en": "New Year Celebration"
+    },
+    "thumbnailUrl": "",
+    "songId": 20397,
+    "effectSetId": "birthday_bash",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "party"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "5f41fe28-bcd8-4a08-b636-47612396714a",
+    "name": "Hero Entry Celebration",
+    "nameI18n": {
+      "en": "Hero Entry Celebration"
+    },
+    "thumbnailUrl": "",
+    "songId": 16049,
+    "effectSetId": "cinema_magic",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "celebration"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "60f629cd-5fdf-40f9-84b7-ba913bf28e23",
+    "name": "Local Pride Celebration",
+    "nameI18n": {
+      "en": "Local Pride Celebration"
+    },
+    "thumbnailUrl": "",
+    "songId": 16047,
+    "effectSetId": "street_graffiti",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "celebration"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "61e06a35-1d3d-419c-98a2-436e5ecf681c",
+    "name": "Festival Dance Moves",
+    "nameI18n": {
+      "en": "Festival Dance Moves"
+    },
+    "thumbnailUrl": "",
+    "songId": 16051,
+    "effectSetId": "wild_party",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "celebration"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "6576fd4f-7c71-452d-881b-83df480aff4c",
+    "name": "Night Celebration Vibes",
+    "nameI18n": {
+      "en": "Night Celebration Vibes"
+    },
+    "thumbnailUrl": "",
+    "songId": 16036,
+    "effectSetId": "neon_nights",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "celebration"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "6793a37f-952d-45ef-be86-a1a80f43111c",
+    "name": "True Love Memories",
+    "nameI18n": {
+      "en": "True Love Memories"
+    },
+    "thumbnailUrl": "",
+    "songId": 16039,
+    "effectSetId": "summer_memories",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "family"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "67b60847-e553-495f-9a5f-67c4a9729332",
+    "name": "Dreamy Memories",
+    "nameI18n": {
+      "en": "Dreamy Memories"
+    },
+    "thumbnailUrl": "",
+    "songId": 2037,
+    "effectSetId": "dreamy_vibes",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "memories"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "694757b7-00dd-42b9-9d38-ffaab276df9c",
+    "name": "Tonight Birthday",
+    "nameI18n": {
+      "en": "Tonight Birthday"
+    },
+    "thumbnailUrl": "",
+    "songId": 20431,
+    "effectSetId": "wild_party",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "birthday"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "6ec6c393-53da-4ba2-8111-8f980e5c55bd",
+    "name": "Festival Dance Energy",
+    "nameI18n": {
+      "en": "Festival Dance Energy"
+    },
+    "thumbnailUrl": "",
+    "songId": 16059,
+    "effectSetId": "wild_party",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "celebration"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "6f3a9a95-0e0b-450f-b6e2-ea40073ae271",
+    "name": "Pop Music Video",
+    "nameI18n": {
+      "en": "Pop Music Video"
+    },
+    "thumbnailUrl": "",
+    "songId": 15247,
+    "effectSetId": "music_video",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "selfie"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "6fb9d6b1-feb1-4214-9d75-fd59f85bdc2a",
+    "name": "Summer Vacation",
+    "nameI18n": {
+      "en": "Summer Vacation"
+    },
+    "thumbnailUrl": "",
+    "songId": 20229,
+    "effectSetId": "summer_memories",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "travel"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "73240bd0-a995-4509-989f-3c8f72cc1ae6",
+    "name": "Travel Diary",
+    "nameI18n": {
+      "en": "Travel Diary"
+    },
+    "thumbnailUrl": "",
+    "songId": 442,
+    "effectSetId": "travel_diary",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "travel"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "743bb0ba-f8f0-477f-84e2-bfdfab4418e1",
+    "name": "Polaroid Memories",
+    "nameI18n": {
+      "en": "Polaroid Memories"
+    },
+    "thumbnailUrl": "",
+    "songId": 442,
+    "effectSetId": "polaroid_memories",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "memories"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "763b0946-cfac-4998-9f87-e5891d27443d",
+    "name": "Royal Love Story",
+    "nameI18n": {
+      "en": "Royal Love Story"
+    },
+    "thumbnailUrl": "",
+    "songId": 16056,
+    "effectSetId": "classic_elegance",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "78e6e881-3739-4e83-a4fe-5edc5e808473",
+    "name": "Street Party Energy",
+    "nameI18n": {
+      "en": "Street Party Energy"
+    },
+    "thumbnailUrl": "",
+    "songId": 16065,
+    "effectSetId": "zoom_mania",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "celebration"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "7cccbc5f-b4b8-4cc0-bd99-ed3fe648a6db",
+    "name": "My Beloved Memories",
+    "nameI18n": {
+      "en": "My Beloved Memories"
+    },
+    "thumbnailUrl": "",
+    "songId": 16050,
+    "effectSetId": "dreamy_vibes",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "7f7d32c3-7fa6-4455-b958-a5a9c2cd7226",
+    "name": "Happy Birthday",
+    "nameI18n": {
+      "en": "Happy Birthday"
+    },
+    "thumbnailUrl": "",
+    "songId": 16043,
+    "effectSetId": "wild_party",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "birthday"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "82bed96c-8ad8-464c-b2bd-dba9270d364b",
+    "name": "Birthday Bash",
+    "nameI18n": {
+      "en": "Birthday Bash"
+    },
+    "thumbnailUrl": "",
+    "songId": 20397,
+    "effectSetId": "birthday_bash",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "birthday"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "889d04b7-2818-4db8-a100-41f516085e52",
+    "name": "Elegant Wedding",
+    "nameI18n": {
+      "en": "Elegant Wedding"
+    },
+    "thumbnailUrl": "",
+    "songId": 15206,
+    "effectSetId": "classic_elegance",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "8b75869d-1fe3-44de-9b0d-47f2e357517a",
+    "name": "Creative Selfie",
+    "nameI18n": {
+      "en": "Creative Selfie"
+    },
+    "thumbnailUrl": "",
+    "songId": 3427,
+    "effectSetId": "artistic_chaos",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "selfie"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "8c0ca218-1e7c-4aee-9206-d33176eaa6e1",
+    "name": "Truth & Pride",
+    "nameI18n": {
+      "en": "Truth & Pride"
+    },
+    "thumbnailUrl": "",
+    "songId": 16035,
+    "effectSetId": "vintage_film",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "family"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "90a62b73-c496-4338-8f61-5f271f3cbe19",
+    "name": "Wedding Love Story",
+    "nameI18n": {
+      "en": "Wedding Love Story"
+    },
+    "thumbnailUrl": "",
+    "songId": 15206,
+    "effectSetId": "wedding_bells",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "923b423e-4572-4172-aa0c-2443841b14b4",
+    "name": "Minimal Love Story",
+    "nameI18n": {
+      "en": "Minimal Love Story"
+    },
+    "thumbnailUrl": "",
+    "songId": 20213,
+    "effectSetId": "minimalist",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "couple"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "94857c39-6e59-4658-b37a-92543f48a269",
+    "name": "Come See My World",
+    "nameI18n": {
+      "en": "Come See My World"
+    },
+    "thumbnailUrl": "",
+    "songId": 16069,
+    "effectSetId": "nature_vibes",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "family"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "95f8910b-74e9-407e-b7fa-92425d335136",
+    "name": "Dance Flip Edit",
+    "nameI18n": {
+      "en": "Dance Flip Edit"
+    },
+    "thumbnailUrl": "",
+    "songId": 15302,
+    "effectSetId": "flip_master",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "party"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "982b20fa-9a95-411f-8821-a0f65e5be185",
+    "name": "Because Of You",
+    "nameI18n": {
+      "en": "Because Of You"
+    },
+    "thumbnailUrl": "",
+    "songId": 16071,
+    "effectSetId": "geometric_love",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "love"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "9c148d71-8b37-4c08-b42c-b432a60b6173",
+    "name": "Midnight Romance",
+    "nameI18n": {
+      "en": "Midnight Romance"
+    },
+    "thumbnailUrl": "",
+    "songId": 20002,
+    "effectSetId": "midnight_fantasy",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "couple"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "9c67fd52-cd7d-449c-842d-c0cc38ce0bc5",
+    "name": "Forever With You",
+    "nameI18n": {
+      "en": "Forever With You"
+    },
+    "thumbnailUrl": "",
+    "songId": 15601,
+    "effectSetId": "wedding_bells",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "love"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "a135c497-06c3-4e79-b79d-fb5aab2f21e0",
+    "name": "Morning Coffee Vlog",
+    "nameI18n": {
+      "en": "Morning Coffee Vlog"
+    },
+    "thumbnailUrl": "",
+    "songId": 15205,
+    "effectSetId": "morning_coffee",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "daily_life"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "a1a329f1-b6a0-407e-a8b3-5478654fd6fa",
+    "name": "Handmade Memories",
+    "nameI18n": {
+      "en": "Handmade Memories"
+    },
+    "thumbnailUrl": "",
+    "songId": 2037,
+    "effectSetId": "paper_craft",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "memories"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "a1be7774-c7f4-4b8b-8412-bf145ae913e3",
+    "name": "Birthday show",
+    "nameI18n": {
+      "en": "Birthday show"
+    },
+    "thumbnailUrl": "",
+    "songId": 16073,
+    "effectSetId": "disco_fever",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "birthday"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "a21e21bc-59bb-41d4-b15a-39a0c6f1d965",
+    "name": "Eternal Love Story",
+    "nameI18n": {
+      "en": "Eternal Love Story"
+    },
+    "thumbnailUrl": "",
+    "songId": 15201,
+    "effectSetId": "romantic_sunset",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "love"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "a2fed714-cc16-43cc-af4e-6033cc878c5e",
+    "name": "Sweet Love Moments",
+    "nameI18n": {
+      "en": "Sweet Love Moments"
+    },
+    "thumbnailUrl": "",
+    "songId": 16037,
+    "effectSetId": "dreamy_vibes",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "a652b784-d4ec-4365-87a7-857db36df549",
+    "name": "Cyber Street Edit",
+    "nameI18n": {
+      "en": "Cyber Street Edit"
+    },
+    "thumbnailUrl": "",
+    "songId": 20521,
+    "effectSetId": "digital_apocalypse",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "fashion"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "a6560907-c6ea-404a-91f6-98a0180e9c9b",
+    "name": "Heartfelt Memories",
+    "nameI18n": {
+      "en": "Heartfelt Memories"
+    },
+    "thumbnailUrl": "",
+    "songId": 16060,
+    "effectSetId": "summer_memories",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "family"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "ac2c66fe-09c5-4123-bd8f-40bd1872448c",
+    "name": "Birthday invitation",
+    "nameI18n": {
+      "en": "Birthday invitation"
+    },
+    "thumbnailUrl": "",
+    "songId": 15251,
+    "effectSetId": "music_video",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "birthday"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "ade3e7d7-86c0-4d04-bf58-53c77dd14133",
+    "name": "Chill birthday",
+    "nameI18n": {
+      "en": "Chill birthday"
+    },
+    "thumbnailUrl": "",
+    "songId": 16055,
+    "effectSetId": "summer_memories",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "birthday"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "af0f6be4-ec7b-42dd-8ca3-0316d6f45d5c",
+    "name": "Birthday Party",
+    "nameI18n": {
+      "en": "Birthday Party"
+    },
+    "thumbnailUrl": "",
+    "songId": 16041,
+    "effectSetId": "wild_party",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "birthday"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "b01fccf4-3bf0-4532-86d6-49bd61c5e725",
+    "name": "Autumn Life Moments",
+    "nameI18n": {
+      "en": "Autumn Life Moments"
+    },
+    "thumbnailUrl": "",
+    "songId": 15205,
+    "effectSetId": "autumn_leaves",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "memories"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "b1e3400c-9b24-4c9c-ab80-ea153d1f52a3",
+    "name": "Crystal Love",
+    "nameI18n": {
+      "en": "Crystal Love"
+    },
+    "thumbnailUrl": "",
+    "songId": 15206,
+    "effectSetId": "crystal_clear",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "couple"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "b2d5d1ba-42ca-49bf-a2ad-ed51cff3ff14",
+    "name": "Fairy Tale Wedding",
+    "nameI18n": {
+      "en": "Fairy Tale Wedding"
+    },
+    "thumbnailUrl": "",
+    "songId": 20395,
     "effectSetId": "fairy_tale",
     "aspectRatio": "9:16",
-    "tags": [],
-    "isPremium": true,
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
+    ],
+    "isPremium": false,
     "isActive": true
   },
   {
-    "id": "tpl_3d_showcase",
-    "name": "3D Showcase",
-    "description": "Stunning 3D flip and cube effects",
+    "id": "b2f7a47f-a360-443e-9cb9-984e15d15102",
+    "name": "Perfect Love Story",
+    "nameI18n": {
+      "en": "Perfect Love Story"
+    },
     "thumbnailUrl": "",
-    "songId": 20284,
+    "songId": 16062,
+    "effectSetId": "romantic_sunset",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "love"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "b3cd30b8-9091-465c-b62a-62b602d156a0",
+    "name": "Dreamy Life Moments",
+    "nameI18n": {
+      "en": "Dreamy Life Moments"
+    },
+    "thumbnailUrl": "",
+    "songId": 2037,
+    "effectSetId": "watercolor_dreams",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "memories"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "b64068cf-5ed3-409e-b0e1-0ecc5803b61c",
+    "name": "Romantic Couple Moments",
+    "nameI18n": {
+      "en": "Romantic Couple Moments"
+    },
+    "thumbnailUrl": "",
+    "songId": 16048,
+    "effectSetId": "romantic_sunset",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "bac48469-e5e0-4436-8a64-2b627b79d48e",
+    "name": "Disco Fever Party",
+    "nameI18n": {
+      "en": "Disco Fever Party"
+    },
+    "thumbnailUrl": "",
+    "songId": 15302,
+    "effectSetId": "disco_fever",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "party"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "bb469d75-d034-4f06-8307-eed594670415",
+    "name": "Cyber Creator Edit",
+    "nameI18n": {
+      "en": "Cyber Creator Edit"
+    },
+    "thumbnailUrl": "",
+    "songId": 15247,
+    "effectSetId": "matrix_code",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "selfie"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "c506999b-9e30-433e-a04c-9a206be6d872",
+    "name": "Gamer Attitude",
+    "nameI18n": {
+      "en": "Gamer Attitude"
+    },
+    "thumbnailUrl": "",
+    "songId": 20521,
+    "effectSetId": "game_over",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "selfie"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "c6e0bf46-8727-4ee8-b788-946962f40e3c",
+    "name": "Beautiful Bride Moments",
+    "nameI18n": {
+      "en": "Beautiful Bride Moments"
+    },
+    "thumbnailUrl": "",
+    "songId": 16057,
+    "effectSetId": "classic_elegance",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "c874b65d-bdff-4074-9c70-c70ad1319768",
+    "name": "Legendary Love Story",
+    "nameI18n": {
+      "en": "Legendary Love Story"
+    },
+    "thumbnailUrl": "",
+    "songId": 16064,
+    "effectSetId": "fairy_tale",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "love"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "ce078c7a-a047-46c2-94ae-f1273f716aec",
+    "name": "Emotional Love Story",
+    "nameI18n": {
+      "en": "Emotional Love Story"
+    },
+    "thumbnailUrl": "",
+    "songId": 16038,
+    "effectSetId": "dreamy_vibes",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "d0ab5afa-48a8-4bc3-a392-b6173cc66449",
+    "name": "Motion Lights Edit",
+    "nameI18n": {
+      "en": "Motion Lights Edit"
+    },
+    "thumbnailUrl": "",
+    "songId": 20229,
+    "effectSetId": "motion_flow",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "selfie"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "d640f27f-cd29-4938-95e1-087379cc6cd2",
+    "name": "Latin Party Night",
+    "nameI18n": {
+      "en": "Latin Party Night"
+    },
+    "thumbnailUrl": "",
+    "songId": 20397,
+    "effectSetId": "wild_party",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "party"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "d6a093b3-1c0f-4f4e-9043-8ed75b412fc7",
+    "name": "Trance Dance",
+    "nameI18n": {
+      "en": "Trance Dance"
+    },
+    "thumbnailUrl": "",
+    "songId": 636,
+    "effectSetId": "hypnotic_trance",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "party"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "dc8ab077-5df2-4438-b4cb-9a06e1d33a79",
+    "name": "Sacred Wedding Love",
+    "nameI18n": {
+      "en": "Sacred Wedding Love"
+    },
+    "thumbnailUrl": "",
+    "songId": 16054,
+    "effectSetId": "wedding_bells",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "dd66edc1-8231-457e-bb1d-e8cc65479dd5",
+    "name": "Our Life Story",
+    "nameI18n": {
+      "en": "Our Life Story"
+    },
+    "thumbnailUrl": "",
+    "songId": 16068,
+    "effectSetId": "travel_diary",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "family"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "e3dcf3c4-0cd4-45d8-bcf3-56fba4381a7b",
+    "name": "Digital Creator Edit",
+    "nameI18n": {
+      "en": "Digital Creator Edit"
+    },
+    "thumbnailUrl": "",
+    "songId": 15247,
+    "effectSetId": "tech_showcase",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "selfie"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "e5c222df-b5fc-42bb-a37f-2c5672f9a2f4",
+    "name": "Sunset Romance",
+    "nameI18n": {
+      "en": "Sunset Romance"
+    },
+    "thumbnailUrl": "",
+    "songId": 15206,
+    "effectSetId": "romantic_sunset",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "couple"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "e7140aa1-539d-456b-9358-d340c4313fe8",
+    "name": "Geometric Love",
+    "nameI18n": {
+      "en": "Geometric Love"
+    },
+    "thumbnailUrl": "",
+    "songId": 15301,
+    "effectSetId": "geometric_love",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "couple"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "eb4560f0-2190-46a7-bf39-c331cb619fe5",
+    "name": "Golden Glam",
+    "nameI18n": {
+      "en": "Golden Glam"
+    },
+    "thumbnailUrl": "",
+    "songId": 448,
+    "effectSetId": "liquid_gold",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "fashion"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "ec407eb0-6cd3-4470-9722-72d79edf3653",
+    "name": "Love Story Reel",
+    "nameI18n": {
+      "en": "Love Story Reel"
+    },
+    "thumbnailUrl": "",
+    "songId": 631,
+    "effectSetId": "geometric_love",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "ed9ec1a1-7034-4764-8f4b-125ce2f48e5b",
+    "name": "Falling In Love",
+    "nameI18n": {
+      "en": "Falling In Love"
+    },
+    "thumbnailUrl": "",
+    "songId": 16053,
+    "effectSetId": "dreamy_vibes",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "wedding"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "f01917b2-733c-4bff-a56f-dae4499c69ad",
+    "name": "Psychedelic Dance",
+    "nameI18n": {
+      "en": "Psychedelic Dance"
+    },
+    "thumbnailUrl": "",
+    "songId": 636,
+    "effectSetId": "psychedelic_trip",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "party"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "f1a10ea8-2f5f-4348-95b7-43df7caa54b4",
+    "name": "Calm Daily Moments",
+    "nameI18n": {
+      "en": "Calm Daily Moments"
+    },
+    "thumbnailUrl": "",
+    "songId": 15205,
+    "effectSetId": "zen_garden",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "daily_life"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "fc3538fd-9b06-4e45-99c1-8d0cf401378b",
+    "name": "Forever Love",
+    "nameI18n": {
+      "en": "Forever Love"
+    },
+    "thumbnailUrl": "",
+    "songId": 16072,
+    "effectSetId": "romantic_sunset",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "love"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "fc736fd6-688f-4f0a-85de-7528369313f2",
+    "name": "Crazy In Love",
+    "nameI18n": {
+      "en": "Crazy In Love"
+    },
+    "thumbnailUrl": "",
+    "songId": 16067,
+    "effectSetId": "geometric_love",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "love"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "ff00bfba-2eb0-4830-9722-e1e9006c3b92",
+    "name": "Neon Dance Party",
+    "nameI18n": {
+      "en": "Neon Dance Party"
+    },
+    "thumbnailUrl": "",
+    "songId": 15302,
+    "effectSetId": "neon_nights",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "party"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "ff5a43b5-cc9c-4b21-9a8d-7f18cef43824",
+    "name": "Nights With You",
+    "nameI18n": {
+      "en": "Nights With You"
+    },
+    "thumbnailUrl": "",
+    "songId": 16063,
+    "effectSetId": "romantic_sunset",
+    "aspectRatio": "9:16",
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "love"
+    ],
+    "isPremium": false,
+    "isActive": true
+  },
+  {
+    "id": "ff8fe694-f352-42d4-9ad8-77af6dc1518c",
+    "name": "3D Creator Stage",
+    "nameI18n": {
+      "en": "3D Creator Stage"
+    },
+    "thumbnailUrl": "",
+    "songId": 15247,
     "effectSetId": "3d_world",
     "aspectRatio": "9:16",
-    "tags": [
-      "trending",
-      "new"
-    ],
-    "isPremium": true,
-    "isActive": true
-  },
-  {
-    "id": "tpl_wild_party",
-    "name": "Wild Party",
-    "description": "Crazy energetic party chaos",
-    "thumbnailUrl": "",
-    "songId": 20301,
-    "effectSetId": "wild_party",
-    "aspectRatio": "9:16",
-    "tags": [
-      "trending"
-    ],
-    "isPremium": false,
-    "isActive": true
-  },
-  {
-    "id": "tpl_zen_meditation",
-    "name": "Zen Meditation",
-    "description": "Calm, peaceful transitions",
-    "thumbnailUrl": "",
-    "songId": 20262,
-    "effectSetId": "zen_garden",
-    "aspectRatio": "1:1",
-    "tags": [
-      "new"
-    ],
-    "isPremium": false,
-    "isActive": true
-  },
-  {
-    "id": "tpl_christmas_magic",
-    "name": "Christmas Magic",
-    "description": "Festive holiday spirit",
-    "thumbnailUrl": "",
-    "songId": 20112,
-    "effectSetId": "fairy_tale",
-    "aspectRatio": "9:16",
-    "tags": [
-      "seasonal"
-    ],
-    "isPremium": false,
-    "isActive": true
-  },
-  {
-    "id": "tpl_new_year_party",
-    "name": "New Year Party",
-    "description": "Countdown celebration vibes",
-    "thumbnailUrl": "",
-    "songId": 20284,
-    "effectSetId": "wild_party",
-    "aspectRatio": "9:16",
-    "tags": [
-      "seasonal",
-      "trending"
+    "imageDurationMs": 3000,
+    "transitionPct": 30,
+    "vibeTags": [
+      "selfie"
     ],
     "isPremium": false,
     "isActive": true

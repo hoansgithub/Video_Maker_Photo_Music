@@ -11,10 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -34,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.theme.AppDimens
-import com.videomaker.aimusic.ui.theme.Black40
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 
@@ -64,31 +60,15 @@ fun SongListItem(
                 .padding(dimens.spaceSm),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Thumbnail with play button overlay
-            Box {
-                AppAsyncImage(
-                    imageUrl = coverUrl,
-                    contentDescription = name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(dimens.radiusMd))
-                )
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .align(Alignment.Center)
-                        .background(Black40, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
+            // Thumbnail — shows music note placeholder when no image available
+            AppAsyncImage(
+                imageUrl = coverUrl,
+                contentDescription = name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(dimens.radiusMd))
+            )
 
             Spacer(modifier = Modifier.width(dimens.spaceMd))
 

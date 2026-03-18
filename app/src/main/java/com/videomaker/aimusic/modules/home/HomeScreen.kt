@@ -266,20 +266,17 @@ private fun GalleryTabContent(
         viewModel = viewModel,
         topBarHeight = topBarHeight,
         onNavigateToCreate = onCreateClick,
-        onNavigateToSongDetail = { songId ->
+        onNavigateToSongDetail = {
             // TODO: Navigate to song detail
         },
-        onNavigateToTemplateDetail = { templateId ->
+        onNavigateToTemplateDetail = {
             // TODO: Navigate to template detail
         },
         onNavigateToAllTopSongs = {
             // TODO: Navigate to all top songs
         },
-        onNavigateToAllTrendingTemplates = {
-            // TODO: Navigate to all trending templates
-        },
-        onNavigateToAllPopularTemplates = {
-            // TODO: Navigate to all popular templates
+        onNavigateToAllTemplates = {
+            // TODO: Navigate to all templates
         },
         onNavigateToSearch = onNavigateToSearch
     )

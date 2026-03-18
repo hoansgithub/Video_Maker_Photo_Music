@@ -444,32 +444,16 @@ private fun SuggestSongCard(
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Column {
-            // Cover image — 1:1, 16dp corner radius, with centered play button overlay
-            Box {
-                AppAsyncImage(
-                    imageUrl = song.coverUrl,
-                    contentDescription = song.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                        .clip(RoundedCornerShape(16.dp))
-                )
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .align(Alignment.Center)
-                        .background(Black40, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
+            // Cover image — 1:1, 16dp corner radius
+            AppAsyncImage(
+                imageUrl = song.coverUrl,
+                contentDescription = song.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(16.dp))
+            )
 
             // Song info: [name + artist column] | [start-project button]
             Row(
@@ -672,31 +656,15 @@ private fun RankingSongItem(
                 .padding(dimens.spaceSm),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Thumbnail with centered play button overlay
-            Box {
-                AppAsyncImage(
-                    imageUrl = song.coverUrl,
-                    contentDescription = song.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(dimens.radiusMd))
-                )
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .align(Alignment.Center)
-                        .background(Black40, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
+            // Thumbnail
+            AppAsyncImage(
+                imageUrl = song.coverUrl,
+                contentDescription = song.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(dimens.radiusMd))
+            )
 
             Spacer(modifier = Modifier.width(dimens.spaceSm))
 
