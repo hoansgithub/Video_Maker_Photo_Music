@@ -3,6 +3,12 @@ package com.videomaker.aimusic.modules.gallerysearch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
+import coil.size.Precision
+import coil.size.Size
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +58,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -562,27 +569,63 @@ private fun GallerySearchTemplateCard(
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
+    val context = LocalContext.current
     val aspectRatio = parseAspectRatio(template.aspectRatio)
+
+    val imageRequest = remember(template.thumbnailPath, template.id) {
+        ImageRequest.Builder(context)
+            .data(template.thumbnailPath)
+            .size(Size(400, 700))
+            .precision(Precision.INEXACT)
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .memoryCacheKey("template_${template.id}")
+            .diskCacheKey("template_${template.id}")
+            .build()
+    }
 
     Card(
         onClick = onClick,
         modifier = modifier.aspectRatio(aspectRatio.coerceIn(0.5f, 2f)),
         shape = RoundedCornerShape(dimens.radiusLg),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Primary.copy(alpha = 0.15f),
-                            MaterialTheme.colorScheme.surfaceVariant
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (template.thumbnailPath.isNotEmpty()) {
+                AsyncImage(
+                    model = imageRequest,
+                    contentDescription = template.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    Primary.copy(alpha = 0.15f),
+                                    MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            )
+                        )
+                )
+            }
+
+            // Gradient scrim so name is readable over any thumbnail
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.55f)),
+                            startY = 0.4f * Float.MAX_VALUE
                         )
                     )
-                )
-        ) {
+            )
+
             // Premium badge
             if (template.isPremium) {
                 Box(
@@ -604,19 +647,16 @@ private fun GallerySearchTemplateCard(
             }
 
             // Template name
-            Column(
+            Text(
+                text = template.name,
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                color = TextBright,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(10.dp)
-            ) {
-                Text(
-                    text = template.name,
-                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = TextBright,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            )
         }
     }
 }
@@ -778,8 +818,8 @@ private fun GallerySearchResultsPreview() {
             )
             GallerySearchResultsContent(
                 templates = listOf(
-                    GallerySearchTemplateItem("1", "Aesthetic Mood", listOf("aesthetic"), "9:16", false),
-                    GallerySearchTemplateItem("2", "Chill Lofi", listOf("lofi", "aesthetic"), "1:1", true),
+                    GallerySearchTemplateItem("1", "Aesthetic Mood", "", listOf("aesthetic"), "9:16", false),
+                    GallerySearchTemplateItem("2", "Chill Lofi", "", listOf("lofi", "aesthetic"), "1:1", true),
                 ),
                 songs = listOf(
                     MusicSong(id = 1, name = "Aesthetic Vibes", artist = "Lo-Fi Girl"),

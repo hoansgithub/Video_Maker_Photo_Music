@@ -26,8 +26,14 @@ class TemplateRepositoryImpl(
 ) : TemplateRepository {
 
     companion object {
+        private const val TABLE_TEMPLATES = "templates"
         private const val FN_TEMPLATES_SORTED = "get_templates_sorted"
         private const val FN_TEMPLATES_BY_TAG_SORTED = "get_templates_by_tag_sorted"
+        private val COLUMNS_SEARCH = Columns.raw(
+            "id,name,thumbnail_path,song_id,effect_set_id,aspect_ratio," +
+            "image_duration_ms,transition_pct,is_premium,is_active,sort_order,use_count," +
+            "template_vibe_tags(vibe_tag_id,sort_order)"
+        )
     }
 
     override suspend fun getTemplates(limit: Int, offset: Int): Result<List<VideoTemplate>> =
@@ -122,6 +128,30 @@ class TemplateRepositoryImpl(
             Result.success(fallback)
         }
     }
+
+    override suspend fun searchTemplates(query: String): Result<List<VideoTemplate>> =
+        withContext(Dispatchers.IO) {
+            val q = query.trim()
+            if (q.isEmpty()) return@withContext Result.success(emptyList())
+
+            try {
+                val templates = supabaseClient.from(TABLE_TEMPLATES)
+                    .select(COLUMNS_SEARCH) {
+                        filter {
+                            eq("is_active", true)
+                            ilike("name", "%$q%")
+                        }
+                        order("use_count", Order.DESCENDING)
+                        limit(15)
+                    }
+                    .decodeList<TemplateDto>()
+                    .map { it.toDomain() }
+
+                Result.success(templates)
+            } catch (e: Exception) {
+                Result.failure(Exception("Failed to search templates", e))
+            }
+        }
 
     override suspend fun clearCache() {
         apiCacheManager.clearTemplateCache()

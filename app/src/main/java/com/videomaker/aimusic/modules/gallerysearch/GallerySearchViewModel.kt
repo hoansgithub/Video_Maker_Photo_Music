@@ -8,9 +8,12 @@ import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
 import com.videomaker.aimusic.domain.usecase.SearchSongsUseCase
+import com.videomaker.aimusic.domain.usecase.SearchTemplatesUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,6 +42,7 @@ sealed class GallerySearchUiState {
 data class GallerySearchTemplateItem(
     val id: String,
     val name: String,
+    val thumbnailPath: String,
     val tags: List<String>,
     val aspectRatio: String,
     val isPremium: Boolean
@@ -62,6 +66,7 @@ sealed class GallerySearchNavigationEvent {
 class GallerySearchViewModel(
     private val preferencesManager: PreferencesManager,
     private val searchSongsUseCase: SearchSongsUseCase,
+    private val searchTemplatesUseCase: SearchTemplatesUseCase,
     private val getGenresUseCase: GetGenresUseCase
 ) : ViewModel() {
 
@@ -106,8 +111,7 @@ class GallerySearchViewModel(
                             emit(GallerySearchUiState.Idle)
                         } else {
                             emit(GallerySearchUiState.Loading)
-                            val result = searchSongsUseCase(query)
-                            emit(buildResultState(query, result))
+                            emit(runSearch(query))
                         }
                     }
                 }
@@ -181,20 +185,38 @@ class GallerySearchViewModel(
         explicitSearchJob?.cancel()
         _uiState.value = GallerySearchUiState.Loading
         explicitSearchJob = viewModelScope.launch {
-            _uiState.value = buildResultState(query, searchSongsUseCase(query))
+            _uiState.value = runSearch(query)
         }
     }
 
-    private fun buildResultState(
-        query: String,
-        result: Result<List<MusicSong>>
-    ): GallerySearchUiState {
-        return result.fold(
-            onSuccess = { songs ->
-                if (songs.isEmpty()) GallerySearchUiState.Empty(query)
-                else GallerySearchUiState.Results(query = query, templates = emptyList(), songs = songs)
-            },
-            onFailure = { GallerySearchUiState.Error("Search failed. Please try again.") }
-        )
+    /** Runs template + song searches in parallel and merges into a single UI state. */
+    private suspend fun runSearch(query: String): GallerySearchUiState = coroutineScope {
+        val templatesDeferred = async { searchTemplatesUseCase(query) }
+        val songsDeferred = async { searchSongsUseCase(query) }
+
+        val templateResult = templatesDeferred.await()
+        val songResult = songsDeferred.await()
+
+        if (templateResult.isFailure && songResult.isFailure) {
+            return@coroutineScope GallerySearchUiState.Error("Search failed. Please try again.")
+        }
+
+        val templates = templateResult.getOrElse { emptyList() }.map { t ->
+            GallerySearchTemplateItem(
+                id = t.id,
+                name = t.name,
+                thumbnailPath = t.thumbnailPath,
+                tags = t.vibeTags,
+                aspectRatio = t.aspectRatio,
+                isPremium = t.isPremium
+            )
+        }
+        val songs = songResult.getOrElse { emptyList() }
+
+        if (templates.isEmpty() && songs.isEmpty()) {
+            GallerySearchUiState.Empty(query)
+        } else {
+            GallerySearchUiState.Results(query = query, templates = templates, songs = songs)
+        }
     }
 }

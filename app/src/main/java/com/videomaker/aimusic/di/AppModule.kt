@@ -34,6 +34,7 @@ import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
 import com.videomaker.aimusic.domain.usecase.ReorderAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.SearchSongsUseCase
+import com.videomaker.aimusic.domain.usecase.SearchTemplatesUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CheckLanguageSelectedUseCase
@@ -179,6 +180,7 @@ val domainModule = module {
     single { GetSongsByGenreUseCase(it.get()) }
     single { ClearSongCacheUseCase(it.get()) }
     single { SearchSongsUseCase(it.get()) }
+    single { SearchTemplatesUseCase(it.get()) }
 }
 
 // ========== PRESENTATION LAYER MODULE ==========
@@ -328,12 +330,14 @@ class SongsViewModelFactory(
 class GallerySearchViewModelFactory(
     private val preferencesManager: PreferencesManager,
     private val searchSongsUseCase: SearchSongsUseCase,
+    private val searchTemplatesUseCase: SearchTemplatesUseCase,
     private val getGenresUseCase: GetGenresUseCase
 ) {
     fun create(): GallerySearchViewModel {
         return GallerySearchViewModel(
             preferencesManager = preferencesManager,
             searchSongsUseCase = searchSongsUseCase,
+            searchTemplatesUseCase = searchTemplatesUseCase,
             getGenresUseCase = getGenresUseCase
         )
     }
@@ -409,6 +413,7 @@ val presentationModule = module {
         GallerySearchViewModelFactory(
             preferencesManager = it.get(),
             searchSongsUseCase = it.get(),
+            searchTemplatesUseCase = it.get(),
             getGenresUseCase = it.get()
         )
     }

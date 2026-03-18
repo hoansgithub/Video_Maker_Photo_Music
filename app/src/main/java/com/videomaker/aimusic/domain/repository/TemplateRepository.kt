@@ -20,6 +20,12 @@ interface TemplateRepository {
      */
     suspend fun getVibeTags(): Result<List<VibeTag>>
 
+    /**
+     * Search templates by name (ILIKE). Returns up to 15 results ordered by use_count.
+     * Not cached — search results are query-specific.
+     */
+    suspend fun searchTemplates(query: String): Result<List<VideoTemplate>>
+
     /** Clears cached template data. Call before pull-to-refresh. */
     suspend fun clearCache()
 }

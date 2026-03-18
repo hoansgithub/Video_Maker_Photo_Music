@@ -133,8 +133,10 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 )
                 GallerySearchScreen(
                     viewModel = searchViewModel,
-                    onNavigateToTemplateDetail = { /* TODO */ },
-                    onNavigateToSongDetail = { /* TODO */ },
+                    onNavigateToTemplateDetail = { templateId ->
+                        backStack.add(AppRoute.AssetPicker(templateId = templateId))
+                    },
+                    onNavigateToSongDetail = { /* TODO: song detail screen */ },
                     onNavigateBack = { backStack.removeLastOrNull() }
                 )
             }
