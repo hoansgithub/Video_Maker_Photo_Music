@@ -1,7 +1,6 @@
 package com.videomaker.aimusic.navigation
 
 import android.app.Activity
-import android.net.Uri
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -35,6 +34,7 @@ import com.videomaker.aimusic.di.GalleryViewModelFactory
 import com.videomaker.aimusic.di.MusicPickerViewModelFactory
 import com.videomaker.aimusic.di.ProjectsViewModelFactory
 import com.videomaker.aimusic.di.SongsViewModelFactory
+import com.videomaker.aimusic.di.TemplatePreviewerViewModelFactory
 import com.videomaker.aimusic.modules.editor.EditorScreen
 import com.videomaker.aimusic.modules.editor.EditorViewModel
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
@@ -50,6 +50,7 @@ import com.videomaker.aimusic.modules.projects.ProjectsScreen
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.settings.SettingsScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerScreen
+import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
 
 private val slideAnimSpec = tween<IntOffset>(300)
 
@@ -238,9 +239,23 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             // TEMPLATE FLOW
             // ============================================
             entry<AppRoute.TemplatePreviewer> { route ->
+                val factory = remember(route.templateId) { ACCDI.get<TemplatePreviewerViewModelFactory>() }
+                val viewModel: TemplatePreviewerViewModel = viewModel(
+                    key = "template_previewer_${route.templateId}",
+                    factory = createSafeViewModelFactory {
+                        factory.create(templateId = route.templateId, imageUris = route.imageUris)
+                    }
+                )
                 TemplatePreviewerScreen(
-                    templateId = route.templateId,
-                    imageUris = route.imageUris.map { Uri.parse(it) },
+                    viewModel = viewModel,
+                    onNavigateToEditor = { projectId ->
+                        backStack.apply {
+                            val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home
+                            clear()
+                            add(home)
+                            add(AppRoute.Editor(projectId))
+                        }
+                    },
                     onNavigateBack = { backStack.removeLastOrNull() }
                 )
             }

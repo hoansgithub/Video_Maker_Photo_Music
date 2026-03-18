@@ -59,6 +59,7 @@ import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.root.RootViewModel
 import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
+import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
 
 /**
  * ACCDI Dependency Injection Modules
@@ -325,6 +326,25 @@ class SongsViewModelFactory(
 }
 
 /**
+ * Factory wrapper for TemplatePreviewerViewModel to support templateId + imageUris parameters.
+ */
+class TemplatePreviewerViewModelFactory(
+    private val templateRepository: TemplateRepository,
+    private val createProjectUseCase: CreateProjectUseCase,
+    private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase
+) {
+    fun create(templateId: String, imageUris: List<String>): TemplatePreviewerViewModel {
+        return TemplatePreviewerViewModel(
+            initialTemplateId = templateId,
+            imageUrisStr = imageUris,
+            templateRepository = templateRepository,
+            createProjectUseCase = createProjectUseCase,
+            updateProjectSettingsUseCase = updateProjectSettingsUseCase
+        )
+    }
+}
+
+/**
  * Factory wrapper for SearchViewModel.
  */
 class GallerySearchViewModelFactory(
@@ -427,6 +447,15 @@ val presentationModule = module {
             getGenresUseCase = it.get(),
             getSongsByGenreUseCase = it.get(),
             clearSongCacheUseCase = it.get()
+        )
+    }
+
+    // Template Previewer ViewModel factory (singleton - stateless factory)
+    single {
+        TemplatePreviewerViewModelFactory(
+            templateRepository = it.get(),
+            createProjectUseCase = it.get(),
+            updateProjectSettingsUseCase = it.get()
         )
     }
 }

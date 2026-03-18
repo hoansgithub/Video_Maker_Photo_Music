@@ -67,7 +67,23 @@
       "Bash(gh run watch:*)",
       "Bash(gh api:*)",
       "Bash(test:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(git commit:*)",
+      "Read(//private/tmp/acccore_inspect/**)",
+      "Bash(javap -p -c classes.jar co/alcheclub/lib/acccore/firebase/FirebaseModuleKt)",
+      "Bash(cd:*)",
+      "Bash(mkdir -p /tmp/acc_ins)",
+      "Read(//tmp/**)",
+      "Bash(javap -p co/alcheclub/lib/acccore/firebase/FirebaseModuleKt.class)",
+      "Bash(pip3 show:*)",
+      "Bash(brew install:*)",
+      "Bash(kill 57322)",
+      "Bash(xargs -I{} jar tf {})",
+      "Bash(ANON_KEY=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkeWR0aXdnbG90c3NrbG5rd2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMDk2ODcsImV4cCI6MjA4NTY4NTY4N30.Z5feTHYb2CyooObfZFL8ep16apwd71b_5VxOZvEYQDw\")",
+      "Bash(BASE=\"https://zdydtiwglotssklnkwjh.supabase.co/rest/v1\")",
+      "Bash(H1=\"apikey: $ANON_KEY\")",
+      "Bash(H2=\"Authorization: Bearer $ANON_KEY\")",
+      "Bash(__NEW_LINE_d0a741a68c27056e__ curl:*)"
     ]
   }
 }

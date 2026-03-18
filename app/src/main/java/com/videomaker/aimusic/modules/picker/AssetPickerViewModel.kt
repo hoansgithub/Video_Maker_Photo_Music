@@ -1,8 +1,11 @@
 package com.videomaker.aimusic.modules.picker
 
+import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
+import android.os.Build
+import android.os.Bundle
 import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -403,16 +406,33 @@ class AssetPickerViewModel(
             MediaStore.Images.Media.BUCKET_DISPLAY_NAME
         )
 
-        // Sort by date descending — most recent photos first, capped at MAX_IMAGES
-        val sortOrder = "${MediaStore.Images.Media.DATE_ADDED} DESC LIMIT $MAX_IMAGES"
+        // QUERY_ARG_LIMIT added in API 30; also fixes "invalid token LIMIT" on API 29+.
+        // API 28-29 fall back to legacy sortOrder without LIMIT (small galleries on older devices).
+        val cursor = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val queryArgs = Bundle().apply {
+                putStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS,
+                    arrayOf(MediaStore.Images.Media.DATE_ADDED))
+                putInt(ContentResolver.QUERY_ARG_SORT_DIRECTION,
+                    ContentResolver.QUERY_SORT_DIRECTION_DESCENDING)
+                putInt(ContentResolver.QUERY_ARG_LIMIT, MAX_IMAGES)
+            }
+            appContext.contentResolver.query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                projection,
+                queryArgs,
+                null
+            )
+        } else {
+            appContext.contentResolver.query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                projection,
+                null,
+                null,
+                "${MediaStore.Images.Media.DATE_ADDED} DESC"
+            )
+        }
 
-        appContext.contentResolver.query(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            projection,
-            null,
-            null,
-            sortOrder
-        )?.use { cursor ->
+        cursor?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
             val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)
             val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED)
