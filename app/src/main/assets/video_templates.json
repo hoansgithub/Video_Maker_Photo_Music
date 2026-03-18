@@ -5,7 +5,7 @@
     "nameI18n": {
       "en": "Wild Party Night"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15302,
     "effectSetId": "wild_party",
     "aspectRatio": "9:16",
@@ -23,7 +23,7 @@
     "nameI18n": {
       "en": "Viral Selfie Reel"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 3427,
     "effectSetId": "instagram_ready",
     "aspectRatio": "9:16",
@@ -41,7 +41,7 @@
     "nameI18n": {
       "en": "Rebel Celebration"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16045,
     "effectSetId": "street_graffiti",
     "aspectRatio": "9:16",
@@ -59,7 +59,7 @@
     "nameI18n": {
       "en": "Birthday wish"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16074,
     "effectSetId": "street_graffiti",
     "aspectRatio": "9:16",
@@ -77,7 +77,7 @@
     "nameI18n": {
       "en": "Street Attitude"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20521,
     "effectSetId": "street_graffiti",
     "aspectRatio": "9:16",
@@ -95,7 +95,7 @@
     "nameI18n": {
       "en": "Electric Night"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20229,
     "effectSetId": "electric_storm",
     "aspectRatio": "9:16",
@@ -113,7 +113,7 @@
     "nameI18n": {
       "en": "Nature Travel Moments"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 2037,
     "effectSetId": "nature_vibes",
     "aspectRatio": "9:16",
@@ -131,7 +131,7 @@
     "nameI18n": {
       "en": "Endless Love"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16070,
     "effectSetId": "wedding_bells",
     "aspectRatio": "9:16",
@@ -149,7 +149,7 @@
     "nameI18n": {
       "en": "Story of Us"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16052,
     "effectSetId": "vintage_film",
     "aspectRatio": "9:16",
@@ -167,7 +167,7 @@
     "nameI18n": {
       "en": "Maybe Love Story"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16066,
     "effectSetId": "dreamy_vibes",
     "aspectRatio": "9:16",
@@ -185,7 +185,7 @@
     "nameI18n": {
       "en": "Dark Story Edit"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20521,
     "effectSetId": "horror_nights",
     "aspectRatio": "9:16",
@@ -203,7 +203,7 @@
     "nameI18n": {
       "en": "Deep Love Moments"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16058,
     "effectSetId": "romantic_sunset",
     "aspectRatio": "9:16",
@@ -221,7 +221,7 @@
     "nameI18n": {
       "en": "Love Story Edit"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 3416,
     "effectSetId": "newsroom",
     "aspectRatio": "9:16",
@@ -239,7 +239,7 @@
     "nameI18n": {
       "en": "Dark Street Story"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20521,
     "effectSetId": "velvet_noir",
     "aspectRatio": "9:16",
@@ -257,7 +257,7 @@
     "nameI18n": {
       "en": "Epic Love Story"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20002,
     "effectSetId": "cinema_magic",
     "aspectRatio": "9:16",
@@ -275,7 +275,7 @@
     "nameI18n": {
       "en": "Retro Memories"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15205,
     "effectSetId": "summer_memories",
     "aspectRatio": "9:16",
@@ -293,7 +293,7 @@
     "nameI18n": {
       "en": "Romantic Shadows"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20213,
     "effectSetId": "shadow_play",
     "aspectRatio": "9:16",
@@ -311,7 +311,7 @@
     "nameI18n": {
       "en": "Cosmic Aesthetic"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20229,
     "effectSetId": "space_odyssey",
     "aspectRatio": "9:16",
@@ -329,7 +329,7 @@
     "nameI18n": {
       "en": "Fun Dance Celebration"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16044,
     "effectSetId": "wild_party",
     "aspectRatio": "9:16",
@@ -347,7 +347,7 @@
     "nameI18n": {
       "en": "Ocean Love"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20213,
     "effectSetId": "ocean_waves",
     "aspectRatio": "9:16",
@@ -365,7 +365,7 @@
     "nameI18n": {
       "en": "Celebration With Friends"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16040,
     "effectSetId": "zoom_mania",
     "aspectRatio": "9:16",
@@ -383,7 +383,7 @@
     "nameI18n": {
       "en": "Vintage Love Story"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20395,
     "effectSetId": "vintage_film",
     "aspectRatio": "9:16",
@@ -401,7 +401,7 @@
     "nameI18n": {
       "en": "Love & Memories"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16046,
     "effectSetId": "paper_craft",
     "aspectRatio": "9:16",
@@ -419,7 +419,7 @@
     "nameI18n": {
       "en": "Street Style Edit"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20521,
     "effectSetId": "tokyo_drift",
     "aspectRatio": "9:16",
@@ -437,7 +437,7 @@
     "nameI18n": {
       "en": "Zoom Party Energy"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20397,
     "effectSetId": "zoom_mania",
     "aspectRatio": "9:16",
@@ -455,7 +455,7 @@
     "nameI18n": {
       "en": "Cute Couple Memories"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16042,
     "effectSetId": "polaroid_memories",
     "aspectRatio": "9:16",
@@ -473,7 +473,7 @@
     "nameI18n": {
       "en": "Christmas Romance"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20395,
     "effectSetId": "cinema_magic",
     "aspectRatio": "9:16",
@@ -491,7 +491,7 @@
     "nameI18n": {
       "en": "Pop Art Selfie"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 3427,
     "effectSetId": "pop_art",
     "aspectRatio": "9:16",
@@ -509,7 +509,7 @@
     "nameI18n": {
       "en": "New Year Celebration"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20397,
     "effectSetId": "birthday_bash",
     "aspectRatio": "9:16",
@@ -527,7 +527,7 @@
     "nameI18n": {
       "en": "Hero Entry Celebration"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16049,
     "effectSetId": "cinema_magic",
     "aspectRatio": "9:16",
@@ -545,7 +545,7 @@
     "nameI18n": {
       "en": "Local Pride Celebration"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16047,
     "effectSetId": "street_graffiti",
     "aspectRatio": "9:16",
@@ -563,7 +563,7 @@
     "nameI18n": {
       "en": "Festival Dance Moves"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16051,
     "effectSetId": "wild_party",
     "aspectRatio": "9:16",
@@ -581,7 +581,7 @@
     "nameI18n": {
       "en": "Night Celebration Vibes"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16036,
     "effectSetId": "neon_nights",
     "aspectRatio": "9:16",
@@ -599,7 +599,7 @@
     "nameI18n": {
       "en": "True Love Memories"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16039,
     "effectSetId": "summer_memories",
     "aspectRatio": "9:16",
@@ -617,7 +617,7 @@
     "nameI18n": {
       "en": "Dreamy Memories"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 2037,
     "effectSetId": "dreamy_vibes",
     "aspectRatio": "9:16",
@@ -635,7 +635,7 @@
     "nameI18n": {
       "en": "Tonight Birthday"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20431,
     "effectSetId": "wild_party",
     "aspectRatio": "9:16",
@@ -653,7 +653,7 @@
     "nameI18n": {
       "en": "Festival Dance Energy"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16059,
     "effectSetId": "wild_party",
     "aspectRatio": "9:16",
@@ -671,7 +671,7 @@
     "nameI18n": {
       "en": "Pop Music Video"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15247,
     "effectSetId": "music_video",
     "aspectRatio": "9:16",
@@ -689,7 +689,7 @@
     "nameI18n": {
       "en": "Summer Vacation"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20229,
     "effectSetId": "summer_memories",
     "aspectRatio": "9:16",
@@ -707,7 +707,7 @@
     "nameI18n": {
       "en": "Travel Diary"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 442,
     "effectSetId": "travel_diary",
     "aspectRatio": "9:16",
@@ -725,7 +725,7 @@
     "nameI18n": {
       "en": "Polaroid Memories"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 442,
     "effectSetId": "polaroid_memories",
     "aspectRatio": "9:16",
@@ -743,7 +743,7 @@
     "nameI18n": {
       "en": "Royal Love Story"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16056,
     "effectSetId": "classic_elegance",
     "aspectRatio": "9:16",
@@ -761,7 +761,7 @@
     "nameI18n": {
       "en": "Street Party Energy"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16065,
     "effectSetId": "zoom_mania",
     "aspectRatio": "9:16",
@@ -779,7 +779,7 @@
     "nameI18n": {
       "en": "My Beloved Memories"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16050,
     "effectSetId": "dreamy_vibes",
     "aspectRatio": "9:16",
@@ -797,7 +797,7 @@
     "nameI18n": {
       "en": "Happy Birthday"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16043,
     "effectSetId": "wild_party",
     "aspectRatio": "9:16",
@@ -815,7 +815,7 @@
     "nameI18n": {
       "en": "Birthday Bash"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20397,
     "effectSetId": "birthday_bash",
     "aspectRatio": "9:16",
@@ -833,7 +833,7 @@
     "nameI18n": {
       "en": "Elegant Wedding"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15206,
     "effectSetId": "classic_elegance",
     "aspectRatio": "9:16",
@@ -851,7 +851,7 @@
     "nameI18n": {
       "en": "Creative Selfie"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 3427,
     "effectSetId": "artistic_chaos",
     "aspectRatio": "9:16",
@@ -869,7 +869,7 @@
     "nameI18n": {
       "en": "Truth & Pride"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16035,
     "effectSetId": "vintage_film",
     "aspectRatio": "9:16",
@@ -887,7 +887,7 @@
     "nameI18n": {
       "en": "Wedding Love Story"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15206,
     "effectSetId": "wedding_bells",
     "aspectRatio": "9:16",
@@ -905,7 +905,7 @@
     "nameI18n": {
       "en": "Minimal Love Story"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20213,
     "effectSetId": "minimalist",
     "aspectRatio": "9:16",
@@ -923,7 +923,7 @@
     "nameI18n": {
       "en": "Come See My World"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16069,
     "effectSetId": "nature_vibes",
     "aspectRatio": "9:16",
@@ -941,7 +941,7 @@
     "nameI18n": {
       "en": "Dance Flip Edit"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15302,
     "effectSetId": "flip_master",
     "aspectRatio": "9:16",
@@ -959,7 +959,7 @@
     "nameI18n": {
       "en": "Because Of You"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16071,
     "effectSetId": "geometric_love",
     "aspectRatio": "9:16",
@@ -977,7 +977,7 @@
     "nameI18n": {
       "en": "Midnight Romance"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20002,
     "effectSetId": "midnight_fantasy",
     "aspectRatio": "9:16",
@@ -995,7 +995,7 @@
     "nameI18n": {
       "en": "Forever With You"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15601,
     "effectSetId": "wedding_bells",
     "aspectRatio": "9:16",
@@ -1013,7 +1013,7 @@
     "nameI18n": {
       "en": "Morning Coffee Vlog"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15205,
     "effectSetId": "morning_coffee",
     "aspectRatio": "9:16",
@@ -1031,7 +1031,7 @@
     "nameI18n": {
       "en": "Handmade Memories"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 2037,
     "effectSetId": "paper_craft",
     "aspectRatio": "9:16",
@@ -1049,7 +1049,7 @@
     "nameI18n": {
       "en": "Birthday show"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16073,
     "effectSetId": "disco_fever",
     "aspectRatio": "9:16",
@@ -1067,7 +1067,7 @@
     "nameI18n": {
       "en": "Eternal Love Story"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15201,
     "effectSetId": "romantic_sunset",
     "aspectRatio": "9:16",
@@ -1085,7 +1085,7 @@
     "nameI18n": {
       "en": "Sweet Love Moments"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16037,
     "effectSetId": "dreamy_vibes",
     "aspectRatio": "9:16",
@@ -1103,7 +1103,7 @@
     "nameI18n": {
       "en": "Cyber Street Edit"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20521,
     "effectSetId": "digital_apocalypse",
     "aspectRatio": "9:16",
@@ -1121,7 +1121,7 @@
     "nameI18n": {
       "en": "Heartfelt Memories"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16060,
     "effectSetId": "summer_memories",
     "aspectRatio": "9:16",
@@ -1139,7 +1139,7 @@
     "nameI18n": {
       "en": "Birthday invitation"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15251,
     "effectSetId": "music_video",
     "aspectRatio": "9:16",
@@ -1157,7 +1157,7 @@
     "nameI18n": {
       "en": "Chill birthday"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16055,
     "effectSetId": "summer_memories",
     "aspectRatio": "9:16",
@@ -1175,7 +1175,7 @@
     "nameI18n": {
       "en": "Birthday Party"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16041,
     "effectSetId": "wild_party",
     "aspectRatio": "9:16",
@@ -1193,7 +1193,7 @@
     "nameI18n": {
       "en": "Autumn Life Moments"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15205,
     "effectSetId": "autumn_leaves",
     "aspectRatio": "9:16",
@@ -1211,7 +1211,7 @@
     "nameI18n": {
       "en": "Crystal Love"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15206,
     "effectSetId": "crystal_clear",
     "aspectRatio": "9:16",
@@ -1229,7 +1229,7 @@
     "nameI18n": {
       "en": "Fairy Tale Wedding"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20395,
     "effectSetId": "fairy_tale",
     "aspectRatio": "9:16",
@@ -1247,7 +1247,7 @@
     "nameI18n": {
       "en": "Perfect Love Story"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16062,
     "effectSetId": "romantic_sunset",
     "aspectRatio": "9:16",
@@ -1265,7 +1265,7 @@
     "nameI18n": {
       "en": "Dreamy Life Moments"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 2037,
     "effectSetId": "watercolor_dreams",
     "aspectRatio": "9:16",
@@ -1283,7 +1283,7 @@
     "nameI18n": {
       "en": "Romantic Couple Moments"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16048,
     "effectSetId": "romantic_sunset",
     "aspectRatio": "9:16",
@@ -1301,7 +1301,7 @@
     "nameI18n": {
       "en": "Disco Fever Party"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15302,
     "effectSetId": "disco_fever",
     "aspectRatio": "9:16",
@@ -1319,7 +1319,7 @@
     "nameI18n": {
       "en": "Cyber Creator Edit"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15247,
     "effectSetId": "matrix_code",
     "aspectRatio": "9:16",
@@ -1337,7 +1337,7 @@
     "nameI18n": {
       "en": "Gamer Attitude"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20521,
     "effectSetId": "game_over",
     "aspectRatio": "9:16",
@@ -1355,7 +1355,7 @@
     "nameI18n": {
       "en": "Beautiful Bride Moments"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16057,
     "effectSetId": "classic_elegance",
     "aspectRatio": "9:16",
@@ -1373,7 +1373,7 @@
     "nameI18n": {
       "en": "Legendary Love Story"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16064,
     "effectSetId": "fairy_tale",
     "aspectRatio": "9:16",
@@ -1391,7 +1391,7 @@
     "nameI18n": {
       "en": "Emotional Love Story"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16038,
     "effectSetId": "dreamy_vibes",
     "aspectRatio": "9:16",
@@ -1409,7 +1409,7 @@
     "nameI18n": {
       "en": "Motion Lights Edit"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20229,
     "effectSetId": "motion_flow",
     "aspectRatio": "9:16",
@@ -1427,7 +1427,7 @@
     "nameI18n": {
       "en": "Latin Party Night"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 20397,
     "effectSetId": "wild_party",
     "aspectRatio": "9:16",
@@ -1445,7 +1445,7 @@
     "nameI18n": {
       "en": "Trance Dance"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 636,
     "effectSetId": "hypnotic_trance",
     "aspectRatio": "9:16",
@@ -1463,7 +1463,7 @@
     "nameI18n": {
       "en": "Sacred Wedding Love"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16054,
     "effectSetId": "wedding_bells",
     "aspectRatio": "9:16",
@@ -1481,7 +1481,7 @@
     "nameI18n": {
       "en": "Our Life Story"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16068,
     "effectSetId": "travel_diary",
     "aspectRatio": "9:16",
@@ -1499,7 +1499,7 @@
     "nameI18n": {
       "en": "Digital Creator Edit"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15247,
     "effectSetId": "tech_showcase",
     "aspectRatio": "9:16",
@@ -1517,7 +1517,7 @@
     "nameI18n": {
       "en": "Sunset Romance"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15206,
     "effectSetId": "romantic_sunset",
     "aspectRatio": "9:16",
@@ -1535,7 +1535,7 @@
     "nameI18n": {
       "en": "Geometric Love"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15301,
     "effectSetId": "geometric_love",
     "aspectRatio": "9:16",
@@ -1553,7 +1553,7 @@
     "nameI18n": {
       "en": "Golden Glam"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 448,
     "effectSetId": "liquid_gold",
     "aspectRatio": "9:16",
@@ -1571,7 +1571,7 @@
     "nameI18n": {
       "en": "Love Story Reel"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 631,
     "effectSetId": "geometric_love",
     "aspectRatio": "9:16",
@@ -1589,7 +1589,7 @@
     "nameI18n": {
       "en": "Falling In Love"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16053,
     "effectSetId": "dreamy_vibes",
     "aspectRatio": "9:16",
@@ -1607,7 +1607,7 @@
     "nameI18n": {
       "en": "Psychedelic Dance"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 636,
     "effectSetId": "psychedelic_trip",
     "aspectRatio": "9:16",
@@ -1625,7 +1625,7 @@
     "nameI18n": {
       "en": "Calm Daily Moments"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15205,
     "effectSetId": "zen_garden",
     "aspectRatio": "9:16",
@@ -1643,7 +1643,7 @@
     "nameI18n": {
       "en": "Forever Love"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16072,
     "effectSetId": "romantic_sunset",
     "aspectRatio": "9:16",
@@ -1661,7 +1661,7 @@
     "nameI18n": {
       "en": "Crazy In Love"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16067,
     "effectSetId": "geometric_love",
     "aspectRatio": "9:16",
@@ -1679,7 +1679,7 @@
     "nameI18n": {
       "en": "Neon Dance Party"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15302,
     "effectSetId": "neon_nights",
     "aspectRatio": "9:16",
@@ -1697,7 +1697,7 @@
     "nameI18n": {
       "en": "Nights With You"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 16063,
     "effectSetId": "romantic_sunset",
     "aspectRatio": "9:16",
@@ -1715,7 +1715,7 @@
     "nameI18n": {
       "en": "3D Creator Stage"
     },
-    "thumbnailUrl": "",
+    "thumbnailPath": "",
     "songId": 15247,
     "effectSetId": "3d_world",
     "aspectRatio": "9:16",

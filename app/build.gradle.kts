@@ -241,6 +241,7 @@ dependencies {
     // ============================================
     implementation(libs.shimmer.compose)
     implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
     implementation(libs.coil.video)
 
     // ============================================

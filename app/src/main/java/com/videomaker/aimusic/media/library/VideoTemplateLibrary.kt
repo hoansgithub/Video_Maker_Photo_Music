@@ -73,7 +73,7 @@ object VideoTemplateLibrary {
 private data class VideoTemplateJson(
     val id: String,
     val name: String,
-    @SerialName("thumbnailUrl") val thumbnailUrl: String = "",
+    @SerialName("thumbnailPath") val thumbnailPath: String = "",
     @SerialName("songId") val songId: Long,
     @SerialName("effectSetId") val effectSetId: String,
     @SerialName("aspectRatio") val aspectRatio: String = "9:16",
@@ -86,7 +86,7 @@ private data class VideoTemplateJson(
     fun toDomain() = VideoTemplate(
         id = id,
         name = name,
-        thumbnailUrl = thumbnailUrl,
+        thumbnailPath = thumbnailPath,
         songId = songId,
         effectSetId = effectSetId,
         aspectRatio = aspectRatio,

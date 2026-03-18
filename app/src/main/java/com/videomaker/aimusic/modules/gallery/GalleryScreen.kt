@@ -1,6 +1,6 @@
 package com.videomaker.aimusic.modules.gallery
 
-import android.graphics.Bitmap
+import java.util.Locale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.Image
@@ -28,6 +28,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -68,6 +69,7 @@ import com.videomaker.aimusic.ui.theme.Black24
 import com.videomaker.aimusic.ui.theme.ChipBorderInactive
 import com.videomaker.aimusic.ui.theme.CyanAccent
 import com.videomaker.aimusic.ui.theme.GoldAccent
+import com.videomaker.aimusic.ui.theme.Gray200
 import com.videomaker.aimusic.ui.theme.Gray450
 import com.videomaker.aimusic.ui.theme.GreenAccent
 import com.videomaker.aimusic.ui.theme.OrangeAccent
@@ -281,12 +283,8 @@ private fun GalleryContent(
             // Templates grid — shows loading shimmer or results
             item(key = "template_grid", contentType = "template_grid") {
                 when (templateListState) {
-                    is TemplateListState.Loading -> ShimmerPlaceholder(
-                        modifier = Modifier
-                            .padding(horizontal = dimens.spaceLg)
-                            .fillMaxWidth()
-                            .height(320.dp),
-                        cornerRadius = dimens.radiusLg
+                    is TemplateListState.Loading -> TemplateGridSkeleton(
+                        modifier = Modifier.padding(horizontal = dimens.spaceLg)
                     )
                     is TemplateListState.Success -> StaggeredTemplateGrid(
                         templates = templateListState.templates,
@@ -639,6 +637,46 @@ private fun TagChip(
  * Template grid using reusable StaggeredGrid component
  */
 @Composable
+private fun TemplateGridSkeleton(
+    modifier: Modifier = Modifier,
+    columns: Int = 2
+) {
+    val dimens = AppDimens.current
+    // Mimic staggered grid: alternating tall/short cards per column
+    // Left col: tall, short, tall  |  Right col: short, tall, short
+    val leftHeights  = listOf(220.dp, 140.dp, 200.dp)
+    val rightHeights = listOf(150.dp, 210.dp, 130.dp)
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+        ) {
+            leftHeights.forEach { h ->
+                ShimmerPlaceholder(
+                    modifier = Modifier.fillMaxWidth().height(h),
+                    cornerRadius = dimens.radiusLg
+                )
+            }
+        }
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+        ) {
+            rightHeights.forEach { h ->
+                ShimmerPlaceholder(
+                    modifier = Modifier.fillMaxWidth().height(h),
+                    cornerRadius = dimens.radiusLg
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun StaggeredTemplateGrid(
     templates: List<VideoTemplate>,
     onTemplateClick: (VideoTemplate) -> Unit,
@@ -692,6 +730,20 @@ private fun parseAspectRatio(aspectRatio: String): Float {
     }
 }
 
+private fun formatUseCount(count: Long): String = when {
+    count >= 1_000_000 -> {
+        val v = count / 1_000_000.0
+        if (v % 1.0 == 0.0) "${v.toLong()}M"
+        else String.format(Locale.US, "%.1fM", v)
+    }
+    count >= 1_000 -> {
+        val v = count / 1_000.0
+        if (v % 1.0 == 0.0) "${v.toLong()}k"
+        else String.format(Locale.US, "%.1fk", v)
+    }
+    else -> count.toString()
+}
+
 @Composable
 private fun VideoTemplateItem(
     template: VideoTemplate,
@@ -701,18 +753,15 @@ private fun VideoTemplateItem(
 ) {
     val context = LocalContext.current
 
-    val imageRequest = remember(template.thumbnailUrl, template.id) {
+    val imageRequest = remember(template.thumbnailPath, template.id) {
         ImageRequest.Builder(context)
-            .data(template.thumbnailUrl)
+            .data(template.thumbnailPath)
             .size(Size(400, 700))
-            .bitmapConfig(Bitmap.Config.RGB_565)
             .precision(Precision.INEXACT)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .diskCachePolicy(CachePolicy.ENABLED)
             .memoryCacheKey("template_${template.id}")
             .diskCacheKey("template_${template.id}")
-            .crossfade(150)
-            .allowHardware(true)
             .build()
     }
 
@@ -727,7 +776,7 @@ private fun VideoTemplateItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            if (template.thumbnailUrl.isNotEmpty()) {
+            if (template.thumbnailPath.isNotEmpty()) {
                 AsyncImage(
                     model = imageRequest,
                     contentDescription = template.name,
@@ -740,13 +789,6 @@ private fun VideoTemplateItem(
                     cornerRadius = 0.dp
                 )
             }
-
-            // Gradient overlay for text readability
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .bottomGradientOverlay()
-            )
 
             // Premium badge
             if (template.isPremium) {
@@ -768,19 +810,33 @@ private fun VideoTemplateItem(
                 }
             }
 
-            // Template name
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(10.dp)
-            ) {
-                Text(
-                    text = template.name,
-                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = TextBright,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+            // Use count badge
+            if (template.useCount > 0) {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(dimens.spaceSm)
+                        .background(
+                            color = Color(0xE5282828),
+                            shape = RoundedCornerShape(999.dp)
+                        )
+                        .padding(horizontal = 6.dp, vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Repeat,
+                        contentDescription = null,
+                        tint = Gray200,
+                        modifier = Modifier.size(10.dp)
+                    )
+                    Text(
+                        text = formatUseCount(template.useCount),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Gray200,
+                        maxLines = 1
+                    )
+                }
             }
         }
     }

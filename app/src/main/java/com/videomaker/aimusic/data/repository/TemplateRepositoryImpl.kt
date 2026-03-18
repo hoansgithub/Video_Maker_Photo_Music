@@ -23,14 +23,14 @@ class TemplateRepositoryImpl(
     companion object {
         private const val TABLE_TEMPLATES = "templates"
         private val COLUMNS = Columns.raw(
-            "id,name,thumbnail_url,song_id,effect_set_id,aspect_ratio," +
-            "image_duration_ms,transition_pct,is_premium,is_active,sort_order," +
+            "id,name,thumbnail_path,song_id,effect_set_id,aspect_ratio," +
+            "image_duration_ms,transition_pct,is_premium,is_active,sort_order,use_count," +
             "template_vibe_tags(vibe_tag_id,sort_order)"
         )
         // !inner = only return templates that have at least one matching tag row
         private val COLUMNS_BY_TAG = Columns.raw(
-            "id,name,thumbnail_url,song_id,effect_set_id,aspect_ratio," +
-            "image_duration_ms,transition_pct,is_premium,is_active,sort_order," +
+            "id,name,thumbnail_path,song_id,effect_set_id,aspect_ratio," +
+            "image_duration_ms,transition_pct,is_premium,is_active,sort_order,use_count," +
             "template_vibe_tags!inner(vibe_tag_id,sort_order)"
         )
     }
@@ -138,11 +138,14 @@ class TemplateRepositoryImpl(
 // DTO
 // ============================================
 
+private const val THUMBNAIL_BASE_URL =
+    "https://zdydtiwglotssklnkwjh.supabase.co/storage/v1/object/public/template-thumbnails/"
+
 @Serializable
 private data class TemplateDto(
     val id: String,
     val name: String,
-    @SerialName("thumbnail_url") val thumbnailUrl: String? = null,
+    @SerialName("thumbnail_path") val thumbnailPath: String? = null,
     @SerialName("song_id") val songId: Long,
     @SerialName("effect_set_id") val effectSetId: String,
     @SerialName("aspect_ratio") val aspectRatio: String = "9:16",
@@ -151,12 +154,13 @@ private data class TemplateDto(
     @SerialName("is_premium") val isPremium: Boolean = false,
     @SerialName("is_active") val isActive: Boolean = true,
     @SerialName("sort_order") val sortOrder: Int = 0,
+    @SerialName("use_count") val useCount: Long = 0,
     @SerialName("template_vibe_tags") val vibeTags: List<VibeTagRef> = emptyList()
 ) {
     fun toDomain() = VideoTemplate(
         id = id,
         name = name,
-        thumbnailUrl = thumbnailUrl ?: "",
+        thumbnailPath = if (!thumbnailPath.isNullOrEmpty()) THUMBNAIL_BASE_URL + thumbnailPath else "",
         songId = songId,
         effectSetId = effectSetId,
         aspectRatio = aspectRatio,
@@ -165,7 +169,8 @@ private data class TemplateDto(
         // Sort server-returned tags by sort_order (small list per template, ~1-3 items)
         vibeTags = vibeTags.sortedBy { it.sortOrder }.map { it.vibeTagId },
         isPremium = isPremium,
-        isActive = isActive
+        isActive = isActive,
+        useCount = useCount
     )
 }
 

@@ -14,7 +14,7 @@ import androidx.compose.runtime.Immutable
 data class VideoTemplate(
     val id: String,
     val name: String,
-    val thumbnailUrl: String = "",
+    val thumbnailPath: String = "",
     val songId: Long,
     val effectSetId: String,
     val aspectRatio: String = "9:16",
@@ -22,5 +22,6 @@ data class VideoTemplate(
     val transitionPct: Int = 30,
     val vibeTags: List<String> = emptyList(),
     val isPremium: Boolean = false,
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val useCount: Long = 0
 )

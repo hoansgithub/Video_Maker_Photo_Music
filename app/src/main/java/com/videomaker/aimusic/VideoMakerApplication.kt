@@ -10,6 +10,7 @@ import co.alcheclub.lib.acccore.firebase.firebaseModule
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfigCoordinator
 import coil.ImageLoader
 import coil.ImageLoaderFactory
+import coil.decode.ImageDecoderDecoder
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.util.DebugLogger
@@ -63,7 +64,9 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                     .maxSizeBytes(100L * 1024 * 1024) // 100MB
                     .build()
             }
-            .crossfade(true)
+            .components {
+                add(ImageDecoderDecoder.Factory())
+            }
             .crossfade(200)
             .respectCacheHeaders(true)
             .apply {
