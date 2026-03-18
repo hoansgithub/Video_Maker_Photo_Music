@@ -113,7 +113,7 @@ class ApiCacheManager(context: Context) {
         // ── Song cache keys ──────────────────────────────────────────────────
         const val KEY_SONGS_GENRES         = "songs_genres"
         const val KEY_SONGS_SUGGESTED      = "songs_suggested"
-        const val KEY_SONGS_WEEKLY_RANKING = "songs_weekly_ranking"
+        fun keySongsWeeklyRanking(region: String): String = "songs_weekly_ranking_${region}"
 
         /** Dynamic key per genre — safe for use as a filename. */
         fun keySongsGenre(genre: String): String =
@@ -121,8 +121,8 @@ class ApiCacheManager(context: Context) {
 
         // ── Template cache keys ──────────────────────────────────────────────
         const val KEY_VIBE_TAGS = "vibe_tags_theme"
-        fun keyTemplates(limit: Int, offset: Int): String = "templates_${limit}_${offset}"
-        fun keyTemplatesByTag(tag: String, limit: Int, offset: Int): String =
-            "templates_tag_${tag}_${limit}_${offset}"
+        fun keyTemplates(region: String, limit: Int, offset: Int): String = "templates_${region}_${limit}_${offset}"
+        fun keyTemplatesByTag(region: String, tag: String, limit: Int, offset: Int): String =
+            "templates_tag_${region}_${tag}_${limit}_${offset}"
     }
 }

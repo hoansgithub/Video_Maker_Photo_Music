@@ -1,53 +1,49 @@
 package com.videomaker.aimusic.data.repository
 
 import com.videomaker.aimusic.core.data.local.ApiCacheManager
+import com.videomaker.aimusic.core.data.local.RegionProvider
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.media.library.VideoTemplateLibrary
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class TemplateRepositoryImpl(
     private val supabaseClient: SupabaseClient,
     private val apiCacheManager: ApiCacheManager,
-    private val templateLibrary: VideoTemplateLibrary = VideoTemplateLibrary
+    private val templateLibrary: VideoTemplateLibrary = VideoTemplateLibrary,
+    private val regionProvider: RegionProvider
 ) : TemplateRepository {
 
     companion object {
-        private const val TABLE_TEMPLATES = "templates"
-        private val COLUMNS = Columns.raw(
-            "id,name,thumbnail_path,song_id,effect_set_id,aspect_ratio," +
-            "image_duration_ms,transition_pct,is_premium,is_active,sort_order,use_count," +
-            "template_vibe_tags(vibe_tag_id,sort_order)"
-        )
-        // !inner = only return templates that have at least one matching tag row
-        private val COLUMNS_BY_TAG = Columns.raw(
-            "id,name,thumbnail_path,song_id,effect_set_id,aspect_ratio," +
-            "image_duration_ms,transition_pct,is_premium,is_active,sort_order,use_count," +
-            "template_vibe_tags!inner(vibe_tag_id,sort_order)"
-        )
+        private const val FN_TEMPLATES_SORTED = "get_templates_sorted"
+        private const val FN_TEMPLATES_BY_TAG_SORTED = "get_templates_by_tag_sorted"
     }
 
     override suspend fun getTemplates(limit: Int, offset: Int): Result<List<VideoTemplate>> =
         withContext(Dispatchers.IO) {
-            val cacheKey = ApiCacheManager.keyTemplates(limit, offset)
+            val region = regionProvider.getRegionCode()
+            val cacheKey = ApiCacheManager.keyTemplates(region, limit, offset)
             apiCacheManager.get<List<VideoTemplate>>(cacheKey)
                 ?.let { return@withContext Result.success(it) }
 
             try {
-                val templates = supabaseClient.from(TABLE_TEMPLATES)
-                    .select(COLUMNS) {
-                        filter { eq("is_active", true) }
-                        order("sort_order", Order.ASCENDING)
-                        range(offset.toLong(), (offset + limit - 1).toLong())
-                    }
+                val templates = supabaseClient.postgrest
+                    .rpc(FN_TEMPLATES_SORTED, buildJsonObject {
+                        put("p_region", region)
+                        put("p_limit", limit)
+                        put("p_offset", offset)
+                    })
                     .decodeList<TemplateDto>()
                     .map { it.toDomain() }
 
@@ -69,21 +65,19 @@ class TemplateRepositoryImpl(
         limit: Int,
         offset: Int
     ): Result<List<VideoTemplate>> = withContext(Dispatchers.IO) {
-        val cacheKey = ApiCacheManager.keyTemplatesByTag(tag, limit, offset)
+        val region = regionProvider.getRegionCode()
+        val cacheKey = ApiCacheManager.keyTemplatesByTag(region, tag, limit, offset)
         apiCacheManager.get<List<VideoTemplate>>(cacheKey)
             ?.let { return@withContext Result.success(it) }
 
         try {
-            val templates = supabaseClient.from(TABLE_TEMPLATES)
-                .select(COLUMNS_BY_TAG) {
-                    filter {
-                        eq("is_active", true)
-                        // Filters both the embedded rows AND the parent (due to !inner join)
-                        eq("template_vibe_tags.vibe_tag_id", tag)
-                    }
-                    order("sort_order", Order.ASCENDING)
-                    range(offset.toLong(), (offset + limit - 1).toLong())
-                }
+            val templates = supabaseClient.postgrest
+                .rpc(FN_TEMPLATES_BY_TAG_SORTED, buildJsonObject {
+                    put("p_region", region)
+                    put("p_tag", tag)
+                    put("p_limit", limit)
+                    put("p_offset", offset)
+                })
                 .decodeList<TemplateDto>()
                 .map { it.toDomain() }
 
@@ -155,7 +149,8 @@ private data class TemplateDto(
     @SerialName("is_active") val isActive: Boolean = true,
     @SerialName("sort_order") val sortOrder: Int = 0,
     @SerialName("use_count") val useCount: Long = 0,
-    @SerialName("template_vibe_tags") val vibeTags: List<VibeTagRef> = emptyList()
+    @SerialName("template_vibe_tags") val vibeTags: List<VibeTagRef> = emptyList(),
+    @SerialName("target_regions") val targetRegions: List<String> = emptyList()
 ) {
     fun toDomain() = VideoTemplate(
         id = id,

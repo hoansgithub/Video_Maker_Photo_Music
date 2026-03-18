@@ -1,6 +1,7 @@
 package com.videomaker.aimusic.data.repository
 
 import com.videomaker.aimusic.core.data.local.ApiCacheManager
+import com.videomaker.aimusic.core.data.local.RegionProvider
 import com.videomaker.aimusic.data.mapper.toMusicSong
 import com.videomaker.aimusic.data.mapper.toMusicSongs
 import com.videomaker.aimusic.data.remote.dto.SongDto
@@ -24,30 +25,33 @@ import kotlinx.serialization.json.put
  */
 class SongRepositoryImpl(
     private val supabaseClient: SupabaseClient,
-    private val apiCacheManager: ApiCacheManager
+    private val apiCacheManager: ApiCacheManager,
+    private val regionProvider: RegionProvider
 ) : SongRepository {
 
     companion object {
         private const val TABLE_SONGS = "songs"
         private const val TABLE_GENRES = "genres"
         private const val FN_SEARCH_SONGS = "search_songs"
+        private const val FN_SONGS_SORTED = "get_songs_sorted"
         private const val ERROR_LOAD_FAILED = "Failed to load songs"
         private const val ERROR_NOT_FOUND = "Song not found"
     }
 
 
     override suspend fun getFeaturedSongs(limit: Int): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
-        val cacheKey = ApiCacheManager.KEY_SONGS_WEEKLY_RANKING
+        val region = regionProvider.getRegionCode()
+        val cacheKey = ApiCacheManager.keySongsWeeklyRanking(region)
         apiCacheManager.get<List<MusicSong>>(cacheKey)
             ?.let { return@withContext Result.success(it) }
 
         try {
-            val songs = supabaseClient.from(TABLE_SONGS)
-                .select {
-                    filter { eq("is_active", true) }
-                    order("sort_order", Order.DESCENDING)
-                    limit(limit.toLong())
-                }
+            val songs = supabaseClient.postgrest
+                .rpc(FN_SONGS_SORTED, buildJsonObject {
+                    put("p_region", region)
+                    put("p_limit", limit)
+                    put("p_offset", 0)
+                })
                 .decodeList<SongDto>()
                 .toMusicSongs()
 
@@ -167,14 +171,13 @@ class SongRepositoryImpl(
 
     override suspend fun getSongsPaged(offset: Int, limit: Int): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
         try {
-            val songs = supabaseClient.from(TABLE_SONGS)
-                .select {
-                    filter {
-                        eq("is_active", true)
-                    }
-                    order("sort_order", Order.DESCENDING)
-                    range(offset.toLong(), (offset + limit - 1).toLong())
-                }
+            val region = regionProvider.getRegionCode()
+            val songs = supabaseClient.postgrest
+                .rpc(FN_SONGS_SORTED, buildJsonObject {
+                    put("p_region", region)
+                    put("p_limit", limit)
+                    put("p_offset", offset)
+                })
                 .decodeList<SongDto>()
 
             Result.success(songs.toMusicSongs())
@@ -182,12 +185,6 @@ class SongRepositoryImpl(
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
     }
-
-    /** Minimal DTO for genres-only queries — avoids transferring full song rows. */
-    @Serializable
-    private data class SongGenresDto(
-        val genres: List<String> = emptyList()
-    )
 
     /** DTO for genres table row (id, display_name, type, sort_order, is_active). */
     @Serializable
@@ -233,7 +230,9 @@ class SongRepositoryImpl(
             } else {
                 supabaseClient.from(TABLE_SONGS)
                     .select {
-                        filter { eq("is_active", true) }
+                        filter {
+                            eq("is_active", true)
+                        }
                         order("sort_order", Order.DESCENDING)
                         limit(limit.toLong())
                     }

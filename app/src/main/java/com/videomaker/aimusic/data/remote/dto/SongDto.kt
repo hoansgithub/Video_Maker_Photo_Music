@@ -50,5 +50,7 @@ data class SongDto(
     @SerialName("created_at")
     val createdAt: String? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: String? = null,
+    @SerialName("target_regions")
+    val targetRegions: List<String> = emptyList()
 )

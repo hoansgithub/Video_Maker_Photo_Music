@@ -9,6 +9,7 @@ import co.alcheclub.lib.acccore.di.viewModel
 import com.videomaker.aimusic.core.data.local.ApiCacheManager
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.PreferencesManager
+import com.videomaker.aimusic.core.data.local.RegionProvider
 import com.videomaker.aimusic.data.local.database.ProjectDatabase
 import com.videomaker.aimusic.data.remote.SupabaseClientProvider
 import com.videomaker.aimusic.data.repository.ExportRepositoryImpl
@@ -97,12 +98,20 @@ val dataModule = module {
     // Supabase client (singleton)
     single { SupabaseClientProvider.instance }
 
+    // Region provider (singleton - derived from language + device locale)
+    single {
+        RegionProvider(
+            languageManager = it.get(),
+            preferencesManager = it.get()
+        )
+    }
+
     // Repository implementations
     single<OnboardingRepository> { OnboardingRepositoryImpl(it.get()) }
     single<ProjectRepository> { ProjectRepositoryImpl(it.get(), it.get()) }
     single<ExportRepository> { ExportRepositoryImpl(it.get()) }
-    single<SongRepository> { SongRepositoryImpl(it.get(), it.get()) }
-    single<TemplateRepository> { TemplateRepositoryImpl(it.get(), it.get()) }
+    single<SongRepository> { SongRepositoryImpl(it.get(), it.get(), regionProvider = it.get()) }
+    single<TemplateRepository> { TemplateRepositoryImpl(it.get(), it.get(), regionProvider = it.get()) }
 }
 
 // ========== MEDIA LAYER MODULE ==========

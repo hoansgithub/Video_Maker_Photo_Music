@@ -22,6 +22,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_RECENT_SEARCHES = "recent_searches"
         private const val KEY_PREFERRED_GENRES = "preferred_genres"
         private const val KEY_PREFERRED_FEATURES = "preferred_features"
+        private const val KEY_USER_REGION = "user_region"
         private const val RECENT_SEARCHES_DELIMITER = "\u001F" // Unit Separator
         private const val GENRES_DELIMITER = ","
         private const val MAX_RECENT_SEARCHES = 10
@@ -117,6 +118,12 @@ class PreferencesManager(context: Context) {
     fun clearRecentSearches() {
         prefs.edit { remove(KEY_RECENT_SEARCHES) }
     }
+
+    fun getUserRegion(): String? =
+        prefs.getString(KEY_USER_REGION, null)
+
+    fun setUserRegion(region: String) =
+        prefs.edit().putString(KEY_USER_REGION, region).apply()
 
     /**
      * Clear all preferences (for testing/logout)
