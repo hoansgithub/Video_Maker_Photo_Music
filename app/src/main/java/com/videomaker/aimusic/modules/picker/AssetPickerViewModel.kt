@@ -72,6 +72,11 @@ sealed class AssetPickerNavigationEvent {
     data class NavigateToEditor(val projectId: String) : AssetPickerNavigationEvent()
     /** Assets added to existing project - just go back */
     data object AssetsAdded : AssetPickerNavigationEvent()
+    /** Template mode: confirm selection with URIs directly */
+    data class NavigateToTemplatePreviewer(
+        val templateId: String,
+        val imageUris: List<String>
+    ) : AssetPickerNavigationEvent()
 }
 
 /**
@@ -88,19 +93,26 @@ class AssetPickerViewModel(
     context: Context,  // Convert to Application context to prevent memory leak
     private val createProjectUseCase: CreateProjectUseCase,
     private val addAssetsUseCase: AddAssetsUseCase,
-    private val projectId: String? = null // null = create new project, non-null = add to existing
+    private val projectId: String? = null, // null = create new project, non-null = add to existing
+    private val templateId: String? = null  // non-null = template mode, bypasses project creation
 ) : ViewModel() {
 
     // Use applicationContext to prevent Activity memory leak
     private val appContext: Context = context.applicationContext
 
     companion object {
-        // Note: No query limit needed - MediaStore query only loads lightweight metadata
-        // (IDs, names, dates). Actual image loading is lazy via LazyVerticalGrid + Coil.
+        // Cap metadata load — enough for any real user gallery
+        private const val MAX_IMAGES = 3000
     }
 
     /** True if adding to existing project, false if creating new */
     val isAddMode: Boolean get() = projectId != null
+
+    /** True if launched from template flow */
+    val isTemplateMode: Boolean get() = templateId != null
+
+    /** Minimum number of images required before confirming */
+    val minSelection: Int get() = if (isTemplateMode) 2 else 1
 
     // ============================================
     // STATE
@@ -214,32 +226,42 @@ class AssetPickerViewModel(
      */
     fun confirmSelection() {
         val currentState = _uiState.value
-        if (currentState is AssetPickerUiState.Success && currentState.selectedAssets.isNotEmpty()) {
+        if (currentState is AssetPickerUiState.Success && currentState.selectedAssets.size >= minSelection) {
             viewModelScope.launch {
                 val uris = currentState.selectedAssets.map { it.uri }
 
-                if (projectId != null) {
-                    // Add mode - add to existing project
-                    addAssetsUseCase(projectId, uris)
-                        .onSuccess {
-                            _navigationEvent.value = AssetPickerNavigationEvent.AssetsAdded
-                        }
-                        .onFailure { error ->
-                            _uiState.value = AssetPickerUiState.Error(
-                                error.message ?: "Failed to add assets"
-                            )
-                        }
-                } else {
-                    // Create mode - create new project
-                    createProjectUseCase(uris)
-                        .onSuccess { project ->
-                            _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditor(project.id)
-                        }
-                        .onFailure { error ->
-                            _uiState.value = AssetPickerUiState.Error(
-                                error.message ?: "Failed to create project"
-                            )
-                        }
+                when {
+                    templateId != null -> {
+                        // Template mode - return URIs directly, no project created
+                        _navigationEvent.value = AssetPickerNavigationEvent.NavigateToTemplatePreviewer(
+                            templateId = templateId,
+                            imageUris = uris.map { it.toString() }
+                        )
+                    }
+                    projectId != null -> {
+                        // Add mode - add to existing project
+                        addAssetsUseCase(projectId, uris)
+                            .onSuccess {
+                                _navigationEvent.value = AssetPickerNavigationEvent.AssetsAdded
+                            }
+                            .onFailure { error ->
+                                _uiState.value = AssetPickerUiState.Error(
+                                    error.message ?: "Failed to add assets"
+                                )
+                            }
+                    }
+                    else -> {
+                        // Create mode - create new project
+                        createProjectUseCase(uris)
+                            .onSuccess { project ->
+                                _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditor(project.id)
+                            }
+                            .onFailure { error ->
+                                _uiState.value = AssetPickerUiState.Error(
+                                    error.message ?: "Failed to create project"
+                                )
+                            }
+                    }
                 }
             }
         }
@@ -381,8 +403,8 @@ class AssetPickerViewModel(
             MediaStore.Images.Media.BUCKET_DISPLAY_NAME
         )
 
-        // Sort by date descending - most recent photos first
-        val sortOrder = "${MediaStore.Images.Media.DATE_ADDED} DESC"
+        // Sort by date descending — most recent photos first, capped at MAX_IMAGES
+        val sortOrder = "${MediaStore.Images.Media.DATE_ADDED} DESC LIMIT $MAX_IMAGES"
 
         appContext.contentResolver.query(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,

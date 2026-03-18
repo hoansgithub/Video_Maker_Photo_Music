@@ -193,12 +193,13 @@ class AssetPickerViewModelFactory(
     private val createProjectUseCase: CreateProjectUseCase,
     private val addAssetsUseCase: AddAssetsUseCase
 ) {
-    fun create(projectId: String? = null): AssetPickerViewModel {
+    fun create(projectId: String? = null, templateId: String? = null): AssetPickerViewModel {
         return AssetPickerViewModel(
             context = application,
             createProjectUseCase = createProjectUseCase,
             addAssetsUseCase = addAssetsUseCase,
-            projectId = projectId
+            projectId = projectId,
+            templateId = templateId
         )
     }
 }

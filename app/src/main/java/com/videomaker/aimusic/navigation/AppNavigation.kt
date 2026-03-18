@@ -1,6 +1,7 @@
 package com.videomaker.aimusic.navigation
 
 import android.app.Activity
+import android.net.Uri
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -48,6 +49,7 @@ import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
 import com.videomaker.aimusic.modules.projects.ProjectsScreen
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.settings.SettingsScreen
+import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerScreen
 
 private val slideAnimSpec = tween<IntOffset>(300)
 
@@ -116,7 +118,10 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     onCreateClick = { backStack.add(AppRoute.AssetPicker()) },
                     onMyProjectsClick = { backStack.add(AppRoute.Projects) },
                     onSettingsClick = { backStack.add(AppRoute.Settings) },
-                    onNavigateToSearch = { backStack.add(AppRoute.Search) }
+                    onNavigateToSearch = { backStack.add(AppRoute.Search) },
+                    onNavigateToTemplateDetail = { templateId ->
+                        backStack.add(AppRoute.AssetPicker(templateId = templateId))
+                    }
                 )
             }
 
@@ -138,22 +143,33 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             // CREATE FLOW
             // ============================================
             entry<AppRoute.AssetPicker> { route ->
-                val factory = remember(route.projectId) { ACCDI.get<AssetPickerViewModelFactory>() }
+                val factory = remember(route.projectId, route.templateId) { ACCDI.get<AssetPickerViewModelFactory>() }
                 val pickerViewModel: AssetPickerViewModel = viewModel(
-                    key = "asset_picker_${route.projectId}",
-                    factory = createSafeViewModelFactory { factory.create(route.projectId) }
+                    key = "asset_picker_${route.projectId}_${route.templateId}",
+                    factory = createSafeViewModelFactory {
+                        factory.create(projectId = route.projectId, templateId = route.templateId)
+                    }
                 )
                 AssetPickerScreen(
                     viewModel = pickerViewModel,
                     onNavigateToEditor = { projectId ->
-                        // Pop back to Home then push Editor
-                        while (backStack.size > 1 && backStack.lastOrNull() !is AppRoute.Home) {
-                            backStack.removeLastOrNull()
+                        backStack.apply {
+                            val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home
+                            clear()
+                            add(home)
+                            add(AppRoute.Editor(projectId))
                         }
-                        backStack.add(AppRoute.Editor(projectId))
                     },
                     onNavigateBack = { backStack.removeLastOrNull() },
-                    onAssetsAdded = { backStack.removeLastOrNull() }
+                    onAssetsAdded = { backStack.removeLastOrNull() },
+                    onNavigateToTemplatePreviewer = { templateId, imageUris ->
+                        backStack.apply {
+                            val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home
+                            clear()
+                            add(home)
+                            add(AppRoute.TemplatePreviewer(templateId = templateId, imageUris = imageUris))
+                        }
+                    }
                 )
             }
 
@@ -213,6 +229,17 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     onNavigateBack = { backStack.removeLastOrNull() },
                     onNavigateToEditor = { projectId -> backStack.add(AppRoute.Editor(projectId)) },
                     onCreateClick = { backStack.add(AppRoute.AssetPicker()) }
+                )
+            }
+
+            // ============================================
+            // TEMPLATE FLOW
+            // ============================================
+            entry<AppRoute.TemplatePreviewer> { route ->
+                TemplatePreviewerScreen(
+                    templateId = route.templateId,
+                    imageUris = route.imageUris.map { Uri.parse(it) },
+                    onNavigateBack = { backStack.removeLastOrNull() }
                 )
             }
 

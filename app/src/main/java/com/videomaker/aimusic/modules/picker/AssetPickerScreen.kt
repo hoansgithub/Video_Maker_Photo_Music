@@ -64,10 +64,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
@@ -113,7 +111,8 @@ fun AssetPickerScreen(
     viewModel: AssetPickerViewModel,
     onNavigateToEditor: (String) -> Unit,
     onNavigateBack: () -> Unit,
-    onAssetsAdded: () -> Unit = {}
+    onAssetsAdded: () -> Unit = {},
+    onNavigateToTemplatePreviewer: (templateId: String, imageUris: List<String>) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -150,6 +149,8 @@ fun AssetPickerScreen(
                 is AssetPickerNavigationEvent.NavigateBack -> onNavigateBack()
                 is AssetPickerNavigationEvent.NavigateToEditor -> onNavigateToEditor(event.projectId)
                 is AssetPickerNavigationEvent.AssetsAdded -> onAssetsAdded()
+                is AssetPickerNavigationEvent.NavigateToTemplatePreviewer ->
+                    onNavigateToTemplatePreviewer(event.templateId, event.imageUris)
             }
             viewModel.onNavigationHandled()
         }
@@ -173,14 +174,6 @@ fun AssetPickerScreen(
         }
     }
 
-    // Main content - semi-transparent background
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.5f))
-            .clickable { viewModel.navigateBack() }
-    )
-
     // Bottom Sheet
     if (showBottomSheet) {
         ModalBottomSheet(
@@ -195,6 +188,8 @@ fun AssetPickerScreen(
         ) {
             AssetPickerContent(
                 uiState = uiState,
+                minSelection = viewModel.minSelection,
+                isTemplateMode = viewModel.isTemplateMode,
                 onAlbumSelect = { albumId -> viewModel.selectAlbum(albumId) },
                 onAssetClick = { asset -> viewModel.toggleAssetSelection(asset) },
                 onConfirmClick = { viewModel.confirmSelection() },
@@ -219,6 +214,8 @@ fun AssetPickerScreen(
 @Composable
 private fun AssetPickerContent(
     uiState: AssetPickerUiState,
+    minSelection: Int,
+    isTemplateMode: Boolean,
     onAlbumSelect: (String) -> Unit,
     onAssetClick: (GalleryAsset) -> Unit,
     onConfirmClick: () -> Unit,
@@ -244,22 +241,34 @@ private fun AssetPickerContent(
                 )
             }
 
-            Text(
-                text = stringResource(R.string.picker_title),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = stringResource(R.string.picker_title),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                if (isTemplateMode) {
+                    Text(
+                        text = stringResource(R.string.picker_min_selection, minSelection),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
             // Selection count and confirm button
-            if (uiState is AssetPickerUiState.Success && uiState.selectedAssets.isNotEmpty()) {
+            val selectedCount = if (uiState is AssetPickerUiState.Success) uiState.selectedAssets.size else 0
+            val canConfirm = selectedCount >= minSelection
+            if (selectedCount > 0) {
                 Button(
                     onClick = onConfirmClick,
+                    enabled = canConfirm,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
                     ),
                     shape = RoundedCornerShape(20.dp)
                 ) {
-                    Text(stringResource(R.string.picker_done, uiState.selectedAssets.size))
+                    Text(stringResource(R.string.picker_done, selectedCount))
                 }
             } else {
                 Spacer(modifier = Modifier.width(48.dp))
@@ -345,7 +354,7 @@ private fun AlbumFilterChips(
                 label = {
                     Text(
                         text = "${album.displayName} (${album.count})",
-                        fontSize = 13.sp
+                        style = MaterialTheme.typography.labelMedium
                     )
                 },
                 colors = FilterChipDefaults.filterChipColors(
@@ -496,8 +505,7 @@ private fun ImageGridItem(
                     Text(
                         text = selectionIndex.toString(),
                         color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.labelMedium
                     )
                 } else {
                     Icon(
@@ -532,12 +540,12 @@ private fun EmptyGalleryContent(
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = stringResource(R.string.picker_no_photos),
-                fontSize = 18.sp,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = stringResource(R.string.picker_no_photos_hint),
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
         }
@@ -571,8 +579,7 @@ private fun PermissionDeniedContent(
 
             Text(
                 text = stringResource(R.string.picker_permission_title),
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center
             )
 
@@ -580,7 +587,7 @@ private fun PermissionDeniedContent(
 
             Text(
                 text = stringResource(R.string.picker_permission_message),
-                fontSize = 16.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

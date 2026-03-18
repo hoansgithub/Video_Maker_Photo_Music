@@ -77,7 +77,8 @@ fun HomeScreen(
     onCreateClick: () -> Unit = {},
     onMyProjectsClick: () -> Unit = {},
     onProjectClick: (String) -> Unit = {},
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    onNavigateToTemplateDetail: (String) -> Unit = {}
 ) {
     val tabs = listOf(
         stringResource(R.string.home_tab_gallery),
@@ -109,6 +110,7 @@ fun HomeScreen(
                     viewModel = galleryViewModel,
                     onCreateClick = onCreateClick,
                     onNavigateToSearch = onNavigateToSearch,
+                    onNavigateToTemplateDetail = onNavigateToTemplateDetail,
                     topBarHeight = topBarHeight
                 )
                 1 -> SongsTabContent(
@@ -260,6 +262,7 @@ private fun GalleryTabContent(
     viewModel: GalleryViewModel,
     onCreateClick: () -> Unit,
     onNavigateToSearch: () -> Unit = {},
+    onNavigateToTemplateDetail: (String) -> Unit = {},
     topBarHeight: Dp = 0.dp
 ) {
     GalleryScreen(
@@ -269,9 +272,7 @@ private fun GalleryTabContent(
         onNavigateToSongDetail = {
             // TODO: Navigate to song detail
         },
-        onNavigateToTemplateDetail = {
-            // TODO: Navigate to template detail
-        },
+        onNavigateToTemplateDetail = onNavigateToTemplateDetail,
         onNavigateToAllTopSongs = {
             // TODO: Navigate to all top songs
         },

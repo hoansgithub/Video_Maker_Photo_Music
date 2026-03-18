@@ -49,7 +49,7 @@ sealed interface AppRoute : NavKey {
 
     /** @param projectId null = create new project; non-null = add to existing */
     @Serializable
-    data class AssetPicker(val projectId: String? = null) : AppRoute
+    data class AssetPicker(val projectId: String? = null, val templateId: String? = null) : AppRoute
 
     @Serializable
     data class Editor(val projectId: String) : AppRoute
@@ -59,6 +59,17 @@ sealed interface AppRoute : NavKey {
 
     @Serializable
     data class Export(val projectId: String) : AppRoute
+
+    // ============================================
+    // TEMPLATE FLOW ROUTES
+    // ============================================
+
+    /** Template preview: apply a template to user-selected images */
+    @Serializable
+    data class TemplatePreviewer(
+        val templateId: String,
+        val imageUris: List<String>   // URI strings from Photo Picker
+    ) : AppRoute
 
     // ============================================
     // PROJECTS ROUTES

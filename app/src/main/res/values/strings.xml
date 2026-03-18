@@ -123,6 +123,7 @@
     <string name="picker_permission_title">Photo Access Required</string>
     <string name="picker_permission_message">To create videos from your photos, we need permission to access your photo library.</string>
     <string name="picker_allow_access">Allow Access</string>
+    <string name="picker_min_selection">Select at least %d photos</string>
 
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Music Player</string>
