@@ -5,8 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.domain.model.MusicSong
-import com.videomaker.aimusic.domain.model.SongGenre
-import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
+import com.videomaker.aimusic.domain.model.VibeTag
+import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.SearchSongsUseCase
 import com.videomaker.aimusic.domain.usecase.SearchTemplatesUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -65,9 +66,9 @@ sealed class GallerySearchNavigationEvent {
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class GallerySearchViewModel(
     private val preferencesManager: PreferencesManager,
+    private val templateRepository: TemplateRepository,
     private val searchSongsUseCase: SearchSongsUseCase,
-    private val searchTemplatesUseCase: SearchTemplatesUseCase,
-    private val getGenresUseCase: GetGenresUseCase
+    private val searchTemplatesUseCase: SearchTemplatesUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GallerySearchUiState>(GallerySearchUiState.Idle)
@@ -79,8 +80,8 @@ class GallerySearchViewModel(
     private val _recentSearches = MutableStateFlow<List<String>>(emptyList())
     val recentSearches: StateFlow<List<String>> = _recentSearches.asStateFlow()
 
-    private val _suggestionGenres = MutableStateFlow<List<SongGenre>>(emptyList())
-    val suggestionGenres: StateFlow<List<SongGenre>> = _suggestionGenres.asStateFlow()
+    private val _suggestionVibeTags = MutableStateFlow<List<VibeTag>>(emptyList())
+    val suggestionVibeTags: StateFlow<List<VibeTag>> = _suggestionVibeTags.asStateFlow()
 
     private val _navigationEvent = MutableStateFlow<GallerySearchNavigationEvent?>(null)
     val navigationEvent: StateFlow<GallerySearchNavigationEvent?> = _navigationEvent.asStateFlow()
@@ -97,7 +98,9 @@ class GallerySearchViewModel(
         _recentSearches.value = preferencesManager.getRecentSearches()
 
         viewModelScope.launch {
-            getGenresUseCase().onSuccess { _suggestionGenres.value = it }
+            templateRepository.getVibeTags()
+                .onSuccess { _suggestionVibeTags.value = it }
+                .onFailure { android.util.Log.w("GallerySearchVM", "Failed to load vibe tags", it) }
         }
 
         // distinctUntilChanged BEFORE debounce: suppresses duplicate emissions before the timer
@@ -180,6 +183,19 @@ class GallerySearchViewModel(
         _navigationEvent.value = null
     }
 
+    /**
+     * Called when a suggestion vibe tag chip is tapped.
+     * Searches templates by vibe tag (exact match) and songs by display name.
+     */
+    fun onVibeTagClick(tag: VibeTag) {
+        explicitSearchJob?.cancel()
+        _query.value = tag.displayName
+        _uiState.value = GallerySearchUiState.Loading
+        explicitSearchJob = viewModelScope.launch {
+            _uiState.value = runSearchByVibeTag(tag.id, tag.displayName)
+        }
+    }
+
     /** Explicit search (keyboard Search / recent tap) — cancels any previous explicit job. */
     private fun launchExplicitSearch(query: String) {
         explicitSearchJob?.cancel()
@@ -193,14 +209,33 @@ class GallerySearchViewModel(
     private suspend fun runSearch(query: String): GallerySearchUiState = coroutineScope {
         val templatesDeferred = async { searchTemplatesUseCase(query) }
         val songsDeferred = async { searchSongsUseCase(query) }
+        mergeResults(templatesDeferred.await(), songsDeferred.await(), label = query)
+    }
 
-        val templateResult = templatesDeferred.await()
-        val songResult = songsDeferred.await()
-
-        if (templateResult.isFailure && songResult.isFailure) {
-            return@coroutineScope GallerySearchUiState.Error("Search failed. Please try again.")
+    /**
+     * Searches templates by vibe tag (exact match) and songs by display name in parallel.
+     * Used when a suggestion vibe tag chip is tapped.
+     */
+    private suspend fun runSearchByVibeTag(
+        tagId: String,
+        displayName: String
+    ): GallerySearchUiState = coroutineScope {
+        val templatesDeferred = async {
+            templateRepository.getTemplatesByVibeTag(tag = tagId, limit = 20, offset = 0)
         }
+        val songsDeferred = async { searchSongsUseCase(displayName) }
+        mergeResults(templatesDeferred.await(), songsDeferred.await(), label = displayName)
+    }
 
+    /** Maps raw results into a [GallerySearchUiState]. Shared by text search and tag search. */
+    private fun mergeResults(
+        templateResult: Result<List<VideoTemplate>>,
+        songResult: Result<List<MusicSong>>,
+        label: String
+    ): GallerySearchUiState {
+        if (templateResult.isFailure && songResult.isFailure) {
+            return GallerySearchUiState.Error("Search failed. Please try again.")
+        }
         val templates = templateResult.getOrElse { emptyList() }.map { t ->
             GallerySearchTemplateItem(
                 id = t.id,
@@ -212,11 +247,10 @@ class GallerySearchViewModel(
             )
         }
         val songs = songResult.getOrElse { emptyList() }
-
-        if (templates.isEmpty() && songs.isEmpty()) {
-            GallerySearchUiState.Empty(query)
+        return if (templates.isEmpty() && songs.isEmpty()) {
+            GallerySearchUiState.Empty(label)
         } else {
-            GallerySearchUiState.Results(query = query, templates = templates, songs = songs)
+            GallerySearchUiState.Results(query = label, templates = templates, songs = songs)
         }
     }
 }

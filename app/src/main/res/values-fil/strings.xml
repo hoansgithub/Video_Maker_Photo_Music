@@ -33,6 +33,7 @@
     <string name="home_tab_projects">Aking mga Proyekto</string>
 
     <!-- Gallery Tab -->
+    <string name="gallery_filter_for_you">Para sa iyo</string>
     <string name="gallery_hot_songs">Mga Sikat na Kanta</string>
     <string name="gallery_templates">Mga Template</string>
     <string name="gallery_coming_soon">Malapit na</string>

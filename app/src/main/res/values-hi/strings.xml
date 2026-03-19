@@ -33,6 +33,7 @@
     <string name="home_tab_projects">मेरे प्रोजेक्ट्स</string>
 
     <!-- Gallery Tab -->
+    <string name="gallery_filter_for_you">आपके लिए</string>
     <string name="gallery_hot_songs">हॉट गाने</string>
     <string name="gallery_templates">टेम्पलेट</string>
     <string name="gallery_coming_soon">जल्द आ रहा है</string>

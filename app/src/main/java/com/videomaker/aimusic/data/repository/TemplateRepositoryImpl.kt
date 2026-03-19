@@ -104,11 +104,15 @@ class TemplateRepositoryImpl(
             ?.let { return@withContext Result.success(it) }
 
         try {
+            // !inner joins through template_vibe_tags → templates, ensuring only tags that have
+            // at least one *active* linked template are returned. This prevents chips that would
+            // always return empty results when tapped.
             val tags = supabaseClient.from("vibe_tags")
-                .select(Columns.raw("id,display_name,emoji")) {
+                .select(Columns.raw("id,display_name,emoji,template_vibe_tags!inner(vibe_tag_id,templates!inner(id,is_active))")) {
                     filter {
                         eq("tag_type", "theme")
                         eq("is_active", true)
+                        eq("template_vibe_tags.templates.is_active", true)
                     }
                     order("sort_order", Order.ASCENDING)
                     limit(100)
@@ -234,9 +238,28 @@ private data class VibeTagRef(
     @SerialName("sort_order") val sortOrder: Int = 0
 )
 
+/**
+ * Junction row for the getVibeTags !inner join — discarded after mapping.
+ * template_vibe_tags → templates is a many-to-one FK, so PostgREST returns
+ * `templates` as a single nested object, not an array.
+ */
+@Serializable
+private data class VibeTagJoinDto(
+    @SerialName("vibe_tag_id") val vibeTagId: String = "",
+    val templates: VibeTagTemplateJoinDto? = null
+)
+
+@Serializable
+private data class VibeTagTemplateJoinDto(
+    val id: String = "",
+    @SerialName("is_active") val isActive: Boolean = true
+)
+
 @Serializable
 private data class VibeTagDto(
     val id: String,
     @SerialName("display_name") val displayName: String,
-    val emoji: String = ""
+    val emoji: String = "",
+    // Included only to satisfy the !inner join chain — not used after mapping
+    @SerialName("template_vibe_tags") val templateVibeTags: List<VibeTagJoinDto> = emptyList()
 )

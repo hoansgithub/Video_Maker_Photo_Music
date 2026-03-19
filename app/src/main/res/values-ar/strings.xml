@@ -33,6 +33,7 @@
     <string name="home_tab_projects">مشاريعي</string>
 
     <!-- Gallery Tab -->
+    <string name="gallery_filter_for_you">لك</string>
     <string name="gallery_hot_songs">أغاني رائجة</string>
     <string name="gallery_templates">قوالب</string>
     <string name="gallery_coming_soon">قريباً</string>

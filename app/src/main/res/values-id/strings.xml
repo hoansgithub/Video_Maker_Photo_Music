@@ -33,6 +33,7 @@
     <string name="home_tab_projects">Proyek Saya</string>
 
     <!-- Gallery Tab -->
+    <string name="gallery_filter_for_you">Untuk kamu</string>
     <string name="gallery_hot_songs">Lagu Populer</string>
     <string name="gallery_templates">Template</string>
     <string name="gallery_coming_soon">Segera Hadir</string>

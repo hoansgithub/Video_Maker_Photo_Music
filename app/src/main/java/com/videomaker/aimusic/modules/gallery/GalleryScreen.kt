@@ -48,7 +48,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -64,14 +63,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.theme.AppDimens
-import com.videomaker.aimusic.ui.theme.Black24
-import com.videomaker.aimusic.ui.theme.ChipBorderInactive
 import com.videomaker.aimusic.ui.theme.GoldAccent
 import com.videomaker.aimusic.ui.theme.Gray200
-import com.videomaker.aimusic.ui.theme.Gray450
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
 import com.videomaker.aimusic.ui.theme.SearchFieldBorder
+import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.PrimaryButton
 import com.videomaker.aimusic.ui.theme.TextTertiary
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -551,51 +548,19 @@ private fun TagChipRow(
             .padding(horizontal = dimens.spaceLg),
         horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
     ) {
-        // "All" chip — clears filter
-        TagChip(
-            label = "All",
+        // "For you" chip — clears filter
+        AppFilterChip(
+            text = stringResource(R.string.gallery_filter_for_you),
             isSelected = selectedTagId == null,
             onClick = { onTagSelected(null) }
         )
         vibeTags.forEach { tag ->
-            TagChip(
-                label = if (tag.emoji.isNotEmpty()) "${tag.emoji} ${tag.displayName}" else tag.displayName,
+            AppFilterChip(
+                text = if (tag.emoji.isNotEmpty()) "${tag.emoji} ${tag.displayName}" else tag.displayName,
                 isSelected = tag.id == selectedTagId,
                 onClick = { onTagSelected(tag.id) }
             )
         }
-    }
-}
-
-@Composable
-private fun TagChip(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val dimens = AppDimens.current
-    val borderColor = if (isSelected) Primary else ChipBorderInactive
-    val textColor = if (isSelected) Primary else Gray450
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(dimens.radiusFull))
-            .background(Black24)
-            .border(
-                width = 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(dimens.radiusFull)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = dimens.spaceMd, vertical = dimens.spaceSm),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-            color = textColor
-        )
     }
 }
 

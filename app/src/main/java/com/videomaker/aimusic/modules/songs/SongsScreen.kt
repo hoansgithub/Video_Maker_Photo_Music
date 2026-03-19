@@ -63,6 +63,7 @@ import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.ui.components.AppAsyncImage
+import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.SectionHeader
 import com.videomaker.aimusic.ui.components.ShimmerBox
@@ -71,7 +72,6 @@ import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Black24
 import com.videomaker.aimusic.ui.theme.Black40
-import com.videomaker.aimusic.ui.theme.ChipBorderInactive
 import com.videomaker.aimusic.ui.theme.GoldAccent
 import com.videomaker.aimusic.ui.theme.PlaceholderBackground
 import com.videomaker.aimusic.ui.theme.Primary
@@ -82,7 +82,6 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.theme.TextTertiary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
-import com.videomaker.aimusic.ui.theme.Gray450
 
 // ============================================
 // SONGS SCREEN
@@ -853,13 +852,13 @@ private fun GenreTagChipRow(
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
             ) {
                 // "All" chip — maps to null selection
-                GenreChip(
-                    text = "All",
+                AppFilterChip(
+                    text = stringResource(R.string.settings_all),
                     isSelected = selectedGenre == null,
                     onClick = { onGenreSelected(null) }
                 )
                 state.data.forEach { genre ->
-                    GenreChip(
+                    AppFilterChip(
                         text = genre.displayName,
                         isSelected = selectedGenre == genre.id,
                         onClick = { onGenreSelected(genre.id) }
@@ -874,37 +873,6 @@ private fun GenreTagChipRow(
     }
 }
 
-@Composable
-private fun GenreChip(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val dimens = AppDimens.current
-
-    Box(
-        modifier = modifier
-            .background(
-                color = if (isSelected) Black24 else Color.Transparent,
-                shape = RoundedCornerShape(999.dp)
-            )
-            .border(
-                width = 1.dp,
-                color = if (isSelected) Primary else ChipBorderInactive,
-                shape = RoundedCornerShape(999.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceSm),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text.uppercase(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (isSelected) Primary else Gray450
-        )
-    }
-}
 
 // ============================================
 // SAMPLE DATA

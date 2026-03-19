@@ -72,16 +72,14 @@ import androidx.media3.common.util.UnstableApi
 import co.alcheclub.lib.acccore.di.ACCDI
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.MusicSong
-import com.videomaker.aimusic.domain.model.SongGenre
+import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
+import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
-import com.videomaker.aimusic.ui.theme.Black24
-import com.videomaker.aimusic.ui.theme.ChipBorderInactive
-import com.videomaker.aimusic.ui.theme.Gray450
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
 import com.videomaker.aimusic.ui.theme.SearchFieldBorder
@@ -105,7 +103,7 @@ fun GallerySearchScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
-    val suggestionGenres by viewModel.suggestionGenres.collectAsStateWithLifecycle()
+    val suggestionVibeTags by viewModel.suggestionVibeTags.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -144,14 +142,11 @@ fun GallerySearchScreen(
         when (val state = uiState) {
             is GallerySearchUiState.Idle -> GallerySearchIdleContent(
                 recentSearches = recentSearches,
-                suggestionGenres = suggestionGenres,
+                suggestionVibeTags = suggestionVibeTags,
                 onRecentClick = viewModel::onRecentSearchClick,
                 onRemoveRecent = viewModel::onRemoveRecentSearch,
                 onClearAllRecents = viewModel::onClearAllRecents,
-                onSuggestionClick = { suggestion ->
-                    viewModel.onQueryChange(suggestion)
-                    viewModel.onSearch()
-                }
+                onVibeTagClick = viewModel::onVibeTagClick
             )
 
             is GallerySearchUiState.Loading -> GallerySearchLoadingContent()
@@ -303,11 +298,11 @@ private fun GallerySearchTopBar(
 @Composable
 private fun GallerySearchIdleContent(
     recentSearches: List<String>,
-    suggestionGenres: List<SongGenre>,
+    suggestionVibeTags: List<VibeTag>,
     onRecentClick: (String) -> Unit,
     onRemoveRecent: (String) -> Unit,
     onClearAllRecents: () -> Unit,
-    onSuggestionClick: (String) -> Unit
+    onVibeTagClick: (VibeTag) -> Unit
 ) {
     val dimens = AppDimens.current
 
@@ -372,11 +367,10 @@ private fun GallerySearchIdleContent(
                 contentPadding = PaddingValues(horizontal = dimens.spaceLg),
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
             ) {
-                items(suggestionGenres, key = { it.id }) { genre ->
-                    SuggestionChip(
-                        // TODO: Use label_i18n[locale] when the column is populated in DB
-                        label = genre.displayName,
-                        onClick = { onSuggestionClick(genre.id) }
+                items(suggestionVibeTags, key = { it.id }) { tag ->
+                    AppFilterChip(
+                        text = if (tag.emoji.isNotEmpty()) "${tag.emoji} ${tag.displayName}" else tag.displayName,
+                        onClick = { onVibeTagClick(tag) }
                     )
                 }
             }
@@ -428,28 +422,6 @@ private fun RecentSearchItem(
     }
 }
 
-@Composable
-private fun SuggestionChip(
-    label: String,
-    onClick: () -> Unit
-) {
-    val dimens = AppDimens.current
-
-    Box(
-        modifier = Modifier
-            .background(Black24, RoundedCornerShape(dimens.radiusFull))
-            .border(1.dp, ChipBorderInactive, RoundedCornerShape(dimens.radiusFull))
-            .clickable(onClick = onClick)
-            .padding(horizontal = dimens.spaceMd, vertical = dimens.spaceSm),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-            color = Gray450
-        )
-    }
-}
 
 // ============================================
 // RESULTS CONTENT
@@ -785,16 +757,16 @@ private fun GallerySearchIdlePreview() {
             )
             GallerySearchIdleContent(
                 recentSearches = listOf("birthday", "aesthetic", "travel vlog"),
-                suggestionGenres = listOf(
-                    SongGenre("aesthetic", "Aesthetic"),
-                    SongGenre("birthday", "Birthday"),
-                    SongGenre("lofi", "Lofi"),
-                    SongGenre("cinematic", "Cinematic"),
+                suggestionVibeTags = listOf(
+                    VibeTag("aesthetic", "Aesthetic", "✨"),
+                    VibeTag("birthday", "Birthday", "🎂"),
+                    VibeTag("travel", "Travel", "✈️"),
+                    VibeTag("cinematic", "Cinematic", "🎬"),
                 ),
                 onRecentClick = {},
                 onRemoveRecent = {},
                 onClearAllRecents = {},
-                onSuggestionClick = {}
+                onVibeTagClick = {}
             )
         }
     }

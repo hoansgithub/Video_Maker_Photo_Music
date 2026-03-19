@@ -33,6 +33,7 @@
     <string name="home_tab_projects">Projelerim</string>
 
     <!-- Gallery Tab -->
+    <string name="gallery_filter_for_you">Sizin için</string>
     <string name="gallery_hot_songs">Popüler Şarkılar</string>
     <string name="gallery_templates">Şablonlar</string>
     <string name="gallery_coming_soon">Yakında</string>

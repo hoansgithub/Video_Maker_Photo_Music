@@ -33,6 +33,7 @@
     <string name="home_tab_projects">Mis Proyectos</string>
 
     <!-- Gallery Tab -->
+    <string name="gallery_filter_for_you">Para ti</string>
     <string name="gallery_hot_songs">Canciones Populares</string>
     <string name="gallery_templates">Plantillas</string>
     <string name="gallery_coming_soon">Próximamente</string>
