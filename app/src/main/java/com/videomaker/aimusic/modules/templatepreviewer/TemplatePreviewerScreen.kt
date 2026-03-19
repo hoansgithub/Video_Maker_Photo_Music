@@ -1,10 +1,12 @@
 package com.videomaker.aimusic.modules.templatepreviewer
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -35,14 +39,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.TextOnPrimary
+import com.videomaker.aimusic.ui.theme.White16
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -315,30 +325,52 @@ private fun TemplatePreviewerReadyContent(
                 }
 
                 // CTA button
+                val ctaShape = RoundedCornerShape(999.dp)
                 Button(
                     onClick = {
                         val template = templates.getOrNull(pagerState.settledPage % templates.size) ?: return@Button
                         onUseThisTemplate(template)
                     },
                     enabled = !state.isCreatingProject,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .shadow(
+                            elevation = 12.dp,
+                            shape = ctaShape,
+                            ambientColor = Primary,
+                            spotColor = Primary
+                        ),
+                    shape = ctaShape,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = Color.Black
+                        containerColor = Primary,
+                        contentColor = TextOnPrimary,
+                        disabledContainerColor = Primary.copy(alpha = 0.7f),
+                        disabledContentColor = TextOnPrimary
+                    ),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                        horizontal = 24.dp, vertical = 0.dp
                     )
                 ) {
                     if (state.isCreatingProject) {
                         CircularProgressIndicator(
-                            color = Color.Black,
+                            color = TextOnPrimary,
                             modifier = Modifier.size(20.dp),
                             strokeWidth = 2.dp
                         )
                     } else {
                         Text(
                             text = "Use This Template",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextOnPrimary
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_circle_plus),
+                            contentDescription = null,
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
@@ -348,54 +380,65 @@ private fun TemplatePreviewerReadyContent(
 }
 
 // ============================================
-// MUSIC INFO ROW — shimmer while loading
+// MUSIC INFO ROW — dark capsule, shimmer while loading
 // ============================================
+
+/** Formats duration millis as "00:12" (zero-padded minutes and seconds). */
+private fun formatDurationMmSs(durationMs: Int): String {
+    val totalSec = durationMs / 1000
+    val minutes = totalSec / 60
+    val seconds = totalSec % 60
+    return "%02d:%02d".format(minutes, seconds)
+}
 
 @Composable
 private fun MusicInfoRow(currentSong: SongLoadState) {
     if (currentSong is SongLoadState.None) return
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .wrapContentWidth()
+            .background(color = White16, shape = RoundedCornerShape(999.dp))
+            .padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Icon(
             imageVector = Icons.Filled.MusicNote,
             contentDescription = null,
             tint = Color.White.copy(alpha = 0.8f),
-            modifier = Modifier.size(14.dp)
+            modifier = Modifier.size(13.dp)
         )
 
         when (currentSong) {
             is SongLoadState.Loading -> {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    ShimmerPlaceholder(
-                        modifier = Modifier.width(130.dp).height(11.dp),
-                        cornerRadius = 4.dp
-                    )
-                    ShimmerPlaceholder(
-                        modifier = Modifier.width(80.dp).height(9.dp),
-                        cornerRadius = 4.dp
-                    )
-                }
+                ShimmerPlaceholder(
+                    modifier = Modifier.width(100.dp).height(10.dp),
+                    cornerRadius = 4.dp
+                )
+                ShimmerPlaceholder(
+                    modifier = Modifier.width(36.dp).height(10.dp),
+                    cornerRadius = 4.dp
+                )
             }
             is SongLoadState.Ready -> {
-                Column {
+                Text(
+                    text = currentSong.song.name,
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .widthIn(max = 160.dp)
+                        .basicMarquee()
+                )
+                val duration = currentSong.song.durationMs
+                if (duration != null && duration > 0) {
                     Text(
-                        text = currentSong.song.name,
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = currentSong.song.artist,
+                        text = formatDurationMmSs(duration),
                         color = Color.White.copy(alpha = 0.6f),
-                        style = MaterialTheme.typography.labelSmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        style = MaterialTheme.typography.labelSmall
                     )
                 }
             }
