@@ -26,6 +26,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import co.alcheclub.lib.acccore.di.ACCDI
 import co.alcheclub.lib.acccore.di.get
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.di.AssetPickerViewModelFactory
 import com.videomaker.aimusic.di.EditorViewModelFactory
 import com.videomaker.aimusic.di.ExportViewModelFactory
@@ -239,7 +240,8 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             // TEMPLATE FLOW
             // ============================================
             entry<AppRoute.TemplatePreviewer> { route ->
-                val factory = remember(route.templateId) { ACCDI.get<TemplatePreviewerViewModelFactory>() }
+                val factory = remember(route.templateId, route.imageUris) { ACCDI.get<TemplatePreviewerViewModelFactory>() }
+                val audioCache = remember { ACCDI.get<AudioPreviewCache>() }
                 val viewModel: TemplatePreviewerViewModel = viewModel(
                     key = "template_previewer_${route.templateId}",
                     factory = createSafeViewModelFactory {
@@ -248,6 +250,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 )
                 TemplatePreviewerScreen(
                     viewModel = viewModel,
+                    audioDataSourceFactory = audioCache.cacheDataSourceFactory,
                     onNavigateToEditor = { projectId ->
                         backStack.apply {
                             val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home

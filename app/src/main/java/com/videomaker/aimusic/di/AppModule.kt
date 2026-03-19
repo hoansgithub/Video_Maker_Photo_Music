@@ -330,6 +330,7 @@ class SongsViewModelFactory(
  */
 class TemplatePreviewerViewModelFactory(
     private val templateRepository: TemplateRepository,
+    private val songRepository: SongRepository,
     private val createProjectUseCase: CreateProjectUseCase,
     private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase
 ) {
@@ -338,6 +339,7 @@ class TemplatePreviewerViewModelFactory(
             initialTemplateId = templateId,
             imageUrisStr = imageUris,
             templateRepository = templateRepository,
+            songRepository = songRepository,
             createProjectUseCase = createProjectUseCase,
             updateProjectSettingsUseCase = updateProjectSettingsUseCase
         )
@@ -454,6 +456,7 @@ val presentationModule = module {
     single {
         TemplatePreviewerViewModelFactory(
             templateRepository = it.get(),
+            songRepository = it.get(),
             createProjectUseCase = it.get(),
             updateProjectSettingsUseCase = it.get()
         )
