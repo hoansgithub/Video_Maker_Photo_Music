@@ -307,10 +307,11 @@ private fun TemplatePreviewerReadyContent(
                     .fillMaxWidth()
                     .navigationBarsPadding()
                     .padding(horizontal = 24.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Music info row
-                MusicInfoRow(currentSong = currentSong)
+                // Music info capsule
+                MusicInfoCapsule(currentSong = currentSong)
 
                 // Template name
                 val currentTemplate = templates.getOrNull(pagerState.settledPage % templates.size)
@@ -320,7 +321,9 @@ private fun TemplatePreviewerReadyContent(
                         color = Color.White.copy(alpha = 0.85f),
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
 
@@ -359,18 +362,18 @@ private fun TemplatePreviewerReadyContent(
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text(
-                            text = "Use This Template",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextOnPrimary
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
                         Icon(
                             painter = painterResource(id = R.drawable.ic_circle_plus),
                             contentDescription = null,
                             tint = Color.Unspecified,
                             modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Use This Template",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextOnPrimary
                         )
                     }
                 }
@@ -380,7 +383,7 @@ private fun TemplatePreviewerReadyContent(
 }
 
 // ============================================
-// MUSIC INFO ROW — dark capsule, shimmer while loading
+// MUSIC INFO CAPSULE — vertical layout, shimmer while loading
 // ============================================
 
 /** Formats duration millis as "00:12" (zero-padded minutes and seconds). */
@@ -392,22 +395,22 @@ private fun formatDurationMmSs(durationMs: Int): String {
 }
 
 @Composable
-private fun MusicInfoRow(currentSong: SongLoadState) {
+private fun MusicInfoCapsule(currentSong: SongLoadState) {
     if (currentSong is SongLoadState.None) return
 
-    Row(
+    Column(
         modifier = Modifier
             .wrapContentWidth()
             .background(color = White16, shape = RoundedCornerShape(999.dp))
-            .padding(horizontal = 12.dp, vertical = 7.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Icon(
             imageVector = Icons.Filled.MusicNote,
             contentDescription = null,
             tint = Color.White.copy(alpha = 0.8f),
-            modifier = Modifier.size(13.dp)
+            modifier = Modifier.size(14.dp)
         )
 
         when (currentSong) {
@@ -429,7 +432,6 @@ private fun MusicInfoRow(currentSong: SongLoadState) {
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     modifier = Modifier
-                        .weight(1f, fill = false)
                         .widthIn(max = 160.dp)
                         .basicMarquee()
                 )
