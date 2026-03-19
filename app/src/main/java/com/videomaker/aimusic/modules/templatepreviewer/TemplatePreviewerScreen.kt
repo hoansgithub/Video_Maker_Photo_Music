@@ -40,8 +40,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
+import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import coil.size.Precision
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -151,7 +153,14 @@ private fun TemplatePreviewerReadyContent(
             modifier = Modifier.fillMaxSize(),
             key = { pageIndex -> templates[pageIndex % templates.size].id }
         ) { pageIndex ->
-            TemplateThumbnailPage(template = templates[pageIndex % templates.size])
+            // Animate only the settled page and only when not mid-swipe.
+            // Off-screen pages (prev/next buffer) load a static first frame to save
+            // CPU and memory — animated WebP frames are not decoded for hidden pages.
+            val isCurrentPage = pageIndex == pagerState.settledPage && !pagerState.isScrollInProgress
+            TemplateThumbnailPage(
+                template = templates[pageIndex % templates.size],
+                isCurrentPage = isCurrentPage
+            )
         }
 
         // Top gradient scrim
@@ -254,17 +263,32 @@ private fun TemplatePreviewerReadyContent(
 // ============================================
 
 @Composable
-private fun TemplateThumbnailPage(template: VideoTemplate) {
+private fun TemplateThumbnailPage(template: VideoTemplate, isCurrentPage: Boolean) {
     val context = LocalContext.current
+    val thumbnailUrl = template.thumbnailPath.ifEmpty { null }
+
     Box(
         modifier = Modifier.fillMaxSize().background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(context)
-                .data(template.thumbnailPath.ifEmpty { null })
+                .data(thumbnailUrl)
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .memoryCachePolicy(CachePolicy.ENABLED)
+                // Separate memory cache entries for animated vs static so they
+                // don't overwrite each other when a page transitions to/from current.
+                .memoryCacheKey("${template.id}_${if (isCurrentPage) "anim" else "static"}")
+                .precision(Precision.INEXACT)
+                .apply {
+                    if (!isCurrentPage) {
+                        // BitmapFactoryDecoder decodes only the first frame — no animation
+                        // decoder is invoked, so ImageDecoderDecoder (animated WebP) is bypassed.
+                        decoderFactory(BitmapFactoryDecoder.Factory())
+                    }
+                    // Current page: use default decoder chain — ImageDecoderDecoder handles
+                    // animated WebP automatically via the coil-gif dependency.
+                }
                 .crossfade(true)
                 .build(),
             contentDescription = template.name,
