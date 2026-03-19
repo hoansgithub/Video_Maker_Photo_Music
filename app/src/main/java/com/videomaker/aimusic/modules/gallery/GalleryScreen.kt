@@ -81,6 +81,7 @@ import com.videomaker.aimusic.ui.theme.SearchFieldBorder
 import com.videomaker.aimusic.ui.theme.SlateAccent
 import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.TealAccent
+import com.videomaker.aimusic.ui.components.PrimaryButton
 import com.videomaker.aimusic.ui.theme.TextBright
 import com.videomaker.aimusic.ui.theme.TextOnPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
@@ -332,43 +333,19 @@ private fun CreateNewVideoButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dimens = AppDimens.current
-
-    Button(
+    PrimaryButton(
+        text = stringResource(R.string.gallery_create_new_video),
         onClick = onClick,
-        shape = RoundedCornerShape(dimens.radiusFull),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Primary
-        ),
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 0.dp,
-            pressedElevation = 0.dp
-        ),
-        contentPadding = PaddingValues(
-            horizontal = dimens.spaceXl,
-            vertical = dimens.spaceMd
-        ),
-        modifier = modifier
-            .shadow(
-                elevation = 12.dp,
-                shape = RoundedCornerShape(dimens.radiusFull),
-                ambientColor = Primary,
-                spotColor = Primary
-            )
-    ) {
+        leadingIcon = {
             Icon(
                 painter = painterResource(id = R.drawable.ic_circle_plus),
                 contentDescription = null,
                 tint = Color.Unspecified,
                 modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.width(dimens.spaceSm))
-            Text(
-                text = stringResource(R.string.gallery_create_new_video),
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = TextOnPrimary
-            )
-        }
+        },
+        modifier = modifier.height(52.dp)
+    )
 }
 
 // ============================================

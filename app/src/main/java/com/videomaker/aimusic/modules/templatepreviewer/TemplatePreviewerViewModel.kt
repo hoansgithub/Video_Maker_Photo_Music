@@ -55,7 +55,7 @@ sealed class TemplatePreviewerNavigationEvent {
 // ============================================
 
 class TemplatePreviewerViewModel(
-    val initialTemplateId: String,
+    private val initialTemplateId: String,
     imageUrisStr: List<String>,
     private val templateRepository: TemplateRepository,
     private val songRepository: SongRepository,
@@ -63,7 +63,7 @@ class TemplatePreviewerViewModel(
     private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase
 ) : ViewModel() {
 
-    val imageUris: List<Uri> = imageUrisStr.mapNotNull { uriStr ->
+    private val imageUris: List<Uri> = imageUrisStr.mapNotNull { uriStr ->
         uriStr.takeIf { it.isNotBlank() }?.let { Uri.parse(it) }
     }
 
@@ -180,22 +180,23 @@ class TemplatePreviewerViewModel(
 
         isLoadingMore = true
         viewModelScope.launch {
-            templateRepository.getTemplates(limit = PAGE_SIZE, offset = currentOffset)
-                .onSuccess { newTemplates ->
-                    currentOffset += newTemplates.size
-                    hasMorePages = newTemplates.size >= PAGE_SIZE
+            try {
+                templateRepository.getTemplates(limit = PAGE_SIZE, offset = currentOffset)
+                    .onSuccess { newTemplates ->
+                        currentOffset += newTemplates.size
+                        hasMorePages = newTemplates.size >= PAGE_SIZE
 
-                    val currentState = _uiState.value as? TemplatePreviewerUiState.Ready
-                    if (currentState != null && newTemplates.isNotEmpty()) {
-                        _uiState.value = currentState.copy(
-                            templates = currentState.templates + newTemplates
-                        )
+                        val currentState = _uiState.value as? TemplatePreviewerUiState.Ready
+                        if (currentState != null && newTemplates.isNotEmpty()) {
+                            _uiState.value = currentState.copy(
+                                templates = currentState.templates + newTemplates
+                            )
+                        }
                     }
-                }
-                .onFailure {
                     // Silently fail on pagination — user can scroll back up
-                }
-            isLoadingMore = false
+            } finally {
+                isLoadingMore = false
+            }
         }
     }
 

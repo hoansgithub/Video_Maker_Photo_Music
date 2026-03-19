@@ -48,6 +48,7 @@ val FullGradient = listOf(GradientOrangeStart, GradientOrangeEnd, GradientPurple
 // BACKGROUND COLORS - Dark Theme (From Figma)
 // ============================================
 
+val SplashBackground = Color(0xFF101010)    // Splash/loading screen background
 val BackgroundDark = Color(0xFF09090B)      // Zinc-950 (Figma background)
 val BackgroundDarkElevated = Color(0xFF18181B) // Zinc-900 (elevated surface)
 val SurfaceDark = Color(0xFF27272A)         // Zinc-800 (card/container surface)
@@ -155,6 +156,7 @@ val InfoDark = Color(0xFF1976D2)        // Dark info
 // ============================================
 
 // Buttons
+val CtaText = Color(0xFF151515)                 // Text on Primary CTA button
 val ButtonPrimary = Primary                     // Orange button
 val ButtonSecondary = Secondary                 // Cyan button
 val ButtonTertiary = Tertiary                   // Pink button

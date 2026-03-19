@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -23,7 +22,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,11 +33,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -49,21 +60,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.ui.theme.Primary
-import com.videomaker.aimusic.ui.theme.TextOnPrimary
-import com.videomaker.aimusic.ui.theme.White16
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.MediaItem
-import androidx.media3.common.PlaybackException
-import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import com.videomaker.aimusic.ui.components.PrimaryButton
+import com.videomaker.aimusic.ui.theme.Black60
 import coil.compose.SubcomposeAsyncImage
 import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
@@ -122,6 +122,9 @@ fun TemplatePreviewerScreen(
             .build()
     }
 
+    // Real duration read from ExoPlayer after playback is ready — not from DB
+    var playerDurationMs by remember { mutableStateOf<Long?>(null) }
+
     DisposableEffect(Unit) {
         onDispose { player.release() }
     }
@@ -148,11 +151,13 @@ fun TemplatePreviewerScreen(
             is SongLoadState.Loading -> Unit // keep playing previous track
 
             is SongLoadState.None -> {
+                playerDurationMs = null
                 fadeVolume(player, to = 0f)
                 player.stop()
             }
 
             is SongLoadState.Ready -> {
+                playerDurationMs = null  // clear stale duration until new track is ready
                 val url = state.song.previewUrl.ifEmpty { state.song.mp3Url }
                 if (url.isEmpty()) { player.stop(); return@LaunchedEffect }
 
@@ -162,6 +167,8 @@ fun TemplatePreviewerScreen(
                 player.prepare()
                 player.play()
                 if (awaitPlayerReady(player)) {
+                    val dur = player.duration
+                    playerDurationMs = if (dur != C.TIME_UNSET && dur > 0) dur else null
                     fadeVolume(player, to = 1f)
                 } else {
                     player.volume = 1f
@@ -183,6 +190,7 @@ fun TemplatePreviewerScreen(
             TemplatePreviewerReadyContent(
                 state = state,
                 currentSong = currentSong,
+                playerDurationMs = playerDurationMs,
                 onPageChanged = viewModel::onPageChanged,
                 onUseThisTemplate = viewModel::onUseThisTemplate,
                 onNavigateBack = viewModel::onNavigateBack
@@ -219,6 +227,7 @@ fun TemplatePreviewerScreen(
 private fun TemplatePreviewerReadyContent(
     state: TemplatePreviewerUiState.Ready,
     currentSong: SongLoadState,
+    playerDurationMs: Long?,
     onPageChanged: (Int) -> Unit,
     onUseThisTemplate: (VideoTemplate) -> Unit,
     onNavigateBack: () -> Unit
@@ -282,21 +291,40 @@ private fun TemplatePreviewerReadyContent(
                 .align(Alignment.BottomCenter)
         )
 
-        // Back button
-        IconButton(
-            onClick = onNavigateBack,
+        // Top bar — back button (left) + template name (right)
+        val currentTemplateName = templates.getOrNull(pagerState.settledPage % templates.size)?.name
+        Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
+                .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(start = 8.dp, top = 8.dp)
-                .size(48.dp)
-                .background(color = Color.Black.copy(alpha = 0.4f), shape = CircleShape)
+                .padding(start = 8.dp, end = 16.dp, top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = Color.White
-            )
+            IconButton(
+                onClick = onNavigateBack,
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(color = Color.Black.copy(alpha = 0.4f), shape = CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+            if (currentTemplateName != null) {
+                Text(
+                    text = currentTemplateName,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
 
         // Bottom bar — music info + template name + CTA
@@ -311,72 +339,32 @@ private fun TemplatePreviewerReadyContent(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // Music info capsule
-                MusicInfoCapsule(currentSong = currentSong)
+                MusicInfoCapsule(currentSong = currentSong, playerDurationMs = playerDurationMs)
 
-                // Template name
-                val currentTemplate = templates.getOrNull(pagerState.settledPage % templates.size)
-                if (currentTemplate != null) {
-                    Text(
-                        text = currentTemplate.name,
-                        color = Color.White.copy(alpha = 0.85f),
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                // CTA button
-                val ctaShape = RoundedCornerShape(999.dp)
-                Button(
+                // CTA button — spinner while music loads or project is being created.
+                // Enabled once music is ready (or template has no music) and not yet creating.
+                val ctaLoading = state.isCreatingProject || currentSong is SongLoadState.Loading
+                val ctaEnabled = currentSong !is SongLoadState.Loading && !state.isCreatingProject
+                PrimaryButton(
+                    text = "Use This Template",
                     onClick = {
-                        val template = templates.getOrNull(pagerState.settledPage % templates.size) ?: return@Button
+                        val template = templates.getOrNull(pagerState.settledPage % templates.size) ?: return@PrimaryButton
                         onUseThisTemplate(template)
                     },
-                    enabled = !state.isCreatingProject,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                        .shadow(
-                            elevation = 12.dp,
-                            shape = ctaShape,
-                            ambientColor = Primary,
-                            spotColor = Primary
-                        ),
-                    shape = ctaShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Primary,
-                        contentColor = TextOnPrimary,
-                        disabledContainerColor = Primary.copy(alpha = 0.7f),
-                        disabledContentColor = TextOnPrimary
-                    ),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        horizontal = 24.dp, vertical = 0.dp
-                    )
-                ) {
-                    if (state.isCreatingProject) {
-                        CircularProgressIndicator(
-                            color = TextOnPrimary,
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
+                    enabled = ctaEnabled,
+                    isLoading = ctaLoading,
+                    leadingIcon = {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_circle_plus),
                             contentDescription = null,
                             tint = Color.Unspecified,
                             modifier = Modifier.size(24.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Use This Template",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextOnPrimary
-                        )
-                    }
-                }
+                    },
+                    modifier = Modifier
+                        .wrapContentWidth()
+                        .height(52.dp)
+                )
             }
         }
     }
@@ -387,7 +375,7 @@ private fun TemplatePreviewerReadyContent(
 // ============================================
 
 /** Formats duration millis as "00:12" (zero-padded minutes and seconds). */
-private fun formatDurationMmSs(durationMs: Int): String {
+private fun formatDurationMmSs(durationMs: Long): String {
     val totalSec = durationMs / 1000
     val minutes = totalSec / 60
     val seconds = totalSec % 60
@@ -395,22 +383,22 @@ private fun formatDurationMmSs(durationMs: Int): String {
 }
 
 @Composable
-private fun MusicInfoCapsule(currentSong: SongLoadState) {
+private fun MusicInfoCapsule(currentSong: SongLoadState, playerDurationMs: Long?) {
     if (currentSong is SongLoadState.None) return
 
-    Column(
+    Row(
         modifier = Modifier
-            .wrapContentWidth()
-            .background(color = White16, shape = RoundedCornerShape(999.dp))
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+            .fillMaxWidth()
+            .background(color = Black60, shape = RoundedCornerShape(999.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Icon(
-            imageVector = Icons.Filled.MusicNote,
+            painter = painterResource(id = R.drawable.ic_double_notes),
             contentDescription = null,
             tint = Color.White.copy(alpha = 0.8f),
-            modifier = Modifier.size(14.dp)
+            modifier = Modifier.size(16.dp)
         )
 
         when (currentSong) {
@@ -428,21 +416,21 @@ private fun MusicInfoCapsule(currentSong: SongLoadState) {
                 Text(
                     text = currentSong.song.name,
                     color = Color.White,
-                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     modifier = Modifier
-                        .widthIn(max = 160.dp)
+                        .weight(1f)
                         .basicMarquee()
                 )
-                val duration = currentSong.song.durationMs
-                if (duration != null && duration > 0) {
-                    Text(
-                        text = formatDurationMmSs(duration),
-                        color = Color.White.copy(alpha = 0.6f),
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
+                Text(
+                    text = if (playerDurationMs != null && playerDurationMs > 0)
+                        formatDurationMmSs(playerDurationMs)
+                    else "--:--",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal
+                )
             }
             is SongLoadState.None -> Unit
         }
@@ -533,5 +521,171 @@ private suspend fun awaitPlayerReady(player: ExoPlayer): Boolean {
         }
         player.addListener(listener)
         cont.invokeOnCancellation { player.removeListener(listener) }
+    }
+}
+
+// ============================================
+// PREVIEWS
+// ============================================
+
+private val previewTemplates = listOf(
+    VideoTemplate(id = "t1", name = "Golden Hour Vibes", songId = 1L, effectSetId = "classic"),
+    VideoTemplate(id = "t2", name = "Summer Memories", songId = 2L, effectSetId = "cinematic"),
+    VideoTemplate(id = "t3", name = "City Lights", songId = 0L, effectSetId = "minimal"),
+)
+
+private val previewSongReady = SongLoadState.Ready(
+    song = com.videomaker.aimusic.domain.model.MusicSong(
+        id = 1L,
+        name = "Golden Hour",
+        artist = "Loving Caliber",
+        durationMs = 182000
+    )
+)
+
+@androidx.compose.ui.tooling.preview.Preview(
+    name = "Ready — music loaded",
+    showBackground = true,
+    backgroundColor = 0xFF000000,
+    device = "spec:width=390dp,height=844dp,dpi=460"
+)
+@Composable
+private fun PreviewTemplatePreviewerReady() {
+    com.videomaker.aimusic.ui.theme.VideoMakerTheme {
+        ProvideShimmerEffect {
+            TemplatePreviewerReadyContent(
+                state = TemplatePreviewerUiState.Ready(
+                    templates = previewTemplates,
+                    initialPage = 0
+                ),
+                currentSong = previewSongReady,
+                playerDurationMs = 182000L,
+                onPageChanged = {},
+                onUseThisTemplate = {},
+                onNavigateBack = {}
+            )
+        }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(
+    name = "Ready — music loading (shimmer)",
+    showBackground = true,
+    backgroundColor = 0xFF000000,
+    device = "spec:width=390dp,height=844dp,dpi=460"
+)
+@Composable
+private fun PreviewTemplatePreviewerMusicLoading() {
+    com.videomaker.aimusic.ui.theme.VideoMakerTheme {
+        ProvideShimmerEffect {
+            TemplatePreviewerReadyContent(
+                state = TemplatePreviewerUiState.Ready(
+                    templates = previewTemplates,
+                    initialPage = 0
+                ),
+                currentSong = SongLoadState.Loading,
+                playerDurationMs = null,
+                onPageChanged = {},
+                onUseThisTemplate = {},
+                onNavigateBack = {}
+            )
+        }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(
+    name = "Ready — no music",
+    showBackground = true,
+    backgroundColor = 0xFF000000,
+    device = "spec:width=390dp,height=844dp,dpi=460"
+)
+@Composable
+private fun PreviewTemplatePreviewerNoMusic() {
+    com.videomaker.aimusic.ui.theme.VideoMakerTheme {
+        ProvideShimmerEffect {
+            TemplatePreviewerReadyContent(
+                state = TemplatePreviewerUiState.Ready(
+                    templates = previewTemplates,
+                    initialPage = 2  // "City Lights" has songId=0
+                ),
+                currentSong = SongLoadState.None,
+                playerDurationMs = null,
+                onPageChanged = {},
+                onUseThisTemplate = {},
+                onNavigateBack = {}
+            )
+        }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(
+    name = "Ready — creating project",
+    showBackground = true,
+    backgroundColor = 0xFF000000,
+    device = "spec:width=390dp,height=844dp,dpi=460"
+)
+@Composable
+private fun PreviewTemplatePreviewerCreating() {
+    com.videomaker.aimusic.ui.theme.VideoMakerTheme {
+        ProvideShimmerEffect {
+            TemplatePreviewerReadyContent(
+                state = TemplatePreviewerUiState.Ready(
+                    templates = previewTemplates,
+                    initialPage = 0,
+                    isCreatingProject = true
+                ),
+                currentSong = previewSongReady,
+                playerDurationMs = 182000L,
+                onPageChanged = {},
+                onUseThisTemplate = {},
+                onNavigateBack = {}
+            )
+        }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(
+    name = "Loading state",
+    showBackground = true,
+    backgroundColor = 0xFF000000
+)
+@Composable
+private fun PreviewTemplatePreviewerLoading() {
+    com.videomaker.aimusic.ui.theme.VideoMakerTheme {
+        Box(
+            modifier = Modifier.fillMaxSize().background(Color.Black),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Color.White)
+        }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(
+    name = "Error state",
+    showBackground = true,
+    backgroundColor = 0xFF000000
+)
+@Composable
+private fun PreviewTemplatePreviewerError() {
+    com.videomaker.aimusic.ui.theme.VideoMakerTheme {
+        Box(
+            modifier = Modifier.fillMaxSize().background(Color.Black),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Failed to load templates. Please try again.",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                )
+                Button(onClick = {}) { Text("Go Back") }
+            }
+        }
     }
 }

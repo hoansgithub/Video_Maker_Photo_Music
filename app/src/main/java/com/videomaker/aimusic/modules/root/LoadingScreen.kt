@@ -1,7 +1,6 @@
 package com.videomaker.aimusic.modules.root
 
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -35,6 +34,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
 /**
@@ -57,30 +58,10 @@ fun LoadingScreen(
     message: String,
     modifier: Modifier = Modifier
 ) {
-    // Animated gradient background
-    val infiniteTransition = rememberInfiniteTransition(label = "background")
-    val gradientOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "gradientOffset"
-    )
-
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1A1A1A),
-                        Color(0xFF0D0D0D).copy(alpha = 0.3f + gradientOffset * 0.1f),
-                        Color(0xFF1A1A1A)
-                    )
-                )
-            ),
+            .background(SplashBackground),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -99,17 +80,10 @@ fun LoadingScreen(
 
             // App Name
             Text(
-                text = "Video Maker",
+                text = stringResource(R.string.app_name),
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
-            )
-
-            Text(
-                text = "Photo + Music",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Light,
-                color = Color.White.copy(alpha = 0.7f)
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -121,7 +95,7 @@ fun LoadingScreen(
                     modifier = Modifier.padding(bottom = 32.dp)
                 ) {
                     CircularProgressIndicator(
-                        color = Color(0xFFFF9A76),
+                        color = Primary,
                         strokeWidth = 3.dp,
                         modifier = Modifier.size(36.dp)
                     )
@@ -159,7 +133,7 @@ private fun AnimatedAppIcon() {
         label = "scale"
     )
 
-    // Fade in animation
+    // Subtle alpha pulse (oscillates 0.85–1.0)
     val alpha by infiniteTransition.animateFloat(
         initialValue = 0.85f,
         targetValue = 1f,
