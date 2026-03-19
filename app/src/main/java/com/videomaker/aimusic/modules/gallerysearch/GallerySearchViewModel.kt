@@ -213,18 +213,15 @@ class GallerySearchViewModel(
     }
 
     /**
-     * Searches templates by vibe tag (exact match) and songs by display name in parallel.
-     * Used when a suggestion vibe tag chip is tapped.
+     * Searches templates by vibe tag (exact tag match).
+     * Songs are not included — vibe tags are a template-only concept.
      */
     private suspend fun runSearchByVibeTag(
         tagId: String,
         displayName: String
-    ): GallerySearchUiState = coroutineScope {
-        val templatesDeferred = async {
-            templateRepository.getTemplatesByVibeTag(tag = tagId, limit = 20, offset = 0)
-        }
-        val songsDeferred = async { searchSongsUseCase(displayName) }
-        mergeResults(templatesDeferred.await(), songsDeferred.await(), label = displayName)
+    ): GallerySearchUiState {
+        val templateResult = templateRepository.getTemplatesByVibeTag(tag = tagId, limit = 20, offset = 0)
+        return mergeResults(templateResult, Result.success(emptyList()), label = displayName)
     }
 
     /** Maps raw results into a [GallerySearchUiState]. Shared by text search and tag search. */
