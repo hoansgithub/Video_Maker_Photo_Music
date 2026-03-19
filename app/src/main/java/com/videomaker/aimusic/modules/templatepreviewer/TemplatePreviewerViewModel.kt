@@ -7,6 +7,7 @@ import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.VideoTemplate
+
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
@@ -106,7 +107,7 @@ class TemplatePreviewerViewModel(
         loadSongForTemplate(state.templates[realIndex])
     }
 
-    fun onUseThisTemplate(template: VideoTemplate) {
+    fun onUseThisTemplate(template: VideoTemplate, aspectRatio: AspectRatio) {
         val currentState = _uiState.value as? TemplatePreviewerUiState.Ready ?: return
         if (currentState.isCreatingProject) return
 
@@ -115,7 +116,7 @@ class TemplatePreviewerViewModel(
 
             createProjectUseCase(imageUris)
                 .onSuccess { project ->
-                    val settings = buildSettingsFromTemplate(template)
+                    val settings = buildSettingsFromTemplate(template, aspectRatio)
                     updateProjectSettingsUseCase(project.id, settings)
                         .onSuccess {
                             _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToEditor(project.id)
@@ -220,14 +221,7 @@ class TemplatePreviewerViewModel(
         }
     }
 
-    private fun buildSettingsFromTemplate(template: VideoTemplate): ProjectSettings {
-        val aspectRatio = when (template.aspectRatio) {
-            "16:9" -> AspectRatio.RATIO_16_9
-            "1:1" -> AspectRatio.RATIO_1_1
-            "4:5" -> AspectRatio.RATIO_4_5
-            else -> AspectRatio.RATIO_9_16
-        }
-
+    private fun buildSettingsFromTemplate(template: VideoTemplate, aspectRatio: AspectRatio): ProjectSettings {
         return ProjectSettings(
             imageDurationMs = template.imageDurationMs.toLong(),
             transitionPercentage = template.transitionPct,

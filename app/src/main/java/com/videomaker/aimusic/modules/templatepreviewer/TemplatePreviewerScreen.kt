@@ -2,6 +2,8 @@ package com.videomaker.aimusic.modules.templatepreviewer
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,10 +27,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +56,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -62,8 +68,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.ui.components.PrimaryButton
 import com.videomaker.aimusic.ui.theme.Black60
+import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.SurfaceDark
+import com.videomaker.aimusic.ui.theme.SurfaceDarkVariant
+import com.videomaker.aimusic.ui.theme.White16
+import com.videomaker.aimusic.ui.theme.White40
 import coil.compose.SubcomposeAsyncImage
 import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
@@ -223,13 +235,14 @@ fun TemplatePreviewerScreen(
 // READY CONTENT — virtual infinite vertical pager
 // ============================================
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TemplatePreviewerReadyContent(
     state: TemplatePreviewerUiState.Ready,
     currentSong: SongLoadState,
     playerDurationMs: Long?,
     onPageChanged: (Int) -> Unit,
-    onUseThisTemplate: (VideoTemplate) -> Unit,
+    onUseThisTemplate: (VideoTemplate, AspectRatio) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val templates = state.templates
@@ -237,6 +250,9 @@ private fun TemplatePreviewerReadyContent(
         initialPage = initialVirtualPage(state.initialPage, templates.size),
         pageCount = { VIRTUAL_PAGE_COUNT }
     )
+
+    // Bottom sheet state — non-null while the sheet is visible
+    var pendingTemplate by remember { mutableStateOf<VideoTemplate?>(null) }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
@@ -349,7 +365,7 @@ private fun TemplatePreviewerReadyContent(
                     text = "Use This Template",
                     onClick = {
                         val template = templates.getOrNull(pagerState.settledPage % templates.size) ?: return@PrimaryButton
-                        onUseThisTemplate(template)
+                        pendingTemplate = template
                     },
                     enabled = ctaEnabled,
                     isLoading = ctaLoading,
@@ -367,7 +383,154 @@ private fun TemplatePreviewerReadyContent(
                 )
             }
         }
+
+        // Ratio selection bottom sheet
+        val template = pendingTemplate
+        if (template != null) {
+            SelectRatioBottomSheet(
+                defaultRatio = aspectRatioFromString(template.aspectRatio),
+                onDismiss = { pendingTemplate = null },
+                onConfirm = { selectedRatio ->
+                    pendingTemplate = null
+                    onUseThisTemplate(template, selectedRatio)
+                }
+            )
+        }
     }
+}
+
+// ============================================
+// RATIO SELECTION BOTTOM SHEET
+// ============================================
+
+private fun aspectRatioFromString(value: String): AspectRatio = when (value) {
+    "16:9" -> AspectRatio.RATIO_16_9
+    "9:16" -> AspectRatio.RATIO_9_16
+    "4:5" -> AspectRatio.RATIO_4_5
+    "1:1" -> AspectRatio.RATIO_1_1
+    else -> AspectRatio.RATIO_9_16
+}
+
+private val AspectRatio.shortLabel: String
+    get() = when (this) {
+        AspectRatio.RATIO_16_9 -> "16:9"
+        AspectRatio.RATIO_9_16 -> "9:16"
+        AspectRatio.RATIO_4_5 -> "4:5"
+        AspectRatio.RATIO_1_1 -> "1:1"
+    }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SelectRatioBottomSheet(
+    defaultRatio: AspectRatio,
+    onDismiss: () -> Unit,
+    onConfirm: (AspectRatio) -> Unit
+) {
+    var selected by remember { mutableStateOf(defaultRatio) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = SurfaceDark,
+        dragHandle = null,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(top = 24.dp, bottom = 16.dp)
+                .navigationBarsPadding(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            Text(
+                text = "Select Video Ratio",
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                listOf(
+                    AspectRatio.RATIO_16_9,
+                    AspectRatio.RATIO_9_16,
+                    AspectRatio.RATIO_4_5,
+                    AspectRatio.RATIO_1_1
+                ).forEach { ratio ->
+                    RatioOptionCard(
+                        ratio = ratio,
+                        isSelected = ratio == selected,
+                        onClick = { selected = ratio },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            PrimaryButton(
+                text = "Create now",
+                onClick = { onConfirm(selected) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun RatioOptionCard(
+    ratio: AspectRatio,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) Primary else White16
+    val borderWidth = if (isSelected) 1.5.dp else 1.dp
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .border(borderWidth, borderColor, RoundedCornerShape(12.dp))
+            .background(SurfaceDarkVariant)
+            .clickable { onClick() }
+            .padding(vertical = 14.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            AspectRatioIcon(ratio = ratio, isSelected = isSelected)
+            Text(
+                text = ratio.shortLabel,
+                color = if (isSelected) Primary else Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+private fun AspectRatioIcon(ratio: AspectRatio, isSelected: Boolean) {
+    val color = if (isSelected) Primary else White40
+    val maxSize = 40.dp
+    val (iconW, iconH) = when (ratio) {
+        AspectRatio.RATIO_16_9 -> maxSize to (maxSize * (9f / 16f))
+        AspectRatio.RATIO_9_16 -> (maxSize * (9f / 16f)) to maxSize
+        AspectRatio.RATIO_4_5 -> (maxSize * (4f / 5f)) to maxSize
+        AspectRatio.RATIO_1_1 -> maxSize to maxSize
+    }
+    Box(
+        modifier = Modifier
+            .size(width = iconW, height = iconH)
+            .border(1.5.dp, color, RoundedCornerShape(3.dp))
+    )
 }
 
 // ============================================
@@ -561,7 +724,7 @@ private fun PreviewTemplatePreviewerReady() {
                 currentSong = previewSongReady,
                 playerDurationMs = 182000L,
                 onPageChanged = {},
-                onUseThisTemplate = {},
+                onUseThisTemplate = { _, _ -> },
                 onNavigateBack = {}
             )
         }
@@ -586,7 +749,7 @@ private fun PreviewTemplatePreviewerMusicLoading() {
                 currentSong = SongLoadState.Loading,
                 playerDurationMs = null,
                 onPageChanged = {},
-                onUseThisTemplate = {},
+                onUseThisTemplate = { _, _ -> },
                 onNavigateBack = {}
             )
         }
@@ -611,7 +774,7 @@ private fun PreviewTemplatePreviewerNoMusic() {
                 currentSong = SongLoadState.None,
                 playerDurationMs = null,
                 onPageChanged = {},
-                onUseThisTemplate = {},
+                onUseThisTemplate = { _, _ -> },
                 onNavigateBack = {}
             )
         }
@@ -637,7 +800,7 @@ private fun PreviewTemplatePreviewerCreating() {
                 currentSong = previewSongReady,
                 playerDurationMs = 182000L,
                 onPageChanged = {},
-                onUseThisTemplate = {},
+                onUseThisTemplate = { _, _ -> },
                 onNavigateBack = {}
             )
         }
