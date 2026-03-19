@@ -40,6 +40,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -77,6 +78,7 @@ import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
+import com.videomaker.aimusic.ui.components.ShimmerBox
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
@@ -101,9 +103,10 @@ fun GallerySearchScreen(
     onNavigateBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val query by viewModel.query.collectAsStateWithLifecycle()
+    val displayText by viewModel.displayText.collectAsStateWithLifecycle()
     val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
     val suggestionVibeTags by viewModel.suggestionVibeTags.collectAsStateWithLifecycle()
+    val featuredTemplates by viewModel.featuredTemplates.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -131,7 +134,7 @@ fun GallerySearchScreen(
     ) {
         // Top bar with back + search field
         GallerySearchTopBar(
-            query = query,
+            query = displayText,
             onQueryChange = viewModel::onQueryChange,
             onSearch = viewModel::onSearch,
             onClearQuery = viewModel::onClearQuery,
@@ -143,26 +146,39 @@ fun GallerySearchScreen(
             is GallerySearchUiState.Idle -> GallerySearchIdleContent(
                 recentSearches = recentSearches,
                 suggestionVibeTags = suggestionVibeTags,
+                featuredTemplates = featuredTemplates,
                 onRecentClick = viewModel::onRecentSearchClick,
                 onRemoveRecent = viewModel::onRemoveRecentSearch,
                 onClearAllRecents = viewModel::onClearAllRecents,
-                onVibeTagClick = viewModel::onVibeTagClick
+                onVibeTagClick = viewModel::onVibeTagClick,
+                onTemplateClick = viewModel::onTemplateClick
             )
 
             is GallerySearchUiState.Loading -> GallerySearchLoadingContent()
 
-            is GallerySearchUiState.Results -> GallerySearchResultsContent(
-                templates = state.templates,
-                songs = state.songs,
-                onTemplateClick = viewModel::onTemplateClick,
-                onSongClick = { song ->
-                    keyboardController?.hide()
-                    viewModel.onSongClick(song)
-                },
-                onScrollStarted = { keyboardController?.hide() }
-            )
+            is GallerySearchUiState.Results -> {
+                val onSongClick = remember(keyboardController) {
+                    { song: MusicSong ->
+                        keyboardController?.hide()
+                        viewModel.onSongClick(song)
+                    }
+                }
+                GallerySearchResultsContent(
+                    templates = state.templates,
+                    songs = state.songs,
+                    onTemplateClick = viewModel::onTemplateClick,
+                    onSongClick = onSongClick,
+                    onScrollStarted = { keyboardController?.hide() }
+                )
+            }
 
-            is GallerySearchUiState.Empty -> GallerySearchEmptyContent(query = state.query)
+            is GallerySearchUiState.Empty -> GallerySearchEmptyContent(
+                query = state.query,
+                suggestionVibeTags = suggestionVibeTags,
+                featuredTemplates = featuredTemplates,
+                onVibeTagClick = viewModel::onVibeTagClick,
+                onTemplateClick = viewModel::onTemplateClick
+            )
 
             is GallerySearchUiState.Error -> GallerySearchErrorContent(message = state.message)
         }
@@ -279,7 +295,7 @@ private fun GallerySearchTopBar(
                     Spacer(modifier = Modifier.width(dimens.spaceXs))
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Clear",
+                        contentDescription = stringResource(R.string.close),
                         tint = TextTertiary,
                         modifier = Modifier
                             .size(20.dp)
@@ -292,17 +308,19 @@ private fun GallerySearchTopBar(
 }
 
 // ============================================
-// IDLE CONTENT (recents + suggestions)
+// IDLE CONTENT (recents + browse by theme + trending templates)
 // ============================================
 
 @Composable
 private fun GallerySearchIdleContent(
     recentSearches: List<String>,
     suggestionVibeTags: List<VibeTag>,
+    featuredTemplates: List<GallerySearchTemplateItem>,
     onRecentClick: (String) -> Unit,
     onRemoveRecent: (String) -> Unit,
     onClearAllRecents: () -> Unit,
-    onVibeTagClick: (VibeTag) -> Unit
+    onVibeTagClick: (VibeTag) -> Unit,
+    onTemplateClick: (String) -> Unit
 ) {
     val dimens = AppDimens.current
 
@@ -351,28 +369,52 @@ private fun GallerySearchIdleContent(
             }
         }
 
-        // Suggestions section
-        item(key = "suggestions_header") {
-            Text(
-                text = stringResource(R.string.search_suggestions),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = dimens.spaceLg)
-            )
-            Spacer(modifier = Modifier.height(dimens.spaceSm))
+        // Browse by theme section
+        if (suggestionVibeTags.isNotEmpty()) {
+            item(key = "theme_header") {
+                Text(
+                    text = stringResource(R.string.search_browse_by_theme),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceSm))
+            }
+
+            item(key = "theme_chips") {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = dimens.spaceLg),
+                    horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+                ) {
+                    items(suggestionVibeTags, key = { it.id }) { tag ->
+                        AppFilterChip(
+                            text = if (tag.emoji.isNotEmpty()) "${tag.emoji} ${tag.displayName}" else tag.displayName,
+                            onClick = { onVibeTagClick(tag) }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(dimens.spaceXl))
+            }
         }
 
-        item(key = "suggestion_chips") {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = dimens.spaceLg),
-                horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
-            ) {
-                items(suggestionVibeTags, key = { it.id }) { tag ->
-                    AppFilterChip(
-                        text = if (tag.emoji.isNotEmpty()) "${tag.emoji} ${tag.displayName}" else tag.displayName,
-                        onClick = { onVibeTagClick(tag) }
-                    )
-                }
+        // Trending templates section
+        if (featuredTemplates.isNotEmpty()) {
+            item(key = "trending_header") {
+                Text(
+                    text = stringResource(R.string.search_trending_templates),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceSm))
+            }
+
+            item(key = "trending_grid") {
+                GallerySearchTemplateGrid(
+                    templates = featuredTemplates,
+                    onTemplateClick = onTemplateClick,
+                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                )
             }
         }
     }
@@ -413,7 +455,7 @@ private fun RecentSearchItem(
 
         Icon(
             imageVector = Icons.Default.Close,
-            contentDescription = "Remove",
+            contentDescription = stringResource(R.string.remove),
             tint = TextTertiary,
             modifier = Modifier
                 .size(18.dp)
@@ -508,12 +550,14 @@ private fun GallerySearchTemplateGrid(
 ) {
     val dimens = AppDimens.current
 
+    val rows = remember(templates) { templates.chunked(2) }
+
     // Simple 2-column grid layout
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(dimens.spaceSm)
     ) {
-        templates.chunked(2).forEach { rowItems ->
+        rows.forEach { rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
@@ -542,7 +586,7 @@ private fun GallerySearchTemplateCard(
 ) {
     val dimens = AppDimens.current
     val context = LocalContext.current
-    val aspectRatio = parseAspectRatio(template.aspectRatio)
+    val aspectRatio = remember(template.aspectRatio) { parseAspectRatio(template.aspectRatio) }
 
     val imageRequest = remember(template.thumbnailPath, template.id) {
         ImageRequest.Builder(context)
@@ -611,7 +655,7 @@ private fun GallerySearchTemplateCard(
                         .padding(horizontal = 6.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "PRO",
+                        text = stringResource(R.string.badge_pro),
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                         color = Color.Black
                     )
@@ -634,7 +678,7 @@ private fun GallerySearchTemplateCard(
 }
 
 // ============================================
-// LOADING CONTENT
+// LOADING CONTENT — shimmer matching actual results layout
 // ============================================
 
 @Composable
@@ -647,7 +691,62 @@ private fun GallerySearchLoadingContent() {
             contentPadding = PaddingValues(vertical = dimens.spaceMd),
             userScrollEnabled = false
         ) {
-            items(6, contentType = { "song_placeholder" }) {
+            // Section header placeholder
+            item(key = "loading_templates_header") {
+                ShimmerBox(
+                    modifier = Modifier
+                        .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceSm)
+                        .width(120.dp)
+                        .height(16.dp),
+                    cornerRadius = 8.dp
+                )
+            }
+
+            // 2-column template card grid (3 rows × 2 = 6 shimmer cards, 9:16 aspect ratio)
+            item(key = "loading_templates_grid") {
+                Column(
+                    modifier = Modifier.padding(horizontal = dimens.spaceLg),
+                    verticalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+                ) {
+                    repeat(3) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+                        ) {
+                            ShimmerBox(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .aspectRatio(9f / 16f),
+                                cornerRadius = 12.dp
+                            )
+                            ShimmerBox(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .aspectRatio(9f / 16f),
+                                cornerRadius = 12.dp
+                            )
+                        }
+                    }
+                }
+            }
+
+            item(key = "loading_templates_spacer") {
+                Spacer(modifier = Modifier.height(dimens.spaceXl))
+            }
+
+            // Songs section header placeholder
+            item(key = "loading_songs_header") {
+                ShimmerBox(
+                    modifier = Modifier
+                        .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceSm)
+                        .width(80.dp)
+                        .height(16.dp),
+                    cornerRadius = 8.dp
+                )
+            }
+
+            // Song list item skeletons
+            items(4, key = { it }, contentType = { "song_placeholder" }) {
                 SongListItemPlaceholder()
             }
         }
@@ -659,23 +758,95 @@ private fun GallerySearchLoadingContent() {
 // ============================================
 
 @Composable
-private fun GallerySearchEmptyContent(query: String) {
-    Box(
+private fun GallerySearchEmptyContent(
+    query: String,
+    suggestionVibeTags: List<VibeTag>,
+    featuredTemplates: List<GallerySearchTemplateItem>,
+    onVibeTagClick: (VibeTag) -> Unit,
+    onTemplateClick: (String) -> Unit
+) {
+    val dimens = AppDimens.current
+
+    LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentPadding = PaddingValues(vertical = dimens.spaceMd)
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = stringResource(R.string.search_no_results),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(AppDimens.current.spaceSm))
-            Text(
-                text = stringResource(R.string.search_no_results_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondary
-            )
+        // No results message
+        item(key = "empty_message") {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = dimens.spaceXxl),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = TextSecondary,
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceMd))
+                Text(
+                    text = stringResource(R.string.search_no_results),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceSm))
+                Text(
+                    text = stringResource(R.string.search_no_results_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary
+                )
+            }
+        }
+
+        // Try these themes
+        if (suggestionVibeTags.isNotEmpty()) {
+            item(key = "empty_themes_header") {
+                Text(
+                    text = stringResource(R.string.search_browse_by_theme),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceSm))
+            }
+
+            item(key = "empty_theme_chips") {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = dimens.spaceLg),
+                    horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+                ) {
+                    items(suggestionVibeTags, key = { it.id }) { tag ->
+                        AppFilterChip(
+                            text = if (tag.emoji.isNotEmpty()) "${tag.emoji} ${tag.displayName}" else tag.displayName,
+                            onClick = { onVibeTagClick(tag) }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(dimens.spaceXl))
+            }
+        }
+
+        // Trending templates as fallback
+        if (featuredTemplates.isNotEmpty()) {
+            item(key = "empty_trending_header") {
+                Text(
+                    text = stringResource(R.string.search_trending_templates),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceSm))
+            }
+
+            item(key = "empty_trending_grid") {
+                GallerySearchTemplateGrid(
+                    templates = featuredTemplates,
+                    onTemplateClick = onTemplateClick,
+                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                )
+            }
         }
     }
 }
@@ -763,11 +934,39 @@ private fun GallerySearchIdlePreview() {
                     VibeTag("travel", "Travel", "✈️"),
                     VibeTag("cinematic", "Cinematic", "🎬"),
                 ),
+                featuredTemplates = listOf(
+                    GallerySearchTemplateItem("1", "Aesthetic Mood", "", listOf("aesthetic"), "9:16", false),
+                    GallerySearchTemplateItem("2", "Chill Lofi", "", listOf("lofi"), "9:16", true),
+                    GallerySearchTemplateItem("3", "Travel Vlog", "", listOf("travel"), "9:16", false),
+                    GallerySearchTemplateItem("4", "Birthday", "", listOf("birthday"), "9:16", false),
+                ),
                 onRecentClick = {},
                 onRemoveRecent = {},
                 onClearAllRecents = {},
-                onVibeTagClick = {}
+                onVibeTagClick = {},
+                onTemplateClick = {}
             )
+        }
+    }
+}
+
+@Preview(widthDp = 375, heightDp = 812)
+@Composable
+private fun GallerySearchLoadingPreview() {
+    VideoMakerTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface)
+        ) {
+            GallerySearchTopBar(
+                query = "aesthetic",
+                onQueryChange = {},
+                onSearch = {},
+                onClearQuery = {},
+                onBack = {}
+            )
+            GallerySearchLoadingContent()
         }
     }
 }
@@ -820,7 +1019,18 @@ private fun GallerySearchEmptyPreview() {
                 onClearQuery = {},
                 onBack = {}
             )
-            GallerySearchEmptyContent(query = "xyznonexistent")
+            GallerySearchEmptyContent(
+                query = "xyznonexistent",
+                suggestionVibeTags = listOf(
+                    VibeTag("aesthetic", "Aesthetic", "✨"),
+                    VibeTag("birthday", "Birthday", "🎂"),
+                ),
+                featuredTemplates = listOf(
+                    GallerySearchTemplateItem("1", "Trending Template", "", emptyList(), "9:16", false),
+                ),
+                onVibeTagClick = {},
+                onTemplateClick = {}
+            )
         }
     }
 }

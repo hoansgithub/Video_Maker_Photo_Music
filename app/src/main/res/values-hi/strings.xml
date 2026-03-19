@@ -169,6 +169,8 @@
     <string name="search_no_results">कोई परिणाम नहीं मिला</string>
     <string name="search_no_results_hint">कोई अलग कीवर्ड आज़माएं</string>
     <string name="search_suggestions">सुझाव</string>
+    <string name="search_browse_by_theme">थीम के अनुसार ब्राउज़ करें</string>
+    <string name="search_trending_templates">ट्रेंडिंग टेम्पलेट</string>
     <string name="search_tag_aesthetic">एस्थेटिक</string>
     <string name="search_tag_birthday">जन्मदिन</string>
     <string name="search_tag_travel">यात्रा</string>
@@ -206,6 +208,8 @@
     <string name="seconds">%d सेकंड</string>
     <string name="none">कोई नहीं</string>
     <string name="close">बंद करें</string>
+    <string name="remove">हटाएं</string>
+    <string name="badge_pro">PRO</string>
     <string name="settings">सेटिंग्स</string>
 
     <!-- Error states -->

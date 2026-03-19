@@ -74,14 +74,22 @@ class GallerySearchViewModel(
     private val _uiState = MutableStateFlow<GallerySearchUiState>(GallerySearchUiState.Idle)
     val uiState: StateFlow<GallerySearchUiState> = _uiState.asStateFlow()
 
+    // Text shown in the search bar — updated on every character typed, tag tap, or recent tap.
+    // Separate from _query so that tag/recent taps do NOT trigger the debounce text search.
+    private val _displayText = MutableStateFlow("")
+    val displayText: StateFlow<String> = _displayText.asStateFlow()
+
+    // Drives the 300ms debounce search — only mutated when the user is actively typing.
     private val _query = MutableStateFlow("")
-    val query: StateFlow<String> = _query.asStateFlow()
 
     private val _recentSearches = MutableStateFlow<List<String>>(emptyList())
     val recentSearches: StateFlow<List<String>> = _recentSearches.asStateFlow()
 
     private val _suggestionVibeTags = MutableStateFlow<List<VibeTag>>(emptyList())
     val suggestionVibeTags: StateFlow<List<VibeTag>> = _suggestionVibeTags.asStateFlow()
+
+    private val _featuredTemplates = MutableStateFlow<List<GallerySearchTemplateItem>>(emptyList())
+    val featuredTemplates: StateFlow<List<GallerySearchTemplateItem>> = _featuredTemplates.asStateFlow()
 
     private val _navigationEvent = MutableStateFlow<GallerySearchNavigationEvent?>(null)
     val navigationEvent: StateFlow<GallerySearchNavigationEvent?> = _navigationEvent.asStateFlow()
@@ -90,9 +98,14 @@ class GallerySearchViewModel(
     private val _selectedSong = MutableStateFlow<MusicSong?>(null)
     val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
 
-    // Tracks the explicit search job (keyboard Search button / recent tap) so it can be cancelled
-    // when the debounce flow fires a newer query.
+    // Tracks the explicit search job (keyboard Search button / recent tap / vibe tag tap)
+    // so it can be cancelled when a newer search starts.
     private var explicitSearchJob: Job? = null
+
+    // When true, the debounce flow is not allowed to write to _uiState.
+    // Set when an explicit search (tag tap / recent tap / keyboard submit) takes control.
+    // Cleared when the user resumes typing so the debounce can take over again.
+    private var debounceLockedOut = false
 
     init {
         _recentSearches.value = preferencesManager.getRecentSearches()
@@ -101,6 +114,14 @@ class GallerySearchViewModel(
             templateRepository.getVibeTags()
                 .onSuccess { _suggestionVibeTags.value = it }
                 .onFailure { android.util.Log.w("GallerySearchVM", "Failed to load vibe tags", it) }
+        }
+
+        viewModelScope.launch {
+            templateRepository.getFeaturedTemplates(limit = 6)
+                .onSuccess { templates ->
+                    _featuredTemplates.value = templates.map { it.toSearchItem() }
+                }
+                .onFailure { android.util.Log.w("GallerySearchVM", "Failed to load featured templates", it) }
         }
 
         // distinctUntilChanged BEFORE debounce: suppresses duplicate emissions before the timer
@@ -118,17 +139,28 @@ class GallerySearchViewModel(
                         }
                     }
                 }
-                .collect { state -> _uiState.value = state }
+                .collect { state ->
+                    // Suppress debounce output while an explicit search (tag / recent / submit)
+                    // has taken control. This prevents the debounce from overwriting results.
+                    if (!debounceLockedOut) {
+                        _uiState.value = state
+                    }
+                }
         }
     }
 
+    /** Called on every keystroke in the search field. */
     fun onQueryChange(newQuery: String) {
-        _query.value = newQuery
+        debounceLockedOut = false  // user is typing — let debounce control state
+        _displayText.value = newQuery
+        _query.value = newQuery  // drives the debounce flow
     }
 
+    /** Called when the user taps the keyboard Search / Done button. */
     fun onSearch() {
-        val q = _query.value.trim()
+        val q = _displayText.value.trim()
         if (q.isNotBlank()) {
+            acquireExplicitSearchControl()
             preferencesManager.addRecentSearch(q)
             _recentSearches.value = preferencesManager.getRecentSearches()
             launchExplicitSearch(q)
@@ -137,12 +169,16 @@ class GallerySearchViewModel(
 
     fun onClearQuery() {
         explicitSearchJob?.cancel()
+        debounceLockedOut = false
+        _displayText.value = ""
         _query.value = ""
         _uiState.value = GallerySearchUiState.Idle
     }
 
+    /** Tapping a recent search — bypasses debounce, does NOT mutate _query. */
     fun onRecentSearchClick(query: String) {
-        _query.value = query
+        acquireExplicitSearchControl()
+        _displayText.value = query
         preferencesManager.addRecentSearch(query)
         _recentSearches.value = preferencesManager.getRecentSearches()
         launchExplicitSearch(query)
@@ -185,20 +221,33 @@ class GallerySearchViewModel(
 
     /**
      * Called when a suggestion vibe tag chip is tapped.
-     * Searches templates by vibe tag (exact match) and songs by display name.
+     * Searches templates by vibe tag (exact match). Songs are excluded.
+     *
+     * Sets _displayText only (not _query) so the debounce flow is not re-triggered.
+     * Acquires explicit search control so the debounce cannot overwrite results.
      */
     fun onVibeTagClick(tag: VibeTag) {
-        explicitSearchJob?.cancel()
-        _query.value = tag.displayName
+        acquireExplicitSearchControl()
+        _displayText.value = tag.displayName
         _uiState.value = GallerySearchUiState.Loading
         explicitSearchJob = viewModelScope.launch {
             _uiState.value = runSearchByVibeTag(tag.id, tag.displayName)
         }
     }
 
+    /**
+     * Locks out the debounce flow and cancels any pending explicit job.
+     * Must be called at the start of any explicit search (tag / recent / submit).
+     * Resets _query to "" so any pending debounce timer is cancelled.
+     */
+    private fun acquireExplicitSearchControl() {
+        explicitSearchJob?.cancel()
+        debounceLockedOut = true
+        _query.value = ""  // cancel any pending debounce timer
+    }
+
     /** Explicit search (keyboard Search / recent tap) — cancels any previous explicit job. */
     private fun launchExplicitSearch(query: String) {
-        explicitSearchJob?.cancel()
         _uiState.value = GallerySearchUiState.Loading
         explicitSearchJob = viewModelScope.launch {
             _uiState.value = runSearch(query)
@@ -233,16 +282,7 @@ class GallerySearchViewModel(
         if (templateResult.isFailure && songResult.isFailure) {
             return GallerySearchUiState.Error("Search failed. Please try again.")
         }
-        val templates = templateResult.getOrElse { emptyList() }.map { t ->
-            GallerySearchTemplateItem(
-                id = t.id,
-                name = t.name,
-                thumbnailPath = t.thumbnailPath,
-                tags = t.vibeTags,
-                aspectRatio = t.aspectRatio,
-                isPremium = t.isPremium
-            )
-        }
+        val templates = templateResult.getOrElse { emptyList() }.map { it.toSearchItem() }
         val songs = songResult.getOrElse { emptyList() }
         return if (templates.isEmpty() && songs.isEmpty()) {
             GallerySearchUiState.Empty(label)
@@ -250,4 +290,13 @@ class GallerySearchViewModel(
             GallerySearchUiState.Results(query = label, templates = templates, songs = songs)
         }
     }
+
+    private fun VideoTemplate.toSearchItem() = GallerySearchTemplateItem(
+        id = id,
+        name = name,
+        thumbnailPath = thumbnailPath,
+        tags = vibeTags,
+        aspectRatio = aspectRatio,
+        isPremium = isPremium
+    )
 }

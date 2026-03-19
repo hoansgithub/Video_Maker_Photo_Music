@@ -169,6 +169,8 @@
     <string name="search_no_results">Walang nahanap na resulta</string>
     <string name="search_no_results_hint">Subukan ang ibang keyword</string>
     <string name="search_suggestions">Mga Mungkahi</string>
+    <string name="search_browse_by_theme">I-browse ayon sa tema</string>
+    <string name="search_trending_templates">Trending na Template</string>
     <string name="search_tag_aesthetic">Aesthetic</string>
     <string name="search_tag_birthday">Kaarawan</string>
     <string name="search_tag_travel">Paglalakbay</string>
@@ -206,6 +208,8 @@
     <string name="seconds">%d segundo</string>
     <string name="none">Wala</string>
     <string name="close">Isara</string>
+    <string name="remove">Alisin</string>
+    <string name="badge_pro">PRO</string>
     <string name="settings">Mga Setting</string>
 
     <!-- Error states -->

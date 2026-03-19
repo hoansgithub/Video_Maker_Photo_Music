@@ -169,6 +169,8 @@
     <string name="search_no_results">No se encontraron resultados</string>
     <string name="search_no_results_hint">Prueba una palabra clave diferente</string>
     <string name="search_suggestions">Sugerencias</string>
+    <string name="search_browse_by_theme">Explorar por tema</string>
+    <string name="search_trending_templates">Plantillas en Tendencia</string>
     <string name="search_tag_aesthetic">Estético</string>
     <string name="search_tag_birthday">Cumpleaños</string>
     <string name="search_tag_travel">Viaje</string>
@@ -206,6 +208,8 @@
     <string name="seconds">%d segundos</string>
     <string name="none">Ninguno</string>
     <string name="close">Cerrar</string>
+    <string name="remove">Eliminar</string>
+    <string name="badge_pro">PRO</string>
     <string name="settings">Configuración</string>
 
     <!-- Error states -->

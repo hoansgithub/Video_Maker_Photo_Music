@@ -169,6 +169,8 @@
     <string name="search_no_results">لا توجد نتائج</string>
     <string name="search_no_results_hint">جرّب كلمة مختلفة</string>
     <string name="search_suggestions">اقتراحات</string>
+    <string name="search_browse_by_theme">تصفح حسب المظهر</string>
+    <string name="search_trending_templates">القوالب الرائجة</string>
     <string name="search_tag_aesthetic">جمالي</string>
     <string name="search_tag_birthday">عيد ميلاد</string>
     <string name="search_tag_travel">سفر</string>
@@ -206,6 +208,8 @@
     <string name="seconds">%d ثواني</string>
     <string name="none">بدون</string>
     <string name="close">إغلاق</string>
+    <string name="remove">إزالة</string>
+    <string name="badge_pro">احترافي</string>
     <string name="settings">الإعدادات</string>
 
     <!-- Error states -->

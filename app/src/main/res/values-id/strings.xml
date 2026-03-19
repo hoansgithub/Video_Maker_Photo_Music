@@ -169,6 +169,8 @@
     <string name="search_no_results">Tidak ada hasil</string>
     <string name="search_no_results_hint">Coba kata kunci lain</string>
     <string name="search_suggestions">Saran</string>
+    <string name="search_browse_by_theme">Telusuri berdasarkan tema</string>
+    <string name="search_trending_templates">Template Populer</string>
     <string name="search_tag_aesthetic">Estetik</string>
     <string name="search_tag_birthday">Ulang Tahun</string>
     <string name="search_tag_travel">Perjalanan</string>
@@ -206,6 +208,8 @@
     <string name="seconds">%d detik</string>
     <string name="none">Tidak ada</string>
     <string name="close">Tutup</string>
+    <string name="remove">Hapus</string>
+    <string name="badge_pro">PRO</string>
     <string name="settings">Pengaturan</string>
 
     <!-- Error states -->

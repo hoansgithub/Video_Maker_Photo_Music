@@ -173,6 +173,8 @@
     <string name="search_no_results">No results found</string>
     <string name="search_no_results_hint">Try a different keyword</string>
     <string name="search_suggestions">Suggestions</string>
+    <string name="search_browse_by_theme">Browse by Theme</string>
+    <string name="search_trending_templates">Trending Templates</string>
     <string name="search_tag_aesthetic">Aesthetic</string>
     <string name="search_tag_birthday">Birthday</string>
     <string name="search_tag_travel">Travel</string>
@@ -210,6 +212,8 @@
     <string name="seconds">%d seconds</string>
     <string name="none">None</string>
     <string name="close">Close</string>
+    <string name="remove">Remove</string>
+    <string name="badge_pro">PRO</string>
     <string name="settings">Settings</string>
 
     <!-- Error states -->
