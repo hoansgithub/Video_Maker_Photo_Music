@@ -45,7 +45,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,6 +76,7 @@ import com.videomaker.aimusic.ui.components.PrimaryButton
 import com.videomaker.aimusic.ui.theme.TextTertiary
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
@@ -310,14 +310,16 @@ private fun GalleryContent(
                 )
         )
 
-        // Floating Create button
-        CreateNewVideoButton(
-            onClick = onCreateClick,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(bottom = dimens.spaceLg)
-        )
+        // Floating Create button — only shown once featured templates are loaded
+        if (featuredTemplates.isNotEmpty()) {
+            CreateNewVideoButton(
+                onClick = onCreateClick,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .padding(bottom = dimens.spaceLg)
+            )
+        }
     }
 }
 
@@ -439,8 +441,10 @@ private fun FeaturedTemplatesCarousel(
             modifier = Modifier.fillMaxWidth()
         ) { page ->
             val template = templates[page.mod(templates.size)]
+            val isCurrentPage = page == pagerState.settledPage && !pagerState.isScrollInProgress
             FeaturedTemplateCard(
                 template = template,
+                isCurrentPage = isCurrentPage,
                 onClick = { onTemplateClick(template) }
             )
         }
@@ -457,20 +461,27 @@ private fun FeaturedTemplatesCarousel(
 @Composable
 private fun FeaturedTemplateCard(
     template: VideoTemplate,
+    isCurrentPage: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
     val context = LocalContext.current
 
-    val imageRequest = remember(template.id) {
+    val imageRequest = remember(template.id, isCurrentPage) {
         ImageRequest.Builder(context)
             .data(template.thumbnailPath.ifEmpty { null })
             .memoryCachePolicy(CachePolicy.ENABLED)
             .diskCachePolicy(CachePolicy.ENABLED)
-            .memoryCacheKey("featured_${template.id}")
+            .memoryCacheKey("featured_${template.id}_${if (isCurrentPage) "anim" else "static"}")
             .diskCacheKey("featured_${template.id}")
             .crossfade(true)
+            .apply {
+                if (!isCurrentPage) {
+                    // Static first frame only — bypasses animated WebP decoder
+                    decoderFactory(BitmapFactoryDecoder.Factory())
+                }
+            }
             .build()
     }
 
@@ -487,7 +498,7 @@ private fun FeaturedTemplateCard(
             AsyncImage(
                 model = imageRequest,
                 contentDescription = template.name,
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
 
@@ -596,10 +607,7 @@ private fun TagChip(
  * Template grid using reusable StaggeredGrid component
  */
 @Composable
-private fun TemplateGridSkeleton(
-    modifier: Modifier = Modifier,
-    columns: Int = 2
-) {
+private fun TemplateGridSkeleton(modifier: Modifier = Modifier) {
     val dimens = AppDimens.current
     // Mimic staggered grid: alternating tall/short cards per column
     // Left col: tall, short, tall  |  Right col: short, tall, short

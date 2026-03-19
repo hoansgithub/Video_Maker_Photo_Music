@@ -29,7 +29,7 @@ class TemplateRepositoryImpl(
         private const val TABLE_TEMPLATES = "templates"
         private const val FN_TEMPLATES_SORTED = "get_templates_sorted"
         private const val FN_TEMPLATES_BY_TAG_SORTED = "get_templates_by_tag_sorted"
-        private val COLUMNS_SEARCH = Columns.raw(
+        private val COLUMNS_TEMPLATE = Columns.raw(
             "id,name,thumbnail_path,song_id,effect_set_id,aspect_ratio," +
             "image_duration_ms,transition_pct,is_premium,is_active,sort_order,use_count," +
             "template_vibe_tags(vibe_tag_id,sort_order)"
@@ -111,6 +111,7 @@ class TemplateRepositoryImpl(
                         eq("is_active", true)
                     }
                     order("sort_order", Order.ASCENDING)
+                    limit(100)
                 }
                 .decodeList<VibeTagDto>()
                 .map { VibeTag(id = it.id, displayName = it.displayName, emoji = it.emoji) }
@@ -137,7 +138,7 @@ class TemplateRepositoryImpl(
 
             try {
                 val templates = supabaseClient.from(TABLE_TEMPLATES)
-                    .select(COLUMNS_SEARCH) {
+                    .select(COLUMNS_TEMPLATE) {
                         filter { eq("is_active", true) }
                         order("use_count", Order.DESCENDING)
                         limit(limit.toLong())
@@ -164,7 +165,7 @@ class TemplateRepositoryImpl(
 
             try {
                 val templates = supabaseClient.from(TABLE_TEMPLATES)
-                    .select(COLUMNS_SEARCH) {
+                    .select(COLUMNS_TEMPLATE) {
                         filter {
                             eq("is_active", true)
                             ilike("name", "%$q%")

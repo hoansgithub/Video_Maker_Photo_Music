@@ -185,7 +185,12 @@ class GalleryViewModel(
     }
 
     fun onCreateClick() {
-        _navigationEvent.value = GalleryNavigationEvent.NavigateToCreate
+        val firstFeatured = (_uiState.value as? GalleryUiState.Success)?.featuredTemplates?.firstOrNull()
+        _navigationEvent.value = if (firstFeatured != null) {
+            GalleryNavigationEvent.NavigateToTemplateDetail(firstFeatured.id)
+        } else {
+            GalleryNavigationEvent.NavigateToCreate
+        }
     }
 
     fun onNavigationHandled() {
