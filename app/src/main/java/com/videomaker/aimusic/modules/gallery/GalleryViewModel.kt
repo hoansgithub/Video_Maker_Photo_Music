@@ -13,6 +13,8 @@ import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.media.library.MusicSongLibrary
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,7 +38,8 @@ sealed class GalleryUiState {
         val topSongs: List<TopSong>,
         val vibeTags: List<VibeTag>,
         val selectedVibeTagId: String?,       // null = "All"
-        val templateListState: TemplateListState
+        val templateListState: TemplateListState,
+        val featuredTemplates: List<VideoTemplate> = emptyList()
     ) : GalleryUiState()
     data class Error(val message: String) : GalleryUiState()
 }
@@ -80,19 +83,24 @@ class GalleryViewModel(
                 val topSongs = MusicSongLibrary.getTop(12).mapIndexed { index, song ->
                     song.toTopSong(ranking = index + 1, likes = Random.nextInt(10000, 150000))
                 }
-                val vibeTags = templateRepository.getVibeTags().getOrElse { emptyList() }
-                val templates = templateRepository.getTemplates(limit = 20, offset = 0)
-                    .getOrElse { emptyList() }
+                val (vibeTags, templates, featuredTemplates) = coroutineScope {
+                    val vibeTagsDeferred = async { templateRepository.getVibeTags().getOrElse { emptyList() } }
+                    val templatesDeferred = async { templateRepository.getTemplates(limit = 20, offset = 0).getOrElse { emptyList() } }
+                    val featuredDeferred = async { templateRepository.getFeaturedTemplates(limit = 10).getOrElse { emptyList() } }
+                    Triple(vibeTagsDeferred.await(), templatesDeferred.await(), featuredDeferred.await())
+                }
 
                 _uiState.value = GalleryUiState.Success(
                     trendingSongs = trendingSongs,
                     topSongs = topSongs,
                     vibeTags = vibeTags,
                     selectedVibeTagId = null,
-                    templateListState = TemplateListState.Success(templates)
+                    templateListState = TemplateListState.Success(templates),
+                    featuredTemplates = featuredTemplates
                 )
 
                 preloadCarouselImages(trendingSongs)
+                preloadFeaturedThumbnails(featuredTemplates)
             } catch (e: Exception) {
                 _uiState.value = GalleryUiState.Error(e.message ?: "Failed to load gallery data")
             }
@@ -133,6 +141,23 @@ class GalleryViewModel(
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .memoryCacheKey("banner_${song.id}")
                     .diskCacheKey("banner_${song.id}")
+                    .build()
+                imageLoader.enqueue(request)
+            }
+        }
+    }
+
+    private fun preloadFeaturedThumbnails(templates: List<VideoTemplate>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            templates.forEach { template ->
+                if (template.thumbnailPath.isEmpty()) return@forEach
+                val request = ImageRequest.Builder(application)
+                    .data(template.thumbnailPath)
+                    .size(Size(720, 405))
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .memoryCacheKey("featured_${template.id}")
+                    .diskCacheKey("featured_${template.id}")
                     .build()
                 imageLoader.enqueue(request)
             }

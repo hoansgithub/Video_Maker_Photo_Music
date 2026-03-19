@@ -21,6 +21,12 @@ interface TemplateRepository {
     suspend fun getVibeTags(): Result<List<VibeTag>>
 
     /**
+     * Get top templates by use_count for the home screen featured carousel.
+     * Not region-filtered — shows globally popular templates.
+     */
+    suspend fun getFeaturedTemplates(limit: Int): Result<List<VideoTemplate>>
+
+    /**
      * Search templates by name (ILIKE). Returns up to 15 results ordered by use_count.
      * Not cached — search results are query-specific.
      */

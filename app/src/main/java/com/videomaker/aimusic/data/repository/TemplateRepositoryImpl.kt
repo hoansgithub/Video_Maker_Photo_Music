@@ -129,6 +129,34 @@ class TemplateRepositoryImpl(
         }
     }
 
+    override suspend fun getFeaturedTemplates(limit: Int): Result<List<VideoTemplate>> =
+        withContext(Dispatchers.IO) {
+            val cacheKey = "featured_templates_$limit"
+            apiCacheManager.get<List<VideoTemplate>>(cacheKey)
+                ?.let { return@withContext Result.success(it) }
+
+            try {
+                val templates = supabaseClient.from(TABLE_TEMPLATES)
+                    .select(COLUMNS_SEARCH) {
+                        filter { eq("is_active", true) }
+                        order("use_count", Order.DESCENDING)
+                        limit(limit.toLong())
+                    }
+                    .decodeList<TemplateDto>()
+                    .map { it.toDomain() }
+
+                apiCacheManager.put(cacheKey, templates)
+                Result.success(templates)
+            } catch (e: Exception) {
+                apiCacheManager.getStale<List<VideoTemplate>>(cacheKey)
+                    ?.let { return@withContext Result.success(it) }
+                val fallback = templateLibrary.getAll()
+                    .sortedByDescending { it.useCount }
+                    .take(limit)
+                Result.success(fallback)
+            }
+        }
+
     override suspend fun searchTemplates(query: String): Result<List<VideoTemplate>> =
         withContext(Dispatchers.IO) {
             val q = query.trim()

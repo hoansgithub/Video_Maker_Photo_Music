@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -29,7 +30,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Repeat
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
@@ -62,29 +62,18 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.ui.theme.AmberAccent
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Black24
 import com.videomaker.aimusic.ui.theme.ChipBorderInactive
-import com.videomaker.aimusic.ui.theme.CyanAccent
 import com.videomaker.aimusic.ui.theme.GoldAccent
 import com.videomaker.aimusic.ui.theme.Gray200
 import com.videomaker.aimusic.ui.theme.Gray450
-import com.videomaker.aimusic.ui.theme.GreenAccent
-import com.videomaker.aimusic.ui.theme.OrangeAccent
-import com.videomaker.aimusic.ui.theme.PinkAccent
 import com.videomaker.aimusic.ui.theme.Primary
-import com.videomaker.aimusic.ui.theme.RoseAccent
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
 import com.videomaker.aimusic.ui.theme.SearchFieldBorder
-import com.videomaker.aimusic.ui.theme.SlateAccent
-import com.videomaker.aimusic.ui.theme.SurfaceDark
-import com.videomaker.aimusic.ui.theme.TealAccent
 import com.videomaker.aimusic.ui.components.PrimaryButton
-import com.videomaker.aimusic.ui.theme.TextBright
-import com.videomaker.aimusic.ui.theme.TextOnPrimary
-import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.theme.TextTertiary
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -149,9 +138,10 @@ fun GalleryScreen(
 
         // UI based on state
         when (val state = uiState) {
-            is GalleryUiState.Loading -> GalleryLoadingContent()
+            is GalleryUiState.Loading -> GalleryLoadingContent(topBarHeight = topBarHeight)
             is GalleryUiState.Success -> GalleryContent(
                 topBarHeight = topBarHeight,
+                featuredTemplates = state.featuredTemplates,
                 vibeTags = state.vibeTags,
                 selectedVibeTagId = state.selectedVibeTagId,
                 templateListState = state.templateListState,
@@ -170,12 +160,13 @@ fun GalleryScreen(
  * Shimmer skeleton loading for gallery content.
  */
 @Composable
-private fun GalleryLoadingContent() {
+private fun GalleryLoadingContent(topBarHeight: Dp = 0.dp) {
     val dimens = AppDimens.current
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(top = topBarHeight + dimens.spaceLg)
             .padding(horizontal = dimens.spaceLg),
         verticalArrangement = Arrangement.spacedBy(dimens.spaceMd)
     ) {
@@ -225,6 +216,7 @@ private fun GalleryErrorContent(message: String) {
 @Composable
 private fun GalleryContent(
     topBarHeight: Dp = 0.dp,
+    featuredTemplates: List<VideoTemplate>,
     vibeTags: List<VibeTag>,
     selectedVibeTagId: String?,
     templateListState: TemplateListState,
@@ -255,9 +247,14 @@ private fun GalleryContent(
                 )
             }
 
-            // Section 2: Featured Effects Showcase
-            item(key = "featured_effects", contentType = "effects_showcase") {
-                FeaturedEffectsShowcase()
+            // Section 2: Featured Templates Carousel
+            if (featuredTemplates.isNotEmpty()) {
+                item(key = "featured_templates", contentType = "featured_carousel") {
+                    FeaturedTemplatesCarousel(
+                        templates = featuredTemplates,
+                        onTemplateClick = onTemplateClick
+                    )
+                }
             }
 
             item(key = "spacer1", contentType = "spacer") {
@@ -400,33 +397,16 @@ private fun GallerySearchField(
 }
 
 // ============================================
-// FEATURED EFFECTS SHOWCASE
+// FEATURED TEMPLATES CAROUSEL
 // ============================================
 
-private data class FeaturedEffect(
-    val name: String,
-    val description: String,
-    val accentColor: Color
-)
-
-private fun buildSampleEffects(context: android.content.Context) = listOf(
-    FeaturedEffect(context.getString(R.string.effect_dreamy_vibes_title), context.getString(R.string.effect_dreamy_vibes_desc), RoseAccent),
-    FeaturedEffect(context.getString(R.string.effect_cyberpunk_title), context.getString(R.string.effect_cyberpunk_desc), CyanAccent),
-    FeaturedEffect(context.getString(R.string.effect_vintage_film_title), context.getString(R.string.effect_vintage_film_desc), AmberAccent),
-    FeaturedEffect(context.getString(R.string.effect_ocean_breeze_title), context.getString(R.string.effect_ocean_breeze_desc), TealAccent),
-    FeaturedEffect(context.getString(R.string.effect_golden_hour_title), context.getString(R.string.effect_golden_hour_desc), OrangeAccent),
-    FeaturedEffect(context.getString(R.string.effect_noir_title), context.getString(R.string.effect_noir_desc), SlateAccent),
-    FeaturedEffect(context.getString(R.string.effect_sakura_title), context.getString(R.string.effect_sakura_desc), PinkAccent),
-    FeaturedEffect(context.getString(R.string.effect_aurora_title), context.getString(R.string.effect_aurora_desc), GreenAccent),
-)
-
 @Composable
-private fun FeaturedEffectsShowcase(
+private fun FeaturedTemplatesCarousel(
+    templates: List<VideoTemplate>,
+    onTemplateClick: (VideoTemplate) -> Unit,
     autoSlideIntervalMs: Long = 4000L,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val sampleEffects = remember(context) { buildSampleEffects(context) }
     val infinitePageCount = Int.MAX_VALUE
     val initialPage = infinitePageCount / 2
 
@@ -438,8 +418,6 @@ private fun FeaturedEffectsShowcase(
     val isDragged by pagerState.interactionSource.collectIsDraggedAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Lifecycle-aware auto-slide — single coroutine, checks isDragged inside loop to
-    // avoid multiple competing coroutines from repeated drag/release interactions
     LaunchedEffect(Unit) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             while (true) {
@@ -460,80 +438,84 @@ private fun FeaturedEffectsShowcase(
             pageSpacing = dimens.spaceMd,
             modifier = Modifier.fillMaxWidth()
         ) { page ->
-            val actualIndex = page.mod(sampleEffects.size)
-            FeaturedEffectCard(effect = sampleEffects[actualIndex])
+            val template = templates[page.mod(templates.size)]
+            FeaturedTemplateCard(
+                template = template,
+                onClick = { onTemplateClick(template) }
+            )
         }
 
         Spacer(modifier = Modifier.height(dimens.spaceMd))
 
         PageIndicator(
-            pageCount = sampleEffects.size,
-            currentPage = pagerState.currentPage.mod(sampleEffects.size)
+            pageCount = templates.size,
+            currentPage = pagerState.currentPage.mod(templates.size)
         )
     }
 }
 
 @Composable
-private fun FeaturedEffectCard(
-    effect: FeaturedEffect,
+private fun FeaturedTemplateCard(
+    template: VideoTemplate,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
+    val context = LocalContext.current
+
+    val imageRequest = remember(template.id) {
+        ImageRequest.Builder(context)
+            .data(template.thumbnailPath.ifEmpty { null })
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .memoryCacheKey("featured_${template.id}")
+            .diskCacheKey("featured_${template.id}")
+            .crossfade(true)
+            .build()
+    }
 
     Card(
+        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(16f / 9f),
         shape = RoundedCornerShape(dimens.radiusXl),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            effect.accentColor.copy(alpha = 0.6f),
-                            effect.accentColor.copy(alpha = 0.15f),
-                            SurfaceDark
-                        )
-                    )
-                )
-        ) {
-            // Decorative icon
-            Icon(
-                imageVector = Icons.Default.AutoAwesome,
-                contentDescription = null,
-                tint = effect.accentColor.copy(alpha = 0.2f),
-                modifier = Modifier
-                    .size(120.dp)
-                    .align(Alignment.TopEnd)
-                    .padding(dimens.spaceLg)
+        Box(modifier = Modifier.fillMaxSize()) {
+            AsyncImage(
+                model = imageRequest,
+                contentDescription = template.name,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize()
             )
 
-            // Effect info
-            Column(
+            // Bottom gradient scrim
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.45f)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f))
+                        )
+                    )
+                    .align(Alignment.BottomCenter)
+            )
+
+            // Template name — bottom-left
+            Text(
+                text = template.name,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(dimens.spaceLg)
-            ) {
-                Text(
-                    text = effect.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = TextBright,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(dimens.spaceXs))
-                Text(
-                    text = effect.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextBright.copy(alpha = 0.8f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+                    .padding(dimens.spaceMd)
+            )
         }
     }
 }
@@ -849,6 +831,7 @@ private fun GalleryContentPreview() {
             )
             GalleryContent(
                 topBarHeight = 56.dp,
+                featuredTemplates = previewTemplates.take(5),
                 vibeTags = listOf(
                     VibeTag("birthday", "Birthday", "🎂"),
                     VibeTag("travel", "Travel", "✈️"),
@@ -877,7 +860,7 @@ private fun GalleryLoadingPreview() {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
-            GalleryLoadingContent()
+            GalleryLoadingContent(topBarHeight = 56.dp)
         }
     }
 }
