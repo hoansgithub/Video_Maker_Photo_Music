@@ -29,7 +29,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Repeat
+
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
@@ -88,6 +88,7 @@ import com.videomaker.aimusic.ui.components.PageIndicator
 import com.videomaker.aimusic.ui.components.SectionHeader
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.components.StaggeredGrid
+import com.videomaker.aimusic.ui.components.TemplateCard
 import com.videomaker.aimusic.ui.components.bottomGradientOverlay
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.delay
@@ -631,9 +632,12 @@ private fun StaggeredTemplateGrid(
         modifier = modifier
     ) { index ->
         key(templates[index].id) {
-            VideoTemplateItem(
-                template = templates[index],
+            TemplateCard(
+                name = templates[index].name,
+                thumbnailPath = templates[index].thumbnailPath,
                 aspectRatio = aspectRatios[index],
+                isPremium = templates[index].isPremium,
+                useCount = templates[index].useCount,
                 onClick = { onTemplateClick(templates[index]) }
             )
         }
@@ -662,117 +666,6 @@ private fun parseAspectRatio(aspectRatio: String): Float {
     }
 }
 
-private fun formatUseCount(count: Long): String = when {
-    count >= 1_000_000 -> {
-        val v = count / 1_000_000.0
-        if (v % 1.0 == 0.0) "${v.toLong()}M"
-        else String.format(Locale.US, "%.1fM", v)
-    }
-    count >= 1_000 -> {
-        val v = count / 1_000.0
-        if (v % 1.0 == 0.0) "${v.toLong()}k"
-        else String.format(Locale.US, "%.1fk", v)
-    }
-    else -> count.toString()
-}
-
-@Composable
-private fun VideoTemplateItem(
-    template: VideoTemplate,
-    aspectRatio: Float,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-
-    val imageRequest = remember(template.thumbnailPath, template.id) {
-        ImageRequest.Builder(context)
-            .data(template.thumbnailPath)
-            .size(Size(400, 700))
-            .precision(Precision.INEXACT)
-            .memoryCachePolicy(CachePolicy.ENABLED)
-            .diskCachePolicy(CachePolicy.ENABLED)
-            .memoryCacheKey("template_${template.id}")
-            .diskCacheKey("template_${template.id}")
-            .build()
-    }
-
-    val dimens = AppDimens.current
-
-    Card(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(aspectRatio),
-        shape = RoundedCornerShape(dimens.radiusLg),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            if (template.thumbnailPath.isNotEmpty()) {
-                AsyncImage(
-                    model = imageRequest,
-                    contentDescription = template.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                ShimmerPlaceholder(
-                    modifier = Modifier.fillMaxSize(),
-                    cornerRadius = 0.dp
-                )
-            }
-
-            // Premium badge
-            if (template.isPremium) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(dimens.spaceSm)
-                        .background(
-                            color = GoldAccent,
-                            shape = RoundedCornerShape(dimens.radiusMd)
-                        )
-                        .padding(horizontal = 6.dp, vertical = 3.dp)
-                ) {
-                    Text(
-                        text = "PRO",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = Color.Black
-                    )
-                }
-            }
-
-            // Use count badge
-            if (template.useCount > 0) {
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(dimens.spaceSm)
-                        .background(
-                            color = Color(0xE5282828),
-                            shape = RoundedCornerShape(999.dp)
-                        )
-                        .padding(horizontal = 6.dp, vertical = 3.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(3.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Repeat,
-                        contentDescription = null,
-                        tint = Gray200,
-                        modifier = Modifier.size(10.dp)
-                    )
-                    Text(
-                        text = formatUseCount(template.useCount),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Gray200,
-                        maxLines = 1
-                    )
-                }
-            }
-        }
-    }
-}
 
 // ============================================
 // PREVIEW

@@ -256,3 +256,13 @@ val AmberAccent = Color(0xFFD4A574)             // Amber/vintage gold
 // Music note colors (from icon)
 val MusicNoteWhite = TextOnPrimary              // White music note
 val MusicNoteGray = SurfaceLight                // Gray variant
+
+// ============================================
+// TEMPLATE CARD
+// ============================================
+val TemplateBadgeBackground = Color(0xE5282828) // Use-count badge bg (#282828, 90% opacity)
+
+// ============================================
+// MUSIC PLAYER
+// ============================================
+val PlayerCardBackground = Color(0xFF373737)    // Song info + seeker card background

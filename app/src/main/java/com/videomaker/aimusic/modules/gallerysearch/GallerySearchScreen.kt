@@ -40,6 +40,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Close
+
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -73,8 +74,10 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
+import com.videomaker.aimusic.ui.components.TemplateCard
 import com.videomaker.aimusic.ui.components.ShimmerBox
 import com.videomaker.aimusic.ui.theme.AppDimens
+import com.videomaker.aimusic.ui.theme.Gray200
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
 import com.videomaker.aimusic.ui.theme.SearchFieldBorder
@@ -487,8 +490,12 @@ private fun GallerySearchTemplateGrid(
                 horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
             ) {
                 rowItems.forEach { template ->
-                    GallerySearchTemplateCard(
-                        template = template,
+                    TemplateCard(
+                        name = template.name,
+                        thumbnailPath = template.thumbnailPath,
+                        aspectRatio = parseAspectRatio(template.aspectRatio),
+                        isPremium = template.isPremium,
+                        useCount = template.useCount,
                         onClick = { onTemplateClick(template.id) },
                         modifier = Modifier.weight(1f)
                     )
@@ -502,104 +509,6 @@ private fun GallerySearchTemplateGrid(
     }
 }
 
-@Composable
-private fun GallerySearchTemplateCard(
-    template: GallerySearchTemplateItem,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val dimens = AppDimens.current
-    val context = LocalContext.current
-    val aspectRatio = remember(template.aspectRatio) { parseAspectRatio(template.aspectRatio) }
-
-    val imageRequest = remember(template.thumbnailPath, template.id) {
-        ImageRequest.Builder(context)
-            .data(template.thumbnailPath)
-            .size(Size(400, 700))
-            .precision(Precision.INEXACT)
-            .memoryCachePolicy(CachePolicy.ENABLED)
-            .diskCachePolicy(CachePolicy.ENABLED)
-            .memoryCacheKey("template_${template.id}")
-            .diskCacheKey("template_${template.id}")
-            .build()
-    }
-
-    Card(
-        onClick = onClick,
-        modifier = modifier.aspectRatio(aspectRatio.coerceIn(0.5f, 2f)),
-        shape = RoundedCornerShape(dimens.radiusLg),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            if (template.thumbnailPath.isNotEmpty()) {
-                AsyncImage(
-                    model = imageRequest,
-                    contentDescription = template.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    Primary.copy(alpha = 0.15f),
-                                    MaterialTheme.colorScheme.surfaceVariant
-                                )
-                            )
-                        )
-                )
-            }
-
-            // Gradient scrim so name is readable over any thumbnail
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.55f)),
-                            startY = 0.4f * Float.MAX_VALUE
-                        )
-                    )
-            )
-
-            // Premium badge
-            if (template.isPremium) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(dimens.spaceSm)
-                        .background(
-                            color = Color(0xFFFFD700),
-                            shape = RoundedCornerShape(dimens.radiusMd)
-                        )
-                        .padding(horizontal = 6.dp, vertical = 3.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.badge_pro),
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = Color.Black
-                    )
-                }
-            }
-
-            // Template name
-            Text(
-                text = template.name,
-                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                color = TextBright,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(10.dp)
-            )
-        }
-    }
-}
 
 // ============================================
 // LOADING CONTENT — shimmer matching actual results layout

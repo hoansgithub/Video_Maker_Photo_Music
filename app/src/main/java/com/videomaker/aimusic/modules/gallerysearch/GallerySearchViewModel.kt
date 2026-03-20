@@ -41,7 +41,8 @@ data class GallerySearchTemplateItem(
     val thumbnailPath: String,
     val tags: List<String>,
     val aspectRatio: String,
-    val isPremium: Boolean
+    val isPremium: Boolean,
+    val useCount: Long = 0
 )
 
 // ============================================
@@ -243,6 +244,7 @@ class GallerySearchViewModel(
         thumbnailPath = thumbnailPath,
         tags = vibeTags,
         aspectRatio = aspectRatio,
-        isPremium = isPremium
+        isPremium = isPremium,
+        useCount = useCount
     )
 }

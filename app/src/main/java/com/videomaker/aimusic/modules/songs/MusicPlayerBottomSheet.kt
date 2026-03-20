@@ -66,7 +66,7 @@ import com.videomaker.aimusic.ui.components.ShimmerBox
 import com.videomaker.aimusic.ui.theme.Black60
 import com.videomaker.aimusic.ui.theme.Gray500
 import com.videomaker.aimusic.ui.theme.Gray600
-import com.videomaker.aimusic.ui.theme.Gray800
+import com.videomaker.aimusic.ui.theme.PlayerCardBackground
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.TextOnPrimary
@@ -107,35 +107,38 @@ fun MusicPlayerBottomSheet(
 
     // ── ExoPlayer lifecycle ────────────────────────────────────────────────
     DisposableEffect(song.id) {
-        val url = song.previewUrl.ifEmpty { song.mp3Url }
-        if (url.isNotEmpty()) {
-            player.addListener(object : Player.Listener {
-                override fun onPlaybackStateChanged(state: Int) {
-                    when (state) {
-                        Player.STATE_READY -> {
-                            durationMs = player.duration.coerceAtLeast(1).toInt()
-                            player.play()
-                            isPlaying = true
-                            isPrepared = true
-                        }
-                        Player.STATE_ENDED -> {
-                            isPlaying = false
-                            currentMs = durationMs  // Stay at end — keep controls visible
-                        }
+        val listener = object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                when (state) {
+                    Player.STATE_READY -> {
+                        durationMs = player.duration.coerceAtLeast(1).toInt()
+                        player.play()
+                        isPlaying = true
+                        isPrepared = true
+                    }
+                    Player.STATE_ENDED -> {
+                        isPlaying = false
+                        currentMs = durationMs  // Stay at end — keep controls visible
                     }
                 }
+            }
 
-                override fun onIsPlayingChanged(playing: Boolean) {
-                    isPlaying = playing
-                }
-            })
+            override fun onIsPlayingChanged(playing: Boolean) {
+                isPlaying = playing
+            }
+        }
+
+        val url = song.previewUrl.ifEmpty { song.mp3Url }
+        if (url.isNotEmpty()) {
+            player.addListener(listener)
             runCatching {
                 player.setMediaItem(MediaItem.fromUri(url))
                 player.prepare()
             }
         }
         onDispose {
-            player.release()   // clears all listeners and frees resources
+            player.removeListener(listener)
+            player.release()
         }
     }
 
@@ -195,166 +198,174 @@ fun MusicPlayerBottomSheet(
 
             Spacer(Modifier.height(16.dp))
 
-            // ── Song info card ────────────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Gray800)
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                AppAsyncImage(
-                    imageUrl = song.coverUrl,
-                    contentDescription = song.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                )
-
-                Spacer(Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = song.name,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = song.artist,
-                        fontSize = 13.sp,
-                        color = TextSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                Spacer(Modifier.width(12.dp))
-
-                EqualizerBars(isPlaying = isPlaying)
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            // ── Playback row ──────────────────────────────────
+            // ── Song info + seeker card ────────────────────────
             // ModalBottomSheet runs in its own window so shimmer needs its
             // own ProvideShimmerEffect — no ancestor provides it here.
             ProvideShimmerEffect {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(PlayerCardBackground)
+                        .padding(12.dp)
                 ) {
-                    if (!isPrepared) {
-                        // Loading state — shimmer placeholders
-                        ShimmerBox(
+                    // Song info row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        AppAsyncImage(
+                            imageUrl = song.coverUrl,
+                            contentDescription = song.name,
+                            contentScale = ContentScale.Crop,
                             modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(8.dp))
                         )
-                        Spacer(Modifier.width(8.dp))
-                        ShimmerBox(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(4.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        ShimmerBox(
-                            modifier = Modifier
-                                .width(36.dp)
-                                .height(13.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                        )
-                    } else {
-                        // Ready — real controls
-                        IconButton(
-                            onClick = {
-                                when {
-                                    player.isPlaying -> player.pause()
-                                    player.playbackState == Player.STATE_ENDED -> {
-                                        // Replay from start
-                                        player.seekTo(0)
-                                        currentMs = 0
-                                        player.play()
-                                    }
-                                    else -> player.play()
-                                }
-                            },
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(White16, CircleShape)
-                        ) {
-                            Icon(
-                                imageVector = if (isPlaying) Icons.Default.Pause
-                                              else Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                tint = TextPrimary,
-                                modifier = Modifier.size(22.dp)
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = song.name,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                text = song.artist,
+                                fontSize = 13.sp,
+                                color = TextSecondary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
 
-                        Spacer(Modifier.width(8.dp))
+                        Spacer(Modifier.width(12.dp))
 
-                        val progress = if (isSeeking) seekValue
-                                       else currentMs.toFloat() / durationMs.toFloat()
+                        EqualizerBars(isPlaying = isPlaying)
+                    }
 
-                        Slider(
-                            value = progress.coerceIn(0f, 1f),
-                            onValueChange = { v ->
-                                isSeeking = true
-                                seekValue = v
-                            },
-                            onValueChangeFinished = {
-                                runCatching {
-                                    player.seekTo((seekValue * durationMs).toLong())
-                                    currentMs = (seekValue * durationMs).toInt()
-                                }
-                                isSeeking = false
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = SliderDefaults.colors(
-                                thumbColor = Color.White,
-                                activeTrackColor = Color.White,
-                                inactiveTrackColor = Gray500,
-                                activeTickColor = Color.Transparent,
-                                inactiveTickColor = Color.Transparent
-                            ),
-                            thumb = {
-                                SliderDefaults.Thumb(
-                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                    thumbSize = androidx.compose.ui.unit.DpSize(18.dp, 18.dp),
-                                    colors = SliderDefaults.colors(thumbColor = Color.White)
-                                )
-                            },
-                            track = { sliderState ->
-                                SliderDefaults.Track(
-                                    sliderState = sliderState,
-                                    modifier = Modifier.height(4.dp),
-                                    colors = SliderDefaults.colors(
-                                        activeTrackColor = Color.White,
-                                        inactiveTrackColor = Gray500,
-                                        activeTickColor = Color.Transparent,
-                                        inactiveTickColor = Color.Transparent
-                                    ),
-                                    drawStopIndicator = null
+                    Spacer(Modifier.height(12.dp))
+
+                    // Seeker row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (!isPrepared) {
+                            // Loading state — shimmer placeholders
+                            ShimmerBox(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            ShimmerBox(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(4.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            ShimmerBox(
+                                modifier = Modifier
+                                    .width(36.dp)
+                                    .height(13.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                            )
+                        } else {
+                            // Play/pause button
+                            IconButton(
+                                onClick = {
+                                    when {
+                                        player.isPlaying -> player.pause()
+                                        player.playbackState == Player.STATE_ENDED -> {
+                                            player.seekTo(0)
+                                            currentMs = 0
+                                            player.play()
+                                        }
+                                        else -> player.play()
+                                    }
+                                },
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(White16, CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = if (isPlaying) Icons.Default.Pause
+                                                  else Icons.Default.PlayArrow,
+                                    contentDescription = null,
+                                    tint = TextPrimary,
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
-                        )
 
-                        Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(8.dp))
 
-                        Text(
-                            text = song.formattedDuration,
-                            fontSize = 13.sp,
-                            color = TextSecondary
-                        )
+                            val progress = if (isSeeking) seekValue
+                                           else currentMs.toFloat() / durationMs.toFloat()
+
+                            Slider(
+                                value = progress.coerceIn(0f, 1f),
+                                onValueChange = { v ->
+                                    isSeeking = true
+                                    seekValue = v
+                                },
+                                onValueChangeFinished = {
+                                    runCatching {
+                                        player.seekTo((seekValue * durationMs).toLong())
+                                        currentMs = (seekValue * durationMs).toInt()
+                                    }
+                                    isSeeking = false
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = SliderDefaults.colors(
+                                    thumbColor = TextPrimary,
+                                    activeTrackColor = TextPrimary,
+                                    inactiveTrackColor = Gray500,
+                                    activeTickColor = Color.Transparent,
+                                    inactiveTickColor = Color.Transparent
+                                ),
+                                thumb = {
+                                    SliderDefaults.Thumb(
+                                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                        thumbSize = androidx.compose.ui.unit.DpSize(18.dp, 18.dp),
+                                        colors = SliderDefaults.colors(thumbColor = TextPrimary)
+                                    )
+                                },
+                                track = { sliderState ->
+                                    SliderDefaults.Track(
+                                        sliderState = sliderState,
+                                        modifier = Modifier.height(4.dp),
+                                        colors = SliderDefaults.colors(
+                                            activeTrackColor = TextPrimary,
+                                            inactiveTrackColor = Gray500,
+                                            activeTickColor = Color.Transparent,
+                                            inactiveTickColor = Color.Transparent
+                                        ),
+                                        drawStopIndicator = null
+                                    )
+                                }
+                            )
+
+                            Spacer(Modifier.width(8.dp))
+
+                            // Realtime countdown — remaining time, updates every 200ms
+                            val remainingMs = if (isSeeking)
+                                ((1f - seekValue) * durationMs).toLong().coerceAtLeast(0L)
+                            else
+                                (durationMs - currentMs).toLong().coerceAtLeast(0L)
+                            Text(
+                                text = formatDurationMmSs(remainingMs),
+                                fontSize = 13.sp,
+                                color = TextSecondary,
+                                modifier = Modifier.width(36.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -392,6 +403,17 @@ fun MusicPlayerBottomSheet(
             }
         }
     }
+}
+
+// ============================================
+// HELPERS
+// ============================================
+
+private fun formatDurationMmSs(durationMs: Long): String {
+    val totalSec = durationMs / 1000
+    val minutes = totalSec / 60
+    val seconds = totalSec % 60
+    return "%02d:%02d".format(minutes, seconds)
 }
 
 // ============================================
