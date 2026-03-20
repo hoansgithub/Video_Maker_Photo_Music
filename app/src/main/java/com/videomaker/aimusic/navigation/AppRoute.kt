@@ -43,6 +43,9 @@ sealed interface AppRoute : NavKey {
     @Serializable
     data object Search : AppRoute
 
+    @Serializable
+    data object SongSearch : AppRoute
+
     // ============================================
     // CREATE FLOW ROUTES
     // ============================================

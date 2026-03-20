@@ -218,6 +218,12 @@
     <!-- Songs -->
     <string name="start_project">Iniciar projeto</string>
 
+    <!-- Song Search -->
+    <string name="song_search_hint">Buscar músicas…</string>
+    <string name="song_search_explore_by_genre">Explorar por Gênero</string>
+    <string name="song_search_suggested">Sugerido para Você</string>
+    <string name="song_search_no_results">Nenhuma música encontrada</string>
+
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Comece Sua Jornada</string>
     <string name="onboarding_page4_subtitle">Isso nos ajuda a recomendar o conteúdo mais relevante para você.</string>

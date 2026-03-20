@@ -32,6 +32,7 @@ import com.videomaker.aimusic.di.EditorViewModelFactory
 import com.videomaker.aimusic.di.ExportViewModelFactory
 import com.videomaker.aimusic.di.GallerySearchViewModelFactory
 import com.videomaker.aimusic.di.GalleryViewModelFactory
+import com.videomaker.aimusic.di.SongSearchViewModelFactory
 import com.videomaker.aimusic.di.MusicPickerViewModelFactory
 import com.videomaker.aimusic.di.ProjectsViewModelFactory
 import com.videomaker.aimusic.di.SongsViewModelFactory
@@ -44,6 +45,8 @@ import com.videomaker.aimusic.modules.export.ExportScreen
 import com.videomaker.aimusic.modules.export.ExportViewModel
 import com.videomaker.aimusic.modules.gallerysearch.GallerySearchScreen
 import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
+import com.videomaker.aimusic.modules.songsearch.SongSearchScreen
+import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.modules.home.HomeScreen
 import com.videomaker.aimusic.modules.picker.AssetPickerScreen
 import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
@@ -121,6 +124,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     onMyProjectsClick = { backStack.add(AppRoute.Projects) },
                     onSettingsClick = { backStack.add(AppRoute.Settings) },
                     onNavigateToSearch = { backStack.add(AppRoute.Search) },
+                    onNavigateToSongSearch = { backStack.add(AppRoute.SongSearch) },
                     onNavigateToTemplateDetail = { templateId ->
                         backStack.add(AppRoute.AssetPicker(templateId = templateId))
                     }
@@ -138,6 +142,19 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     onNavigateToTemplateDetail = { templateId ->
                         backStack.add(AppRoute.AssetPicker(templateId = templateId))
                     },
+                    onNavigateBack = { backStack.removeLastOrNull() }
+                )
+            }
+
+            entry<AppRoute.SongSearch> {
+                val factory = remember { ACCDI.get<SongSearchViewModelFactory>() }
+                val songSearchViewModel: SongSearchViewModel = viewModel(
+                    key = "song_search",
+                    factory = createSafeViewModelFactory { factory.create() }
+                )
+                SongSearchScreen(
+                    viewModel = songSearchViewModel,
+                    onNavigateToSongDetail = { /* TODO: song detail screen */ },
                     onNavigateBack = { backStack.removeLastOrNull() }
                 )
             }

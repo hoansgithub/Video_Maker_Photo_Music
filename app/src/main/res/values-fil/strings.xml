@@ -218,6 +218,12 @@
     <!-- Songs -->
     <string name="start_project">Simulan ang proyekto</string>
 
+    <!-- Song Search -->
+    <string name="song_search_hint">Maghanap ng mga kanta…</string>
+    <string name="song_search_explore_by_genre">I-explore ayon sa Genre</string>
+    <string name="song_search_suggested">Inirekomenda para sa Iyo</string>
+    <string name="song_search_no_results">Walang nahanap na kanta</string>
+
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Simulan ang Iyong Paglalakbay</string>
     <string name="onboarding_page4_subtitle">Nakakatulong ito sa amin para mairekomenda ang pinaka-angkop na nilalaman para sa iyo.</string>

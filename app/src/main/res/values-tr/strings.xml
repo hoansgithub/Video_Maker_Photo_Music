@@ -218,6 +218,12 @@
     <!-- Songs -->
     <string name="start_project">Projeyi başlat</string>
 
+    <!-- Song Search -->
+    <string name="song_search_hint">Şarkı ara…</string>
+    <string name="song_search_explore_by_genre">Türe Göre Keşfet</string>
+    <string name="song_search_suggested">Size Önerilen</string>
+    <string name="song_search_no_results">Şarkı bulunamadı</string>
+
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Yolculuğunuza Başlayın</string>
     <string name="onboarding_page4_subtitle">Bu, sizin için en uygun içeriği önermemize yardımcı olur.</string>

@@ -78,6 +78,7 @@ fun HomeScreen(
     onMyProjectsClick: () -> Unit = {},
     onProjectClick: (String) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
+    onNavigateToSongSearch: () -> Unit = {},
     onNavigateToTemplateDetail: (String) -> Unit = {}
 ) {
     val tabs = listOf(
@@ -116,7 +117,7 @@ fun HomeScreen(
                 1 -> SongsTabContent(
                     viewModel = songsViewModel,
                     topBarHeight = topBarHeight,
-                    onNavigateToSearch = onNavigateToSearch
+                    onNavigateToSearch = onNavigateToSongSearch
                 )
                 2 -> ProjectsTabContent(
                     onCreateClick = onCreateClick,

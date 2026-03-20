@@ -218,6 +218,12 @@
     <!-- Songs -->
     <string name="start_project">प्रोजेक्ट शुरू करें</string>
 
+    <!-- Song Search -->
+    <string name="song_search_hint">गाने खोजें…</string>
+    <string name="song_search_explore_by_genre">शैली के अनुसार खोजें</string>
+    <string name="song_search_suggested">आपके लिए सुझाव</string>
+    <string name="song_search_no_results">कोई गाना नहीं मिला</string>
+
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">अपनी यात्रा शुरू करें</string>
     <string name="onboarding_page4_subtitle">इससे हमें आपके लिए सबसे प्रासंगिक कंटेंट सुझाने में मदद मिलती है।</string>

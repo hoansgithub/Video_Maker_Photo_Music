@@ -218,6 +218,12 @@
     <!-- Songs -->
     <string name="start_project">Mulai proyek</string>
 
+    <!-- Song Search -->
+    <string name="song_search_hint">Cari lagu…</string>
+    <string name="song_search_explore_by_genre">Jelajahi berdasarkan Genre</string>
+    <string name="song_search_suggested">Disarankan untuk Anda</string>
+    <string name="song_search_no_results">Tidak ada lagu ditemukan</string>
+
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Mulai Perjalanan Anda</string>
     <string name="onboarding_page4_subtitle">Ini membantu kami merekomendasikan konten yang paling relevan untuk Anda.</string>

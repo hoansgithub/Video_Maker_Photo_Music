@@ -24,6 +24,7 @@ import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.ClearSongCacheUseCase
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
 import com.videomaker.aimusic.domain.usecase.GetSongsByGenreUseCase
+
 import com.videomaker.aimusic.domain.usecase.GetStationSongsUseCase
 import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.GetWeeklyRankingSongsUseCase
@@ -59,6 +60,7 @@ import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.root.RootViewModel
 import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
+import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
 
 /**
@@ -347,6 +349,27 @@ class TemplatePreviewerViewModelFactory(
 }
 
 /**
+ * Factory wrapper for SongSearchViewModel.
+ */
+class SongSearchViewModelFactory(
+    private val preferencesManager: PreferencesManager,
+    private val searchSongsUseCase: SearchSongsUseCase,
+    private val getGenresUseCase: GetGenresUseCase,
+    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
+    private val getSongsByGenreUseCase: GetSongsByGenreUseCase
+) {
+    fun create(): SongSearchViewModel {
+        return SongSearchViewModel(
+            preferencesManager = preferencesManager,
+            searchSongsUseCase = searchSongsUseCase,
+            getGenresUseCase = getGenresUseCase,
+            getSuggestedSongsUseCase = getSuggestedSongsUseCase,
+            getSongsByGenreUseCase = getSongsByGenreUseCase
+        )
+    }
+}
+
+/**
  * Factory wrapper for SearchViewModel.
  */
 class GallerySearchViewModelFactory(
@@ -446,6 +469,17 @@ val presentationModule = module {
             getGenresUseCase = it.get(),
             getSongsByGenreUseCase = it.get(),
             clearSongCacheUseCase = it.get()
+        )
+    }
+
+    // Song Search ViewModel factory (singleton - stateless factory)
+    single {
+        SongSearchViewModelFactory(
+            preferencesManager = it.get(),
+            searchSongsUseCase = it.get(),
+            getGenresUseCase = it.get(),
+            getSuggestedSongsUseCase = it.get(),
+            getSongsByGenreUseCase = it.get()
         )
     }
 
