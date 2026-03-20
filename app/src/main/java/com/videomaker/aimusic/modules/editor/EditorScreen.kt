@@ -113,9 +113,9 @@ fun EditorScreen(
     var showExitConfirmation by remember { mutableStateOf(false) }
     var showMusicPicker by remember { mutableStateOf(false) }
 
-    // Music Picker ViewModel - created on demand
-    val musicPickerViewModel = remember(showMusicPicker) {
-        if (showMusicPicker) musicPickerViewModelFactory.create() else null
+    // Music Picker ViewModel - created once and reused
+    val musicPickerViewModel = remember {
+        musicPickerViewModelFactory.create()
     }
 
     // Handle back button press - show confirmation dialog
@@ -236,7 +236,7 @@ fun EditorScreen(
         }
 
         // Music Picker Bottom Sheet
-        if (showMusicPicker && musicPickerViewModel != null) {
+        if (showMusicPicker) {
             MusicPickerScreen(
                 viewModel = musicPickerViewModel,
                 onTrackSelected = { uri ->
@@ -248,6 +248,25 @@ fun EditorScreen(
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun HdBadge(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .background(
+                color = MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(4.dp)
+            )
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text = "HD",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
     }
 }
 
@@ -291,21 +310,7 @@ internal fun EditorTopBar(
                 ) {
                     // HD badge for 1080p (on the left)
                     if (selectedQuality == VideoQuality.FHD_1080) {
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    shape = RoundedCornerShape(4.dp)
-                                )
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "HD",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
+                        HdBadge()
                         Spacer(modifier = Modifier.width(6.dp))
                     }
                     Text(
@@ -335,21 +340,7 @@ internal fun EditorTopBar(
                                 ) {
                                     // HD badge for 1080p (on the left)
                                     if (quality == VideoQuality.FHD_1080) {
-                                        Box(
-                                            modifier = Modifier
-                                                .background(
-                                                    color = MaterialTheme.colorScheme.primary,
-                                                    shape = RoundedCornerShape(4.dp)
-                                                )
-                                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                                        ) {
-                                            Text(
-                                                text = "HD",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.onPrimary
-                                            )
-                                        }
+                                        HdBadge()
                                         Spacer(modifier = Modifier.width(8.dp))
                                     }
                                     Text(
@@ -448,6 +439,9 @@ private fun MusicSection(
     onExpandClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Hoist interaction source to prevent recreation on every recomposition
+    val sliderInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -490,7 +484,7 @@ private fun MusicSection(
                 ),
                 thumb = {
                     SliderDefaults.Thumb(
-                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        interactionSource = sliderInteractionSource,
                         thumbSize = androidx.compose.ui.unit.DpSize(18.dp, 18.dp),
                         colors = SliderDefaults.colors(thumbColor = TextPrimary)
                     )
