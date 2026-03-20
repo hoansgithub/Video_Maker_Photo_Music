@@ -50,9 +50,17 @@ sealed interface AppRoute : NavKey {
     // CREATE FLOW ROUTES
     // ============================================
 
-    /** @param projectId null = create new project; non-null = add to existing */
+    /**
+     * @param projectId null = create new project; non-null = add to existing
+     * @param overrideSongId When >= 0, TemplatePreviewer will play this song instead of the
+     *   template's embedded song. Used by the song → image picker → previewer flow.
+     */
     @Serializable
-    data class AssetPicker(val projectId: String? = null, val templateId: String? = null) : AppRoute
+    data class AssetPicker(
+        val projectId: String? = null,
+        val templateId: String? = null,
+        val overrideSongId: Long = -1L
+    ) : AppRoute
 
     @Serializable
     data class Editor(val projectId: String) : AppRoute
@@ -67,11 +75,18 @@ sealed interface AppRoute : NavKey {
     // TEMPLATE FLOW ROUTES
     // ============================================
 
-    /** Template preview: apply a template to user-selected images */
+    /**
+     * Template preview: apply a template to user-selected images.
+     *
+     * @param templateId ID of the template to open first. Empty string = open at top-ranked template.
+     * @param overrideSongId When >= 0, plays this song across all templates instead of each
+     *   template's own song. -1 = use template's embedded song (default behaviour).
+     */
     @Serializable
     data class TemplatePreviewer(
         val templateId: String,
-        val imageUris: List<String>   // URI strings from Photo Picker
+        val imageUris: List<String>,
+        val overrideSongId: Long = -1L
     ) : AppRoute
 
     // ============================================

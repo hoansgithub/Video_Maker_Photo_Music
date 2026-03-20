@@ -112,7 +112,7 @@ fun AssetPickerScreen(
     onNavigateToEditor: (String) -> Unit,
     onNavigateBack: () -> Unit,
     onAssetsAdded: () -> Unit = {},
-    onNavigateToTemplatePreviewer: (templateId: String, imageUris: List<String>) -> Unit = { _, _ -> }
+    onNavigateToTemplatePreviewer: (templateId: String, imageUris: List<String>, overrideSongId: Long) -> Unit = { _, _, _ -> }
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -150,7 +150,7 @@ fun AssetPickerScreen(
                 is AssetPickerNavigationEvent.NavigateToEditor -> onNavigateToEditor(event.projectId)
                 is AssetPickerNavigationEvent.AssetsAdded -> onAssetsAdded()
                 is AssetPickerNavigationEvent.NavigateToTemplatePreviewer ->
-                    onNavigateToTemplatePreviewer(event.templateId, event.imageUris)
+                    onNavigateToTemplatePreviewer(event.templateId, event.imageUris, event.overrideSongId)
             }
             viewModel.onNavigationHandled()
         }

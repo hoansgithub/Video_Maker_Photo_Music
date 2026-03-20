@@ -207,13 +207,18 @@ class AssetPickerViewModelFactory(
     private val createProjectUseCase: CreateProjectUseCase,
     private val addAssetsUseCase: AddAssetsUseCase
 ) {
-    fun create(projectId: String? = null, templateId: String? = null): AssetPickerViewModel {
+    fun create(
+        projectId: String? = null,
+        templateId: String? = null,
+        overrideSongId: Long = -1L
+    ): AssetPickerViewModel {
         return AssetPickerViewModel(
             context = application,
             createProjectUseCase = createProjectUseCase,
             addAssetsUseCase = addAssetsUseCase,
             projectId = projectId,
-            templateId = templateId
+            templateId = templateId,
+            overrideSongId = overrideSongId
         )
     }
 }
@@ -336,10 +341,15 @@ class TemplatePreviewerViewModelFactory(
     private val createProjectUseCase: CreateProjectUseCase,
     private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase
 ) {
-    fun create(templateId: String, imageUris: List<String>): TemplatePreviewerViewModel {
+    fun create(
+        templateId: String,
+        imageUris: List<String>,
+        overrideSongId: Long = -1L
+    ): TemplatePreviewerViewModel {
         return TemplatePreviewerViewModel(
             initialTemplateId = templateId,
             imageUrisStr = imageUris,
+            overrideSongId = overrideSongId,
             templateRepository = templateRepository,
             songRepository = songRepository,
             createProjectUseCase = createProjectUseCase,

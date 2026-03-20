@@ -703,7 +703,8 @@ private val previewSongReady = SongLoadState.Ready(
         name = "Golden Hour",
         artist = "Loving Caliber",
         durationMs = 182000
-    )
+    ),
+    nonce = 0
 )
 
 @androidx.compose.ui.tooling.preview.Preview(

@@ -94,7 +94,7 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 fun SongsScreen(
     viewModel: SongsViewModel,
     topBarHeight: Dp = 0.dp,
-    onNavigateToSongDetail: (Long) -> Unit = {},
+    onNavigateToAssetPicker: (songId: Long) -> Unit = {},
     onNavigateToSuggestedAll: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {}
 ) {
@@ -112,7 +112,7 @@ fun SongsScreen(
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
-                is SongsNavigationEvent.NavigateToSongDetail -> onNavigateToSongDetail(event.songId)
+                is SongsNavigationEvent.NavigateToAssetPickerForSong -> onNavigateToAssetPicker(event.songId)
                 is SongsNavigationEvent.NavigateToSuggestedAll -> onNavigateToSuggestedAll()
             }
             viewModel.onNavigationHandled()

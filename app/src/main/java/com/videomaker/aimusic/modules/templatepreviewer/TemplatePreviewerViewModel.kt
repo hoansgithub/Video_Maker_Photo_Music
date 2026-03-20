@@ -39,7 +39,12 @@ sealed class TemplatePreviewerUiState {
 sealed class SongLoadState {
     data object None : SongLoadState()
     data object Loading : SongLoadState()
-    data class Ready(val song: MusicSong) : SongLoadState()
+    /**
+     * @param nonce Increments on every page change so StateFlow always emits a new value,
+     *   even when the same song plays across consecutive templates. This guarantees the
+     *   player restarts from the beginning on each swipe.
+     */
+    data class Ready(val song: MusicSong, val nonce: Int) : SongLoadState()
 }
 
 // ============================================
@@ -58,6 +63,9 @@ sealed class TemplatePreviewerNavigationEvent {
 class TemplatePreviewerViewModel(
     private val initialTemplateId: String,
     imageUrisStr: List<String>,
+    /** When >= 0, this song is played on every page and applied on project creation,
+     *  overriding each template's embedded song. -1 = use template's own song. */
+    private val overrideSongId: Long = -1L,
     private val templateRepository: TemplateRepository,
     private val songRepository: SongRepository,
     private val createProjectUseCase: CreateProjectUseCase,
@@ -87,6 +95,10 @@ class TemplatePreviewerViewModel(
 
     // Cancels the in-flight song fetch when the page changes before it resolves
     private var songLoadJob: Job? = null
+
+    // Incremented on every page change so SongLoadState.Ready always differs between pages,
+    // even when consecutive templates share the same song — guaranteeing player restart.
+    private var songNonce = 0
 
     init {
         loadInitialTemplates()
@@ -202,21 +214,24 @@ class TemplatePreviewerViewModel(
     }
 
     private fun loadSongForTemplate(template: VideoTemplate) {
-        val songId = template.songId
+        // If the caller supplied an override song, use it on every page.
+        val songId = if (overrideSongId >= 0L) overrideSongId else template.songId
+
+        // Always increment nonce — even for the same song — so Ready(song, nonce) differs
+        // from the previous emission and LaunchedEffect(currentSong) re-runs, restarting playback.
+        val nonce = ++songNonce
+
         if (songId <= 0L) {
             songLoadJob?.cancel()
             _currentSong.value = SongLoadState.None
             return
         }
-        // Already showing this song — no need to reload
-        val current = _currentSong.value
-        if (current is SongLoadState.Ready && current.song.id == songId) return
 
         songLoadJob?.cancel()
         _currentSong.value = SongLoadState.Loading
         songLoadJob = viewModelScope.launch {
             songRepository.getSongById(songId)
-                .onSuccess { song -> _currentSong.value = SongLoadState.Ready(song) }
+                .onSuccess { song -> _currentSong.value = SongLoadState.Ready(song, nonce) }
                 .onFailure { _currentSong.value = SongLoadState.None }
         }
     }
@@ -226,7 +241,8 @@ class TemplatePreviewerViewModel(
             imageDurationMs = template.imageDurationMs.toLong(),
             transitionPercentage = template.transitionPct,
             effectSetId = template.effectSetId,
-            musicSongId = template.songId.takeIf { it > 0L },
+            musicSongId = if (overrideSongId >= 0L) overrideSongId
+                          else template.songId.takeIf { it > 0L },
             aspectRatio = aspectRatio
         )
     }

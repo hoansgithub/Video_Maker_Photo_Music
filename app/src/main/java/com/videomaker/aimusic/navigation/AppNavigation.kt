@@ -127,6 +127,9 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     onNavigateToSongSearch = { backStack.add(AppRoute.SongSearch) },
                     onNavigateToTemplateDetail = { templateId ->
                         backStack.add(AppRoute.AssetPicker(templateId = templateId))
+                    },
+                    onNavigateToAssetPicker = { songId ->
+                        backStack.add(AppRoute.AssetPicker(overrideSongId = songId))
                     }
                 )
             }
@@ -163,11 +166,17 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             // CREATE FLOW
             // ============================================
             entry<AppRoute.AssetPicker> { route ->
-                val factory = remember(route.projectId, route.templateId) { ACCDI.get<AssetPickerViewModelFactory>() }
+                val factory = remember(route.projectId, route.templateId, route.overrideSongId) {
+                    ACCDI.get<AssetPickerViewModelFactory>()
+                }
                 val pickerViewModel: AssetPickerViewModel = viewModel(
-                    key = "asset_picker_${route.projectId}_${route.templateId}",
+                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}",
                     factory = createSafeViewModelFactory {
-                        factory.create(projectId = route.projectId, templateId = route.templateId)
+                        factory.create(
+                            projectId = route.projectId,
+                            templateId = route.templateId,
+                            overrideSongId = route.overrideSongId
+                        )
                     }
                 )
                 AssetPickerScreen(
@@ -182,12 +191,16 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     },
                     onNavigateBack = { backStack.removeLastOrNull() },
                     onAssetsAdded = { backStack.removeLastOrNull() },
-                    onNavigateToTemplatePreviewer = { templateId, imageUris ->
+                    onNavigateToTemplatePreviewer = { templateId, imageUris, overrideSongId ->
                         backStack.apply {
                             val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home
                             clear()
                             add(home)
-                            add(AppRoute.TemplatePreviewer(templateId = templateId, imageUris = imageUris))
+                            add(AppRoute.TemplatePreviewer(
+                                templateId = templateId,
+                                imageUris = imageUris,
+                                overrideSongId = overrideSongId
+                            ))
                         }
                     }
                 )
@@ -256,12 +269,18 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             // TEMPLATE FLOW
             // ============================================
             entry<AppRoute.TemplatePreviewer> { route ->
-                val factory = remember(route.templateId, route.imageUris) { ACCDI.get<TemplatePreviewerViewModelFactory>() }
+                val factory = remember(route.templateId, route.imageUris, route.overrideSongId) {
+                    ACCDI.get<TemplatePreviewerViewModelFactory>()
+                }
                 val audioCache = remember { ACCDI.get<AudioPreviewCache>() }
                 val viewModel: TemplatePreviewerViewModel = viewModel(
-                    key = "template_previewer_${route.templateId}",
+                    key = "template_previewer_${route.templateId}_${route.overrideSongId}",
                     factory = createSafeViewModelFactory {
-                        factory.create(templateId = route.templateId, imageUris = route.imageUris)
+                        factory.create(
+                            templateId = route.templateId,
+                            imageUris = route.imageUris,
+                            overrideSongId = route.overrideSongId
+                        )
                     }
                 )
                 TemplatePreviewerScreen(

@@ -75,10 +75,11 @@ sealed class AssetPickerNavigationEvent {
     data class NavigateToEditor(val projectId: String) : AssetPickerNavigationEvent()
     /** Assets added to existing project - just go back */
     data object AssetsAdded : AssetPickerNavigationEvent()
-    /** Template mode: confirm selection with URIs directly */
+    /** Template mode / song-to-video mode: confirm selection with URIs directly */
     data class NavigateToTemplatePreviewer(
         val templateId: String,
-        val imageUris: List<String>
+        val imageUris: List<String>,
+        val overrideSongId: Long = -1L
     ) : AssetPickerNavigationEvent()
 }
 
@@ -97,11 +98,22 @@ class AssetPickerViewModel(
     private val createProjectUseCase: CreateProjectUseCase,
     private val addAssetsUseCase: AddAssetsUseCase,
     private val projectId: String? = null, // null = create new project, non-null = add to existing
-    private val templateId: String? = null  // non-null = template mode, bypasses project creation
+    private val templateId: String? = null,  // non-null = template mode, bypasses project creation
+    private val overrideSongId: Long = -1L   // >= 0 = song-to-video mode, overrides template song
 ) : ViewModel() {
 
     // Use applicationContext to prevent Activity memory leak
     private val appContext: Context = context.applicationContext
+
+    init {
+        // Invariant: song-to-video mode and explicit template mode are mutually exclusive.
+        // isSongToVideoMode takes priority in confirmSelection(); a non-null templateId would be
+        // silently ignored, which is a caller bug.
+        check(!(isSongToVideoMode && templateId != null)) {
+            "AssetPickerViewModel: overrideSongId ($overrideSongId) and templateId ($templateId) " +
+            "cannot both be set — choose one mode."
+        }
+    }
 
     companion object {
         // Cap metadata load — enough for any real user gallery
@@ -113,6 +125,10 @@ class AssetPickerViewModel(
 
     /** True if launched from template flow */
     val isTemplateMode: Boolean get() = templateId != null
+
+    /** True if launched from the song player — images will go straight to TemplatePreviewer
+     *  with the selected song overriding each template's own track. */
+    val isSongToVideoMode: Boolean get() = overrideSongId >= 0L
 
     /** Minimum number of images required before confirming */
     val minSelection: Int get() = if (isTemplateMode) 2 else 1
@@ -234,6 +250,15 @@ class AssetPickerViewModel(
                 val uris = currentState.selectedAssets.map { it.uri }
 
                 when {
+                    isSongToVideoMode -> {
+                        // Song-to-video: open top-ranked template (empty = first in list) with the
+                        // chosen song playing across all templates instead of their own tracks.
+                        _navigationEvent.value = AssetPickerNavigationEvent.NavigateToTemplatePreviewer(
+                            templateId = "",
+                            imageUris = uris.map { it.toString() },
+                            overrideSongId = overrideSongId
+                        )
+                    }
                     templateId != null -> {
                         // Template mode - return URIs directly, no project created
                         _navigationEvent.value = AssetPickerNavigationEvent.NavigateToTemplatePreviewer(
@@ -406,8 +431,8 @@ class AssetPickerViewModel(
             MediaStore.Images.Media.BUCKET_DISPLAY_NAME
         )
 
-        // QUERY_ARG_LIMIT added in API 30; also fixes "invalid token LIMIT" on API 29+.
-        // API 28-29 fall back to legacy sortOrder without LIMIT (small galleries on older devices).
+        // QUERY_ARG_LIMIT added in API 30. On API 28-29 we append "LIMIT N" to the sortOrder
+        // string, which MediaStore passes directly to SQLite and is accepted on those versions.
         val cursor = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val queryArgs = Bundle().apply {
                 putStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS,
@@ -428,7 +453,7 @@ class AssetPickerViewModel(
                 projection,
                 null,
                 null,
-                "${MediaStore.Images.Media.DATE_ADDED} DESC"
+                "${MediaStore.Images.Media.DATE_ADDED} DESC LIMIT $MAX_IMAGES"
             )
         }
 
