@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
@@ -49,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -70,9 +72,9 @@ import com.videomaker.aimusic.ui.components.ShimmerBox
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
-import com.videomaker.aimusic.ui.theme.Black24
 import com.videomaker.aimusic.ui.theme.Black40
 import com.videomaker.aimusic.ui.theme.GoldAccent
+import com.videomaker.aimusic.ui.theme.Gray400
 import com.videomaker.aimusic.ui.theme.PlaceholderBackground
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
@@ -667,20 +669,21 @@ private fun RankingSongItem(
 
             Spacer(modifier = Modifier.width(dimens.spaceSm))
 
-            // Ranking number
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(
-                        color = if (ranking <= 3) GoldAccent else Black24,
-                        shape = RoundedCornerShape(dimens.radiusMd)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
+            // Ranking label: # (gray, large) with number overlapping to the right (lime)
+            Box(modifier = Modifier.width(36.dp)) {
+                Text(
+                    text = "#",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Medium,
+                    fontStyle = FontStyle.Italic,
+                    color = Gray400,
+                )
                 Text(
                     text = ranking.toString(),
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                    color = if (ranking <= 3) Color.Black else TextBright
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Primary,
+                    modifier = Modifier.offset(x = 13.dp, y = 8.dp)
                 )
             }
 
