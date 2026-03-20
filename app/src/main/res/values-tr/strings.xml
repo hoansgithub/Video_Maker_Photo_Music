@@ -163,14 +163,14 @@
     <string name="settings_transition_duration_value">%.1fs</string>
 
     <!-- Search -->
-    <string name="search_hint">Stilinizi arayın</string>
+    <string name="search_hint">Mükemmel stilini bul…</string>
     <string name="search_recent">Son Aramalar</string>
     <string name="search_clear_all">Tümünü Temizle</string>
-    <string name="search_no_results">Sonuç bulunamadı</string>
-    <string name="search_no_results_hint">Farklı bir anahtar kelime deneyin</string>
+    <string name="search_no_results">Stil bulunamadı</string>
+    <string name="search_no_results_hint">Farklı bir kelime dene veya aşağıdan bir vibe seç</string>
     <string name="search_suggestions">Öneriler</string>
-    <string name="search_browse_by_theme">Temaya göre göz at</string>
-    <string name="search_trending_templates">Trend Şablonlar</string>
+    <string name="search_browse_by_theme">Vibe'a göre keşfet</string>
+    <string name="search_trending_templates">Şu An Popüler</string>
     <string name="search_tag_aesthetic">Estetik</string>
     <string name="search_tag_birthday">Doğum Günü</string>
     <string name="search_tag_travel">Seyahat</string>

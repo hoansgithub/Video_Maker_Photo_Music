@@ -167,14 +167,14 @@
     <string name="settings_transition_duration_value">%.1fs</string>
 
     <!-- Search -->
-    <string name="search_hint">Search your styles</string>
-    <string name="search_recent">Recent Searches</string>
+    <string name="search_hint">Find your perfect style…</string>
+    <string name="search_recent">Recently Searched</string>
     <string name="search_clear_all">Clear All</string>
-    <string name="search_no_results">No results found</string>
-    <string name="search_no_results_hint">Try a different keyword</string>
+    <string name="search_no_results">No styles found</string>
+    <string name="search_no_results_hint">Try a different word or pick a vibe below</string>
     <string name="search_suggestions">Suggestions</string>
-    <string name="search_browse_by_theme">Browse by Theme</string>
-    <string name="search_trending_templates">Trending Templates</string>
+    <string name="search_browse_by_theme">Explore by Vibe</string>
+    <string name="search_trending_templates">Popular Right Now</string>
     <string name="search_tag_aesthetic">Aesthetic</string>
     <string name="search_tag_birthday">Birthday</string>
     <string name="search_tag_travel">Travel</string>

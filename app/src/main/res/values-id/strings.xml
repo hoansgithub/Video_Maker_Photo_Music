@@ -163,14 +163,14 @@
     <string name="settings_transition_duration_value">%.1fd</string>
 
     <!-- Search -->
-    <string name="search_hint">Cari gaya Anda</string>
-    <string name="search_recent">Pencarian Terbaru</string>
+    <string name="search_hint">Temukan gaya sempurna kamu…</string>
+    <string name="search_recent">Baru Dicari</string>
     <string name="search_clear_all">Hapus Semua</string>
-    <string name="search_no_results">Tidak ada hasil</string>
-    <string name="search_no_results_hint">Coba kata kunci lain</string>
+    <string name="search_no_results">Tidak ada gaya ditemukan</string>
+    <string name="search_no_results_hint">Coba kata lain atau pilih vibe di bawah</string>
     <string name="search_suggestions">Saran</string>
-    <string name="search_browse_by_theme">Telusuri berdasarkan tema</string>
-    <string name="search_trending_templates">Template Populer</string>
+    <string name="search_browse_by_theme">Jelajahi berdasarkan Vibe</string>
+    <string name="search_trending_templates">Populer Saat Ini</string>
     <string name="search_tag_aesthetic">Estetik</string>
     <string name="search_tag_birthday">Ulang Tahun</string>
     <string name="search_tag_travel">Perjalanan</string>

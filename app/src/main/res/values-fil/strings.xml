@@ -163,14 +163,14 @@
     <string name="settings_transition_duration_value">%.1fs</string>
 
     <!-- Search -->
-    <string name="search_hint">Hanapin ang iyong estilo</string>
-    <string name="search_recent">Mga Kamakailang Paghahanap</string>
+    <string name="search_hint">Hanapin ang iyong perpektong istilo…</string>
+    <string name="search_recent">Kamakailan Na Hinanap</string>
     <string name="search_clear_all">I-clear Lahat</string>
-    <string name="search_no_results">Walang nahanap na resulta</string>
-    <string name="search_no_results_hint">Subukan ang ibang keyword</string>
+    <string name="search_no_results">Walang nahanap na istilo</string>
+    <string name="search_no_results_hint">Subukan ang ibang salita o pumili ng vibe sa ibaba</string>
     <string name="search_suggestions">Mga Mungkahi</string>
-    <string name="search_browse_by_theme">I-browse ayon sa tema</string>
-    <string name="search_trending_templates">Trending na Template</string>
+    <string name="search_browse_by_theme">I-explore ayon sa Vibe</string>
+    <string name="search_trending_templates">Sikat Ngayon</string>
     <string name="search_tag_aesthetic">Aesthetic</string>
     <string name="search_tag_birthday">Kaarawan</string>
     <string name="search_tag_travel">Paglalakbay</string>

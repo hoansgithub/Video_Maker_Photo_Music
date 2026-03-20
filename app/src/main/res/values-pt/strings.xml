@@ -163,14 +163,14 @@
     <string name="settings_transition_duration_value">%.1fs</string>
 
     <!-- Search -->
-    <string name="search_hint">Pesquise seus estilos</string>
+    <string name="search_hint">Encontre seu estilo perfeito…</string>
     <string name="search_recent">Pesquisas Recentes</string>
     <string name="search_clear_all">Limpar Tudo</string>
-    <string name="search_no_results">Nenhum resultado encontrado</string>
-    <string name="search_no_results_hint">Tente uma palavra-chave diferente</string>
+    <string name="search_no_results">Nenhum estilo encontrado</string>
+    <string name="search_no_results_hint">Tente outra palavra ou escolha um vibe abaixo</string>
     <string name="search_suggestions">Sugestões</string>
-    <string name="search_browse_by_theme">Explorar por tema</string>
-    <string name="search_trending_templates">Templates em Alta</string>
+    <string name="search_browse_by_theme">Explorar por Vibe</string>
+    <string name="search_trending_templates">Populares Agora</string>
     <string name="search_tag_aesthetic">Estético</string>
     <string name="search_tag_birthday">Aniversário</string>
     <string name="search_tag_travel">Viagem</string>
