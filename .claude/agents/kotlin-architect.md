@@ -11,6 +11,14 @@ You design Android application architecture following Clean Architecture princip
 
 ## Architecture Decision Process
 
+### Database Query Safety (Architectural Principle)
+
+- NEVER design repositories that return unbounded result sets
+- ALL repository methods fetching lists MUST accept pagination parameters (limit/offset or page/pageSize)
+- ALL filtering MUST happen at the query level (WHERE clause), NOT client-side .filter{}
+- ALL sorting MUST happen at the query level (ORDER BY), NOT client-side .sortedBy{}
+- Repository interfaces MUST enforce pagination in their signatures
+
 ### 1. Layer Analysis
 
 ```

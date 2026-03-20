@@ -333,6 +333,14 @@ fun `getUser when cached returns cached data without API call`() = runTest {
 
 ---
 
+## Priority: Database Query Tests
+
+- **Unbounded fetch prevention**: Verify all DAO/repository queries include LIMIT or pagination parameters
+- **Server-side filtering**: Verify .filter{} is NOT used on full result sets; filtering done in query WHERE clause
+- **Server-side sorting**: Verify .sortedBy{} / .sorted{} is NOT used on full result sets; sorting done in query ORDER BY
+- **Pagination**: Test that paginated queries return correct page sizes and offsets
+- **Empty page**: Test behavior when paginated query returns fewer results than page size
+
 ## Edge Case Tests
 
 ### Always Test These

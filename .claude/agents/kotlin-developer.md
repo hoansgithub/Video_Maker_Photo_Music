@@ -157,6 +157,30 @@ ANR triggers when main thread blocked >5s. Google Play penalizes ≥0.47% ANR ra
 - [ ] ProGuard/R8 optimization enabled for release
 - [ ] Baseline profiles generated
 
+## Database Query Safety (CRITICAL)
+
+- NEVER fetch all records (assume billions of rows)
+- ALL queries MUST have LIMIT / pagination
+- ALL filtering in query (WHERE), NOT client-side .filter{}
+- ALL sorting in query (ORDER BY), NOT client-side .sortedBy{}
+
+```kotlin
+// ❌ FORBIDDEN - Unbounded fetch
+@Query("SELECT * FROM users")
+suspend fun getAllUsers(): List<User>
+
+// ✅ REQUIRED - Paginated fetch
+@Query("SELECT * FROM users ORDER BY name LIMIT :limit OFFSET :offset")
+suspend fun getUsers(limit: Int, offset: Int): List<User>
+
+// ❌ FORBIDDEN - Client-side filtering
+val activeUsers = repository.getAllUsers().filter { it.isActive }
+
+// ✅ REQUIRED - Server-side filtering
+@Query("SELECT * FROM users WHERE is_active = 1 LIMIT :limit")
+suspend fun getActiveUsers(limit: Int): List<User>
+```
+
 ## Checklist Before Done
 
 ### Navigation & Architecture

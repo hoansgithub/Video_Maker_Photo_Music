@@ -113,6 +113,15 @@ git log -5 --oneline
 □ Proper lifecycle handling
 ```
 
+#### Database Queries
+```
+□ Every query has LIMIT / pagination
+□ ALL filtering in query (WHERE), NOT client-side .filter{}
+□ ALL sorting in query (ORDER BY), NOT client-side .sortedBy{}
+□ No unbounded fetches (SELECT * without LIMIT)
+□ Supabase queries include .range()
+```
+
 ---
 
 ## Feedback Categories

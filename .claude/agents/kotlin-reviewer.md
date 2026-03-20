@@ -121,6 +121,13 @@ You review Android code for quality, best practices, and Kotlin/Compose conventi
 - [ ] Single Responsibility, Dependency Inversion
 - [ ] Domain layer has no dependencies
 - [ ] UseCase pattern for business logic
+
+## Database Queries (CRITICAL)
+- [ ] Every query has LIMIT / pagination
+- [ ] ALL filtering in query (WHERE), NOT client-side .filter{}
+- [ ] ALL sorting in query (ORDER BY), NOT client-side .sortedBy{}
+- [ ] No unbounded fetches (SELECT * without LIMIT)
+- [ ] Supabase queries include .range()
 ```
 
 ## Review Process

@@ -309,9 +309,23 @@ Deinit Logging Check:
 
 ---
 
+## Database Queries (CRITICAL)
+- [ ] Every query has LIMIT / pagination
+- [ ] ALL filtering in query (WHERE), NOT client-side .filter{}
+- [ ] ALL sorting in query (ORDER BY), NOT client-side .sortedBy{}
+- [ ] No unbounded fetches (SELECT * without LIMIT)
+- [ ] Supabase queries include .range()
+
 ## Quick Detection Commands
 
 ```bash
+# DATABASE: Unbounded fetches (CRITICAL)
+grep -rn 'SELECT \*.*FROM' --include="*.kt" | grep -vi "limit\|where"
+grep -rn "\.select()" --include="*.kt" | grep -v "range\|limit"
+# DATABASE: Client-side filtering/sorting
+grep -rn "\.filter\s*{" --include="*.kt"
+grep -rn "\.sortedBy\s*{" --include="*.kt"
+
 # iOS: Find potential retain cycles
 grep -rn "{ self\." --include="*.swift" | grep -v "weak self" | grep -v "unowned self"
 

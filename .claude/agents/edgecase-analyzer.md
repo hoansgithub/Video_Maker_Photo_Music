@@ -117,6 +117,17 @@ ANR RISKS
 □ Database migration on update? Large file parse on first launch?
 ```
 
+### 6. Database & Data Volume Edge Cases
+
+| Condition | Questions to Ask |
+|-----------|------------------|
+| Unbounded query | Does any query fetch all rows without LIMIT? |
+| Large table | What if table has millions of rows? |
+| Client-side filter | Is .filter{} used on full result sets instead of WHERE? |
+| Client-side sort | Is .sortedBy{} used on full result sets instead of ORDER BY? |
+| Missing pagination | Does the list screen paginate or load everything? |
+| Supabase range | Do Supabase queries include .range() for pagination? |
+
 ## Code Analysis Patterns
 
 **Missing null handling**: ❌ `cache.get("user")!!` → ✅ `cache.get("user") ?: run { Logger.w("..."); null }`

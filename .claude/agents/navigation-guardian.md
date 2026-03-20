@@ -117,6 +117,18 @@ grep -rn "BitmapFactory.decode" --include="*.kt"
 grep -rn "synchronized" --include="*.kt"
 ```
 
+### 12. Database Queries Feeding Navigation (HIGH)
+
+- Also check that repository queries feeding navigation screens have LIMIT / pagination
+- Unbounded queries can cause ANR before navigation even occurs
+- ❌ `val items = repository.getAll()` then navigate to list screen
+- ✅ `val items = repository.getPage(page, limit)` with paginated loading
+
+```bash
+grep -rn 'SELECT \*.*FROM' --include="*.kt" | grep -vi "limit\|where"
+grep -rn "\.select()" --include="*.kt" | grep -v "range\|limit"
+```
+
 ## Quick Scan Commands
 
 ```bash
