@@ -66,7 +66,8 @@ private val previewProject = Project(
         effectSetId = "dreamy_vibes",
         overlayFrameId = null,
         musicSongId = 1L,
-        musicSongUrl = null,
+        musicSongName = "Sample Song",
+        musicSongUrl = "https://example.com/song.mp3",
         customAudioUri = null,
         audioVolume = 0.8f,
         aspectRatio = AspectRatio.RATIO_9_16
@@ -95,6 +96,8 @@ fun EditorTopBarPreview() {
         Surface {
             EditorTopBar(
                 selectedQuality = VideoQuality.FHD_1080,
+                isProcessing = false,
+                canExport = true,
                 onBackClick = {},
                 onQualityChange = {},
                 onDoneClick = {}
@@ -115,6 +118,8 @@ fun EditorTopBar720pPreview() {
         Surface {
             EditorTopBar(
                 selectedQuality = VideoQuality.HD_720,
+                isProcessing = false,
+                canExport = true,
                 onBackClick = {},
                 onQualityChange = {},
                 onDoneClick = {}
@@ -139,6 +144,8 @@ fun EditorLayoutPreview() {
             // Top Bar
             EditorTopBar(
                 selectedQuality = VideoQuality.FHD_1080,
+                isProcessing = false,
+                canExport = true,
                 onBackClick = {},
                 onQualityChange = {},
                 onDoneClick = {}

@@ -6,13 +6,19 @@ import kotlinx.serialization.Serializable
  * MusicSong - A song from the music library for video creation
  *
  * Songs are loaded from Supabase `songs` table and displayed in Gallery/Songs tabs.
+ *
+ * **Audio URL Fields:**
+ * - `mp3Url`: Full track URL (used for final video export and all previews)
+ * - `previewUrl`: Short preview clip (30-60s, NOT currently used - kept for future feature)
  */
 @Serializable
 data class MusicSong(
     val id: Long,
     val name: String,
     val artist: String,
+    /** Full track URL - used for video composition and preview playback */
     val mp3Url: String = "",
+    /** Short preview clip URL (30-60s) - NOT currently used, reserved for future quick preview feature */
     val previewUrl: String = "",
     val coverUrl: String = "",
     val genres: List<String> = emptyList(),

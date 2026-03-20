@@ -108,7 +108,8 @@ private fun initialVirtualPage(initialPage: Int, templateCount: Int): Int {
 fun TemplatePreviewerScreen(
     viewModel: TemplatePreviewerViewModel,
     audioDataSourceFactory: CacheDataSource.Factory,
-    onNavigateToEditor: (String) -> Unit,
+    onNavigateToEditor: (projectId: String?, initialData: com.videomaker.aimusic.domain.model.EditorInitialData?) -> Unit,
+    onNavigateToAssetPicker: (template: com.videomaker.aimusic.domain.model.VideoTemplate, overrideSongId: Long) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -120,7 +121,10 @@ fun TemplatePreviewerScreen(
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
-                is TemplatePreviewerNavigationEvent.NavigateToEditor -> onNavigateToEditor(event.projectId)
+                is TemplatePreviewerNavigationEvent.NavigateToEditor ->
+                    onNavigateToEditor(event.projectId, event.initialData)
+                is TemplatePreviewerNavigationEvent.NavigateToAssetPicker ->
+                    onNavigateToAssetPicker(event.template, event.overrideSongId)
                 is TemplatePreviewerNavigationEvent.NavigateBack -> onNavigateBack()
             }
             viewModel.onNavigationHandled()
@@ -170,7 +174,8 @@ fun TemplatePreviewerScreen(
 
             is SongLoadState.Ready -> {
                 playerDurationMs = null  // clear stale duration until new track is ready
-                val url = state.song.previewUrl.ifEmpty { state.song.mp3Url }
+                // Use full track (mp3Url) for consistency with Editor, not short preview clip
+                val url = state.song.mp3Url.ifEmpty { state.song.previewUrl }
                 if (url.isEmpty()) { player.stop(); return@LaunchedEffect }
 
                 fadeVolume(player, to = 0f)

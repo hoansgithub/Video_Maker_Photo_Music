@@ -26,15 +26,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,7 +58,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -112,6 +113,7 @@ fun EditorScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showExitConfirmation by remember { mutableStateOf(false) }
     var showMusicPicker by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     // Music Picker ViewModel - created once and reused
     val musicPickerViewModel = remember {
@@ -144,6 +146,8 @@ fun EditorScreen(
                 val successState = uiState as? EditorUiState.Success
                 EditorTopBar(
                     selectedQuality = successState?.selectedQuality ?: VideoQuality.DEFAULT,
+                    isProcessing = successState?.isProcessing ?: false,
+                    canExport = successState?.canExport ?: false,
                     onBackClick = { showExitConfirmation = true },
                     onQualityChange = viewModel::updateQuality,
                     onDoneClick = viewModel::navigateToExport
@@ -166,6 +170,7 @@ fun EditorScreen(
                     EditorMainContent(
                         project = state.project,
                         isPlaying = state.isPlaying,
+                        isProcessing = state.isProcessing,
                         currentPositionMs = state.currentPositionMs,
                         durationMs = state.durationMs,
                         seekToPosition = state.seekToPosition,
@@ -182,6 +187,7 @@ fun EditorScreen(
                         onEffectClick = { /* TODO: Open effect picker */ },
                         onImageDurationClick = { /* TODO: Open image duration picker */ },
                         onRatioClick = { /* TODO: Open ratio picker */ },
+                        onVolumeClick = { /* TODO: Open volume picker */ },
                         modifier = Modifier.padding(paddingValues)
                     )
                 }
@@ -218,15 +224,26 @@ fun EditorScreen(
 
         // Exit confirmation dialog - rendered last to overlay everything
         if (showExitConfirmation) {
+            val isUnsaved = (uiState as? EditorUiState.Success)?.isUnsavedProject == true
             ExitConfirmationDialog(
+                isUnsavedProject = isUnsaved,
                 onSaveAndExit = {
                     showExitConfirmation = false
-                    // Project is already auto-saved via Room, just navigate back
-                    viewModel.navigateBack()
+                    scope.launch {
+                        if (isUnsaved) {
+                            // Save project to DB first, then navigate
+                            if (viewModel.saveProject()) {
+                                viewModel.navigateBack()
+                            }
+                        } else {
+                            // Project already saved, just navigate
+                            viewModel.navigateBack()
+                        }
+                    }
                 },
                 onDiscardAndExit = {
                     showExitConfirmation = false
-                    // Navigate back without additional save (project remains as last auto-saved state)
+                    // Navigate back without saving (for unsaved projects, this discards the work)
                     viewModel.navigateBack()
                 },
                 onCancel = {
@@ -274,6 +291,8 @@ private fun HdBadge(modifier: Modifier = Modifier) {
 @Composable
 internal fun EditorTopBar(
     selectedQuality: VideoQuality,
+    isProcessing: Boolean,
+    canExport: Boolean,
     onBackClick: () -> Unit,
     onQualityChange: (VideoQuality) -> Unit,
     onDoneClick: () -> Unit
@@ -373,12 +392,14 @@ internal fun EditorTopBar(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Done button
+            // Done button - disabled during processing
             Button(
                 onClick = onDoneClick,
+                enabled = canExport,
                 modifier = Modifier.height(40.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                 ),
                 shape = RoundedCornerShape(16.dp),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
@@ -386,8 +407,17 @@ internal fun EditorTopBar(
                     vertical = 0.dp
                 )
             ) {
+                if (isProcessing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
                 Text(
-                    text = stringResource(R.string.done),
+                    text = if (isProcessing) stringResource(R.string.editor_processing)
+                           else stringResource(R.string.done),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onPrimary
@@ -442,6 +472,15 @@ private fun MusicSection(
     // Hoist interaction source to prevent recreation on every recomposition
     val sliderInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
 
+    // Local state for smooth slider dragging (prevents jumps during drag)
+    var isDragging by remember { mutableStateOf(false) }
+    var localPosition by remember { mutableStateOf(currentPosition) }
+
+    // Update local position when not dragging (allows external position updates)
+    if (!isDragging) {
+        localPosition = currentPosition
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -470,10 +509,17 @@ private fun MusicSection(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Slider
+            // Slider with smooth dragging
             Slider(
-                value = currentPosition.coerceIn(0f, 1f),
-                onValueChange = onSeek,
+                value = localPosition.coerceIn(0f, 1f),
+                onValueChange = { newValue ->
+                    isDragging = true
+                    localPosition = newValue
+                },
+                onValueChangeFinished = {
+                    isDragging = false
+                    onSeek(localPosition) // Only seek when user releases
+                },
                 modifier = Modifier.weight(1f),
                 colors = SliderDefaults.colors(
                     thumbColor = TextPrimary,
@@ -576,11 +622,16 @@ private fun MusicSection(
     }
 }
 
+// ============================================
+// SETTINGS TAB BAR
+// Effect, Duration, Ratio, Volume tabs
+// ============================================
 @Composable
 private fun SettingsTabBar(
     onEffectClick: () -> Unit,
     onImageDurationClick: () -> Unit,
     onRatioClick: () -> Unit,
+    onVolumeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -601,7 +652,7 @@ private fun SettingsTabBar(
         // Image Duration button
         SettingsTabButton(
             icon = Icons.Default.Schedule,
-            label = "Image Duration",
+            label = "Duration",
             onClick = onImageDurationClick,
             modifier = Modifier.weight(1f)
         )
@@ -611,6 +662,14 @@ private fun SettingsTabBar(
             icon = Icons.Default.AspectRatio,
             label = "Ratio",
             onClick = onRatioClick,
+            modifier = Modifier.weight(1f)
+        )
+
+        // Volume button
+        SettingsTabButton(
+            icon = Icons.AutoMirrored.Filled.VolumeUp,
+            label = "Volume",
+            onClick = onVolumeClick,
             modifier = Modifier.weight(1f)
         )
     }
@@ -650,6 +709,7 @@ private fun SettingsTabButton(
 internal fun EditorMainContent(
     project: Project,
     isPlaying: Boolean,
+    isProcessing: Boolean,
     currentPositionMs: Long,
     durationMs: Long,
     seekToPosition: Long?,
@@ -666,6 +726,7 @@ internal fun EditorMainContent(
     onEffectClick: () -> Unit,
     onImageDurationClick: () -> Unit,
     onRatioClick: () -> Unit,
+    onVolumeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -674,25 +735,58 @@ internal fun EditorMainContent(
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
         // Real-time Video Preview using CompositionPlayer
-        VideoPreviewPlayer(
-            project = project,
-            isPlaying = isPlaying,
-            onPlayPauseClick = onPlayPauseClick,
-            onPlaybackStateChange = onPlaybackStateChange,
-            onPositionUpdate = onPositionUpdate,
-            seekToPosition = seekToPosition,
-            scrubToPosition = scrubToPosition,
-            onSeekComplete = onSeekComplete,
-            onScrubComplete = onScrubComplete,
-            autoPlay = true,
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
-        )
+                .weight(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            VideoPreviewPlayer(
+                project = project,
+                isPlaying = isPlaying,
+                onPlayPauseClick = onPlayPauseClick,
+                onPlaybackStateChange = onPlaybackStateChange,
+                onPositionUpdate = onPositionUpdate,
+                seekToPosition = seekToPosition,
+                scrubToPosition = scrubToPosition,
+                onSeekComplete = onSeekComplete,
+                onScrubComplete = onScrubComplete,
+                autoPlay = true,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            // Processing indicator - centered overlay
+            if (isProcessing) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(48.dp),
+                            strokeWidth = 4.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.editor_preparing_video),
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        }
 
         // Music Section - song info and player
         MusicSection(
-            songName = project.settings.musicSongUrl ?: "No music selected",
+            songName = project.settings.musicSongName ?: "No music selected",
             duration = project.formattedDuration,
             currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,
             isPlaying = isPlaying,
@@ -717,11 +811,12 @@ internal fun EditorMainContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Settings Tab Bar - Effect, Image Duration, Ratio
+        // Settings Tab Bar - Effect, Duration, Ratio, Volume
         SettingsTabBar(
             onEffectClick = onEffectClick,
             onImageDurationClick = onImageDurationClick,
             onRatioClick = onRatioClick,
+            onVolumeClick = onVolumeClick,
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -729,84 +824,118 @@ internal fun EditorMainContent(
 
 @Composable
 private fun ExitConfirmationDialog(
+    isUnsavedProject: Boolean,
     onSaveAndExit: () -> Unit,
     onDiscardAndExit: () -> Unit,
     onCancel: () -> Unit
 ) {
+    val title = if (isUnsavedProject) {
+        stringResource(R.string.editor_unsaved_project_title)
+    } else {
+        stringResource(R.string.editor_unsaved_changes_title)
+    }
+    val message = if (isUnsavedProject) {
+        stringResource(R.string.editor_unsaved_project_message)
+    } else {
+        stringResource(R.string.editor_unsaved_changes_message)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f)),
+            .background(Color.Black.copy(alpha = 0.6f))
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null,
+                onClick = { /* Prevent background clicks */ }
+            ),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
-                .padding(32.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(16.dp)
-                )
+                .padding(horizontal = 32.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(SplashBackground)
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Title
             Text(
-                text = stringResource(R.string.editor_save_dialog_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                text = title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Message
             Text(
-                text = stringResource(R.string.editor_save_dialog_message),
-                style = MaterialTheme.typography.bodyMedium,
+                text = message,
+                fontSize = 15.sp,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = TextSecondary,
+                lineHeight = 22.sp
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Save & Exit button
+            // Save & Exit button (Primary)
             Button(
                 onClick = onSaveAndExit,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp)
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             ) {
                 Text(
                     text = stringResource(R.string.editor_save_and_exit),
-                    fontWeight = FontWeight.Bold
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Discard button
-            OutlinedButton(
-                onClick = onDiscardAndExit,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(text = stringResource(R.string.editor_discard_changes))
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Cancel button
+            // Keep Editing button (Secondary)
             OutlinedButton(
                 onClick = onCancel,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
+                    .height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                border = androidx.compose.foundation.BorderStroke(
+                    width = 1.dp,
+                    color = Color.White.copy(alpha = 0.2f)
                 )
             ) {
-                Text(text = stringResource(R.string.cancel))
+                Text(
+                    text = stringResource(R.string.editor_keep_editing),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextPrimary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Discard button (Tertiary)
+            TextButton(
+                onClick = onDiscardAndExit,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.editor_discard),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.error
+                )
             }
         }
     }

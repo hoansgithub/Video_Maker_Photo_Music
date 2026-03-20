@@ -126,10 +126,19 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     onNavigateToSearch = { backStack.add(AppRoute.Search) },
                     onNavigateToSongSearch = { backStack.add(AppRoute.SongSearch) },
                     onNavigateToTemplateDetail = { templateId ->
-                        backStack.add(AppRoute.AssetPicker(templateId = templateId))
+                        // NEW FLOW: Browse templates first, THEN select images
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = templateId,
+                            imageUris = emptyList() // Sample images mode
+                        ))
                     },
                     onNavigateToAssetPicker = { songId ->
-                        backStack.add(AppRoute.AssetPicker(overrideSongId = songId))
+                        // Song-to-video flow: browse templates with override song
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "", // Top-ranked
+                            imageUris = emptyList(),
+                            overrideSongId = songId
+                        ))
                     }
                 )
             }
@@ -143,7 +152,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 GallerySearchScreen(
                     viewModel = searchViewModel,
                     onNavigateToTemplateDetail = { templateId ->
-                        backStack.add(AppRoute.AssetPicker(templateId = templateId))
+                        // NEW FLOW: Browse templates first, THEN select images
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = templateId,
+                            imageUris = emptyList() // Sample images mode
+                        ))
                     },
                     onNavigateBack = { backStack.removeLastOrNull() }
                 )
@@ -157,7 +170,14 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 )
                 SongSearchScreen(
                     viewModel = songSearchViewModel,
-                    onNavigateToSongDetail = { /* TODO: song detail screen */ },
+                    onNavigateToSongDetail = { songId ->
+                        // Song-to-video flow: browse templates with selected song
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "", // Top-ranked template
+                            imageUris = emptyList(),
+                            overrideSongId = songId
+                        ))
+                    },
                     onNavigateBack = { backStack.removeLastOrNull() }
                 )
             }
@@ -189,6 +209,15 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                             add(AppRoute.Editor(projectId))
                         }
                     },
+                    onNavigateToEditorWithData = { initialData ->
+                        // NEW FLOW: Navigate directly to Editor with template data
+                        backStack.apply {
+                            val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home
+                            clear()
+                            add(home)
+                            add(AppRoute.Editor(projectId = null, initialData = initialData))
+                        }
+                    },
                     onNavigateBack = { backStack.removeLastOrNull() },
                     onAssetsAdded = { backStack.removeLastOrNull() },
                     onNavigateToTemplatePreviewer = { templateId, imageUris, overrideSongId ->
@@ -207,11 +236,15 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             }
 
             entry<AppRoute.Editor> { route ->
-                val factory = remember(route.projectId) { ACCDI.get<EditorViewModelFactory>() }
+                val factory = remember(route.projectId, route.initialData) {
+                    ACCDI.get<EditorViewModelFactory>()
+                }
                 val musicPickerFactory = remember { ACCDI.get<MusicPickerViewModelFactory>() }
                 val editorViewModel: EditorViewModel = viewModel(
-                    key = "editor_${route.projectId}",
-                    factory = createSafeViewModelFactory { factory.create(route.projectId) }
+                    key = "editor_${route.projectId ?: route.initialData.hashCode()}",
+                    factory = createSafeViewModelFactory {
+                        factory.create(route.projectId, route.initialData)
+                    }
                 )
                 EditorScreen(
                     viewModel = editorViewModel,
@@ -286,13 +319,22 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 TemplatePreviewerScreen(
                     viewModel = viewModel,
                     audioDataSourceFactory = audioCache.cacheDataSourceFactory,
-                    onNavigateToEditor = { projectId ->
+                    onNavigateToEditor = { projectId, initialData ->
                         backStack.apply {
                             val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home
                             clear()
                             add(home)
-                            add(AppRoute.Editor(projectId))
+                            add(AppRoute.Editor(projectId = projectId, initialData = initialData))
                         }
+                    },
+                    onNavigateToAssetPicker = { template, overrideSongId ->
+                        // NEW FLOW: User selected a template, now pick images
+                        // Pass both templateId and overrideSongId (if song-to-video mode)
+                        // AssetPickerViewModel will use overrideSongId as priority over template's song
+                        backStack.add(AppRoute.AssetPicker(
+                            templateId = template.id,
+                            overrideSongId = overrideSongId
+                        ))
                     },
                     onNavigateBack = { backStack.removeLastOrNull() }
                 )

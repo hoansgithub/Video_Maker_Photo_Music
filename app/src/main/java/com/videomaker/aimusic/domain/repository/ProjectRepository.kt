@@ -19,6 +19,14 @@ interface ProjectRepository {
     suspend fun createProject(assets: List<Uri>): Project
 
     /**
+     * Create a new project with the given assets and settings
+     * @param assets URIs of selected images
+     * @param settings Initial project settings (effect set, duration, aspect ratio, etc.)
+     * @return Created project
+     */
+    suspend fun createProject(assets: List<Uri>, settings: ProjectSettings): Project
+
+    /**
      * Get a project by ID
      * @param id Project ID
      * @return Project or null if not found

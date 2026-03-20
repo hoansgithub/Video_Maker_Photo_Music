@@ -412,12 +412,15 @@ fun VideoPreviewPlayer(
             }
 
             // Show error message if error
-            if (previewState is PreviewState.Error) {
-                Text(
-                    text = (previewState as PreviewState.Error).message,
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+            when (val state = previewState) {
+                is PreviewState.Error -> {
+                    Text(
+                        text = state.message,
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                else -> {}
             }
 
             // PROCESSING OVERLAY - Full overlay when building composition
@@ -446,31 +449,7 @@ fun VideoPreviewPlayer(
                 }
             }
 
-            // Play/Pause overlay button (only show when ready)
-            if (previewState is PreviewState.Ready) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(12.dp)
-                ) {
-                    IconButton(
-                        onClick = onPlayPauseClick,
-                        modifier = Modifier
-                            .size(48.dp)
-                            .background(
-                                color = Color.Black.copy(alpha = 0.6f),
-                                shape = CircleShape
-                            )
-                    ) {
-                        Icon(
-                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isPlaying) "Pause" else "Play",
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                }
-            }
+            // Play/Pause button removed - using the one in Music Section instead
 
             // Asset counter overlay
             Box(

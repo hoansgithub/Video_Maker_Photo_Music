@@ -129,7 +129,7 @@ val dataModule = module {
  * Scope: Singleton - Expensive to create
  */
 val mediaModule = module {
-    single { CompositionFactory(androidContext()) }
+    single { CompositionFactory(androidContext(), it.get()) }
     single { AudioPreviewCache(androidContext()) }
 
     // Coil ImageLoader singleton
@@ -205,7 +205,9 @@ val domainModule = module {
 class AssetPickerViewModelFactory(
     private val application: android.app.Application,
     private val createProjectUseCase: CreateProjectUseCase,
-    private val addAssetsUseCase: AddAssetsUseCase
+    private val addAssetsUseCase: AddAssetsUseCase,
+    private val templateRepository: TemplateRepository,
+    private val songRepository: SongRepository
 ) {
     fun create(
         projectId: String? = null,
@@ -216,6 +218,8 @@ class AssetPickerViewModelFactory(
             context = application,
             createProjectUseCase = createProjectUseCase,
             addAssetsUseCase = addAssetsUseCase,
+            templateRepository = templateRepository,
+            songRepository = songRepository,
             projectId = projectId,
             templateId = templateId,
             overrideSongId = overrideSongId
@@ -230,19 +234,27 @@ class AssetPickerViewModelFactory(
  */
 class EditorViewModelFactory(
     private val getProjectUseCase: GetProjectUseCase,
+    private val createProjectUseCase: CreateProjectUseCase,
     private val updateSettingsUseCase: UpdateProjectSettingsUseCase,
     private val reorderAssetsUseCase: ReorderAssetsUseCase,
     private val addAssetsUseCase: AddAssetsUseCase,
-    private val removeAssetUseCase: RemoveAssetUseCase
+    private val removeAssetUseCase: RemoveAssetUseCase,
+    private val songRepository: SongRepository
 ) {
-    fun create(projectId: String): EditorViewModel {
+    fun create(
+        projectId: String?,
+        initialData: com.videomaker.aimusic.domain.model.EditorInitialData?
+    ): EditorViewModel {
         return EditorViewModel(
             projectId = projectId,
+            initialData = initialData,
             getProjectUseCase = getProjectUseCase,
+            createProjectUseCase = createProjectUseCase,
             updateSettingsUseCase = updateSettingsUseCase,
             reorderAssetsUseCase = reorderAssetsUseCase,
             addAssetsUseCase = addAssetsUseCase,
-            removeAssetUseCase = removeAssetUseCase
+            removeAssetUseCase = removeAssetUseCase,
+            songRepository = songRepository
         )
     }
 }
@@ -412,7 +424,9 @@ val presentationModule = module {
             application = (androidContext().applicationContext as? android.app.Application)
                 ?: error("applicationContext is not an Application instance"),
             createProjectUseCase = it.get(),
-            addAssetsUseCase = it.get()
+            addAssetsUseCase = it.get(),
+            templateRepository = it.get(),
+            songRepository = it.get()
         )
     }
 
@@ -420,10 +434,12 @@ val presentationModule = module {
     single {
         EditorViewModelFactory(
             getProjectUseCase = it.get(),
+            createProjectUseCase = it.get(),
             updateSettingsUseCase = it.get(),
             reorderAssetsUseCase = it.get(),
             addAssetsUseCase = it.get(),
-            removeAssetUseCase = it.get()
+            removeAssetUseCase = it.get(),
+            songRepository = it.get()
         )
     }
 

@@ -5,20 +5,41 @@ import androidx.lifecycle.viewModelScope
 import android.net.Uri
 import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.EditorInitialData
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.VideoQuality
+import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
+import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
 import com.videomaker.aimusic.domain.usecase.ReorderAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
+
+// ============================================
+// PROCESSING STATE
+// ============================================
+
+sealed class VideoProcessingState {
+    /** No active processing */
+    data object Idle : VideoProcessingState()
+    /** Video composition being prepared (debounced after settings change) */
+    data object Preparing : VideoProcessingState()
+    /** Video ready for playback/export */
+    data object Ready : VideoProcessingState()
+    /** Processing failed */
+    data class Error(val message: String) : VideoProcessingState()
+}
 
 // ============================================
 // UI STATE
@@ -29,6 +50,7 @@ sealed class EditorUiState {
 
     data class Success(
         val project: Project,
+        val isUnsavedProject: Boolean = false,
         val selectedAssetIndex: Int = 0,
         val isPlaying: Boolean = false,
         val showSettingsPanel: Boolean = false,
@@ -38,10 +60,13 @@ sealed class EditorUiState {
         val seekToPosition: Long? = null,
         val scrubToPosition: Long? = null,
         val wasPlayingBeforeSeek: Boolean = false,
-        val selectedQuality: VideoQuality = VideoQuality.DEFAULT
+        val selectedQuality: VideoQuality = VideoQuality.DEFAULT,
+        val processingState: VideoProcessingState = VideoProcessingState.Idle
     ) : EditorUiState() {
-        val hasPendingChanges: Boolean get() = pendingSettings != null
+        val hasPendingChanges: Boolean get() = pendingSettings != null || isUnsavedProject
         val displaySettings: ProjectSettings get() = pendingSettings ?: project.settings
+        val isProcessing: Boolean get() = processingState is VideoProcessingState.Preparing
+        val canExport: Boolean get() = !isProcessing && processingState !is VideoProcessingState.Error
     }
 
     data class Error(val message: String) : EditorUiState()
@@ -62,12 +87,15 @@ sealed class EditorNavigationEvent {
 // ============================================
 
 class EditorViewModel(
-    private val projectId: String,
+    private val projectId: String?,
+    private val initialData: EditorInitialData?,
     private val getProjectUseCase: GetProjectUseCase,
+    private val createProjectUseCase: CreateProjectUseCase,
     private val updateSettingsUseCase: UpdateProjectSettingsUseCase,
     private val reorderAssetsUseCase: ReorderAssetsUseCase,
     private val addAssetsUseCase: AddAssetsUseCase,
-    private val removeAssetUseCase: RemoveAssetUseCase
+    private val removeAssetUseCase: RemoveAssetUseCase,
+    private val songRepository: SongRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<EditorUiState>(EditorUiState.Loading)
@@ -77,15 +105,43 @@ class EditorViewModel(
     private val _navigationEvent = MutableStateFlow<EditorNavigationEvent?>(null)
     val navigationEvent: StateFlow<EditorNavigationEvent?> = _navigationEvent.asStateFlow()
 
-    init {
-        loadProject()
+    // Track the actual project ID (might be generated for new projects)
+    private var currentProjectId: String? = projectId
+
+    // Observer job for existing projects
+    private var projectObserverJob: Job? = null
+
+    // Video preparation job - cancelled when settings change
+    private var videoPreparationJob: Job? = null
+
+    // Debounce delay for video preparation (wait for user to stop changing settings)
+    private companion object {
+        const val VIDEO_PREPARATION_DEBOUNCE_MS = 500L
     }
 
-    private fun loadProject() {
-        viewModelScope.launch {
+    init {
+        require(projectId != null || initialData != null) {
+            "Either projectId or initialData must be provided"
+        }
+        loadOrInitializeProject()
+    }
+
+    private fun loadOrInitializeProject() {
+        if (projectId != null) {
+            // Mode 1: Load existing project from DB
+            loadExistingProject(projectId)
+        } else if (initialData != null) {
+            // Mode 2: Initialize new project in memory
+            initializeNewProject(initialData)
+        }
+    }
+
+    private fun loadExistingProject(id: String) {
+        projectObserverJob?.cancel()
+        projectObserverJob = viewModelScope.launch {
             _uiState.value = EditorUiState.Loading
             try {
-                getProjectUseCase.observe(projectId).collect { project ->
+                getProjectUseCase.observe(id).collect { project ->
                     if (project != null) {
                         val currentState = _uiState.value
                         val prev = currentState as? EditorUiState.Success
@@ -93,6 +149,7 @@ class EditorViewModel(
                             ?.coerceIn(0, project.assets.lastIndex.coerceAtLeast(0)) ?: 0
                         _uiState.value = EditorUiState.Success(
                             project = project,
+                            isUnsavedProject = false,
                             selectedAssetIndex = selectedIndex,
                             isPlaying = prev?.isPlaying ?: false,
                             showSettingsPanel = prev?.showSettingsPanel ?: false,
@@ -110,6 +167,97 @@ class EditorViewModel(
             } catch (e: Exception) {
                 _uiState.value = EditorUiState.Error(e.message ?: "Failed to load project")
             }
+        }
+    }
+
+    private fun initializeNewProject(data: EditorInitialData) {
+        viewModelScope.launch {
+            _uiState.value = EditorUiState.Loading
+            try {
+                // Generate temporary project ID
+                val tempId = UUID.randomUUID().toString()
+                currentProjectId = tempId
+
+                // Create in-memory project
+                val imageUris = data.imageUris.mapNotNull { uriStr ->
+                    uriStr.takeIf { it.isNotBlank() }?.let { Uri.parse(it) }
+                }
+
+                val assets = imageUris.mapIndexed { index, uri ->
+                    Asset(
+                        id = UUID.randomUUID().toString(),
+                        uri = uri,
+                        orderIndex = index
+                    )
+                }
+
+                // Fetch song data (name + URL) to ensure consistency across app
+                val song = data.musicSongId?.let { songId ->
+                    songRepository.getSongById(songId).getOrNull()
+                }
+
+                val settings = ProjectSettings(
+                    imageDurationMs = data.imageDurationMs,
+                    transitionPercentage = data.transitionPercentage,
+                    effectSetId = data.effectSetId,
+                    musicSongId = data.musicSongId,
+                    musicSongName = song?.name, // For display in UI
+                    musicSongUrl = song?.mp3Url, // For playback (same URL as previewer)
+                    aspectRatio = data.aspectRatio
+                )
+
+                val project = Project(
+                    id = tempId,
+                    name = "New Project",
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis(),
+                    thumbnailUri = imageUris.firstOrNull(),
+                    assets = assets,
+                    settings = settings
+                )
+
+                _uiState.value = EditorUiState.Success(
+                    project = project,
+                    isUnsavedProject = true
+                )
+            } catch (e: Exception) {
+                _uiState.value = EditorUiState.Error(e.message ?: "Failed to initialize project")
+            }
+        }
+    }
+
+    suspend fun saveProject(): Boolean {
+        val currentState = _uiState.value
+        if (currentState !is EditorUiState.Success) return false
+        if (!currentState.isUnsavedProject) return true // Already saved
+
+        return try {
+            val project = currentState.project
+            val assetUris = project.assets.map { it.uri }
+            val settings = currentState.displaySettings
+
+            // Create project in DB with settings
+            val result = createProjectUseCase(assetUris, settings)
+            result.onSuccess { createdProject ->
+                // Update current project ID
+                currentProjectId = createdProject.id
+                // Start observing the DB project - it will update the state
+                // Don't manually update state here to avoid race condition
+                loadExistingProject(createdProject.id)
+            }
+            result.onFailure { error ->
+                // Show error to user
+                _uiState.value = EditorUiState.Error(
+                    error.message ?: "Failed to save project"
+                )
+            }
+            result.isSuccess
+        } catch (e: Exception) {
+            // Show error to user
+            _uiState.value = EditorUiState.Error(
+                e.message ?: "Failed to save project"
+            )
+            false
         }
     }
 
@@ -145,20 +293,64 @@ class EditorViewModel(
     fun moveAsset(fromIndex: Int, toIndex: Int) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
-            viewModelScope.launch {
-                val assets = currentState.project.assets.toMutableList()
-                val asset = assets.removeAt(fromIndex)
-                assets.add(toIndex, asset)
-                reorderAssetsUseCase(projectId, assets)
+            val assets = currentState.project.assets.toMutableList()
+            val asset = assets.removeAt(fromIndex)
+            assets.add(toIndex, asset)
+
+            if (currentState.isUnsavedProject) {
+                // In-memory update - reindex assets
+                val reindexedAssets = assets.mapIndexed { index, a ->
+                    a.copy(orderIndex = index)
+                }
+                _uiState.value = currentState.copy(
+                    project = currentState.project.copy(assets = reindexedAssets)
+                )
+            } else {
+                // DB update
+                viewModelScope.launch {
+                    currentProjectId?.let { id ->
+                        reorderAssetsUseCase(id, assets)
+                    }
+                }
             }
+
+            // Asset order changed - trigger video preparation
+            triggerVideoPreparation()
         }
     }
 
     fun addAssets(uris: List<Uri>) {
         if (uris.isEmpty()) return
-        viewModelScope.launch {
-            addAssetsUseCase(projectId, uris)
+        val currentState = _uiState.value
+        if (currentState !is EditorUiState.Success) return
+
+        if (currentState.isUnsavedProject) {
+            // In-memory update
+            val existingCount = currentState.project.assets.size
+            val newAssets = uris.mapIndexed { index, uri ->
+                Asset(
+                    id = UUID.randomUUID().toString(),
+                    uri = uri,
+                    orderIndex = existingCount + index
+                )
+            }
+            _uiState.value = currentState.copy(
+                project = currentState.project.copy(
+                    assets = currentState.project.assets + newAssets,
+                    updatedAt = System.currentTimeMillis()
+                )
+            )
+        } else {
+            // DB update
+            viewModelScope.launch {
+                currentProjectId?.let { id ->
+                    addAssetsUseCase(id, uris)
+                }
+            }
         }
+
+        // Assets added - trigger video preparation
+        triggerVideoPreparation()
     }
 
     /**
@@ -170,9 +362,32 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState !is EditorUiState.Success) return false
         if (currentState.project.assets.size <= 2) return false
-        viewModelScope.launch {
-            removeAssetUseCase(projectId, assetId)
+
+        if (currentState.isUnsavedProject) {
+            // In-memory update - remove and reindex
+            val remainingAssets = currentState.project.assets
+                .filter { it.id != assetId }
+                .mapIndexed { index, asset ->
+                    asset.copy(orderIndex = index)
+                }
+            _uiState.value = currentState.copy(
+                project = currentState.project.copy(
+                    assets = remainingAssets,
+                    thumbnailUri = remainingAssets.firstOrNull()?.uri,
+                    updatedAt = System.currentTimeMillis()
+                )
+            )
+        } else {
+            // DB update
+            viewModelScope.launch {
+                currentProjectId?.let { id ->
+                    removeAssetUseCase(id, assetId)
+                }
+            }
         }
+
+        // Asset removed - trigger video preparation
+        triggerVideoPreparation()
         return true
     }
 
@@ -219,13 +434,24 @@ class EditorViewModel(
         updatePendingSettings { it.copy(overlayFrameId = frameId) }
     }
 
-    fun updateMusicSong(songId: Long?, songUrl: String?) {
-        updatePendingSettings { it.copy(musicSongId = songId, musicSongUrl = songUrl, customAudioUri = null) }
+    fun updateMusicSong(songId: Long?, songUrl: String? = null) {
+        // Fetch song data to get both name and URL
+        viewModelScope.launch {
+            val song = songId?.let { songRepository.getSongById(it).getOrNull() }
+            updatePendingSettings {
+                it.copy(
+                    musicSongId = songId,
+                    musicSongName = song?.name,
+                    musicSongUrl = song?.mp3Url,
+                    customAudioUri = null
+                )
+            }
+        }
     }
 
     fun updateCustomAudio(uri: Uri?) {
         if (uri != null) {
-            updatePendingSettings { it.copy(customAudioUri = uri, musicSongId = null, musicSongUrl = null) }
+            updatePendingSettings { it.copy(customAudioUri = uri, musicSongId = null, musicSongName = null, musicSongUrl = null) }
         } else {
             updatePendingSettings { it.copy(customAudioUri = null) }
         }
@@ -251,11 +477,24 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success && currentState.pendingSettings != null) {
             val newSettings = currentState.pendingSettings
-            val updatedProject = currentState.project.copy(settings = newSettings)
+            val updatedProject = currentState.project.copy(
+                settings = newSettings,
+                updatedAt = System.currentTimeMillis()
+            )
             _uiState.value = currentState.copy(project = updatedProject, pendingSettings = null)
-            viewModelScope.launch {
-                updateSettingsUseCase(projectId, newSettings)
+
+            if (!currentState.isUnsavedProject) {
+                // DB update
+                viewModelScope.launch {
+                    currentProjectId?.let { id ->
+                        updateSettingsUseCase(id, newSettings)
+                    }
+                }
             }
+            // For unsaved projects, settings are already in memory
+
+            // Trigger video preparation after settings applied
+            triggerVideoPreparation()
         }
     }
 
@@ -263,6 +502,85 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
             _uiState.value = currentState.copy(pendingSettings = null)
+        }
+    }
+
+    // ============================================
+    // VIDEO PREPARATION - DEBOUNCED & CANCELLABLE
+    // ============================================
+
+    /**
+     * Trigger video preparation with debounce.
+     * Cancels any ongoing preparation and waits for user to stop making changes.
+     */
+    private fun triggerVideoPreparation() {
+        val currentState = _uiState.value
+        if (currentState !is EditorUiState.Success) return
+
+        // Cancel previous preparation
+        videoPreparationJob?.cancel()
+
+        // Mark as preparing (but debounced, so user sees "waiting" state)
+        _uiState.value = currentState.copy(processingState = VideoProcessingState.Preparing)
+
+        // Start new debounced preparation
+        videoPreparationJob = viewModelScope.launch {
+            try {
+                // Debounce: wait for user to stop changing settings
+                delay(VIDEO_PREPARATION_DEBOUNCE_MS)
+
+                // Prepare video composition
+                prepareVideoComposition()
+
+                // Mark as ready
+                val state = _uiState.value as? EditorUiState.Success
+                if (state != null) {
+                    _uiState.value = state.copy(processingState = VideoProcessingState.Ready)
+                }
+            } catch (e: CancellationException) {
+                // Job was cancelled (user made more changes) - this is expected
+                throw e
+            } catch (e: Exception) {
+                // Preparation failed
+                val state = _uiState.value as? EditorUiState.Success
+                if (state != null) {
+                    _uiState.value = state.copy(
+                        processingState = VideoProcessingState.Error(
+                            e.message ?: "Failed to prepare video"
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Actually prepare the video composition.
+     * This is where the heavy work happens (Media3 Composition creation, etc.)
+     */
+    private suspend fun prepareVideoComposition() {
+        // TODO: Implement actual video composition preparation
+        // This will use Media3 Transformer to create the composition
+        // For now, simulate the work
+        delay(100) // Simulate processing time
+
+        // Future implementation:
+        // 1. Get current project settings
+        // 2. Create Media3 Composition from assets + settings
+        // 3. Set up CompositionPlayer for preview
+        // 4. Notify UI when ready
+    }
+
+    /**
+     * Cancel any ongoing video preparation.
+     * Called when user navigates away or makes destructive changes.
+     */
+    fun cancelVideoPreparation() {
+        videoPreparationJob?.cancel()
+        videoPreparationJob = null
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success) {
+            _uiState.value = currentState.copy(processingState = VideoProcessingState.Idle)
         }
     }
 
@@ -348,15 +666,67 @@ class EditorViewModel(
     }
 
     fun navigateToPreview() {
-        _navigationEvent.value = EditorNavigationEvent.NavigateToPreview(projectId)
+        val currentState = _uiState.value
+        if (currentState !is EditorUiState.Success) return
+
+        // Block if video is being prepared
+        if (currentState.isProcessing) {
+            // TODO: Show toast/snackbar "Please wait for video preparation to complete"
+            return
+        }
+
+        if (currentState.isUnsavedProject) {
+            // Auto-save before preview
+            viewModelScope.launch {
+                if (saveProject()) {
+                    currentProjectId?.let { id ->
+                        _navigationEvent.value = EditorNavigationEvent.NavigateToPreview(id)
+                    }
+                }
+            }
+        } else {
+            currentProjectId?.let { id ->
+                _navigationEvent.value = EditorNavigationEvent.NavigateToPreview(id)
+            }
+        }
     }
 
     fun navigateToExport() {
-        _navigationEvent.value = EditorNavigationEvent.NavigateToExport(projectId)
+        val currentState = _uiState.value
+        if (currentState !is EditorUiState.Success) return
+
+        // Block if video is being prepared
+        if (currentState.isProcessing) {
+            // TODO: Show toast/snackbar "Please wait for video preparation to complete"
+            return
+        }
+
+        if (currentState.isUnsavedProject) {
+            // Auto-save before export
+            viewModelScope.launch {
+                if (saveProject()) {
+                    currentProjectId?.let { id ->
+                        _navigationEvent.value = EditorNavigationEvent.NavigateToExport(id)
+                    }
+                }
+            }
+        } else {
+            currentProjectId?.let { id ->
+                _navigationEvent.value = EditorNavigationEvent.NavigateToExport(id)
+            }
+        }
     }
 
     /** Called by UI after navigation is handled — clears the event. */
     fun onNavigationHandled() {
         _navigationEvent.value = null
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        projectObserverJob?.cancel()
+        projectObserverJob = null
+        videoPreparationJob?.cancel()
+        videoPreparationJob = null
     }
 }

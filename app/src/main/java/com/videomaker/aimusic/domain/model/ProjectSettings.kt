@@ -23,6 +23,7 @@ import android.net.Uri
  * @param effectSetId ID of selected effect set (null = no transitions)
  * @param overlayFrameId ID of selected overlay frame (null = none)
  * @param musicSongId ID of Supabase MusicSong selected for this project (null = none)
+ * @param musicSongName Cached song name for display purposes (null = none)
  * @param musicSongUrl Supabase song mp3 URL stored for offline composition (null = none)
  * @param customAudioUri User's custom audio URI from device (overrides musicSongId)
  * @param audioVolume Music volume (0.0 to 1.0)
@@ -34,7 +35,8 @@ data class ProjectSettings(
     val effectSetId: String? = "dreamy_vibes", // Default effect set
     val overlayFrameId: String? = null,
     val musicSongId: Long? = null,
-    val musicSongUrl: String? = null,
+    val musicSongName: String? = null, // Cached for display only
+    val musicSongUrl: String? = null, // Cached for offline playback
     val customAudioUri: Uri? = null,
     val audioVolume: Float = 1.0f,
     val aspectRatio: AspectRatio = AspectRatio.RATIO_9_16

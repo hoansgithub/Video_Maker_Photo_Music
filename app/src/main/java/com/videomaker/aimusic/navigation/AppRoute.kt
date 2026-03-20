@@ -62,8 +62,18 @@ sealed interface AppRoute : NavKey {
         val overrideSongId: Long = -1L
     ) : AppRoute
 
+    /**
+     * Editor screen route.
+     *
+     * For existing projects: pass projectId only
+     * For new projects from template: pass initialData only
+     * One of projectId or initialData must be non-null.
+     */
     @Serializable
-    data class Editor(val projectId: String) : AppRoute
+    data class Editor(
+        val projectId: String? = null,
+        val initialData: com.videomaker.aimusic.domain.model.EditorInitialData? = null
+    ) : AppRoute
 
     @Serializable
     data class Preview(val projectId: String) : AppRoute
@@ -76,16 +86,17 @@ sealed interface AppRoute : NavKey {
     // ============================================
 
     /**
-     * Template preview: apply a template to user-selected images.
+     * Template preview: apply a template to user-selected images OR sample images.
      *
      * @param templateId ID of the template to open first. Empty string = open at top-ranked template.
+     * @param imageUris User-selected images. Empty list = show sample/placeholder images for browsing.
      * @param overrideSongId When >= 0, plays this song across all templates instead of each
      *   template's own song. -1 = use template's embedded song (default behaviour).
      */
     @Serializable
     data class TemplatePreviewer(
         val templateId: String,
-        val imageUris: List<String>,
+        val imageUris: List<String> = emptyList(), // Empty = browse mode with sample images
         val overrideSongId: Long = -1L
     ) : AppRoute
 

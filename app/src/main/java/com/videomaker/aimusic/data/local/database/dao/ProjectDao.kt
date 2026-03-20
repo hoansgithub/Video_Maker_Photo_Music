@@ -33,12 +33,12 @@ interface ProjectDao {
     @Query("SELECT * FROM projects WHERE id = :id")
     fun observeWithAssets(id: String): Flow<ProjectWithAssets?>
 
-    @Query("SELECT * FROM projects ORDER BY updatedAt DESC")
-    fun observeAll(): Flow<List<ProjectEntity>>
+    @Query("SELECT * FROM projects ORDER BY updatedAt DESC LIMIT :limit")
+    fun observeAll(limit: Int = 100): Flow<List<ProjectEntity>>
 
     @Transaction
-    @Query("SELECT * FROM projects ORDER BY updatedAt DESC")
-    fun observeAllWithAssets(): Flow<List<ProjectWithAssets>>
+    @Query("SELECT * FROM projects ORDER BY updatedAt DESC LIMIT :limit")
+    fun observeAllWithAssets(limit: Int = 100): Flow<List<ProjectWithAssets>>
 
     @Query("DELETE FROM projects WHERE id = :id")
     suspend fun deleteById(id: String)
@@ -53,6 +53,7 @@ interface ProjectDao {
             effectSetId = :effectSetId,
             overlayFrameId = :overlayFrameId,
             musicSongId = :musicSongId,
+            musicSongName = :musicSongName,
             musicSongUrl = :musicSongUrl,
             customAudioUri = :customAudioUri,
             audioVolume = :audioVolume,
@@ -67,6 +68,7 @@ interface ProjectDao {
         effectSetId: String?,
         overlayFrameId: String?,
         musicSongId: Long?,
+        musicSongName: String?,
         musicSongUrl: String?,
         customAudioUri: String?,
         audioVolume: Float,

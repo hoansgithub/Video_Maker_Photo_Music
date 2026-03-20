@@ -11,6 +11,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.EditorInitialData
+import com.videomaker.aimusic.domain.repository.SongRepository
+import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import kotlinx.coroutines.Dispatchers
@@ -75,6 +79,8 @@ sealed class AssetPickerUiState {
 sealed class AssetPickerNavigationEvent {
     data object NavigateBack : AssetPickerNavigationEvent()
     data class NavigateToEditor(val projectId: String) : AssetPickerNavigationEvent()
+    /** NEW: Navigate to Editor with initial data (from template flow) */
+    data class NavigateToEditorWithData(val initialData: EditorInitialData) : AssetPickerNavigationEvent()
     /** Assets added to existing project - just go back */
     data object AssetsAdded : AssetPickerNavigationEvent()
     /** Template mode / song-to-video mode: confirm selection with URIs directly */
@@ -99,6 +105,8 @@ class AssetPickerViewModel(
     context: Context,  // Convert to Application context to prevent memory leak
     private val createProjectUseCase: CreateProjectUseCase,
     private val addAssetsUseCase: AddAssetsUseCase,
+    private val templateRepository: TemplateRepository,
+    private val songRepository: SongRepository,
     private val projectId: String? = null, // null = create new project, non-null = add to existing
     private val templateId: String? = null,  // non-null = template mode, bypasses project creation
     private val overrideSongId: Long = -1L   // >= 0 = song-to-video mode, overrides template song
@@ -145,23 +153,17 @@ class AssetPickerViewModel(
     private val _navigationEvent = MutableStateFlow<AssetPickerNavigationEvent?>(null)
     val navigationEvent: StateFlow<AssetPickerNavigationEvent?> = _navigationEvent.asStateFlow()
 
-    init {
-        // Invariant: song-to-video mode and explicit template mode are mutually exclusive.
-        // isSongToVideoMode takes priority in confirmSelection(); a non-null templateId would be
-        // silently ignored, which is a caller bug.
-        if (isSongToVideoMode && templateId != null) {
-            val errorMessage = "AssetPickerViewModel: Invalid state - both overrideSongId ($overrideSongId) " +
-                    "and templateId ($templateId) are set. These modes are mutually exclusive."
+    // USER MESSAGE EVENTS (for snackbars/toasts)
+    // ============================================
 
-            if (BuildConfig.DEBUG) {
-                // In debug: crash immediately to catch developer bugs during testing
-                error(errorMessage)
-            } else {
-                // In production: log error and navigate back gracefully to prevent user-facing crash
-                Log.e("AssetPickerViewModel", errorMessage)
-                _navigationEvent.value = AssetPickerNavigationEvent.NavigateBack
-            }
-        }
+    private val _messageEvent = MutableStateFlow<String?>(null)
+    val messageEvent: StateFlow<String?> = _messageEvent.asStateFlow()
+
+    init {
+        // NOTE: With the new flow (Template Browse → Select Template → Pick Images),
+        // it's valid to have both overrideSongId and templateId:
+        // - User picks a song → browses templates with that song → selects a template → picks images
+        // The confirmSelection() method handles priority: overrideSongId takes priority over template's song
     }
 
     // ============================================
@@ -238,7 +240,8 @@ class AssetPickerViewModel(
             } else {
                 // Check max selection limit before adding
                 if (currentSelection.size >= MAX_SELECTION) {
-                    // Silently ignore - max limit reached
+                    // Show user feedback about max limit
+                    _messageEvent.value = "Maximum $MAX_SELECTION images can be selected"
                     return
                 }
                 currentSelection.add(asset)
@@ -270,20 +273,53 @@ class AssetPickerViewModel(
                 val uris = currentState.selectedAssets.map { it.uri }
 
                 when {
+                    // PRIORITY 1: Template already selected - go directly to Editor
+                    // This handles both:
+                    // - Gallery → Template → Image → Editor
+                    // - Music → Template → Image → Editor (templateId + overrideSongId both set)
+                    templateId != null -> {
+                        // Fetch templates and find by ID
+                        templateRepository.getTemplates(limit = 100, offset = 0)
+                            .onSuccess { templates ->
+                                val template = templates.find { it.id == templateId }
+                                if (template != null) {
+                                    // Determine song ID (override or template's song)
+                                    val songId = if (overrideSongId >= 0L) overrideSongId
+                                                else template.songId.takeIf { it > 0L }
+
+                                    // Fetch song name (avoid extra network request in Editor)
+                                    val songName = songId?.let { id ->
+                                        songRepository.getSongById(id).getOrNull()?.name
+                                    }
+
+                                    val initialData = EditorInitialData(
+                                        imageUris = uris.map { it.toString() },
+                                        effectSetId = template.effectSetId,
+                                        imageDurationMs = template.imageDurationMs.toLong(),
+                                        transitionPercentage = template.transitionPct,
+                                        musicSongId = songId,
+                                        musicSongName = songName,
+                                        aspectRatio = AspectRatio.fromString(template.aspectRatio)
+                                    )
+
+                                    _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditorWithData(initialData)
+                                } else {
+                                    _uiState.value = AssetPickerUiState.Error("Template not found")
+                                }
+                            }
+                            .onFailure { error ->
+                                _uiState.value = AssetPickerUiState.Error(
+                                    error.message ?: "Failed to load template"
+                                )
+                            }
+                    }
+                    // PRIORITY 2: Song-to-video mode WITHOUT template selected
+                    // Navigate to template selector with the chosen song
                     isSongToVideoMode -> {
-                        // Song-to-video: open top-ranked template (empty = first in list) with the
-                        // chosen song playing across all templates instead of their own tracks.
                         _navigationEvent.value = AssetPickerNavigationEvent.NavigateToTemplatePreviewer(
                             templateId = "",
                             imageUris = uris.map { it.toString() },
                             overrideSongId = overrideSongId
-                        )
-                    }
-                    templateId != null -> {
-                        // Template mode - return URIs directly, no project created
-                        _navigationEvent.value = AssetPickerNavigationEvent.NavigateToTemplatePreviewer(
-                            templateId = templateId,
-                            imageUris = uris.map { it.toString() }
                         )
                     }
                     projectId != null -> {
@@ -327,6 +363,10 @@ class AssetPickerViewModel(
      */
     fun onNavigationHandled() {
         _navigationEvent.value = null
+    }
+
+    fun onMessageHandled() {
+        _messageEvent.value = null
     }
 
     // ============================================

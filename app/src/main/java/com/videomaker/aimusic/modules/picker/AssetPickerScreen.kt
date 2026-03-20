@@ -111,6 +111,7 @@ private const val SHEET_ANIMATION_DELAY_MS = 350L
 fun AssetPickerScreen(
     viewModel: AssetPickerViewModel,
     onNavigateToEditor: (String) -> Unit,
+    onNavigateToEditorWithData: (com.videomaker.aimusic.domain.model.EditorInitialData) -> Unit = {},
     onNavigateBack: () -> Unit,
     onAssetsAdded: () -> Unit = {},
     onNavigateToTemplatePreviewer: (templateId: String, imageUris: List<String>, overrideSongId: Long) -> Unit = { _, _, _ -> }
@@ -149,6 +150,7 @@ fun AssetPickerScreen(
             when (event) {
                 is AssetPickerNavigationEvent.NavigateBack -> onNavigateBack()
                 is AssetPickerNavigationEvent.NavigateToEditor -> onNavigateToEditor(event.projectId)
+                is AssetPickerNavigationEvent.NavigateToEditorWithData -> onNavigateToEditorWithData(event.initialData)
                 is AssetPickerNavigationEvent.AssetsAdded -> onAssetsAdded()
                 is AssetPickerNavigationEvent.NavigateToTemplatePreviewer ->
                     onNavigateToTemplatePreviewer(event.templateId, event.imageUris, event.overrideSongId)

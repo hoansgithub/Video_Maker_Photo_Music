@@ -24,7 +24,8 @@ data class ProjectEntity(
     val effectSetId: String? = "dreamy_vibes",
     val overlayFrameId: String? = null,
     val musicSongId: Long? = null,
-    val musicSongUrl: String? = null,
+    val musicSongName: String? = null, // Cached song name for display
+    val musicSongUrl: String? = null, // Cached song URL for playback
     val customAudioUri: String? = null,
     val audioVolume: Float = 1.0f,
     val aspectRatio: String = "RATIO_9_16"

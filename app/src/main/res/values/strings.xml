@@ -48,13 +48,8 @@
     <string name="songs_weekly_ranking">Weekly Ranking</string>
     <string name="songs_station">Stations</string>
 
-    <!-- Legacy Home (keeping for backwards compatibility) -->
-    <string name="home_title">Video Maker</string>
-    <string name="home_welcome">What would you like to do?</string>
+    <!-- Common Actions -->
     <string name="home_create">Create</string>
-    <string name="home_create_description">Create a slideshow from your photos</string>
-    <string name="home_my_projects">My Projects</string>
-    <string name="home_my_projects_description">View your saved projects</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
@@ -69,10 +64,8 @@
     <string name="editor_settings">Settings</string>
     <string name="editor_preview">Preview</string>
     <string name="editor_export">Export</string>
-    <string name="editor_transition">Transition</string>
     <string name="editor_duration">Duration</string>
     <string name="editor_music">Music</string>
-    <string name="editor_frame">Frame</string>
     <string name="editor_aspect_ratio">Aspect Ratio</string>
     <string name="editor_volume">Volume</string>
     <string name="editor_duration_format">Duration: %s</string>
@@ -81,6 +74,14 @@
     <string name="editor_save_dialog_message">Your project will be saved and available in My Projects.</string>
     <string name="editor_save_and_exit">Save &amp; Exit</string>
     <string name="editor_discard_changes">Discard Changes</string>
+    <string name="editor_processing">Processing…</string>
+    <string name="editor_preparing_video">Preparing video…</string>
+    <string name="editor_unsaved_project_title">Save Your Project?</string>
+    <string name="editor_unsaved_project_message">Your project hasn\'t been saved yet. Save it now or discard your work?</string>
+    <string name="editor_unsaved_changes_title">Unsaved Changes</string>
+    <string name="editor_unsaved_changes_message">If you leave now, your changes will be lost. Are you sure you want to leave?</string>
+    <string name="editor_keep_editing">Keep Editing</string>
+    <string name="editor_discard">Discard</string>
 
     <!-- Projects -->
     <string name="projects_title">My Projects</string>
@@ -181,24 +182,6 @@
     <string name="search_tag_lofi">Lofi</string>
     <string name="search_tag_cinematic">Cinematic</string>
     <string name="search_tag_vintage">Vintage</string>
-
-    <!-- Featured Effects -->
-    <string name="effect_dreamy_vibes_title">Dreamy Vibes</string>
-    <string name="effect_dreamy_vibes_desc">Soft glow &amp; pastel tones</string>
-    <string name="effect_cyberpunk_title">Cyberpunk</string>
-    <string name="effect_cyberpunk_desc">Neon lights &amp; glitch effects</string>
-    <string name="effect_vintage_film_title">Vintage Film</string>
-    <string name="effect_vintage_film_desc">Retro grain &amp; warm hues</string>
-    <string name="effect_ocean_breeze_title">Ocean Breeze</string>
-    <string name="effect_ocean_breeze_desc">Cool blue gradients</string>
-    <string name="effect_golden_hour_title">Golden Hour</string>
-    <string name="effect_golden_hour_desc">Warm sunset overlay</string>
-    <string name="effect_noir_title">Noir</string>
-    <string name="effect_noir_desc">High contrast B&amp;W</string>
-    <string name="effect_sakura_title">Sakura</string>
-    <string name="effect_sakura_desc">Cherry blossom pink</string>
-    <string name="effect_aurora_title">Aurora</string>
-    <string name="effect_aurora_desc">Northern lights shimmer</string>
 
     <!-- Common -->
     <string name="cancel">Cancel</string>

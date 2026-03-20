@@ -53,7 +53,15 @@ sealed class SongLoadState {
 
 sealed class TemplatePreviewerNavigationEvent {
     data object NavigateBack : TemplatePreviewerNavigationEvent()
-    data class NavigateToEditor(val projectId: String) : TemplatePreviewerNavigationEvent()
+    data class NavigateToEditor(
+        val projectId: String?,
+        val initialData: com.videomaker.aimusic.domain.model.EditorInitialData?
+    ) : TemplatePreviewerNavigationEvent()
+    /** NEW: Browse mode - user selected template, now needs to pick images */
+    data class NavigateToAssetPicker(
+        val template: VideoTemplate, // Pass template data directly
+        val overrideSongId: Long
+    ) : TemplatePreviewerNavigationEvent()
 }
 
 // ============================================
@@ -75,6 +83,9 @@ class TemplatePreviewerViewModel(
     private val imageUris: List<Uri> = imageUrisStr.mapNotNull { uriStr ->
         uriStr.takeIf { it.isNotBlank() }?.let { Uri.parse(it) }
     }
+
+    /** Browse mode: no user images selected yet (show sample images, navigate to AssetPicker) */
+    val isBrowseMode: Boolean get() = imageUris.isEmpty()
 
     // UI State
     private val _uiState = MutableStateFlow<TemplatePreviewerUiState>(TemplatePreviewerUiState.Loading)
@@ -123,26 +134,37 @@ class TemplatePreviewerViewModel(
         val currentState = _uiState.value as? TemplatePreviewerUiState.Ready ?: return
         if (currentState.isCreatingProject) return
 
-        viewModelScope.launch {
-            _uiState.value = currentState.copy(isCreatingProject = true)
+        if (isBrowseMode) {
+            // NEW FLOW: No images selected yet, navigate to AssetPicker
+            _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
+                template = template, // Pass template data directly
+                overrideSongId = overrideSongId
+            )
+        } else {
+            // OLD FLOW: Images selected, navigate to Editor
+            // Get song name from already-loaded song (avoid extra network request)
+            val currentSongState = _currentSong.value
+            val songName = if (currentSongState is SongLoadState.Ready) {
+                currentSongState.song.name
+            } else null
 
-            createProjectUseCase(imageUris)
-                .onSuccess { project ->
-                    val settings = buildSettingsFromTemplate(template, aspectRatio)
-                    updateProjectSettingsUseCase(project.id, settings)
-                        .onSuccess {
-                            _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToEditor(project.id)
-                        }
-                        .onFailure {
-                            // Still navigate — settings update failure is non-fatal
-                            _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToEditor(project.id)
-                        }
-                }
-                .onFailure { error ->
-                    _uiState.value = TemplatePreviewerUiState.Error(
-                        error.message ?: "Failed to create project"
-                    )
-                }
+            // Pass data to editor without creating project
+            // Project will be created when user presses Save/Done
+            val initialData = com.videomaker.aimusic.domain.model.EditorInitialData(
+                imageUris = imageUris.map { it.toString() },
+                effectSetId = template.effectSetId,
+                imageDurationMs = template.imageDurationMs.toLong(),
+                transitionPercentage = template.transitionPct,
+                musicSongId = if (overrideSongId >= 0L) overrideSongId
+                             else template.songId.takeIf { it > 0L },
+                musicSongName = songName, // Reuse already-loaded song name
+                aspectRatio = aspectRatio
+            )
+
+            _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToEditor(
+                projectId = null,
+                initialData = initialData
+            )
         }
     }
 

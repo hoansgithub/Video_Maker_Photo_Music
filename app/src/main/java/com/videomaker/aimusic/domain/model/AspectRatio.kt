@@ -26,7 +26,17 @@ enum class AspectRatio(val width: Int, val height: Int, val displayName: String)
 
     companion object {
         fun fromString(value: String): AspectRatio {
-            return entries.find { it.name == value } ?: RATIO_9_16
+            // Try enum name first (e.g., "RATIO_9_16")
+            entries.find { it.name == value }?.let { return it }
+
+            // Try ratio string (e.g., "9:16", "16:9")
+            return when (value) {
+                "9:16" -> RATIO_9_16
+                "4:5" -> RATIO_4_5
+                "1:1" -> RATIO_1_1
+                "16:9" -> RATIO_16_9
+                else -> RATIO_9_16 // Default
+            }
         }
     }
 }

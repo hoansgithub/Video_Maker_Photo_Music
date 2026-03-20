@@ -55,6 +55,47 @@ class ProjectRepositoryImpl(
         return getProject(projectId) ?: throw IllegalStateException("Failed to create project")
     }
 
+    override suspend fun createProject(assets: List<Uri>, settings: ProjectSettings): Project {
+        val projectId = UUID.randomUUID().toString()
+        val now = System.currentTimeMillis()
+
+        // Create project entity with settings
+        val projectEntity = ProjectEntity(
+            id = projectId,
+            name = "Project ${now.toString().takeLast(4)}",
+            createdAt = now,
+            updatedAt = now,
+            thumbnailUri = assets.firstOrNull()?.toString(),
+            imageDurationMs = settings.imageDurationMs,
+            transitionPercentage = settings.transitionPercentage,
+            effectSetId = settings.effectSetId,
+            overlayFrameId = settings.overlayFrameId,
+            musicSongId = settings.musicSongId,
+            musicSongName = settings.musicSongName,
+            musicSongUrl = settings.musicSongUrl,
+            customAudioUri = settings.customAudioUri?.toString(),
+            audioVolume = settings.audioVolume,
+            aspectRatio = settings.aspectRatio.name
+        )
+
+        // Create asset entities
+        val assetEntities = assets.mapIndexed { index, uri ->
+            ProjectMapper.createAssetEntity(
+                id = UUID.randomUUID().toString(),
+                projectId = projectId,
+                uri = uri,
+                orderIndex = index
+            )
+        }
+
+        // Insert into database
+        projectDao.insert(projectEntity)
+        assetDao.insertAll(assetEntities)
+
+        // Return the created project
+        return getProject(projectId) ?: throw IllegalStateException("Failed to create project")
+    }
+
     override suspend fun getProject(id: String): Project? {
         return projectDao.getWithAssets(id)?.let { ProjectMapper.toDomain(it) }
     }
@@ -85,6 +126,7 @@ class ProjectRepositoryImpl(
             effectSetId = settings.effectSetId,
             overlayFrameId = settings.overlayFrameId,
             musicSongId = settings.musicSongId,
+            musicSongName = settings.musicSongName,
             musicSongUrl = settings.musicSongUrl,
             customAudioUri = settings.customAudioUri?.toString(),
             audioVolume = settings.audioVolume,

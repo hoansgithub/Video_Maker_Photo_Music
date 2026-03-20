@@ -14,6 +14,7 @@ import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.Transition
+import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.media.audio.VolumeAudioProcessor
 import com.videomaker.aimusic.media.effects.FrameOverlayEffect
 import com.videomaker.aimusic.media.effects.TransitionEffect
@@ -38,7 +39,10 @@ import java.io.File
  * Threading: This class uses suspend functions for bitmap loading.
  * Call createComposition from a coroutine scope.
  */
-class CompositionFactory(private val context: Context) {
+class CompositionFactory(
+    private val context: Context,
+    private val songRepository: SongRepository
+) {
 
     /**
      * Data class for pre-processed image info
@@ -477,7 +481,7 @@ class CompositionFactory(private val context: Context) {
         )
     }
 
-    private fun createAudioSequence(
+    private suspend fun createAudioSequence(
         settings: ProjectSettings,
         totalVideoDurationMs: Long
     ): EditedMediaItemSequence? {
@@ -517,11 +521,27 @@ class CompositionFactory(private val context: Context) {
         return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
     }
 
-    private fun getAudioUri(settings: ProjectSettings): Uri? {
+    private suspend fun getAudioUri(settings: ProjectSettings): Uri? {
+        // Priority 1: Custom audio from device (local file)
         settings.customAudioUri?.let { return it }
 
+        // Priority 2: Music song from Supabase (remote URL)
+        settings.musicSongId?.let { songId ->
+            // Look up song from repository to get mp3Url
+            val result = songRepository.getSongById(songId)
+            result.onSuccess { song ->
+                // Use mp3Url (full track) for export, not previewUrl
+                if (song.mp3Url.isNotBlank()) {
+                    return Uri.parse(song.mp3Url)
+                }
+            }
+        }
+
+        // Fallback: Use cached musicSongUrl if available (backward compatibility)
         settings.musicSongUrl?.let { url ->
-            return Uri.parse(url)
+            if (url.isNotBlank()) {
+                return Uri.parse(url)
+            }
         }
 
         return null

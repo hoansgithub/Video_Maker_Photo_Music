@@ -16,7 +16,7 @@ import com.videomaker.aimusic.data.local.database.entity.ProjectEntity
  */
 @Database(
     entities = [ProjectEntity::class, AssetEntity::class],
-    version = 5, // Bumped for audioTrackId -> musicSongId + musicSongUrl (Supabase songs)
+    version = 6, // Bumped for musicSongName field (display cache separate from URL)
     exportSchema = true
 )
 abstract class ProjectDatabase : RoomDatabase() {
