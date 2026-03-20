@@ -7,6 +7,7 @@ import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
+import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
@@ -36,7 +37,8 @@ sealed class EditorUiState {
         val durationMs: Long = 0L,
         val seekToPosition: Long? = null,
         val scrubToPosition: Long? = null,
-        val wasPlayingBeforeSeek: Boolean = false
+        val wasPlayingBeforeSeek: Boolean = false,
+        val selectedQuality: VideoQuality = VideoQuality.DEFAULT
     ) : EditorUiState() {
         val hasPendingChanges: Boolean get() = pendingSettings != null
         val displaySettings: ProjectSettings get() = pendingSettings ?: project.settings
@@ -191,6 +193,13 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
             _uiState.value = currentState.copy(showSettingsPanel = false)
+        }
+    }
+
+    fun updateQuality(quality: VideoQuality) {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success) {
+            _uiState.value = currentState.copy(selectedQuality = quality)
         }
     }
 
