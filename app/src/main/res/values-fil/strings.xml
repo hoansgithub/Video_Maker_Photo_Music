@@ -117,7 +117,7 @@
 
     <!-- Asset Picker -->
     <string name="picker_title">Pumili ng Larawan</string>
-    <string name="picker_done">Tapos (%d)</string>
+    <string name="picker_done">Tapos (%1$d/%2$d)</string>
     <string name="picker_close">Isara</string>
     <string name="picker_selected">Napili</string>
     <string name="picker_no_photos">Walang larawan na nahanap</string>

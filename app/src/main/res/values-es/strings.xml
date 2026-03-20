@@ -117,7 +117,7 @@
 
     <!-- Asset Picker -->
     <string name="picker_title">Seleccionar Fotos</string>
-    <string name="picker_done">Listo (%d)</string>
+    <string name="picker_done">Listo (%1$d/%2$d)</string>
     <string name="picker_close">Cerrar</string>
     <string name="picker_selected">Seleccionado</string>
     <string name="picker_no_photos">No se encontraron fotos</string>

@@ -65,6 +65,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -268,7 +269,7 @@ private fun AssetPickerContent(
                     ),
                     shape = RoundedCornerShape(20.dp)
                 ) {
-                    Text(stringResource(R.string.picker_done, selectedCount))
+                    Text(stringResource(R.string.picker_done, selectedCount, AssetPickerViewModel.MAX_SELECTION))
                 }
             } else {
                 Spacer(modifier = Modifier.width(48.dp))
@@ -381,7 +382,9 @@ private fun ImageGrid(
         contentPadding = PaddingValues(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = modifier
+        modifier = modifier,
+        // Performance: Show recent photos first (bottom to top)
+        reverseLayout = false // Keep normal layout, assets are already sorted by dateAdded DESC
     ) {
         items(
             items = assets,
@@ -434,19 +437,20 @@ private fun ImageGridItem(
         // Memory optimizations:
         // - RGB_565: 2 bytes/pixel vs ARGB_8888's 4 bytes = 50% memory reduction
         // - INEXACT precision: allows slightly smaller images, saving memory
-        // - allowHardware(false): ensures software bitmaps that can be recycled
+        // - allowHardware(true): GPU acceleration for faster rendering
+        // - Reduced crossfade: 100ms instead of 150ms for snappier feel
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(context)
                 .data(asset.uri)
                 .size(Size(thumbnailSizePx, thumbnailSizePx)) // Fixed thumbnail size
                 .bitmapConfig(Bitmap.Config.RGB_565) // Half memory vs ARGB_8888
                 .precision(Precision.INEXACT) // Allow slightly smaller size for memory savings
-                .allowHardware(false) // Software bitmaps can be recycled
+                .allowHardware(true) // GPU acceleration - better for scrolling performance
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .memoryCacheKey("thumb_${asset.id}")
                 .diskCacheKey("thumb_${asset.id}_${asset.dateAdded}") // Time-based cache key
-                .crossfade(150) // Fast crossfade
+                .crossfade(100) // Faster crossfade for snappier feel
                 .build(),
             contentDescription = asset.displayName,
             contentScale = ContentScale.Crop,
@@ -489,14 +493,14 @@ private fun ImageGridItem(
                     .background(Color.Black.copy(alpha = 0.3f))
             )
 
-            // Selection number badge
+            // Selection number badge - Primary (lime) background with dark text
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
-                    .size(24.dp)
+                    .size(26.dp)
                     .background(
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.primary, // Lime color from theme
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -504,14 +508,16 @@ private fun ImageGridItem(
                 if (selectionIndex != null) {
                     Text(
                         text = selectionIndex.toString(),
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelMedium
+                        color = MaterialTheme.colorScheme.onPrimary, // Dark text on primary from theme
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        )
                     )
                 } else {
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = stringResource(R.string.picker_selected),
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onPrimary, // Dark text on primary from theme
                         modifier = Modifier.size(16.dp)
                     )
                 }

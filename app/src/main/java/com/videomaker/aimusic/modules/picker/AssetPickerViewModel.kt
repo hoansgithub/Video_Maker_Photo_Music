@@ -118,6 +118,9 @@ class AssetPickerViewModel(
     companion object {
         // Cap metadata load — enough for any real user gallery
         private const val MAX_IMAGES = 3000
+
+        // Maximum number of images that can be selected at once
+        const val MAX_SELECTION = 20
     }
 
     /** True if adding to existing project, false if creating new */
@@ -219,8 +222,14 @@ class AssetPickerViewModel(
             val currentSelection = currentState.selectedAssets.toMutableList()
 
             if (currentSelection.contains(asset)) {
+                // Deselect
                 currentSelection.remove(asset)
             } else {
+                // Check max selection limit before adding
+                if (currentSelection.size >= MAX_SELECTION) {
+                    // Silently ignore - max limit reached
+                    return
+                }
                 currentSelection.add(asset)
             }
 

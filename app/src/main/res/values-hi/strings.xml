@@ -117,7 +117,7 @@
 
     <!-- Asset Picker -->
     <string name="picker_title">फ़ोटो चुनें</string>
-    <string name="picker_done">हो गया (%d)</string>
+    <string name="picker_done">हो गया (%1$d/%2$d)</string>
     <string name="picker_close">बंद करें</string>
     <string name="picker_selected">चयनित</string>
     <string name="picker_no_photos">कोई फ़ोटो नहीं मिली</string>
