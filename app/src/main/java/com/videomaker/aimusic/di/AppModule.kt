@@ -352,14 +352,12 @@ class TemplatePreviewerViewModelFactory(
 class GallerySearchViewModelFactory(
     private val preferencesManager: PreferencesManager,
     private val templateRepository: TemplateRepository,
-    private val searchSongsUseCase: SearchSongsUseCase,
     private val searchTemplatesUseCase: SearchTemplatesUseCase
 ) {
     fun create(): GallerySearchViewModel {
         return GallerySearchViewModel(
             preferencesManager = preferencesManager,
             templateRepository = templateRepository,
-            searchSongsUseCase = searchSongsUseCase,
             searchTemplatesUseCase = searchTemplatesUseCase
         )
     }
@@ -435,7 +433,6 @@ val presentationModule = module {
         GallerySearchViewModelFactory(
             preferencesManager = it.get(),
             templateRepository = it.get(),
-            searchSongsUseCase = it.get(),
             searchTemplatesUseCase = it.get()
         )
     }

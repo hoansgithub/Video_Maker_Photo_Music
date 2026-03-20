@@ -69,18 +69,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.util.UnstableApi
-import co.alcheclub.lib.acccore.di.ACCDI
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VibeTag
-import com.videomaker.aimusic.media.audio.AudioPreviewCache
-import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.ShimmerBox
-import com.videomaker.aimusic.ui.components.SongListItem
-import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
@@ -94,12 +87,10 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 // GALLERY SEARCH SCREEN
 // ============================================
 
-@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun GallerySearchScreen(
     viewModel: GallerySearchViewModel,
     onNavigateToTemplateDetail: (String) -> Unit = {},
-    onNavigateToSongDetail: (Long) -> Unit = {},
     onNavigateBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -108,9 +99,7 @@ fun GallerySearchScreen(
     val suggestionVibeTags by viewModel.suggestionVibeTags.collectAsStateWithLifecycle()
     val featuredTemplates by viewModel.featuredTemplates.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
-    val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
-    val audioPreviewCache = remember { ACCDI.get<AudioPreviewCache>() }
 
     // Handle navigation events
     LaunchedEffect(navigationEvent) {
@@ -119,8 +108,6 @@ fun GallerySearchScreen(
                 is GallerySearchNavigationEvent.NavigateBack -> onNavigateBack()
                 is GallerySearchNavigationEvent.NavigateToTemplateDetail ->
                     onNavigateToTemplateDetail(event.templateId)
-                is GallerySearchNavigationEvent.NavigateToSongDetail ->
-                    onNavigateToSongDetail(event.songId)
             }
             viewModel.onNavigationHandled()
         }
@@ -156,21 +143,11 @@ fun GallerySearchScreen(
 
             is GallerySearchUiState.Loading -> GallerySearchLoadingContent()
 
-            is GallerySearchUiState.Results -> {
-                val onSongClick = remember(keyboardController) {
-                    { song: MusicSong ->
-                        keyboardController?.hide()
-                        viewModel.onSongClick(song)
-                    }
-                }
-                GallerySearchResultsContent(
-                    templates = state.templates,
-                    songs = state.songs,
-                    onTemplateClick = viewModel::onTemplateClick,
-                    onSongClick = onSongClick,
-                    onScrollStarted = { keyboardController?.hide() }
-                )
-            }
+            is GallerySearchUiState.Results -> GallerySearchResultsContent(
+                templates = state.templates,
+                onTemplateClick = viewModel::onTemplateClick,
+                onScrollStarted = { keyboardController?.hide() }
+            )
 
             is GallerySearchUiState.Empty -> GallerySearchEmptyContent(
                 query = state.query,
@@ -182,16 +159,6 @@ fun GallerySearchScreen(
 
             is GallerySearchUiState.Error -> GallerySearchErrorContent(message = state.message)
         }
-    }
-
-    // Music player bottom sheet
-    selectedSong?.let { song ->
-        MusicPlayerBottomSheet(
-            song = song,
-            cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-            onDismiss = viewModel::onDismissPlayer,
-            onUseToCreate = { viewModel.onUseToCreateVideo(song) }
-        )
     }
 }
 
@@ -472,9 +439,7 @@ private fun RecentSearchItem(
 @Composable
 private fun GallerySearchResultsContent(
     templates: List<GallerySearchTemplateItem>,
-    songs: List<MusicSong>,
     onTemplateClick: (String) -> Unit,
-    onSongClick: (MusicSong) -> Unit,
     onScrollStarted: () -> Unit
 ) {
     val dimens = AppDimens.current
@@ -491,53 +456,12 @@ private fun GallerySearchResultsContent(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = dimens.spaceMd)
     ) {
-        // Templates section
-        if (templates.isNotEmpty()) {
-            item(key = "templates_header") {
-                Text(
-                    text = stringResource(R.string.gallery_templates),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(horizontal = dimens.spaceLg, vertical = dimens.spaceSm)
-                )
-            }
-
-            item(key = "templates_grid") {
-                GallerySearchTemplateGrid(
-                    templates = templates,
-                    onTemplateClick = onTemplateClick,
-                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
-                )
-            }
-
-            item(key = "templates_spacer") {
-                Spacer(modifier = Modifier.height(dimens.spaceXl))
-            }
-        }
-
-        // Songs section
-        if (songs.isNotEmpty()) {
-            item(key = "songs_header") {
-                Text(
-                    text = stringResource(R.string.songs_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(horizontal = dimens.spaceLg, vertical = dimens.spaceSm)
-                )
-            }
-
-            items(
-                items = songs,
-                key = { "song_${it.id}" },
-                contentType = { "song" }
-            ) { song ->
-                SongListItem(
-                    name = song.name,
-                    artist = song.artist,
-                    coverUrl = song.coverUrl,
-                    onSongClick = { onSongClick(song) }
-                )
-            }
+        item(key = "templates_grid") {
+            GallerySearchTemplateGrid(
+                templates = templates,
+                onTemplateClick = onTemplateClick,
+                modifier = Modifier.padding(horizontal = dimens.spaceLg)
+            )
         }
     }
 }
@@ -730,25 +654,6 @@ private fun GallerySearchLoadingContent() {
                 }
             }
 
-            item(key = "loading_templates_spacer") {
-                Spacer(modifier = Modifier.height(dimens.spaceXl))
-            }
-
-            // Songs section header placeholder
-            item(key = "loading_songs_header") {
-                ShimmerBox(
-                    modifier = Modifier
-                        .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceSm)
-                        .width(80.dp)
-                        .height(16.dp),
-                    cornerRadius = 8.dp
-                )
-            }
-
-            // Song list item skeletons
-            items(4, key = { it }, contentType = { "song_placeholder" }) {
-                SongListItemPlaceholder()
-            }
         }
     }
 }
@@ -992,11 +897,7 @@ private fun GallerySearchResultsPreview() {
                     GallerySearchTemplateItem("1", "Aesthetic Mood", "", listOf("aesthetic"), "9:16", false),
                     GallerySearchTemplateItem("2", "Chill Lofi", "", listOf("lofi", "aesthetic"), "1:1", true),
                 ),
-                songs = listOf(
-                    MusicSong(id = 1, name = "Aesthetic Vibes", artist = "Lo-Fi Girl"),
-                ),
                 onTemplateClick = {},
-                onSongClick = {},
                 onScrollStarted = {}
             )
         }

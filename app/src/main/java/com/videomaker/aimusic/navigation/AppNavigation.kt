@@ -138,7 +138,6 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     onNavigateToTemplateDetail = { templateId ->
                         backStack.add(AppRoute.AssetPicker(templateId = templateId))
                     },
-                    onNavigateToSongDetail = { /* TODO: song detail screen */ },
                     onNavigateBack = { backStack.removeLastOrNull() }
                 )
             }
