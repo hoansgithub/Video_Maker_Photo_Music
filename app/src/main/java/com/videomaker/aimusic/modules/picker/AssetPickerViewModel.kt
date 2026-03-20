@@ -7,8 +7,10 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import kotlinx.coroutines.Dispatchers
@@ -105,16 +107,6 @@ class AssetPickerViewModel(
     // Use applicationContext to prevent Activity memory leak
     private val appContext: Context = context.applicationContext
 
-    init {
-        // Invariant: song-to-video mode and explicit template mode are mutually exclusive.
-        // isSongToVideoMode takes priority in confirmSelection(); a non-null templateId would be
-        // silently ignored, which is a caller bug.
-        check(!(isSongToVideoMode && templateId != null)) {
-            "AssetPickerViewModel: overrideSongId ($overrideSongId) and templateId ($templateId) " +
-            "cannot both be set — choose one mode."
-        }
-    }
-
     companion object {
         // Cap metadata load — enough for any real user gallery
         private const val MAX_IMAGES = 3000
@@ -152,6 +144,25 @@ class AssetPickerViewModel(
 
     private val _navigationEvent = MutableStateFlow<AssetPickerNavigationEvent?>(null)
     val navigationEvent: StateFlow<AssetPickerNavigationEvent?> = _navigationEvent.asStateFlow()
+
+    init {
+        // Invariant: song-to-video mode and explicit template mode are mutually exclusive.
+        // isSongToVideoMode takes priority in confirmSelection(); a non-null templateId would be
+        // silently ignored, which is a caller bug.
+        if (isSongToVideoMode && templateId != null) {
+            val errorMessage = "AssetPickerViewModel: Invalid state - both overrideSongId ($overrideSongId) " +
+                    "and templateId ($templateId) are set. These modes are mutually exclusive."
+
+            if (BuildConfig.DEBUG) {
+                // In debug: crash immediately to catch developer bugs during testing
+                error(errorMessage)
+            } else {
+                // In production: log error and navigate back gracefully to prevent user-facing crash
+                Log.e("AssetPickerViewModel", errorMessage)
+                _navigationEvent.value = AssetPickerNavigationEvent.NavigateBack
+            }
+        }
+    }
 
     // ============================================
     // PUBLIC API
