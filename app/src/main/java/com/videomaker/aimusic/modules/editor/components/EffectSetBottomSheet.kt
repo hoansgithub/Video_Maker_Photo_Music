@@ -80,7 +80,7 @@ fun EffectSetBottomSheet(
 
     // Detect when user scrolls near the end to trigger pagination
     LaunchedEffect(gridState) {
-        val threshold = 3 // Trigger load when 3 items from end
+        val threshold = 8 // Trigger load when 8 items from end (2 rows with 4 columns)
         snapshotFlow { gridState.layoutInfo }
             .collect { layoutInfo ->
                 val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: return@collect
@@ -183,7 +183,8 @@ private fun EffectSetGrid(
     ) {
         items(
             items = effectSets,
-            key = { it.id }
+            key = { it.id },
+            contentType = { "effect_set" }
         ) { effectSet ->
             EffectSetCard(
                 effectSet = effectSet,
@@ -255,33 +256,19 @@ private fun EffectSetCard(
                 .clip(RoundedCornerShape(8.dp))
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
-        // Name
+        // Name - 2 lines max
         Text(
             text = effectSet.name,
-            fontSize = 14.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             color = TextPrimary,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
-
-        // Description (if not empty)
-        if (effectSet.description.isNotEmpty()) {
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = effectSet.description,
-                fontSize = 12.sp,
-                color = TextSecondary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
     }
 }
 

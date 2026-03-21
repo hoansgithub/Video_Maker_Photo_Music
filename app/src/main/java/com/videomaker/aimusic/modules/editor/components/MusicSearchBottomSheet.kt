@@ -3,7 +3,6 @@ package com.videomaker.aimusic.modules.editor.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,7 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -85,12 +84,18 @@ internal fun MusicSearchBottomSheet(
     val genres by viewModel.genres.collectAsStateWithLifecycle()
     val suggestedSongs by viewModel.suggestedSongs.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     val dimens = AppDimens.current
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
+
+    // Dismiss keyboard when sheet is being dragged
+    LaunchedEffect(sheetState.currentValue) {
+        focusManager.clearFocus()
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -211,24 +216,25 @@ internal fun MusicSearchBottomSheet(
                 is SongSearchUiState.Results -> {
                     val listState = rememberLazyListState()
 
+                    // Aggressive keyboard dismissal on ANY scroll movement
                     LaunchedEffect(listState) {
-                        snapshotFlow { listState.isScrollInProgress }
-                            .collect { scrolling ->
-                                if (scrolling) {
-                                    keyboardController?.hide()
-                                }
+                        var previousIndex = listState.firstVisibleItemIndex
+                        var previousOffset = listState.firstVisibleItemScrollOffset
+
+                        snapshotFlow {
+                            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+                        }.collect { (index, offset) ->
+                            if (index != previousIndex || kotlin.math.abs(offset - previousOffset) > 0) {
+                                focusManager.clearFocus()
                             }
+                            previousIndex = index
+                            previousOffset = offset
+                        }
                     }
 
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .pointerInput(Unit) {
-                                detectDragGestures { _, _ ->
-                                    keyboardController?.hide()
-                                }
-                            }
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         items(state.songs, key = { "song_${it.id}" }) { song ->
                             SongListItem(
@@ -236,6 +242,7 @@ internal fun MusicSearchBottomSheet(
                                 artist = song.artist,
                                 coverUrl = song.coverUrl,
                                 onSongClick = {
+                                    focusManager.clearFocus()
                                     keyboardController?.hide()
                                     onSongSelected(song)
                                 }
@@ -247,24 +254,25 @@ internal fun MusicSearchBottomSheet(
                 is SongSearchUiState.Empty -> {
                     val listState = rememberLazyListState()
 
+                    // Aggressive keyboard dismissal on ANY scroll movement
                     LaunchedEffect(listState) {
-                        snapshotFlow { listState.isScrollInProgress }
-                            .collect { scrolling ->
-                                if (scrolling) {
-                                    keyboardController?.hide()
-                                }
+                        var previousIndex = listState.firstVisibleItemIndex
+                        var previousOffset = listState.firstVisibleItemScrollOffset
+
+                        snapshotFlow {
+                            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+                        }.collect { (index, offset) ->
+                            if (index != previousIndex || kotlin.math.abs(offset - previousOffset) > 0) {
+                                focusManager.clearFocus()
                             }
+                            previousIndex = index
+                            previousOffset = offset
+                        }
                     }
 
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .pointerInput(Unit) {
-                                detectDragGestures { _, _ ->
-                                    keyboardController?.hide()
-                                }
-                            },
+                        modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(vertical = dimens.spaceMd)
                     ) {
                         // Empty message
@@ -340,6 +348,7 @@ internal fun MusicSearchBottomSheet(
                                     artist = song.artist,
                                     coverUrl = song.coverUrl,
                                     onSongClick = {
+                                        focusManager.clearFocus()
                                         keyboardController?.hide()
                                         onSongSelected(song)
                                     }
@@ -365,24 +374,25 @@ internal fun MusicSearchBottomSheet(
                 is SongSearchUiState.Idle -> {
                     val listState = rememberLazyListState()
 
+                    // Aggressive keyboard dismissal on ANY scroll movement
                     LaunchedEffect(listState) {
-                        snapshotFlow { listState.isScrollInProgress }
-                            .collect { scrolling ->
-                                if (scrolling) {
-                                    keyboardController?.hide()
-                                }
+                        var previousIndex = listState.firstVisibleItemIndex
+                        var previousOffset = listState.firstVisibleItemScrollOffset
+
+                        snapshotFlow {
+                            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+                        }.collect { (index, offset) ->
+                            if (index != previousIndex || kotlin.math.abs(offset - previousOffset) > 0) {
+                                focusManager.clearFocus()
                             }
+                            previousIndex = index
+                            previousOffset = offset
+                        }
                     }
 
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .pointerInput(Unit) {
-                                detectDragGestures { _, _ ->
-                                    keyboardController?.hide()
-                                }
-                            },
+                        modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(vertical = dimens.spaceMd)
                     ) {
                         // Genres section
@@ -429,6 +439,7 @@ internal fun MusicSearchBottomSheet(
                                     artist = song.artist,
                                     coverUrl = song.coverUrl,
                                     onSongClick = {
+                                        focusManager.clearFocus()
                                         keyboardController?.hide()
                                         onSongSelected(song)
                                     }

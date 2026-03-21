@@ -65,6 +65,7 @@ import com.videomaker.aimusic.di.MusicPickerViewModelFactory
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.modules.editor.components.DurationBottomSheet
+import com.videomaker.aimusic.modules.editor.components.EffectSetBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSection
 import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
@@ -72,8 +73,8 @@ import com.videomaker.aimusic.modules.editor.components.SettingsPanel
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
 import com.videomaker.aimusic.modules.editor.components.VideoPreviewPlayer
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
+import com.videomaker.aimusic.modules.editor.EffectSetViewModel
 import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen
-import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
@@ -110,6 +111,7 @@ fun EditorScreen(
     var showVolumeSheet by remember { mutableStateOf(false) }
     var showRatioSheet by remember { mutableStateOf(false) }
     var showDurationSheet by remember { mutableStateOf(false) }
+    var showEffectSetSheet by remember { mutableStateOf(false) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -117,6 +119,12 @@ fun EditorScreen(
     val musicPickerViewModel = remember {
         musicPickerViewModelFactory.create()
     }
+
+    // Effect Set ViewModel - created once and reused
+    val effectSetViewModel: EffectSetViewModel = koinViewModel()
+
+    // Song Search ViewModel - created once and reused
+    val songSearchViewModel: com.videomaker.aimusic.modules.songsearch.SongSearchViewModel = koinViewModel()
 
     // Handle back button press - show confirmation dialog
     BackHandler {
@@ -182,7 +190,7 @@ fun EditorScreen(
                         onSeekEnd = {}, // Resume happens in clearSeekRequest after seek completes
                         onSeekComplete = viewModel::clearSeekRequest,
                         onScrubComplete = viewModel::clearScrubRequest,
-                        onEffectClick = { /* TODO: Open effect picker */ },
+                        onEffectClick = { showEffectSetSheet = true },
                         onImageDurationClick = { showDurationSheet = true },
                         onRatioClick = { showRatioSheet = true },
                         onVolumeClick = { showVolumeSheet = true },
@@ -309,11 +317,24 @@ fun EditorScreen(
             }
         }
 
+        // Effect Set Bottom Sheet
+        if (showEffectSetSheet) {
+            val selectedEffectSetId = (uiState as? EditorUiState.Success)?.displaySettings?.effectSetId
+            EffectSetBottomSheet(
+                viewModel = effectSetViewModel,
+                selectedEffectSetId = selectedEffectSetId,
+                onEffectSetSelected = { effectSet ->
+                    viewModel.updateEffectSet(effectSet.id)
+                    showEffectSetSheet = false
+                },
+                onDismiss = { showEffectSetSheet = false }
+            )
+        }
+
         // Music Search Bottom Sheet
         if (showMusicSearchSheet) {
-            val searchViewModel: SongSearchViewModel = koinViewModel()
             MusicSearchBottomSheet(
-                viewModel = searchViewModel,
+                viewModel = songSearchViewModel,
                 onSongSelected = { song ->
                     viewModel.updateMusicTrack(
                         songId = song.id,
@@ -326,6 +347,7 @@ fun EditorScreen(
                 onDismiss = { showMusicSearchSheet = false }
             )
         }
+
     }
 }
 

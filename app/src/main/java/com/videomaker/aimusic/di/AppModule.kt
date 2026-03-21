@@ -456,6 +456,13 @@ val presentationModule = module {
         )
     }
 
+    // Effect Set ViewModel
+    viewModel {
+        com.videomaker.aimusic.modules.editor.EffectSetViewModel(
+            getEffectSetsPagedUseCase = get()
+        )
+    }
+
     // Asset Picker ViewModel factory (needs projectId parameter)
     single {
         AssetPickerViewModelFactory(

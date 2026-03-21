@@ -40,7 +40,9 @@ class EffectSetRepositoryImpl(
     private fun getThumbnailUrl(filename: String): String {
         if (filename.isEmpty()) return ""
         val baseUrl = supabaseClient.supabaseUrl.removeSuffix("/")
-        return "$baseUrl/storage/v1/object/public/$STORAGE_BUCKET/$filename"
+        // Ensure https:// protocol is included
+        val urlWithProtocol = if (baseUrl.startsWith("http")) baseUrl else "https://$baseUrl"
+        return "$urlWithProtocol/storage/v1/object/public/$STORAGE_BUCKET/$filename"
     }
 
     override suspend fun getEffectSetsPaged(offset: Int, limit: Int): Result<List<EffectSet>> =
@@ -55,7 +57,7 @@ class EffectSetRepositoryImpl(
             }
 
             try {
-                val effectSets = supabaseClient.from(TABLE_EFFECT_SETS)
+                val dtos = supabaseClient.from(TABLE_EFFECT_SETS)
                     .select {
                         filter {
                             eq("is_active", true)
@@ -66,7 +68,8 @@ class EffectSetRepositoryImpl(
                         this.range(offset.toLong(), (offset + limit - 1).toLong())
                     }
                     .decodeList<EffectSetDto>()
-                    .map { it.toEffectSet(::getThumbnailUrl) }
+
+                val effectSets = dtos.map { it.toEffectSet(::getThumbnailUrl) }
 
                 // Cache first page only
                 if (offset == 0) {
@@ -122,8 +125,8 @@ class EffectSetRepositoryImpl(
         val id: String,
         val name: String,
         val description: String = "",
-        @SerialName("thumbnail_url")
-        val thumbnailUrl: String = "",
+        @SerialName("thumbnail_path")
+        val thumbnailPath: String = "",
         @SerialName("is_premium")
         val isPremium: Boolean = false,
         @SerialName("is_active")
@@ -139,7 +142,7 @@ class EffectSetRepositoryImpl(
             id = id,
             name = name,
             description = description,
-            thumbnailUrl = getThumbnailUrl(thumbnailUrl),
+            thumbnailUrl = getThumbnailUrl(thumbnailPath),
             isPremium = isPremium,
             isActive = isActive,
             transitions = emptyList() // Transitions loaded separately if needed
