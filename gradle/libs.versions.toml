@@ -58,7 +58,7 @@ koin = "4.2.0"  # Matches ACCCoreAndroid
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-# acccore = "0.0.18"  # From GitHub Packages - COMMENTED OUT (using local build)
+acccore = "0.0.20"  # From GitHub Packages - Latest version
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)
@@ -93,12 +93,12 @@ espressoCore = "3.7.0"
 # ============================================
 # ACCCORE - AlcheClub Custom DI & Services
 # ============================================
-# Using local composite build - no version needed (versions come from ACCCoreAndroid/gradle/libs.versions.toml)
-acccore = { module = "co.alcheclub.lib:acccore" }
-acccore-firebase = { module = "co.alcheclub.lib:acccore-firebase" }
-acccore-revenuecat = { module = "co.alcheclub.lib:acccore-revenuecat" }
-acccore-ads = { module = "co.alcheclub.lib:acccore-ads" }
-acccore-appsflyer = { module = "co.alcheclub.lib:acccore-appsflyer" }
+# GitHub Packages - co.alcheclub.lib group
+acccore = { module = "co.alcheclub.lib:acccore", version.ref = "acccore" }
+acccore-firebase = { module = "co.alcheclub.lib:acccore-firebase", version.ref = "acccore" }
+acccore-revenuecat = { module = "co.alcheclub.lib:acccore-revenuecat", version.ref = "acccore" }
+acccore-ads = { module = "co.alcheclub.lib:acccore-ads", version.ref = "acccore" }
+acccore-appsflyer = { module = "co.alcheclub.lib:acccore-appsflyer", version.ref = "acccore" }
 
 # ============================================
 # ANDROIDX CORE

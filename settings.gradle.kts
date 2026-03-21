@@ -19,9 +19,6 @@ dependencyResolutionManagement {
 
         // ============================================
         // GITHUB PACKAGES - ACCCore Library (Private)
-        // Requires credentials in ~/.gradle/gradle.properties:
-        //   gpr.user=YOUR_GITHUB_USERNAME
-        //   gpr.key=YOUR_GITHUB_PAT_TOKEN
         // ============================================
         maven {
             name = "GitHubPackages"
@@ -40,6 +37,16 @@ rootProject.name = "VideoMaker"
 include(":app")
 
 // ============================================
-// REMOVED: Local composite build
-// Now using GitHub Packages for ACCCore library
+// LOCAL COMPOSITE BUILD - ACCCoreAndroid
+// COMMENTED OUT - Using GitHub Packages instead
+// Uncomment for local testing of ACCCore updates
 // ============================================
+// includeBuild("../ACCCoreAndroid") {
+//     dependencySubstitution {
+//         substitute(module("co.alcheclub.lib:acccore")).using(project(":ACCCore"))
+//         substitute(module("co.alcheclub.lib:acccore-firebase")).using(project(":ACCCore-Firebase"))
+//         substitute(module("co.alcheclub.lib:acccore-revenuecat")).using(project(":ACCCore-RevenueCat"))
+//         substitute(module("co.alcheclub.lib:acccore-ads")).using(project(":ACCCore-Ads"))
+//         substitute(module("co.alcheclub.lib:acccore-appsflyer")).using(project(":ACCCore-AppsFlyer"))
+//     }
+// }

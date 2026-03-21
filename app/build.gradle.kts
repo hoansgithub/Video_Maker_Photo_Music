@@ -234,14 +234,13 @@ dependencies {
     implementation(libs.koin.androidx.compose)
 
     // ============================================
-    // ACCCORE - AlcheClub DI & Services (LOCAL COMPOSITE BUILD)
-    // Using local ACCCoreAndroid for testing
+    // ACCCORE - AlcheClub DI & Services (GitHub Packages)
     // ============================================
-    implementation("co.alcheclub.lib:acccore")  // Local composite build
-    implementation("co.alcheclub.lib:acccore-firebase")    // Firebase Analytics, Crashlytics, RemoteConfig, Performance
-    // implementation("co.alcheclub.lib:acccore-revenuecat")  // Uncomment when RevenueCat needed
-    // implementation("co.alcheclub.lib:acccore-ads")         // Uncomment when Ads needed
-    // implementation("co.alcheclub.lib:acccore-appsflyer")   // Uncomment when AppsFlyer needed
+    implementation(libs.acccore)
+    implementation(libs.acccore.firebase)    // Firebase Analytics, Crashlytics, RemoteConfig, Performance
+    // implementation(libs.acccore.revenuecat)  // Uncomment when RevenueCat needed
+    // implementation(libs.acccore.ads)         // Uncomment when Ads needed
+    // implementation(libs.acccore.appsflyer)   // Uncomment when AppsFlyer needed
 
     // ============================================
     // UI UTILITIES
