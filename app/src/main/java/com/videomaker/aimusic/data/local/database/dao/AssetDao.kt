@@ -29,11 +29,11 @@ interface AssetDao {
     @Query("SELECT * FROM assets WHERE id = :id")
     suspend fun getById(id: String): AssetEntity?
 
-    @Query("SELECT * FROM assets WHERE projectId = :projectId ORDER BY orderIndex ASC")
-    suspend fun getByProjectId(projectId: String): List<AssetEntity>
+    @Query("SELECT * FROM assets WHERE projectId = :projectId ORDER BY orderIndex ASC LIMIT :limit")
+    suspend fun getByProjectId(projectId: String, limit: Int = 500): List<AssetEntity>
 
-    @Query("SELECT * FROM assets WHERE projectId = :projectId ORDER BY orderIndex ASC")
-    fun observeByProjectId(projectId: String): Flow<List<AssetEntity>>
+    @Query("SELECT * FROM assets WHERE projectId = :projectId ORDER BY orderIndex ASC LIMIT :limit")
+    fun observeByProjectId(projectId: String, limit: Int = 500): Flow<List<AssetEntity>>
 
     @Query("DELETE FROM assets WHERE id = :id")
     suspend fun deleteById(id: String)

@@ -2,24 +2,20 @@
 <issues format="6" by="lint 8.13.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.2)" variant="all" version="8.13.2">
 
     <issue
+        id="LocaleFolder"
+        message="The locale folder &quot;`id`&quot; should be called &quot;`in`&quot; instead; see the `java.util.Locale` documentation">
+        <location
+            file="src/main/res/values-id"/>
+    </issue>
+
+    <issue
         id="UnusedAttribute"
         message="Attribute `localeConfig` is only used in API level 33 and higher (current min is 28)"
         errorLine1="        android:localeConfig=&quot;@xml/locales_config&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="25"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="AppBundleLocaleChanges"
-        message="Found dynamic locale changes, but did not find corresponding Play Core library calls for downloading languages and splitting by language is not disabled in the `bundle` configuration"
-        errorLine1="        config.setLocale(locale)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/videomaker/aimusic/core/data/local/LanguageManager.kt"
-            line="139"
+            line="29"
             column="9"/>
     </issue>
 
@@ -30,7 +26,7 @@
         errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="7"
+            line="11"
             column="36"/>
     </issue>
 
@@ -54,6 +50,17 @@
             file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
             line="13"
             column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.core:core-ktx than 1.17.0 is available: 1.18.0"
+        errorLine1="coreKtx = &quot;1.17.0&quot;"
+        errorLine2="          ~~~~~~~~">
+        <location
+            file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
+            line="14"
+            column="11"/>
     </issue>
 
     <issue
@@ -91,7 +98,7 @@
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.activity:activity-compose than 1.11.0 is available: 1.12.4"
+        message="A newer version of androidx.activity:activity-compose than 1.11.0 is available: 1.13.0"
         errorLine1="activityCompose = &quot;1.11.0&quot;"
         errorLine2="                  ~~~~~~~~">
         <location
@@ -113,7 +120,7 @@
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.compose:compose-bom than 2025.10.01 is available: 2026.02.01"
+        message="A newer version of androidx.compose:compose-bom than 2025.10.01 is available: 2026.03.00"
         errorLine1="composeBom = &quot;2025.10.01&quot;"
         errorLine2="             ~~~~~~~~~~~~">
         <location
@@ -157,7 +164,7 @@
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.media3:media3-common than 1.6.1 is available: 1.9.2"
+        message="A newer version of androidx.media3:media3-common than 1.6.1 is available: 1.9.3"
         errorLine1="media3 = &quot;1.6.1&quot;"
         errorLine2="         ~~~~~~~">
         <location
@@ -168,7 +175,7 @@
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.media3:media3-effect than 1.6.1 is available: 1.9.2"
+        message="A newer version of androidx.media3:media3-effect than 1.6.1 is available: 1.9.3"
         errorLine1="media3 = &quot;1.6.1&quot;"
         errorLine2="         ~~~~~~~">
         <location
@@ -179,7 +186,7 @@
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.media3:media3-exoplayer than 1.6.1 is available: 1.9.2"
+        message="A newer version of androidx.media3:media3-exoplayer than 1.6.1 is available: 1.9.3"
         errorLine1="media3 = &quot;1.6.1&quot;"
         errorLine2="         ~~~~~~~">
         <location
@@ -190,7 +197,7 @@
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.media3:media3-session than 1.6.1 is available: 1.9.2"
+        message="A newer version of androidx.media3:media3-session than 1.6.1 is available: 1.9.3"
         errorLine1="media3 = &quot;1.6.1&quot;"
         errorLine2="         ~~~~~~~">
         <location
@@ -201,7 +208,7 @@
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.media3:media3-transformer than 1.6.1 is available: 1.9.2"
+        message="A newer version of androidx.media3:media3-transformer than 1.6.1 is available: 1.9.3"
         errorLine1="media3 = &quot;1.6.1&quot;"
         errorLine2="         ~~~~~~~">
         <location
@@ -212,7 +219,7 @@
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.media3:media3-ui than 1.6.1 is available: 1.9.2"
+        message="A newer version of androidx.media3:media3-ui than 1.6.1 is available: 1.9.3"
         errorLine1="media3 = &quot;1.6.1&quot;"
         errorLine2="         ~~~~~~~">
         <location
@@ -223,7 +230,7 @@
 
     <issue
         id="GradleDependency"
-        message="A newer version of androidx.datastore:datastore-preferences than 1.1.7 is available: 1.2.0"
+        message="A newer version of androidx.datastore:datastore-preferences than 1.1.7 is available: 1.2.1"
         errorLine1="datastore = &quot;1.1.7&quot;"
         errorLine2="            ~~~~~~~">
         <location
@@ -245,12 +252,12 @@
 
     <issue
         id="GradleDependency"
-        message="A newer version of com.google.firebase:firebase-bom than 34.6.0 is available: 34.10.0"
-        errorLine1="firebaseBom = &quot;34.6.0&quot;"
+        message="A newer version of com.google.firebase:firebase-bom than 34.7.0 is available: 34.11.0"
+        errorLine1="firebaseBom = &quot;34.7.0&quot;  # Matches ACCCoreAndroid"
         errorLine2="              ~~~~~~~~">
         <location
             file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
-            line="61"
+            line="66"
             column="15"/>
     </issue>
 
@@ -261,7 +268,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="35"
+            line="39"
             column="13"/>
     </issue>
 
@@ -272,7 +279,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="47"
+            line="51"
             column="13"/>
     </issue>
 
@@ -283,7 +290,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="54"
+            line="62"
             column="13"/>
     </issue>
 
@@ -294,41 +301,8 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="61"
+            line="69"
             column="13"/>
-    </issue>
-
-    <issue
-        id="NewerVersionAvailable"
-        message="A newer version of org.jetbrains.kotlin.android than 2.1.0 is available: 2.3.10"
-        errorLine1="kotlin = &quot;2.1.0&quot;"
-        errorLine2="         ~~~~~~~">
-        <location
-            file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
-            line="7"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="NewerVersionAvailable"
-        message="A newer version of org.jetbrains.kotlin.plugin.compose than 2.1.0 is available: 2.3.10"
-        errorLine1="kotlin = &quot;2.1.0&quot;"
-        errorLine2="         ~~~~~~~">
-        <location
-            file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
-            line="7"
-            column="10"/>
-    </issue>
-
-    <issue
-        id="NewerVersionAvailable"
-        message="A newer version of org.jetbrains.kotlin.plugin.serialization than 2.1.0 is available: 2.3.10"
-        errorLine1="kotlin = &quot;2.1.0&quot;"
-        errorLine2="         ~~~~~~~">
-        <location
-            file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
-            line="7"
-            column="10"/>
     </issue>
 
     <issue
@@ -344,12 +318,12 @@
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of com.revenuecat.purchases:purchases than 9.1.0 is available: 9.22.2"
+        message="A newer version of com.revenuecat.purchases:purchases than 9.1.0 is available: 9.27.0"
         errorLine1="revenuecat = &quot;9.1.0&quot;"
         errorLine2="             ~~~~~~~">
         <location
             file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
-            line="66"
+            line="71"
             column="14"/>
     </issue>
 
@@ -360,7 +334,7 @@
         errorLine2="          ~~~~~~~">
         <location
             file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
-            line="71"
+            line="76"
             column="11"/>
     </issue>
 
@@ -371,7 +345,7 @@
         errorLine2="           ~~~~~~~">
         <location
             file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
-            line="77"
+            line="82"
             column="12"/>
     </issue>
 
@@ -382,7 +356,7 @@
         errorLine2="       ~~~~~~~">
         <location
             file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
-            line="78"
+            line="83"
             column="8"/>
     </issue>
 
@@ -393,7 +367,7 @@
         errorLine2="       ~~~~~~~">
         <location
             file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
-            line="78"
+            line="83"
             column="8"/>
     </issue>
 
@@ -404,7 +378,7 @@
         errorLine2="       ~~~~~~~">
         <location
             file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
-            line="78"
+            line="83"
             column="8"/>
     </issue>
 
@@ -415,7 +389,7 @@
         errorLine2="       ~~~~~~~">
         <location
             file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
-            line="78"
+            line="83"
             column="8"/>
     </issue>
 
@@ -426,7 +400,7 @@
         errorLine2="       ~~~~~~~">
         <location
             file="$HOME/Documents/alcheclub-android/Video_Maker_Photo_Music/gradle/libs.versions.toml"
-            line="78"
+            line="83"
             column="8"/>
     </issue>
 
@@ -437,7 +411,7 @@
         errorLine2="                                              ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="278"
+            line="281"
             column="47"/>
     </issue>
 
@@ -448,7 +422,7 @@
         errorLine2="                                                               ~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="278"
+            line="281"
             column="64"/>
     </issue>
 
@@ -459,7 +433,7 @@
         errorLine2="                      ~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="279"
+            line="282"
             column="23"/>
     </issue>
 
@@ -774,7 +748,7 @@
         errorLine2="                                                                                                               ~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="113"
+            line="117"
             column="112"/>
     </issue>
 
@@ -785,7 +759,7 @@
         errorLine2="            ~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="129"
+            line="133"
             column="13"/>
     </issue>
 
@@ -796,7 +770,7 @@
         errorLine2="                ~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="135"
+            line="139"
             column="17"/>
     </issue>
 
@@ -807,7 +781,7 @@
         errorLine2="                           ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="141"
+            line="145"
             column="28"/>
     </issue>
 
@@ -818,7 +792,7 @@
         errorLine2="                                              ~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="141"
+            line="145"
             column="47"/>
     </issue>
 
@@ -829,7 +803,7 @@
         errorLine2="       ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="287"
+            line="291"
             column="8"/>
     </issue>
 
@@ -840,7 +814,7 @@
         errorLine2="                ~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="324"
+            line="328"
             column="17"/>
     </issue>
 
@@ -851,7 +825,7 @@
         errorLine2="                                       ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="339"
+            line="343"
             column="40"/>
     </issue>
 
@@ -862,7 +836,7 @@
         errorLine2="                                                            ~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="339"
+            line="343"
             column="61"/>
     </issue>
 
@@ -873,7 +847,7 @@
         errorLine2="       ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="383"
+            line="387"
             column="8"/>
     </issue>
 
@@ -884,7 +858,7 @@
         errorLine2="             ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="399"
+            line="403"
             column="14"/>
     </issue>
 
@@ -895,7 +869,7 @@
         errorLine2="            ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="402"
+            line="406"
             column="13"/>
     </issue>
 
@@ -906,7 +880,7 @@
         errorLine2="                               ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="413"
+            line="417"
             column="32"/>
     </issue>
 
@@ -917,7 +891,7 @@
         errorLine2="             ~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="414"
+            line="418"
             column="14"/>
     </issue>
 
@@ -928,7 +902,7 @@
         errorLine2="             ~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="415"
+            line="419"
             column="14"/>
     </issue>
 
@@ -939,7 +913,7 @@
         errorLine2="             ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="416"
+            line="420"
             column="14"/>
     </issue>
 
@@ -950,7 +924,7 @@
         errorLine2="             ~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="417"
+            line="421"
             column="14"/>
     </issue>
 
@@ -961,7 +935,7 @@
         errorLine2="       ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="443"
+            line="447"
             column="8"/>
     </issue>
 
@@ -972,7 +946,7 @@
         errorLine2="               ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="474"
+            line="478"
             column="16"/>
     </issue>
 
@@ -983,7 +957,7 @@
         errorLine2="       ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="483"
+            line="487"
             column="8"/>
     </issue>
 
@@ -994,7 +968,7 @@
         errorLine2="            ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="499"
+            line="503"
             column="13"/>
     </issue>
 
@@ -1005,7 +979,7 @@
         errorLine2="            ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="500"
+            line="504"
             column="13"/>
     </issue>
 
@@ -1016,7 +990,7 @@
         errorLine2="            ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="505"
+            line="509"
             column="13"/>
     </issue>
 
@@ -1027,7 +1001,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="511"
+            line="515"
             column="13"/>
     </issue>
 
@@ -1038,7 +1012,7 @@
         errorLine2="                                              ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="511"
+            line="515"
             column="47"/>
     </issue>
 
@@ -1049,7 +1023,7 @@
         errorLine2="             ~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="512"
+            line="516"
             column="14"/>
     </issue>
 
@@ -1060,7 +1034,7 @@
         errorLine2="             ~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="513"
+            line="517"
             column="14"/>
     </issue>
 
@@ -1071,7 +1045,7 @@
         errorLine2="             ~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="514"
+            line="518"
             column="14"/>
     </issue>
 
@@ -1082,7 +1056,7 @@
         errorLine2="             ~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="515"
+            line="519"
             column="14"/>
     </issue>
 
@@ -1093,7 +1067,7 @@
         errorLine2="                                       ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="517"
+            line="521"
             column="40"/>
     </issue>
 
@@ -1104,7 +1078,7 @@
         errorLine2="                                                                        ~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="517"
+            line="521"
             column="73"/>
     </issue>
 
@@ -1767,7 +1741,7 @@
         errorLine2="                             ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="43"
+            line="48"
             column="30"/>
     </issue>
 
@@ -1778,7 +1752,7 @@
         errorLine2="                ~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="75"
+            line="65"
             column="17"/>
     </issue>
 
@@ -1789,7 +1763,7 @@
         errorLine2="                                                 ~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="100"
+            line="90"
             column="50"/>
     </issue>
 
@@ -1800,7 +1774,7 @@
         errorLine2="                    ~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="108"
+            line="99"
             column="21"/>
     </issue>
 
@@ -1811,7 +1785,7 @@
         errorLine2="                                              ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="108"
+            line="99"
             column="47"/>
     </issue>
 
@@ -1822,7 +1796,7 @@
         errorLine2="                         ~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="109"
+            line="100"
             column="26"/>
     </issue>
 
@@ -1833,7 +1807,7 @@
         errorLine2="                                         ~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="110"
+            line="101"
             column="42"/>
     </issue>
 
@@ -1844,7 +1818,7 @@
         errorLine2="                                                                  ~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="110"
+            line="101"
             column="67"/>
     </issue>
 
@@ -1855,7 +1829,7 @@
         errorLine2="                                                                                       ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="110"
+            line="101"
             column="88"/>
     </issue>
 
@@ -1866,7 +1840,7 @@
         errorLine2="                                                                                                  ~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="111"
+            line="102"
             column="99"/>
     </issue>
 
@@ -1877,7 +1851,7 @@
         errorLine2="                                         ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="118"
+            line="109"
             column="42"/>
     </issue>
 
@@ -1888,7 +1862,7 @@
         errorLine2="                                             ~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="119"
+            line="110"
             column="46"/>
     </issue>
 
@@ -1899,7 +1873,7 @@
         errorLine2="                                        ~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="120"
+            line="111"
             column="41"/>
     </issue>
 
@@ -1910,7 +1884,7 @@
         errorLine2="                                           ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="121"
+            line="112"
             column="44"/>
     </issue>
 
@@ -1921,7 +1895,7 @@
         errorLine2="                                                                                        ~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="123"
+            line="114"
             column="89"/>
     </issue>
 
@@ -1932,7 +1906,7 @@
         errorLine2="                         ~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="130"
+            line="121"
             column="26"/>
     </issue>
 
@@ -1943,7 +1917,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="135"
+            line="128"
             column="33"/>
     </issue>
 
@@ -1954,7 +1928,7 @@
         errorLine2="                                                 ~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="135"
+            line="128"
             column="50"/>
     </issue>
 
@@ -1965,7 +1939,7 @@
         errorLine2="                                         ~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="136"
+            line="129"
             column="42"/>
     </issue>
 
@@ -1976,7 +1950,7 @@
         errorLine2="                                                          ~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="138"
+            line="131"
             column="59"/>
     </issue>
 
@@ -1987,7 +1961,7 @@
         errorLine2="                                 ~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="152"
+            line="145"
             column="34"/>
     </issue>
 
@@ -1998,8 +1972,19 @@
         errorLine2="                                 ~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/export/VideoExportWorker.kt"
-            line="165"
+            line="159"
             column="34"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="        runCatching { getKoin().getOrNull&lt;com.videomaker.aimusic.media.audio.AudioPreviewCache>()?.simpleCache?.release() }"
+        errorLine2="                                                                                                                ~~~~~~~">
+        <location
+            file="src/main/java/com/videomaker/aimusic/VideoMakerApplication.kt"
+            line="164"
+            column="113"/>
     </issue>
 
     <issue
@@ -2023,7 +2008,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="72"
+            line="73"
             column="13"/>
     </issue>
 
@@ -2034,19 +2019,19 @@
         errorLine2="        ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="73"
+            line="74"
             column="9"/>
     </issue>
 
     <issue
         id="UnsafeOptInUsageError"
         message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
-        errorLine1="            playerToRelease.release()"
-        errorLine2="                            ~~~~~~~">
+        errorLine1="        runCatching { playerToRelease.release() }"
+        errorLine2="                                      ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="76"
-            column="29"/>
+            line="78"
+            column="39"/>
     </issue>
 
     <issue
@@ -2221,7 +2206,7 @@
         errorLine2="                          ~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="218"
+            line="221"
             column="27"/>
     </issue>
 
@@ -2232,7 +2217,7 @@
         errorLine2="                      ~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="220"
+            line="223"
             column="23"/>
     </issue>
 
@@ -2243,7 +2228,7 @@
         errorLine2="                          ~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="232"
+            line="235"
             column="27"/>
     </issue>
 
@@ -2254,7 +2239,7 @@
         errorLine2="                      ~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="234"
+            line="237"
             column="23"/>
     </issue>
 
@@ -2265,7 +2250,7 @@
         errorLine2="            ~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="261"
+            line="264"
             column="13"/>
     </issue>
 
@@ -2276,7 +2261,7 @@
         errorLine2="                ~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="273"
+            line="276"
             column="17"/>
     </issue>
 
@@ -2287,7 +2272,7 @@
         errorLine2="                ~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="278"
+            line="281"
             column="17"/>
     </issue>
 
@@ -2298,7 +2283,7 @@
         errorLine2="                                              ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="278"
+            line="281"
             column="47"/>
     </issue>
 
@@ -2309,7 +2294,7 @@
         errorLine2="                                                               ~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="278"
+            line="281"
             column="64"/>
     </issue>
 
@@ -2320,7 +2305,7 @@
         errorLine2="                      ~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="279"
+            line="282"
             column="23"/>
     </issue>
 
@@ -2331,7 +2316,7 @@
         errorLine2="                      ~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="280"
+            line="283"
             column="23"/>
     </issue>
 
@@ -2342,7 +2327,7 @@
         errorLine2="                      ~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="281"
+            line="284"
             column="23"/>
     </issue>
 
@@ -2353,7 +2338,7 @@
         errorLine2="                      ~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="284"
+            line="287"
             column="23"/>
     </issue>
 
@@ -2364,7 +2349,7 @@
         errorLine2="                                      ~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="296"
+            line="299"
             column="39"/>
     </issue>
 
@@ -2375,7 +2360,7 @@
         errorLine2="                          ~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="317"
+            line="320"
             column="27"/>
     </issue>
 
@@ -2386,7 +2371,7 @@
         errorLine2="            ~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="333"
+            line="336"
             column="13"/>
     </issue>
 
@@ -2397,7 +2382,7 @@
         errorLine2="                              ~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="340"
+            line="343"
             column="31"/>
     </issue>
 
@@ -2408,7 +2393,7 @@
         errorLine2="                              ~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="345"
+            line="348"
             column="31"/>
     </issue>
 
@@ -2419,7 +2404,7 @@
         errorLine2="                            ~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="368"
+            line="371"
             column="29"/>
     </issue>
 
@@ -2430,7 +2415,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="393"
+            line="396"
             column="27"/>
     </issue>
 
@@ -2771,7 +2756,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/navigation/AppNavigation.kt"
-            line="68"
+            line="74"
             column="20"/>
     </issue>
 
@@ -2782,7 +2767,7 @@
         errorLine2="    ~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/gallery/GalleryScreen.kt"
-            line="486"
+            line="408"
             column="5"/>
     </issue>
 
@@ -2843,6 +2828,17 @@
 
     <issue
         id="SwitchIntDef"
+        message="Switch statement on an `int` with known associated constant missing case `Player.STATE_BUFFERING`, `Player.STATE_IDLE`"
+        errorLine1="                when (state) {"
+        errorLine2="                ~~~~">
+        <location
+            file="src/main/java/com/videomaker/aimusic/modules/songs/MusicPlayerBottomSheet.kt"
+            line="112"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="SwitchIntDef"
         message="Switch statement on an `int` with known associated constant missing case `Player.STATE_BUFFERING`, `Player.STATE_ENDED`"
         errorLine1="                when (playbackState) {"
         errorLine2="                ~~~~">
@@ -2859,832 +2855,1965 @@
         errorLine2="                    ~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/modules/editor/components/VideoPreviewPlayer.kt"
-            line="290"
+            line="293"
             column="21"/>
     </issue>
 
     <issue
-        id="ViewModelConstructorInComposable"
-        message="Constructing a view model in a composable"
-        errorLine1="        OnboardingScreen(viewModel = OnboardingViewModel(previewRepo), onComplete = {})"
-        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/videomaker/aimusic/modules/onboarding/OnboardingScreen.kt"
-            line="154"
-            column="38"/>
-    </issue>
-
-    <issue
         id="DiscouragedApi"
         message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
         errorLine1="            android:screenOrientation=&quot;portrait&quot;"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="35"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="DiscouragedApi"
-        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
-        errorLine1="            android:screenOrientation=&quot;portrait&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="47"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="DiscouragedApi"
-        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
-        errorLine1="            android:screenOrientation=&quot;portrait&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="54"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="DiscouragedApi"
-        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
-        errorLine1="            android:screenOrientation=&quot;portrait&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="61"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;home_tab_gallery&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;home_tab_gallery&quot;>Gallery&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
             line="39"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;home_tab_songs&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;home_tab_songs&quot;>Songs&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        id="DiscouragedApi"
+        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
+        errorLine1="            android:screenOrientation=&quot;portrait&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="40"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;home_tab_projects&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;home_tab_projects&quot;>My Projects&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="41"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;gallery_hot_songs&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;gallery_hot_songs&quot;>Hot Songs&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="44"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;gallery_templates&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;gallery_templates&quot;>Templates&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="45"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;gallery_coming_soon&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;gallery_coming_soon&quot;>Coming Soon&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="46"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;gallery_search_hint&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;gallery_search_hint&quot;>Search your styles&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="47"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;gallery_create_new_video&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;gallery_create_new_video&quot;>Create New Video&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="48"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;songs_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;songs_title&quot;>Songs&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/AndroidManifest.xml"
             line="51"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;songs_all&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;songs_all&quot;>All Songs&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~">
+        id="DiscouragedApi"
+        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
+        errorLine1="            android:screenOrientation=&quot;portrait&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="52"
+            file="src/main/AndroidManifest.xml"
+            line="62"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="DiscouragedApi"
+        message="Fixed screen orientations will be ignored in most cases, starting from Android 16. Android is moving toward a model where apps are expected to adapt to various orientations, display sizes, and aspect ratios."
+        errorLine1="            android:screenOrientation=&quot;portrait&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="69"
             column="13"/>
     </issue>
 
     <issue
         id="MissingTranslation"
-        message="&quot;songs_categories&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;songs_categories&quot;>Categories&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        message="&quot;editor_processing&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;pt&quot; (Portuguese), &quot;fil&quot; (Filipino; Pilipino), &quot;id&quot; (Indonesian), &quot;es&quot; (Spanish), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;editor_processing&quot;>Processing…&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
+            line="77"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;editor_preparing_video&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;pt&quot; (Portuguese), &quot;fil&quot; (Filipino; Pilipino), &quot;id&quot; (Indonesian), &quot;es&quot; (Spanish), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;editor_preparing_video&quot;>Preparing video…&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="78"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;editor_unsaved_project_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;pt&quot; (Portuguese), &quot;fil&quot; (Filipino; Pilipino), &quot;id&quot; (Indonesian), &quot;es&quot; (Spanish), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;editor_unsaved_project_title&quot;>Save Your Project?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="79"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;editor_unsaved_project_message&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;pt&quot; (Portuguese), &quot;fil&quot; (Filipino; Pilipino), &quot;id&quot; (Indonesian), &quot;es&quot; (Spanish), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;editor_unsaved_project_message&quot;>Your project hasn\&apos;t been saved yet. Save it now or discard your work?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="80"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;editor_unsaved_changes_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;pt&quot; (Portuguese), &quot;fil&quot; (Filipino; Pilipino), &quot;id&quot; (Indonesian), &quot;es&quot; (Spanish), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;editor_unsaved_changes_title&quot;>Unsaved Changes&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="81"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;editor_unsaved_changes_message&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;pt&quot; (Portuguese), &quot;fil&quot; (Filipino; Pilipino), &quot;id&quot; (Indonesian), &quot;es&quot; (Spanish), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;editor_unsaved_changes_message&quot;>If you leave now, your changes will be lost. Are you sure you want to leave?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="82"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;editor_keep_editing&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;pt&quot; (Portuguese), &quot;fil&quot; (Filipino; Pilipino), &quot;id&quot; (Indonesian), &quot;es&quot; (Spanish), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;editor_keep_editing&quot;>Keep Editing&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="83"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;editor_discard&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;pt&quot; (Portuguese), &quot;fil&quot; (Filipino; Pilipino), &quot;id&quot; (Indonesian), &quot;es&quot; (Spanish), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;editor_discard&quot;>Discard&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="84"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;picker_min_selection&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;pt&quot; (Portuguese), &quot;fil&quot; (Filipino; Pilipino), &quot;id&quot; (Indonesian), &quot;es&quot; (Spanish), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;picker_min_selection&quot;>Select at least %d photos&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="128"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;music_player_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;pt&quot; (Portuguese), &quot;fil&quot; (Filipino; Pilipino), &quot;id&quot; (Indonesian), &quot;es&quot; (Spanish), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;music_player_title&quot;>Music Player&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="131"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;music_player_use_to_create&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;pt&quot; (Portuguese), &quot;fil&quot; (Filipino; Pilipino), &quot;id&quot; (Indonesian), &quot;es&quot; (Spanish), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;music_player_use_to_create&quot;>Use to Create Video&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="132"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Typos"
+        message="&quot;Video&quot; is a common misspelling; did you mean &quot;Vídeo&quot;?"
+        errorLine1="    &lt;string name=&quot;app_name&quot;>Video Maker&lt;/string>"
+        errorLine2="                            ~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="3"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="Typos"
+        message="&quot;Video&quot; is a common misspelling; did you mean &quot;Vídeo&quot;?"
+        errorLine1="    &lt;string name=&quot;home_title&quot;>Video Maker&lt;/string>"
+        errorLine2="                              ~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="53"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_title&quot;>صانع الفيديو&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="53"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;songs_search_hint&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;songs_search_hint&quot;>Search songs&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;home_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_title&quot;>Video Maker&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="53"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_title&quot;>Video Maker&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="53"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_title&quot;>वीडियो मेकर&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="53"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_title&quot;>Video Maker&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="53"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_title&quot;>Video Maker&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="53"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_title&quot;>Video Maker&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="53"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_welcome&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_welcome&quot;>ماذا تريد أن تفعل؟&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="54"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;songs_suggest_for_you&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;songs_suggest_for_you&quot;>Suggested For You&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;home_welcome&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_welcome&quot;>¿Qué te gustaría hacer?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="55"
+            file="src/main/res/values-es/strings.xml"
+            line="54"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;songs_weekly_ranking&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;songs_weekly_ranking&quot;>Weekly Ranking&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;home_welcome&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_welcome&quot;>Ano ang gusto mong gawin?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-fil/strings.xml"
+            line="54"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_welcome&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_welcome&quot;>आप क्या करना चाहते हैं?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="54"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_welcome&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_welcome&quot;>Apa yang ingin Anda lakukan?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="54"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_welcome&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_welcome&quot;>O que você gostaria de fazer?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="54"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_welcome&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_welcome&quot;>Ne yapmak istersiniz?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="54"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_create_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_create_description&quot;>أنشئ عرض شرائح من صورك&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="56"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;songs_station&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;songs_station&quot;>Stations&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;home_create_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_create_description&quot;>Crea una presentación con tus fotos&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="56"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_create_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_create_description&quot;>Gumawa ng slideshow mula sa iyong mga larawan&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="56"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_create_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_create_description&quot;>अपनी तस्वीरों से स्लाइडशो बनाएं&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="56"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_create_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_create_description&quot;>Buat slideshow dari foto Anda&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="56"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_create_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_create_description&quot;>Crie um slideshow com suas fotos&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="56"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_create_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_create_description&quot;>Fotoğraflarınızdan slayt gösterisi oluşturun&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="56"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_my_projects&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects&quot;>مشاريعي&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="57"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;projects_create_description&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;projects_create_description&quot;>Start a new slideshow project&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="98"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;music_picker_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;music_picker_title&quot;>Select Music&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="137"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;music_picker_loading&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;music_picker_loading&quot;>Loading music…&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="138"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;music_picker_no_music&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;music_picker_no_music&quot;>No music found&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="139"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;music_picker_no_music_hint&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;music_picker_no_music_hint&quot;>Add music files to your device to use them here&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="140"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;music_picker_permission_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;music_picker_permission_title&quot;>Audio Access Required&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="141"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;music_picker_permission_message&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;music_picker_permission_message&quot;>To use your music as background audio, we need permission to access your audio files.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="142"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;music_picker_allow_access&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;music_picker_allow_access&quot;>Allow Access&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="143"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;music_picker_preview&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;music_picker_preview&quot;>Preview&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="144"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;music_picker_stop_preview&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;music_picker_stop_preview&quot;>Stop&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="145"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;music_picker_select&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;music_picker_select&quot;>Select&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="146"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;settings_effect_set&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;settings_effect_set&quot;>Effect Set&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="153"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;settings_transition_duration&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;settings_transition_duration&quot;>Transition Duration&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="169"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;settings_transition_duration_value&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;settings_transition_duration_value&quot;>%.1fs&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="170"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;search_hint&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;search_hint&quot;>Search your styles&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="173"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;search_recent&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;search_recent&quot;>Recent Searches&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="174"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;search_clear_all&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;search_clear_all&quot;>Clear All&lt;/string>"
+        id="ExtraTranslation"
+        message="&quot;home_my_projects&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects&quot;>Mis Proyectos&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="175"
+            file="src/main/res/values-es/strings.xml"
+            line="57"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;search_no_results&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;search_no_results&quot;>No results found&lt;/string>"
+        id="ExtraTranslation"
+        message="&quot;home_my_projects&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects&quot;>Aking mga Proyekto&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="57"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_my_projects&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects&quot;>मेरे प्रोजेक्ट्स&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="57"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_my_projects&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects&quot;>Proyek Saya&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="57"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_my_projects&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects&quot;>Meus Projetos&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="57"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_my_projects&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects&quot;>Projelerim&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="57"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_my_projects_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects_description&quot;>عرض مشاريعك المحفوظة&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="58"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_my_projects_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects_description&quot;>Ver tus proyectos guardados&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="58"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_my_projects_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects_description&quot;>Tingnan ang iyong mga naka-save na proyekto&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="58"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_my_projects_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects_description&quot;>अपने सहेजे गए प्रोजेक्ट्स देखें&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="58"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_my_projects_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects_description&quot;>Lihat proyek yang tersimpan&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="58"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_my_projects_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects_description&quot;>Ver seus projetos salvos&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="58"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;home_my_projects_description&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;home_my_projects_description&quot;>Kayıtlı projelerinizi görüntüleyin&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="58"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;editor_transition&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_transition&quot;>الانتقال&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="176"
+            file="src/main/res/values-ar/strings.xml"
+            line="73"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;search_no_results_hint&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;search_no_results_hint&quot;>Try a different keyword&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;editor_transition&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_transition&quot;>Transición&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="177"
+            file="src/main/res/values-es/strings.xml"
+            line="73"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;search_suggestions&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;search_suggestions&quot;>Suggestions&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;editor_transition&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_transition&quot;>Transition&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="178"
+            file="src/main/res/values-fil/strings.xml"
+            line="73"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_dreamy_vibes_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_title&quot;>Dreamy Vibes&lt;/string>"
+        id="ExtraTranslation"
+        message="&quot;editor_transition&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_transition&quot;>ट्रांज़िशन&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="73"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;editor_transition&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_transition&quot;>Transisi&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="73"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;editor_transition&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_transition&quot;>Transição&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="73"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;editor_transition&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_transition&quot;>Geçiş&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="73"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;editor_frame&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_frame&quot;>الإطار&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="76"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;editor_frame&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_frame&quot;>Marco&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="76"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;editor_frame&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_frame&quot;>Frame&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="76"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;editor_frame&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_frame&quot;>फ्रेम&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="76"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;editor_frame&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_frame&quot;>Bingkai&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="76"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;editor_frame&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_frame&quot;>Moldura&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="76"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;editor_frame&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;editor_frame&quot;>Çerçeve&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="76"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_title&quot;>أجواء الأحلام&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="181"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;effect_dreamy_vibes_desc&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_desc&quot;>Soft glow &amp;amp; pastel tones&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-ar/strings.xml"
             line="182"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_cyberpunk_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_cyberpunk_title&quot;>Cyberpunk&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_title&quot;>Vibes Soñadoras&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="182"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_title&quot;>Dreamy Vibes&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="182"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_title&quot;>ड्रीमी वाइब्स&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="182"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_title&quot;>Dreamy Vibes&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="182"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_title&quot;>Vibes Sonhadoras&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="182"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_title&quot;>Rüyamsı Titreşimler&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="182"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_desc&quot;>توهج ناعم وألوان باستيل&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="183"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_cyberpunk_desc&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_cyberpunk_desc&quot;>Neon lights &amp;amp; glitch effects&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_desc&quot;>Brillo suave y colores pastel&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="183"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_desc&quot;>Malambot na glow at pastel na kulay&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="183"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_desc&quot;>सॉफ्ट ग्लो और पेस्टल रंग&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="183"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_desc&quot;>Cahaya lembut dan warna pastel&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="183"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_desc&quot;>Brilho suave e cores pastel&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="183"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_dreamy_vibes_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_desc&quot;>Yumuşak parıltı ve pastel renkler&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="183"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_title&quot;>سايبربانك&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="184"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_vintage_film_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_vintage_film_title&quot;>Vintage Film&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_title&quot;>Cyberpunk&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="184"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_title&quot;>Cyberpunk&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="184"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_title&quot;>साइबरपंक&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="184"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_title&quot;>Cyberpunk&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="184"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_title&quot;>Cyberpunk&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="184"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_title&quot;>Cyberpunk&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="184"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_desc&quot;>أضواء نيون وتأثيرات خلل&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="185"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_vintage_film_desc&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_vintage_film_desc&quot;>Retro grain &amp;amp; warm hues&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_desc&quot;>Luces de neón y efectos glitch&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="185"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_desc&quot;>Neon na ilaw at glitch effects&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="185"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_desc&quot;>नियॉन लाइट्स और ग्लिच इफेक्ट्स&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="185"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_desc&quot;>Lampu neon dan efek glitch&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="185"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_desc&quot;>Luzes neon e efeitos glitch&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="185"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_cyberpunk_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_desc&quot;>Neon ışıklar ve glitch efektleri&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="185"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_title&quot;>فيلم كلاسيكي&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="186"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_ocean_breeze_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_title&quot;>Ocean Breeze&lt;/string>"
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_title&quot;>Película Vintage&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="186"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_title&quot;>Vintage Film&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="186"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_title&quot;>विंटेज फिल्म&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="186"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_title&quot;>Film Vintage&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="186"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_title&quot;>Filme Vintage&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="186"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_title&quot;>Vintage Film&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="186"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_desc&quot;>حبوب ريترو وألوان دافئة&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="187"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_ocean_breeze_desc&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_desc&quot;>Cool blue gradients&lt;/string>"
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_desc&quot;>Grano retro y colores cálidos&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="187"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_desc&quot;>Retro grain at maingat na kulay&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="187"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_desc&quot;>रेट्रो ग्रेन और गर्म रंग&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="187"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_desc&quot;>Butiran retro dan warna hangat&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="187"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_desc&quot;>Grão retrô e cores quentes&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="187"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_vintage_film_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_desc&quot;>Retro tanecik ve sıcak renkler&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="187"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_title&quot;>نسيم المحيط&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="188"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_golden_hour_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_golden_hour_title&quot;>Golden Hour&lt;/string>"
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_title&quot;>Brisa del Océano&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="188"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_title&quot;>Ocean Breeze&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="188"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_title&quot;>ओशन ब्रीज़&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="188"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_title&quot;>Ocean Breeze&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="188"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_title&quot;>Brisa do Oceano&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="188"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_title&quot;>Okyanus Esintisi&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="188"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_desc&quot;>تدرجات زرقاء باردة&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-ar/strings.xml"
             line="189"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_golden_hour_desc&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_golden_hour_desc&quot;>Warm sunset overlay&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_desc&quot;>Degradados azules fríos&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="189"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_desc&quot;>Malamig na asul na gradient&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="189"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_desc&quot;>ठंडे नीले रंग के ग्रेडिएंट&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="189"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_desc&quot;>Gradasi biru dingin&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="189"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_desc&quot;>Gradientes azuis frios&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="189"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_ocean_breeze_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_desc&quot;>Soğuk mavi gradyanlar&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="189"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_title&quot;>الساعة الذهبية&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="190"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_noir_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_noir_title&quot;>Noir&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_title&quot;>Hora Dorada&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="190"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_title&quot;>Golden Hour&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="190"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_title&quot;>गोल्डन ऑवर&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="190"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_title&quot;>Golden Hour&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="190"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_title&quot;>Hora Dourada&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="190"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_title&quot;>Altın Saat&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="190"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_desc&quot;>طبقة غروب دافئة&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="191"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_noir_desc&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_noir_desc&quot;>High contrast B&amp;amp;W&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_desc&quot;>Superposición de atardecer cálido&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="191"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_desc&quot;>Mainit na sunset overlay&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="191"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_desc&quot;>गर्म सनसेट ओवरले&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="191"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_desc&quot;>Lapisan matahari terbenam yang hangat&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="191"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_desc&quot;>Sobreposição de pôr do sol quente&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="191"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_golden_hour_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_desc&quot;>Sıcak gün batımı katmanı&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="191"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_noir_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_title&quot;>نوار&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="192"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_sakura_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_sakura_title&quot;>Sakura&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_noir_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_title&quot;>Noir&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="192"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_noir_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_title&quot;>Noir&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="192"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_noir_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_title&quot;>नॉयर&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="192"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_noir_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_title&quot;>Noir&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="192"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_noir_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_title&quot;>Noir&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="192"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_noir_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_title&quot;>Noir&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="192"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_noir_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_desc&quot;>أبيض وأسود بتباين عالٍ&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="193"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_sakura_desc&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_sakura_desc&quot;>Cherry blossom pink&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_noir_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_desc&quot;>Blanco y negro de alto contraste&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="193"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_noir_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_desc&quot;>Mataas na contrast na itim at puti&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="193"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_noir_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_desc&quot;>हाई कॉन्ट्रास्ट ब्लैक एंड व्हाइट&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="193"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_noir_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_desc&quot;>Hitam putih kontras tinggi&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="193"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_noir_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_desc&quot;>Preto e branco de alto contraste&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="193"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_noir_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_noir_desc&quot;>Yüksek kontrastlı siyah-beyaz&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="193"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_title&quot;>ساكورا&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="194"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_aurora_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_aurora_title&quot;>Aurora&lt;/string>"
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_title&quot;>Sakura&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="194"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_title&quot;>Sakura&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="194"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_title&quot;>सकुरा&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="194"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_title&quot;>Sakura&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="194"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_title&quot;>Sakura&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="194"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_title&quot;>Sakura&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="194"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_desc&quot;>وردي أزهار الكرز&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="195"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;effect_aurora_desc&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;effect_aurora_desc&quot;>Northern lights shimmer&lt;/string>"
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_desc&quot;>Rosa flor de cerezo&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
+            file="src/main/res/values-es/strings.xml"
+            line="195"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_desc&quot;>Cherry blossom pink&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-fil/strings.xml"
+            line="195"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_desc&quot;>चेरी ब्लॉसम पिंक&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hi/strings.xml"
+            line="195"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_desc&quot;>Merah muda bunga sakura&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-id/strings.xml"
+            line="195"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_desc&quot;>Rosa flor de cerejeira&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="195"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_sakura_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_sakura_desc&quot;>Kiraz çiçeği pembesi&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="195"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_title&quot;>أورورا&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
             line="196"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;error_load_failed&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;error_load_failed&quot;>Failed to load. Pull down to retry.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_title&quot;>Aurora&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="213"
+            file="src/main/res/values-es/strings.xml"
+            line="196"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;start_project&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;start_project&quot;>Start project&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_title&quot;>Aurora&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="216"
+            file="src/main/res/values-fil/strings.xml"
+            line="196"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;onboarding_page4_title&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;onboarding_page4_title&quot;>What music do\nyou love?&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_title&quot;>ऑरोरा&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="219"
+            file="src/main/res/values-hi/strings.xml"
+            line="196"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;onboarding_page4_subtitle&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;onboarding_page4_subtitle&quot;>Pick your favourite genres. We\&apos;ll tailor your music suggestions.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_title&quot;>Aurora&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="220"
+            file="src/main/res/values-id/strings.xml"
+            line="196"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;genre_pop&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_pop&quot;>Pop&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_title&quot;>Aurora&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="223"
+            file="src/main/res/values-pt/strings.xml"
+            line="196"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;genre_rock&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_rock&quot;>Rock&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_title&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_title&quot;>Aurora&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="224"
+            file="src/main/res/values-tr/strings.xml"
+            line="196"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;genre_hiphop&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_hiphop&quot;>Hip-Hop&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_desc&quot;>بريق الشفق القطبي&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="225"
+            file="src/main/res/values-ar/strings.xml"
+            line="197"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;genre_rnb&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_rnb&quot;>R&amp;amp;B&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_desc&quot;>Brillo de aurora boreal&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="226"
+            file="src/main/res/values-es/strings.xml"
+            line="197"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;genre_electronic&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_electronic&quot;>Electronic&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_desc&quot;>Northern lights glitter&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="227"
+            file="src/main/res/values-fil/strings.xml"
+            line="197"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;genre_jazz&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_jazz&quot;>Jazz&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_desc&quot;>नॉर्दर्न लाइट्स ग्लिटर&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="228"
+            file="src/main/res/values-hi/strings.xml"
+            line="197"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;genre_classical&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_classical&quot;>Classical&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_desc&quot;>Kilau cahaya utara&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="229"
+            file="src/main/res/values-id/strings.xml"
+            line="197"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;genre_country&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_country&quot;>Country&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_desc&quot;>Brilho das luzes do norte&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="230"
+            file="src/main/res/values-pt/strings.xml"
+            line="197"
             column="13"/>
     </issue>
 
     <issue
-        id="MissingTranslation"
-        message="&quot;genre_latin&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_latin&quot;>Latin&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        id="ExtraTranslation"
+        message="&quot;effect_aurora_desc&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;effect_aurora_desc&quot;>Kuzey ışıkları parıltısı&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="231"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;genre_kpop&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_kpop&quot;>K-Pop&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="232"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;genre_dance&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_dance&quot;>Dance&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="233"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;genre_edm&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_edm&quot;>EDM&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="234"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;genre_blues&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_blues&quot;>Blues&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="235"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;genre_metal&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_metal&quot;>Metal&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="236"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;genre_soul&quot; is not translated in &quot;ar&quot; (Arabic), &quot;hi&quot; (Hindi), &quot;in&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;genre_soul&quot;>Soul&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="237"
+            file="src/main/res/values-tr/strings.xml"
+            line="197"
             column="13"/>
     </issue>
 
@@ -3695,7 +4824,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="87"
+            line="72"
             column="5"/>
     </issue>
 
@@ -3706,7 +4835,18 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="97"
+            line="90"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;photos&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;picker_min_selection&quot;>Select at least %d photos&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="128"
             column="5"/>
     </issue>
 
@@ -3717,7 +4857,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="207"
+            line="195"
             column="5"/>
     </issue>
 
@@ -3823,7 +4963,7 @@
         errorLine2="^">
         <location
             file="src/main/java/com/videomaker/aimusic/media/library/VideoTemplateLibrary.kt"
-            line="8"
+            line="9"
             column="1"/>
     </issue>
 
@@ -3834,7 +4974,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/library/VideoTemplateLibrary.kt"
-            line="16"
+            line="17"
             column="5"/>
     </issue>
 
@@ -3847,6 +4987,17 @@
             file="src/main/java/com/videomaker/aimusic/ui/components/StaggeredGrid.kt"
             line="44"
             column="47"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableFloatStateOf` instead of `mutableStateOf`"
+        errorLine1="    var localPosition by remember { mutableStateOf(currentPosition) }"
+        errorLine2="                                    ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/videomaker/aimusic/modules/editor/EditorScreen.kt"
+            line="477"
+            column="37"/>
     </issue>
 
     <issue
@@ -3995,7 +5146,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="44"
+            line="36"
             column="13"/>
     </issue>
 
@@ -4006,7 +5157,18 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="46"
+            line="38"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.songs_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;songs_title&quot;>Songs&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="43"
             column="13"/>
     </issue>
 
@@ -4017,7 +5179,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="52"
+            line="44"
             column="13"/>
     </issue>
 
@@ -4028,62 +5190,40 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="53"
+            line="45"
             column="13"/>
     </issue>
 
     <issue
         id="UnusedResources"
         message="The resource `R.string.home_title` appears to be unused"
-        errorLine1="    &lt;string name=&quot;home_title&quot;>Video Maker&lt;/string>"
+        errorLine1="    &lt;string name=&quot;home_title&quot;>صانع الفيديو&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="60"
+            file="src/main/res/values-ar/strings.xml"
+            line="53"
             column="13"/>
     </issue>
 
     <issue
         id="UnusedResources"
         message="The resource `R.string.home_welcome` appears to be unused"
-        errorLine1="    &lt;string name=&quot;home_welcome&quot;>What would you like to do?&lt;/string>"
+        errorLine1="    &lt;string name=&quot;home_welcome&quot;>ماذا تريد أن تفعل؟&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="61"
+            file="src/main/res/values-ar/strings.xml"
+            line="54"
             column="13"/>
     </issue>
 
     <issue
         id="UnusedResources"
         message="The resource `R.string.home_create_description` appears to be unused"
-        errorLine1="    &lt;string name=&quot;home_create_description&quot;>Create a slideshow from your photos&lt;/string>"
+        errorLine1="    &lt;string name=&quot;home_create_description&quot;>أنشئ عرض شرائح من صورك&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/res/values/strings.xml"
-            line="63"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.home_my_projects` appears to be unused"
-        errorLine1="    &lt;string name=&quot;home_my_projects&quot;>My Projects&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="64"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.home_my_projects_description` appears to be unused"
-        errorLine1="    &lt;string name=&quot;home_my_projects_description&quot;>View your saved projects&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="65"
+            file="src/main/res/values-ar/strings.xml"
+            line="56"
             column="13"/>
     </issue>
 
@@ -4094,7 +5234,18 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="69"
+            line="56"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.home_my_projects` appears to be unused"
+        errorLine1="    &lt;string name=&quot;home_my_projects&quot;>مشاريعي&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="57"
             column="13"/>
     </issue>
 
@@ -4105,7 +5256,18 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="70"
+            line="57"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.home_my_projects_description` appears to be unused"
+        errorLine1="    &lt;string name=&quot;home_my_projects_description&quot;>عرض مشاريعك المحفوظة&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="58"
             column="13"/>
     </issue>
 
@@ -4116,7 +5278,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="76"
+            line="63"
             column="13"/>
     </issue>
 
@@ -4127,7 +5289,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="77"
+            line="64"
             column="13"/>
     </issue>
 
@@ -4138,18 +5300,18 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="78"
+            line="65"
             column="13"/>
     </issue>
 
     <issue
         id="UnusedResources"
-        message="The resource `R.string.editor_transition` appears to be unused"
-        errorLine1="    &lt;string name=&quot;editor_transition&quot;>Transition&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        message="The resource `R.string.editor_export` appears to be unused"
+        errorLine1="    &lt;string name=&quot;editor_export&quot;>Export&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="80"
+            line="66"
             column="13"/>
     </issue>
 
@@ -4160,7 +5322,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="81"
+            line="67"
             column="13"/>
     </issue>
 
@@ -4171,18 +5333,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="82"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.editor_frame` appears to be unused"
-        errorLine1="    &lt;string name=&quot;editor_frame&quot;>Frame&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="83"
+            line="68"
             column="13"/>
     </issue>
 
@@ -4193,7 +5344,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="84"
+            line="69"
             column="13"/>
     </issue>
 
@@ -4204,7 +5355,84 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="85"
+            line="70"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.editor_duration_format` appears to be unused"
+        errorLine1="    &lt;string name=&quot;editor_duration_format&quot;>Duration: %s&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="71"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.editor_photos_count` appears to be unused"
+        errorLine1="    &lt;string name=&quot;editor_photos_count&quot;>%d photos&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="72"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.editor_save_dialog_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;editor_save_dialog_title&quot;>Save Project?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="73"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.editor_transition` appears to be unused"
+        errorLine1="    &lt;string name=&quot;editor_transition&quot;>الانتقال&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="73"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.editor_save_dialog_message` appears to be unused"
+        errorLine1="    &lt;string name=&quot;editor_save_dialog_message&quot;>Your project will be saved and available in My Projects.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="74"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.editor_discard_changes` appears to be unused"
+        errorLine1="    &lt;string name=&quot;editor_discard_changes&quot;>Discard Changes&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="76"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.editor_frame` appears to be unused"
+        errorLine1="    &lt;string name=&quot;editor_frame&quot;>الإطار&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="76"
             column="13"/>
     </issue>
 
@@ -4215,7 +5443,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="99"
+            line="92"
             column="13"/>
     </issue>
 
@@ -4226,7 +5454,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="100"
+            line="93"
             column="13"/>
     </issue>
 
@@ -4237,7 +5465,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="103"
+            line="96"
             column="13"/>
     </issue>
 
@@ -4248,7 +5476,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="104"
+            line="97"
             column="13"/>
     </issue>
 
@@ -4259,7 +5487,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="106"
+            line="99"
             column="13"/>
     </issue>
 
@@ -4270,7 +5498,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="128"
+            line="121"
             column="13"/>
     </issue>
 
@@ -4281,7 +5509,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="149"
+            line="147"
             column="13"/>
     </issue>
 
@@ -4292,7 +5520,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="150"
+            line="148"
             column="13"/>
     </issue>
 
@@ -4303,18 +5531,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="151"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.settings_all` appears to be unused"
-        errorLine1="    &lt;string name=&quot;settings_all&quot;>All&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="154"
+            line="149"
             column="13"/>
     </issue>
 
@@ -4325,7 +5542,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="157"
+            line="155"
             column="13"/>
     </issue>
 
@@ -4336,7 +5553,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="159"
+            line="157"
             column="13"/>
     </issue>
 
@@ -4347,7 +5564,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="164"
+            line="162"
             column="13"/>
     </issue>
 
@@ -4358,7 +5575,150 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="168"
+            line="166"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.search_suggestions` appears to be unused"
+        errorLine1="    &lt;string name=&quot;search_suggestions&quot;>Suggestions&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="176"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.search_tag_aesthetic` appears to be unused"
+        errorLine1="    &lt;string name=&quot;search_tag_aesthetic&quot;>Aesthetic&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="179"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.search_tag_birthday` appears to be unused"
+        errorLine1="    &lt;string name=&quot;search_tag_birthday&quot;>Birthday&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="180"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.search_tag_travel` appears to be unused"
+        errorLine1="    &lt;string name=&quot;search_tag_travel&quot;>Travel&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="181"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_dreamy_vibes_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_title&quot;>أجواء الأحلام&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="182"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.search_tag_lofi` appears to be unused"
+        errorLine1="    &lt;string name=&quot;search_tag_lofi&quot;>Lofi&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="182"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_dreamy_vibes_desc` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_dreamy_vibes_desc&quot;>توهج ناعم وألوان باستيل&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="183"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.search_tag_cinematic` appears to be unused"
+        errorLine1="    &lt;string name=&quot;search_tag_cinematic&quot;>Cinematic&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="183"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_cyberpunk_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_title&quot;>سايبربانك&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="184"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.search_tag_vintage` appears to be unused"
+        errorLine1="    &lt;string name=&quot;search_tag_vintage&quot;>Vintage&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="184"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_cyberpunk_desc` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_cyberpunk_desc&quot;>أضواء نيون وتأثيرات خلل&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="185"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_vintage_film_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_title&quot;>فيلم كلاسيكي&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="186"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_vintage_film_desc` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_vintage_film_desc&quot;>حبوب ريترو وألوان دافئة&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="187"
             column="13"/>
     </issue>
 
@@ -4369,7 +5729,18 @@
         errorLine2="            ~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="200"
+            line="188"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_ocean_breeze_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_title&quot;>نسيم المحيط&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="188"
             column="13"/>
     </issue>
 
@@ -4380,7 +5751,29 @@
         errorLine2="            ~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="201"
+            line="189"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_ocean_breeze_desc` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_ocean_breeze_desc&quot;>تدرجات زرقاء باردة&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="189"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_golden_hour_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_title&quot;>الساعة الذهبية&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="190"
             column="13"/>
     </issue>
 
@@ -4391,7 +5784,51 @@
         errorLine2="            ~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="202"
+            line="190"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_golden_hour_desc` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_golden_hour_desc&quot;>طبقة غروب دافئة&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="191"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_noir_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_noir_title&quot;>نوار&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="192"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_noir_desc` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_noir_desc&quot;>أبيض وأسود بتباين عالٍ&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="193"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_sakura_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_sakura_title&quot;>ساكورا&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="194"
             column="13"/>
     </issue>
 
@@ -4402,7 +5839,18 @@
         errorLine2="            ~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="206"
+            line="194"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_sakura_desc` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_sakura_desc&quot;>وردي أزهار الكرز&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="195"
             column="13"/>
     </issue>
 
@@ -4413,7 +5861,18 @@
         errorLine2="            ~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="207"
+            line="195"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_aurora_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_aurora_title&quot;>أورورا&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="196"
             column="13"/>
     </issue>
 
@@ -4424,7 +5883,194 @@
         errorLine2="            ~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="208"
+            line="196"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.effect_aurora_desc` appears to be unused"
+        errorLine1="    &lt;string name=&quot;effect_aurora_desc&quot;>بريق الشفق القطبي&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ar/strings.xml"
+            line="197"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.badge_pro` appears to be unused"
+        errorLine1="    &lt;string name=&quot;badge_pro&quot;>PRO&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="199"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_pop` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_pop&quot;>Pop&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="223"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_rock` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_rock&quot;>Rock&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="224"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_hiphop` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_hiphop&quot;>Hip-Hop&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="225"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_rnb` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_rnb&quot;>R&amp;amp;B&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="226"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_electronic` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_electronic&quot;>Electronic&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="227"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_jazz` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_jazz&quot;>Jazz&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="228"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_classical` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_classical&quot;>Classical&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="229"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_country` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_country&quot;>Country&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="230"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_latin` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_latin&quot;>Latin&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="231"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_kpop` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_kpop&quot;>K-Pop&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="232"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_dance` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_dance&quot;>Dance&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="233"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_edm` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_edm&quot;>EDM&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="234"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_blues` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_blues&quot;>Blues&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="235"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_metal` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_metal&quot;>Metal&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="236"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.genre_soul` appears to be unused"
+        errorLine1="    &lt;string name=&quot;genre_soul&quot;>Soul&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="237"
             column="13"/>
     </issue>
 
@@ -4452,6 +6098,13 @@
 
     <issue
         id="IconLocation"
+        message="Found bitmap drawable `res/drawable/app_icon_loading.png` in densityless folder">
+        <location
+            file="src/main/res/drawable/app_icon_loading.png"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
         message="Found bitmap drawable `res/drawable/bg_home.webp` in densityless folder">
         <location
             file="src/main/res/drawable/bg_home.webp"/>
@@ -4469,6 +6122,13 @@
         message="Found bitmap drawable `res/drawable/ic_circle_plus.webp` in densityless folder">
         <location
             file="src/main/res/drawable/ic_circle_plus.webp"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/ic_double_notes.webp` in densityless folder">
+        <location
+            file="src/main/res/drawable/ic_double_notes.webp"/>
     </issue>
 
     <issue
@@ -4500,14 +6160,167 @@
     </issue>
 
     <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/ob_page1.webp` in densityless folder">
+        <location
+            file="src/main/res/drawable/ob_page1.webp"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/ob_page2.webp` in densityless folder">
+        <location
+            file="src/main/res/drawable/ob_page2.webp"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/ob_page3.webp` in densityless folder">
+        <location
+            file="src/main/res/drawable/ob_page3.webp"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.webp, ic_launcher_foreground.webp, ic_launcher_round.webp">
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher_round.webp"/>
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher_foreground.webp"/>
+        <location
+            file="src/main/res/mipmap-hdpi/ic_launcher.webp"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.webp, ic_launcher_foreground.webp, ic_launcher_round.webp">
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher_round.webp"/>
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher_foreground.webp"/>
+        <location
+            file="src/main/res/mipmap-mdpi/ic_launcher.webp"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.webp, ic_launcher_foreground.webp, ic_launcher_round.webp">
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher_round.webp"/>
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher_foreground.webp"/>
+        <location
+            file="src/main/res/mipmap-xhdpi/ic_launcher.webp"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.webp, ic_launcher_foreground.webp, ic_launcher_round.webp">
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher_round.webp"/>
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher_foreground.webp"/>
+        <location
+            file="src/main/res/mipmap-xxhdpi/ic_launcher.webp"/>
+    </issue>
+
+    <issue
+        id="IconDuplicates"
+        message="The following unrelated icon files have identical contents: ic_launcher.webp, ic_launcher_foreground.webp, ic_launcher_round.webp">
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp"/>
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.webp"/>
+        <location
+            file="src/main/res/mipmap-xxxhdpi/ic_launcher.webp"/>
+    </issue>
+
+    <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="            return Uri.parse(url)"
-        errorLine2="                   ~~~~~~~~~~~~~~">
+        errorLine1="                    return Uri.parse(song.mp3Url)"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
-            line="524"
-            column="20"/>
+            line="535"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                return Uri.parse(url)"
+        errorLine2="                       ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/videomaker/aimusic/media/composition/CompositionFactory.kt"
+            line="543"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        Asset(id = &quot;1&quot;, uri = Uri.parse(&quot;content://1&quot;), orderIndex = 0),"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/videomaker/aimusic/modules/editor/EditorScreenPreview.kt"
+            line="76"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        Asset(id = &quot;2&quot;, uri = Uri.parse(&quot;content://2&quot;), orderIndex = 1),"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/videomaker/aimusic/modules/editor/EditorScreenPreview.kt"
+            line="77"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        Asset(id = &quot;3&quot;, uri = Uri.parse(&quot;content://3&quot;), orderIndex = 2),"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/videomaker/aimusic/modules/editor/EditorScreenPreview.kt"
+            line="78"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        Asset(id = &quot;4&quot;, uri = Uri.parse(&quot;content://4&quot;), orderIndex = 3),"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/videomaker/aimusic/modules/editor/EditorScreenPreview.kt"
+            line="79"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        Asset(id = &quot;5&quot;, uri = Uri.parse(&quot;content://5&quot;), orderIndex = 4)"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/videomaker/aimusic/modules/editor/EditorScreenPreview.kt"
+            line="80"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                    uriStr.takeIf { it.isNotBlank() }?.let { Uri.parse(it) }"
+        errorLine2="                                                             ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/videomaker/aimusic/modules/editor/EditorViewModel.kt"
+            line="183"
+            column="62"/>
     </issue>
 
     <issue
@@ -4519,6 +6332,17 @@
             file="src/main/java/com/videomaker/aimusic/media/composition/GPUImagePreprocessor.kt"
             line="218"
             column="32"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs.edit().putString(KEY_USER_REGION, region).apply()"
+        errorLine2="        ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/videomaker/aimusic/core/data/local/PreferencesManager.kt"
+            line="126"
+            column="9"/>
     </issue>
 
     <issue
@@ -4539,7 +6363,7 @@
         errorLine2="                                                          ~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/data/mapper/ProjectMapper.kt"
-            line="47"
+            line="48"
             column="59"/>
     </issue>
 
@@ -4550,8 +6374,19 @@
         errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/videomaker/aimusic/data/mapper/ProjectMapper.kt"
-            line="59"
+            line="60"
             column="19"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        uriStr.takeIf { it.isNotBlank() }?.let { Uri.parse(it) }"
+        errorLine2="                                                 ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/videomaker/aimusic/modules/templatepreviewer/TemplatePreviewerViewModel.kt"
+            line="84"
+            column="50"/>
     </issue>
 
     <issue
