@@ -109,7 +109,8 @@ class AssetPickerViewModel(
     private val songRepository: SongRepository,
     private val projectId: String? = null, // null = create new project, non-null = add to existing
     private val templateId: String? = null,  // non-null = template mode, bypasses project creation
-    private val overrideSongId: Long = -1L   // >= 0 = song-to-video mode, overrides template song
+    private val overrideSongId: Long = -1L,   // >= 0 = song-to-video mode, overrides template song
+    private val aspectRatio: AspectRatio? = null  // User's selected aspect ratio from template previewer
 ) : ViewModel() {
 
     // Use applicationContext to prevent Activity memory leak
@@ -299,7 +300,7 @@ class AssetPickerViewModel(
                                         transitionPercentage = template.transitionPct,
                                         musicSongId = songId,
                                         musicSongName = songName,
-                                        aspectRatio = AspectRatio.fromString(template.aspectRatio)
+                                        aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio)
                                     )
 
                                     _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditorWithData(initialData)

@@ -2,6 +2,7 @@ package com.videomaker.aimusic.navigation
 
 import androidx.compose.runtime.Immutable
 import androidx.navigation3.runtime.NavKey
+import com.videomaker.aimusic.domain.model.AspectRatio
 import kotlinx.serialization.Serializable
 
 /**
@@ -54,12 +55,15 @@ sealed interface AppRoute : NavKey {
      * @param projectId null = create new project; non-null = add to existing
      * @param overrideSongId When >= 0, TemplatePreviewer will play this song instead of the
      *   template's embedded song. Used by the song → image picker → previewer flow.
+     * @param aspectRatio User's selected aspect ratio from template previewer.
+     *   null = use template's default or fallback to RATIO_9_16.
      */
     @Serializable
     data class AssetPicker(
         val projectId: String? = null,
         val templateId: String? = null,
-        val overrideSongId: Long = -1L
+        val overrideSongId: Long = -1L,
+        val aspectRatio: AspectRatio? = null
     ) : AppRoute
 
     /**

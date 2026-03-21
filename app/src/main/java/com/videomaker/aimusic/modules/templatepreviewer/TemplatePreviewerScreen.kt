@@ -108,8 +108,7 @@ private fun initialVirtualPage(initialPage: Int, templateCount: Int): Int {
 fun TemplatePreviewerScreen(
     viewModel: TemplatePreviewerViewModel,
     audioDataSourceFactory: CacheDataSource.Factory,
-    onNavigateToEditor: (projectId: String?, initialData: com.videomaker.aimusic.domain.model.EditorInitialData?) -> Unit,
-    onNavigateToAssetPicker: (template: com.videomaker.aimusic.domain.model.VideoTemplate, overrideSongId: Long) -> Unit,
+    onNavigateToAssetPicker: (template: com.videomaker.aimusic.domain.model.VideoTemplate, overrideSongId: Long, aspectRatio: AspectRatio) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -121,10 +120,8 @@ fun TemplatePreviewerScreen(
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
-                is TemplatePreviewerNavigationEvent.NavigateToEditor ->
-                    onNavigateToEditor(event.projectId, event.initialData)
                 is TemplatePreviewerNavigationEvent.NavigateToAssetPicker ->
-                    onNavigateToAssetPicker(event.template, event.overrideSongId)
+                    onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
                 is TemplatePreviewerNavigationEvent.NavigateBack -> onNavigateBack()
             }
             viewModel.onNavigationHandled()

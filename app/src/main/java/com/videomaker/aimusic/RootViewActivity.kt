@@ -129,7 +129,7 @@ class RootViewActivity : AppCompatActivity() {
     }
 
     private fun applyDefaultTransition() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        if (Build.VERSION.SDK_INT >= 34) {  // Android 14+
             overrideActivityTransition(
                 Activity.OVERRIDE_TRANSITION_OPEN,
                 android.R.anim.fade_in,

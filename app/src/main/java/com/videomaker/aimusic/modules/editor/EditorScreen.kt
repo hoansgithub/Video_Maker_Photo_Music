@@ -44,8 +44,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
@@ -56,6 +58,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,6 +77,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.di.MusicPickerViewModelFactory
+import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.ui.theme.Gray500
@@ -114,6 +118,8 @@ fun EditorScreen(
     var showExitConfirmation by remember { mutableStateOf(false) }
     var showMusicPicker by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
+    var showRatioSheet by remember { mutableStateOf(false) }
+    var showDurationSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     // Music Picker ViewModel - created once and reused
@@ -186,8 +192,8 @@ fun EditorScreen(
                         onSeekComplete = viewModel::clearSeekRequest,
                         onScrubComplete = viewModel::clearScrubRequest,
                         onEffectClick = { /* TODO: Open effect picker */ },
-                        onImageDurationClick = { /* TODO: Open image duration picker */ },
-                        onRatioClick = { /* TODO: Open ratio picker */ },
+                        onImageDurationClick = { showDurationSheet = true },
+                        onRatioClick = { showRatioSheet = true },
                         onVolumeClick = { showVolumeSheet = true },
                         modifier = Modifier.padding(paddingValues)
                     )
@@ -273,9 +279,42 @@ fun EditorScreen(
             if (successState != null) {
                 VolumeBottomSheet(
                     currentVolume = successState.displaySettings.audioVolume,
-                    onVolumeChange = viewModel::updateAudioVolume,
+                    onConfirm = { volume ->
+                        viewModel.updateAudioVolume(volume)
+                        showVolumeSheet = false
+                    },
                     onDismiss = {
                         showVolumeSheet = false
+                    }
+                )
+            }
+        }
+
+        // Ratio Bottom Sheet
+        if (showRatioSheet) {
+            val successState = uiState as? EditorUiState.Success
+            if (successState != null) {
+                SelectRatioBottomSheet(
+                    currentRatio = successState.displaySettings.aspectRatio,
+                    onDismiss = { showRatioSheet = false },
+                    onConfirm = { selectedRatio ->
+                        viewModel.updateAspectRatio(selectedRatio)
+                        showRatioSheet = false
+                    }
+                )
+            }
+        }
+
+        // Duration Bottom Sheet
+        if (showDurationSheet) {
+            val successState = uiState as? EditorUiState.Success
+            if (successState != null) {
+                DurationBottomSheet(
+                    currentDurationMs = successState.displaySettings.imageDurationMs,
+                    onDismiss = { showDurationSheet = false },
+                    onConfirm = { selectedDurationMs ->
+                        viewModel.updateImageDuration(selectedDurationMs)
+                        showDurationSheet = false
                     }
                 )
             }
@@ -661,6 +700,8 @@ private fun MusicSection(
 @Composable
 private fun SettingsTabBar(
     currentVolume: Float,
+    currentRatio: AspectRatio,
+    currentDurationMs: Long,
     onEffectClick: () -> Unit,
     onImageDurationClick: () -> Unit,
     onRatioClick: () -> Unit,
@@ -682,18 +723,18 @@ private fun SettingsTabBar(
             modifier = Modifier.weight(1f)
         )
 
-        // Image Duration button
+        // Image Duration button - shows current duration
         SettingsTabButton(
             icon = Icons.Default.Schedule,
-            label = "Duration",
+            label = "${currentDurationMs / 1000f}s",
             onClick = onImageDurationClick,
             modifier = Modifier.weight(1f)
         )
 
-        // Ratio button
+        // Ratio button - shows current ratio
         SettingsTabButton(
             icon = Icons.Default.AspectRatio,
-            label = "Ratio",
+            label = currentRatio.shortLabel,
             onClick = onRatioClick,
             modifier = Modifier.weight(1f)
         )
@@ -854,6 +895,8 @@ internal fun EditorMainContent(
         // Settings Tab Bar - Effect, Duration, Ratio, Volume
         SettingsTabBar(
             currentVolume = project.settings.audioVolume,
+            currentRatio = project.settings.aspectRatio,
+            currentDurationMs = project.settings.imageDurationMs,
             onEffectClick = onEffectClick,
             onImageDurationClick = onImageDurationClick,
             onRatioClick = onRatioClick,
@@ -976,6 +1019,262 @@ private fun ExitConfirmationDialog(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+// ============================================
+// ASPECT RATIO EXTENSION
+// ============================================
+
+private val AspectRatio.shortLabel: String
+    get() = when (this) {
+        AspectRatio.RATIO_16_9 -> "16:9"
+        AspectRatio.RATIO_9_16 -> "9:16"
+        AspectRatio.RATIO_4_5 -> "4:5"
+        AspectRatio.RATIO_1_1 -> "1:1"
+    }
+
+// ============================================
+// SELECT RATIO BOTTOM SHEET
+// ============================================
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SelectRatioBottomSheet(
+    currentRatio: AspectRatio,
+    onDismiss: () -> Unit,
+    onConfirm: (AspectRatio) -> Unit
+) {
+    var selected by remember { mutableStateOf(currentRatio) }
+    val sheetState = rememberModalBottomSheetState()
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Select Video Ratio",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary
+            )
+
+            // Ratio options grid
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                listOf(
+                    AspectRatio.RATIO_16_9,
+                    AspectRatio.RATIO_9_16,
+                    AspectRatio.RATIO_4_5,
+                    AspectRatio.RATIO_1_1
+                ).forEach { ratio ->
+                    RatioOptionCard(
+                        ratio = ratio,
+                        isSelected = ratio == selected,
+                        onClick = { selected = ratio },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // Confirm button
+            Button(
+                onClick = {
+                    onConfirm(selected)
+                    onDismiss()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "Apply",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RatioOptionCard(
+    ratio: AspectRatio,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else Gray500
+    val borderWidth = if (isSelected) 2.dp else 1.dp
+    val backgroundColor = if (isSelected) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        SplashBackground
+    }
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .border(borderWidth, borderColor, RoundedCornerShape(12.dp))
+            .background(backgroundColor)
+            .clickable { onClick() }
+            .padding(vertical = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Aspect ratio icon
+            AspectRatioIcon(ratio = ratio, isSelected = isSelected)
+
+            // Label
+            Text(
+                text = ratio.shortLabel,
+                color = if (isSelected) MaterialTheme.colorScheme.primary else TextPrimary,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+private fun AspectRatioIcon(
+    ratio: AspectRatio,
+    isSelected: Boolean
+) {
+    val color = if (isSelected) MaterialTheme.colorScheme.primary else Gray500
+    val maxSize = 36.dp
+    val (iconW, iconH) = when (ratio) {
+        AspectRatio.RATIO_16_9 -> maxSize to (maxSize * (9f / 16f))
+        AspectRatio.RATIO_9_16 -> (maxSize * (9f / 16f)) to maxSize
+        AspectRatio.RATIO_4_5 -> (maxSize * (4f / 5f)) to maxSize
+        AspectRatio.RATIO_1_1 -> maxSize to maxSize
+    }
+
+    Box(
+        modifier = Modifier
+            .size(width = iconW, height = iconH)
+            .border(1.5.dp, color, RoundedCornerShape(4.dp))
+    )
+}
+
+// ============================================
+// DURATION BOTTOM SHEET
+// ============================================
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DurationBottomSheet(
+    currentDurationMs: Long,
+    onDismiss: () -> Unit,
+    onConfirm: (Long) -> Unit
+) {
+    // Convert ms to seconds for slider (default 3s if current is 0 or out of range)
+    val currentSeconds = (currentDurationMs / 1000f).coerceIn(1f, 20f)
+    var sliderValue by remember { mutableFloatStateOf(currentSeconds) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = SplashBackground,
+        dragHandle = null,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(top = 24.dp, bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Text(
+                text = "Image Duration",
+                color = TextPrimary,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            // Selected duration display
+            Text(
+                text = "${sliderValue.toInt()}s",
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            // Slider
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
+            ) {
+                Slider(
+                    value = sliderValue,
+                    onValueChange = { sliderValue = it },
+                    valueRange = 1f..20f,
+                    steps = 18, // 19 discrete values (1-20 inclusive)
+                    colors = SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                        inactiveTrackColor = Gray500
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Min/Max labels
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "1s",
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = "20s",
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            // Apply button
+            Button(
+                onClick = { onConfirm((sliderValue.toInt() * 1000).toLong()) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "Apply",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }

@@ -211,7 +211,8 @@ class AssetPickerViewModelFactory(
     fun create(
         projectId: String? = null,
         templateId: String? = null,
-        overrideSongId: Long = -1L
+        overrideSongId: Long = -1L,
+        aspectRatio: com.videomaker.aimusic.domain.model.AspectRatio? = null
     ): AssetPickerViewModel {
         return AssetPickerViewModel(
             context = application,
@@ -221,7 +222,8 @@ class AssetPickerViewModelFactory(
             songRepository = songRepository,
             projectId = projectId,
             templateId = templateId,
-            overrideSongId = overrideSongId
+            overrideSongId = overrideSongId,
+            aspectRatio = aspectRatio
         )
     }
 }
@@ -414,6 +416,13 @@ val presentationModule = module {
             checkOnboardingStatusUseCase = get(),
             checkLanguageSelectedUseCase = get(),
             remoteConfig = get()  // Firebase Remote Config (from firebaseModule)
+        )
+    }
+
+    // Onboarding ViewModel
+    viewModel {
+        com.videomaker.aimusic.modules.onboarding.OnboardingViewModel(
+            onboardingRepository = get()
         )
     }
 

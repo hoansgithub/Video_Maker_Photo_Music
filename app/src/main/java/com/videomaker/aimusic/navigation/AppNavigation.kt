@@ -187,12 +187,13 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             entry<AppRoute.AssetPicker> { route ->
                 val factory: AssetPickerViewModelFactory = koinInject()
                 val pickerViewModel: AssetPickerViewModel = viewModel(
-                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}",
+                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}_${route.aspectRatio}",
                     factory = createSafeViewModelFactory {
                         factory.create(
                             projectId = route.projectId,
                             templateId = route.templateId,
-                            overrideSongId = route.overrideSongId
+                            overrideSongId = route.overrideSongId,
+                            aspectRatio = route.aspectRatio
                         )
                     }
                 )
@@ -312,21 +313,14 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 TemplatePreviewerScreen(
                     viewModel = viewModel,
                     audioDataSourceFactory = audioCache.cacheDataSourceFactory,
-                    onNavigateToEditor = { projectId, initialData ->
-                        backStack.apply {
-                            val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home
-                            clear()
-                            add(home)
-                            add(AppRoute.Editor(projectId = projectId, initialData = initialData))
-                        }
-                    },
-                    onNavigateToAssetPicker = { template, overrideSongId ->
-                        // NEW FLOW: User selected a template, now pick images
-                        // Pass both templateId and overrideSongId (if song-to-video mode)
+                    onNavigateToAssetPicker = { template, overrideSongId, aspectRatio ->
+                        // User selected a template with aspect ratio, now pick images
+                        // Pass templateId, overrideSongId (if song-to-video mode), and selected aspectRatio
                         // AssetPickerViewModel will use overrideSongId as priority over template's song
                         backStack.add(AppRoute.AssetPicker(
                             templateId = template.id,
-                            overrideSongId = overrideSongId
+                            overrideSongId = overrideSongId,
+                            aspectRatio = aspectRatio
                         ))
                     },
                     onNavigateBack = { backStack.removeLastOrNull() }

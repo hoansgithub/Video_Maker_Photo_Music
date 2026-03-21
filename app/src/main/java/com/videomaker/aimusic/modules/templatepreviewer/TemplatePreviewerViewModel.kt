@@ -53,14 +53,10 @@ sealed class SongLoadState {
 
 sealed class TemplatePreviewerNavigationEvent {
     data object NavigateBack : TemplatePreviewerNavigationEvent()
-    data class NavigateToEditor(
-        val projectId: String?,
-        val initialData: com.videomaker.aimusic.domain.model.EditorInitialData?
-    ) : TemplatePreviewerNavigationEvent()
-    /** NEW: Browse mode - user selected template, now needs to pick images */
     data class NavigateToAssetPicker(
-        val template: VideoTemplate, // Pass template data directly
-        val overrideSongId: Long
+        val template: VideoTemplate,
+        val overrideSongId: Long,
+        val aspectRatio: AspectRatio
     ) : TemplatePreviewerNavigationEvent()
 }
 
@@ -134,38 +130,12 @@ class TemplatePreviewerViewModel(
         val currentState = _uiState.value as? TemplatePreviewerUiState.Ready ?: return
         if (currentState.isCreatingProject) return
 
-        if (isBrowseMode) {
-            // NEW FLOW: No images selected yet, navigate to AssetPicker
-            _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
-                template = template, // Pass template data directly
-                overrideSongId = overrideSongId
-            )
-        } else {
-            // OLD FLOW: Images selected, navigate to Editor
-            // Get song name from already-loaded song (avoid extra network request)
-            val currentSongState = _currentSong.value
-            val songName = if (currentSongState is SongLoadState.Ready) {
-                currentSongState.song.name
-            } else null
-
-            // Pass data to editor without creating project
-            // Project will be created when user presses Save/Done
-            val initialData = com.videomaker.aimusic.domain.model.EditorInitialData(
-                imageUris = imageUris.map { it.toString() },
-                effectSetId = template.effectSetId,
-                imageDurationMs = template.imageDurationMs.toLong(),
-                transitionPercentage = template.transitionPct,
-                musicSongId = if (overrideSongId >= 0L) overrideSongId
-                             else template.songId.takeIf { it > 0L },
-                musicSongName = songName, // Reuse already-loaded song name
-                aspectRatio = aspectRatio
-            )
-
-            _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToEditor(
-                projectId = null,
-                initialData = initialData
-            )
-        }
+        // Navigate to AssetPicker - user needs to select images
+        _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
+            template = template,
+            overrideSongId = overrideSongId,
+            aspectRatio = aspectRatio
+        )
     }
 
     fun onNavigateBack() {
