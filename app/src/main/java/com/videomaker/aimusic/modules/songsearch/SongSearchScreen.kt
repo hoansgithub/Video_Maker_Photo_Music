@@ -56,7 +56,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
-import co.alcheclub.lib.acccore.di.ACCDI
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
@@ -92,7 +92,7 @@ fun SongSearchScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
-    val audioPreviewCache = remember { ACCDI.get<AudioPreviewCache>() }
+    val audioPreviewCache: AudioPreviewCache = koinInject()
 
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->

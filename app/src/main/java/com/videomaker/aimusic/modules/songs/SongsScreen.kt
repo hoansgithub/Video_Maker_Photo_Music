@@ -59,7 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
-import co.alcheclub.lib.acccore.di.ACCDI
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.domain.model.MusicSong
@@ -107,7 +107,7 @@ fun SongsScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
-    val audioPreviewCache = remember { ACCDI.get<AudioPreviewCache>() }
+    val audioPreviewCache: AudioPreviewCache = koinInject()
 
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->

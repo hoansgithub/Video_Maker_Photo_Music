@@ -14,8 +14,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import co.alcheclub.lib.acccore.di.ACCDI
-import co.alcheclub.lib.acccore.di.get
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepository
@@ -38,15 +38,8 @@ import kotlinx.coroutines.launch
  */
 class OnboardingActivity : AppCompatActivity() {
 
-    private val completeOnboardingUseCase by lazy { ACCDI.get<CompleteOnboardingUseCase>() }
-
-    private val onboardingViewModel: OnboardingViewModel by lazy {
-        val repository = ACCDI.get<OnboardingRepository>()
-        ViewModelProvider(
-            this,
-            createSafeViewModelFactory { OnboardingViewModel(repository) }
-        )[OnboardingViewModel::class.java]
-    }
+    private val completeOnboardingUseCase: CompleteOnboardingUseCase by inject()
+    private val onboardingViewModel: OnboardingViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

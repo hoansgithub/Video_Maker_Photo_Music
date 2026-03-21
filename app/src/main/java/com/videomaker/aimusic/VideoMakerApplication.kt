@@ -3,11 +3,15 @@ package com.videomaker.aimusic
 import android.app.Application
 import co.alcheclub.lib.acccore.analytics.AnalyticsCoordinator
 import co.alcheclub.lib.acccore.coreModuleFromDI
-import co.alcheclub.lib.acccore.di.ACCDI
-import co.alcheclub.lib.acccore.di.LogLevel
-import co.alcheclub.lib.acccore.di.get
 import co.alcheclub.lib.acccore.firebase.firebaseModule
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfigCoordinator
+import org.koin.android.ext.android.get
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
+import org.koin.java.KoinJavaComponent.getKoin
+import org.koin.core.parameter.parametersOf
+import co.alcheclub.lib.acccore.di.koin.getAllSingletons
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.ImageDecoderDecoder
@@ -31,7 +35,7 @@ import kotlinx.coroutines.launch
 /**
  * Application class for Video Maker App
  *
- * Initializes ACCDI (AlcheClub Custom Dependency Injection) on startup.
+ * Initializes Koin (Dependency Injection) on startup.
  * Registered in AndroidManifest.xml with android:name=".VideoMakerApplication"
  *
  * Firebase modules initialized:
@@ -80,12 +84,13 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
 
-        // Initialize ACCDI with separated modules
+        // Initialize Koin with separated modules
         // ⚠️ CRITICAL: Module ordering matters!
         // 1. firebaseModule - Provides Firebase AnalyticsPlatform & ConfigCenter
         // 2. coreModuleFromDI - Creates coordinators that auto-discover all platforms
         // 3. Other modules - Can use coordinators
-        ACCDI.start(this) {
+        startKoin {
+            androidContext(this@VideoMakerApplication)
             modules(
                 firebaseModule(manualAdImpressionTracking = true),  // Firebase Analytics, Crashlytics, RemoteConfig, Performance
                 coreModuleFromDI(
@@ -98,10 +103,9 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                 domainModule,       // Use cases & business logic
                 presentationModule  // ViewModels
             )
-            logLevel(if (BuildConfig.DEBUG) LogLevel.DEBUG else LogLevel.NONE)
         }
 
-        android.util.Log.d("VideoMakerApplication", "ACCDI initialized with Firebase support")
+        android.util.Log.d("VideoMakerApplication", "Koin initialized with Firebase support")
 
         // Auto-register services with coordinators
         applicationScope.launch {
@@ -109,11 +113,11 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                 // ============================================
                 // AUTO-DISCOVER ALL SERVICES FROM DI CONTAINER
                 // ============================================
-                val analyticsCoordinator = ACCDI.get<AnalyticsCoordinator>()
-                val remoteConfigCoordinator = ACCDI.get<RemoteConfigCoordinator>()
+                val analyticsCoordinator = get<AnalyticsCoordinator>()
+                val remoteConfigCoordinator = get<RemoteConfigCoordinator>()
 
                 // Get all singleton instances for automatic discovery
-                val singletons = ACCDI.getAllSingletons()
+                val singletons = getKoin().getAllSingletons()
 
                 // Automatic discovery: searches ALL singletons for service implementations
                 // - AnalyticsCoordinator finds: TrackableService implementations
@@ -153,18 +157,18 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         android.util.Log.d("VideoMakerApplication", "App terminating - cleaning up resources")
 
         // Close coordinators (fire-and-forget — OS kills process shortly after onTerminate)
-        runCatching { ACCDI.getOrNull<AnalyticsCoordinator>()?.close() }
-        runCatching { ACCDI.getOrNull<RemoteConfigCoordinator>()?.close() }
+        runCatching { getKoin().getOrNull<AnalyticsCoordinator>()?.close() }
+        runCatching { getKoin().getOrNull<RemoteConfigCoordinator>()?.close() }
 
         // Release SimpleCache SQLite connection for clean shutdown
-        runCatching { ACCDI.getOrNull<com.videomaker.aimusic.media.audio.AudioPreviewCache>()?.simpleCache?.release() }
+        runCatching { getKoin().getOrNull<com.videomaker.aimusic.media.audio.AudioPreviewCache>()?.simpleCache?.release() }
 
         // Cancel application scope (cancels all coroutines)
         applicationScope.cancel()
         android.util.Log.d("VideoMakerApplication", "Application scope cancelled")
 
-        // Clean up ACCDI (clears all definitions)
-        ACCDI.stop()
-        android.util.Log.d("VideoMakerApplication", "ACCDI stopped")
+        // Clean up Koin (clears all definitions)
+        stopKoin()
+        android.util.Log.d("VideoMakerApplication", "Koin stopped")
     }
 }

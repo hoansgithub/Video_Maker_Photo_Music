@@ -22,6 +22,7 @@ import com.videomaker.aimusic.media.library.FrameLibrary
 import com.videomaker.aimusic.media.library.TransitionSetLibrary
 import com.videomaker.aimusic.media.library.TransitionShaderLibrary
 import java.io.File
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * CompositionFactory - Creates Media3 Composition from Project domain model
@@ -62,20 +63,22 @@ class CompositionFactory(
 
     /**
      * Tracks the last set of transition bitmap pairs (FROM + TO) for memory management.
+     * Thread-safe using AtomicReference for concurrent access from UI and background threads.
      */
-    private var lastTransitionBitmaps: Map<Int, TransitionBitmapPair>? = null
+    private val lastTransitionBitmaps = AtomicReference<Map<Int, TransitionBitmapPair>?>(null)
 
     /**
-     * Tracks cache files for cleanup
+     * Tracks cache files for cleanup.
+     * Thread-safe using AtomicReference for concurrent access.
      */
-    private var lastCacheFiles: List<File>? = null
+    private val lastCacheFiles = AtomicReference<List<File>?>(null)
 
     /**
      * Recycle all tracked transition bitmaps (both FROM and TO).
+     * Thread-safe - can be called from any thread.
      */
     fun recycleBitmaps() {
-        val bitmapPairs = lastTransitionBitmaps
-        lastTransitionBitmaps = null
+        val bitmapPairs = lastTransitionBitmaps.getAndSet(null)
 
         if (bitmapPairs != null) {
             bitmapPairs.values.forEach { pair ->
@@ -90,11 +93,11 @@ class CompositionFactory(
     }
 
     /**
-     * Clean up pre-processed image cache files
+     * Clean up pre-processed image cache files.
+     * Thread-safe - can be called from any thread.
      */
     fun cleanupCacheFiles() {
-        val files = lastCacheFiles
-        lastCacheFiles = null
+        val files = lastCacheFiles.getAndSet(null)
 
         if (files != null) {
             files.forEach { file ->
@@ -127,7 +130,7 @@ class CompositionFactory(
 
         // STEP 2: Load transition TO bitmaps from cache files
         val transitionBitmaps = loadTransitionBitmapsFromCache(processedImages, settings)
-        lastTransitionBitmaps = transitionBitmaps
+        lastTransitionBitmaps.set(transitionBitmaps)
 
         // STEP 3: Create video sequence using cache URIs
         val videoSequence = createVideoSequence(project.assets, settings, processedImages, transitionBitmaps)
@@ -136,7 +139,7 @@ class CompositionFactory(
 
         // Add audio sequence if enabled
         if (includeAudio) {
-            val audioSequence = createAudioSequence(settings, project.totalDurationMs)
+            val audioSequence = createAudioSequence(settings, project.totalDurationMs, forExport)
             if (audioSequence != null) {
                 sequences.add(audioSequence)
             }
@@ -205,7 +208,7 @@ class CompositionFactory(
         }
 
         // Track cache files for cleanup
-        lastCacheFiles = cacheFiles
+        lastCacheFiles.set(cacheFiles)
 
         return results
     }
@@ -483,7 +486,8 @@ class CompositionFactory(
 
     private suspend fun createAudioSequence(
         settings: ProjectSettings,
-        totalVideoDurationMs: Long
+        totalVideoDurationMs: Long,
+        forExport: Boolean
     ): EditedMediaItemSequence? {
         val audioUri = getAudioUri(settings) ?: return null
 
@@ -500,7 +504,9 @@ class CompositionFactory(
             .build()
 
         // Create audio effects with volume processor
-        val audioEffects = if (volume != 1.0f) {
+        // PREVIEW: Don't apply VolumeAudioProcessor - use player.setVolume() for instant changes
+        // EXPORT: Apply VolumeAudioProcessor to bake volume into output file
+        val audioEffects = if (forExport && volume != 1.0f) {
             Effects(
                 /* audioProcessors= */ listOf(VolumeAudioProcessor(volume)),
                 /* videoEffects= */ emptyList()

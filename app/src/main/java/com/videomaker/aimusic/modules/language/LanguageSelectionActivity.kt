@@ -8,8 +8,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import co.alcheclub.lib.acccore.di.ACCDI
-import co.alcheclub.lib.acccore.di.get
+import org.koin.android.ext.android.inject
 import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
@@ -39,9 +38,9 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
  */
 class LanguageSelectionActivity : AppCompatActivity() {
 
-    private val saveLanguagePreferenceUseCase by lazy { ACCDI.get<SaveLanguagePreferenceUseCase>() }
-    private val applyLanguageUseCase by lazy { ACCDI.get<ApplyLanguageUseCase>() }
-    private val completeLanguageSelectionUseCase by lazy { ACCDI.get<CompleteLanguageSelectionUseCase>() }
+    private val saveLanguagePreferenceUseCase: SaveLanguagePreferenceUseCase by inject()
+    private val applyLanguageUseCase: ApplyLanguageUseCase by inject()
+    private val completeLanguageSelectionUseCase: CompleteLanguageSelectionUseCase by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

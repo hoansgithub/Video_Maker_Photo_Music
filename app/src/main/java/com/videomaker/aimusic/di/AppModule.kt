@@ -1,11 +1,10 @@
 package com.videomaker.aimusic.di
 
 import androidx.work.WorkManager
-import co.alcheclub.lib.acccore.di.Module
-import co.alcheclub.lib.acccore.di.androidContext
-import co.alcheclub.lib.acccore.di.get
-import co.alcheclub.lib.acccore.di.module
-import co.alcheclub.lib.acccore.di.viewModel
+import org.koin.core.module.Module
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.module
 import com.videomaker.aimusic.core.data.local.ApiCacheManager
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.PreferencesManager
@@ -96,8 +95,8 @@ val dataModule = module {
 
     // Project Database
     single { ProjectDatabase.getInstance(androidContext()) }
-    single { it.get<ProjectDatabase>().projectDao() }
-    single { it.get<ProjectDatabase>().assetDao() }
+    single { get<ProjectDatabase>().projectDao() }
+    single { get<ProjectDatabase>().assetDao() }
 
     // Supabase client (singleton)
     single { SupabaseClientProvider.instance }
@@ -105,17 +104,17 @@ val dataModule = module {
     // Region provider (singleton - derived from language + device locale)
     single {
         RegionProvider(
-            languageManager = it.get(),
-            preferencesManager = it.get()
+            languageManager = get(),
+            preferencesManager = get()
         )
     }
 
     // Repository implementations
-    single<OnboardingRepository> { OnboardingRepositoryImpl(it.get()) }
-    single<ProjectRepository> { ProjectRepositoryImpl(it.get(), it.get()) }
-    single<ExportRepository> { ExportRepositoryImpl(it.get()) }
-    single<SongRepository> { SongRepositoryImpl(it.get(), it.get(), regionProvider = it.get()) }
-    single<TemplateRepository> { TemplateRepositoryImpl(it.get(), it.get(), regionProvider = it.get()) }
+    single<OnboardingRepository> { OnboardingRepositoryImpl(get()) }
+    single<ProjectRepository> { ProjectRepositoryImpl(get(), get()) }
+    single<ExportRepository> { ExportRepositoryImpl(get()) }
+    single<SongRepository> { SongRepositoryImpl(get(), get(), regionProvider = get()) }
+    single<TemplateRepository> { TemplateRepositoryImpl(get(), get(), regionProvider = get()) }
 }
 
 // ========== MEDIA LAYER MODULE ==========
@@ -129,7 +128,7 @@ val dataModule = module {
  * Scope: Singleton - Expensive to create
  */
 val mediaModule = module {
-    single { CompositionFactory(androidContext(), it.get()) }
+    single { CompositionFactory(androidContext(), get()) }
     single { AudioPreviewCache(androidContext()) }
 
     // Coil ImageLoader singleton
@@ -154,36 +153,36 @@ val mediaModule = module {
  */
 val domainModule = module {
     // Onboarding use cases
-    factory { CheckOnboardingStatusUseCase(it.get()) }
-    factory { CompleteOnboardingUseCase(it.get()) }
+    factory { CheckOnboardingStatusUseCase(get()) }
+    factory { CompleteOnboardingUseCase(get()) }
 
     // Language use cases
-    factory { CheckLanguageSelectedUseCase(it.get()) }
-    factory { CompleteLanguageSelectionUseCase(it.get()) }
-    factory { GetSelectedLanguageUseCase(it.get()) }
-    factory { SaveLanguagePreferenceUseCase(it.get()) }
-    factory { ApplyLanguageUseCase(it.get()) }
+    factory { CheckLanguageSelectedUseCase(get()) }
+    factory { CompleteLanguageSelectionUseCase(get()) }
+    factory { GetSelectedLanguageUseCase(get()) }
+    factory { SaveLanguagePreferenceUseCase(get()) }
+    factory { ApplyLanguageUseCase(get()) }
 
     // Project use cases
-    factory { CreateProjectUseCase(it.get()) }
-    factory { GetProjectUseCase(it.get()) }
-    factory { GetAllProjectsUseCase(it.get()) }
-    factory { UpdateProjectSettingsUseCase(it.get()) }
-    factory { ReorderAssetsUseCase(it.get()) }
-    factory { AddAssetsUseCase(it.get()) }
-    factory { RemoveAssetUseCase(it.get()) }
-    factory { DeleteProjectUseCase(it.get()) }
+    factory { CreateProjectUseCase(get()) }
+    factory { GetProjectUseCase(get()) }
+    factory { GetAllProjectsUseCase(get()) }
+    factory { UpdateProjectSettingsUseCase(get()) }
+    factory { ReorderAssetsUseCase(get()) }
+    factory { AddAssetsUseCase(get()) }
+    factory { RemoveAssetUseCase(get()) }
+    factory { DeleteProjectUseCase(get()) }
 
     // Song use cases — single because they are stateless; factory instances held by singleton
     // factories would violate the factory lifecycle contract if use cases ever become stateful
-    single { GetSuggestedSongsUseCase(it.get(), it.get()) }
-    single { GetWeeklyRankingSongsUseCase(it.get()) }
-    single { GetStationSongsUseCase(it.get()) }
-    single { GetGenresUseCase(it.get()) }
-    single { GetSongsByGenreUseCase(it.get()) }
-    single { ClearSongCacheUseCase(it.get()) }
-    single { SearchSongsUseCase(it.get()) }
-    single { SearchTemplatesUseCase(it.get()) }
+    single { GetSuggestedSongsUseCase(get(), get()) }
+    single { GetWeeklyRankingSongsUseCase(get()) }
+    single { GetStationSongsUseCase(get()) }
+    single { GetGenresUseCase(get()) }
+    single { GetSongsByGenreUseCase(get()) }
+    single { ClearSongCacheUseCase(get()) }
+    single { SearchSongsUseCase(get()) }
+    single { SearchTemplatesUseCase(get()) }
 }
 
 // ========== PRESENTATION LAYER MODULE ==========
@@ -412,9 +411,9 @@ val presentationModule = module {
     // Root ViewModel for RootViewActivity (handles loading, Firebase, navigation)
     viewModel {
         RootViewModel(
-            checkOnboardingStatusUseCase = it.get<CheckOnboardingStatusUseCase>(),
-            checkLanguageSelectedUseCase = it.get<CheckLanguageSelectedUseCase>(),
-            remoteConfig = it.get<RemoteConfig>()  // Firebase Remote Config (from firebaseModule)
+            checkOnboardingStatusUseCase = get(),
+            checkLanguageSelectedUseCase = get(),
+            remoteConfig = get()  // Firebase Remote Config (from firebaseModule)
         )
     }
 
@@ -423,38 +422,38 @@ val presentationModule = module {
         AssetPickerViewModelFactory(
             application = (androidContext().applicationContext as? android.app.Application)
                 ?: error("applicationContext is not an Application instance"),
-            createProjectUseCase = it.get(),
-            addAssetsUseCase = it.get(),
-            templateRepository = it.get(),
-            songRepository = it.get()
+            createProjectUseCase = get(),
+            addAssetsUseCase = get(),
+            templateRepository = get(),
+            songRepository = get()
         )
     }
 
     // Editor ViewModel factory (singleton - stateless factory)
     single {
         EditorViewModelFactory(
-            getProjectUseCase = it.get(),
-            createProjectUseCase = it.get(),
-            updateSettingsUseCase = it.get(),
-            reorderAssetsUseCase = it.get(),
-            addAssetsUseCase = it.get(),
-            removeAssetUseCase = it.get(),
-            songRepository = it.get()
+            getProjectUseCase = get(),
+            createProjectUseCase = get(),
+            updateSettingsUseCase = get(),
+            reorderAssetsUseCase = get(),
+            addAssetsUseCase = get(),
+            removeAssetUseCase = get(),
+            songRepository = get()
         )
     }
 
     // Export ViewModel factory (singleton - stateless factory)
     single {
         ExportViewModelFactory(
-            exportRepository = it.get()
+            exportRepository = get()
         )
     }
 
     // Projects ViewModel factory (singleton - stateless factory)
     single {
         ProjectsViewModelFactory(
-            getAllProjectsUseCase = it.get(),
-            deleteProjectUseCase = it.get()
+            getAllProjectsUseCase = get(),
+            deleteProjectUseCase = get()
         )
     }
 
@@ -472,50 +471,50 @@ val presentationModule = module {
         GalleryViewModelFactory(
             application = (androidContext().applicationContext as? android.app.Application)
                 ?: error("applicationContext is not an Application instance"),
-            imageLoader = it.get(),
-            templateRepository = it.get()
+            imageLoader = get(),
+            templateRepository = get()
         )
     }
 
     // Gallery Search ViewModel factory (singleton - stateless factory)
     single {
         GallerySearchViewModelFactory(
-            preferencesManager = it.get(),
-            templateRepository = it.get(),
-            searchTemplatesUseCase = it.get()
+            preferencesManager = get(),
+            templateRepository = get(),
+            searchTemplatesUseCase = get()
         )
     }
 
     // Songs ViewModel factory (singleton - stateless factory)
     single {
         SongsViewModelFactory(
-            getSuggestedSongsUseCase = it.get(),
-            getWeeklyRankingSongsUseCase = it.get(),
-            getStationSongsUseCase = it.get(),
-            getGenresUseCase = it.get(),
-            getSongsByGenreUseCase = it.get(),
-            clearSongCacheUseCase = it.get()
+            getSuggestedSongsUseCase = get(),
+            getWeeklyRankingSongsUseCase = get(),
+            getStationSongsUseCase = get(),
+            getGenresUseCase = get(),
+            getSongsByGenreUseCase = get(),
+            clearSongCacheUseCase = get()
         )
     }
 
     // Song Search ViewModel factory (singleton - stateless factory)
     single {
         SongSearchViewModelFactory(
-            preferencesManager = it.get(),
-            searchSongsUseCase = it.get(),
-            getGenresUseCase = it.get(),
-            getSuggestedSongsUseCase = it.get(),
-            getSongsByGenreUseCase = it.get()
+            preferencesManager = get(),
+            searchSongsUseCase = get(),
+            getGenresUseCase = get(),
+            getSuggestedSongsUseCase = get(),
+            getSongsByGenreUseCase = get()
         )
     }
 
     // Template Previewer ViewModel factory (singleton - stateless factory)
     single {
         TemplatePreviewerViewModelFactory(
-            templateRepository = it.get(),
-            songRepository = it.get(),
-            createProjectUseCase = it.get(),
-            updateProjectSettingsUseCase = it.get()
+            templateRepository = get(),
+            songRepository = get(),
+            createProjectUseCase = get(),
+            updateProjectSettingsUseCase = get()
         )
     }
 }

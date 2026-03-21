@@ -12,7 +12,8 @@ import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
-import co.alcheclub.lib.acccore.di.ACCDI
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import com.videomaker.aimusic.media.composition.CompositionFactory
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -31,7 +32,10 @@ import kotlin.coroutines.resumeWithException
 class VideoExportWorker(
     context: Context,
     params: WorkerParameters
-) : CoroutineWorker(context, params) {
+) : CoroutineWorker(context, params), KoinComponent {
+
+    private val projectRepository: ProjectRepository by inject()
+    private val compositionFactory: CompositionFactory by inject()
 
     companion object {
         private const val TAG = "VideoExportWorker"
@@ -50,9 +54,6 @@ class VideoExportWorker(
             ?: return Result.failure(workDataOf(KEY_ERROR to "Missing project ID"))
 
         return try {
-            val projectRepository: ProjectRepository = ACCDI.get()
-            val compositionFactory = ACCDI.get<CompositionFactory>()
-
             val project = projectRepository.getProject(projectId)
                 ?: return Result.failure(workDataOf(KEY_ERROR to "Project not found"))
 
@@ -61,7 +62,7 @@ class VideoExportWorker(
             }
 
             val outputFile = createOutputFile(projectId)
-            val composition = compositionFactory.createComposition(project)
+            val composition = compositionFactory.createComposition(project, includeAudio = true, forExport = true)
 
             try {
                 exportVideo(composition, outputFile.absolutePath)

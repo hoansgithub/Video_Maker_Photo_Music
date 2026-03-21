@@ -67,6 +67,16 @@ sealed class EditorUiState {
         val displaySettings: ProjectSettings get() = pendingSettings ?: project.settings
         val isProcessing: Boolean get() = processingState is VideoProcessingState.Preparing
         val canExport: Boolean get() = !isProcessing && processingState !is VideoProcessingState.Error
+
+        /**
+         * Project with pending settings applied - use this for preview/display
+         * This allows real-time preview of unsaved changes (e.g., volume slider)
+         */
+        val displayProject: Project get() = if (pendingSettings != null) {
+            project.copy(settings = pendingSettings)
+        } else {
+            project
+        }
     }
 
     data class Error(val message: String) : EditorUiState()
@@ -458,6 +468,7 @@ class EditorViewModel(
     }
 
     fun updateAudioVolume(volume: Float) {
+        // Store in pending settings - NO database write until user confirms
         updatePendingSettings { it.copy(audioVolume = volume) }
     }
 

@@ -56,6 +56,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -80,10 +81,9 @@ import com.videomaker.aimusic.ui.theme.PlayerCardBackground
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
-import com.videomaker.aimusic.modules.editor.components.AssetStrip
-import com.videomaker.aimusic.modules.editor.components.PlaybackSeekbar
 import com.videomaker.aimusic.modules.editor.components.SettingsPanel
 import com.videomaker.aimusic.modules.editor.components.VideoPreviewPlayer
+import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen
 
 /**
@@ -92,7 +92,7 @@ import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen
  * Layout:
  * - TopBar with back, title, and preview buttons
  * - Preview area showing current asset
- * - Timeline with horizontal scrollable asset thumbnails
+ * - Music section with playback controls
  * - Settings panel (expandable)
  * - Export button
  *
@@ -113,6 +113,7 @@ fun EditorScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showExitConfirmation by remember { mutableStateOf(false) }
     var showMusicPicker by remember { mutableStateOf(false) }
+    var showVolumeSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     // Music Picker ViewModel - created once and reused
@@ -168,7 +169,7 @@ fun EditorScreen(
                 }
                 is EditorUiState.Success -> {
                     EditorMainContent(
-                        project = state.project,
+                        project = state.displayProject, // Use displayProject to show pending changes in preview
                         isPlaying = state.isPlaying,
                         isProcessing = state.isProcessing,
                         currentPositionMs = state.currentPositionMs,
@@ -187,7 +188,7 @@ fun EditorScreen(
                         onEffectClick = { /* TODO: Open effect picker */ },
                         onImageDurationClick = { /* TODO: Open image duration picker */ },
                         onRatioClick = { /* TODO: Open ratio picker */ },
-                        onVolumeClick = { /* TODO: Open volume picker */ },
+                        onVolumeClick = { showVolumeSheet = true },
                         modifier = Modifier.padding(paddingValues)
                     )
                 }
@@ -264,6 +265,20 @@ fun EditorScreen(
                     showMusicPicker = false
                 }
             )
+        }
+
+        // Volume Bottom Sheet
+        if (showVolumeSheet) {
+            val successState = uiState as? EditorUiState.Success
+            if (successState != null) {
+                VolumeBottomSheet(
+                    currentVolume = successState.displaySettings.audioVolume,
+                    onVolumeChange = viewModel::updateAudioVolume,
+                    onDismiss = {
+                        showVolumeSheet = false
+                    }
+                )
+            }
         }
     }
 }
@@ -354,10 +369,11 @@ internal fun EditorTopBar(
                         DropdownMenuItem(
                             text = {
                                 Row(
-                                    horizontalArrangement = Arrangement.Start,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // HD badge for 1080p (on the left)
+                                    // HD badge for 1080p
                                     if (quality == VideoQuality.FHD_1080) {
                                         HdBadge()
                                         Spacer(modifier = Modifier.width(8.dp))
@@ -465,6 +481,9 @@ private fun MusicSection(
     currentPosition: Float,
     isPlaying: Boolean,
     onSeek: (Float) -> Unit,
+    onScrub: (Float) -> Unit = {},
+    onSeekStart: () -> Unit = {},
+    onSeekEnd: () -> Unit = {},
     onPlayPauseClick: () -> Unit,
     onExpandClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -475,6 +494,8 @@ private fun MusicSection(
     // Local state for smooth slider dragging (prevents jumps during drag)
     var isDragging by remember { mutableStateOf(false) }
     var localPosition by remember { mutableStateOf(currentPosition) }
+    // Track last scrub time for throttling (150ms)
+    var lastScrubTime by remember { mutableLongStateOf(0L) }
 
     // Update local position when not dragging (allows external position updates)
     if (!isDragging) {
@@ -509,16 +530,27 @@ private fun MusicSection(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Slider with smooth dragging
+            // Slider with smooth dragging and real-time scrubbing
             Slider(
                 value = localPosition.coerceIn(0f, 1f),
                 onValueChange = { newValue ->
-                    isDragging = true
+                    if (!isDragging) {
+                        isDragging = true
+                        onSeekStart() // Pause playback when starting to drag
+                    }
                     localPosition = newValue
+
+                    // Throttled scrubbing - show preview while dragging (150ms intervals)
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastScrubTime >= 150L) {
+                        lastScrubTime = currentTime
+                        onScrub(newValue) // Real-time preview during drag
+                    }
                 },
                 onValueChangeFinished = {
                     isDragging = false
-                    onSeek(localPosition) // Only seek when user releases
+                    onSeek(localPosition) // Seek when user releases
+                    onSeekEnd() // Resume playback
                 },
                 modifier = Modifier.weight(1f),
                 colors = SliderDefaults.colors(
@@ -628,6 +660,7 @@ private fun MusicSection(
 // ============================================
 @Composable
 private fun SettingsTabBar(
+    currentVolume: Float,
     onEffectClick: () -> Unit,
     onImageDurationClick: () -> Unit,
     onRatioClick: () -> Unit,
@@ -665,10 +698,10 @@ private fun SettingsTabBar(
             modifier = Modifier.weight(1f)
         )
 
-        // Volume button
+        // Volume button - shows current percentage
         SettingsTabButton(
             icon = Icons.AutoMirrored.Filled.VolumeUp,
-            label = "Volume",
+            label = "${(currentVolume * 100).toInt()}%",
             onClick = onVolumeClick,
             modifier = Modifier.weight(1f)
         )
@@ -795,6 +828,13 @@ internal fun EditorMainContent(
                     onSeek((position * durationMs).toLong())
                 }
             },
+            onScrub = { position ->
+                if (durationMs > 0) {
+                    onScrub((position * durationMs).toLong())
+                }
+            },
+            onSeekStart = onSeekStart,
+            onSeekEnd = onSeekEnd,
             onPlayPauseClick = onPlayPauseClick,
             onExpandClick = { /* TODO: Open music picker */ }
         )
@@ -813,6 +853,7 @@ internal fun EditorMainContent(
 
         // Settings Tab Bar - Effect, Duration, Ratio, Volume
         SettingsTabBar(
+            currentVolume = project.settings.audioVolume,
             onEffectClick = onEffectClick,
             onImageDurationClick = onImageDurationClick,
             onRatioClick = onRatioClick,

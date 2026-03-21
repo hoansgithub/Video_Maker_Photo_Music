@@ -39,6 +39,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.Player
 import androidx.media3.transformer.CompositionPlayer
 import androidx.media3.ui.PlayerView
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.media.composition.CompositionFactory
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -182,7 +183,7 @@ fun VideoPreviewPlayer(
     val playerReadyFlow = remember { MutableStateFlow(false) }
 
     // Create composition factory
-    val compositionFactory = remember { co.alcheclub.lib.acccore.di.ACCDI.get<CompositionFactory>() }
+    val compositionFactory: CompositionFactory = koinInject()
 
     // Handler for periodic position updates
     val positionHandler = remember { Handler(Looper.getMainLooper()) }
@@ -241,13 +242,21 @@ fun VideoPreviewPlayer(
         }
     }
 
-    // Key that changes when project or settings change
+    // Key that changes when project or settings change (EXCEPT volume)
+    // Volume changes are handled separately via player.setVolume() for instant feedback
     val compositionKey = remember(
         project.id,
         project.assets.joinToString(",") { it.id },
-        project.settings
+        project.settings.effectSetId,
+        project.settings.imageDurationMs,
+        project.settings.transitionPercentage,
+        project.settings.overlayFrameId,
+        project.settings.musicSongId,
+        project.settings.customAudioUri,
+        project.settings.aspectRatio
+        // audioVolume intentionally excluded - handled separately
     ) {
-        "${project.id}_${project.assets.joinToString(",") { it.id }}_${project.settings.hashCode()}"
+        "${project.id}_${project.assets.joinToString(",") { it.id }}_${project.settings.effectSetId}_${project.settings.imageDurationMs}_${project.settings.transitionPercentage}_${project.settings.overlayFrameId}_${project.settings.musicSongId}_${project.settings.customAudioUri}_${project.settings.aspectRatio}"
     }
 
     // Build composition when key changes
@@ -280,6 +289,7 @@ fun VideoPreviewPlayer(
             val newPlayer = CompositionPlayer.Builder(context).build()
             newPlayer.setComposition(composition)
             newPlayer.repeatMode = Player.REPEAT_MODE_OFF
+            newPlayer.volume = project.settings.audioVolume // Set initial volume
             newPlayer.prepare()
 
             // Add listener for playback state changes
@@ -330,12 +340,40 @@ fun VideoPreviewPlayer(
         }
     }
 
+    // Real-time volume control - NO composition rebuild required!
+    // Uses player.setVolume() for instant feedback without re-processing
+    LaunchedEffect(project.settings.audioVolume, player, previewState) {
+        // THREAD SAFETY: Ensure player access happens on main thread
+        withContext(Dispatchers.Main.immediate) {
+            val currentPlayer = player ?: return@withContext
+
+            // Don't try to set volume if player is in error state
+            // This prevents infinite waiting without arbitrary timeout
+            if (previewState is PreviewState.Error) return@withContext
+
+            // Wait for player to be ready (no timeout - can take as long as needed)
+            // If player errors, previewState becomes Error and effect restarts (early return above)
+            if (!playerReadyFlow.value) {
+                playerReadyFlow.first { it }
+            }
+
+            // Set player volume (0.0 to 1.0)
+            // This is instant - no composition rebuild needed!
+            currentPlayer.volume = project.settings.audioVolume
+        }
+    }
+
     // Control playback based on isPlaying state
-    LaunchedEffect(isPlaying, player) {
+    LaunchedEffect(isPlaying, player, previewState) {
         val currentPlayer = player ?: return@LaunchedEffect
+
+        // Don't try to play if player is in error state
+        if (previewState is PreviewState.Error) return@LaunchedEffect
 
         if (isPlaying) {
             try {
+                // Wait for player to be ready (no timeout - can take as long as needed for large projects)
+                // If player errors, previewState becomes Error and effect restarts (early return above)
                 if (!playerReadyFlow.value) {
                     playerReadyFlow.first { it }
                 }

@@ -24,8 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import co.alcheclub.lib.acccore.di.ACCDI
-import co.alcheclub.lib.acccore.di.get
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.di.AssetPickerViewModelFactory
 import com.videomaker.aimusic.di.EditorViewModelFactory
@@ -107,12 +106,12 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             // HOME LEVEL
             // ============================================
             entry<AppRoute.Home> {
-                val galleryFactory = remember { ACCDI.get<GalleryViewModelFactory>() }
+                val galleryFactory = koinInject<GalleryViewModelFactory>()
                 val galleryViewModel: GalleryViewModel = viewModel(
                     key = "gallery",
                     factory = createSafeViewModelFactory { galleryFactory.create() }
                 )
-                val songsFactory = remember { ACCDI.get<SongsViewModelFactory>() }
+                val songsFactory = koinInject<SongsViewModelFactory>()
                 val songsViewModel: SongsViewModel = viewModel(
                     key = "songs",
                     factory = createSafeViewModelFactory { songsFactory.create() }
@@ -144,7 +143,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             }
 
             entry<AppRoute.Search> {
-                val factory = remember { ACCDI.get<GallerySearchViewModelFactory>() }
+                val factory = koinInject<GallerySearchViewModelFactory>()
                 val searchViewModel: GallerySearchViewModel = viewModel(
                     key = "gallery_search",
                     factory = createSafeViewModelFactory { factory.create() }
@@ -163,7 +162,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             }
 
             entry<AppRoute.SongSearch> {
-                val factory = remember { ACCDI.get<SongSearchViewModelFactory>() }
+                val factory = koinInject<SongSearchViewModelFactory>()
                 val songSearchViewModel: SongSearchViewModel = viewModel(
                     key = "song_search",
                     factory = createSafeViewModelFactory { factory.create() }
@@ -186,9 +185,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             // CREATE FLOW
             // ============================================
             entry<AppRoute.AssetPicker> { route ->
-                val factory = remember(route.projectId, route.templateId, route.overrideSongId) {
-                    ACCDI.get<AssetPickerViewModelFactory>()
-                }
+                val factory: AssetPickerViewModelFactory = koinInject()
                 val pickerViewModel: AssetPickerViewModel = viewModel(
                     key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}",
                     factory = createSafeViewModelFactory {
@@ -236,10 +233,8 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             }
 
             entry<AppRoute.Editor> { route ->
-                val factory = remember(route.projectId, route.initialData) {
-                    ACCDI.get<EditorViewModelFactory>()
-                }
-                val musicPickerFactory = remember { ACCDI.get<MusicPickerViewModelFactory>() }
+                val factory: EditorViewModelFactory = koinInject()
+                val musicPickerFactory: MusicPickerViewModelFactory = koinInject()
                 val editorViewModel: EditorViewModel = viewModel(
                     key = "editor_${route.projectId ?: route.initialData.hashCode()}",
                     factory = createSafeViewModelFactory {
@@ -270,7 +265,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             }
 
             entry<AppRoute.Export> { route ->
-                val factory = remember(route.projectId) { ACCDI.get<ExportViewModelFactory>() }
+                val factory: ExportViewModelFactory = koinInject()
                 val exportViewModel: ExportViewModel = viewModel(
                     key = "export_${route.projectId}",
                     factory = createSafeViewModelFactory { factory.create(route.projectId) }
@@ -285,7 +280,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             // PROJECTS
             // ============================================
             entry<AppRoute.Projects> {
-                val factory = remember { ACCDI.get<ProjectsViewModelFactory>() }
+                val factory = koinInject<ProjectsViewModelFactory>()
                 val projectsViewModel: ProjectsViewModel = viewModel(
                     key = "projects",
                     factory = createSafeViewModelFactory { factory.create() }
@@ -302,10 +297,8 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             // TEMPLATE FLOW
             // ============================================
             entry<AppRoute.TemplatePreviewer> { route ->
-                val factory = remember(route.templateId, route.imageUris, route.overrideSongId) {
-                    ACCDI.get<TemplatePreviewerViewModelFactory>()
-                }
-                val audioCache = remember { ACCDI.get<AudioPreviewCache>() }
+                val factory: TemplatePreviewerViewModelFactory = koinInject()
+                val audioCache: AudioPreviewCache = koinInject()
                 val viewModel: TemplatePreviewerViewModel = viewModel(
                     key = "template_previewer_${route.templateId}_${route.overrideSongId}",
                     factory = createSafeViewModelFactory {
