@@ -279,10 +279,7 @@ fun EditorScreen(
             if (successState != null) {
                 VolumeBottomSheet(
                     currentVolume = successState.displaySettings.audioVolume,
-                    onConfirm = { volume ->
-                        viewModel.updateAudioVolume(volume)
-                        showVolumeSheet = false
-                    },
+                    onVolumeChange = viewModel::updateAudioVolume, // Live updates
                     onDismiss = {
                         showVolumeSheet = false
                     }

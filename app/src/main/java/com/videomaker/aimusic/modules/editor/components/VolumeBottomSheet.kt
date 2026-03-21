@@ -4,11 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -32,17 +29,17 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 
 /**
- * VolumeBottomSheet - Bottom sheet for adjusting music volume
+ * VolumeBottomSheet - Bottom sheet for adjusting music volume with live updates
  *
  * @param currentVolume Current volume level (0.0 to 1.0)
- * @param onConfirm Callback when Apply is clicked (0.0 to 1.0)
+ * @param onVolumeChange Callback when volume changes (live updates)
  * @param onDismiss Callback when bottom sheet is dismissed
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VolumeBottomSheet(
     currentVolume: Float,
-    onConfirm: (Float) -> Unit,
+    onVolumeChange: (Float) -> Unit,
     onDismiss: () -> Unit
 ) {
     var volumeValue by remember { mutableFloatStateOf(currentVolume) }
@@ -70,7 +67,7 @@ fun VolumeBottomSheet(
                 fontWeight = FontWeight.SemiBold
             )
 
-            // Selected volume display
+            // Live volume display
             Text(
                 text = "${(volumeValue * 100).toInt()}%",
                 color = MaterialTheme.colorScheme.primary,
@@ -78,7 +75,7 @@ fun VolumeBottomSheet(
                 fontWeight = FontWeight.Bold
             )
 
-            // Slider
+            // Slider with live updates
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -86,7 +83,10 @@ fun VolumeBottomSheet(
             ) {
                 Slider(
                     value = volumeValue,
-                    onValueChange = { volumeValue = it },
+                    onValueChange = { newValue ->
+                        volumeValue = newValue
+                        onVolumeChange(newValue) // Live update
+                    },
                     valueRange = 0f..1f,
                     colors = SliderDefaults.colors(
                         thumbColor = MaterialTheme.colorScheme.primary,
@@ -112,24 +112,6 @@ fun VolumeBottomSheet(
                         fontSize = 12.sp
                     )
                 }
-            }
-
-            // Apply button
-            Button(
-                onClick = { onConfirm(volumeValue) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(
-                    text = "Apply",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
             }
         }
     }
