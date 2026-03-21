@@ -426,6 +426,17 @@ val presentationModule = module {
         )
     }
 
+    // Song Search ViewModel
+    viewModel {
+        com.videomaker.aimusic.modules.songsearch.SongSearchViewModel(
+            preferencesManager = get(),
+            searchSongsUseCase = get(),
+            getGenresUseCase = get(),
+            getSuggestedSongsUseCase = get(),
+            getSongsByGenreUseCase = get()
+        )
+    }
+
     // Asset Picker ViewModel factory (needs projectId parameter)
     single {
         AssetPickerViewModelFactory(

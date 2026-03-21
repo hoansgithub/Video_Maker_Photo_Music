@@ -4,9 +4,11 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,20 +23,11 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.AspectRatio
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -44,13 +37,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -58,13 +46,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,18 +62,23 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.di.MusicPickerViewModelFactory
-import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
-import com.videomaker.aimusic.ui.theme.Gray500
-import com.videomaker.aimusic.ui.theme.PlayerCardBackground
-import com.videomaker.aimusic.ui.theme.SplashBackground
-import com.videomaker.aimusic.ui.theme.TextPrimary
-import com.videomaker.aimusic.ui.theme.TextSecondary
+import com.videomaker.aimusic.modules.editor.components.DurationBottomSheet
+import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
+import com.videomaker.aimusic.modules.editor.components.MusicSection
+import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
 import com.videomaker.aimusic.modules.editor.components.SettingsPanel
+import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
 import com.videomaker.aimusic.modules.editor.components.VideoPreviewPlayer
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen
+import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
+import com.videomaker.aimusic.ui.theme.SplashBackground
+import com.videomaker.aimusic.ui.theme.TextPrimary
+import com.videomaker.aimusic.ui.theme.TextSecondary
+import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 /**
  * EditorScreen - Main video editor screen
@@ -120,6 +110,7 @@ fun EditorScreen(
     var showVolumeSheet by remember { mutableStateOf(false) }
     var showRatioSheet by remember { mutableStateOf(false) }
     var showDurationSheet by remember { mutableStateOf(false) }
+    var showMusicSearchSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     // Music Picker ViewModel - created once and reused
@@ -195,6 +186,7 @@ fun EditorScreen(
                         onImageDurationClick = { showDurationSheet = true },
                         onRatioClick = { showRatioSheet = true },
                         onVolumeClick = { showVolumeSheet = true },
+                        onMusicClick = { showMusicSearchSheet = true },
                         modifier = Modifier.padding(paddingValues)
                     )
                 }
@@ -316,6 +308,24 @@ fun EditorScreen(
                 )
             }
         }
+
+        // Music Search Bottom Sheet
+        if (showMusicSearchSheet) {
+            val searchViewModel: SongSearchViewModel = koinViewModel()
+            MusicSearchBottomSheet(
+                viewModel = searchViewModel,
+                onSongSelected = { song ->
+                    viewModel.updateMusicTrack(
+                        songId = song.id,
+                        songName = song.name,
+                        songUrl = song.mp3Url,
+                        songCoverUrl = song.coverUrl
+                    )
+                    showMusicSearchSheet = false
+                },
+                onDismiss = { showMusicSearchSheet = false }
+            )
+        }
     }
 }
 
@@ -330,7 +340,7 @@ private fun HdBadge(modifier: Modifier = Modifier) {
             .padding(horizontal = 4.dp, vertical = 2.dp)
     ) {
         Text(
-            text = "HD",
+            text = stringResource(R.string.editor_hd),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onPrimary
@@ -391,7 +401,7 @@ internal fun EditorTopBar(
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Select quality",
+                        contentDescription = stringResource(R.string.editor_select_quality),
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -510,271 +520,7 @@ internal fun ErrorContent(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MusicSection(
-    songName: String,
-    duration: String,
-    currentPosition: Float,
-    isPlaying: Boolean,
-    onSeek: (Float) -> Unit,
-    onScrub: (Float) -> Unit = {},
-    onSeekStart: () -> Unit = {},
-    onSeekEnd: () -> Unit = {},
-    onPlayPauseClick: () -> Unit,
-    onExpandClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // Hoist interaction source to prevent recreation on every recomposition
-    val sliderInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-
-    // Local state for smooth slider dragging (prevents jumps during drag)
-    var isDragging by remember { mutableStateOf(false) }
-    var localPosition by remember { mutableStateOf(currentPosition) }
-    // Track last scrub time for throttling (150ms)
-    var lastScrubTime by remember { mutableLongStateOf(0L) }
-
-    // Update local position when not dragging (allows external position updates)
-    if (!isDragging) {
-        localPosition = currentPosition
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(PlayerCardBackground)
-            .padding(12.dp)
-    ) {
-        // Seeker row - TOP
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Play/pause button
-            IconButton(
-                onClick = onPlayPauseClick,
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = TextPrimary,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Slider with smooth dragging and real-time scrubbing
-            Slider(
-                value = localPosition.coerceIn(0f, 1f),
-                onValueChange = { newValue ->
-                    if (!isDragging) {
-                        isDragging = true
-                        onSeekStart() // Pause playback when starting to drag
-                    }
-                    localPosition = newValue
-
-                    // Throttled scrubbing - show preview while dragging (150ms intervals)
-                    val currentTime = System.currentTimeMillis()
-                    if (currentTime - lastScrubTime >= 150L) {
-                        lastScrubTime = currentTime
-                        onScrub(newValue) // Real-time preview during drag
-                    }
-                },
-                onValueChangeFinished = {
-                    isDragging = false
-                    onSeek(localPosition) // Seek when user releases
-                    onSeekEnd() // Resume playback
-                },
-                modifier = Modifier.weight(1f),
-                colors = SliderDefaults.colors(
-                    thumbColor = TextPrimary,
-                    activeTrackColor = TextPrimary,
-                    inactiveTrackColor = Gray500,
-                    activeTickColor = Color.Transparent,
-                    inactiveTickColor = Color.Transparent
-                ),
-                thumb = {
-                    SliderDefaults.Thumb(
-                        interactionSource = sliderInteractionSource,
-                        thumbSize = androidx.compose.ui.unit.DpSize(18.dp, 18.dp),
-                        colors = SliderDefaults.colors(thumbColor = TextPrimary)
-                    )
-                },
-                track = { sliderState ->
-                    SliderDefaults.Track(
-                        sliderState = sliderState,
-                        modifier = Modifier.height(4.dp),
-                        colors = SliderDefaults.colors(
-                            activeTrackColor = TextPrimary,
-                            inactiveTrackColor = Gray500,
-                            activeTickColor = Color.Transparent,
-                            inactiveTickColor = Color.Transparent
-                        ),
-                        drawStopIndicator = null
-                    )
-                }
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Duration
-            Text(
-                text = duration,
-                fontSize = 13.sp,
-                color = TextSecondary,
-                modifier = Modifier.width(36.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Separator line
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(Color.White.copy(alpha = 0.1f))
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Song info row - BOTTOM
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Music icon
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MusicNote,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Song name
-            Text(
-                text = songName,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary,
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Expand button - matches quality selector icon
-            Icon(
-                imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = "Expand music options",
-                tint = TextSecondary,
-                modifier = Modifier
-                    .size(24.dp)
-                    .clickable(onClick = onExpandClick)
-            )
-        }
-    }
-}
-
-// ============================================
-// SETTINGS TAB BAR
-// Effect, Duration, Ratio, Volume tabs
-// ============================================
-@Composable
-private fun SettingsTabBar(
-    currentVolume: Float,
-    currentRatio: AspectRatio,
-    currentDurationMs: Long,
-    onEffectClick: () -> Unit,
-    onImageDurationClick: () -> Unit,
-    onRatioClick: () -> Unit,
-    onVolumeClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(SplashBackground)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        // Effect button
-        SettingsTabButton(
-            icon = Icons.Default.AutoAwesome,
-            label = "Effect",
-            onClick = onEffectClick,
-            modifier = Modifier.weight(1f)
-        )
-
-        // Image Duration button - shows current duration
-        SettingsTabButton(
-            icon = Icons.Default.Schedule,
-            label = "${currentDurationMs / 1000f}s",
-            onClick = onImageDurationClick,
-            modifier = Modifier.weight(1f)
-        )
-
-        // Ratio button - shows current ratio
-        SettingsTabButton(
-            icon = Icons.Default.AspectRatio,
-            label = currentRatio.shortLabel,
-            onClick = onRatioClick,
-            modifier = Modifier.weight(1f)
-        )
-
-        // Volume button - shows current percentage
-        SettingsTabButton(
-            icon = Icons.AutoMirrored.Filled.VolumeUp,
-            label = "${(currentVolume * 100).toInt()}%",
-            onClick = onVolumeClick,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun SettingsTabButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = TextPrimary,
-            modifier = Modifier.size(28.dp)
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = TextPrimary
-        )
-    }
-}
+// MusicSection, SettingsTabBar, and SettingsTabButton moved to components/ package
 
 @Composable
 internal fun EditorMainContent(
@@ -798,6 +544,7 @@ internal fun EditorMainContent(
     onImageDurationClick: () -> Unit,
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit,
+    onMusicClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -858,6 +605,7 @@ internal fun EditorMainContent(
         // Music Section - song info and player
         MusicSection(
             songName = project.settings.musicSongName ?: "No music selected",
+            coverUrl = project.settings.musicSongCoverUrl ?: "",
             duration = project.formattedDuration,
             currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,
             isPlaying = isPlaying,
@@ -874,7 +622,7 @@ internal fun EditorMainContent(
             onSeekStart = onSeekStart,
             onSeekEnd = onSeekEnd,
             onPlayPauseClick = onPlayPauseClick,
-            onExpandClick = { /* TODO: Open music picker */ }
+            onMusicClick = onMusicClick
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -1022,258 +770,5 @@ private fun ExitConfirmationDialog(
     }
 }
 
-// ============================================
-// ASPECT RATIO EXTENSION
-// ============================================
-
-private val AspectRatio.shortLabel: String
-    get() = when (this) {
-        AspectRatio.RATIO_16_9 -> "16:9"
-        AspectRatio.RATIO_9_16 -> "9:16"
-        AspectRatio.RATIO_4_5 -> "4:5"
-        AspectRatio.RATIO_1_1 -> "1:1"
-    }
-
-// ============================================
-// SELECT RATIO BOTTOM SHEET
-// ============================================
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SelectRatioBottomSheet(
-    currentRatio: AspectRatio,
-    onDismiss: () -> Unit,
-    onConfirm: (AspectRatio) -> Unit
-) {
-    var selected by remember { mutableStateOf(currentRatio) }
-    val sheetState = rememberModalBottomSheetState()
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Select Video Ratio",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary
-            )
-
-            // Ratio options grid
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                listOf(
-                    AspectRatio.RATIO_16_9,
-                    AspectRatio.RATIO_9_16,
-                    AspectRatio.RATIO_4_5,
-                    AspectRatio.RATIO_1_1
-                ).forEach { ratio ->
-                    RatioOptionCard(
-                        ratio = ratio,
-                        isSelected = ratio == selected,
-                        onClick = { selected = ratio },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
-            // Confirm button
-            Button(
-                onClick = {
-                    onConfirm(selected)
-                    onDismiss()
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(
-                    text = "Apply",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RatioOptionCard(
-    ratio: AspectRatio,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else Gray500
-    val borderWidth = if (isSelected) 2.dp else 1.dp
-    val backgroundColor = if (isSelected) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        SplashBackground
-    }
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .border(borderWidth, borderColor, RoundedCornerShape(12.dp))
-            .background(backgroundColor)
-            .clickable { onClick() }
-            .padding(vertical = 16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Aspect ratio icon
-            AspectRatioIcon(ratio = ratio, isSelected = isSelected)
-
-            // Label
-            Text(
-                text = ratio.shortLabel,
-                color = if (isSelected) MaterialTheme.colorScheme.primary else TextPrimary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
-
-@Composable
-private fun AspectRatioIcon(
-    ratio: AspectRatio,
-    isSelected: Boolean
-) {
-    val color = if (isSelected) MaterialTheme.colorScheme.primary else Gray500
-    val maxSize = 36.dp
-    val (iconW, iconH) = when (ratio) {
-        AspectRatio.RATIO_16_9 -> maxSize to (maxSize * (9f / 16f))
-        AspectRatio.RATIO_9_16 -> (maxSize * (9f / 16f)) to maxSize
-        AspectRatio.RATIO_4_5 -> (maxSize * (4f / 5f)) to maxSize
-        AspectRatio.RATIO_1_1 -> maxSize to maxSize
-    }
-
-    Box(
-        modifier = Modifier
-            .size(width = iconW, height = iconH)
-            .border(1.5.dp, color, RoundedCornerShape(4.dp))
-    )
-}
-
-// ============================================
-// DURATION BOTTOM SHEET
-// ============================================
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DurationBottomSheet(
-    currentDurationMs: Long,
-    onDismiss: () -> Unit,
-    onConfirm: (Long) -> Unit
-) {
-    // Convert ms to seconds for slider (default 3s if current is 0 or out of range)
-    val currentSeconds = (currentDurationMs / 1000f).coerceIn(1f, 20f)
-    var sliderValue by remember { mutableFloatStateOf(currentSeconds) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = SplashBackground,
-        dragHandle = null,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(top = 24.dp, bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Text(
-                text = "Image Duration",
-                color = TextPrimary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            // Selected duration display
-            Text(
-                text = "${sliderValue.toInt()}s",
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            // Slider
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-            ) {
-                Slider(
-                    value = sliderValue,
-                    onValueChange = { sliderValue = it },
-                    valueRange = 1f..20f,
-                    steps = 18, // 19 discrete values (1-20 inclusive)
-                    colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.primary,
-                        activeTrackColor = MaterialTheme.colorScheme.primary,
-                        inactiveTrackColor = Gray500
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Min/Max labels
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "1s",
-                        color = TextSecondary,
-                        fontSize = 12.sp
-                    )
-                    Text(
-                        text = "20s",
-                        color = TextSecondary,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-
-            // Apply button
-            Button(
-                onClick = { onConfirm((sliderValue.toInt() * 1000).toLong()) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(
-                    text = "Apply",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-    }
-}
+// SelectRatioBottomSheet, RatioOptionCard, AspectRatioIcon, DurationBottomSheet,
+// and MusicSearchBottomSheet moved to components/ package

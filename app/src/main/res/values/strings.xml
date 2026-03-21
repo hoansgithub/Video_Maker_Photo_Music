@@ -68,6 +68,15 @@
     <string name="editor_music">Music</string>
     <string name="editor_aspect_ratio">Aspect Ratio</string>
     <string name="editor_volume">Volume</string>
+    <string name="editor_effect">Effect</string>
+    <string name="editor_select_video_ratio">Select Video Ratio</string>
+    <string name="editor_apply">Apply</string>
+    <string name="editor_image_duration">Image Duration</string>
+    <string name="editor_change_music">Change music</string>
+    <string name="editor_select_quality">Select quality</string>
+    <string name="editor_hd">HD</string>
+    <string name="editor_play">Play</string>
+    <string name="editor_pause">Pause</string>
     <string name="editor_duration_format">Duration: %s</string>
     <string name="editor_photos_count">%d photos</string>
     <string name="editor_save_dialog_title">Save Project?</string>
@@ -210,6 +219,8 @@
     <string name="song_search_explore_by_genre">Explore by Genre</string>
     <string name="song_search_suggested">Suggested for You</string>
     <string name="song_search_no_results">No songs found</string>
+    <string name="song_search_change_music">Change Music</string>
+    <string name="song_search_idle_hint">Start typing to search for songs</string>
 
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Start your journey</string>

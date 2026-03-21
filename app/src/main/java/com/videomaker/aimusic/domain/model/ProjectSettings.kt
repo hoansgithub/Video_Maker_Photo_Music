@@ -25,6 +25,7 @@ import android.net.Uri
  * @param musicSongId ID of Supabase MusicSong selected for this project (null = none)
  * @param musicSongName Cached song name for display purposes (null = none)
  * @param musicSongUrl Supabase song mp3 URL stored for offline composition (null = none)
+ * @param musicSongCoverUrl Supabase song cover image URL for display (null = none)
  * @param customAudioUri User's custom audio URI from device (overrides musicSongId)
  * @param audioVolume Music volume (0.0 to 1.0)
  * @param aspectRatio Output video aspect ratio
@@ -37,6 +38,7 @@ data class ProjectSettings(
     val musicSongId: Long? = null,
     val musicSongName: String? = null, // Cached for display only
     val musicSongUrl: String? = null, // Cached for offline playback
+    val musicSongCoverUrl: String? = null, // Cached for display only
     val customAudioUri: Uri? = null,
     val audioVolume: Float = 1.0f,
     val aspectRatio: AspectRatio = AspectRatio.RATIO_9_16

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,13 +22,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
@@ -95,15 +91,6 @@ fun SongListItem(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-
-            Spacer(modifier = Modifier.width(dimens.spaceXs))
-
-            Icon(
-                painter = painterResource(R.drawable.ic_start_project),
-                contentDescription = stringResource(R.string.start_project),
-                tint = Color.Unspecified,
-                modifier = Modifier.size(36.dp)
-            )
         }
     }
 }
@@ -147,11 +134,5 @@ fun SongListItemPlaceholder(modifier: Modifier = Modifier) {
                     .clip(RoundedCornerShape(4.dp))
             )
         }
-        Spacer(modifier = Modifier.width(dimens.spaceXs))
-        ShimmerBox(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(4.dp))
-        )
     }
 }

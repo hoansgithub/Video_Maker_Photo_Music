@@ -453,9 +453,23 @@ class EditorViewModel(
                     musicSongId = songId,
                     musicSongName = song?.name,
                     musicSongUrl = song?.mp3Url,
+                    musicSongCoverUrl = song?.coverUrl,
                     customAudioUri = null
                 )
             }
+        }
+    }
+
+    fun updateMusicTrack(songId: Long, songName: String, songUrl: String, songCoverUrl: String) {
+        // Direct update with all song details (no fetch needed)
+        updatePendingSettings {
+            it.copy(
+                musicSongId = songId,
+                musicSongName = songName,
+                musicSongUrl = songUrl,
+                musicSongCoverUrl = songCoverUrl,
+                customAudioUri = null
+            )
         }
     }
 
