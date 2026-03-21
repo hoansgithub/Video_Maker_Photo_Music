@@ -4,8 +4,8 @@
 # ============================================
 # Using 8.13.2 for Pangle SDK compatibility (AGP 9.0 has strict namespace validation)
 agp = "8.13.2"
-kotlin = "2.1.0"
-ksp = "2.1.0-1.0.29"
+kotlin = "2.3.20"  # Upgraded to match ACCCoreAndroid
+ksp = "2.3.6"  # KSP2 for Kotlin 2.3.20
 
 # ============================================
 # ANDROIDX CORE
@@ -51,14 +51,19 @@ kotlinxSerialization = "1.7.3"
 workManager = "2.11.0"
 
 # ============================================
+# DEPENDENCY INJECTION (Koin)
+# ============================================
+koin = "4.2.0"  # Matches ACCCoreAndroid
+
+# ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.18"  # From GitHub Packages
+# acccore = "0.0.18"  # From GitHub Packages - COMMENTED OUT (using local build)
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)
 # ============================================
-firebaseBom = "34.6.0"
+firebaseBom = "34.7.0"  # Matches ACCCoreAndroid
 
 # ============================================
 # MONETIZATION (Optional)
@@ -88,12 +93,12 @@ espressoCore = "3.7.0"
 # ============================================
 # ACCCORE - AlcheClub Custom DI & Services
 # ============================================
-# GitHub Packages - co.alcheclub.lib group
-acccore = { module = "co.alcheclub.lib:acccore", version.ref = "acccore" }
-acccore-firebase = { module = "co.alcheclub.lib:acccore-firebase", version.ref = "acccore" }
-acccore-revenuecat = { module = "co.alcheclub.lib:acccore-revenuecat", version.ref = "acccore" }
-acccore-ads = { module = "co.alcheclub.lib:acccore-ads", version.ref = "acccore" }
-acccore-appsflyer = { module = "co.alcheclub.lib:acccore-appsflyer", version.ref = "acccore" }
+# Using local composite build - no version needed (versions come from ACCCoreAndroid/gradle/libs.versions.toml)
+acccore = { module = "co.alcheclub.lib:acccore" }
+acccore-firebase = { module = "co.alcheclub.lib:acccore-firebase" }
+acccore-revenuecat = { module = "co.alcheclub.lib:acccore-revenuecat" }
+acccore-ads = { module = "co.alcheclub.lib:acccore-ads" }
+acccore-appsflyer = { module = "co.alcheclub.lib:acccore-appsflyer" }
 
 # ============================================
 # ANDROIDX CORE
@@ -188,6 +193,14 @@ coil-video = { group = "io.coil-kt", name = "coil-video", version.ref = "coil" }
 # ============================================
 play-review = { group = "com.google.android.play", name = "review", version = "2.0.2" }
 play-review-ktx = { group = "com.google.android.play", name = "review-ktx", version = "2.0.2" }
+
+# ============================================
+# DEPENDENCY INJECTION (Koin) - Matches ACCCoreAndroid
+# ============================================
+koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
+koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }
+koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koin" }
+koin-test-junit4 = { group = "io.insert-koin", name = "koin-test-junit4", version.ref = "koin" }
 
 # ============================================
 # SUPABASE

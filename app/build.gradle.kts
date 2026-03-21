@@ -137,10 +137,10 @@ android {
     }
 }
 
-// Kotlin JVM target configuration for AGP 8.x
+// Kotlin JVM target configuration for Kotlin 2.3.20+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    kotlinOptions {
-        jvmTarget = "17"
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
@@ -228,13 +228,20 @@ dependencies {
     // implementation(libs.supabase.auth)  // Uncomment when auth needed
 
     // ============================================
-    // ACCCORE - AlcheClub DI & Services
+    // DEPENDENCY INJECTION (Koin) - Matches ACCCoreAndroid
     // ============================================
-    implementation(libs.acccore)
-    implementation(libs.acccore.firebase)    // Firebase Analytics, Crashlytics, RemoteConfig, Performance
-    // implementation(libs.acccore.revenuecat)  // Uncomment when RevenueCat needed
-    // implementation(libs.acccore.ads)         // Uncomment when Ads needed
-    // implementation(libs.acccore.appsflyer)   // Uncomment when AppsFlyer needed
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+
+    // ============================================
+    // ACCCORE - AlcheClub DI & Services (LOCAL COMPOSITE BUILD)
+    // Using local ACCCoreAndroid for testing
+    // ============================================
+    implementation("co.alcheclub.lib:acccore")  // Local composite build
+    implementation("co.alcheclub.lib:acccore-firebase")    // Firebase Analytics, Crashlytics, RemoteConfig, Performance
+    // implementation("co.alcheclub.lib:acccore-revenuecat")  // Uncomment when RevenueCat needed
+    // implementation("co.alcheclub.lib:acccore-ads")         // Uncomment when Ads needed
+    // implementation("co.alcheclub.lib:acccore-appsflyer")   // Uncomment when AppsFlyer needed
 
     // ============================================
     // UI UTILITIES
@@ -254,6 +261,8 @@ dependencies {
     // TESTING
     // ============================================
     testImplementation(libs.junit)
+    testImplementation(libs.koin.test)
+    testImplementation(libs.koin.test.junit4)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
