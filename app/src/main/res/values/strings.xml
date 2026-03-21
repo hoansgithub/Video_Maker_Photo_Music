@@ -91,6 +91,8 @@
     <string name="editor_unsaved_changes_message">If you leave now, your changes will be lost. Are you sure you want to leave?</string>
     <string name="editor_keep_editing">Keep Editing</string>
     <string name="editor_discard">Discard</string>
+    <string name="editor_effect_sets">Effect Sets</string>
+    <string name="editor_retry">Retry</string>
 
     <!-- Projects -->
     <string name="projects_title">My Projects</string>

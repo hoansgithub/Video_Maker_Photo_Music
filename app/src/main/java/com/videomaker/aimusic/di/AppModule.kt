@@ -11,19 +11,21 @@ import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.data.local.RegionProvider
 import com.videomaker.aimusic.data.local.database.ProjectDatabase
 import com.videomaker.aimusic.data.remote.SupabaseClientProvider
+import com.videomaker.aimusic.data.repository.EffectSetRepositoryImpl
 import com.videomaker.aimusic.data.repository.ExportRepositoryImpl
 import com.videomaker.aimusic.data.repository.ProjectRepositoryImpl
 import com.videomaker.aimusic.data.repository.SongRepositoryImpl
 import com.videomaker.aimusic.data.repository.TemplateRepositoryImpl
+import com.videomaker.aimusic.domain.repository.EffectSetRepository
 import com.videomaker.aimusic.domain.repository.ExportRepository
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.ClearSongCacheUseCase
+import com.videomaker.aimusic.domain.usecase.GetEffectSetsPagedUseCase
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
 import com.videomaker.aimusic.domain.usecase.GetSongsByGenreUseCase
-
 import com.videomaker.aimusic.domain.usecase.GetStationSongsUseCase
 import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.GetWeeklyRankingSongsUseCase
@@ -115,6 +117,7 @@ val dataModule = module {
     single<ExportRepository> { ExportRepositoryImpl(get()) }
     single<SongRepository> { SongRepositoryImpl(get(), get(), regionProvider = get()) }
     single<TemplateRepository> { TemplateRepositoryImpl(get(), get(), regionProvider = get()) }
+    single<EffectSetRepository> { EffectSetRepositoryImpl(get(), get(), get()) }
 }
 
 // ========== MEDIA LAYER MODULE ==========
@@ -183,6 +186,9 @@ val domainModule = module {
     single { ClearSongCacheUseCase(get()) }
     single { SearchSongsUseCase(get()) }
     single { SearchTemplatesUseCase(get()) }
+
+    // Effect Set use cases
+    single { GetEffectSetsPagedUseCase(get()) }
 }
 
 // ========== PRESENTATION LAYER MODULE ==========
@@ -409,6 +415,19 @@ class GallerySearchViewModelFactory(
     }
 }
 
+/**
+ * Factory wrapper for EffectSetViewModel.
+ */
+class EffectSetViewModelFactory(
+    private val getEffectSetsPagedUseCase: GetEffectSetsPagedUseCase
+) {
+    fun create(): com.videomaker.aimusic.modules.editor.EffectSetViewModel {
+        return com.videomaker.aimusic.modules.editor.EffectSetViewModel(
+            getEffectSetsPagedUseCase = getEffectSetsPagedUseCase
+        )
+    }
+}
+
 val presentationModule = module {
     // Root ViewModel for RootViewActivity (handles loading, Firebase, navigation)
     viewModel {
@@ -535,6 +554,13 @@ val presentationModule = module {
             songRepository = get(),
             createProjectUseCase = get(),
             updateProjectSettingsUseCase = get()
+        )
+    }
+
+    // Effect Set ViewModel factory (singleton - stateless factory)
+    single {
+        EffectSetViewModelFactory(
+            getEffectSetsPagedUseCase = get()
         )
     }
 }

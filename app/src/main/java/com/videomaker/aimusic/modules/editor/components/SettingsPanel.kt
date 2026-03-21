@@ -60,7 +60,7 @@ import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.AudioTrack
 import com.videomaker.aimusic.domain.model.OverlayFrame
 import com.videomaker.aimusic.domain.model.ProjectSettings
-import com.videomaker.aimusic.domain.model.TransitionSet
+import com.videomaker.aimusic.domain.model.EffectSet
 import com.videomaker.aimusic.media.library.AudioTrackLibrary
 import com.videomaker.aimusic.media.library.FrameLibrary
 import com.videomaker.aimusic.media.library.TransitionSetLibrary
@@ -215,7 +215,7 @@ private fun EffectSetSelector(
     onEffectSetSelect: (String?) -> Unit
 ) {
     // Load effect sets
-    var effectSets by remember { mutableStateOf<List<TransitionSet>?>(null) }
+    var effectSets by remember { mutableStateOf<List<EffectSet>?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
     // Load data on background thread
@@ -260,7 +260,7 @@ private fun EffectSetSelector(
 
 @Composable
 private fun EffectSetSelectorContent(
-    effectSets: List<TransitionSet>,
+    effectSets: List<EffectSet>,
     selectedEffectSetId: String?,
     onEffectSetSelect: (String?) -> Unit
 ) {
@@ -304,7 +304,7 @@ private fun EffectSetSelectorContent(
 
 @Composable
 private fun EffectSetChip(
-    effectSet: TransitionSet?,
+    effectSet: EffectSet?,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {

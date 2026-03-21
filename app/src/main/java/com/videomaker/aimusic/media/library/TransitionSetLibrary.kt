@@ -1,7 +1,7 @@
 package com.videomaker.aimusic.media.library
 
 import android.content.Context
-import com.videomaker.aimusic.domain.model.TransitionSet
+import com.videomaker.aimusic.domain.model.EffectSet
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -16,7 +16,7 @@ import kotlinx.serialization.json.Json
 object TransitionSetLibrary {
 
     private var context: Context? = null
-    private var cachedSets: List<TransitionSet>? = null
+    private var cachedSets: List<EffectSet>? = null
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -34,7 +34,7 @@ object TransitionSetLibrary {
     /**
      * Load effect sets from JSON file
      */
-    private fun loadSets(): List<TransitionSet> {
+    private fun loadSets(): List<EffectSet> {
         cachedSets?.let { return it }
 
         val ctx = context ?: throw IllegalStateException(
@@ -48,7 +48,7 @@ object TransitionSetLibrary {
 
             val effectSetsJson = json.decodeFromString<List<EffectSetJson>>(jsonString)
             val sets = effectSetsJson.map { jsonSet ->
-                TransitionSet(
+                EffectSet(
                     id = jsonSet.id,
                     name = jsonSet.name,
                     description = jsonSet.description,
@@ -69,12 +69,12 @@ object TransitionSetLibrary {
         }
     }
 
-    fun getAll(): List<TransitionSet> = loadSets()
+    fun getAll(): List<EffectSet> = loadSets()
 
-    fun getById(id: String): TransitionSet? = loadSets().find { it.id == id }
+    fun getById(id: String): EffectSet? = loadSets().find { it.id == id }
 
-    fun getDefault(): TransitionSet = loadSets().firstOrNull()
-        ?: TransitionSet(
+    fun getDefault(): EffectSet = loadSets().firstOrNull()
+        ?: EffectSet(
             id = "default",
             name = "Default",
             description = "Default transitions",
@@ -83,9 +83,9 @@ object TransitionSetLibrary {
             transitions = listOfNotNull(TransitionShaderLibrary.getDefault())
         )
 
-    fun getFree(): List<TransitionSet> = loadSets().filter { !it.isPremium }
+    fun getFree(): List<EffectSet> = loadSets().filter { !it.isPremium }
 
-    fun getPremium(): List<TransitionSet> = loadSets().filter { it.isPremium }
+    fun getPremium(): List<EffectSet> = loadSets().filter { it.isPremium }
 
     /**
      * Clear cached sets (useful for development hot reload)

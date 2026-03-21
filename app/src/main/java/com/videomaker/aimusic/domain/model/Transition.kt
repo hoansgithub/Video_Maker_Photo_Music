@@ -34,9 +34,9 @@ enum class TransitionCategory(val displayName: String) {
 }
 
 /**
- * TransitionSet - A collection of transitions with a common theme
+ * EffectSet - A collection of transitions with a common theme
  */
-data class TransitionSet(
+data class EffectSet(
     val id: String,
     val name: String,
     val description: String,
