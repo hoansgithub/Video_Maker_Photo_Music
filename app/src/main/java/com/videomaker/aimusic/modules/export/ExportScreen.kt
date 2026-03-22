@@ -492,24 +492,17 @@ private fun SuccessContent(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                enabled = !savedToGallery,
-                colors = if (savedToGallery) {
-                    ButtonDefaults.buttonColors(
-                        disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        disabledContentColor = MaterialTheme.colorScheme.primary
-                    )
-                } else {
-                    ButtonDefaults.buttonColors()
-                }
+                // Always enabled - allow re-downloading
+                colors = ButtonDefaults.buttonColors()
             ) {
                 Icon(
-                    imageVector = if (savedToGallery) Icons.Default.Check else Icons.Default.Download,
+                    imageVector = Icons.Default.Download,
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (savedToGallery) stringResource(R.string.export_saved_to_gallery) else stringResource(R.string.export_save),
+                    text = stringResource(R.string.export_save),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

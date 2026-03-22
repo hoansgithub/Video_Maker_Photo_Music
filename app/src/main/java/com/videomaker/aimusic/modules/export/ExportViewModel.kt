@@ -225,7 +225,7 @@ class ExportViewModel(
     fun saveToGallery(applicationContext: Context) {
         val currentState = _uiState.value
         if (currentState !is ExportUiState.Success) return
-        if (currentState.savedToGallery) return // Already saved
+        // Allow re-downloading - user may want multiple copies or re-download if deleted
 
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
