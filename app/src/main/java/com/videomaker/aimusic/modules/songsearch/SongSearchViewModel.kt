@@ -86,6 +86,18 @@ class SongSearchViewModel(
     private val _selectedSong = MutableStateFlow<MusicSong?>(null)
     val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
 
+    // ============================================
+    // PREVIEW STATE (for music selector in editor)
+    // ============================================
+    private val _previewingSongId = MutableStateFlow<Long?>(null)
+    val previewingSongId: StateFlow<Long?> = _previewingSongId.asStateFlow()
+
+    private val _selectedForConfirmId = MutableStateFlow<Long?>(null)
+    val selectedForConfirmId: StateFlow<Long?> = _selectedForConfirmId.asStateFlow()
+
+    private val _isLoadingPreview = MutableStateFlow(false)
+    val isLoadingPreview: StateFlow<Boolean> = _isLoadingPreview.asStateFlow()
+
     // Tracks the explicit search job (keyboard Search / recent tap / genre tap).
     private var explicitSearchJob: Job? = null
 
@@ -247,5 +259,66 @@ class SongSearchViewModel(
         val songs = result.getOrElse { emptyList() }
         return if (songs.isEmpty()) SongSearchUiState.Empty(label)
         else SongSearchUiState.Results(query = label, songs = songs)
+    }
+
+    // ============================================
+    // PREVIEW METHODS (for music selector in editor)
+    // ============================================
+
+    /**
+     * Toggle preview for a song. Marks it as selected for confirmation.
+     */
+    fun togglePreview(songId: Long) {
+        if (_previewingSongId.value == songId) {
+            // Stop preview but keep selection
+            _previewingSongId.value = null
+            _isLoadingPreview.value = false
+        } else {
+            // Start new preview
+            _isLoadingPreview.value = true
+            _previewingSongId.value = songId
+            _selectedForConfirmId.value = songId
+        }
+    }
+
+    /**
+     * Called when ExoPlayer is prepared and starts playing
+     */
+    fun onPreviewPrepared() {
+        _isLoadingPreview.value = false
+    }
+
+    /**
+     * Stop preview
+     */
+    fun stopPreview() {
+        _previewingSongId.value = null
+        _isLoadingPreview.value = false
+    }
+
+    /**
+     * Confirm selection - used by music selector confirm button
+     * Returns the selected song for the callback
+     */
+    fun confirmSelection(): MusicSong? {
+        val songId = _selectedForConfirmId.value ?: return null
+        val state = _uiState.value
+
+        return when (state) {
+            is SongSearchUiState.Results -> state.songs.find { it.id == songId }
+            else -> {
+                // Check suggested songs if not in results
+                _suggestedSongs.value.find { it.id == songId }
+            }
+        }
+    }
+
+    /**
+     * Clear preview state (called when sheet is dismissed)
+     */
+    fun clearPreviewState() {
+        _previewingSongId.value = null
+        _selectedForConfirmId.value = null
+        _isLoadingPreview.value = false
     }
 }

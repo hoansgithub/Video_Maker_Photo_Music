@@ -7,8 +7,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,13 +22,20 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,28 +48,46 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.draw.shadow
+import com.videomaker.aimusic.ui.components.StaggeredGrid
+import coil.request.ImageRequest
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import com.videomaker.aimusic.ui.theme.Primary
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.modules.gallery.GalleryScreen
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
+import com.videomaker.aimusic.modules.projects.ProjectsUiState
+import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.songs.SongsScreen
 import com.videomaker.aimusic.modules.songs.SongsViewModel
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.PrimaryDark
+import com.videomaker.aimusic.ui.theme.TextBright
 import com.videomaker.aimusic.ui.theme.TextInactive
+import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * HomeScreen - Main screen with tabbed navigation
@@ -79,6 +106,7 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     galleryViewModel: GalleryViewModel,
     songsViewModel: SongsViewModel,
+    projectsViewModel: ProjectsViewModel,
     onSettingsClick: () -> Unit = {},
     onCreateClick: () -> Unit = {},
     onMyProjectsClick: () -> Unit = {},
@@ -128,6 +156,7 @@ fun HomeScreen(
                     onNavigateToAssetPicker = onNavigateToAssetPicker
                 )
                 2 -> ProjectsTabContent(
+                    viewModel = projectsViewModel,
                     onCreateClick = { onNavigateToTemplateDetail("") }, // Open template previewer with first template
                     onProjectClick = onProjectClick,
                     topBarHeight = topBarHeight
@@ -315,20 +344,77 @@ private fun SongsTabContent(
  */
 @Composable
 private fun ProjectsTabContent(
+    viewModel: ProjectsViewModel,
     onCreateClick: () -> Unit,
     onProjectClick: (String) -> Unit,
     topBarHeight: Dp = 0.dp
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dimens = AppDimens.current
 
-    // Empty state - centered with icon, title, subtitle, and button
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background image — edge-to-edge, behind everything
+        Image(
+            painter = painterResource(id = R.drawable.bg_projects),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Content with top padding
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = topBarHeight)
+        ) {
+            when (val state = uiState) {
+                is ProjectsUiState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+                is ProjectsUiState.Empty -> {
+                    ProjectsEmptyState(onCreateClick = onCreateClick)
+                }
+                is ProjectsUiState.Success -> {
+                    ProjectsListContent(
+                        projects = state.projects,
+                        onProjectClick = { project ->
+                            onProjectClick(project.id)
+                        },
+                        onCreateClick = onCreateClick
+                    )
+                }
+                is ProjectsUiState.Error -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = state.message,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Empty state with icon, title, subtitle, and button
+ */
+@Composable
+private fun ProjectsEmptyState(
+    onCreateClick: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = topBarHeight)
-            .windowInsetsPadding(
-                WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)
-            ),
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -391,6 +477,254 @@ private fun ProjectsTabContent(
         }
     }
 }
+
+/**
+ * Projects list with staggered grid layout and floating create button
+ */
+@Composable
+private fun ProjectsListContent(
+    projects: List<Project>,
+    onProjectClick: (Project) -> Unit,
+    onCreateClick: () -> Unit
+) {
+    val dimens = AppDimens.current
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Scrollable staggered grid
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = dimens.spaceLg,
+                end = dimens.spaceLg,
+                top = dimens.spaceLg,
+                bottom = dimens.space3Xl + dimens.space2Xl // Extra padding for FAB
+            )
+        ) {
+            item(key = "project_grid", contentType = "grid") {
+                ProjectsStaggeredGrid(
+                    projects = projects,
+                    onProjectClick = onProjectClick,
+                    spacing = dimens.spaceSm
+                )
+            }
+        }
+
+        // Bottom gradient fade — dark to transparent, behind the FAB
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(120.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            MaterialTheme.colorScheme.background
+                        )
+                    )
+                )
+        )
+
+        // Circular Floating Action Button — bottom right with shadow
+        CreateProjectFloatingButton(
+            onClick = onCreateClick,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(bottom = dimens.spaceLg, end = dimens.spaceLg)
+        )
+    }
+}
+
+/**
+ * Staggered grid for projects based on aspect ratio
+ */
+@Composable
+private fun ProjectsStaggeredGrid(
+    projects: List<Project>,
+    onProjectClick: (Project) -> Unit,
+    spacing: Dp
+) {
+    if (projects.isEmpty()) return
+
+    // Calculate aspect ratios from project settings
+    val aspectRatios = projects.map { project ->
+        project.settings.aspectRatio.ratio
+    }
+
+    StaggeredGrid(
+        itemCount = projects.size,
+        aspectRatios = aspectRatios,
+        columns = 2,
+        spacing = spacing
+    ) { index ->
+        ProjectGridCard(
+            project = projects[index],
+            onClick = { onProjectClick(projects[index]) }
+        )
+    }
+}
+
+/**
+ * Circular Floating Action Button for creating new projects
+ */
+@Composable
+private fun CreateProjectFloatingButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .size(64.dp)
+            .shadow(
+                elevation = 12.dp,
+                shape = CircleShape,
+                clip = false
+            )
+            .clip(CircleShape)
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Primary,
+                        Primary.copy(alpha = 0.9f)
+                    )
+                )
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_circle_plus),
+            contentDescription = "Create New Project",
+            modifier = Modifier.size(32.dp),
+            tint = Color.Unspecified
+        )
+    }
+}
+
+/**
+ * Project card for grid layout (staggered)
+ */
+@Composable
+private fun ProjectGridCard(
+    project: Project,
+    onClick: () -> Unit
+) {
+    val dimens = AppDimens.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(dimens.radiusMd))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .clickable(onClick = onClick)
+    ) {
+        // Thumbnail with aspect ratio
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(project.settings.aspectRatio.ratio)
+                .clip(RoundedCornerShape(topStart = dimens.radiusMd, topEnd = dimens.radiusMd))
+                .background(Color.Black.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (project.thumbnailUri != null) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(project.thumbnailUri)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = project.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else if (project.assets.isNotEmpty()) {
+                // Use first asset as thumbnail
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(project.assets.first().uri)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = project.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Outlined.Folder,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                )
+            }
+
+            // Duration badge at bottom-right
+            if (project.assets.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(dimens.spaceXs)
+                        .background(
+                            color = Color.Black.copy(alpha = 0.7f),
+                            shape = RoundedCornerShape(dimens.radiusSm)
+                        )
+                        .padding(horizontal = dimens.spaceXs, vertical = dimens.spaceXxs)
+                ) {
+                    Text(
+                        text = project.formattedDuration,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 10.sp,
+                        color = Color.White
+                    )
+                }
+            }
+
+            // Play icon at center
+            Icon(
+                imageVector = Icons.Default.PlayArrow,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.5f),
+                        shape = CircleShape
+                    )
+                    .padding(8.dp),
+                tint = Color.White
+            )
+        }
+
+        // Project Info
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dimens.spaceSm)
+        ) {
+            Text(
+                text = project.name,
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(dimens.spaceXxs))
+            Text(
+                text = stringResource(
+                    R.string.projects_item_info,
+                    project.assets.size,
+                    project.formattedDuration
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+    }
+}
+
+private val projectDateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+
+private fun formatProjectDate(timestamp: Long): String = projectDateFormatter.format(Date(timestamp))
 
 // ============================================
 // PREVIEW

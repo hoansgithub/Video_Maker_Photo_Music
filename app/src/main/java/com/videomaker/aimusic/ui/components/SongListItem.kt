@@ -1,5 +1,9 @@
 package com.videomaker.aimusic.ui.components
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,10 +16,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,7 +54,10 @@ fun SongListItem(
     artist: String,
     coverUrl: String,
     onSongClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isPlaying: Boolean = false,
+    isSelected: Boolean = false,
+    isLoading: Boolean = false
 ) {
     val dimens = AppDimens.current
 
@@ -48,7 +65,10 @@ fun SongListItem(
         onClick = onSongClick,
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(dimens.radiusLg),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            else Color.Transparent
+        )
     ) {
         Row(
             modifier = Modifier
@@ -56,15 +76,47 @@ fun SongListItem(
                 .padding(dimens.spaceSm),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Thumbnail — shows music note placeholder when no image available
-            AppAsyncImage(
-                imageUrl = coverUrl,
-                contentDescription = name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(dimens.radiusMd))
-            )
+            // Thumbnail with overlay for playing/loading state
+            Box {
+                AppAsyncImage(
+                    imageUrl = coverUrl,
+                    contentDescription = name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(dimens.radiusMd))
+                )
+
+                // Playing animation or loading indicator overlay
+                when {
+                    isLoading -> {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(dimens.radiusMd))
+                                .background(Color.Black.copy(alpha = 0.5f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    }
+                    isPlaying -> {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(dimens.radiusMd))
+                                .background(Color.Black.copy(alpha = 0.5f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            PlayingAnimationBars()
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.width(dimens.spaceMd))
 
@@ -72,10 +124,10 @@ fun SongListItem(
                 Text(
                     text = name,
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                         fontSize = 15.sp
                     ),
-                    color = TextPrimary,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else TextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -91,6 +143,58 @@ fun SongListItem(
                     overflow = TextOverflow.Ellipsis
                 )
             }
+
+            // Play/Pause indicator
+            if (isPlaying || isSelected) {
+                Icon(
+                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 3 bouncing bars animation for playing state
+ */
+@Composable
+private fun PlayingAnimationBars() {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.size(24.dp)
+    ) {
+        repeat(3) { index ->
+            var height by remember { mutableStateOf(0.4f) }
+
+            LaunchedEffect(Unit) {
+                while (true) {
+                    animate(
+                        initialValue = 0.4f,
+                        targetValue = 1f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(
+                                durationMillis = 300,
+                                delayMillis = index * 100
+                            ),
+                            repeatMode = RepeatMode.Reverse
+                        )
+                    ) { value, _ ->
+                        height = value
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(20.dp * height)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color.White)
+            )
         }
     }
 }
