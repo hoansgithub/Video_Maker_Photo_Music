@@ -147,8 +147,11 @@ fun EditorScreen(
         }
     }
 
+    // Check if processing to apply blur to content
+    val isProcessing = (uiState as? EditorUiState.Success)?.isProcessing ?: false
+
     Box(modifier = Modifier.fillMaxSize()) {
-        // Main editor UI with Scaffold
+        // Main editor UI with Scaffold - blur when processing
         val editorTitle = stringResource(R.string.editor_title)
         Scaffold(
             topBar = {
@@ -163,7 +166,8 @@ fun EditorScreen(
                 )
             },
             containerColor = SplashBackground, // #101010 (closest to #101313)
-            contentWindowInsets = WindowInsets(0, 0, 0, 0)
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            modifier = if (isProcessing) Modifier.blur(16.dp) else Modifier
         ) { paddingValues ->
             when (val state = uiState) {
                 is EditorUiState.Loading -> {
@@ -376,19 +380,12 @@ fun EditorScreen(
             )
         }
 
-        // Fullscreen Processing Overlay - blurry background with loading indicator
-        val isProcessing = (uiState as? EditorUiState.Success)?.isProcessing ?: false
+        // Fullscreen Processing Overlay - blocks all interactions, content is blurred
         if (isProcessing) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .blur(radius = 20.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = { /* Block interactions during processing */ }
-                    ),
+                    .background(Color.Black.copy(alpha = 0.6f)),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
