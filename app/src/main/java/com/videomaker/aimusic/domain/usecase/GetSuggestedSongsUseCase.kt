@@ -5,7 +5,7 @@ import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepository
 
 /**
- * GetSuggestedSongsUseCase - Retrieves personalized song suggestions
+ * GetSuggestedSongsUseCase - Retrieves personalized song suggestions with pagination
  *
  * Returns songs based on user's preferred genres selected during onboarding.
  * Orchestrates data from both song and onboarding repositories.
@@ -16,11 +16,12 @@ class GetSuggestedSongsUseCase(
 ) {
     /**
      * Get personalized song suggestions based on user preferences
+     * @param offset Starting position for pagination (default: 0)
      * @param limit Maximum number of songs to return (default: 10)
      * @return Result containing list of suggested songs
      */
-    suspend operator fun invoke(limit: Int = 10): Result<List<MusicSong>> {
+    suspend operator fun invoke(offset: Int = 0, limit: Int = 10): Result<List<MusicSong>> {
         val preferredGenres = onboardingRepository.getPreferredGenres()
-        return songRepository.getSuggestedSongs(preferredGenres, limit)
+        return songRepository.getSuggestedSongs(preferredGenres, offset, limit)
     }
 }

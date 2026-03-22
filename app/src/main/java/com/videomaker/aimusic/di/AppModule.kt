@@ -395,11 +395,11 @@ class TemplateListViewModelFactory(
  * Factory wrapper for SuggestedSongsListViewModel.
  */
 class SuggestedSongsListViewModelFactory(
-    private val songRepository: SongRepository
+    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase
 ) {
     fun create(): com.videomaker.aimusic.modules.suggestedsongs.SuggestedSongsListViewModel {
         return com.videomaker.aimusic.modules.suggestedsongs.SuggestedSongsListViewModel(
-            songRepository = songRepository
+            getSuggestedSongsUseCase = getSuggestedSongsUseCase
         )
     }
 }
@@ -602,7 +602,7 @@ val presentationModule = module {
     // Suggested Songs List ViewModel factory (singleton - stateless factory)
     single {
         SuggestedSongsListViewModelFactory(
-            songRepository = get()
+            getSuggestedSongsUseCase = get()
         )
     }
 

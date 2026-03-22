@@ -3,7 +3,7 @@ package com.videomaker.aimusic.modules.suggestedsongs
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.domain.model.MusicSong
-import com.videomaker.aimusic.domain.repository.SongRepository
+import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,7 +46,7 @@ sealed class SuggestedSongsNavigationEvent {
 // ============================================
 
 class SuggestedSongsListViewModel(
-    private val songRepository: SongRepository
+    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase
 ) : ViewModel() {
 
     companion object {
@@ -60,6 +60,10 @@ class SuggestedSongsListViewModel(
     private val _navigationEvent = MutableStateFlow<SuggestedSongsNavigationEvent?>(null)
     val navigationEvent: StateFlow<SuggestedSongsNavigationEvent?> = _navigationEvent.asStateFlow()
 
+    // Selected song for music player bottom sheet
+    private val _selectedSong = MutableStateFlow<MusicSong?>(null)
+    val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
+
     private var currentPageState = SongsPageState()
 
     init {
@@ -70,7 +74,7 @@ class SuggestedSongsListViewModel(
         viewModelScope.launch {
             _uiState.value = SuggestedSongsListUiState.Loading
 
-            val result = songRepository.getSongsPaged(offset = 0, limit = PAGE_SIZE)
+            val result = getSuggestedSongsUseCase(offset = 0, limit = PAGE_SIZE)
 
             if (result.isSuccess) {
                 val songs = result.getOrNull() ?: emptyList()
@@ -96,7 +100,7 @@ class SuggestedSongsListViewModel(
             currentPageState = state.copy(isLoadingMore = true)
             _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
 
-            val result = songRepository.getSongsPaged(offset = state.offset, limit = PAGE_SIZE)
+            val result = getSuggestedSongsUseCase(offset = state.offset, limit = PAGE_SIZE)
 
             if (result.isSuccess) {
                 val newSongs = result.getOrNull() ?: emptyList()
@@ -123,9 +127,8 @@ class SuggestedSongsListViewModel(
             currentPageState = currentPageState.copy(isRefreshing = true)
             _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
 
-            songRepository.clearCache()
-
-            val result = songRepository.getSongsPaged(offset = 0, limit = PAGE_SIZE)
+            // Note: First page (offset=0) is cached by the repository
+            val result = getSuggestedSongsUseCase(offset = 0, limit = PAGE_SIZE)
 
             if (result.isSuccess) {
                 val songs = result.getOrNull() ?: emptyList()
@@ -147,6 +150,15 @@ class SuggestedSongsListViewModel(
     }
 
     fun onSongClick(song: MusicSong) {
+        _selectedSong.value = song
+    }
+
+    fun onDismissPlayer() {
+        _selectedSong.value = null
+    }
+
+    fun onUseToCreateVideo(song: MusicSong) {
+        _selectedSong.value = null
         _navigationEvent.value = SuggestedSongsNavigationEvent.NavigateToAssetPicker(song.id)
     }
 

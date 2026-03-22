@@ -206,11 +206,17 @@ class SongRepositoryImpl(
      */
     override suspend fun getSuggestedSongs(
         preferredGenres: List<String>,
+        offset: Int,
         limit: Int
     ): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
+        val region = regionProvider.getRegionCode()
+
+        // Only cache first page (offset = 0)
         val cacheKey = ApiCacheManager.KEY_SONGS_SUGGESTED
-        apiCacheManager.get<List<MusicSong>>(cacheKey)
-            ?.let { return@withContext Result.success(it) }
+        if (offset == 0) {
+            apiCacheManager.get<List<MusicSong>>(cacheKey)
+                ?.let { return@withContext Result.success(it) }
+        }
 
         try {
             // DB stores genres in lowercase (e.g. "pop", "hip-hop") — normalise before querying
@@ -220,10 +226,14 @@ class SongRepositoryImpl(
                     .select {
                         filter {
                             eq("is_active", true)
+                            or {
+                                eq("region", region)
+                                eq("region", "all")
+                            }
                             overlaps("genres", normalised)
                         }
                         order("sort_order", Order.DESCENDING)
-                        limit(limit.toLong())
+                        range(offset.toLong(), (offset + limit - 1).toLong())
                     }
                     .decodeList<SongDto>()
                     .toMusicSongs()
@@ -232,19 +242,29 @@ class SongRepositoryImpl(
                     .select {
                         filter {
                             eq("is_active", true)
+                            or {
+                                eq("region", region)
+                                eq("region", "all")
+                            }
                         }
                         order("sort_order", Order.DESCENDING)
-                        limit(limit.toLong())
+                        range(offset.toLong(), (offset + limit - 1).toLong())
                     }
                     .decodeList<SongDto>()
                     .toMusicSongs()
             }
 
-            apiCacheManager.put(cacheKey, songs)
+            // Only cache first page
+            if (offset == 0) {
+                apiCacheManager.put(cacheKey, songs)
+            }
             Result.success(songs)
         } catch (e: Exception) {
-            apiCacheManager.getStale<List<MusicSong>>(cacheKey)
-                ?.let { return@withContext Result.success(it) }
+            // Only return stale cache for first page
+            if (offset == 0) {
+                apiCacheManager.getStale<List<MusicSong>>(cacheKey)
+                    ?.let { return@withContext Result.success(it) }
+            }
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
     }

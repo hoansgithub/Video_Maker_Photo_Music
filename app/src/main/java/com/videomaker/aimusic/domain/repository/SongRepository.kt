@@ -38,10 +38,18 @@ interface SongRepository {
     suspend fun getSongsPaged(offset: Int, limit: Int): Result<List<MusicSong>>
 
     /**
-     * Get suggested songs personalised by [preferredGenres].
+     * Get suggested songs personalised by [preferredGenres] with pagination.
      * Falls back to top songs by sort_order when no genres are provided.
+     *
+     * @param preferredGenres List of genre IDs to filter by
+     * @param offset Starting position for pagination
+     * @param limit Number of items to return
      */
-    suspend fun getSuggestedSongs(preferredGenres: List<String>, limit: Int = 10): Result<List<MusicSong>>
+    suspend fun getSuggestedSongs(
+        preferredGenres: List<String>,
+        offset: Int = 0,
+        limit: Int = 10
+    ): Result<List<MusicSong>>
 
     /**
      * Get a random selection of songs (over-fetches then shuffles client-side)

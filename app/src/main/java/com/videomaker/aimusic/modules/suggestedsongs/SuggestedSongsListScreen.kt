@@ -37,8 +37,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.MusicSong
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
+import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.theme.AppDimens
 
@@ -50,7 +54,9 @@ import com.videomaker.aimusic.ui.theme.AppDimens
  * - Lazy loading: max 20 items per page
  * - Pull-to-refresh
  * - Query-level pagination (no client-side filtering)
+ * - Music player bottom sheet on song click
  */
+@androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SuggestedSongsListScreen(
@@ -60,6 +66,8 @@ fun SuggestedSongsListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
+    val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
+    val audioPreviewCache: AudioPreviewCache = koinInject()
 
     // Handle navigation events
     LaunchedEffect(navigationEvent) {
@@ -111,6 +119,16 @@ fun SuggestedSongsListScreen(
                 )
             }
         }
+    }
+
+    // Music player bottom sheet — shown when a song is tapped
+    selectedSong?.let { song ->
+        MusicPlayerBottomSheet(
+            song = song,
+            cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+            onDismiss = viewModel::onDismissPlayer,
+            onUseToCreate = { viewModel.onUseToCreateVideo(song) }
+        )
     }
 }
 
