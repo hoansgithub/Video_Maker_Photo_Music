@@ -186,6 +186,9 @@ fun VideoPreviewPlayer(
     // Track composition building job so we can cancel it when app goes to background
     var compositionBuildJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
+    // Trigger to rebuild composition when returning from background
+    var rebuildTrigger by remember { mutableStateOf(0) }
+
     // Notify parent of preview state changes
     LaunchedEffect(previewState) {
         onPreviewStateChange(previewState)
@@ -256,6 +259,7 @@ fun VideoPreviewPlayer(
 
     // Key that changes when project or settings change (EXCEPT volume)
     // Volume changes are handled separately via player.setVolume() for instant feedback
+    // rebuildTrigger included to restart composition after background cancellation
     val compositionKey = remember(
         project.id,
         project.assets.joinToString(",") { it.id },
@@ -265,10 +269,11 @@ fun VideoPreviewPlayer(
         project.settings.overlayFrameId,
         project.settings.musicSongId,
         project.settings.customAudioUri,
-        project.settings.aspectRatio
+        project.settings.aspectRatio,
+        rebuildTrigger
         // audioVolume intentionally excluded - handled separately
     ) {
-        "${project.id}_${project.assets.joinToString(",") { it.id }}_${project.settings.effectSetId}_${project.settings.imageDurationMs}_${project.settings.transitionPercentage}_${project.settings.overlayFrameId}_${project.settings.musicSongId}_${project.settings.customAudioUri}_${project.settings.aspectRatio}"
+        "${project.id}_${project.assets.joinToString(",") { it.id }}_${project.settings.effectSetId}_${project.settings.imageDurationMs}_${project.settings.transitionPercentage}_${project.settings.overlayFrameId}_${project.settings.musicSongId}_${project.settings.customAudioUri}_${project.settings.aspectRatio}_${rebuildTrigger}"
     }
 
     // Build composition when key changes
@@ -444,6 +449,13 @@ fun VideoPreviewPlayer(
                     // Reset state
                     previewState = PreviewState.Building
                     playerReadyFlow.value = false
+                }
+                Lifecycle.Event.ON_START -> {
+                    // Restart composition building when returning from background
+                    // Only if player was released (null) and we're in Building state
+                    if (player == null && previewState is PreviewState.Building) {
+                        rebuildTrigger++
+                    }
                 }
                 else -> {}
             }
