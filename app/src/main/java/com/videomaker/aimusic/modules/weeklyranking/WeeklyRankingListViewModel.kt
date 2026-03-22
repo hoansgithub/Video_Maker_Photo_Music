@@ -1,9 +1,9 @@
-package com.videomaker.aimusic.modules.suggestedsongs
+package com.videomaker.aimusic.modules.weeklyranking
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.domain.model.MusicSong
-import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
+import com.videomaker.aimusic.domain.usecase.GetWeeklyRankingSongsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,9 +14,9 @@ import kotlinx.coroutines.launch
 // ============================================
 
 /**
- * State for the paginated song list
+ * State for the paginated weekly ranking list
  */
-data class SongsPageState(
+data class WeeklyRankingPageState(
     val songs: List<MusicSong> = emptyList(),
     val offset: Int = 0,
     val hasMore: Boolean = true,
@@ -26,70 +26,70 @@ data class SongsPageState(
     val error: String? = null
 )
 
-sealed class SuggestedSongsListUiState {
-    data object Loading : SuggestedSongsListUiState()
-    data class Success(val pageState: SongsPageState) : SuggestedSongsListUiState()
-    data class Error(val message: String) : SuggestedSongsListUiState()
+sealed class WeeklyRankingListUiState {
+    data object Loading : WeeklyRankingListUiState()
+    data class Success(val pageState: WeeklyRankingPageState) : WeeklyRankingListUiState()
+    data class Error(val message: String) : WeeklyRankingListUiState()
 }
 
 // ============================================
 // NAVIGATION EVENTS
 // ============================================
 
-sealed class SuggestedSongsNavigationEvent {
-    data object NavigateBack : SuggestedSongsNavigationEvent()
-    data class NavigateToAssetPicker(val songId: Long) : SuggestedSongsNavigationEvent()
+sealed class WeeklyRankingNavigationEvent {
+    data object NavigateBack : WeeklyRankingNavigationEvent()
+    data class NavigateToAssetPicker(val songId: Long) : WeeklyRankingNavigationEvent()
 }
 
 // ============================================
 // VIEW MODEL
 // ============================================
 
-class SuggestedSongsListViewModel(
-    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase
+class WeeklyRankingListViewModel(
+    private val getWeeklyRankingSongsUseCase: GetWeeklyRankingSongsUseCase
 ) : ViewModel() {
 
     companion object {
         private const val PAGE_SIZE = 20
-        private const val MAX_ITEMS = 300  // Limit total items to prevent RAM issues
+        private const val MAX_ITEMS = 100  // Maximum 100 items as requested
     }
 
-    private val _uiState = MutableStateFlow<SuggestedSongsListUiState>(SuggestedSongsListUiState.Loading)
-    val uiState: StateFlow<SuggestedSongsListUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<WeeklyRankingListUiState>(WeeklyRankingListUiState.Loading)
+    val uiState: StateFlow<WeeklyRankingListUiState> = _uiState.asStateFlow()
 
-    private val _navigationEvent = MutableStateFlow<SuggestedSongsNavigationEvent?>(null)
-    val navigationEvent: StateFlow<SuggestedSongsNavigationEvent?> = _navigationEvent.asStateFlow()
+    private val _navigationEvent = MutableStateFlow<WeeklyRankingNavigationEvent?>(null)
+    val navigationEvent: StateFlow<WeeklyRankingNavigationEvent?> = _navigationEvent.asStateFlow()
 
     // Selected song for music player bottom sheet
     private val _selectedSong = MutableStateFlow<MusicSong?>(null)
     val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
 
-    private var currentPageState = SongsPageState()
+    private var currentPageState = WeeklyRankingPageState()
 
     init {
         loadFirstPage()
     }
 
     private fun loadFirstPage() {
-        android.util.Log.d("SuggestedSongs", "loadFirstPage() starting")
+        android.util.Log.d("WeeklyRanking", "loadFirstPage() starting")
         viewModelScope.launch {
-            _uiState.value = SuggestedSongsListUiState.Loading
+            _uiState.value = WeeklyRankingListUiState.Loading
 
-            val result = getSuggestedSongsUseCase(offset = 0, limit = PAGE_SIZE)
+            val result = getWeeklyRankingSongsUseCase(offset = 0, limit = PAGE_SIZE)
 
             if (result.isSuccess) {
                 val songs = result.getOrNull() ?: emptyList()
-                android.util.Log.d("SuggestedSongs", "loadFirstPage() success: fetched ${songs.size} songs, hasMore=${songs.size >= PAGE_SIZE}")
-                currentPageState = SongsPageState(
+                android.util.Log.d("WeeklyRanking", "loadFirstPage() success: fetched ${songs.size} songs, hasMore=${songs.size >= PAGE_SIZE}")
+                currentPageState = WeeklyRankingPageState(
                     songs = songs,
                     offset = songs.size,
                     hasMore = songs.size >= PAGE_SIZE && songs.size < MAX_ITEMS,
                     isLoading = false
                 )
-                _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
+                _uiState.value = WeeklyRankingListUiState.Success(currentPageState)
             } else {
-                android.util.Log.e("SuggestedSongs", "loadFirstPage() failed: ${result.exceptionOrNull()?.message}")
-                _uiState.value = SuggestedSongsListUiState.Error("Failed to load songs")
+                android.util.Log.e("WeeklyRanking", "loadFirstPage() failed: ${result.exceptionOrNull()?.message}")
+                _uiState.value = WeeklyRankingListUiState.Error("Failed to load weekly ranking")
             }
         }
     }
@@ -98,36 +98,36 @@ class SuggestedSongsListViewModel(
         val state = currentPageState
         // Stop loading if already loading, no more items, or reached max limit
         if (state.isLoadingMore || !state.hasMore || state.songs.size >= MAX_ITEMS) {
-            android.util.Log.d("SuggestedSongs", "loadMore() blocked: isLoadingMore=${state.isLoadingMore}, hasMore=${state.hasMore}, songsSize=${state.songs.size}")
+            android.util.Log.d("WeeklyRanking", "loadMore() blocked: isLoadingMore=${state.isLoadingMore}, hasMore=${state.hasMore}, songsSize=${state.songs.size}")
             return
         }
 
-        android.util.Log.d("SuggestedSongs", "loadMore() starting: offset=${state.offset}, currentSongs=${state.songs.size}")
+        android.util.Log.d("WeeklyRanking", "loadMore() starting: offset=${state.offset}, currentSongs=${state.songs.size}")
         viewModelScope.launch {
             currentPageState = state.copy(isLoadingMore = true)
-            _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
+            _uiState.value = WeeklyRankingListUiState.Success(currentPageState)
 
-            val result = getSuggestedSongsUseCase(offset = state.offset, limit = PAGE_SIZE)
+            val result = getWeeklyRankingSongsUseCase(offset = state.offset, limit = PAGE_SIZE)
 
             if (result.isSuccess) {
                 val newSongs = result.getOrNull() ?: emptyList()
-                android.util.Log.d("SuggestedSongs", "loadMore() success: fetched ${newSongs.size} new songs")
+                android.util.Log.d("WeeklyRanking", "loadMore() success: fetched ${newSongs.size} new songs")
                 val allSongs = (state.songs + newSongs).distinctBy { it.id }.take(MAX_ITEMS)
-                currentPageState = SongsPageState(
+                currentPageState = WeeklyRankingPageState(
                     songs = allSongs,
                     offset = state.offset + newSongs.size,
                     hasMore = newSongs.size >= PAGE_SIZE && allSongs.size < MAX_ITEMS,
                     isLoadingMore = false
                 )
-                android.util.Log.d("SuggestedSongs", "loadMore() complete: total=${allSongs.size}, hasMore=${currentPageState.hasMore}")
-                _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
+                android.util.Log.d("WeeklyRanking", "loadMore() complete: total=${allSongs.size}, hasMore=${currentPageState.hasMore}")
+                _uiState.value = WeeklyRankingListUiState.Success(currentPageState)
             } else {
-                android.util.Log.e("SuggestedSongs", "loadMore() failed: ${result.exceptionOrNull()?.message}")
+                android.util.Log.e("WeeklyRanking", "loadMore() failed: ${result.exceptionOrNull()?.message}")
                 currentPageState = state.copy(
                     isLoadingMore = false,
                     error = "Failed to load more songs"
                 )
-                _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
+                _uiState.value = WeeklyRankingListUiState.Success(currentPageState)
             }
         }
     }
@@ -135,26 +135,26 @@ class SuggestedSongsListViewModel(
     fun refresh() {
         viewModelScope.launch {
             currentPageState = currentPageState.copy(isRefreshing = true)
-            _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
+            _uiState.value = WeeklyRankingListUiState.Success(currentPageState)
 
-            // Note: First page (offset=0) is cached by the repository
-            val result = getSuggestedSongsUseCase(offset = 0, limit = PAGE_SIZE)
+            // First page (offset=0) is cached by the repository
+            val result = getWeeklyRankingSongsUseCase(offset = 0, limit = PAGE_SIZE)
 
             if (result.isSuccess) {
                 val songs = result.getOrNull() ?: emptyList()
-                currentPageState = SongsPageState(
+                currentPageState = WeeklyRankingPageState(
                     songs = songs,
                     offset = songs.size,
                     hasMore = songs.size >= PAGE_SIZE && songs.size < MAX_ITEMS,
                     isRefreshing = false
                 )
-                _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
+                _uiState.value = WeeklyRankingListUiState.Success(currentPageState)
             } else {
                 currentPageState = currentPageState.copy(
                     isRefreshing = false,
                     error = "Failed to refresh"
                 )
-                _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
+                _uiState.value = WeeklyRankingListUiState.Success(currentPageState)
             }
         }
     }
@@ -169,11 +169,11 @@ class SuggestedSongsListViewModel(
 
     fun onUseToCreateVideo(song: MusicSong) {
         _selectedSong.value = null
-        _navigationEvent.value = SuggestedSongsNavigationEvent.NavigateToAssetPicker(song.id)
+        _navigationEvent.value = WeeklyRankingNavigationEvent.NavigateToAssetPicker(song.id)
     }
 
     fun onNavigateBack() {
-        _navigationEvent.value = SuggestedSongsNavigationEvent.NavigateBack
+        _navigationEvent.value = WeeklyRankingNavigationEvent.NavigateBack
     }
 
     fun onNavigationHandled() {

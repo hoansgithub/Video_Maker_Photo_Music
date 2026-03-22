@@ -78,6 +78,7 @@ class TemplateRepositoryImpl(
             ?.let { return@withContext Result.success(it) }
 
         try {
+            android.util.Log.d("TemplateRepository", "getTemplatesByVibeTag: region=$region, tag=$tag, limit=$limit, offset=$offset")
             val templates = supabaseClient.postgrest
                 .rpc(FN_TEMPLATES_BY_TAG_SORTED, buildJsonObject {
                     put("p_region", region)
@@ -88,14 +89,17 @@ class TemplateRepositoryImpl(
                 .decodeList<TemplateDto>()
                 .map { it.toDomain() }
 
+            android.util.Log.d("TemplateRepository", "getTemplatesByVibeTag: fetched ${templates.size} templates")
             apiCacheManager.put(cacheKey, templates)
             Result.success(templates)
         } catch (e: Exception) {
+            android.util.Log.e("TemplateRepository", "getTemplatesByVibeTag failed: ${e.message}")
             apiCacheManager.getStale<List<VideoTemplate>>(cacheKey)
                 ?.let { return@withContext Result.success(it) }
             val fallback = templateLibrary.getByVibeTag(tag)
                 .drop(offset)
                 .take(limit)
+            android.util.Log.d("TemplateRepository", "getTemplatesByVibeTag: using fallback, ${fallback.size} templates")
             Result.success(fallback)
         }
     }

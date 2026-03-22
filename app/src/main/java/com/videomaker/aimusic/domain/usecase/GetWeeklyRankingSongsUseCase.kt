@@ -15,8 +15,9 @@ class GetWeeklyRankingSongsUseCase(
     /**
      * Get weekly ranking/featured songs
      * @param limit Maximum number of songs to return (default: 9)
+     * @param offset Starting position for pagination (default: 0)
      * @return Result containing list of featured songs
      */
-    suspend operator fun invoke(limit: Int = 9): Result<List<MusicSong>> =
-        repository.getFeaturedSongs(limit)
+    suspend operator fun invoke(limit: Int = 9, offset: Int = 0): Result<List<MusicSong>> =
+        repository.getFeaturedSongs(limit, offset)
 }

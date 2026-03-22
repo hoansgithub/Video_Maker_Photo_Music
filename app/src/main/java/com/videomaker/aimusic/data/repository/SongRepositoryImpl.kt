@@ -42,27 +42,41 @@ class SongRepositoryImpl(
     }
 
 
-    override suspend fun getFeaturedSongs(limit: Int): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
+    override suspend fun getFeaturedSongs(limit: Int, offset: Int): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
         val region = regionProvider.getRegionCode()
-        val cacheKey = ApiCacheManager.keySongsWeeklyRanking(region)
-        apiCacheManager.get<List<MusicSong>>(cacheKey)
-            ?.let { return@withContext Result.success(it) }
+        // Include limit in cache key to avoid conflicts between home preview (9) and full list (20)
+        val cacheKey = "${ApiCacheManager.keySongsWeeklyRanking(region)}_${limit}"
+
+        // Only cache first page (offset = 0)
+        if (offset == 0) {
+            apiCacheManager.get<List<MusicSong>>(cacheKey)
+                ?.let { return@withContext Result.success(it) }
+        }
 
         try {
             val songs = supabaseClient.postgrest
                 .rpc(FN_SONGS_SORTED, buildJsonObject {
                     put("p_region", region)
                     put("p_limit", limit)
-                    put("p_offset", 0)
+                    put("p_offset", offset)
                 })
                 .decodeList<SongDto>()
                 .toMusicSongs()
 
-            apiCacheManager.put(cacheKey, songs)
+            android.util.Log.d("SongRepository", "getFeaturedSongs: region=$region, limit=$limit, offset=$offset, fetched ${songs.size} songs")
+
+            // Only cache first page
+            if (offset == 0) {
+                apiCacheManager.put(cacheKey, songs)
+            }
             Result.success(songs)
         } catch (e: Exception) {
-            apiCacheManager.getStale<List<MusicSong>>(cacheKey)
-                ?.let { return@withContext Result.success(it) }
+            android.util.Log.e("SongRepository", "getFeaturedSongs failed: ${e.message}")
+            // Only return stale cache for first page
+            if (offset == 0) {
+                apiCacheManager.getStale<List<MusicSong>>(cacheKey)
+                    ?.let { return@withContext Result.success(it) }
+            }
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
     }
@@ -148,9 +162,13 @@ class SongRepositoryImpl(
     override suspend fun getSongsByGenre(genre: String, limit: Int): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
         val cacheKey = ApiCacheManager.keySongsGenre(genre)
         apiCacheManager.get<List<MusicSong>>(cacheKey)
-            ?.let { return@withContext Result.success(it) }
+            ?.let {
+                android.util.Log.d("SongRepository", "getSongsByGenre: using cache for genre=$genre, ${it.size} songs")
+                return@withContext Result.success(it)
+            }
 
         try {
+            android.util.Log.d("SongRepository", "getSongsByGenre: fetching genre=$genre, limit=$limit")
             val songs = supabaseClient.from(TABLE_SONGS)
                 .select {
                     filter {
@@ -163,9 +181,11 @@ class SongRepositoryImpl(
                 .decodeList<SongDto>()
                 .toMusicSongs()
 
+            android.util.Log.d("SongRepository", "getSongsByGenre: fetched ${songs.size} songs for genre=$genre")
             apiCacheManager.put(cacheKey, songs)
             Result.success(songs)
         } catch (e: Exception) {
+            android.util.Log.e("SongRepository", "getSongsByGenre failed for genre=$genre: ${e.message}")
             apiCacheManager.getStale<List<MusicSong>>(cacheKey)
                 ?.let { return@withContext Result.success(it) }
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
@@ -218,8 +238,12 @@ class SongRepositoryImpl(
     ): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
         val region = regionProvider.getRegionCode()
 
+        // Cache key includes limit and genres to avoid conflicts between
+        // Home screen preview (limit=10) and full list (limit=20)
+        val genresKey = preferredGenres.sorted().joinToString(",").ifEmpty { "all" }
+        val cacheKey = "songs_suggested_${region}_${genresKey}_${limit}"
+
         // Only cache first page (offset = 0)
-        val cacheKey = ApiCacheManager.KEY_SONGS_SUGGESTED
         if (offset == 0) {
             apiCacheManager.get<List<MusicSong>>(cacheKey)
                 ?.let { return@withContext Result.success(it) }
@@ -233,6 +257,8 @@ class SongRepositoryImpl(
                 normalised.forEach { genre -> add(JsonPrimitive(genre)) }
             }
 
+            android.util.Log.d("SongRepository", "getSuggestedSongs: region=$region, genres=$normalised, limit=$limit, offset=$offset")
+
             val songs = supabaseClient.postgrest
                 .rpc(FN_SONGS_BY_GENRES_SORTED, buildJsonObject {
                     put("p_region", region)
@@ -243,12 +269,15 @@ class SongRepositoryImpl(
                 .decodeList<SongDto>()
                 .toMusicSongs()
 
+            android.util.Log.d("SongRepository", "getSuggestedSongs: fetched ${songs.size} songs")
+
             // Only cache first page
             if (offset == 0) {
                 apiCacheManager.put(cacheKey, songs)
             }
             Result.success(songs)
         } catch (e: Exception) {
+            android.util.Log.e("SongRepository", "getSuggestedSongs failed: ${e.message}")
             // Only return stale cache for first page
             if (offset == 0) {
                 apiCacheManager.getStale<List<MusicSong>>(cacheKey)

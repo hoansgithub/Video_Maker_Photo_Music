@@ -405,6 +405,19 @@ class SuggestedSongsListViewModelFactory(
 }
 
 /**
+ * Factory wrapper for WeeklyRankingListViewModel.
+ */
+class WeeklyRankingListViewModelFactory(
+    private val getWeeklyRankingSongsUseCase: GetWeeklyRankingSongsUseCase
+) {
+    fun create(): com.videomaker.aimusic.modules.weeklyranking.WeeklyRankingListViewModel {
+        return com.videomaker.aimusic.modules.weeklyranking.WeeklyRankingListViewModel(
+            getWeeklyRankingSongsUseCase = getWeeklyRankingSongsUseCase
+        )
+    }
+}
+
+/**
  * Factory wrapper for SongSearchViewModel.
  */
 class SongSearchViewModelFactory(
@@ -603,6 +616,13 @@ val presentationModule = module {
     single {
         SuggestedSongsListViewModelFactory(
             getSuggestedSongsUseCase = get()
+        )
+    }
+
+    // Weekly Ranking List ViewModel factory (singleton - stateless factory)
+    single {
+        WeeklyRankingListViewModelFactory(
+            getWeeklyRankingSongsUseCase = get()
         )
     }
 

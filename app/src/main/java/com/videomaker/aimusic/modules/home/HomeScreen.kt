@@ -81,6 +81,7 @@ fun HomeScreen(
     onNavigateToSearch: () -> Unit = {},
     onNavigateToSongSearch: () -> Unit = {},
     onNavigateToSuggestedSongsList: () -> Unit = {},
+    onNavigateToWeeklyRankingList: () -> Unit = {},
     onNavigateToTemplateDetail: (String) -> Unit = {},
     onNavigateToAllTemplates: (String?) -> Unit = {},
     onNavigateToAssetPicker: (songId: Long) -> Unit = {}
@@ -124,6 +125,7 @@ fun HomeScreen(
                     topBarHeight = topBarHeight,
                     onNavigateToSearch = onNavigateToSongSearch,
                     onNavigateToSuggestedSongsList = onNavigateToSuggestedSongsList,
+                    onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
                     onNavigateToAssetPicker = onNavigateToAssetPicker
                 )
                 2 -> ProjectsTabContent(
@@ -300,6 +302,7 @@ private fun SongsTabContent(
     topBarHeight: Dp = 0.dp,
     onNavigateToSearch: () -> Unit = {},
     onNavigateToSuggestedSongsList: () -> Unit = {},
+    onNavigateToWeeklyRankingList: () -> Unit = {},
     onNavigateToAssetPicker: (Long) -> Unit = {}
 ) {
     SongsScreen(
@@ -307,6 +310,7 @@ private fun SongsTabContent(
         topBarHeight = topBarHeight,
         onNavigateToAssetPicker = onNavigateToAssetPicker,
         onNavigateToSuggestedAll = onNavigateToSuggestedSongsList,
+        onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
         onNavigateToSearch = onNavigateToSearch
     )
 }

@@ -96,6 +96,7 @@ fun SongsScreen(
     topBarHeight: Dp = 0.dp,
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
     onNavigateToSuggestedAll: () -> Unit = {},
+    onNavigateToWeeklyRankingList: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {}
 ) {
 
@@ -142,6 +143,7 @@ fun SongsScreen(
                 onRefresh = viewModel::refresh,
                 onSongClick = viewModel::onSongClick,
                 onSeeMoreSuggested = viewModel::onSeeMoreSuggestedClick,
+                onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
                 onSearchClick = onNavigateToSearch
             )
         }
@@ -176,6 +178,7 @@ private fun SongsContent(
     onRefresh: () -> Unit,
     onSongClick: (MusicSong) -> Unit,
     onSeeMoreSuggested: () -> Unit,
+    onNavigateToWeeklyRankingList: () -> Unit,
     onSearchClick: () -> Unit
 ) {
     val dimens = AppDimens.current
@@ -229,7 +232,7 @@ private fun SongsContent(
                     title = stringResource(R.string.songs_weekly_ranking),
                     icon = Icons.Default.LocalFireDepartment,
                     iconTint = GoldAccent,
-                    onSeeAllClick = { /* TODO: Navigate to all rankings */ }
+                    onSeeAllClick = onNavigateToWeeklyRankingList
                 )
                 Spacer(modifier = Modifier.height(dimens.spaceSm))
             }
@@ -486,15 +489,6 @@ private fun SuggestSongCard(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                Spacer(modifier = Modifier.width(dimens.spaceXs))
-                Icon(
-                    painter = painterResource(R.drawable.ic_start_project),
-                    contentDescription = stringResource(R.string.start_project),
-                    tint = Color.Unspecified,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clickable(onClick = onClick)
-                )
             }
         }
     }
@@ -717,17 +711,6 @@ private fun RankingSongItem(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.width(dimens.spaceXs))
-
-            Icon(
-                painter = painterResource(R.drawable.ic_start_project),
-                contentDescription = stringResource(R.string.start_project),
-                tint = Color.Unspecified,
-                modifier = Modifier
-                    .size(36.dp)
-                    .clickable(onClick = onClick)
-            )
         }
     }
 }
@@ -931,6 +914,7 @@ private fun SongsContentLoadedPreview() {
                     onRefresh = {},
                     onSongClick = {},
                     onSeeMoreSuggested = {},
+                    onNavigateToWeeklyRankingList = {},
                     onSearchClick = {}
                 )
             }
@@ -962,6 +946,7 @@ private fun SongsContentLoadingPreview() {
                     onRefresh = {},
                     onSongClick = {},
                     onSeeMoreSuggested = {},
+                    onNavigateToWeeklyRankingList = {},
                     onSearchClick = {}
                 )
             }

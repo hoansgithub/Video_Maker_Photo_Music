@@ -10,7 +10,7 @@ interface SongRepository {
     /**
      * Get featured/trending songs (high sort_order)
      */
-    suspend fun getFeaturedSongs(limit: Int = 10): Result<List<MusicSong>>
+    suspend fun getFeaturedSongs(limit: Int = 10, offset: Int = 0): Result<List<MusicSong>>
 
     /**
      * Get a single song by ID

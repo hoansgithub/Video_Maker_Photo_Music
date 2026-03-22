@@ -96,7 +96,9 @@
       "Bash(do echo -n \"$comp: \")",
       "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && git diff HEAD -- \"\"\"\"{}\"\"\"\" | grep \"\"\"\"^-\"\"\"\" | grep -v \"\"\"\"^---\"\"\"\" | head -5')",
       "Bash(/Users/hoanl/Documents/alcheclub-android/Video_Maker_Photo_Music/app/src/main/java/com/videomaker/aimusic/modules/editor/EditorScreen.kt:*)",
-      "Bash(/tmp/viewmodel_registration_summary.md:*)"
+      "Bash(/tmp/viewmodel_registration_summary.md:*)",
+      "Bash(chmod:*)",
+      "Bash(/tmp/final_pagination_test.sh)"
     ]
   }
 }

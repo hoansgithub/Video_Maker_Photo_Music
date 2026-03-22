@@ -57,6 +57,12 @@ sealed interface AppRoute : NavKey {
     @Serializable
     data object SuggestedSongsList : AppRoute
 
+    /**
+     * Weekly ranking list: paginated browsing of top 100 weekly ranking songs
+     */
+    @Serializable
+    data object WeeklyRankingList : AppRoute
+
     // ============================================
     // CREATE FLOW ROUTES
     // ============================================
