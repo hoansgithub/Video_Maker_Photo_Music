@@ -260,39 +260,61 @@ class EditorViewModel(
         }
     }
 
+    /**
+     * Comprehensive save function that handles both pending settings and new projects.
+     *
+     * Save logic:
+     * 1. If there are pending settings, apply them to the project
+     * 2. If project is unsaved (new), create it in the database
+     * 3. If project exists, settings are auto-saved via applySettings()
+     *
+     * Returns true if save was successful or no save was needed.
+     */
     suspend fun saveProject(): Boolean {
         val currentState = _uiState.value
         if (currentState !is EditorUiState.Success) return false
-        if (!currentState.isUnsavedProject) return true // Already saved
 
-        return try {
-            val project = currentState.project
-            val assetUris = project.assets.map { it.uri }
-            val settings = currentState.displaySettings
+        // Step 1: Apply pending settings if any
+        if (currentState.pendingSettings != null) {
+            applySettings()
+            // Wait a bit for settings to be applied
+            kotlinx.coroutines.delay(100)
+        }
 
-            // Create project in DB with settings
-            val result = createProjectUseCase(assetUris, settings)
-            result.onSuccess { createdProject ->
-                // Update current project ID
-                currentProjectId = createdProject.id
-                // Start observing the DB project - it will update the state
-                // Don't manually update state here to avoid race condition
-                loadExistingProject(createdProject.id)
-            }
-            result.onFailure { error ->
+        // Step 2: Save new project if unsaved
+        if (currentState.isUnsavedProject) {
+            return try {
+                val project = currentState.project
+                val assetUris = project.assets.map { it.uri }
+                val settings = currentState.displaySettings
+
+                // Create project in DB with settings
+                val result = createProjectUseCase(assetUris, settings)
+                result.onSuccess { createdProject ->
+                    // Update current project ID
+                    currentProjectId = createdProject.id
+                    // Start observing the DB project - it will update the state
+                    // Don't manually update state here to avoid race condition
+                    loadExistingProject(createdProject.id)
+                }
+                result.onFailure { error ->
+                    // Show error to user
+                    _uiState.value = EditorUiState.Error(
+                        error.message ?: "Failed to save project"
+                    )
+                }
+                result.isSuccess
+            } catch (e: Exception) {
                 // Show error to user
                 _uiState.value = EditorUiState.Error(
-                    error.message ?: "Failed to save project"
+                    e.message ?: "Failed to save project"
                 )
+                false
             }
-            result.isSuccess
-        } catch (e: Exception) {
-            // Show error to user
-            _uiState.value = EditorUiState.Error(
-                e.message ?: "Failed to save project"
-            )
-            false
         }
+
+        // Already saved and no pending changes
+        return true
     }
 
     fun selectAsset(index: Int) {
@@ -759,6 +781,10 @@ class EditorViewModel(
         }
     }
 
+    /**
+     * Navigate to export screen.
+     * Saves project (applies pending settings + saves new project if needed) before navigating.
+     */
     fun navigateToExport() {
         val currentState = _uiState.value
         if (currentState !is EditorUiState.Success) return
@@ -769,19 +795,14 @@ class EditorViewModel(
             return
         }
 
-        if (currentState.isUnsavedProject) {
-            // Auto-save before export
-            viewModelScope.launch {
-                if (saveProject()) {
-                    currentProjectId?.let { id ->
-                        _navigationEvent.value = EditorNavigationEvent.NavigateToExport(id)
-                    }
+        // Always save before export (applies pending settings and saves new projects)
+        viewModelScope.launch {
+            if (saveProject()) {
+                currentProjectId?.let { id ->
+                    _navigationEvent.value = EditorNavigationEvent.NavigateToExport(id)
                 }
             }
-        } else {
-            currentProjectId?.let { id ->
-                _navigationEvent.value = EditorNavigationEvent.NavigateToExport(id)
-            }
+            // If save failed, user sees error message and stays in editor
         }
     }
 

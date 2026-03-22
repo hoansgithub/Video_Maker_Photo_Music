@@ -233,32 +233,37 @@ fun EditorScreen(
 
         // Exit confirmation dialog - rendered last to overlay everything
         if (showExitConfirmation) {
-            val isUnsaved = (uiState as? EditorUiState.Success)?.isUnsavedProject == true
-            ExitConfirmationDialog(
-                isUnsavedProject = isUnsaved,
-                onSaveAndExit = {
-                    showExitConfirmation = false
-                    scope.launch {
-                        if (isUnsaved) {
-                            // Save project to DB first, then navigate
+            val hasPendingChanges = (uiState as? EditorUiState.Success)?.hasPendingChanges == true
+            val isUnsavedProject = (uiState as? EditorUiState.Success)?.isUnsavedProject == true
+
+            // Only show dialog if there are pending changes
+            if (hasPendingChanges) {
+                ExitConfirmationDialog(
+                    isUnsavedProject = isUnsavedProject,
+                    onSaveAndExit = {
+                        showExitConfirmation = false
+                        scope.launch {
+                            // Save project (applies pending settings + saves new project)
                             if (viewModel.saveProject()) {
                                 viewModel.navigateBack()
                             }
-                        } else {
-                            // Project already saved, just navigate
-                            viewModel.navigateBack()
+                            // If save fails, stay in editor and show error
                         }
+                    },
+                    onDiscardAndExit = {
+                        showExitConfirmation = false
+                        // Discard pending changes and navigate back
+                        viewModel.navigateBack()
+                    },
+                    onCancel = {
+                        showExitConfirmation = false
                     }
-                },
-                onDiscardAndExit = {
-                    showExitConfirmation = false
-                    // Navigate back without saving (for unsaved projects, this discards the work)
-                    viewModel.navigateBack()
-                },
-                onCancel = {
-                    showExitConfirmation = false
-                }
-            )
+                )
+            } else {
+                // No pending changes, just navigate back
+                showExitConfirmation = false
+                viewModel.navigateBack()
+            }
         }
 
         // Music Picker Bottom Sheet
