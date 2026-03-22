@@ -69,6 +69,7 @@ import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
 import com.videomaker.aimusic.ui.theme.SearchFieldBorder
 import com.videomaker.aimusic.ui.components.AppFilterChip
+import com.videomaker.aimusic.ui.components.TagChipRow
 import com.videomaker.aimusic.ui.components.PrimaryButton
 import com.videomaker.aimusic.ui.theme.TextTertiary
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -524,42 +525,6 @@ private fun FeaturedTemplateCard(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(dimens.spaceMd)
-            )
-        }
-    }
-}
-
-// ============================================
-// TAG CHIP ROW
-// ============================================
-
-@Composable
-private fun TagChipRow(
-    vibeTags: List<VibeTag>,
-    selectedTagId: String?,
-    onTagSelected: (String?) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val dimens = AppDimens.current
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = dimens.spaceLg),
-        horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
-    ) {
-        // "For you" chip — clears filter
-        AppFilterChip(
-            text = stringResource(R.string.gallery_filter_for_you),
-            isSelected = selectedTagId == null,
-            onClick = { onTagSelected(null) }
-        )
-        vibeTags.forEach { tag ->
-            AppFilterChip(
-                text = if (tag.emoji.isNotEmpty()) "${tag.emoji} ${tag.displayName}" else tag.displayName,
-                isSelected = tag.id == selectedTagId,
-                onClick = { onTagSelected(tag.id) }
             )
         }
     }
