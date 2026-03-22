@@ -51,6 +51,12 @@ sealed interface AppRoute : NavKey {
     @Serializable
     data object SongSearch : AppRoute
 
+    /**
+     * Suggested songs list: paginated browsing of all suggested songs
+     */
+    @Serializable
+    data object SuggestedSongsList : AppRoute
+
     // ============================================
     // CREATE FLOW ROUTES
     // ============================================

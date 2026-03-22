@@ -35,6 +35,7 @@ import com.videomaker.aimusic.di.SongSearchViewModelFactory
 // import com.videomaker.aimusic.di.MusicPickerViewModelFactory // Commented out - using Supabase only
 import com.videomaker.aimusic.di.ProjectsViewModelFactory
 import com.videomaker.aimusic.di.SongsViewModelFactory
+import com.videomaker.aimusic.di.SuggestedSongsListViewModelFactory
 import com.videomaker.aimusic.di.TemplateListViewModelFactory
 import com.videomaker.aimusic.di.TemplatePreviewerViewModelFactory
 import com.videomaker.aimusic.modules.editor.EditorScreen
@@ -132,6 +133,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     onSettingsClick = { backStack.add(AppRoute.Settings) },
                     onNavigateToSearch = { backStack.add(AppRoute.Search) },
                     onNavigateToSongSearch = { backStack.add(AppRoute.SongSearch) },
+                    onNavigateToSuggestedSongsList = { backStack.add(AppRoute.SuggestedSongsList) },
                     onNavigateToTemplateDetail = { templateId ->
                         // NEW FLOW: Browse templates first, THEN select images
                         backStack.add(AppRoute.TemplatePreviewer(
@@ -193,6 +195,25 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                         ))
                     },
                     onNavigateBack = { backStack.removeLastOrNull() }
+                )
+            }
+
+            entry<AppRoute.SuggestedSongsList> {
+                val factory = koinInject<SuggestedSongsListViewModelFactory>()
+                val suggestedSongsViewModel: com.videomaker.aimusic.modules.suggestedsongs.SuggestedSongsListViewModel = viewModel(
+                    key = "suggested_songs_list",
+                    factory = createSafeViewModelFactory { factory.create() }
+                )
+                com.videomaker.aimusic.modules.suggestedsongs.SuggestedSongsListScreen(
+                    viewModel = suggestedSongsViewModel,
+                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateToAssetPicker = { songId ->
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "", // Top-ranked template
+                            imageUris = emptyList(),
+                            overrideSongId = songId
+                        ))
+                    }
                 )
             }
 

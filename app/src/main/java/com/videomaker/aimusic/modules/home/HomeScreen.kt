@@ -80,6 +80,7 @@ fun HomeScreen(
     onProjectClick: (String) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onNavigateToSongSearch: () -> Unit = {},
+    onNavigateToSuggestedSongsList: () -> Unit = {},
     onNavigateToTemplateDetail: (String) -> Unit = {},
     onNavigateToAllTemplates: (String?) -> Unit = {},
     onNavigateToAssetPicker: (songId: Long) -> Unit = {}
@@ -122,6 +123,7 @@ fun HomeScreen(
                     viewModel = songsViewModel,
                     topBarHeight = topBarHeight,
                     onNavigateToSearch = onNavigateToSongSearch,
+                    onNavigateToSuggestedSongsList = onNavigateToSuggestedSongsList,
                     onNavigateToAssetPicker = onNavigateToAssetPicker
                 )
                 2 -> ProjectsTabContent(
@@ -297,12 +299,14 @@ private fun SongsTabContent(
     viewModel: SongsViewModel,
     topBarHeight: Dp = 0.dp,
     onNavigateToSearch: () -> Unit = {},
+    onNavigateToSuggestedSongsList: () -> Unit = {},
     onNavigateToAssetPicker: (Long) -> Unit = {}
 ) {
     SongsScreen(
         viewModel = viewModel,
         topBarHeight = topBarHeight,
         onNavigateToAssetPicker = onNavigateToAssetPicker,
+        onNavigateToSuggestedAll = onNavigateToSuggestedSongsList,
         onNavigateToSearch = onNavigateToSearch
     )
 }
