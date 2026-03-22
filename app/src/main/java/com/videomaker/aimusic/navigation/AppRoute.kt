@@ -38,8 +38,12 @@ sealed interface AppRoute : NavKey {
     // HOME LEVEL ROUTES
     // ============================================
 
+    /**
+     * Home screen with optional initial tab
+     * @param initialTab Tab index: 0=Gallery, 1=Songs, 2=My Videos
+     */
     @Serializable
-    data object Home : AppRoute
+    data class Home(val initialTab: Int = 0) : AppRoute
 
     @Serializable
     data object Search : AppRoute
@@ -103,13 +107,6 @@ sealed interface AppRoute : NavKey {
         val imageUris: List<String> = emptyList(), // Empty = browse mode with sample images
         val overrideSongId: Long = -1L
     ) : AppRoute
-
-    // ============================================
-    // PROJECTS ROUTES
-    // ============================================
-
-    @Serializable
-    data object Projects : AppRoute
 
     // ============================================
     // SETTINGS ROUTES

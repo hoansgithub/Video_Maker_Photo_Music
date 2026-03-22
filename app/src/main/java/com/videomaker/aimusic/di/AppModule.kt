@@ -268,12 +268,14 @@ class EditorViewModelFactory(
  * Factory wrapper for ExportViewModel to avoid type erasure issues with ACCDI.
  */
 class ExportViewModelFactory(
-    private val exportRepository: ExportRepository
+    private val exportRepository: ExportRepository,
+    private val projectRepository: ProjectRepository
 ) {
     fun create(projectId: String): ExportViewModel {
         return ExportViewModel(
             projectId = projectId,
-            exportRepository = exportRepository
+            exportRepository = exportRepository,
+            projectRepository = projectRepository
         )
     }
 }
@@ -489,7 +491,8 @@ val presentationModule = module {
     // Export ViewModel factory (singleton - stateless factory)
     single {
         ExportViewModelFactory(
-            exportRepository = get()
+            exportRepository = get(),
+            projectRepository = get()
         )
     }
 

@@ -1,5 +1,8 @@
 package com.videomaker.aimusic.modules.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,19 +33,25 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -84,6 +93,7 @@ import com.videomaker.aimusic.ui.theme.TextBright
 import com.videomaker.aimusic.ui.theme.TextInactive
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -107,9 +117,9 @@ fun HomeScreen(
     galleryViewModel: GalleryViewModel,
     songsViewModel: SongsViewModel,
     projectsViewModel: ProjectsViewModel,
+    initialTab: Int = 0,
     onSettingsClick: () -> Unit = {},
     onCreateClick: () -> Unit = {},
-    onMyProjectsClick: () -> Unit = {},
     onProjectClick: (String) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onNavigateToSongSearch: () -> Unit = {},
@@ -123,7 +133,7 @@ fun HomeScreen(
     )
 
     val pagerState = rememberPagerState(
-        initialPage = 0,
+        initialPage = initialTab.coerceIn(0, tabs.size - 1),
         pageCount = { tabs.size }
     )
     val coroutineScope = rememberCoroutineScope()
@@ -352,6 +362,11 @@ private fun ProjectsTabContent(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dimens = AppDimens.current
 
+    // Start loading projects only when this tab appears
+    LaunchedEffect(Unit) {
+        viewModel.startObservingProjects()
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Background image — edge-to-edge, behind everything
         Image(
@@ -384,6 +399,9 @@ private fun ProjectsTabContent(
                         projects = state.projects,
                         onProjectClick = { project ->
                             onProjectClick(project.id)
+                        },
+                        onDeleteProject = { project ->
+                            viewModel.onDeleteProject(project)
                         },
                         onCreateClick = onCreateClick
                     )
@@ -485,6 +503,7 @@ private fun ProjectsEmptyState(
 private fun ProjectsListContent(
     projects: List<Project>,
     onProjectClick: (Project) -> Unit,
+    onDeleteProject: (Project) -> Unit,
     onCreateClick: () -> Unit
 ) {
     val dimens = AppDimens.current
@@ -504,6 +523,7 @@ private fun ProjectsListContent(
                 ProjectsStaggeredGrid(
                     projects = projects,
                     onProjectClick = onProjectClick,
+                    onDeleteProject = onDeleteProject,
                     spacing = dimens.spaceSm
                 )
             }
@@ -543,6 +563,7 @@ private fun ProjectsListContent(
 private fun ProjectsStaggeredGrid(
     projects: List<Project>,
     onProjectClick: (Project) -> Unit,
+    onDeleteProject: (Project) -> Unit,
     spacing: Dp
 ) {
     if (projects.isEmpty()) return
@@ -553,14 +574,16 @@ private fun ProjectsStaggeredGrid(
     }
 
     StaggeredGrid(
-        itemCount = projects.size,
+        items = projects,
         aspectRatios = aspectRatios,
         columns = 2,
-        spacing = spacing
-    ) { index ->
+        spacing = spacing,
+        key = { project -> project.id }
+    ) { project ->
         ProjectGridCard(
-            project = projects[index],
-            onClick = { onProjectClick(projects[index]) }
+            project = project,
+            onClick = { onProjectClick(project) },
+            onDelete = { onDeleteProject(project) }
         )
     }
 }
@@ -608,17 +631,26 @@ private fun CreateProjectFloatingButton(
 @Composable
 private fun ProjectGridCard(
     project: Project,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: () -> Unit
 ) {
     val dimens = AppDimens.current
+    val coroutineScope = rememberCoroutineScope()
+    var showMenu by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(true) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(dimens.radiusMd))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-            .clickable(onClick = onClick)
+    AnimatedVisibility(
+        visible = isVisible,
+        exit = shrinkVertically() + fadeOut()
     ) {
+        Box {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(dimens.radiusMd))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .clickable(onClick = onClick)
+            ) {
         // Thumbnail with aspect ratio
         Box(
             modifier = Modifier
@@ -679,6 +711,25 @@ private fun ProjectGridCard(
                 }
             }
 
+            // Creation time badge at bottom-left
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(dimens.spaceXs)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.7f),
+                        shape = RoundedCornerShape(dimens.radiusSm)
+                    )
+                    .padding(horizontal = dimens.spaceXs, vertical = dimens.spaceXxs)
+            ) {
+                Text(
+                    text = formatProjectDate(project.createdAt),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 10.sp,
+                    color = Color.White
+                )
+            }
+
             // Play icon at center
             Icon(
                 imageVector = Icons.Default.PlayArrow,
@@ -694,30 +745,79 @@ private fun ProjectGridCard(
             )
         }
 
-        // Project Info
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(dimens.spaceSm)
-        ) {
-            Text(
-                text = project.name,
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(dimens.spaceXxs))
-            Text(
-                text = stringResource(
-                    R.string.projects_item_info,
-                    project.assets.size,
-                    project.formattedDuration
-                ),
-                style = MaterialTheme.typography.labelSmall,
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
+                // Project Info
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(dimens.spaceSm)
+                ) {
+                    Text(
+                        text = project.name,
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(dimens.spaceXxs))
+                    Text(
+                        text = stringResource(
+                            R.string.projects_item_info,
+                            project.assets.size,
+                            project.formattedDuration
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
+
+            // Menu button (top right) - positioned absolutely with circular dark background
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(dimens.spaceXs)
+                    .size(28.dp)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.6f),
+                        shape = CircleShape
+                    )
+                    .clickable { showMenu = true },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = stringResource(R.string.projects_menu),
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+
+                // Dropdown menu
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.projects_delete)) },
+                        onClick = {
+                            showMenu = false
+                            isVisible = false
+                            // Delay actual deletion to allow animation to complete
+                            coroutineScope.launch {
+                                delay(300) // Animation duration
+                                onDelete()
+                            }
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    )
+                }
+            }
         }
     }
 }

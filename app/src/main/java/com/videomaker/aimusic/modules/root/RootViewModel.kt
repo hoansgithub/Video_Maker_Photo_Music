@@ -101,7 +101,7 @@ class RootViewModel(
      * Navigate to home screen
      */
     fun navigateToHome() {
-        _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Home)
+        _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Home())
     }
 
     /**
@@ -221,7 +221,7 @@ class RootViewModel(
             }
             // Default: Go to Home
             else -> {
-                _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Home)
+                _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Home())
             }
         }
     }

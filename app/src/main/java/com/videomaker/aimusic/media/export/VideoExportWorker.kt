@@ -101,6 +101,7 @@ class VideoExportWorker(
                             override fun onCompleted(composition: Composition, result: ExportResult) {
                                 android.util.Log.d(TAG, "Transformer completed: duration=${result.durationMs}ms")
                                 stopProgressTracking()
+                                cleanupTransformer()
                                 if (continuation.isActive) {
                                     continuation.resume(Unit)
                                 }
@@ -113,6 +114,7 @@ class VideoExportWorker(
                             ) {
                                 android.util.Log.e(TAG, "Transformer error: ${exception.errorCode}, ${exception.message}", exception)
                                 stopProgressTracking()
+                                cleanupTransformer()
                                 if (continuation.isActive) {
                                     continuation.resumeWithException(exception)
                                 }
@@ -146,6 +148,7 @@ class VideoExportWorker(
 
                 } catch (e: Exception) {
                     android.util.Log.e(TAG, "Failed to start transformer", e)
+                    cleanupTransformer()
                     if (continuation.isActive) {
                         continuation.resumeWithException(e)
                     }
@@ -158,6 +161,7 @@ class VideoExportWorker(
                 mainHandler.post {
                     transformer?.cancel()
                     stopProgressTracking()
+                    cleanupTransformer()
                 }
                 File(outputPath).delete()
             }
@@ -170,6 +174,19 @@ class VideoExportWorker(
         }
         progressHandler = null
         progressRunnable = null
+    }
+
+    /**
+     * Clean up transformer resources
+     *
+     * Note: Transformer doesn't have a release() method in Media3.
+     * Cleanup is done by calling cancel() and nullifying the reference.
+     * This follows the pattern from Media3's official demo:
+     * https://github.com/androidx/media/blob/release/demos/transformer/src/main/java/androidx/media3/demo/transformer/TransformerActivity.java
+     */
+    private fun cleanupTransformer() {
+        transformer?.cancel()
+        transformer = null
     }
 
 }

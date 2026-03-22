@@ -49,7 +49,6 @@ import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.modules.home.HomeScreen
 import com.videomaker.aimusic.modules.picker.AssetPickerScreen
 import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
-import com.videomaker.aimusic.modules.projects.ProjectsScreen
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.settings.SettingsScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerScreen
@@ -72,7 +71,7 @@ private val slideAnimSpec = tween<IntOffset>(300)
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier) {
     val activity = LocalContext.current as? Activity
-    val backStack = rememberNavBackStack(AppRoute.Home)
+    val backStack = rememberNavBackStack(AppRoute.Home())
 
     NavDisplay(
         modifier = modifier.fillMaxSize(),
@@ -105,7 +104,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             // ============================================
             // HOME LEVEL
             // ============================================
-            entry<AppRoute.Home> {
+            entry<AppRoute.Home> { route ->
                 val galleryFactory = koinInject<GalleryViewModelFactory>()
                 val galleryViewModel: GalleryViewModel = viewModel(
                     key = "gallery",
@@ -125,8 +124,8 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     galleryViewModel = galleryViewModel,
                     songsViewModel = songsViewModel,
                     projectsViewModel = projectsViewModel,
+                    initialTab = route.initialTab,
                     onCreateClick = { backStack.add(AppRoute.AssetPicker()) },
-                    onMyProjectsClick = { backStack.add(AppRoute.Projects) },
                     onSettingsClick = { backStack.add(AppRoute.Settings) },
                     onNavigateToSearch = { backStack.add(AppRoute.Search) },
                     onNavigateToSongSearch = { backStack.add(AppRoute.SongSearch) },
@@ -210,7 +209,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     viewModel = pickerViewModel,
                     onNavigateToEditor = { projectId ->
                         backStack.apply {
-                            val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home
+                            val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home()
                             clear()
                             add(home)
                             add(AppRoute.Editor(projectId))
@@ -219,7 +218,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     onNavigateToEditorWithData = { initialData ->
                         // NEW FLOW: Navigate directly to Editor with template data
                         backStack.apply {
-                            val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home
+                            val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home()
                             clear()
                             add(home)
                             add(AppRoute.Editor(projectId = null, initialData = initialData))
@@ -229,7 +228,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     onAssetsAdded = { backStack.removeLastOrNull() },
                     onNavigateToTemplatePreviewer = { templateId, imageUris, overrideSongId ->
                         backStack.apply {
-                            val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home
+                            val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home()
                             clear()
                             add(home)
                             add(AppRoute.TemplatePreviewer(
@@ -282,24 +281,13 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 )
                 ExportScreen(
                     viewModel = exportViewModel,
-                    onNavigateBack = { backStack.removeLastOrNull() }
-                )
-            }
-
-            // ============================================
-            // PROJECTS
-            // ============================================
-            entry<AppRoute.Projects> {
-                val factory = koinInject<ProjectsViewModelFactory>()
-                val projectsViewModel: ProjectsViewModel = viewModel(
-                    key = "projects",
-                    factory = createSafeViewModelFactory { factory.create() }
-                )
-                ProjectsScreen(
-                    viewModel = projectsViewModel,
                     onNavigateBack = { backStack.removeLastOrNull() },
-                    onNavigateToEditor = { projectId -> backStack.add(AppRoute.Editor(projectId)) },
-                    onCreateClick = { backStack.add(AppRoute.AssetPicker()) }
+                    onNavigateToHomeMyVideos = {
+                        backStack.apply {
+                            clear()
+                            add(AppRoute.Home(initialTab = 2)) // Tab 2 = My Videos
+                        }
+                    }
                 )
             }
 

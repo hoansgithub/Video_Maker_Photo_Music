@@ -86,6 +86,84 @@ fun StaggeredGrid(
  * @param columns Number of columns (default 2)
  * @param spacing Spacing between items
  * @param modifier Modifier for the layout
+ * @param key Stable key function for each item
+ * @param itemContent Content for each item
+ */
+@Composable
+fun <T> StaggeredGrid(
+    items: List<T>,
+    aspectRatios: List<Float>,
+    columns: Int = 2,
+    spacing: Dp,
+    modifier: Modifier = Modifier,
+    key: ((item: T) -> Any)? = null,
+    itemContent: @Composable (item: T) -> Unit
+) {
+    if (items.isEmpty()) return
+
+    Layout(
+        content = {
+            items.forEach { item ->
+                if (key != null) {
+                    androidx.compose.runtime.key(key(item)) {
+                        itemContent(item)
+                    }
+                } else {
+                    itemContent(item)
+                }
+            }
+        },
+        modifier = modifier
+    ) { measurables, constraints ->
+        val spacingPx = spacing.roundToPx()
+        val columnWidth = (constraints.maxWidth - spacingPx * (columns - 1)) / columns
+
+        // Track height of each column
+        val columnHeights = IntArray(columns) { 0 }
+
+        val placeables = measurables.mapIndexed { index, measurable ->
+            // Find shortest column
+            val column = columnHeights.indices.minByOrNull { columnHeights[it] } ?: 0
+
+            // Calculate height based on aspect ratio
+            val aspectRatio = aspectRatios.getOrElse(index) { 1f }
+            val itemHeight = (columnWidth / aspectRatio).toInt()
+
+            val placeable = measurable.measure(
+                constraints.copy(
+                    minWidth = columnWidth,
+                    maxWidth = columnWidth,
+                    minHeight = itemHeight,
+                    maxHeight = itemHeight
+                )
+            )
+
+            val x = column * (columnWidth + spacingPx)
+            val y = columnHeights[column]
+
+            columnHeights[column] += itemHeight + spacingPx
+
+            Triple(placeable, x, y)
+        }
+
+        val totalHeight = (columnHeights.maxOrNull() ?: 0) - spacingPx
+
+        layout(constraints.maxWidth, totalHeight.coerceAtLeast(0)) {
+            placeables.forEach { (placeable, x, y) ->
+                placeable.placeRelative(x, y)
+            }
+        }
+    }
+}
+
+/**
+ * Staggered grid with pre-calculated aspect ratios list (index-based - deprecated)
+ *
+ * @param itemCount Number of items to display
+ * @param aspectRatios Pre-calculated list of aspect ratios
+ * @param columns Number of columns (default 2)
+ * @param spacing Spacing between items
+ * @param modifier Modifier for the layout
  * @param itemContent Content for each item
  */
 @Composable

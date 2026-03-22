@@ -1,10 +1,14 @@
 package com.videomaker.aimusic.modules.export
 
 import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.domain.repository.ExportProgress
 import com.videomaker.aimusic.domain.repository.ExportRepository
+import com.videomaker.aimusic.domain.repository.ProjectRepository
 import com.videomaker.aimusic.media.export.MediaStoreHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,6 +75,7 @@ sealed class ExportUiState {
  */
 sealed class ExportNavigationEvent {
     data object NavigateBack : ExportNavigationEvent()
+    data object NavigateToHomeMyVideos : ExportNavigationEvent()
 }
 
 // ============================================
@@ -87,7 +92,8 @@ sealed class ExportNavigationEvent {
  */
 class ExportViewModel(
     private val projectId: String,
-    private val exportRepository: ExportRepository
+    private val exportRepository: ExportRepository,
+    private val projectRepository: ProjectRepository
 ) : ViewModel() {
 
     // ============================================
@@ -96,6 +102,18 @@ class ExportViewModel(
 
     private val _uiState = MutableStateFlow<ExportUiState>(ExportUiState.Preparing)
     val uiState: StateFlow<ExportUiState> = _uiState.asStateFlow()
+
+    // Project data for thumbnail
+    private val _thumbnailUri = MutableStateFlow<Uri?>(null)
+    val thumbnailUri: StateFlow<Uri?> = _thumbnailUri.asStateFlow()
+
+    // Project aspect ratio for correct video display
+    private val _aspectRatio = MutableStateFlow(AspectRatio.RATIO_9_16)
+    val aspectRatio: StateFlow<AspectRatio> = _aspectRatio.asStateFlow()
+
+    // Current export quality
+    private val _currentQuality = MutableStateFlow(VideoQuality.DEFAULT)
+    val currentQuality: StateFlow<VideoQuality> = _currentQuality.asStateFlow()
 
     // ============================================
     // NAVIGATION EVENTS (StateFlow-based - Google recommended)
@@ -118,7 +136,16 @@ class ExportViewModel(
     // ============================================
 
     init {
+        loadProjectData()
         startExport()
+    }
+
+    private fun loadProjectData() {
+        viewModelScope.launch {
+            val project = projectRepository.getProject(projectId)
+            _thumbnailUri.value = project?.thumbnailUri ?: project?.assets?.firstOrNull()?.uri
+            _aspectRatio.value = project?.settings?.aspectRatio ?: AspectRatio.RATIO_9_16
+        }
     }
 
     private fun startExport() {
@@ -160,10 +187,26 @@ class ExportViewModel(
     }
 
     /**
+     * Change export quality and re-export
+     */
+    fun changeQuality(quality: VideoQuality) {
+        _currentQuality.value = quality
+        _uiState.value = ExportUiState.Preparing
+        startExport()
+    }
+
+    /**
      * Navigate back to editor
      */
     fun navigateBack() {
         _navigationEvent.value = ExportNavigationEvent.NavigateBack
+    }
+
+    /**
+     * Navigate to Home screen with My Videos tab (tab index 2)
+     */
+    fun navigateToHomeMyVideos() {
+        _navigationEvent.value = ExportNavigationEvent.NavigateToHomeMyVideos
     }
 
     /**
@@ -175,20 +218,19 @@ class ExportViewModel(
 
     /**
      * Save the exported video to device gallery
+     *
+     * @param applicationContext Application context (NOT Activity context) - passed explicitly
+     *   to prevent accidental memory leaks from capturing Activity context
      */
-    fun saveToGallery(context: Context) {
+    fun saveToGallery(applicationContext: Context) {
         val currentState = _uiState.value
         if (currentState !is ExportUiState.Success) return
         if (currentState.savedToGallery) return // Already saved
 
-        // Resolve applicationContext immediately — do NOT capture the Activity context
-        // inside the IO coroutine, which may outlive the Activity on rotation.
-        val appContext = context.applicationContext
-
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
                 MediaStoreHelper.saveVideoToGallery(
-                    context = appContext,
+                    context = applicationContext,
                     videoFile = File(currentState.outputPath),
                     displayName = MediaStoreHelper.generateDisplayName(projectId)
                 )

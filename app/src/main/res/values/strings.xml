@@ -95,16 +95,12 @@
     <string name="editor_retry">Retry</string>
 
     <!-- Projects -->
-    <string name="projects_title">My Projects</string>
-    <string name="projects_empty">No projects yet</string>
-    <string name="projects_empty_description">Create your first project to see it here</string>
+    <string name="projects_menu">Project menu</string>
+    <string name="projects_delete">Delete</string>
     <string name="projects_empty_title">Start your journey</string>
     <string name="projects_empty_subtitle">It looks a bit empty here. Let\'s create your first masterpiece today.</string>
     <string name="projects_create_new_video">Create New Video</string>
     <string name="projects_item_info">%1$d photos • %2$s</string>
-    <string name="projects_create_description">Start a new slideshow project</string>
-    <string name="projects_delete_title">Delete Project?</string>
-    <string name="projects_delete_message">\"%s\" will be permanently deleted. This action cannot be undone.</string>
 
     <!-- Export -->
     <string name="export_title">Export Video</string>
@@ -113,6 +109,8 @@
     <string name="export_share">Share</string>
     <string name="export_save">Save to Gallery</string>
     <string name="export_preparing">Preparing export…</string>
+    <string name="export_generating">Generating</string>
+    <string name="export_please_wait">Hold on a sec, getting your video ready!\nPlease don\'t close the app</string>
     <string name="export_exporting">Exporting video…</string>
     <string name="export_dont_close">Please don\'t close the app</string>
     <string name="export_video_saved">Your video has been saved</string>
@@ -128,6 +126,8 @@
     <string name="export_cancel_message">Are you sure you want to cancel the export? All progress will be lost.</string>
     <string name="export_continue">Continue</string>
     <string name="export_cancel_export">Cancel Export</string>
+    <string name="export_error_file_not_found">Video file not found</string>
+    <string name="export_error_share_failed">Failed to share video</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Select Photos</string>

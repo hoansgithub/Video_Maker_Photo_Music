@@ -76,6 +76,7 @@ import com.videomaker.aimusic.modules.editor.components.VideoPreviewPlayer
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.modules.editor.EffectSetViewModel
 // import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen // Commented out - using Supabase only
+import com.videomaker.aimusic.ui.components.QualityPicker
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
@@ -411,25 +412,6 @@ fun EditorScreen(
     }
 }
 
-@Composable
-private fun HdBadge(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .background(
-                color = MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(4.dp)
-            )
-            .padding(horizontal = 4.dp, vertical = 2.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.editor_hd),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimary
-        )
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun EditorTopBar(
@@ -439,8 +421,6 @@ internal fun EditorTopBar(
     onQualityChange: (VideoQuality) -> Unit,
     onDoneClick: () -> Unit
 ) {
-    var showQualityMenu by remember { mutableStateOf(false) }
-
     TopAppBar(
         title = {
             // Empty title - quality button moved to actions
@@ -454,84 +434,12 @@ internal fun EditorTopBar(
             }
         },
         actions = {
-            // Quality dropdown button (aligned right)
-            Box {
-                Row(
-                    modifier = Modifier
-                        .height(40.dp)
-                        .border(
-                            width = 1.dp,
-                            color = Color(0x1FFFFFFF), // #FFFFFF1F
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                        .clickable { showQualityMenu = true }
-                        .padding(horizontal = 16.dp, vertical = 0.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // HD badge for 1080p (on the left)
-                    if (selectedQuality == VideoQuality.FHD_1080) {
-                        HdBadge()
-                        Spacer(modifier = Modifier.width(6.dp))
-                    }
-                    Text(
-                        text = selectedQuality.displayName,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = stringResource(R.string.editor_select_quality),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-
-                // Quality dropdown menu
-                DropdownMenu(
-                    expanded = showQualityMenu,
-                    onDismissRequest = { showQualityMenu = false }
-                ) {
-                    VideoQuality.entries.forEach { quality ->
-                        DropdownMenuItem(
-                            text = {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    // HD badge for 1080p
-                                    if (quality == VideoQuality.FHD_1080) {
-                                        HdBadge()
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                    }
-                                    Text(
-                                        text = quality.displayName,
-                                        fontWeight = if (quality == selectedQuality) {
-                                            FontWeight.Bold
-                                        } else {
-                                            FontWeight.Normal
-                                        }
-                                    )
-                                }
-                            },
-                            onClick = {
-                                onQualityChange(quality)
-                                showQualityMenu = false
-                            },
-                            leadingIcon = if (quality == selectedQuality) {
-                                {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            } else null
-                        )
-                    }
-                }
-            }
+            // Quality picker (reusable component)
+            QualityPicker(
+                selectedQuality = selectedQuality,
+                onQualityChange = onQualityChange,
+                modifier = Modifier.height(40.dp)
+            )
 
             Spacer(modifier = Modifier.width(8.dp))
 

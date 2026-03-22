@@ -46,7 +46,14 @@ class ProjectsViewModel(
     private val _navigationEvent = MutableStateFlow<ProjectsNavigationEvent?>(null)
     val navigationEvent: StateFlow<ProjectsNavigationEvent?> = _navigationEvent.asStateFlow()
 
-    init {
+    private var isObserving = false
+
+    /**
+     * Start observing projects - call this when the My Videos tab becomes visible
+     */
+    fun startObservingProjects() {
+        if (isObserving) return
+        isObserving = true
         observeProjects()
     }
 
@@ -60,7 +67,9 @@ class ProjectsViewModel(
                     _uiState.value = if (projects.isEmpty()) {
                         ProjectsUiState.Empty
                     } else {
-                        ProjectsUiState.Success(projects)
+                        // Sort by creation time - latest first (descending order)
+                        val sortedProjects = projects.sortedByDescending { it.createdAt }
+                        ProjectsUiState.Success(sortedProjects)
                     }
                 }
         }
