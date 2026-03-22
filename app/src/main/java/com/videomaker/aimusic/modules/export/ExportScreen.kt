@@ -99,6 +99,26 @@ fun ExportScreen(
     val context = LocalContext.current
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
 
+    // Cancel export when app goes to background
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_STOP -> {
+                    // Cancel export to free resources when app is not visible
+                    if (uiState is ExportUiState.Processing || uiState is ExportUiState.Preparing) {
+                        viewModel.cancelExport()
+                    }
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     // Handle navigation events - StateFlow-based (Google recommended pattern)
     // Observe navigationEvent StateFlow and call onNavigationHandled() after navigating
     LaunchedEffect(navigationEvent) {
