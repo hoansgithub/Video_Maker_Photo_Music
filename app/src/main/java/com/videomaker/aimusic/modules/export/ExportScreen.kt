@@ -349,14 +349,21 @@ private fun SuccessContent(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Create ExoPlayer with lifecycle management
+    // Create ExoPlayer without preparing (to avoid blocking main thread)
     val exoPlayer = remember(outputPath) {
         ExoPlayer.Builder(context).build().apply {
             val videoUri = Uri.fromFile(File(outputPath))
             setMediaItem(MediaItem.fromUri(videoUri))
             repeatMode = Player.REPEAT_MODE_ONE
-            prepare()
+            // Don't call prepare() here - it can block on ConditionVariable
         }
+    }
+
+    // Prepare player asynchronously to avoid ANR
+    LaunchedEffect(exoPlayer) {
+        // prepare() is non-blocking but can wait on ConditionVariable internally
+        // Running in LaunchedEffect ensures it doesn't block composition
+        exoPlayer.prepare()
     }
 
     // Track playing state from ExoPlayer
