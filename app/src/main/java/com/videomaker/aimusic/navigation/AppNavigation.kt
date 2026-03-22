@@ -35,6 +35,7 @@ import com.videomaker.aimusic.di.SongSearchViewModelFactory
 // import com.videomaker.aimusic.di.MusicPickerViewModelFactory // Commented out - using Supabase only
 import com.videomaker.aimusic.di.ProjectsViewModelFactory
 import com.videomaker.aimusic.di.SongsViewModelFactory
+import com.videomaker.aimusic.di.TemplateListViewModelFactory
 import com.videomaker.aimusic.di.TemplatePreviewerViewModelFactory
 import com.videomaker.aimusic.modules.editor.EditorScreen
 import com.videomaker.aimusic.modules.editor.EditorViewModel
@@ -46,6 +47,8 @@ import com.videomaker.aimusic.modules.gallerysearch.GallerySearchScreen
 import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
 import com.videomaker.aimusic.modules.songsearch.SongSearchScreen
 import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
+import com.videomaker.aimusic.modules.templatelist.TemplateListScreen
+import com.videomaker.aimusic.modules.templatelist.TemplateListViewModel
 import com.videomaker.aimusic.modules.home.HomeScreen
 import com.videomaker.aimusic.modules.picker.AssetPickerScreen
 import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
@@ -135,6 +138,10 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                             templateId = templateId,
                             imageUris = emptyList() // Sample images mode
                         ))
+                    },
+                    onNavigateToAllTemplates = { selectedVibeTagId ->
+                        // Navigate to template list with selected tag filter
+                        backStack.add(AppRoute.TemplateList(selectedVibeTagId))
                     },
                     onNavigateToAssetPicker = { songId ->
                         // Song-to-video flow: browse templates with override song
@@ -294,6 +301,26 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             // ============================================
             // TEMPLATE FLOW
             // ============================================
+            entry<AppRoute.TemplateList> { route ->
+                val factory: TemplateListViewModelFactory = koinInject()
+                val viewModel: TemplateListViewModel = viewModel(
+                    key = "template_list_${route.selectedVibeTagId}",
+                    factory = createSafeViewModelFactory {
+                        factory.create(route.selectedVibeTagId)
+                    }
+                )
+                TemplateListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateToTemplatePreviewer = { templateId ->
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = templateId,
+                            imageUris = emptyList()
+                        ))
+                    }
+                )
+            }
+
             entry<AppRoute.TemplatePreviewer> { route ->
                 val factory: TemplatePreviewerViewModelFactory = koinInject()
                 val audioCache: AudioPreviewCache = koinInject()

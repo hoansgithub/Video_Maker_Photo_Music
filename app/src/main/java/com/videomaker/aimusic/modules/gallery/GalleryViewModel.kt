@@ -52,7 +52,7 @@ sealed class GalleryNavigationEvent {
     data class NavigateToSongDetail(val songId: Long) : GalleryNavigationEvent()
     data class NavigateToTemplateDetail(val templateId: String) : GalleryNavigationEvent()
     data object NavigateToAllTopSongs : GalleryNavigationEvent()
-    data object NavigateToAllTemplates : GalleryNavigationEvent()
+    data class NavigateToAllTemplates(val selectedVibeTagId: String?) : GalleryNavigationEvent()
     data object NavigateToCreate : GalleryNavigationEvent()
 }
 
@@ -181,7 +181,8 @@ class GalleryViewModel(
     }
 
     fun onSeeAllTemplatesClick() {
-        _navigationEvent.value = GalleryNavigationEvent.NavigateToAllTemplates
+        val selectedTagId = (_uiState.value as? GalleryUiState.Success)?.selectedVibeTagId
+        _navigationEvent.value = GalleryNavigationEvent.NavigateToAllTemplates(selectedTagId)
     }
 
     fun onCreateClick() {

@@ -94,6 +94,14 @@ sealed interface AppRoute : NavKey {
     // ============================================
 
     /**
+     * Template list: paginated browsing with vibe tag filtering.
+     *
+     * @param selectedVibeTagId null = "All" templates, non-null = filter by specific tag
+     */
+    @Serializable
+    data class TemplateList(val selectedVibeTagId: String? = null) : AppRoute
+
+    /**
      * Template preview: apply a template to user-selected images OR sample images.
      *
      * @param templateId ID of the template to open first. Empty string = open at top-ranked template.

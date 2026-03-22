@@ -378,6 +378,20 @@ class TemplatePreviewerViewModelFactory(
 }
 
 /**
+ * Factory wrapper for TemplateListViewModel with optional initialVibeTagId parameter.
+ */
+class TemplateListViewModelFactory(
+    private val templateRepository: TemplateRepository
+) {
+    fun create(initialVibeTagId: String?): com.videomaker.aimusic.modules.templatelist.TemplateListViewModel {
+        return com.videomaker.aimusic.modules.templatelist.TemplateListViewModel(
+            templateRepository = templateRepository,
+            initialVibeTagId = initialVibeTagId
+        )
+    }
+}
+
+/**
  * Factory wrapper for SongSearchViewModel.
  */
 class SongSearchViewModelFactory(
@@ -562,6 +576,13 @@ val presentationModule = module {
             songRepository = get(),
             createProjectUseCase = get(),
             updateProjectSettingsUseCase = get()
+        )
+    }
+
+    // Template List ViewModel factory (singleton - stateless factory)
+    single {
+        TemplateListViewModelFactory(
+            templateRepository = get()
         )
     }
 

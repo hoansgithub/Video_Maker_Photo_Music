@@ -104,7 +104,7 @@ fun GalleryScreen(
     onNavigateToSongDetail: (Long) -> Unit = {},
     onNavigateToTemplateDetail: (String) -> Unit = {},
     onNavigateToAllTopSongs: () -> Unit = {},
-    onNavigateToAllTemplates: () -> Unit = {},
+    onNavigateToAllTemplates: (String?) -> Unit = {},
     onNavigateToCreate: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {}
 ) {
@@ -118,7 +118,7 @@ fun GalleryScreen(
                 is GalleryNavigationEvent.NavigateToSongDetail -> onNavigateToSongDetail(event.songId)
                 is GalleryNavigationEvent.NavigateToTemplateDetail -> onNavigateToTemplateDetail(event.templateId)
                 is GalleryNavigationEvent.NavigateToAllTopSongs -> onNavigateToAllTopSongs()
-                is GalleryNavigationEvent.NavigateToAllTemplates -> onNavigateToAllTemplates()
+                is GalleryNavigationEvent.NavigateToAllTemplates -> onNavigateToAllTemplates(event.selectedVibeTagId)
                 is GalleryNavigationEvent.NavigateToCreate -> onNavigateToCreate()
             }
             viewModel.onNavigationHandled()
