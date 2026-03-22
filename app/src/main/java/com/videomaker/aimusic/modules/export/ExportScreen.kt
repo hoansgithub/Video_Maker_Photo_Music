@@ -99,11 +99,6 @@ fun ExportScreen(
     val context = LocalContext.current
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Ensure export is started when screen appears (handles ViewModel reuse)
-    LaunchedEffect(Unit) {
-        viewModel.ensureExportStarted()
-    }
-
     // Cancel export when app goes to background
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {

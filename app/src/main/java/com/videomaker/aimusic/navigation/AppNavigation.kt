@@ -23,7 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import org.koin.compose.koinInject
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.di.AssetPickerViewModelFactory
@@ -81,6 +83,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
     NavDisplay(
         modifier = modifier.fillMaxSize(),
         backStack = backStack,
+        // Decorators for proper ViewModel lifecycle and state preservation
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),  // Preserves rememberSaveable state
+            rememberViewModelStoreNavEntryDecorator()        // Scopes ViewModels to NavEntry
+        ),
         onBack = {
             // At root (Home) — exit the app; otherwise pop
             if (backStack.size > 1) {

@@ -135,29 +135,9 @@ class ExportViewModel(
     // INITIALIZATION
     // ============================================
 
-    // Track if this is the first time appearing (to handle ViewModel reuse)
-    private var hasStartedExport = false
-
     init {
         loadProjectData()
         startExport()
-        hasStartedExport = true
-    }
-
-    /**
-     * Ensure export is running - restart if needed
-     * Called when screen appears to handle ViewModel reuse cases
-     */
-    fun ensureExportStarted() {
-        if (hasStartedExport && _uiState.value is ExportUiState.Success) {
-            // ViewModel was reused, old Success state exists - restart export
-            _uiState.value = ExportUiState.Preparing
-            startExport()
-        } else if (!hasStartedExport) {
-            // First time - start export
-            startExport()
-            hasStartedExport = true
-        }
     }
 
     private fun loadProjectData() {
