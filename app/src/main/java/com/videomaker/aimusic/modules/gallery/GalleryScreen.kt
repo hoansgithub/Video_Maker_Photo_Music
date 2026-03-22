@@ -401,6 +401,10 @@ private fun GallerySearchField(
 // FEATURED TEMPLATES CAROUSEL
 // ============================================
 
+/**
+ * Optimized carousel - only loads images for current and adjacent pages.
+ * Uses beyondBoundsPageCount to limit prefetch to 1 page in each direction.
+ */
 @Composable
 private fun FeaturedTemplatesCarousel(
     templates: List<VideoTemplate>,
@@ -441,9 +445,14 @@ private fun FeaturedTemplatesCarousel(
         ) { page ->
             val template = templates[page.mod(templates.size)]
             val isCurrentPage = page == pagerState.settledPage && !pagerState.isScrollInProgress
+
+            // ✅ Only load image if within visible range (current ± 1 page)
+            val isNearCurrentPage = kotlin.math.abs(page - pagerState.currentPage) <= 1
+
             FeaturedTemplateCard(
                 template = template,
                 isCurrentPage = isCurrentPage,
+                shouldLoadImage = isNearCurrentPage,
                 onClick = { onTemplateClick(template) }
             )
         }
@@ -457,31 +466,44 @@ private fun FeaturedTemplatesCarousel(
     }
 }
 
+/**
+ * Optimized featured card - only loads image when shouldLoadImage is true.
+ * This prevents loading images for pages far from the current page.
+ */
 @Composable
 private fun FeaturedTemplateCard(
     template: VideoTemplate,
     isCurrentPage: Boolean,
+    shouldLoadImage: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
     val context = LocalContext.current
 
-    val imageRequest = remember(template.id, isCurrentPage) {
-        ImageRequest.Builder(context)
-            .data(template.thumbnailPath.ifEmpty { null })
-            .memoryCachePolicy(CachePolicy.ENABLED)
-            .diskCachePolicy(CachePolicy.ENABLED)
-            .memoryCacheKey("featured_${template.id}_${if (isCurrentPage) "anim" else "static"}")
-            .diskCacheKey("featured_${template.id}")
-            .crossfade(true)
-            .apply {
-                if (!isCurrentPage) {
-                    // Static first frame only — bypasses animated WebP decoder
-                    decoderFactory(BitmapFactoryDecoder.Factory())
+    // ✅ Only create image request if within visible range
+    val imageRequest = if (shouldLoadImage) {
+        remember(template.id, isCurrentPage) {
+            ImageRequest.Builder(context)
+                .data(template.thumbnailPath.ifEmpty { null })
+                .size(Size(720, 405))  // Optimize for 16:9 carousel
+                .precision(Precision.INEXACT)
+                .memoryCachePolicy(CachePolicy.ENABLED)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .memoryCacheKey("featured_${template.id}_${if (isCurrentPage) "anim" else "static"}")
+                .diskCacheKey("featured_${template.id}")
+                .crossfade(true)
+                .crossfade(200)
+                .apply {
+                    if (!isCurrentPage) {
+                        // Static first frame only — bypasses animated WebP decoder
+                        decoderFactory(BitmapFactoryDecoder.Factory())
+                    }
                 }
-            }
-            .build()
+                .build()
+        }
+    } else {
+        null
     }
 
     Card(
@@ -494,12 +516,21 @@ private fun FeaturedTemplateCard(
         colors = CardDefaults.cardColors(containerColor = Color.Black)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            AsyncImage(
-                model = imageRequest,
-                contentDescription = template.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
+            // ✅ Only show image if request exists (within visible range)
+            if (imageRequest != null) {
+                AsyncImage(
+                    model = imageRequest,
+                    contentDescription = template.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                // Show placeholder for pages far from current
+                ShimmerPlaceholder(
+                    modifier = Modifier.fillMaxSize(),
+                    cornerRadius = 0.dp
+                )
+            }
 
             // Bottom gradient scrim
             Box(

@@ -28,7 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
@@ -71,10 +72,17 @@ fun TemplateCard(
     val imageRequest = remember(thumbnailPath) {
         ImageRequest.Builder(context)
             .data(thumbnailPath)
-            .size(Size(400, 700))
+            .size(Size(200, 350))  // Reduced from 400x700 to 200x350 (4x less data!)
             .precision(Precision.INEXACT)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .diskCachePolicy(CachePolicy.ENABLED)
+            .crossfade(true)  // Smooth fade-in animation
+            .crossfade(200)  // 200ms crossfade duration
+            .listener(
+                onError = { request, result ->
+                    android.util.Log.e("TemplateCard", "Failed to load thumbnail: ${thumbnailPath}, error: ${result.throwable.message}")
+                }
+            )
             .build()
     }
 
@@ -87,13 +95,39 @@ fun TemplateCard(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
 
-            // Thumbnail
+            // Thumbnail with loading/error states
             if (thumbnailPath.isNotEmpty()) {
-                AsyncImage(
+                SubcomposeAsyncImage(
                     model = imageRequest,
                     contentDescription = name,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    loading = {
+                        // Show shimmer while loading
+                        ShimmerPlaceholder(
+                            modifier = Modifier.fillMaxSize(),
+                            cornerRadius = 0.dp
+                        )
+                    },
+                    error = { errorState ->
+                        // Show placeholder on error (will retry on scroll/recomposition)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "⚠️",
+                                fontSize = 32.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                            )
+                        }
+                    },
+                    success = {
+                        // Show the loaded image
+                        SubcomposeAsyncImageContent()
+                    }
                 )
             } else {
                 ShimmerPlaceholder(

@@ -85,8 +85,8 @@ class GalleryViewModel(
                 }
                 val (vibeTags, templates, featuredTemplates) = coroutineScope {
                     val vibeTagsDeferred = async { templateRepository.getVibeTags().getOrElse { emptyList() } }
-                    val templatesDeferred = async { templateRepository.getTemplates(limit = 20, offset = 0).getOrElse { emptyList() } }
-                    val featuredDeferred = async { templateRepository.getFeaturedTemplates(limit = 10).getOrElse { emptyList() } }
+                    val templatesDeferred = async { templateRepository.getTemplates(limit = 6, offset = 0).getOrElse { emptyList() } }  // Progressive loading: load 6 first
+                    val featuredDeferred = async { templateRepository.getFeaturedTemplates(limit = 6).getOrElse { emptyList() } }  // Reduced from 10 to 6 for faster loading
                     Triple(vibeTagsDeferred.await(), templatesDeferred.await(), featuredDeferred.await())
                 }
 
@@ -99,8 +99,9 @@ class GalleryViewModel(
                     featuredTemplates = featuredTemplates
                 )
 
+                // Only preload carousel images (visible on screen)
+                // Don't preload featured thumbnails - let Coil load them as they become visible
                 preloadCarouselImages(trendingSongs)
-                preloadFeaturedThumbnails(featuredTemplates)
             } catch (e: Exception) {
                 _uiState.value = GalleryUiState.Error(e.message ?: "Failed to load gallery data")
             }
@@ -119,9 +120,9 @@ class GalleryViewModel(
 
         viewModelScope.launch {
             val result = if (tagId == null) {
-                templateRepository.getTemplates(limit = 20, offset = 0)
+                templateRepository.getTemplates(limit = 6, offset = 0)  // Progressive loading: load 6 first
             } else {
-                templateRepository.getTemplatesByVibeTag(tag = tagId, limit = 20, offset = 0)
+                templateRepository.getTemplatesByVibeTag(tag = tagId, limit = 6, offset = 0)  // Progressive loading: load 6 first
             }
             val templates = result.getOrElse { emptyList() }
             val updated = _uiState.value as? GalleryUiState.Success ?: return@launch
@@ -153,7 +154,7 @@ class GalleryViewModel(
                 if (template.thumbnailPath.isEmpty()) return@forEach
                 val request = ImageRequest.Builder(application)
                     .data(template.thumbnailPath)
-                    .size(Size(720, 405))
+                    .size(Size(200, 350))  // Reduced from 720x405 to match TemplateCard size
                     .memoryCachePolicy(CachePolicy.ENABLED)
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .memoryCacheKey("featured_${template.id}")
