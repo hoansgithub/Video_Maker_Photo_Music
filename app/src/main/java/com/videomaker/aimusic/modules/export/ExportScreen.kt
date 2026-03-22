@@ -505,24 +505,37 @@ private fun SuccessContent(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Save to Gallery button
+            // Save to Gallery button - disabled after saving, resets next time
             Button(
                 onClick = onSaveToGalleryClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                // Always enabled - allow re-downloading
-                colors = ButtonDefaults.buttonColors()
+                // Disable after saving, re-enable on next entry (new ViewModel instance)
+                enabled = !savedToGallery,
+                // Show success color when saved, default color when not saved
+                colors = if (savedToGallery) {
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                } else {
+                    ButtonDefaults.buttonColors()
+                }
             ) {
                 Icon(
-                    imageVector = Icons.Default.Download,
+                    imageVector = if (savedToGallery) Icons.Default.Check else Icons.Default.Download,
                     contentDescription = null,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(R.string.export_save),
+                    text = if (savedToGallery) {
+                        stringResource(R.string.export_saved_to_gallery)
+                    } else {
+                        stringResource(R.string.export_save)
+                    },
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
