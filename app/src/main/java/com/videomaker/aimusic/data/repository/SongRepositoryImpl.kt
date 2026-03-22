@@ -17,6 +17,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -34,6 +36,7 @@ class SongRepositoryImpl(
         private const val TABLE_GENRES = "genres"
         private const val FN_SEARCH_SONGS = "search_songs"
         private const val FN_SONGS_SORTED = "get_songs_sorted"
+        private const val FN_SONGS_BY_GENRES_SORTED = "get_songs_by_genres_sorted"
         private const val ERROR_LOAD_FAILED = "Failed to load songs"
         private const val ERROR_NOT_FOUND = "Song not found"
     }
@@ -200,9 +203,13 @@ class SongRepositoryImpl(
     )
 
     /**
-     * Cache key: songs_suggested
-     * Genre-aware: filters by preferredGenres overlap when provided,
-     * otherwise falls back to top songs by sort_order.
+     * Fetches suggested songs with region ordering and genre filtering.
+     * Delegates to the `get_songs_by_genres_sorted` Supabase RPC function.
+     *
+     * The DB function prioritizes user region over "all" region (like templates)
+     * and filters by genre overlap when preferredGenres is provided.
+     *
+     * Cache key: songs_suggested (first page only)
      */
     override suspend fun getSuggestedSongs(
         preferredGenres: List<String>,
@@ -221,38 +228,20 @@ class SongRepositoryImpl(
         try {
             // DB stores genres in lowercase (e.g. "pop", "hip-hop") — normalise before querying
             val normalised = preferredGenres.map { it.lowercase() }
-            val songs = if (normalised.isNotEmpty()) {
-                supabaseClient.from(TABLE_SONGS)
-                    .select {
-                        filter {
-                            eq("is_active", true)
-                            or {
-                                eq("region", region)
-                                eq("region", "all")
-                            }
-                            overlaps("genres", normalised)
-                        }
-                        order("sort_order", Order.DESCENDING)
-                        range(offset.toLong(), (offset + limit - 1).toLong())
-                    }
-                    .decodeList<SongDto>()
-                    .toMusicSongs()
-            } else {
-                supabaseClient.from(TABLE_SONGS)
-                    .select {
-                        filter {
-                            eq("is_active", true)
-                            or {
-                                eq("region", region)
-                                eq("region", "all")
-                            }
-                        }
-                        order("sort_order", Order.DESCENDING)
-                        range(offset.toLong(), (offset + limit - 1).toLong())
-                    }
-                    .decodeList<SongDto>()
-                    .toMusicSongs()
+
+            val genresArray = buildJsonArray {
+                normalised.forEach { genre -> add(JsonPrimitive(genre)) }
             }
+
+            val songs = supabaseClient.postgrest
+                .rpc(FN_SONGS_BY_GENRES_SORTED, buildJsonObject {
+                    put("p_region", region)
+                    put("p_genres", genresArray)
+                    put("p_limit", limit)
+                    put("p_offset", offset)
+                })
+                .decodeList<SongDto>()
+                .toMusicSongs()
 
             // Only cache first page
             if (offset == 0) {

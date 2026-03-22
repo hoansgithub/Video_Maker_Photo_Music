@@ -124,5 +124,6 @@ class ApiCacheManager(context: Context) {
         fun keyTemplates(region: String, limit: Int, offset: Int): String = "templates_${region}_${limit}_${offset}"
         fun keyTemplatesByTag(region: String, tag: String, limit: Int, offset: Int): String =
             "templates_tag_${region}_${tag}_${limit}_${offset}"
+        fun keyFeaturedTemplates(region: String, limit: Int): String = "featured_templates_${region}_${limit}"
     }
 }

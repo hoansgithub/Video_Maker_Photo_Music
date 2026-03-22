@@ -29,6 +29,7 @@ class TemplateRepositoryImpl(
         private const val TABLE_TEMPLATES = "templates"
         private const val FN_TEMPLATES_SORTED = "get_templates_sorted"
         private const val FN_TEMPLATES_BY_TAG_SORTED = "get_templates_by_tag_sorted"
+        private const val FN_FEATURED_TEMPLATES = "get_featured_templates"
         private val COLUMNS_TEMPLATE = Columns.raw(
             "id,name,thumbnail_path,song_id,effect_set_id,aspect_ratio," +
             "image_duration_ms,transition_pct,is_premium,is_active,sort_order,use_count," +
@@ -136,17 +137,17 @@ class TemplateRepositoryImpl(
 
     override suspend fun getFeaturedTemplates(limit: Int): Result<List<VideoTemplate>> =
         withContext(Dispatchers.IO) {
-            val cacheKey = "featured_templates_$limit"
+            val region = regionProvider.getRegionCode()
+            val cacheKey = ApiCacheManager.keyFeaturedTemplates(region, limit)
             apiCacheManager.get<List<VideoTemplate>>(cacheKey)
                 ?.let { return@withContext Result.success(it) }
 
             try {
-                val templates = supabaseClient.from(TABLE_TEMPLATES)
-                    .select(COLUMNS_TEMPLATE) {
-                        filter { eq("is_active", true) }
-                        order("use_count", Order.DESCENDING)
-                        limit(limit.toLong())
-                    }
+                val templates = supabaseClient.postgrest
+                    .rpc(FN_FEATURED_TEMPLATES, buildJsonObject {
+                        put("p_region", region)
+                        put("p_limit", limit)
+                    })
                     .decodeList<TemplateDto>()
                     .map { it.toDomain() }
 
