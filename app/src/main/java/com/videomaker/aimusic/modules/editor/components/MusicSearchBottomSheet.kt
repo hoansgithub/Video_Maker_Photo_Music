@@ -20,11 +20,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.CircularProgressIndicator
@@ -38,7 +50,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,7 +71,10 @@ import com.videomaker.aimusic.modules.songsearch.SongSearchUiState
 import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.SongListItem
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
+import com.videomaker.aimusic.media.audio.MusicPreviewManager
 import com.videomaker.aimusic.ui.theme.AppDimens
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
 import com.videomaker.aimusic.ui.theme.SearchFieldBorder
 import com.videomaker.aimusic.ui.theme.SplashBackground
@@ -73,6 +87,7 @@ import com.videomaker.aimusic.ui.theme.TextTertiary
  * Allows searching and selecting music tracks
  */
 @OptIn(ExperimentalMaterial3Api::class)
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 @Composable
 internal fun MusicSearchBottomSheet(
     viewModel: SongSearchViewModel,
@@ -83,14 +98,96 @@ internal fun MusicSearchBottomSheet(
     val displayText by viewModel.displayText.collectAsStateWithLifecycle()
     val genres by viewModel.genres.collectAsStateWithLifecycle()
     val suggestedSongs by viewModel.suggestedSongs.collectAsStateWithLifecycle()
+
+    // Global music preview state - shared across the whole app
+    val previewingSongId by MusicPreviewManager.previewingSongId.collectAsStateWithLifecycle()
+    val selectedForConfirmId by MusicPreviewManager.selectedForConfirmId.collectAsStateWithLifecycle()
+    val isLoadingPreview by MusicPreviewManager.isLoadingPreview.collectAsStateWithLifecycle()
+
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     val dimens = AppDimens.current
+    val context = LocalContext.current
+    val audioCache: AudioPreviewCache = koinInject()
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
+
+    // ExoPlayer for preview with cache
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context)
+            .setMediaSourceFactory(
+                androidx.media3.exoplayer.source.DefaultMediaSourceFactory(
+                    audioCache.cacheDataSourceFactory
+                )
+            )
+            .build()
+            .apply {
+                repeatMode = Player.REPEAT_MODE_OFF
+            }
+    }
+
+    // Cleanup ExoPlayer
+    DisposableEffect(Unit) {
+        onDispose {
+            exoPlayer.stop()
+            exoPlayer.release()
+        }
+    }
+
+    // Handle preview playback
+    LaunchedEffect(previewingSongId) {
+        var currentListener: Player.Listener? = null
+
+        try {
+            if (previewingSongId != null) {
+                val state = uiState
+                val song = when (state) {
+                    is SongSearchUiState.Results -> state.songs.find { it.id == previewingSongId }
+                    else -> suggestedSongs.find { it.id == previewingSongId }
+                }
+
+                song?.let {
+                    try {
+                        exoPlayer.stop()
+                        exoPlayer.setMediaItem(MediaItem.fromUri(it.mp3Url))
+                        exoPlayer.prepare()
+                        exoPlayer.playWhenReady = true
+
+                        // Listen for when player is ready
+                        val listener = object : Player.Listener {
+                            override fun onPlaybackStateChanged(playbackState: Int) {
+                                if (playbackState == Player.STATE_READY) {
+                                    MusicPreviewManager.onPreviewPrepared()
+                                }
+                            }
+
+                            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                                if (!playWhenReady) {
+                                    MusicPreviewManager.stopPreview()
+                                }
+                            }
+
+                            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                                MusicPreviewManager.stopPreview()
+                            }
+                        }
+                        currentListener = listener
+                        exoPlayer.addListener(listener)
+                    } catch (e: Exception) {
+                        MusicPreviewManager.stopPreview()
+                    }
+                }
+            } else {
+                exoPlayer.stop()
+            }
+        } finally {
+            // Remove listener when effect is cancelled or re-triggered
+            currentListener?.let { exoPlayer.removeListener(it) }
+        }
+    }
 
     // Dismiss keyboard when sheet is being dragged
     LaunchedEffect(sheetState.currentValue) {
@@ -98,7 +195,10 @@ internal fun MusicSearchBottomSheet(
     }
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            MusicPreviewManager.clearPreviewState()
+            onDismiss()
+        },
         sheetState = sheetState,
         containerColor = SplashBackground,
         dragHandle = null,
@@ -111,7 +211,7 @@ internal fun MusicSearchBottomSheet(
                 .padding(horizontal = 20.dp)
                 .padding(top = 24.dp, bottom = 32.dp)
         ) {
-            // Title
+            // Title with close and confirm buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -121,15 +221,52 @@ internal fun MusicSearchBottomSheet(
                     text = stringResource(R.string.song_search_change_music),
                     color = TextPrimary,
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
                 )
 
-                IconButton(onClick = onDismiss) {
+                // Close button (left)
+                IconButton(onClick = {
+                    MusicPreviewManager.clearPreviewState()
+                    onDismiss()
+                }) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = stringResource(R.string.close),
                         tint = TextSecondary
                     )
+                }
+
+                // Confirm button (right) - only visible when song is selected
+                if (selectedForConfirmId != null) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary)
+                            .clickable {
+                                val selectedId = MusicPreviewManager.getSelectedId()
+                                if (selectedId != null) {
+                                    val song = when (val state = uiState) {
+                                        is SongSearchUiState.Results -> state.songs.find { it.id == selectedId }
+                                        else -> suggestedSongs.find { it.id == selectedId }
+                                    }
+                                    if (song != null) {
+                                        MusicPreviewManager.clearPreviewState()
+                                        onSongSelected(song)
+                                    }
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = stringResource(R.string.confirm),
+                            tint = SplashBackground, // Dark color from theme
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
 
@@ -241,10 +378,13 @@ internal fun MusicSearchBottomSheet(
                                 name = song.name,
                                 artist = song.artist,
                                 coverUrl = song.coverUrl,
+                                isPlaying = song.id == previewingSongId,
+                                isSelected = song.id == selectedForConfirmId,
+                                isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                 onSongClick = {
                                     focusManager.clearFocus()
                                     keyboardController?.hide()
-                                    onSongSelected(song)
+                                    MusicPreviewManager.togglePreview(song.id)
                                 }
                             )
                         }
@@ -347,10 +487,13 @@ internal fun MusicSearchBottomSheet(
                                     name = song.name,
                                     artist = song.artist,
                                     coverUrl = song.coverUrl,
+                                    isPlaying = song.id == previewingSongId,
+                                    isSelected = song.id == selectedForConfirmId,
+                                    isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                     onSongClick = {
                                         focusManager.clearFocus()
                                         keyboardController?.hide()
-                                        onSongSelected(song)
+                                        MusicPreviewManager.togglePreview(song.id)
                                     }
                                 )
                             }
@@ -438,10 +581,13 @@ internal fun MusicSearchBottomSheet(
                                     name = song.name,
                                     artist = song.artist,
                                     coverUrl = song.coverUrl,
+                                    isPlaying = song.id == previewingSongId,
+                                    isSelected = song.id == selectedForConfirmId,
+                                    isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                     onSongClick = {
                                         focusManager.clearFocus()
                                         keyboardController?.hide()
-                                        onSongSelected(song)
+                                        MusicPreviewManager.togglePreview(song.id)
                                     }
                                 )
                             }

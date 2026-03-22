@@ -62,7 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.di.MusicPickerViewModelFactory
+// import com.videomaker.aimusic.di.MusicPickerViewModelFactory // Commented out - using Supabase only
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.modules.editor.components.DurationBottomSheet
@@ -70,12 +70,12 @@ import com.videomaker.aimusic.modules.editor.components.EffectSetBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSection
 import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
-import com.videomaker.aimusic.modules.editor.components.SettingsPanel
+// import com.videomaker.aimusic.modules.editor.components.SettingsPanel // Removed - using individual bottom sheets
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
 import com.videomaker.aimusic.modules.editor.components.VideoPreviewPlayer
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.modules.editor.EffectSetViewModel
-import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen
+// import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen // Commented out - using Supabase only
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
@@ -100,7 +100,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun EditorScreen(
     viewModel: EditorViewModel,
-    musicPickerViewModelFactory: MusicPickerViewModelFactory,
+    // musicPickerViewModelFactory: MusicPickerViewModelFactory, // Commented out - using Supabase only
     onNavigateBack: () -> Unit,
     onNavigateToPreview: (String) -> Unit,
     onNavigateToExport: (String) -> Unit,
@@ -108,18 +108,20 @@ fun EditorScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showExitConfirmation by remember { mutableStateOf(false) }
-    var showMusicPicker by remember { mutableStateOf(false) }
+    // var showMusicPicker by remember { mutableStateOf(false) } // Commented out - using Supabase only
     var showVolumeSheet by remember { mutableStateOf(false) }
     var showRatioSheet by remember { mutableStateOf(false) }
     var showDurationSheet by remember { mutableStateOf(false) }
     var showEffectSetSheet by remember { mutableStateOf(false) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
+    var wasPlayingBeforeMusicSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     // Music Picker ViewModel - created once and reused
-    val musicPickerViewModel = remember {
-        musicPickerViewModelFactory.create()
-    }
+    // Commented out - using Supabase only
+    // val musicPickerViewModel = remember {
+    //     musicPickerViewModelFactory.create()
+    // }
 
     // Effect Set ViewModel - created once and reused
     val effectSetViewModel: EffectSetViewModel = koinViewModel()
@@ -203,33 +205,33 @@ fun EditorScreen(
             }
         }
 
-        // Fullscreen Settings Panel - slides up from bottom
-        val successState = uiState as? EditorUiState.Success
-        AnimatedVisibility(
-            visible = successState?.showSettingsPanel == true,
-            enter = slideInVertically(initialOffsetY = { it }), // Slide up from bottom
-            exit = slideOutVertically(targetOffsetY = { it })   // Slide down to bottom
-        ) {
-            if (successState != null) {
-                SettingsPanel(
-                    settings = successState.displaySettings,
-                    hasPendingChanges = successState.hasPendingChanges,
-                    onEffectSetChange = viewModel::updateEffectSet,
-                    onImageDurationChange = viewModel::updateImageDuration,
-                    onTransitionPercentageChange = viewModel::updateTransitionPercentage,
-                    onOverlayFrameChange = viewModel::updateOverlayFrame,
-                    onMusicSongChange = { songId -> viewModel.updateMusicSong(songId, null) },
-                    onCustomAudioChange = viewModel::updateCustomAudio,
-                    onAudioVolumeChange = viewModel::updateAudioVolume,
-                    onAspectRatioChange = viewModel::updateAspectRatio,
-                    onApplySettings = viewModel::applySettings,
-                    onDiscardSettings = viewModel::discardPendingSettings,
-                    onClose = viewModel::closeSettingsPanel,
-                    onOpenMusicPicker = { showMusicPicker = true },
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
+        // Fullscreen Settings Panel - Removed (using individual bottom sheets)
+        // val successState = uiState as? EditorUiState.Success
+        // AnimatedVisibility(
+        //     visible = successState?.showSettingsPanel == true,
+        //     enter = slideInVertically(initialOffsetY = { it }), // Slide up from bottom
+        //     exit = slideOutVertically(targetOffsetY = { it })   // Slide down to bottom
+        // ) {
+        //     if (successState != null) {
+        //         SettingsPanel(
+        //             settings = successState.displaySettings,
+        //             hasPendingChanges = successState.hasPendingChanges,
+        //             onEffectSetChange = viewModel::updateEffectSet,
+        //             onImageDurationChange = viewModel::updateImageDuration,
+        //             onTransitionPercentageChange = viewModel::updateTransitionPercentage,
+        //             onOverlayFrameChange = viewModel::updateOverlayFrame,
+        //             onMusicSongChange = { songId -> viewModel.updateMusicSong(songId, null) },
+        //             onCustomAudioChange = viewModel::updateCustomAudio,
+        //             onAudioVolumeChange = viewModel::updateAudioVolume,
+        //             onAspectRatioChange = viewModel::updateAspectRatio,
+        //             onApplySettings = viewModel::applySettings,
+        //             onDiscardSettings = viewModel::discardPendingSettings,
+        //             onClose = viewModel::closeSettingsPanel,
+        //             onOpenMusicPicker = { /* showMusicPicker = true */ }, // Commented out - using Supabase only
+        //             modifier = Modifier.fillMaxSize()
+        //         )
+        //     }
+        // }
 
         // Exit confirmation dialog - rendered last to overlay everything
         if (showExitConfirmation) {
@@ -266,19 +268,19 @@ fun EditorScreen(
             }
         }
 
-        // Music Picker Bottom Sheet
-        if (showMusicPicker) {
-            MusicPickerScreen(
-                viewModel = musicPickerViewModel,
-                onTrackSelected = { uri ->
-                    viewModel.updateCustomAudio(uri)
-                    showMusicPicker = false
-                },
-                onDismiss = {
-                    showMusicPicker = false
-                }
-            )
-        }
+        // Music Picker Bottom Sheet - Commented out (using Supabase only)
+        // if (showMusicPicker) {
+        //     MusicPickerScreen(
+        //         viewModel = musicPickerViewModel,
+        //         onTrackSelected = { uri ->
+        //             viewModel.updateCustomAudio(uri)
+        //             showMusicPicker = false
+        //         },
+        //         onDismiss = {
+        //             showMusicPicker = false
+        //         }
+        //     )
+        // }
 
         // Volume Bottom Sheet
         if (showVolumeSheet) {
@@ -340,6 +342,15 @@ fun EditorScreen(
 
         // Music Search Bottom Sheet
         if (showMusicSearchSheet) {
+            // Pause video preview when music sheet is open
+            LaunchedEffect(Unit) {
+                val currentState = uiState
+                if (currentState is EditorUiState.Success) {
+                    wasPlayingBeforeMusicSheet = currentState.isPlaying
+                    viewModel.stopPlayback()
+                }
+            }
+
             MusicSearchBottomSheet(
                 viewModel = songSearchViewModel,
                 onSongSelected = { song ->
@@ -350,8 +361,18 @@ fun EditorScreen(
                         songCoverUrl = song.coverUrl
                     )
                     showMusicSearchSheet = false
+                    // Resume playback if it was playing before
+                    if (wasPlayingBeforeMusicSheet) {
+                        viewModel.setPlaybackState(true)
+                    }
                 },
-                onDismiss = { showMusicSearchSheet = false }
+                onDismiss = {
+                    showMusicSearchSheet = false
+                    // Resume playback if it was playing before
+                    if (wasPlayingBeforeMusicSheet) {
+                        viewModel.setPlaybackState(true)
+                    }
+                }
             )
         }
 

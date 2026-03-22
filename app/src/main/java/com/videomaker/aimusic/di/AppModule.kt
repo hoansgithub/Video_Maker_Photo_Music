@@ -55,7 +55,7 @@ import com.videomaker.aimusic.modules.onboarding.domain.usecase.CompleteOnboardi
 import android.content.Context
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
-import com.videomaker.aimusic.modules.musicpicker.MusicPickerViewModel
+// import com.videomaker.aimusic.modules.musicpicker.MusicPickerViewModel
 import com.videomaker.aimusic.modules.songs.SongsViewModel
 import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
@@ -297,20 +297,20 @@ class ProjectsViewModelFactory(
     }
 }
 
-/**
- * Factory wrapper for MusicPickerViewModel.
- *
- * Uses ContentResolver instead of Context to avoid memory leaks.
- * ViewModels outlive Activity lifecycles, so holding Context references
- * would prevent garbage collection.
- */
-class MusicPickerViewModelFactory(
-    private val contentResolver: android.content.ContentResolver
-) {
-    fun create(): MusicPickerViewModel {
-        return MusicPickerViewModel(contentResolver = contentResolver)
-    }
-}
+// /**
+//  * Factory wrapper for MusicPickerViewModel.
+//  *
+//  * Uses ContentResolver instead of Context to avoid memory leaks.
+//  * ViewModels outlive Activity lifecycles, so holding Context references
+//  * would prevent garbage collection.
+//  */
+// class MusicPickerViewModelFactory(
+//     private val contentResolver: android.content.ContentResolver
+// ) {
+//     fun create(): MusicPickerViewModel {
+//         return MusicPickerViewModel(contentResolver = contentResolver)
+//     }
+// }
 
 /**
  * Factory wrapper for GalleryViewModel.
@@ -508,11 +508,11 @@ val presentationModule = module {
 
     // Music Picker ViewModel factory (singleton - stateless factory)
     // Uses ContentResolver to avoid Context memory leaks in ViewModel
-    single {
-        MusicPickerViewModelFactory(
-            contentResolver = androidContext().contentResolver
-        )
-    }
+    // single {
+    //     MusicPickerViewModelFactory(
+    //         contentResolver = androidContext().contentResolver
+    //     )
+    // }
 
     // Gallery ViewModel factory (singleton - stateless factory)
     // Uses Application context (safe) + ImageLoader for Coil image preloading

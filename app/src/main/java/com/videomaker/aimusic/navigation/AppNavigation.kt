@@ -32,7 +32,7 @@ import com.videomaker.aimusic.di.ExportViewModelFactory
 import com.videomaker.aimusic.di.GallerySearchViewModelFactory
 import com.videomaker.aimusic.di.GalleryViewModelFactory
 import com.videomaker.aimusic.di.SongSearchViewModelFactory
-import com.videomaker.aimusic.di.MusicPickerViewModelFactory
+// import com.videomaker.aimusic.di.MusicPickerViewModelFactory // Commented out - using Supabase only
 import com.videomaker.aimusic.di.ProjectsViewModelFactory
 import com.videomaker.aimusic.di.SongsViewModelFactory
 import com.videomaker.aimusic.di.TemplatePreviewerViewModelFactory
@@ -116,9 +116,15 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     key = "songs",
                     factory = createSafeViewModelFactory { songsFactory.create() }
                 )
+                val projectsFactory = koinInject<ProjectsViewModelFactory>()
+                val projectsViewModel: ProjectsViewModel = viewModel(
+                    key = "projects",
+                    factory = createSafeViewModelFactory { projectsFactory.create() }
+                )
                 HomeScreen(
                     galleryViewModel = galleryViewModel,
                     songsViewModel = songsViewModel,
+                    projectsViewModel = projectsViewModel,
                     onCreateClick = { backStack.add(AppRoute.AssetPicker()) },
                     onMyProjectsClick = { backStack.add(AppRoute.Projects) },
                     onSettingsClick = { backStack.add(AppRoute.Settings) },
@@ -138,6 +144,9 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                             imageUris = emptyList(),
                             overrideSongId = songId
                         ))
+                    },
+                    onProjectClick = { projectId ->
+                        backStack.add(AppRoute.Editor(projectId))
                     }
                 )
             }
@@ -235,7 +244,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
 
             entry<AppRoute.Editor> { route ->
                 val factory: EditorViewModelFactory = koinInject()
-                val musicPickerFactory: MusicPickerViewModelFactory = koinInject()
+                // val musicPickerFactory: MusicPickerViewModelFactory = koinInject()
                 val editorViewModel: EditorViewModel = viewModel(
                     key = "editor_${route.projectId ?: route.initialData.hashCode()}",
                     factory = createSafeViewModelFactory {
@@ -244,7 +253,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 )
                 EditorScreen(
                     viewModel = editorViewModel,
-                    musicPickerViewModelFactory = musicPickerFactory,
+                    // musicPickerViewModelFactory = musicPickerFactory,
                     onNavigateBack = { backStack.removeLastOrNull() },
                     onNavigateToPreview = { projectId ->
                         backStack.add(AppRoute.Preview(projectId))
