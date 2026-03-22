@@ -204,8 +204,15 @@ class ExportViewModel(
 
     /**
      * Navigate to Home screen with My Videos tab (tab index 2)
+     * Resets savedToGallery state so button is enabled on next export
      */
     fun navigateToHomeMyVideos() {
+        // Reset saved state so button is enabled next time
+        val currentState = _uiState.value
+        if (currentState is ExportUiState.Success && currentState.savedToGallery) {
+            _uiState.value = currentState.copy(savedToGallery = false)
+        }
+
         _navigationEvent.value = ExportNavigationEvent.NavigateToHomeMyVideos
     }
 
