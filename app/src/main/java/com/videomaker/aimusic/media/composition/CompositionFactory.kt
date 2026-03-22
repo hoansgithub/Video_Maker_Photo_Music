@@ -128,6 +128,15 @@ class CompositionFactory(
         // STEP 1: Pre-process ALL images with blur background
         val processedImages = preProcessAllImages(project.assets, settings, textureSize)
 
+        // VALIDATE: Ensure ALL images were processed successfully
+        if (processedImages.size != project.assets.size) {
+            android.util.Log.e("CompositionFactory",
+                "GPU preprocessing incomplete: ${project.assets.size} assets, ${processedImages.size} processed")
+            throw IllegalStateException(
+                "GPU preprocessing failed: ${project.assets.size} assets, ${processedImages.size} processed"
+            )
+        }
+
         // STEP 2: Load transition TO bitmaps from cache files
         val transitionBitmaps = loadTransitionBitmapsFromCache(processedImages, settings)
         lastTransitionBitmaps.set(transitionBitmaps)
@@ -181,7 +190,8 @@ class CompositionFactory(
         val gpuPreprocessor = GPUImagePreprocessor(context)
         try {
             if (!gpuPreprocessor.initialize()) {
-                return emptyMap()
+                android.util.Log.e("CompositionFactory", "Failed to initialize GPU preprocessor")
+                throw IllegalStateException("Failed to initialize GPU preprocessor")
             }
 
             // Process images sequentially on GPU (GPU context is single-threaded)
@@ -199,8 +209,13 @@ class CompositionFactory(
                     if (success) {
                         results[index] = ProcessedImage(Uri.fromFile(cacheFile), cacheFile)
                         cacheFiles.add(cacheFile)
+                    } else {
+                        android.util.Log.e("CompositionFactory", "Failed to preprocess asset $index: ${asset.uri}")
+                        throw IllegalStateException("GPU preprocessing failed for asset $index")
                     }
-                } catch (_: Exception) {
+                } catch (e: Exception) {
+                    android.util.Log.e("CompositionFactory", "Exception preprocessing asset $index", e)
+                    throw e
                 }
             }
         } finally {
