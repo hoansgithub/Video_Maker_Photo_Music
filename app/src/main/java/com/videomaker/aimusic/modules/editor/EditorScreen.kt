@@ -147,18 +147,18 @@ fun EditorScreen(
         }
     }
 
-    // Check if processing to apply blur to content
-    val isProcessing = (uiState as? EditorUiState.Success)?.isProcessing ?: false
+    // Track preview state to show fullscreen blur overlay
+    var previewState by remember { mutableStateOf<com.videomaker.aimusic.modules.editor.components.PreviewState>(com.videomaker.aimusic.modules.editor.components.PreviewState.Building) }
+    val isPreviewBuilding = previewState is com.videomaker.aimusic.modules.editor.components.PreviewState.Building
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Main editor UI with Scaffold - blur when processing
+        // Main editor UI with Scaffold - blur when preview is building
         val editorTitle = stringResource(R.string.editor_title)
         Scaffold(
             topBar = {
                 val successState = uiState as? EditorUiState.Success
                 EditorTopBar(
                     selectedQuality = successState?.selectedQuality ?: VideoQuality.DEFAULT,
-                    isProcessing = successState?.isProcessing ?: false,
                     canExport = successState?.canExport ?: false,
                     onBackClick = { showExitConfirmation = true },
                     onQualityChange = viewModel::updateQuality,
@@ -167,7 +167,7 @@ fun EditorScreen(
             },
             containerColor = SplashBackground, // #101010 (closest to #101313)
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            modifier = if (isProcessing) Modifier.blur(16.dp) else Modifier
+            modifier = if (isPreviewBuilding) Modifier.blur(16.dp) else Modifier
         ) { paddingValues ->
             when (val state = uiState) {
                 is EditorUiState.Loading -> {
@@ -183,7 +183,6 @@ fun EditorScreen(
                     EditorMainContent(
                         project = state.displayProject, // Use displayProject to show pending changes in preview
                         isPlaying = state.isPlaying,
-                        isProcessing = state.isProcessing,
                         currentPositionMs = state.currentPositionMs,
                         durationMs = state.durationMs,
                         seekToPosition = state.seekToPosition,
@@ -198,6 +197,7 @@ fun EditorScreen(
                         onSeekEnd = {}, // Resume happens in clearSeekRequest after seek completes
                         onSeekComplete = viewModel::clearSeekRequest,
                         onScrubComplete = viewModel::clearScrubRequest,
+                        onPreviewStateChange = { previewState = it },
                         onEffectClick = { showEffectSetSheet = true },
                         onImageDurationClick = { showDurationSheet = true },
                         onRatioClick = { showRatioSheet = true },
@@ -381,7 +381,7 @@ fun EditorScreen(
         }
 
         // Fullscreen Processing Overlay - blocks all interactions, content is blurred
-        if (isProcessing) {
+        if (isPreviewBuilding) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -434,7 +434,6 @@ private fun HdBadge(modifier: Modifier = Modifier) {
 @Composable
 internal fun EditorTopBar(
     selectedQuality: VideoQuality,
-    isProcessing: Boolean,
     canExport: Boolean,
     onBackClick: () -> Unit,
     onQualityChange: (VideoQuality) -> Unit,
@@ -551,17 +550,8 @@ internal fun EditorTopBar(
                     vertical = 0.dp
                 )
             ) {
-                if (isProcessing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
                 Text(
-                    text = if (isProcessing) stringResource(R.string.editor_processing)
-                           else stringResource(R.string.done),
+                    text = stringResource(R.string.done),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onPrimary
@@ -608,7 +598,6 @@ internal fun ErrorContent(
 internal fun EditorMainContent(
     project: Project,
     isPlaying: Boolean,
-    isProcessing: Boolean,
     currentPositionMs: Long,
     durationMs: Long,
     seekToPosition: Long?,
@@ -623,6 +612,7 @@ internal fun EditorMainContent(
     onSeekEnd: () -> Unit,
     onSeekComplete: () -> Unit,
     onScrubComplete: () -> Unit,
+    onPreviewStateChange: (com.videomaker.aimusic.modules.editor.components.PreviewState) -> Unit,
     onEffectClick: () -> Unit,
     onImageDurationClick: () -> Unit,
     onRatioClick: () -> Unit,
@@ -652,6 +642,7 @@ internal fun EditorMainContent(
                 scrubToPosition = scrubToPosition,
                 onSeekComplete = onSeekComplete,
                 onScrubComplete = onScrubComplete,
+                onPreviewStateChange = onPreviewStateChange,
                 autoPlay = true,
                 modifier = Modifier.fillMaxSize()
             )

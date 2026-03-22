@@ -171,6 +171,7 @@ fun VideoPreviewPlayer(
     scrubToPosition: Long? = null,
     onSeekComplete: () -> Unit = {},
     onScrubComplete: () -> Unit = {},
+    onPreviewStateChange: (PreviewState) -> Unit = {},
     autoPlay: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -180,6 +181,11 @@ fun VideoPreviewPlayer(
     // State for preview - single player mode (video + audio in one CompositionPlayer)
     var previewState by remember { mutableStateOf<PreviewState>(PreviewState.Building) }
     var player by remember { mutableStateOf<CompositionPlayer?>(null) }
+
+    // Notify parent of preview state changes
+    LaunchedEffect(previewState) {
+        onPreviewStateChange(previewState)
+    }
 
     // Flow to signal when player is fully initialized and safe to play
     val playerReadyFlow = remember { MutableStateFlow(false) }
@@ -461,32 +467,6 @@ fun VideoPreviewPlayer(
                     )
                 }
                 else -> {}
-            }
-
-            // PROCESSING OVERLAY - Full overlay when building composition
-            if (previewState is PreviewState.Building) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.7f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(48.dp),
-                            color = Color.White,
-                            strokeWidth = 3.dp
-                        )
-                        Text(
-                            text = "Processing...",
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                }
             }
 
             // Play/Pause button removed - using the one in Music Section instead
