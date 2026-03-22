@@ -15,7 +15,6 @@ import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
-import com.videomaker.aimusic.domain.usecase.ReorderAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -86,7 +85,6 @@ class EditorViewModel(
     private val getProjectUseCase: GetProjectUseCase,
     private val createProjectUseCase: CreateProjectUseCase,
     private val updateSettingsUseCase: UpdateProjectSettingsUseCase,
-    private val reorderAssetsUseCase: ReorderAssetsUseCase,
     private val addAssetsUseCase: AddAssetsUseCase,
     private val removeAssetUseCase: RemoveAssetUseCase,
     private val songRepository: SongRepository,
@@ -291,64 +289,6 @@ class EditorViewModel(
         return true
     }
 
-    fun selectAsset(index: Int) {
-        val currentState = _uiState.value
-        if (currentState is EditorUiState.Success) {
-            if (index in currentState.project.assets.indices) {
-                _uiState.value = currentState.copy(selectedAssetIndex = index)
-            }
-        }
-    }
-
-    fun selectNextAsset() {
-        val currentState = _uiState.value
-        if (currentState is EditorUiState.Success) {
-            val nextIndex = (currentState.selectedAssetIndex + 1) % currentState.project.assets.size
-            _uiState.value = currentState.copy(selectedAssetIndex = nextIndex)
-        }
-    }
-
-    fun selectPreviousAsset() {
-        val currentState = _uiState.value
-        if (currentState is EditorUiState.Success) {
-            val prevIndex = if (currentState.selectedAssetIndex == 0) {
-                currentState.project.assets.lastIndex
-            } else {
-                currentState.selectedAssetIndex - 1
-            }
-            _uiState.value = currentState.copy(selectedAssetIndex = prevIndex)
-        }
-    }
-
-    fun moveAsset(fromIndex: Int, toIndex: Int) {
-        val currentState = _uiState.value
-        if (currentState is EditorUiState.Success) {
-            val assets = currentState.project.assets.toMutableList()
-            val asset = assets.removeAt(fromIndex)
-            assets.add(toIndex, asset)
-
-            if (currentState.isUnsavedProject) {
-                // In-memory update - reindex assets
-                val reindexedAssets = assets.mapIndexed { index, a ->
-                    a.copy(orderIndex = index)
-                }
-                _uiState.value = currentState.copy(
-                    project = currentState.project.copy(assets = reindexedAssets)
-                )
-            } else {
-                // DB update
-                viewModelScope.launch {
-                    currentProjectId?.let { id ->
-                        reorderAssetsUseCase(id, assets)
-                    }
-                }
-            }
-
-            // Asset order changed - trigger video preparation
-            triggerVideoPreparation()
-        }
-    }
-
     fun addAssets(uris: List<Uri>) {
         if (uris.isEmpty()) return
         val currentState = _uiState.value
@@ -416,26 +356,6 @@ class EditorViewModel(
         return true
     }
 
-    fun canRemoveAssets(): Boolean {
-        val currentState = _uiState.value
-        if (currentState !is EditorUiState.Success) return false
-        return currentState.project.assets.size > 2
-    }
-
-    fun toggleSettingsPanel() {
-        val currentState = _uiState.value
-        if (currentState is EditorUiState.Success) {
-            _uiState.value = currentState.copy(showSettingsPanel = !currentState.showSettingsPanel)
-        }
-    }
-
-    fun closeSettingsPanel() {
-        val currentState = _uiState.value
-        if (currentState is EditorUiState.Success) {
-            _uiState.value = currentState.copy(showSettingsPanel = false)
-        }
-    }
-
     fun updateQuality(quality: VideoQuality) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
@@ -470,14 +390,6 @@ class EditorViewModel(
         updatePendingSettings { it.copy(imageDurationMs = durationMs) }
     }
 
-    fun updateTransitionPercentage(percentage: Int) {
-        updatePendingSettings { it.copy(transitionPercentage = percentage) }
-    }
-
-    fun updateOverlayFrame(frameId: String?) {
-        updatePendingSettings { it.copy(overlayFrameId = frameId) }
-    }
-
     fun updateMusicSong(songId: Long?, songUrl: String? = null) {
         // Fetch song data to get both name and URL
         viewModelScope.launch {
@@ -504,14 +416,6 @@ class EditorViewModel(
                 musicSongCoverUrl = songCoverUrl,
                 customAudioUri = null
             )
-        }
-    }
-
-    fun updateCustomAudio(uri: Uri?) {
-        if (uri != null) {
-            updatePendingSettings { it.copy(customAudioUri = uri, musicSongId = null, musicSongName = null, musicSongUrl = null) }
-        } else {
-            updatePendingSettings { it.copy(customAudioUri = null) }
         }
     }
 
@@ -551,9 +455,6 @@ class EditorViewModel(
                 }
             }
             // For unsaved projects, settings are already in memory
-
-            // Trigger video preparation after settings applied
-            triggerVideoPreparation()
         }
     }
 
@@ -589,13 +490,6 @@ class EditorViewModel(
                 wasPlayingBeforeSeek = currentState.isPlaying,
                 isPlaying = false
             )
-        }
-    }
-
-    fun resumePlaybackAfterSeek() {
-        val currentState = _uiState.value
-        if (currentState is EditorUiState.Success && currentState.wasPlayingBeforeSeek) {
-            _uiState.value = currentState.copy(isPlaying = true, wasPlayingBeforeSeek = false)
         }
     }
 
@@ -649,30 +543,6 @@ class EditorViewModel(
         _navigationEvent.value = EditorNavigationEvent.NavigateBack
     }
 
-    fun navigateToPreview() {
-        val currentState = _uiState.value
-        if (currentState !is EditorUiState.Success) return
-
-        if (currentState.isUnsavedProject) {
-            // Auto-save before preview
-            viewModelScope.launch {
-                if (saveProject()) {
-                    currentProjectId?.let { id ->
-                        _navigationEvent.value = EditorNavigationEvent.NavigateToPreview(id)
-                    }
-                }
-            }
-        } else {
-            currentProjectId?.let { id ->
-                _navigationEvent.value = EditorNavigationEvent.NavigateToPreview(id)
-            }
-        }
-    }
-
-    /**
-     * Navigate to export screen.
-     * Saves project (applies pending settings + saves new project if needed) before navigating.
-     */
     fun navigateToExport() {
         val currentState = _uiState.value
         if (currentState !is EditorUiState.Success) return

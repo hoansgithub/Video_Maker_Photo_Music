@@ -34,7 +34,6 @@ import com.videomaker.aimusic.domain.usecase.DeleteProjectUseCase
 import com.videomaker.aimusic.domain.usecase.GetAllProjectsUseCase
 import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
-import com.videomaker.aimusic.domain.usecase.ReorderAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.SearchSongsUseCase
 import com.videomaker.aimusic.domain.usecase.SearchTemplatesUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
@@ -171,7 +170,6 @@ val domainModule = module {
     factory { GetProjectUseCase(get()) }
     factory { GetAllProjectsUseCase(get()) }
     factory { UpdateProjectSettingsUseCase(get()) }
-    factory { ReorderAssetsUseCase(get()) }
     factory { AddAssetsUseCase(get()) }
     factory { RemoveAssetUseCase(get()) }
     factory { DeleteProjectUseCase(get()) }
@@ -243,7 +241,6 @@ class EditorViewModelFactory(
     private val getProjectUseCase: GetProjectUseCase,
     private val createProjectUseCase: CreateProjectUseCase,
     private val updateSettingsUseCase: UpdateProjectSettingsUseCase,
-    private val reorderAssetsUseCase: ReorderAssetsUseCase,
     private val addAssetsUseCase: AddAssetsUseCase,
     private val removeAssetUseCase: RemoveAssetUseCase,
     private val songRepository: SongRepository,
@@ -259,7 +256,6 @@ class EditorViewModelFactory(
             getProjectUseCase = getProjectUseCase,
             createProjectUseCase = createProjectUseCase,
             updateSettingsUseCase = updateSettingsUseCase,
-            reorderAssetsUseCase = reorderAssetsUseCase,
             addAssetsUseCase = addAssetsUseCase,
             removeAssetUseCase = removeAssetUseCase,
             songRepository = songRepository,
@@ -483,7 +479,6 @@ val presentationModule = module {
             getProjectUseCase = get(),
             createProjectUseCase = get(),
             updateSettingsUseCase = get(),
-            reorderAssetsUseCase = get(),
             addAssetsUseCase = get(),
             removeAssetUseCase = get(),
             songRepository = get(),
