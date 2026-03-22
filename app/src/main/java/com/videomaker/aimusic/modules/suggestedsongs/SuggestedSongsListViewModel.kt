@@ -51,6 +51,7 @@ class SuggestedSongsListViewModel(
 
     companion object {
         private const val PAGE_SIZE = 20
+        private const val MAX_ITEMS = 300  // Limit total items to prevent RAM issues
     }
 
     private val _uiState = MutableStateFlow<SuggestedSongsListUiState>(SuggestedSongsListUiState.Loading)
@@ -76,7 +77,7 @@ class SuggestedSongsListViewModel(
                 currentPageState = SongsPageState(
                     songs = songs,
                     offset = songs.size,
-                    hasMore = songs.size >= PAGE_SIZE,
+                    hasMore = songs.size >= PAGE_SIZE && songs.size < MAX_ITEMS,
                     isLoading = false
                 )
                 _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
@@ -88,7 +89,8 @@ class SuggestedSongsListViewModel(
 
     fun loadMore() {
         val state = currentPageState
-        if (state.isLoadingMore || !state.hasMore) return
+        // Stop loading if already loading, no more items, or reached max limit
+        if (state.isLoadingMore || !state.hasMore || state.songs.size >= MAX_ITEMS) return
 
         viewModelScope.launch {
             currentPageState = state.copy(isLoadingMore = true)
@@ -98,11 +100,11 @@ class SuggestedSongsListViewModel(
 
             if (result.isSuccess) {
                 val newSongs = result.getOrNull() ?: emptyList()
-                val allSongs = (state.songs + newSongs).distinctBy { it.id }
+                val allSongs = (state.songs + newSongs).distinctBy { it.id }.take(MAX_ITEMS)
                 currentPageState = SongsPageState(
                     songs = allSongs,
                     offset = state.offset + newSongs.size,
-                    hasMore = newSongs.size >= PAGE_SIZE,
+                    hasMore = newSongs.size >= PAGE_SIZE && allSongs.size < MAX_ITEMS,
                     isLoadingMore = false
                 )
                 _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
@@ -130,7 +132,7 @@ class SuggestedSongsListViewModel(
                 currentPageState = SongsPageState(
                     songs = songs,
                     offset = songs.size,
-                    hasMore = songs.size >= PAGE_SIZE,
+                    hasMore = songs.size >= PAGE_SIZE && songs.size < MAX_ITEMS,
                     isRefreshing = false
                 )
                 _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
