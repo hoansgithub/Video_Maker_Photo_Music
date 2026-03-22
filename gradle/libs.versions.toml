@@ -58,7 +58,7 @@ koin = "4.2.0"  # Matches ACCCoreAndroid
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.20"  # From GitHub Packages - Latest version
+acccore = "0.0.21"  # From GitHub Packages - Fix AppsFlyer revenue attribution
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)
