@@ -387,7 +387,12 @@ private fun SuccessContent(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> exoPlayer.pause()
-                Lifecycle.Event.ON_RESUME -> if (isPlaying) exoPlayer.play()
+                Lifecycle.Event.ON_RESUME -> {
+                    // Always auto-play when screen becomes visible and player is ready
+                    if (exoPlayer.playbackState == Player.STATE_READY && !exoPlayer.isPlaying) {
+                        exoPlayer.play()
+                    }
+                }
                 else -> {}
             }
         }
