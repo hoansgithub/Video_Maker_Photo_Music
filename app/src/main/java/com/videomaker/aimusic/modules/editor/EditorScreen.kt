@@ -159,7 +159,7 @@ fun EditorScreen(
                 val successState = uiState as? EditorUiState.Success
                 EditorTopBar(
                     selectedQuality = successState?.selectedQuality ?: VideoQuality.DEFAULT,
-                    canExport = successState?.canExport ?: false,
+                    canExport = !isPreviewBuilding,
                     onBackClick = { showExitConfirmation = true },
                     onQualityChange = viewModel::updateQuality,
                     onDoneClick = viewModel::navigateToExport

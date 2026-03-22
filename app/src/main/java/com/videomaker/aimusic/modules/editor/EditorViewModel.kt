@@ -28,21 +28,6 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 // ============================================
-// PROCESSING STATE
-// ============================================
-
-sealed class VideoProcessingState {
-    /** No active processing */
-    data object Idle : VideoProcessingState()
-    /** Video composition being prepared (debounced after settings change) */
-    data object Preparing : VideoProcessingState()
-    /** Video ready for playback/export */
-    data object Ready : VideoProcessingState()
-    /** Processing failed */
-    data class Error(val message: String) : VideoProcessingState()
-}
-
-// ============================================
 // UI STATE
 // ============================================
 
@@ -62,13 +47,10 @@ sealed class EditorUiState {
         val scrubToPosition: Long? = null,
         val wasPlayingBeforeSeek: Boolean = false,
         val selectedQuality: VideoQuality = VideoQuality.DEFAULT,
-        val processingState: VideoProcessingState = VideoProcessingState.Idle,
         val effectSetName: String = "Effect"
     ) : EditorUiState() {
         val hasPendingChanges: Boolean get() = pendingSettings != null || isUnsavedProject
         val displaySettings: ProjectSettings get() = pendingSettings ?: project.settings
-        val isProcessing: Boolean get() = processingState is VideoProcessingState.Preparing
-        val canExport: Boolean get() = !isProcessing && processingState !is VideoProcessingState.Error
 
         /**
          * Project with pending settings applied - use this for preview/display
@@ -123,14 +105,6 @@ class EditorViewModel(
 
     // Observer job for existing projects
     private var projectObserverJob: Job? = null
-
-    // Video preparation job - cancelled when settings change
-    private var videoPreparationJob: Job? = null
-
-    // Debounce delay for video preparation (wait for user to stop changing settings)
-    private companion object {
-        const val VIDEO_PREPARATION_DEBOUNCE_MS = 500L
-    }
 
     init {
         require(projectId != null || initialData != null) {
@@ -404,9 +378,6 @@ class EditorViewModel(
                 }
             }
         }
-
-        // Assets added - trigger video preparation
-        triggerVideoPreparation()
     }
 
     /**
@@ -442,8 +413,6 @@ class EditorViewModel(
             }
         }
 
-        // Asset removed - trigger video preparation
-        triggerVideoPreparation()
         return true
     }
 
@@ -596,83 +565,8 @@ class EditorViewModel(
     }
 
     // ============================================
-    // VIDEO PREPARATION - DEBOUNCED & CANCELLABLE
+    // PLAYBACK CONTROLS
     // ============================================
-
-    /**
-     * Trigger video preparation with debounce.
-     * Cancels any ongoing preparation and waits for user to stop making changes.
-     */
-    private fun triggerVideoPreparation() {
-        val currentState = _uiState.value
-        if (currentState !is EditorUiState.Success) return
-
-        // Cancel previous preparation
-        videoPreparationJob?.cancel()
-
-        // Mark as preparing (but debounced, so user sees "waiting" state)
-        _uiState.value = currentState.copy(processingState = VideoProcessingState.Preparing)
-
-        // Start new debounced preparation
-        videoPreparationJob = viewModelScope.launch {
-            try {
-                // Debounce: wait for user to stop changing settings
-                delay(VIDEO_PREPARATION_DEBOUNCE_MS)
-
-                // Prepare video composition
-                prepareVideoComposition()
-
-                // Mark as ready
-                val state = _uiState.value as? EditorUiState.Success
-                if (state != null) {
-                    _uiState.value = state.copy(processingState = VideoProcessingState.Ready)
-                }
-            } catch (e: CancellationException) {
-                // Job was cancelled (user made more changes) - this is expected
-                throw e
-            } catch (e: Exception) {
-                // Preparation failed
-                val state = _uiState.value as? EditorUiState.Success
-                if (state != null) {
-                    _uiState.value = state.copy(
-                        processingState = VideoProcessingState.Error(
-                            e.message ?: "Failed to prepare video"
-                        )
-                    )
-                }
-            }
-        }
-    }
-
-    /**
-     * Actually prepare the video composition.
-     * This is where the heavy work happens (Media3 Composition creation, etc.)
-     */
-    private suspend fun prepareVideoComposition() {
-        // TODO: Implement actual video composition preparation
-        // This will use Media3 Transformer to create the composition
-        // For now, simulate the work
-        delay(100) // Simulate processing time
-
-        // Future implementation:
-        // 1. Get current project settings
-        // 2. Create Media3 Composition from assets + settings
-        // 3. Set up CompositionPlayer for preview
-        // 4. Notify UI when ready
-    }
-
-    /**
-     * Cancel any ongoing video preparation.
-     * Called when user navigates away or makes destructive changes.
-     */
-    fun cancelVideoPreparation() {
-        videoPreparationJob?.cancel()
-        videoPreparationJob = null
-        val currentState = _uiState.value
-        if (currentState is EditorUiState.Success) {
-            _uiState.value = currentState.copy(processingState = VideoProcessingState.Idle)
-        }
-    }
 
     fun togglePlayback() {
         val currentState = _uiState.value
@@ -759,12 +653,6 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState !is EditorUiState.Success) return
 
-        // Block if video is being prepared
-        if (currentState.isProcessing) {
-            // TODO: Show toast/snackbar "Please wait for video preparation to complete"
-            return
-        }
-
         if (currentState.isUnsavedProject) {
             // Auto-save before preview
             viewModelScope.launch {
@@ -789,12 +677,6 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState !is EditorUiState.Success) return
 
-        // Block if video is being prepared
-        if (currentState.isProcessing) {
-            // TODO: Show toast/snackbar "Please wait for video preparation to complete"
-            return
-        }
-
         // Always save before export (applies pending settings and saves new projects)
         viewModelScope.launch {
             if (saveProject()) {
@@ -815,7 +697,5 @@ class EditorViewModel(
         super.onCleared()
         projectObserverJob?.cancel()
         projectObserverJob = null
-        videoPreparationJob?.cancel()
-        videoPreparationJob = null
     }
 }
