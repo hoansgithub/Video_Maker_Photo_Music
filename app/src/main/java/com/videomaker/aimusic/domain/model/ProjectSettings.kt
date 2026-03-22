@@ -90,8 +90,8 @@ data class ProjectSettings(
     companion object {
         val DEFAULT = ProjectSettings()
 
-        // Available image durations (in seconds): 2, 3, 4, 5, 6, 8, 10, 12
-        val IMAGE_DURATION_OPTIONS = listOf(2, 3, 4, 5, 6, 8, 10, 12)
+        // Available image durations (in seconds): 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+        val IMAGE_DURATION_OPTIONS = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
         // Available transition percentages: 10%, 20%, 30%, 40%, 50%
         val TRANSITION_PERCENTAGE_OPTIONS = listOf(10, 20, 30, 40, 50)

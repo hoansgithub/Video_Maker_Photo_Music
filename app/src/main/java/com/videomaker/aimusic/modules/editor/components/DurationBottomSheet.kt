@@ -23,7 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.ui.theme.Gray500
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
@@ -45,9 +46,15 @@ internal fun DurationBottomSheet(
     onDismiss: () -> Unit,
     onConfirm: (Long) -> Unit
 ) {
-    // Convert ms to seconds for slider (default 3s if current is 0 or out of range)
-    val currentSeconds = (currentDurationMs / 1000f).coerceIn(1f, 20f)
-    var sliderValue by remember { mutableFloatStateOf(currentSeconds) }
+    // Valid duration options: 2, 3, 4, 5, 6, 8, 10, 12 seconds
+    val validDurations = ProjectSettings.IMAGE_DURATION_OPTIONS
+
+    // Find closest valid duration to current value
+    val currentSeconds = currentDurationMs / 1000
+    val initialIndex = validDurations.indexOfFirst { it == currentSeconds.toInt() }
+        .takeIf { it >= 0 } ?: validDurations.indexOf(3) // Default to 3s
+
+    var selectedIndex by remember { mutableIntStateOf(initialIndex) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
@@ -83,7 +90,10 @@ internal fun DurationBottomSheet(
                     modifier = Modifier
                         .size(40.dp)
                         .background(MaterialTheme.colorScheme.primary, CircleShape)
-                        .clickable { onConfirm((sliderValue.toInt() * 1000).toLong()) },
+                        .clickable {
+                            val selectedDuration = validDurations[selectedIndex] * 1000L
+                            onConfirm(selectedDuration)
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -101,24 +111,24 @@ internal fun DurationBottomSheet(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "${sliderValue.toInt()}s",
+                    text = "${validDurations[selectedIndex]}s",
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            // Slider
+            // Slider with discrete steps for valid durations only
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp)
             ) {
                 Slider(
-                    value = sliderValue,
-                    onValueChange = { sliderValue = it },
-                    valueRange = 1f..20f,
-                    steps = 18, // 19 discrete values (1-20 inclusive)
+                    value = selectedIndex.toFloat(),
+                    onValueChange = { selectedIndex = it.toInt() },
+                    valueRange = 0f..(validDurations.size - 1).toFloat(),
+                    steps = validDurations.size - 2, // Discrete steps between min and max
                     colors = SliderDefaults.colors(
                         thumbColor = MaterialTheme.colorScheme.primary,
                         activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -127,18 +137,18 @@ internal fun DurationBottomSheet(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Min/Max labels
+                // Min/Max labels (2s - 12s)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "1s",
+                        text = "${validDurations.first()}s",
                         color = TextSecondary,
                         fontSize = 12.sp
                     )
                     Text(
-                        text = "20s",
+                        text = "${validDurations.last()}s",
                         color = TextSecondary,
                         fontSize = 12.sp
                     )
