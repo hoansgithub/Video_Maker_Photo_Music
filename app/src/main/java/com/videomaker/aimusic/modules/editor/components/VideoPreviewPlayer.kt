@@ -355,15 +355,14 @@ fun VideoPreviewPlayer(
         withContext(Dispatchers.Main.immediate) {
             val currentPlayer = player ?: return@withContext
 
+            // Don't wait if player is still building - will auto-apply when ready
+            if (previewState is PreviewState.Building) return@withContext
+
             // Don't try to set volume if player is in error state
-            // This prevents infinite waiting without arbitrary timeout
             if (previewState is PreviewState.Error) return@withContext
 
-            // Wait for player to be ready (no timeout - can take as long as needed)
-            // If player errors, previewState becomes Error and effect restarts (early return above)
-            if (!playerReadyFlow.value) {
-                playerReadyFlow.first { it }
-            }
+            // Only proceed if player is ready (no timeout needed - we check state above)
+            if (!playerReadyFlow.value) return@withContext
 
             // Set player volume (0.0 to 1.0)
             // This is instant - no composition rebuild needed!
@@ -375,16 +374,18 @@ fun VideoPreviewPlayer(
     LaunchedEffect(isPlaying, player, previewState) {
         val currentPlayer = player ?: return@LaunchedEffect
 
+        // Don't wait if player is still building - will auto-play when ready (if autoPlay is true)
+        if (previewState is PreviewState.Building) return@LaunchedEffect
+
         // Don't try to play if player is in error state
         if (previewState is PreviewState.Error) return@LaunchedEffect
 
         if (isPlaying) {
             try {
-                // Wait for player to be ready (no timeout - can take as long as needed for large projects)
-                // If player errors, previewState becomes Error and effect restarts (early return above)
-                if (!playerReadyFlow.value) {
-                    playerReadyFlow.first { it }
-                }
+                // Only proceed if player is ready (no timeout - we check state above)
+                // Large projects with many images can take a long time to build, so we don't wait with timeout
+                if (!playerReadyFlow.value) return@LaunchedEffect
+
                 currentPlayer.play()
             } catch (_: Exception) {
             }
