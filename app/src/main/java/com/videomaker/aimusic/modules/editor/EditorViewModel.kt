@@ -9,6 +9,7 @@ import com.videomaker.aimusic.domain.model.EditorInitialData
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.VideoQuality
+import com.videomaker.aimusic.domain.repository.EffectSetRepository
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
@@ -61,7 +62,8 @@ sealed class EditorUiState {
         val scrubToPosition: Long? = null,
         val wasPlayingBeforeSeek: Boolean = false,
         val selectedQuality: VideoQuality = VideoQuality.DEFAULT,
-        val processingState: VideoProcessingState = VideoProcessingState.Idle
+        val processingState: VideoProcessingState = VideoProcessingState.Idle,
+        val effectSetName: String = "Effect"
     ) : EditorUiState() {
         val hasPendingChanges: Boolean get() = pendingSettings != null || isUnsavedProject
         val displaySettings: ProjectSettings get() = pendingSettings ?: project.settings
@@ -105,7 +107,8 @@ class EditorViewModel(
     private val reorderAssetsUseCase: ReorderAssetsUseCase,
     private val addAssetsUseCase: AddAssetsUseCase,
     private val removeAssetUseCase: RemoveAssetUseCase,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val effectSetRepository: EffectSetRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<EditorUiState>(EditorUiState.Loading)
@@ -136,6 +139,18 @@ class EditorViewModel(
         loadOrInitializeProject()
     }
 
+    /**
+     * Fetches the effect set name by ID.
+     * Returns "Effect" as default if ID is null or not found.
+     */
+    private suspend fun getEffectSetName(effectSetId: String?): String {
+        if (effectSetId == null) return "Effect"
+        return effectSetRepository.getEffectSetById(effectSetId)
+            .getOrNull()
+            ?.name
+            ?: "Effect"
+    }
+
     private fun loadOrInitializeProject() {
         if (projectId != null) {
             // Mode 1: Load existing project from DB
@@ -157,6 +172,10 @@ class EditorViewModel(
                         val prev = currentState as? EditorUiState.Success
                         val selectedIndex = prev?.selectedAssetIndex
                             ?.coerceIn(0, project.assets.lastIndex.coerceAtLeast(0)) ?: 0
+
+                        // Load effect set name
+                        val effectSetName = getEffectSetName(project.settings.effectSetId)
+
                         _uiState.value = EditorUiState.Success(
                             project = project,
                             isUnsavedProject = false,
@@ -169,6 +188,7 @@ class EditorViewModel(
                             seekToPosition = prev?.seekToPosition,
                             scrubToPosition = prev?.scrubToPosition,
                             wasPlayingBeforeSeek = prev?.wasPlayingBeforeSeek ?: false,
+                            effectSetName = effectSetName
                         )
                     } else {
                         _uiState.value = EditorUiState.Error("Project not found")
@@ -226,9 +246,13 @@ class EditorViewModel(
                     settings = settings
                 )
 
+                // Load effect set name
+                val effectSetName = getEffectSetName(settings.effectSetId)
+
                 _uiState.value = EditorUiState.Success(
                     project = project,
-                    isUnsavedProject = true
+                    isUnsavedProject = true,
+                    effectSetName = effectSetName
                 )
             } catch (e: Exception) {
                 _uiState.value = EditorUiState.Error(e.message ?: "Failed to initialize project")
@@ -429,7 +453,26 @@ class EditorViewModel(
     }
 
     fun updateEffectSet(effectSetId: String?) {
-        updatePendingSettings { it.copy(effectSetId = effectSetId) }
+        viewModelScope.launch {
+            // Load effect set name
+            val effectSetName = if (effectSetId != null) {
+                getEffectSetName(effectSetId)
+            } else {
+                "Effect"
+            }
+
+            // Update both pending settings and effect set name
+            updatePendingSettings { it.copy(effectSetId = effectSetId) }
+
+            // Update effect set name in state
+            _uiState.update { state ->
+                if (state is EditorUiState.Success) {
+                    state.copy(effectSetName = effectSetName)
+                } else {
+                    state
+                }
+            }
+        }
     }
 
     fun updateImageDuration(durationMs: Long) {

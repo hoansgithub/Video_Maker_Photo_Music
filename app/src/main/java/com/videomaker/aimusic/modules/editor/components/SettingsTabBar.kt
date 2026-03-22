@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
@@ -35,6 +37,7 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
  */
 @Composable
 internal fun SettingsTabBar(
+    currentEffectSetName: String,
     currentVolume: Float,
     currentRatio: AspectRatio,
     currentDurationMs: Long,
@@ -51,10 +54,10 @@ internal fun SettingsTabBar(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        // Effect button
+        // Effect button - displays effect set name (max 2 lines)
         SettingsTabButton(
             icon = Icons.Default.AutoAwesome,
-            label = stringResource(R.string.editor_effect),
+            label = currentEffectSetName,
             onClick = onEffectClick,
             modifier = Modifier.weight(1f)
         )
@@ -110,7 +113,11 @@ private fun SettingsTabButton(
             text = label,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            color = TextPrimary
+            color = TextPrimary,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            lineHeight = 16.sp
         )
     }
 }

@@ -508,32 +508,6 @@ fun VideoPreviewPlayer(
                     style = MaterialTheme.typography.labelMedium
                 )
             }
-
-            // Status indicator
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(12.dp)
-                    .background(
-                        color = when (previewState) {
-                            is PreviewState.Building -> Color(0xFFFF9800).copy(alpha = 0.9f) // Orange
-                            is PreviewState.Ready -> if (isPlaying) Color.Red.copy(alpha = 0.8f) else Color.Gray.copy(alpha = 0.6f)
-                            is PreviewState.Error -> Color.Red.copy(alpha = 0.9f)
-                        },
-                        shape = RoundedCornerShape(4.dp)
-                    )
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    text = when (previewState) {
-                        is PreviewState.Building -> "PROCESSING"
-                        is PreviewState.Ready -> if (isPlaying) "PLAYING" else "PAUSED"
-                        is PreviewState.Error -> "ERROR"
-                    },
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelSmall
-                )
-            }
         }
     }
 }

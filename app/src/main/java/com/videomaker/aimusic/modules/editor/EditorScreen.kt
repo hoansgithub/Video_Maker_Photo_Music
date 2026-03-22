@@ -53,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -181,6 +182,7 @@ fun EditorScreen(
                         durationMs = state.durationMs,
                         seekToPosition = state.seekToPosition,
                         scrubToPosition = state.scrubToPosition,
+                        effectSetName = state.effectSetName,
                         onPlayPauseClick = viewModel::togglePlayback,
                         onPlaybackStateChange = viewModel::setPlaybackState,
                         onPositionUpdate = viewModel::updatePlaybackPosition,
@@ -346,6 +348,41 @@ fun EditorScreen(
                 },
                 onDismiss = { showMusicSearchSheet = false }
             )
+        }
+
+        // Fullscreen Processing Overlay - blurry background with loading indicator
+        val isProcessing = (uiState as? EditorUiState.Success)?.isProcessing ?: false
+        if (isProcessing) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .blur(radius = 20.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { /* Block interactions during processing */ }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(64.dp),
+                        strokeWidth = 5.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = stringResource(R.string.editor_preparing_video),
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
 
     }
@@ -553,6 +590,7 @@ internal fun EditorMainContent(
     durationMs: Long,
     seekToPosition: Long?,
     scrubToPosition: Long?,
+    effectSetName: String,
     onPlayPauseClick: () -> Unit,
     onPlaybackStateChange: (Boolean) -> Unit,
     onPositionUpdate: (Long, Long) -> Unit,
@@ -594,34 +632,6 @@ internal fun EditorMainContent(
                 autoPlay = true,
                 modifier = Modifier.fillMaxSize()
             )
-
-            // Processing indicator - centered overlay
-            if (isProcessing) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(48.dp),
-                            strokeWidth = 4.dp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(R.string.editor_preparing_video),
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
         }
 
         // Music Section - song info and player
@@ -661,6 +671,7 @@ internal fun EditorMainContent(
 
         // Settings Tab Bar - Effect, Duration, Ratio, Volume
         SettingsTabBar(
+            currentEffectSetName = effectSetName,
             currentVolume = project.settings.audioVolume,
             currentRatio = project.settings.aspectRatio,
             currentDurationMs = project.settings.imageDurationMs,

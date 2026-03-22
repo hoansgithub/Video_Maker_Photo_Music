@@ -246,7 +246,8 @@ class EditorViewModelFactory(
     private val reorderAssetsUseCase: ReorderAssetsUseCase,
     private val addAssetsUseCase: AddAssetsUseCase,
     private val removeAssetUseCase: RemoveAssetUseCase,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val effectSetRepository: EffectSetRepository
 ) {
     fun create(
         projectId: String?,
@@ -261,7 +262,8 @@ class EditorViewModelFactory(
             reorderAssetsUseCase = reorderAssetsUseCase,
             addAssetsUseCase = addAssetsUseCase,
             removeAssetUseCase = removeAssetUseCase,
-            songRepository = songRepository
+            songRepository = songRepository,
+            effectSetRepository = effectSetRepository
         )
     }
 }
@@ -484,7 +486,8 @@ val presentationModule = module {
             reorderAssetsUseCase = get(),
             addAssetsUseCase = get(),
             removeAssetUseCase = get(),
-            songRepository = get()
+            songRepository = get(),
+            effectSetRepository = get()
         )
     }
 

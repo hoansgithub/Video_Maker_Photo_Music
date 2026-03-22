@@ -98,6 +98,9 @@
     <string name="projects_title">My Projects</string>
     <string name="projects_empty">No projects yet</string>
     <string name="projects_empty_description">Create your first project to see it here</string>
+    <string name="projects_empty_title">Start your journey</string>
+    <string name="projects_empty_subtitle">It looks a bit empty here. Let\'s create your first masterpiece today.</string>
+    <string name="projects_create_new_video">Create New Video</string>
     <string name="projects_item_info">%1$d photos • %2$s</string>
     <string name="projects_create_description">Start a new slideshow project</string>
     <string name="projects_delete_title">Delete Project?</string>
