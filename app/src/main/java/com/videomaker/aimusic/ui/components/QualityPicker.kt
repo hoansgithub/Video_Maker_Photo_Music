@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
@@ -99,7 +100,7 @@ fun QualityPicker(
                     text = {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start,
+                            horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // HD badge for 1080p
@@ -113,7 +114,8 @@ fun QualityPicker(
                                     FontWeight.Bold
                                 } else {
                                     FontWeight.Normal
-                                }
+                                },
+                                textAlign = TextAlign.End
                             )
                         }
                     },
