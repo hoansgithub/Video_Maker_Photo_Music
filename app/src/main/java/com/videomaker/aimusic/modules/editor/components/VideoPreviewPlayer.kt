@@ -182,6 +182,9 @@ fun VideoPreviewPlayer(
     var previewState by remember { mutableStateOf<PreviewState>(PreviewState.Building) }
     var player by remember { mutableStateOf<CompositionPlayer?>(null) }
 
+    // Track composition building job so we can cancel it when app goes to background
+    var compositionBuildJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+
     // Notify parent of preview state changes
     LaunchedEffect(previewState) {
         onPreviewStateChange(previewState)
@@ -269,6 +272,12 @@ fun VideoPreviewPlayer(
 
     // Build composition when key changes
     LaunchedEffect(compositionKey) {
+        // Cancel any previous composition building
+        compositionBuildJob?.cancel()
+
+        // Store this job so it can be cancelled on background
+        compositionBuildJob = coroutineContext[kotlinx.coroutines.Job]
+
         // Reset ready state
         playerReadyFlow.value = false
         previewState = PreviewState.Building
@@ -338,13 +347,18 @@ fun VideoPreviewPlayer(
             }
 
         } catch (e: Exception) {
-            previewState = PreviewState.Error(e.message ?: "Failed to build preview")
-            playerReadyFlow.value = false
-            if (player == null) {
-                player = oldPlayer
-            } else {
-                oldPlayer?.releaseAsync()
+            // Don't show error if cancelled (expected when app goes to background)
+            if (e !is CancellationException) {
+                previewState = PreviewState.Error(e.message ?: "Failed to build preview")
+                playerReadyFlow.value = false
+                if (player == null) {
+                    player = oldPlayer
+                } else {
+                    oldPlayer?.releaseAsync()
+                }
             }
+        } finally {
+            compositionBuildJob = null
         }
     }
 
@@ -408,14 +422,27 @@ fun VideoPreviewPlayer(
         }
     }
 
-    // Pause video when app goes to background
+    // Cancel all processing when app goes to background
     val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner, player) {
+    DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_STOP -> {
+                    // Pause playback
                     player?.pause()
                     onPlaybackStateChange(false)
+
+                    // Cancel composition building to free resources
+                    compositionBuildJob?.cancel()
+                    compositionBuildJob = null
+
+                    // Release player to free memory
+                    player?.releaseAsync()
+                    player = null
+
+                    // Reset state
+                    previewState = PreviewState.Building
+                    playerReadyFlow.value = false
                 }
                 else -> {}
             }
