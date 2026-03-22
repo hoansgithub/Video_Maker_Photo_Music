@@ -99,7 +99,6 @@ class VideoExportWorker(
                     transformer = Transformer.Builder(applicationContext)
                         .addListener(object : Transformer.Listener {
                             override fun onCompleted(composition: Composition, result: ExportResult) {
-                                android.util.Log.d(TAG, "Transformer completed: duration=${result.durationMs}ms")
                                 stopProgressTracking()
                                 cleanupTransformer()
                                 if (continuation.isActive) {

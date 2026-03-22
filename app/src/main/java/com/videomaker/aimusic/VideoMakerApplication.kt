@@ -105,7 +105,6 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
             )
         }
 
-        android.util.Log.d("VideoMakerApplication", "Koin initialized with Firebase support")
 
         // Auto-register services with coordinators
         applicationScope.launch {
@@ -126,7 +125,6 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                 analyticsCoordinator.registerAll(singletons)
                 remoteConfigCoordinator.registerAll(singletons)
 
-                android.util.Log.d("VideoMakerApplication", "Auto-registered all TrackableServices and ConfigurableObjects from DI container")
             } catch (e: Exception) {
                 android.util.Log.e("VideoMakerApplication", "Failed to register services: ${e.message}", e)
             }
@@ -136,25 +134,20 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         TransitionShaderLibrary.init(this)
         // Pre-load transitions in background to avoid lag when settings opens
         TransitionShaderLibrary.preload()
-        android.util.Log.d("VideoMakerApplication", "TransitionShaderLibrary initialized and preloading")
 
         // Initialize TransitionSetLibrary (depends on TransitionShaderLibrary)
         TransitionSetLibrary.init(this)
-        android.util.Log.d("VideoMakerApplication", "TransitionSetLibrary initialized")
 
         // Initialize MusicSongLibrary to load songs from assets
         MusicSongLibrary.init(this)
-        android.util.Log.d("VideoMakerApplication", "MusicSongLibrary initialized")
 
         // Initialize VideoTemplateLibrary to load templates from assets
         VideoTemplateLibrary.init(this)
-        android.util.Log.d("VideoMakerApplication", "VideoTemplateLibrary initialized")
     }
 
     override fun onTerminate() {
         super.onTerminate()
 
-        android.util.Log.d("VideoMakerApplication", "App terminating - cleaning up resources")
 
         // Close coordinators (fire-and-forget — OS kills process shortly after onTerminate)
         runCatching { getKoin().getOrNull<AnalyticsCoordinator>()?.close() }
@@ -165,10 +158,8 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
         // Cancel application scope (cancels all coroutines)
         applicationScope.cancel()
-        android.util.Log.d("VideoMakerApplication", "Application scope cancelled")
 
         // Clean up Koin (clears all definitions)
         stopKoin()
-        android.util.Log.d("VideoMakerApplication", "Koin stopped")
     }
 }

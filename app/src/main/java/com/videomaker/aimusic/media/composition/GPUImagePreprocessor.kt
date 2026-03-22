@@ -124,7 +124,6 @@ class GPUImagePreprocessor(private val context: Context) {
             }
 
             isInitialized = true
-            android.util.Log.d(TAG, "GPU preprocessor initialized successfully")
             return true
 
         } catch (e: Exception) {
@@ -233,7 +232,6 @@ class GPUImagePreprocessor(private val context: Context) {
             GLES20.glDeleteTextures(1, intArrayOf(inputTexture), 0)
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
 
-            android.util.Log.d(TAG, "Preprocessed image: ${outputFile.name} (${outputWidth}x${outputHeight})")
             return true
 
         } catch (e: Exception) {
@@ -410,7 +408,6 @@ class GPUImagePreprocessor(private val context: Context) {
             eglSurface = EGL14.EGL_NO_SURFACE
             isInitialized = false
 
-            android.util.Log.d(TAG, "GPU preprocessor released")
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Error releasing GPU preprocessor", e)
         }

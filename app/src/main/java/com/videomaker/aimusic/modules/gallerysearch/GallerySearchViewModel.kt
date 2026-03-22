@@ -101,7 +101,6 @@ class GallerySearchViewModel(
         viewModelScope.launch {
             templateRepository.getVibeTags()
                 .onSuccess { _suggestionVibeTags.value = it }
-                .onFailure { android.util.Log.w("GallerySearchVM", "Failed to load vibe tags", it) }
         }
 
         viewModelScope.launch {
@@ -109,7 +108,6 @@ class GallerySearchViewModel(
                 .onSuccess { templates ->
                     _featuredTemplates.value = templates.map { it.toSearchItem() }
                 }
-                .onFailure { android.util.Log.w("GallerySearchVM", "Failed to load featured templates", it) }
         }
 
         // flatMapLatest: cancels the previous search coroutine when a new query arrives

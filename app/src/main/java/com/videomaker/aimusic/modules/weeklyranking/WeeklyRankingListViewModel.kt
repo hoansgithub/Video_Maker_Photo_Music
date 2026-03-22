@@ -71,7 +71,6 @@ class WeeklyRankingListViewModel(
     }
 
     private fun loadFirstPage() {
-        android.util.Log.d("WeeklyRanking", "loadFirstPage() starting")
         viewModelScope.launch {
             _uiState.value = WeeklyRankingListUiState.Loading
 
@@ -79,7 +78,6 @@ class WeeklyRankingListViewModel(
 
             if (result.isSuccess) {
                 val songs = result.getOrNull() ?: emptyList()
-                android.util.Log.d("WeeklyRanking", "loadFirstPage() success: fetched ${songs.size} songs, hasMore=${songs.size >= PAGE_SIZE}")
                 currentPageState = WeeklyRankingPageState(
                     songs = songs,
                     offset = songs.size,
@@ -98,11 +96,9 @@ class WeeklyRankingListViewModel(
         val state = currentPageState
         // Stop loading if already loading, no more items, or reached max limit
         if (state.isLoadingMore || !state.hasMore || state.songs.size >= MAX_ITEMS) {
-            android.util.Log.d("WeeklyRanking", "loadMore() blocked: isLoadingMore=${state.isLoadingMore}, hasMore=${state.hasMore}, songsSize=${state.songs.size}")
             return
         }
 
-        android.util.Log.d("WeeklyRanking", "loadMore() starting: offset=${state.offset}, currentSongs=${state.songs.size}")
         viewModelScope.launch {
             currentPageState = state.copy(isLoadingMore = true)
             _uiState.value = WeeklyRankingListUiState.Success(currentPageState)
@@ -111,7 +107,6 @@ class WeeklyRankingListViewModel(
 
             if (result.isSuccess) {
                 val newSongs = result.getOrNull() ?: emptyList()
-                android.util.Log.d("WeeklyRanking", "loadMore() success: fetched ${newSongs.size} new songs")
                 val allSongs = (state.songs + newSongs).distinctBy { it.id }.take(MAX_ITEMS)
                 currentPageState = WeeklyRankingPageState(
                     songs = allSongs,
@@ -119,7 +114,6 @@ class WeeklyRankingListViewModel(
                     hasMore = newSongs.size >= PAGE_SIZE && allSongs.size < MAX_ITEMS,
                     isLoadingMore = false
                 )
-                android.util.Log.d("WeeklyRanking", "loadMore() complete: total=${allSongs.size}, hasMore=${currentPageState.hasMore}")
                 _uiState.value = WeeklyRankingListUiState.Success(currentPageState)
             } else {
                 android.util.Log.e("WeeklyRanking", "loadMore() failed: ${result.exceptionOrNull()?.message}")

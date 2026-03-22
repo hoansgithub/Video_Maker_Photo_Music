@@ -98,7 +98,6 @@ private class BlurBackgroundShaderProgram(
         // Log aspect ratios for debugging color match with TransitionEffect
         frameCount++
         if (frameCount <= 3) {
-            android.util.Log.d("BlurBackgroundEffect", "CLIP START Frame #$frameCount: time=${presentationTimeUs/1000}ms, input: ${inputWidth}x${inputHeight}, aspect: $inputAspect, target: $targetAspectRatio, inputTexId: $inputTexId")
         }
 
         program.bindAttributesAndUniforms()

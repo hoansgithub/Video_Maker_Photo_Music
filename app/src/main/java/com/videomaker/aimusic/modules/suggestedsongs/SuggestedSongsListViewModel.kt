@@ -71,7 +71,6 @@ class SuggestedSongsListViewModel(
     }
 
     private fun loadFirstPage() {
-        android.util.Log.d("SuggestedSongs", "loadFirstPage() starting")
         viewModelScope.launch {
             _uiState.value = SuggestedSongsListUiState.Loading
 
@@ -79,7 +78,6 @@ class SuggestedSongsListViewModel(
 
             if (result.isSuccess) {
                 val songs = result.getOrNull() ?: emptyList()
-                android.util.Log.d("SuggestedSongs", "loadFirstPage() success: fetched ${songs.size} songs, hasMore=${songs.size >= PAGE_SIZE}")
                 currentPageState = SongsPageState(
                     songs = songs,
                     offset = songs.size,
@@ -98,11 +96,9 @@ class SuggestedSongsListViewModel(
         val state = currentPageState
         // Stop loading if already loading, no more items, or reached max limit
         if (state.isLoadingMore || !state.hasMore || state.songs.size >= MAX_ITEMS) {
-            android.util.Log.d("SuggestedSongs", "loadMore() blocked: isLoadingMore=${state.isLoadingMore}, hasMore=${state.hasMore}, songsSize=${state.songs.size}")
             return
         }
 
-        android.util.Log.d("SuggestedSongs", "loadMore() starting: offset=${state.offset}, currentSongs=${state.songs.size}")
         viewModelScope.launch {
             currentPageState = state.copy(isLoadingMore = true)
             _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
@@ -111,7 +107,6 @@ class SuggestedSongsListViewModel(
 
             if (result.isSuccess) {
                 val newSongs = result.getOrNull() ?: emptyList()
-                android.util.Log.d("SuggestedSongs", "loadMore() success: fetched ${newSongs.size} new songs")
                 val allSongs = (state.songs + newSongs).distinctBy { it.id }.take(MAX_ITEMS)
                 currentPageState = SongsPageState(
                     songs = allSongs,
@@ -119,7 +114,6 @@ class SuggestedSongsListViewModel(
                     hasMore = newSongs.size >= PAGE_SIZE && allSongs.size < MAX_ITEMS,
                     isLoadingMore = false
                 )
-                android.util.Log.d("SuggestedSongs", "loadMore() complete: total=${allSongs.size}, hasMore=${currentPageState.hasMore}")
                 _uiState.value = SuggestedSongsListUiState.Success(currentPageState)
             } else {
                 android.util.Log.e("SuggestedSongs", "loadMore() failed: ${result.exceptionOrNull()?.message}")

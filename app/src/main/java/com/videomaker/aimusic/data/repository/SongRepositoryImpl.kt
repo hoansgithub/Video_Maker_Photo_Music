@@ -63,7 +63,6 @@ class SongRepositoryImpl(
                 .decodeList<SongDto>()
                 .toMusicSongs()
 
-            android.util.Log.d("SongRepository", "getFeaturedSongs: region=$region, limit=$limit, offset=$offset, fetched ${songs.size} songs")
 
             // Only cache first page
             if (offset == 0) {
@@ -163,12 +162,10 @@ class SongRepositoryImpl(
         val cacheKey = ApiCacheManager.keySongsGenre(genre)
         apiCacheManager.get<List<MusicSong>>(cacheKey)
             ?.let {
-                android.util.Log.d("SongRepository", "getSongsByGenre: using cache for genre=$genre, ${it.size} songs")
                 return@withContext Result.success(it)
             }
 
         try {
-            android.util.Log.d("SongRepository", "getSongsByGenre: fetching genre=$genre, limit=$limit")
             val songs = supabaseClient.from(TABLE_SONGS)
                 .select {
                     filter {
@@ -181,7 +178,6 @@ class SongRepositoryImpl(
                 .decodeList<SongDto>()
                 .toMusicSongs()
 
-            android.util.Log.d("SongRepository", "getSongsByGenre: fetched ${songs.size} songs for genre=$genre")
             apiCacheManager.put(cacheKey, songs)
             Result.success(songs)
         } catch (e: Exception) {
@@ -257,7 +253,6 @@ class SongRepositoryImpl(
                 normalised.forEach { genre -> add(JsonPrimitive(genre)) }
             }
 
-            android.util.Log.d("SongRepository", "getSuggestedSongs: region=$region, genres=$normalised, limit=$limit, offset=$offset")
 
             val songs = supabaseClient.postgrest
                 .rpc(FN_SONGS_BY_GENRES_SORTED, buildJsonObject {
@@ -269,7 +264,6 @@ class SongRepositoryImpl(
                 .decodeList<SongDto>()
                 .toMusicSongs()
 
-            android.util.Log.d("SongRepository", "getSuggestedSongs: fetched ${songs.size} songs")
 
             // Only cache first page
             if (offset == 0) {

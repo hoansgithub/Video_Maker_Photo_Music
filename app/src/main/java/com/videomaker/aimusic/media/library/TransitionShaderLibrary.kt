@@ -71,7 +71,6 @@ object TransitionShaderLibrary {
                 val transitions = getLoader().loadAll()
                 // Pre-compute grouped map
                 cachedGroupedByCategory = transitions.groupBy { it.category }
-                android.util.Log.d("TransitionShaderLibrary", "Preloaded ${transitions.size} transitions")
             } catch (e: Exception) {
                 android.util.Log.e("TransitionShaderLibrary", "Failed to preload", e)
             }

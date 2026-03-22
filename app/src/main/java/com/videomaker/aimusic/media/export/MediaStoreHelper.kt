@@ -72,13 +72,11 @@ object MediaStoreHelper {
             val uri = resolver.insert(collection, contentValues)
                 ?: return SaveResult.Error("Failed to create MediaStore entry")
 
-            android.util.Log.d(TAG, "Created MediaStore entry: $uri")
 
             // Copy the file content
             resolver.openOutputStream(uri)?.use { outputStream ->
                 FileInputStream(videoFile).use { inputStream ->
                     val bytes = inputStream.copyTo(outputStream)
-                    android.util.Log.d(TAG, "Copied $bytes bytes to gallery")
                 }
             } ?: return SaveResult.Error("Failed to open output stream")
 
@@ -89,7 +87,6 @@ object MediaStoreHelper {
                 resolver.update(uri, contentValues, null, null)
             }
 
-            android.util.Log.d(TAG, "Video saved to gallery successfully: $uri")
             SaveResult.Success(uri)
 
         } catch (e: Exception) {

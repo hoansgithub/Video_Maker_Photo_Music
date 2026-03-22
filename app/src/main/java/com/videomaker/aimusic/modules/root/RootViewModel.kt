@@ -161,7 +161,6 @@ class RootViewModel(
      */
     private suspend fun loadRemoteConfig() {
         try {
-            android.util.Log.d("RootViewModel", "Fetching Remote Config...")
 
             // Fetch with 10 second timeout to prevent blocking on slow networks
             val result = withTimeoutOrNull(10_000L) {
@@ -171,9 +170,7 @@ class RootViewModel(
             // fetchAndActivate returns Result<Boolean>
             val success = result?.getOrNull() ?: false
             if (success) {
-                android.util.Log.d("RootViewModel", "Remote Config fetched and activated successfully")
             } else {
-                android.util.Log.w("RootViewModel", "Remote Config fetch timed out or failed - using cached/default values")
             }
         } catch (e: Exception) {
             android.util.Log.e("RootViewModel", "Remote Config error: ${e.message}")

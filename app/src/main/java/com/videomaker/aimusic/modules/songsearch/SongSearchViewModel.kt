@@ -111,14 +111,12 @@ class SongSearchViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             getSuggestedSongsUseCase(limit = 8)
                 .onSuccess { _suggestedSongs.value = it }
-                .onFailure { android.util.Log.w("SongSearchVM", "Failed to load suggested songs", it) }
         }
 
         viewModelScope.launch(Dispatchers.IO) {
             getGenresUseCase()
                 .onSuccess { _genres.value = it }
                 // Genre failure is non-critical — fall back to empty (hides the chip row)
-                .onFailure { android.util.Log.w("SongSearchVM", "Failed to load genres", it) }
         }
 
         // flatMapLatest: cancels the previous search coroutine when a new query arrives

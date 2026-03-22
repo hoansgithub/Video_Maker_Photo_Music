@@ -215,7 +215,6 @@ class MusicPickerViewModel(
         super.onCleared()
         // Stop any ongoing preview
         _previewingTrackId.value = null
-        android.util.Log.d(TAG, "ViewModel cleared")
     }
 }
 
