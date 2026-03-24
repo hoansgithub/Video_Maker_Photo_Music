@@ -63,6 +63,14 @@
     <string name="settings_language_description">Baguhin ang wika ng app</string>
     <string name="settings_about">Tungkol sa</string>
     <string name="settings_version">Bersyon</string>
+    <string name="settings_app_widet">Magdagdag ng Widget</string>
+    <string name="settings_rate_us">I-rate Kami</string>
+    <string name="settings_share_with_friends">Ibahagi sa mga Kaibigan</string>
+    <string name="settings_report">Iulat</string>
+    <string name="settings_term_of_service">Mga Tuntunin ng Serbisyo</string>
+    <string name="settings_privacy_policy">Patakaran sa Privacy</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_legal">Legal</string>
 
     <!-- Editor -->
     <string name="editor_title">I-edit ang Proyekto</string>

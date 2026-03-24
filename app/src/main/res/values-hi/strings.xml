@@ -63,6 +63,14 @@
     <string name="settings_language_description">ऐप की भाषा बदलें</string>
     <string name="settings_about">के बारे में</string>
     <string name="settings_version">संस्करण</string>
+    <string name="settings_app_widet">विजेट जोड़ें</string>
+    <string name="settings_rate_us">हमें रेट करें</string>
+    <string name="settings_share_with_friends">दोस्तों के साथ शेयर करें</string>
+    <string name="settings_report">रिपोर्ट करें</string>
+    <string name="settings_term_of_service">सेवा की शर्तें</string>
+    <string name="settings_privacy_policy">गोपनीयता नीति</string>
+    <string name="settings_account">खाता</string>
+    <string name="settings_legal">कानूनी</string>
 
     <!-- Editor -->
     <string name="editor_title">प्रोजेक्ट संपादित करें</string>

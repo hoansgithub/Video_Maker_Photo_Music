@@ -63,6 +63,14 @@
     <string name="settings_language_description">Ubah bahasa aplikasi</string>
     <string name="settings_about">Tentang</string>
     <string name="settings_version">Versi</string>
+    <string name="settings_app_widet">Tambah Widget</string>
+    <string name="settings_rate_us">Beri Nilai Kami</string>
+    <string name="settings_share_with_friends">Bagikan ke Teman</string>
+    <string name="settings_report">Laporkan</string>
+    <string name="settings_term_of_service">Syarat Layanan</string>
+    <string name="settings_privacy_policy">Kebijakan Privasi</string>
+    <string name="settings_account">Akun</string>
+    <string name="settings_legal">Hukum</string>
 
     <!-- Editor -->
     <string name="editor_title">Edit Proyek</string>

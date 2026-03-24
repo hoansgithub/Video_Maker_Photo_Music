@@ -63,6 +63,14 @@
     <string name="settings_language_description">تغيير لغة التطبيق</string>
     <string name="settings_about">حول</string>
     <string name="settings_version">الإصدار</string>
+    <string name="settings_app_widet">إضافة ويدجت</string>
+    <string name="settings_rate_us">قيّمنا</string>
+    <string name="settings_share_with_friends">شارك مع الأصدقاء</string>
+    <string name="settings_report">إبلاغ</string>
+    <string name="settings_term_of_service">شروط الخدمة</string>
+    <string name="settings_privacy_policy">سياسة الخصوصية</string>
+    <string name="settings_account">الحساب</string>
+    <string name="settings_legal">قانوني</string>
 
     <!-- Editor -->
     <string name="editor_title">تعديل المشروع</string>

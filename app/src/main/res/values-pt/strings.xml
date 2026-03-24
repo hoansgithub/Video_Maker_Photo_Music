@@ -63,6 +63,14 @@
     <string name="settings_language_description">Alterar o idioma do aplicativo</string>
     <string name="settings_about">Sobre</string>
     <string name="settings_version">Versão</string>
+    <string name="settings_app_widet">Adicionar Widget</string>
+    <string name="settings_rate_us">Avalie-nos</string>
+    <string name="settings_share_with_friends">Compartilhar com Amigos</string>
+    <string name="settings_report">Reportar</string>
+    <string name="settings_term_of_service">Termos de Serviço</string>
+    <string name="settings_privacy_policy">Política de Privacidade</string>
+    <string name="settings_account">Conta</string>
+    <string name="settings_legal">Legal</string>
 
     <!-- Editor -->
     <string name="editor_title">Editar Projeto</string>
