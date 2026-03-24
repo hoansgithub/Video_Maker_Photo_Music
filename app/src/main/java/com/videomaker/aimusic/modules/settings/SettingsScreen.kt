@@ -81,7 +81,8 @@ private const val PRIVACY_POLICY_URL = "https://alcheclub.co/privacy-policy/"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToLanguageSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -146,7 +147,7 @@ fun SettingsScreen(
                     title = stringResource(R.string.settings_language),
                     subtitle = "",
                     isShowLine = true,
-                    onClick = {}
+                    onClick = { onNavigateToLanguageSettings() }
                 )
                 SettingsItem(
                     icon = R.drawable.ic_menu_square,

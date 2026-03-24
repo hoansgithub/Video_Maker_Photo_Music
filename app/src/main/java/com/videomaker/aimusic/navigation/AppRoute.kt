@@ -134,4 +134,7 @@ sealed interface AppRoute : NavKey {
 
     @Serializable
     data object Settings : AppRoute
+
+    @Serializable
+    data object LanguageSettings : AppRoute
 }

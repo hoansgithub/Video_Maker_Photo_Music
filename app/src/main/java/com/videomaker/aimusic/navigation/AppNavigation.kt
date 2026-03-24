@@ -57,6 +57,9 @@ import com.videomaker.aimusic.modules.home.HomeScreen
 import com.videomaker.aimusic.modules.picker.AssetPickerScreen
 import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
+import com.videomaker.aimusic.modules.language.LanguageSelectionScreen
+import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
+import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
 import com.videomaker.aimusic.modules.settings.SettingsScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
@@ -404,7 +407,27 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             // SETTINGS
             // ============================================
             entry<AppRoute.Settings> {
-                SettingsScreen(onNavigateBack = { backStack.removeLastOrNull() })
+                SettingsScreen(
+                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateToLanguageSettings = { backStack.add(AppRoute.LanguageSettings) }
+                )
+            }
+
+            entry<AppRoute.LanguageSettings> {
+                val saveLanguage: SaveLanguagePreferenceUseCase = koinInject()
+                val applyLanguage: ApplyLanguageUseCase = koinInject()
+
+                LanguageSelectionScreen(
+                    showBackButton = true,
+                    onBackClick = { backStack.removeLastOrNull() },
+                    onLanguageSelected = { languageCode ->
+                        saveLanguage(languageCode)
+                    },
+                    onContinue = {
+                        applyLanguage()
+                        activity?.recreate()
+                    }
+                )
             }
         }
     )
