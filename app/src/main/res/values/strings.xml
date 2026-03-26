@@ -270,5 +270,9 @@
     <string name="widget_recently">Recently</string>
     <string name="widget_trending_song">Trending Song</string>
     <string name="widget_trending_song_hot">Hot</string>
+    <string name="widget_search_hint">Search templates...</string>
+    <string name="widget_pin_request_sent">Widget added to home screen</string>
+    <string name="widget_pin_not_supported">Widget pinning not supported on this device</string>
+    <string name="widget_add_failed">Failed to add widget: %s</string>
 
 </resources>

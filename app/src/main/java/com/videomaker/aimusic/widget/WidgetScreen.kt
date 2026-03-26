@@ -1,5 +1,8 @@
 package com.videomaker.aimusic.widget
 
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,26 +30,43 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.PageIndicatorCircle
 import com.videomaker.aimusic.ui.components.PrimaryButtonNeon
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.CtaText
+import com.videomaker.aimusic.widget.appwidget.SmartSearchAppWidget
+import com.videomaker.aimusic.widget.appwidget.SmartSearchWidgetReceiver
+import com.videomaker.aimusic.widget.appwidget.TrendingSongAppWidget
+import com.videomaker.aimusic.widget.appwidget.TrendingSongWidgetReceiver
+import com.videomaker.aimusic.widget.appwidget.TrendingTemplateAppWidget
+import com.videomaker.aimusic.widget.appwidget.TrendingTemplateWidgetReceiver
 import com.videomaker.aimusic.widget.components.SmartSearchWidget
 import com.videomaker.aimusic.widget.components.TrendingSongWidget
 import com.videomaker.aimusic.widget.components.TrendingWidget
 import com.videomaker.aimusic.widget.model.WidgetType
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+
+private const val TAG = "WidgetScreen"
+
+// Widget preview sizes (4x3 cells)
+private val WIDGET_SIZE = DpSize(250.dp, 180.dp)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +80,9 @@ fun WidgetScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     // Handle navigation events - StateFlow-based (Google recommended pattern)
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
@@ -70,6 +93,17 @@ fun WidgetScreen(
                 is WidgetNavigationEvent.NavigateToTemplatePreviewerWithSong -> onNavigateToTemplatePreviewerWithSong(event.songId)
             }
             viewModel.onNavigationHandled()
+        }
+    }
+
+    // Collect pin widget event (requires Context, so stays in composable)
+    LaunchedEffect(Unit) {
+        viewModel.pinWidgetEvent.collect { widgetType ->
+            requestPinWidget(
+                scope = coroutineScope,
+                context = context,
+                widgetType = widgetType
+            )
         }
     }
 
@@ -205,31 +239,63 @@ fun WidgetScreen(
             // Space below indicator
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Add Widget Button
+            // Add Widget Button - pins the current widget to home screen
             PrimaryButtonNeon(
                 text = stringResource(R.string.widget_bts)
-            ){
-
+            ) {
+                val widgetType = widgetTypes[pagerState.currentPage]
+                viewModel.onAddWidgetClick(widgetType)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
 
-            // Native ad: shimmer until ready, ad when loaded, nothing on failure
-            /*val adPlacement = when (pagerState.currentPage) {
-                0 -> AdPlacement.NATIVE_WIDGET_SEARCH
-                1 -> AdPlacement.NATIVE_WIDGET_TRENDING
-                else -> AdPlacement.NATIVE_WIDGET_DAILY
+/**
+ * Request to pin a widget to the home screen using Glance AppWidgetManager.
+ */
+private fun requestPinWidget(
+    scope: CoroutineScope,
+    context: Context,
+    widgetType: WidgetType
+) {
+    Log.d(TAG, "Requesting pin widget: $widgetType")
+
+    scope.launch {
+        try {
+            val glanceManager = GlanceAppWidgetManager(context)
+            val success = when (widgetType) {
+                WidgetType.SEARCH -> glanceManager.requestPinGlanceAppWidget(
+                    receiver = SmartSearchWidgetReceiver::class.java,
+                    preview = SmartSearchAppWidget(),
+                    previewState = WIDGET_SIZE
+                )
+                WidgetType.SONG -> glanceManager.requestPinGlanceAppWidget(
+                    receiver = TrendingSongWidgetReceiver::class.java,
+                    preview = TrendingSongAppWidget(),
+                    previewState = WIDGET_SIZE
+                )
+                WidgetType.TEMPLATE -> glanceManager.requestPinGlanceAppWidget(
+                    receiver = TrendingTemplateWidgetReceiver::class.java,
+                    preview = TrendingTemplateAppWidget(),
+                    previewState = WIDGET_SIZE
+                )
             }
-            WidgetNativeAdSlot(
-                placement = adPlacement,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .aspectRatio(390f / 200f)
-            )
+            Log.d(TAG, "requestPinGlanceAppWidget result: $success")
 
-            // Bottom safe area
-            Spacer(modifier = Modifier.height(24.dp))*/
+            if (success) {
+                Toast.makeText(context, R.string.widget_pin_request_sent, Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, R.string.widget_pin_not_supported, Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to pin widget", e)
+            Toast.makeText(
+                context,
+                context.getString(R.string.widget_add_failed, e.message),
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 }
