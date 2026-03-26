@@ -1,15 +1,11 @@
 package com.videomaker.aimusic.widget
 
-import android.os.Build
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,67 +13,70 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.domain.model.MusicSong
-import com.videomaker.aimusic.domain.model.VideoTemplate
-import com.videomaker.aimusic.ui.components.PageIndicator
 import com.videomaker.aimusic.ui.components.PageIndicatorCircle
 import com.videomaker.aimusic.ui.components.PrimaryButtonNeon
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.CtaText
-import com.videomaker.aimusic.ui.theme.FoundationBlack
 import com.videomaker.aimusic.widget.components.SmartSearchWidget
 import com.videomaker.aimusic.widget.components.TrendingSongWidget
 import com.videomaker.aimusic.widget.components.TrendingWidget
 import com.videomaker.aimusic.widget.model.WidgetType
-import kotlin.collections.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WidgetScreen(
+    viewModel: WidgetViewModel,
     onNavigateBack: () -> Unit,
+    onNavigateToTemplatePreviewer: (templateId: String) -> Unit,
+    onNavigateToSearch: () -> Unit,
+    onNavigateToTemplatePreviewerWithSong: (songId: Long) -> Unit,
 ) {
-    val context = LocalContext.current
-    val isPreview = LocalInspectionMode.current
-    val coroutineScope = rememberCoroutineScope()
-    // GlanceAppWidgetManager requires Android 8.0+ (API 26) for pinning
-    // Our minSdk is 28, so this is always supported
-    val canPinWidgets = remember {
-        if (isPreview) true
-        else Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
+
+    // Handle navigation events - StateFlow-based (Google recommended pattern)
+    LaunchedEffect(navigationEvent) {
+        navigationEvent?.let { event ->
+            when (event) {
+                is WidgetNavigationEvent.NavigateBack -> onNavigateBack()
+                is WidgetNavigationEvent.NavigateToTemplatePreviewer -> onNavigateToTemplatePreviewer(event.templateId)
+                is WidgetNavigationEvent.NavigateToSearch -> onNavigateToSearch()
+                is WidgetNavigationEvent.NavigateToTemplatePreviewerWithSong -> onNavigateToTemplatePreviewerWithSong(event.songId)
+            }
+            viewModel.onNavigationHandled()
+        }
+    }
+
+    // Derive widget data from state
+    val widgetData = when (val state = uiState) {
+        is WidgetUiState.Success -> state.data
+        else -> WidgetData()
     }
 
     // Pager state
@@ -163,91 +162,24 @@ fun WidgetScreen(
                 when (widgetType) {
                     WidgetType.SEARCH -> {
                         SmartSearchWidget(
-                            list = listOf(
-                                VideoTemplate(
-                                    id = "23",
-                                    name = "132esd",
-                                    songId = 123L,
-                                    effectSetId = "23"
-                                ),
-                                VideoTemplate(
-                                    id = "123",
-                                    name = "132esd",
-                                    songId = 123L,
-                                    effectSetId = "23"
-                                ),
-                                VideoTemplate(
-                                    id = "223",
-                                    name = "132esd",
-                                    songId = 123L,
-                                    effectSetId = "23"
-                                ),
-                            ),
-                            onClickSearch = {
-
-                            }
-                        ) {
-
-                        }
+                            list = widgetData.newReleaseTemplates,
+                            onClickSearch = viewModel::onSearchClick,
+                            onClick = viewModel::onTemplateClick
+                        )
                     }
 
                     WidgetType.SONG -> {
                         TrendingSongWidget(
-                            listSongs = listOf(
-                                MusicSong(
-                                    id = 12000L,
-                                    name = "qqw",
-                                    artist = "sdas"
-                                ),
-                                MusicSong(
-                                    id = 12000L,
-                                    name = "qqw",
-                                    artist = "sdas"
-                                ),
-                                MusicSong(
-                                    id = 12000L,
-                                    name = "qqw",
-                                    artist = "sdas"
-                                ),
-                                MusicSong(
-                                    id = 12000L,
-                                    name = "qqw",
-                                    artist = "sdas"
-                                ),
-                            )
-                        ) {
-
-                        }
+                            listSongs = widgetData.trendingSongs,
+                            onClick = viewModel::onSongPlayClick
+                        )
                     }
 
                     WidgetType.TEMPLATE -> {
                         TrendingWidget(
-                            list = listOf(
-                                VideoTemplate(
-                                    id = "23",
-                                    name = "132esd",
-                                    songId = 123L,
-                                    effectSetId = "23"
-                                ),
-                                VideoTemplate(
-                                    id = "123",
-                                    name = "132esd",
-                                    songId = 123L,
-                                    effectSetId = "23"
-                                ),
-                                VideoTemplate(
-                                    id = "223",
-                                    name = "132esd",
-                                    songId = 123L,
-                                    effectSetId = "23"
-                                ),
-                            ),
-                            onClickAdd = {
-
-                            },
-                            onClick = {
-
-                            }
+                            list = widgetData.trendingTemplates,
+                            onClickAdd = viewModel::onAddTemplateClick,
+                            onClick = viewModel::onTemplateClick
                         )
                     }
                 }

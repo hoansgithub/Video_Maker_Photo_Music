@@ -51,7 +51,7 @@ import com.videomaker.aimusic.ui.utils.innerShadowCustom
 @Composable
 fun TrendingSongWidget(
     listSongs: List<MusicSong>,
-    onClick: () -> Unit
+    onClick: (MusicSong) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -95,7 +95,7 @@ fun TrendingSongWidget(
             items(listSongs) { song ->
                 WidgetSongCard(
                     song = song,
-                    onClick
+                    onClick = { onClick(song) }
                 )
             }
         }
@@ -114,30 +114,31 @@ private fun TrendingWidgetPreview() {
             .fillMaxSize()
             .background(Color(0xFF0A0A0A))
     ) {
-        TrendingSongWidget(listOf(
-            MusicSong(
-               id = 12000L,
-                name = "qqw",
-                artist = "sdas"
+        TrendingSongWidget(
+            listSongs = listOf(
+                MusicSong(
+                   id = 12000L,
+                    name = "qqw",
+                    artist = "sdas"
+                ),
+                MusicSong(
+                   id = 12000L,
+                    name = "qqw",
+                    artist = "sdas"
+                ),
+                MusicSong(
+                   id = 12000L,
+                    name = "qqw",
+                    artist = "sdas"
+                ),
+                MusicSong(
+                   id = 12000L,
+                    name = "qqw",
+                    artist = "sdas"
+                ),
             ),
-            MusicSong(
-               id = 12000L,
-                name = "qqw",
-                artist = "sdas"
-            ),
-            MusicSong(
-               id = 12000L,
-                name = "qqw",
-                artist = "sdas"
-            ),
-            MusicSong(
-               id = 12000L,
-                name = "qqw",
-                artist = "sdas"
-            ),
-        )){
-
-        }
+            onClick = { _ -> }
+        )
     }
 }
 

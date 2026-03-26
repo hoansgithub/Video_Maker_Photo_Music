@@ -62,6 +62,7 @@ import com.videomaker.aimusic.modules.root.RootViewModel
 import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
 import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
+import com.videomaker.aimusic.widget.WidgetViewModel
 
 /**
  * ACCDI Dependency Injection Modules
@@ -468,6 +469,21 @@ class EffectSetViewModelFactory(
     }
 }
 
+/**
+ * Factory wrapper for WidgetViewModel.
+ */
+class WidgetViewModelFactory(
+    private val templateRepository: TemplateRepository,
+    private val songRepository: SongRepository
+) {
+    fun create(): WidgetViewModel {
+        return WidgetViewModel(
+            templateRepository = templateRepository,
+            songRepository = songRepository
+        )
+    }
+}
+
 val presentationModule = module {
     // Root ViewModel for RootViewActivity (handles loading, Firebase, navigation)
     viewModel {
@@ -630,6 +646,14 @@ val presentationModule = module {
     single {
         EffectSetViewModelFactory(
             getEffectSetsPagedUseCase = get()
+        )
+    }
+
+    // Widget ViewModel factory (singleton - stateless factory)
+    single {
+        WidgetViewModelFactory(
+            templateRepository = get(),
+            songRepository = get()
         )
     }
 }

@@ -41,6 +41,8 @@ import com.videomaker.aimusic.di.SuggestedSongsListViewModelFactory
 import com.videomaker.aimusic.di.WeeklyRankingListViewModelFactory
 import com.videomaker.aimusic.di.TemplateListViewModelFactory
 import com.videomaker.aimusic.di.TemplatePreviewerViewModelFactory
+import com.videomaker.aimusic.di.WidgetViewModelFactory
+import com.videomaker.aimusic.widget.WidgetViewModel
 import com.videomaker.aimusic.modules.editor.EditorScreen
 import com.videomaker.aimusic.modules.editor.EditorViewModel
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
@@ -433,8 +435,28 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             }
 
             entry<AppRoute.WidgetScreen> {
+                val factory: WidgetViewModelFactory = koinInject()
+                val widgetViewModel: WidgetViewModel = viewModel(
+                    key = "widget_screen",
+                    factory = createSafeViewModelFactory { factory.create() }
+                )
                 WidgetScreen(
+                    viewModel = widgetViewModel,
                     onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateToTemplatePreviewer = { templateId ->
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = templateId,
+                            imageUris = emptyList()
+                        ))
+                    },
+                    onNavigateToSearch = { backStack.add(AppRoute.Search) },
+                    onNavigateToTemplatePreviewerWithSong = { songId ->
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "",
+                            imageUris = emptyList(),
+                            overrideSongId = songId
+                        ))
+                    }
                 )
             }
         }

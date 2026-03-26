@@ -57,7 +57,7 @@ import kotlin.text.ifEmpty
 fun TrendingWidget(
     list: List<VideoTemplate>,
     onClickAdd: () -> Unit,
-    onClick: () -> Unit,
+    onClick: (VideoTemplate) -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -168,7 +168,7 @@ fun TrendingWidget(
                             .clickable(
                                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                                 indication = null,
-                                onClick = onClick
+                                onClick = { onClick(template) }
                             )
                     )
                 } else {
@@ -219,7 +219,7 @@ private fun TrendingWidgetPreview() {
                 ),
             ),
             onClickAdd = {},
-            onClick = {}
+            onClick = { _ -> }
         )
     }
 }
