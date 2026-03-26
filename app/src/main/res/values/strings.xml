@@ -51,6 +51,13 @@
     <!-- Common Actions -->
     <string name="home_create">Create</string>
 
+    <!-- Legacy Home -->
+    <string name="home_title">Video Maker</string>
+    <string name="home_welcome">What would you like to do?</string>
+    <string name="home_create_description">Create a slideshow from your photos</string>
+    <string name="home_my_projects">My Projects</string>
+    <string name="home_my_projects_description">View your saved projects</string>
+
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_account">Account</string>
@@ -72,8 +79,10 @@
     <string name="editor_settings">Settings</string>
     <string name="editor_preview">Preview</string>
     <string name="editor_export">Export</string>
+    <string name="editor_transition">Transition</string>
     <string name="editor_duration">Duration</string>
     <string name="editor_music">Music</string>
+    <string name="editor_frame">Frame</string>
     <string name="editor_aspect_ratio">Aspect Ratio</string>
     <string name="editor_volume">Volume</string>
     <string name="editor_effect">Effect</string>
@@ -103,12 +112,18 @@
     <string name="editor_retry">Retry</string>
 
     <!-- Projects -->
+    <string name="projects_title">My Projects</string>
     <string name="projects_menu">Project menu</string>
     <string name="projects_delete">Delete</string>
+    <string name="projects_empty">No projects yet</string>
+    <string name="projects_empty_description">Create your first project to see it here</string>
     <string name="projects_empty_title">Start your journey</string>
     <string name="projects_empty_subtitle">It looks a bit empty here. Let\'s create your first masterpiece today.</string>
     <string name="projects_create_new_video">Create New Video</string>
+    <string name="projects_create_description">Start a new slideshow project</string>
     <string name="projects_item_info">%1$d photos • %2$s</string>
+    <string name="projects_delete_title">Delete Project?</string>
+    <string name="projects_delete_message">\"%s\" will be permanently deleted. This action cannot be undone.</string>
 
     <!-- Export -->
     <string name="export_title">Export Video</string>
@@ -204,6 +219,24 @@
     <string name="search_tag_lofi">Lofi</string>
     <string name="search_tag_cinematic">Cinematic</string>
     <string name="search_tag_vintage">Vintage</string>
+
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">Dreamy Vibes</string>
+    <string name="effect_dreamy_vibes_desc">Soft glow and pastel colors</string>
+    <string name="effect_cyberpunk_title">Cyberpunk</string>
+    <string name="effect_cyberpunk_desc">Neon lights and glitch effects</string>
+    <string name="effect_vintage_film_title">Vintage Film</string>
+    <string name="effect_vintage_film_desc">Retro grain and warm colors</string>
+    <string name="effect_ocean_breeze_title">Ocean Breeze</string>
+    <string name="effect_ocean_breeze_desc">Cool blue gradients</string>
+    <string name="effect_golden_hour_title">Golden Hour</string>
+    <string name="effect_golden_hour_desc">Warm sunset overlay</string>
+    <string name="effect_noir_title">Noir</string>
+    <string name="effect_noir_desc">High contrast black and white</string>
+    <string name="effect_sakura_title">Sakura</string>
+    <string name="effect_sakura_desc">Cherry blossom pink</string>
+    <string name="effect_aurora_title">Aurora</string>
+    <string name="effect_aurora_desc">Northern lights glow</string>
 
     <!-- Common -->
     <string name="cancel">Cancel</string>
