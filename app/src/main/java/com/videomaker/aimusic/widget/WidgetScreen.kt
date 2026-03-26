@@ -48,7 +48,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.PageIndicatorCircle
 import com.videomaker.aimusic.ui.components.PrimaryButtonNeon
-import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.CtaText
 import com.videomaker.aimusic.widget.appwidget.SmartSearchAppWidget
 import com.videomaker.aimusic.widget.appwidget.SmartSearchWidgetReceiver
@@ -171,7 +170,7 @@ fun WidgetScreen(
                         WidgetType.TEMPLATE -> stringResource(R.string.widget_trending_template)
                         WidgetType.SONG -> stringResource(R.string.widget_trending_song)
                     },
-                    fontSize = AppDimens.current.font4Xl,
+                    style = MaterialTheme.typography.displayLarge,
                     fontWeight = FontWeight.W600,
                     color = Color.White,
                     textAlign = TextAlign.Center
@@ -182,7 +181,7 @@ fun WidgetScreen(
                 // Subtitle - #999999, regular 16sp
                 Text(
                     text = "4 x 3",
-                    fontSize = AppDimens.current.fontXl,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.W500,
                     color = Color.White,
                     modifier = Modifier
