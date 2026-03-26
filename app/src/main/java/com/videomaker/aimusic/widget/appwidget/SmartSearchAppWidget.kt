@@ -23,6 +23,7 @@ import androidx.glance.layout.Column
 import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
@@ -62,82 +63,104 @@ private fun SmartSearchWidgetContent(context: Context) {
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
-            .cornerRadius(16.dp)
+            .cornerRadius(24.dp)
             .clickable(actionStartActivity(intent))
     ) {
         // Background image
         Image(
-            provider = ImageProvider(R.drawable.bg_widget),
+            provider = ImageProvider(R.drawable.bg_item_widget),
             contentDescription = null,
-            modifier = GlanceModifier.fillMaxSize().cornerRadius(16.dp),
-            contentScale = ContentScale.FillBounds
+            modifier = GlanceModifier.fillMaxSize().cornerRadius(24.dp),
+            contentScale = ContentScale.Crop
         )
 
         // Content
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(top = 16.dp, bottom = 12.dp, start = 12.dp, end = 12.dp),
         ) {
-            // Header: icon + app name
+            // Search bar: [app_icon_loading] [description text - flexible] [ic_lead_search]
             Row(
+                modifier = GlanceModifier
+                    .fillMaxWidth()
+                    .background(ColorProvider(R.color.widget_search_field_bg))
+                    .cornerRadius(16.dp)
+                    .padding(vertical = 12.dp, horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = GlanceModifier
-                        .size(32.dp)
-                        .cornerRadius(6.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        provider = ImageProvider(R.mipmap.ic_launcher),
-                        contentDescription = null,
-                        modifier = GlanceModifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-                Spacer(modifier = GlanceModifier.width(10.dp))
+                Image(
+                    provider = ImageProvider(R.drawable.app_icon_loading),
+                    contentDescription = null,
+                    modifier = GlanceModifier.size(24.dp),
+                    contentScale = ContentScale.FillBounds
+                )
+                Spacer(modifier = GlanceModifier.width(12.dp))
                 Text(
-                    text = context.getString(R.string.app_name),
+                    text = context.getString(R.string.widget_smart_search_description),
                     style = TextStyle(
-                        color = ColorProvider(R.color.widget_text_primary),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                        color = ColorProvider(R.color.widget_text_secondary),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
+                    ),
+                    modifier = GlanceModifier.defaultWeight()
+                )
+                Image(
+                    provider = ImageProvider(R.drawable.ic_search),
+                    contentDescription = null,
+                    modifier = GlanceModifier.size(24.dp),
+                    contentScale = ContentScale.FillBounds
                 )
             }
 
-            Spacer(modifier = GlanceModifier.height(10.dp))
+            Spacer(modifier = GlanceModifier.height(12.dp))
 
-            // Instruction text
+            // Trending label
             Text(
-                text = context.getString(R.string.widget_smart_search_description),
+                text = context.getString(R.string.widget_smart_search_trending),
                 style = TextStyle(
                     color = ColorProvider(R.color.widget_text_secondary),
-                    fontSize = 12.sp
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
                 )
             )
 
             Spacer(modifier = GlanceModifier.height(12.dp))
 
-            // Search field
+            // Row of 3 equal placeholder boxes
             Row(
                 modifier = GlanceModifier
                     .fillMaxWidth()
-                    .height(42.dp)
-                    .cornerRadius(21.dp)
-                    .background(ColorProvider(R.color.widget_search_field_bg))
-                    .padding(horizontal = 14.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .defaultWeight(),
             ) {
-                Text(
-                    text = context.getString(R.string.widget_search_hint),
-                    style = TextStyle(
-                        color = ColorProvider(R.color.widget_hint_text),
-                        fontSize = 14.sp
-                    )
+                Image(
+                    provider = ImageProvider(R.drawable.img_template1),
+                    contentDescription = null,
+                    modifier = GlanceModifier
+                        .defaultWeight()
+                        .fillMaxHeight()
+                        .cornerRadius(18.dp),
+                    contentScale = ContentScale.FillBounds
+                )
+                Spacer(modifier = GlanceModifier.width(7.dp))
+                Image(
+                    provider = ImageProvider(R.drawable.img_template2),
+                    contentDescription = null,
+                    modifier = GlanceModifier
+                        .defaultWeight()
+                        .fillMaxHeight()
+                        .cornerRadius(18.dp),
+                    contentScale = ContentScale.FillBounds
+                )
+                Spacer(modifier = GlanceModifier.width(7.dp))
+                Image(
+                    provider = ImageProvider(R.drawable.img_template3),
+                    contentDescription = null,
+                    modifier = GlanceModifier
+                        .defaultWeight()
+                        .fillMaxHeight()
+                        .cornerRadius(18.dp),
+                    contentScale = ContentScale.FillBounds
                 )
             }
         }

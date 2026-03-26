@@ -32,6 +32,8 @@ import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import androidx.compose.ui.graphics.Color
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.unit.ColorProvider
 import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.R
@@ -62,79 +64,83 @@ private fun TrendingTemplateWidgetContent(context: Context) {
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
-            .cornerRadius(16.dp)
+            .cornerRadius(24.dp)
             .clickable(actionStartActivity(intent))
     ) {
         // Background image
         Image(
-            provider = ImageProvider(R.drawable.bg_widget),
+            provider = ImageProvider(R.drawable.bg_item_widget),
             contentDescription = null,
-            modifier = GlanceModifier.fillMaxSize().cornerRadius(16.dp),
+            modifier = GlanceModifier.fillMaxSize().cornerRadius(24.dp),
             contentScale = ContentScale.FillBounds
         )
 
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .padding(start = 12.dp, end = 12.dp, top = 14.dp, bottom = 10.dp)
+                .padding(top = 16.dp, bottom = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header with icon
+            // Centered Row: [app_icon_loading 24dp] [spacer 4dp] [widget_recently text]
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = GlanceModifier
-                        .size(24.dp)
-                        .cornerRadius(5.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        provider = ImageProvider(R.mipmap.ic_launcher),
-                        contentDescription = null,
-                        modifier = GlanceModifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-                Spacer(modifier = GlanceModifier.width(8.dp))
+                Image(
+                    provider = ImageProvider(R.drawable.app_icon_loading),
+                    contentDescription = null,
+                    modifier = GlanceModifier.size(24.dp),
+                    contentScale = ContentScale.FillBounds
+                )
+                Spacer(modifier = GlanceModifier.width(4.dp))
                 Text(
-                    text = context.getString(R.string.widget_trending_template),
+                    text = context.getString(R.string.widget_recently),
                     style = TextStyle(
-                        color = ColorProvider(R.color.widget_text_primary),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
+                        color = ColorProvider(R.color.widget_text_secondary),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 )
             }
 
-            Spacer(modifier = GlanceModifier.height(8.dp))
+            Spacer(modifier = GlanceModifier.height(14.dp))
 
-            // Recently label
-            Text(
-                text = context.getString(R.string.widget_recently),
-                style = TextStyle(
-                    color = ColorProvider(R.color.widget_text_secondary),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            )
-
-            Spacer(modifier = GlanceModifier.height(8.dp))
-
-            // Tap to explore
-            Box(
+            // Row of 3 boxes: add button + 2 placeholders
+            Row(
                 modifier = GlanceModifier
                     .fillMaxWidth()
-                    .height(36.dp)
-                    .cornerRadius(18.dp)
-                    .background(ColorProvider(R.color.widget_search_field_bg)),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = 12.dp),
             ) {
-                Text(
-                    text = context.getString(R.string.widget_smart_search_description),
-                    style = TextStyle(
-                        color = ColorProvider(R.color.widget_hint_text),
-                        fontSize = 12.sp
-                    )
+                Image(
+                    provider = ImageProvider(R.drawable.img_template_add),
+                    contentDescription = null,
+                    modifier = GlanceModifier
+                        .defaultWeight()
+                        .fillMaxHeight()
+                        .cornerRadius(18.dp),
+                    contentScale = ContentScale.FillBounds
+                )
+
+                Spacer(modifier = GlanceModifier.width(7.dp))
+                // Placeholder 1
+                Image(
+                    provider = ImageProvider(R.drawable.img_template1),
+                    contentDescription = null,
+                    modifier = GlanceModifier
+                        .defaultWeight()
+                        .fillMaxHeight()
+                        .cornerRadius(18.dp),
+                    contentScale = ContentScale.FillBounds
+                )
+                Spacer(modifier = GlanceModifier.width(7.dp))
+                // Placeholder 2
+                Image(
+                    provider = ImageProvider(R.drawable.img_template2),
+                    contentDescription = null,
+                    modifier = GlanceModifier
+                        .defaultWeight()
+                        .fillMaxHeight()
+                        .cornerRadius(18.dp),
+                    contentScale = ContentScale.FillBounds
                 )
             }
         }
