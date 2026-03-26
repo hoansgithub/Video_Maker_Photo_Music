@@ -70,9 +70,9 @@ fun TrendingSongWidget(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Image(
-                painter = painterResource(R.drawable.img_logo_ipsum),
+                painter = painterResource(R.drawable.app_icon_loading),
                 contentDescription = "",
-                modifier = Modifier.width(44.dp),
+                modifier = Modifier.width(24.dp),
                 contentScale = ContentScale.FillWidth
             )
             Text(
