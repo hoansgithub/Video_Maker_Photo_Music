@@ -259,4 +259,16 @@
     <string name="genre_blues">Blues</string>
     <string name="genre_metal">Metal</string>
     <string name="genre_soul">Soul</string>
+
+    <!--  Widget  -->
+    <string name="widget_title">Widget</string>
+    <string name="widget_bts">Add Widget</string>
+    <string name="widget_smart_search">Smart Search</string>
+    <string name="widget_smart_search_description">Searching your style</string>
+    <string name="widget_smart_search_trending">Trending ❤️‍🔥</string>
+    <string name="widget_trending_template">Trending template</string>
+    <string name="widget_recently">Recently</string>
+    <string name="widget_trending_song">Trending Song</string>
+    <string name="widget_trending_song_hot">Hot</string>
+
 </resources>

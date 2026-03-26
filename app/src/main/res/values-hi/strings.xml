@@ -256,4 +256,15 @@
     <string name="genre_blues">ब्लूज़</string>
     <string name="genre_metal">मेटल</string>
     <string name="genre_soul">सोल</string>
+
+    <!--  Widget  -->
+    <string name="widget_title">विजेट</string>
+    <string name="widget_bts">विजेट जोड़ें</string>
+    <string name="widget_smart_search">स्मार्ट सर्च</string>
+    <string name="widget_smart_search_description">आपकी स्टाइल खोजें</string>
+    <string name="widget_smart_search_trending">ट्रेंडिंग ❤️‍🔥</string>
+    <string name="widget_trending_template">ट्रेंडिंग टेम्पलेट</string>
+    <string name="widget_recently">हाल ही में</string>
+    <string name="widget_trending_song">ट्रेंडिंग गाना</string>
+    <string name="widget_trending_song_hot">हॉट</string>
 </resources>

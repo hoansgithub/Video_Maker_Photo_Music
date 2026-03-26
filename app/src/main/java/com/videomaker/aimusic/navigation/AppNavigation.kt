@@ -63,6 +63,7 @@ import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePrefer
 import com.videomaker.aimusic.modules.settings.SettingsScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
+import com.videomaker.aimusic.widget.WidgetScreen
 
 private val slideAnimSpec = tween<IntOffset>(300)
 
@@ -409,7 +410,8 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             entry<AppRoute.Settings> {
                 SettingsScreen(
                     onNavigateBack = { backStack.removeLastOrNull() },
-                    onNavigateToLanguageSettings = { backStack.add(AppRoute.LanguageSettings) }
+                    onNavigateToLanguageSettings = { backStack.add(AppRoute.LanguageSettings) },
+                    onNavigateToWidgetScreen = { backStack.add(AppRoute.WidgetScreen) }
                 )
             }
 
@@ -427,6 +429,12 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                         applyLanguage()
                         activity?.recreate()
                     }
+                )
+            }
+
+            entry<AppRoute.WidgetScreen> {
+                WidgetScreen(
+                    onNavigateBack = { backStack.removeLastOrNull() },
                 )
             }
         }
