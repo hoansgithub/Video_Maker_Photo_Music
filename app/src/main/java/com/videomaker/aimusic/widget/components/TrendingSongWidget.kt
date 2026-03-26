@@ -85,15 +85,15 @@ fun TrendingSongWidget(
             )
         }
 
-        LazyRow(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 12.dp),
-            userScrollEnabled = false,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                .padding(horizontal = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(7.dp)
         ) {
-            items(listSongs) { song ->
+            listSongs.take(3).forEach { song ->
                 WidgetSongCard(
+                    modifier = Modifier.weight(1f),
                     song = song,
                     onClick = { onClick(song) }
                 )
@@ -152,8 +152,7 @@ private fun WidgetSongCard(
 
     Card(
         onClick = onClick,
-        modifier = modifier
-            .width(122.dp),
+        modifier = modifier,
         shape = RoundedCornerShape(dimens.radiusLg),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {

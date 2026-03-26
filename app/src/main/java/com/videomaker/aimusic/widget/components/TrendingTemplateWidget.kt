@@ -93,47 +93,44 @@ fun TrendingWidget(
             )
         }
 
-        LazyRow(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 12.dp),
-            userScrollEnabled = false,
+                .padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(7.dp)
         ) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .width(120.dp)
-                        .height(164.dp)
-                        .background(Neutral_Black,RoundedCornerShape(18.dp))
-                        .clickable(
-                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                            indication = null,
-                            onClick = onClickAdd
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(164.dp)
+                    .background(Neutral_Black,RoundedCornerShape(18.dp))
+                    .clickable(
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        indication = null,
+                        onClick = onClickAdd
+                    )
+                    .padding(5.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Spacer(
+                    Modifier
+                        .matchParentSize()
+                        .paint(
+                            painterResource(R.drawable.bg_button_in_shadown),
+                            contentScale = ContentScale.FillBounds
                         )
-                        .padding(5.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Spacer(
-                        Modifier
-                            .matchParentSize()
-                            .paint(
-                                painterResource(R.drawable.bg_button_in_shadown),
-                                contentScale = ContentScale.Crop
-                            )
-                    )
+                )
 
-                    Icon(
-                        painter = painterResource(R.drawable.ic_circle_plus_v2),
-                        contentDescription = "",
-                        tint = Primary,
-                        modifier = Modifier
-                            .size(25.dp)
-                    )
-                }
+                Icon(
+                    painter = painterResource(R.drawable.ic_circle_plus_v2),
+                    contentDescription = "",
+                    tint = Primary,
+                    modifier = Modifier
+                        .size(25.dp)
+                )
             }
 
-            items(list, key = {it.id}) { template ->
+            list.take(2).forEach { template ->
 
                 // ✅ Only create image request if within visible range
                 val imageRequest = remember(template.id) {
@@ -162,7 +159,7 @@ fun TrendingWidget(
                         contentDescription = "",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .width(120.dp)
+                            .weight(1f)
                             .height(164.dp)
                             .clip(RoundedCornerShape(18.dp))
                             .clickable(
@@ -174,7 +171,7 @@ fun TrendingWidget(
                 } else {
                     ShimmerPlaceholder(
                         modifier = Modifier
-                            .width(120.dp)
+                            .weight(1f)
                             .height(164.dp),
                         cornerRadius = 18.dp
                     )

@@ -45,6 +45,7 @@ import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.Neutral_N500
 import com.videomaker.aimusic.ui.theme.TextOnSecondary
+import kotlin.sequences.ifEmpty
 
 
 @Composable
@@ -53,7 +54,6 @@ fun SmartSearchWidget(
     onClickSearch: () -> Unit,
     onClick: (VideoTemplate) -> Unit,
 ) {
-    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -70,8 +70,8 @@ fun SmartSearchWidget(
             modifier = Modifier
                 .padding(horizontal = 12.dp)
                 .fillMaxWidth()
-                .background(Color.White.copy(0.1f),RoundedCornerShape(16.dp))
-                .border(1.dp,Color.White.copy(0.16f),RoundedCornerShape(16.dp))
+                .background(Color.White.copy(0.1f), RoundedCornerShape(16.dp))
+                .border(1.dp, Color.White.copy(0.16f), RoundedCornerShape(16.dp))
                 .clickable(
                     interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                     indication = null,
@@ -116,61 +116,71 @@ fun SmartSearchWidget(
                 .padding(start = 12.dp),
         )
 
-        LazyRow(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 12.dp),
-            userScrollEnabled = false,
+                .padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(7.dp)
         ) {
-
-            items(list, key = {it.id}) { template ->
-
-                // ✅ Only create image request if within visible range
-                val imageRequest = remember(template.id) {
-                    ImageRequest.Builder(context)
-                        .data(template.thumbnailPath.ifEmpty { null })
-                        .size(Size(720, 405))  // Optimize for 16:9 carousel
-                        .precision(Precision.INEXACT)
-                        .memoryCachePolicy(CachePolicy.ENABLED)
-                        .diskCachePolicy(CachePolicy.ENABLED)
-                        .memoryCacheKey("featured_${template.id}_${if (false) "anim" else "static"}")
-                        .diskCacheKey("featured_${template.id}")
-                        .crossfade(true)
-                        .crossfade(200)
-                        .apply {
-                            if (true) {
-                                // Static first frame only — bypasses animated WebP decoder
-                                decoderFactory(BitmapFactoryDecoder.Factory())
-                            }
-                        }
-                        .build()
-                }
-
-                if (imageRequest != null) {
-                    AsyncImage(
-                        model = imageRequest,
-                        contentDescription = "",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .width(96.dp)
-                            .height(129.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .clickable(
-                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                indication = null,
-                                onClick = { onClick(template) }
-                            )
-                    )
-                } else {
-                    ShimmerPlaceholder(
-                        modifier = Modifier
-                            .width(96.dp)
-                            .height(129.dp),
-                        cornerRadius = 18.dp
-                    )
-                }
+            list.take(3).forEach { template ->
+                ItemSearch(
+                    modifier = Modifier.weight(1f),
+                    template = template,
+                    onClick = onClick,
+                )
             }
         }
+    }
+}
+
+@Composable
+fun ItemSearch(
+    modifier: Modifier = Modifier,
+    template: VideoTemplate,
+    onClick: (VideoTemplate) -> Unit,
+) {
+    val context = LocalContext.current
+
+    // ✅ Only create image request if within visible range
+    val imageRequest = remember(template.id) {
+        ImageRequest.Builder(context)
+            .data(template.thumbnailPath.ifEmpty { null })
+            .size(Size(720, 405))  // Optimize for 16:9 carousel
+            .precision(Precision.INEXACT)
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .memoryCacheKey("featured_${template.id}_${if (false) "anim" else "static"}")
+            .diskCacheKey("featured_${template.id}")
+            .crossfade(true)
+            .crossfade(200)
+            .apply {
+                if (true) {
+                    // Static first frame only — bypasses animated WebP decoder
+                    decoderFactory(BitmapFactoryDecoder.Factory())
+                }
+            }
+            .build()
+    }
+
+    if (imageRequest != null) {
+        AsyncImage(
+            model = imageRequest,
+            contentDescription = "",
+            contentScale = ContentScale.Crop,
+            modifier = modifier
+                .height(129.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null,
+                    onClick = { onClick(template) }
+                )
+        )
+    } else {
+        ShimmerPlaceholder(
+            modifier = modifier
+                .height(129.dp),
+            cornerRadius = 18.dp
+        )
     }
 }
