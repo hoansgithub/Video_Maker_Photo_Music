@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
+import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.usecase.ClearSongCacheUseCase
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
 import com.videomaker.aimusic.domain.usecase.GetSongsByGenreUseCase
@@ -49,7 +50,8 @@ class SongsViewModel(
     private val getStationSongsUseCase: GetStationSongsUseCase,
     private val getGenresUseCase: GetGenresUseCase,
     private val getSongsByGenreUseCase: GetSongsByGenreUseCase,
-    private val clearSongCacheUseCase: ClearSongCacheUseCase
+    private val clearSongCacheUseCase: ClearSongCacheUseCase,
+    private val songRepository: SongRepository
 ) : ViewModel() {
 
     private val _suggestedState =
@@ -159,6 +161,15 @@ class SongsViewModel(
     /** Opens the music player bottom sheet for the given song. */
     fun onSongClick(song: MusicSong) {
         _selectedSong.value = song
+    }
+
+    /** Opens the music player bottom sheet by fetching the song by ID (used by widget deep links). */
+    fun onSongClickById(songId: Long) {
+        if (songId == -1L) return
+        viewModelScope.launch(Dispatchers.IO) {
+            songRepository.getSongById(songId)
+                .onSuccess { _selectedSong.value = it }
+        }
     }
 
     /** Dismisses the player bottom sheet without any further action. */

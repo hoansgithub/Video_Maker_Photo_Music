@@ -243,6 +243,12 @@ dependencies {
     // implementation(libs.acccore.appsflyer)   // Uncomment when AppsFlyer needed
 
     // ============================================
+    // WIDGETS (Glance)
+    // ============================================
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
+
+    // ============================================
     // UI UTILITIES
     // ============================================
     implementation(libs.shimmer.compose)
@@ -268,4 +274,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Review
+    implementation(libs.play.review.ktx)
 }

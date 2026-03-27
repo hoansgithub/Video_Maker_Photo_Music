@@ -65,10 +65,62 @@
         <!-- MainActivity - Main app content (no longer launcher) -->
         <activity
             android:name=".MainActivity"
-            android:exported="false"
+            android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.VideoMaker"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="com.videomaker.aimusic.action.OPEN_SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.videomaker.aimusic.action.OPEN_TRENDING_SONG" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.videomaker.aimusic.action.OPEN_TRENDING_TEMPLATE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- ============================================ -->
+        <!-- WIDGET RECEIVERS (Glance AppWidgets) -->
+        <!-- ============================================ -->
+        <receiver
+            android:name=".widget.appwidget.SmartSearchWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_smart_search">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_search_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.appwidget.TrendingSongWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_trending_song">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_trending_song_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.appwidget.TrendingTemplateWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_trending_template">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_trending_template_info" />
+        </receiver>
 
         <!-- FileProvider for sharing exported videos -->
         <provider

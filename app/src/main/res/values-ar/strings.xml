@@ -63,6 +63,14 @@
     <string name="settings_language_description">تغيير لغة التطبيق</string>
     <string name="settings_about">حول</string>
     <string name="settings_version">الإصدار</string>
+    <string name="settings_app_widet">إضافة ويدجت</string>
+    <string name="settings_rate_us">قيّمنا</string>
+    <string name="settings_share_with_friends">شارك مع الأصدقاء</string>
+    <string name="settings_report">إبلاغ</string>
+    <string name="settings_term_of_service">شروط الخدمة</string>
+    <string name="settings_privacy_policy">سياسة الخصوصية</string>
+    <string name="settings_account">الحساب</string>
+    <string name="settings_legal">قانوني</string>
 
     <!-- Editor -->
     <string name="editor_title">تعديل المشروع</string>
@@ -248,4 +256,15 @@
     <string name="genre_blues">بلوز</string>
     <string name="genre_metal">ميتال</string>
     <string name="genre_soul">سول</string>
+
+    <!--  Widget  -->
+    <string name="widget_title">ويدجت</string>
+    <string name="widget_bts">إضافة ويدجت</string>
+    <string name="widget_smart_search">البحث الذكي</string>
+    <string name="widget_smart_search_description">ابحث عن أسلوبك</string>
+    <string name="widget_smart_search_trending">الرائج ❤️‍🔥</string>
+    <string name="widget_trending_template">القالب الرائج</string>
+    <string name="widget_recently">مؤخراً</string>
+    <string name="widget_trending_song">أغنية رائجة</string>
+    <string name="widget_trending_song_hot">ساخن</string>
 </resources>

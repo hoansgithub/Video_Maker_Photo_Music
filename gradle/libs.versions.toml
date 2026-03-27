@@ -58,7 +58,7 @@ koin = "4.2.0"  # Matches ACCCoreAndroid
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.21"  # From GitHub Packages - Fix AppsFlyer revenue attribution
+acccore = "0.0.23"  # From GitHub Packages - Fix AppsFlyer revenue attribution
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)
@@ -69,6 +69,11 @@ firebaseBom = "34.7.0"  # Matches ACCCoreAndroid
 # MONETIZATION (Optional)
 # ============================================
 revenuecat = "9.1.0"
+
+# ============================================
+# WIDGETS (Glance)
+# ============================================
+glance = "1.1.1"
 
 # ============================================
 # UI UTILITIES
@@ -187,6 +192,12 @@ shimmer-compose = { group = "com.valentinilk.shimmer", name = "compose-shimmer",
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coil" }
 coil-video = { group = "io.coil-kt", name = "coil-video", version.ref = "coil" }
+
+# ============================================
+# WIDGETS (Glance)
+# ============================================
+glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
+glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glance" }
 
 # ============================================
 # PLAY SERVICES

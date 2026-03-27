@@ -12,4 +12,11 @@
     <!-- App background (from Figma) -->
     <color name="background_dark">#FF101313</color>
     <color name="surface_dark">#FF1A1D1D</color>
+
+    <!-- Widget colors -->
+    <color name="widget_bg">#FF1A1A1A</color>
+    <color name="widget_text_primary">#FFFFFFFF</color>
+    <color name="widget_text_secondary">#99FFFFFF</color>
+    <color name="widget_search_field_bg">#33FFFFFF</color>
+    <color name="widget_hint_text">#80FFFFFF</color>
 </resources>

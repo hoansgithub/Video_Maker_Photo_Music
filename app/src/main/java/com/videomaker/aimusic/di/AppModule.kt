@@ -62,6 +62,7 @@ import com.videomaker.aimusic.modules.root.RootViewModel
 import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
 import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
+import com.videomaker.aimusic.widget.WidgetViewModel
 
 /**
  * ACCDI Dependency Injection Modules
@@ -339,7 +340,8 @@ class SongsViewModelFactory(
     private val getStationSongsUseCase: GetStationSongsUseCase,
     private val getGenresUseCase: GetGenresUseCase,
     private val getSongsByGenreUseCase: GetSongsByGenreUseCase,
-    private val clearSongCacheUseCase: ClearSongCacheUseCase
+    private val clearSongCacheUseCase: ClearSongCacheUseCase,
+    private val songRepository: SongRepository
 ) {
     fun create(): SongsViewModel = SongsViewModel(
         getSuggestedSongsUseCase = getSuggestedSongsUseCase,
@@ -347,7 +349,8 @@ class SongsViewModelFactory(
         getStationSongsUseCase = getStationSongsUseCase,
         getGenresUseCase = getGenresUseCase,
         getSongsByGenreUseCase = getSongsByGenreUseCase,
-        clearSongCacheUseCase = clearSongCacheUseCase
+        clearSongCacheUseCase = clearSongCacheUseCase,
+        songRepository = songRepository
     )
 }
 
@@ -468,6 +471,21 @@ class EffectSetViewModelFactory(
     }
 }
 
+/**
+ * Factory wrapper for WidgetViewModel.
+ */
+class WidgetViewModelFactory(
+    private val templateRepository: TemplateRepository,
+    private val songRepository: SongRepository
+) {
+    fun create(): WidgetViewModel {
+        return WidgetViewModel(
+            templateRepository = templateRepository,
+            songRepository = songRepository
+        )
+    }
+}
+
 val presentationModule = module {
     // Root ViewModel for RootViewActivity (handles loading, Firebase, navigation)
     viewModel {
@@ -580,7 +598,8 @@ val presentationModule = module {
             getStationSongsUseCase = get(),
             getGenresUseCase = get(),
             getSongsByGenreUseCase = get(),
-            clearSongCacheUseCase = get()
+            clearSongCacheUseCase = get(),
+            songRepository = get()
         )
     }
 
@@ -630,6 +649,14 @@ val presentationModule = module {
     single {
         EffectSetViewModelFactory(
             getEffectSetsPagedUseCase = get()
+        )
+    }
+
+    // Widget ViewModel factory (singleton - stateless factory)
+    single {
+        WidgetViewModelFactory(
+            templateRepository = get(),
+            songRepository = get()
         )
     }
 }

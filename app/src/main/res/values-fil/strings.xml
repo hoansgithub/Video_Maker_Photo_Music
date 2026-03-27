@@ -63,6 +63,14 @@
     <string name="settings_language_description">Baguhin ang wika ng app</string>
     <string name="settings_about">Tungkol sa</string>
     <string name="settings_version">Bersyon</string>
+    <string name="settings_app_widet">Magdagdag ng Widget</string>
+    <string name="settings_rate_us">I-rate Kami</string>
+    <string name="settings_share_with_friends">Ibahagi sa mga Kaibigan</string>
+    <string name="settings_report">Iulat</string>
+    <string name="settings_term_of_service">Mga Tuntunin ng Serbisyo</string>
+    <string name="settings_privacy_policy">Patakaran sa Privacy</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_legal">Legal</string>
 
     <!-- Editor -->
     <string name="editor_title">I-edit ang Proyekto</string>
@@ -248,4 +256,15 @@
     <string name="genre_blues">Blues</string>
     <string name="genre_metal">Metal</string>
     <string name="genre_soul">Soul</string>
+
+    <!--  Widget  -->
+    <string name="widget_title">Widget</string>
+    <string name="widget_bts">Magdagdag ng Widget</string>
+    <string name="widget_smart_search">Smart Search</string>
+    <string name="widget_smart_search_description">Hinahanap ang iyong estilo</string>
+    <string name="widget_smart_search_trending">Trending ❤️‍🔥</string>
+    <string name="widget_trending_template">Trending na template</string>
+    <string name="widget_recently">Kamakailan</string>
+    <string name="widget_trending_song">Trending na Kanta</string>
+    <string name="widget_trending_song_hot">Hot</string>
 </resources>

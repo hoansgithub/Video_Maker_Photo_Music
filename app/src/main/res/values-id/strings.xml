@@ -63,6 +63,14 @@
     <string name="settings_language_description">Ubah bahasa aplikasi</string>
     <string name="settings_about">Tentang</string>
     <string name="settings_version">Versi</string>
+    <string name="settings_app_widet">Tambah Widget</string>
+    <string name="settings_rate_us">Beri Nilai Kami</string>
+    <string name="settings_share_with_friends">Bagikan ke Teman</string>
+    <string name="settings_report">Laporkan</string>
+    <string name="settings_term_of_service">Syarat Layanan</string>
+    <string name="settings_privacy_policy">Kebijakan Privasi</string>
+    <string name="settings_account">Akun</string>
+    <string name="settings_legal">Hukum</string>
 
     <!-- Editor -->
     <string name="editor_title">Edit Proyek</string>
@@ -248,4 +256,15 @@
     <string name="genre_blues">Blues</string>
     <string name="genre_metal">Metal</string>
     <string name="genre_soul">Soul</string>
+
+    <!--  Widget  -->
+    <string name="widget_title">Widget</string>
+    <string name="widget_bts">Tambah Widget</string>
+    <string name="widget_smart_search">Pencarian Cerdas</string>
+    <string name="widget_smart_search_description">Mencari gaya Anda</string>
+    <string name="widget_smart_search_trending">Trending ❤️‍🔥</string>
+    <string name="widget_trending_template">Template trending</string>
+    <string name="widget_recently">Terbaru</string>
+    <string name="widget_trending_song">Lagu Trending</string>
+    <string name="widget_trending_song_hot">Hot</string>
 </resources>
