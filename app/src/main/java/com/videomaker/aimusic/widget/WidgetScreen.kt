@@ -4,6 +4,9 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
+import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
+import org.koin.compose.koinInject
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -78,6 +81,8 @@ fun WidgetScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
+    val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
+    val audioPreviewCache: AudioPreviewCache = koinInject()
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -104,6 +109,16 @@ fun WidgetScreen(
                 widgetType = widgetType
             )
         }
+    }
+
+    // Music player bottom sheet — shown when a song card is tapped
+    selectedSong?.let { song ->
+        MusicPlayerBottomSheet(
+            song = song,
+            cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+            onDismiss = viewModel::onDismissPlayer,
+            onUseToCreate = { viewModel.onUseToCreateVideo(song) }
+        )
     }
 
     // Derive widget data from state

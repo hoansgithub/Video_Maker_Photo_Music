@@ -57,6 +57,10 @@ class WidgetViewModel(
     private val _navigationEvent = MutableStateFlow<WidgetNavigationEvent?>(null)
     val navigationEvent: StateFlow<WidgetNavigationEvent?> = _navigationEvent.asStateFlow()
 
+    // Currently selected song — drives MusicPlayerBottomSheet visibility
+    private val _selectedSong = MutableStateFlow<MusicSong?>(null)
+    val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
+
     // Pin widget event - Channel for one-time event (requires Context in composable)
     private val _pinWidgetEvent = Channel<WidgetType>(Channel.BUFFERED)
     val pinWidgetEvent = _pinWidgetEvent.receiveAsFlow()
@@ -111,7 +115,19 @@ class WidgetViewModel(
         _navigationEvent.value = WidgetNavigationEvent.NavigateToSearch
     }
 
+    // Opens MusicPlayerBottomSheet for the tapped song
     fun onSongPlayClick(song: MusicSong) {
+        _selectedSong.value = song
+    }
+
+    // Dismisses MusicPlayerBottomSheet
+    fun onDismissPlayer() {
+        _selectedSong.value = null
+    }
+
+    // Called from MusicPlayerBottomSheet "Use to Create" — navigates to TemplatePreviewer
+    fun onUseToCreateVideo(song: MusicSong) {
+        _selectedSong.value = null
         _navigationEvent.value = WidgetNavigationEvent.NavigateToTemplatePreviewerWithSong(song.id)
     }
 

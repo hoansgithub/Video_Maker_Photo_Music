@@ -340,7 +340,8 @@ class SongsViewModelFactory(
     private val getStationSongsUseCase: GetStationSongsUseCase,
     private val getGenresUseCase: GetGenresUseCase,
     private val getSongsByGenreUseCase: GetSongsByGenreUseCase,
-    private val clearSongCacheUseCase: ClearSongCacheUseCase
+    private val clearSongCacheUseCase: ClearSongCacheUseCase,
+    private val songRepository: SongRepository
 ) {
     fun create(): SongsViewModel = SongsViewModel(
         getSuggestedSongsUseCase = getSuggestedSongsUseCase,
@@ -348,7 +349,8 @@ class SongsViewModelFactory(
         getStationSongsUseCase = getStationSongsUseCase,
         getGenresUseCase = getGenresUseCase,
         getSongsByGenreUseCase = getSongsByGenreUseCase,
-        clearSongCacheUseCase = clearSongCacheUseCase
+        clearSongCacheUseCase = clearSongCacheUseCase,
+        songRepository = songRepository
     )
 }
 
@@ -596,7 +598,8 @@ val presentationModule = module {
             getStationSongsUseCase = get(),
             getGenresUseCase = get(),
             getSongsByGenreUseCase = get(),
-            clearSongCacheUseCase = get()
+            clearSongCacheUseCase = get(),
+            songRepository = get()
         )
     }
 

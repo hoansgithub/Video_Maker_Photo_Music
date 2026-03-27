@@ -9,6 +9,7 @@ object WidgetActions {
     const val ACTION_OPEN_TRENDING_TEMPLATE = "com.videomaker.aimusic.action.OPEN_TRENDING_TEMPLATE"
     const val ACTION_OPEN_TEMPLATE_DETAIL = "com.videomaker.aimusic.action.OPEN_TEMPLATE_DETAIL"
     const val ACTION_OPEN_TEMPLATE_WITH_SONG = "com.videomaker.aimusic.action.OPEN_TEMPLATE_WITH_SONG"
+    const val ACTION_OPEN_SONG_PLAYER = "com.videomaker.aimusic.action.OPEN_SONG_PLAYER"
     const val EXTRA_TEMPLATE_ID = "extra_template_id"
     const val EXTRA_SONG_ID = "extra_song_id"
 }

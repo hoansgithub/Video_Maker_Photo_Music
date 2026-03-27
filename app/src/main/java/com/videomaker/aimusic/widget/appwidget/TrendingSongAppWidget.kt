@@ -167,7 +167,7 @@ private fun TrendingSongWidgetContent(
 
                     val songIntent = if (song != null) {
                         Intent(context, MainActivity::class.java).apply {
-                            action = WidgetActions.ACTION_OPEN_TEMPLATE_WITH_SONG
+                            action = WidgetActions.ACTION_OPEN_SONG_PLAYER
                             putExtra(WidgetActions.EXTRA_SONG_ID, song.id)
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                         }

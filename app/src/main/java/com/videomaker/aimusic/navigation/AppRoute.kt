@@ -43,7 +43,7 @@ sealed interface AppRoute : NavKey {
      * @param initialTab Tab index: 0=Gallery, 1=Songs, 2=My Videos
      */
     @Serializable
-    data class Home(val initialTab: Int = 0) : AppRoute
+    data class Home(val initialTab: Int = 0, val initialSongId: Long = -1L) : AppRoute
 
     @Serializable
     data object Search : AppRoute

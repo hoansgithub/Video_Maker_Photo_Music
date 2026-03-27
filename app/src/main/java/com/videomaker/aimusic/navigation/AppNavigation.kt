@@ -127,6 +127,15 @@ fun AppNavigation(
                     ))
                 }
             }
+            WidgetActions.ACTION_OPEN_SONG_PLAYER -> {
+                val songId = intent.getLongExtra(WidgetActions.EXTRA_SONG_ID, -1L)
+                if (songId != -1L) {
+                    backStack.apply {
+                        clear()
+                        add(AppRoute.Home(initialTab = 1, initialSongId = songId))
+                    }
+                }
+            }
         }
         onDeepLinkConsumed()
     }
@@ -183,6 +192,13 @@ fun AppNavigation(
                     key = "projects",
                     factory = createSafeViewModelFactory { projectsFactory.create() }
                 )
+                // Auto-open MusicPlayerBottomSheet when launched from widget song tap
+                LaunchedEffect(route.initialSongId) {
+                    if (route.initialSongId != -1L) {
+                        songsViewModel.onSongClickById(route.initialSongId)
+                    }
+                }
+
                 HomeScreen(
                     galleryViewModel = galleryViewModel,
                     songsViewModel = songsViewModel,
