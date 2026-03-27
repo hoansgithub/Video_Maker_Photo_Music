@@ -243,6 +243,12 @@ dependencies {
     // implementation(libs.acccore.appsflyer)   // Uncomment when AppsFlyer needed
 
     // ============================================
+    // WIDGETS (Glance)
+    // ============================================
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
+
+    // ============================================
     // UI UTILITIES
     // ============================================
     implementation(libs.shimmer.compose)

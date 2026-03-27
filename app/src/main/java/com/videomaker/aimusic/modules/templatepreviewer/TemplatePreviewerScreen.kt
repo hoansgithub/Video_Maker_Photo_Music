@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,7 +24,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -373,7 +371,7 @@ private fun TemplatePreviewerReadyContent(
                     isLoading = ctaLoading,
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_circle_plus),
+                            painter = painterResource(id = R.drawable.ic_circle_plus_v2),
                             contentDescription = null,
                             tint = Color.Unspecified,
                             modifier = Modifier.size(24.dp)

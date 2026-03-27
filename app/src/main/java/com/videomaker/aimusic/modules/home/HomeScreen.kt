@@ -201,6 +201,7 @@ private fun HomeTopBar(
         ) {
             // Tab Titles on the left
             Row(
+                modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.Top
             ) {

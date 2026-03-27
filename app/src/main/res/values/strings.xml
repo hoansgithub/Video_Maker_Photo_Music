@@ -292,4 +292,20 @@
     <string name="genre_blues">Blues</string>
     <string name="genre_metal">Metal</string>
     <string name="genre_soul">Soul</string>
+
+    <!--  Widget  -->
+    <string name="widget_title">Widget</string>
+    <string name="widget_bts">Add Widget</string>
+    <string name="widget_smart_search">Smart Search</string>
+    <string name="widget_smart_search_description">Searching your style</string>
+    <string name="widget_smart_search_trending">Trending ❤️‍🔥</string>
+    <string name="widget_trending_template">Trending template</string>
+    <string name="widget_recently">Recently</string>
+    <string name="widget_trending_song">Trending Song</string>
+    <string name="widget_trending_song_hot">Hot</string>
+    <string name="widget_search_hint">Search templates...</string>
+    <string name="widget_pin_request_sent">Widget added to home screen</string>
+    <string name="widget_pin_not_supported">Widget pinning not supported on this device</string>
+    <string name="widget_add_failed">Failed to add widget: %s</string>
+
 </resources>

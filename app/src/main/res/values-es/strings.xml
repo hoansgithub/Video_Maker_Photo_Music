@@ -256,4 +256,15 @@
     <string name="genre_blues">Blues</string>
     <string name="genre_metal">Metal</string>
     <string name="genre_soul">Soul</string>
+
+    <!--  Widget  -->
+    <string name="widget_title">Widget</string>
+    <string name="widget_bts">Agregar Widget</string>
+    <string name="widget_smart_search">Búsqueda Inteligente</string>
+    <string name="widget_smart_search_description">Buscando tu estilo</string>
+    <string name="widget_smart_search_trending">Tendencia ❤️‍🔥</string>
+    <string name="widget_trending_template">Plantilla en tendencia</string>
+    <string name="widget_recently">Reciente</string>
+    <string name="widget_trending_song">Canción en tendencia</string>
+    <string name="widget_trending_song_hot">Hot</string>
 </resources>

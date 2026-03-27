@@ -343,7 +343,7 @@ private fun CreateProjectFloatingButton(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_circle_plus),
+            painter = painterResource(id = R.drawable.ic_circle_plus_v2),
             contentDescription = "Create New Project",
             modifier = Modifier.size(32.dp),
             tint = Color.Unspecified

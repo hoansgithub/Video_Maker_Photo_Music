@@ -82,7 +82,8 @@ private const val PRIVACY_POLICY_URL = "https://alcheclub.co/privacy-policy/"
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToLanguageSettings: () -> Unit = {}
+    onNavigateToLanguageSettings: () -> Unit = {},
+    onNavigateToWidgetScreen: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -154,7 +155,7 @@ fun SettingsScreen(
                     title = stringResource(R.string.settings_app_widet),
                     subtitle = "",
                     isShowLine = true,
-                    onClick = {}
+                    onClick = { onNavigateToWidgetScreen.invoke() }
                 )
                 SettingsItem(
                     icon = R.drawable.ic_rate,

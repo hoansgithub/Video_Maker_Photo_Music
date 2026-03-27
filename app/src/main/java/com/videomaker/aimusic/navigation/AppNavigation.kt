@@ -1,6 +1,8 @@
 package com.videomaker.aimusic.navigation
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Intent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -15,11 +17,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.videomaker.aimusic.widget.appwidget.WidgetActions
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -41,6 +45,8 @@ import com.videomaker.aimusic.di.SuggestedSongsListViewModelFactory
 import com.videomaker.aimusic.di.WeeklyRankingListViewModelFactory
 import com.videomaker.aimusic.di.TemplateListViewModelFactory
 import com.videomaker.aimusic.di.TemplatePreviewerViewModelFactory
+import com.videomaker.aimusic.di.WidgetViewModelFactory
+import com.videomaker.aimusic.widget.WidgetViewModel
 import com.videomaker.aimusic.modules.editor.EditorScreen
 import com.videomaker.aimusic.modules.editor.EditorViewModel
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
@@ -63,6 +69,7 @@ import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePrefer
 import com.videomaker.aimusic.modules.settings.SettingsScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
+import com.videomaker.aimusic.widget.WidgetScreen
 
 private val slideAnimSpec = tween<IntOffset>(300)
 
@@ -78,10 +85,60 @@ private val slideAnimSpec = tween<IntOffset>(300)
  *
  * Onboarding is NOT a route here — it lives in OnboardingActivity (separate one-time flow).
  */
+@SuppressLint("ContextCastToActivity")
 @Composable
-fun AppNavigation(modifier: Modifier = Modifier) {
+fun AppNavigation(
+    modifier: Modifier = Modifier,
+    pendingDeepLink: Intent? = null,
+    onDeepLinkConsumed: () -> Unit = {}
+) {
     val activity = LocalContext.current as? Activity
     val backStack = rememberNavBackStack(AppRoute.Home())
+
+    // Handle deep-link intents from home screen widgets
+    LaunchedEffect(pendingDeepLink) {
+        val intent = pendingDeepLink ?: return@LaunchedEffect
+        when (intent.action) {
+            WidgetActions.ACTION_OPEN_SEARCH -> {
+                backStack.add(AppRoute.Search)
+            }
+            WidgetActions.ACTION_OPEN_TRENDING_TEMPLATE -> {
+                backStack.add(AppRoute.TemplateList())
+            }
+            WidgetActions.ACTION_OPEN_TRENDING_SONG -> {
+                backStack.add(AppRoute.SongSearch)
+            }
+            WidgetActions.ACTION_OPEN_TEMPLATE_DETAIL -> {
+                val templateId = intent.getStringExtra(WidgetActions.EXTRA_TEMPLATE_ID)
+                if (!templateId.isNullOrBlank()) {
+                    backStack.add(AppRoute.TemplatePreviewer(
+                        templateId = templateId,
+                        imageUris = emptyList()
+                    ))
+                }
+            }
+            WidgetActions.ACTION_OPEN_TEMPLATE_WITH_SONG -> {
+                val songId = intent.getLongExtra(WidgetActions.EXTRA_SONG_ID, -1L)
+                if (songId != -1L) {
+                    backStack.add(AppRoute.TemplatePreviewer(
+                        templateId = "",
+                        imageUris = emptyList(),
+                        overrideSongId = songId
+                    ))
+                }
+            }
+            WidgetActions.ACTION_OPEN_SONG_PLAYER -> {
+                val songId = intent.getLongExtra(WidgetActions.EXTRA_SONG_ID, -1L)
+                if (songId != -1L) {
+                    backStack.apply {
+                        clear()
+                        add(AppRoute.Home(initialTab = 1, initialSongId = songId))
+                    }
+                }
+            }
+        }
+        onDeepLinkConsumed()
+    }
 
     NavDisplay(
         modifier = modifier.fillMaxSize(),
@@ -135,6 +192,13 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     key = "projects",
                     factory = createSafeViewModelFactory { projectsFactory.create() }
                 )
+                // Auto-open MusicPlayerBottomSheet when launched from widget song tap
+                LaunchedEffect(route.initialSongId) {
+                    if (route.initialSongId != -1L) {
+                        songsViewModel.onSongClickById(route.initialSongId)
+                    }
+                }
+
                 HomeScreen(
                     galleryViewModel = galleryViewModel,
                     songsViewModel = songsViewModel,
@@ -409,7 +473,8 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             entry<AppRoute.Settings> {
                 SettingsScreen(
                     onNavigateBack = { backStack.removeLastOrNull() },
-                    onNavigateToLanguageSettings = { backStack.add(AppRoute.LanguageSettings) }
+                    onNavigateToLanguageSettings = { backStack.add(AppRoute.LanguageSettings) },
+                    onNavigateToWidgetScreen = { backStack.add(AppRoute.WidgetScreen) }
                 )
             }
 
@@ -426,6 +491,32 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     onContinue = {
                         applyLanguage()
                         activity?.recreate()
+                    }
+                )
+            }
+
+            entry<AppRoute.WidgetScreen> {
+                val factory: WidgetViewModelFactory = koinInject()
+                val widgetViewModel: WidgetViewModel = viewModel(
+                    key = "widget_screen",
+                    factory = createSafeViewModelFactory { factory.create() }
+                )
+                WidgetScreen(
+                    viewModel = widgetViewModel,
+                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateToTemplatePreviewer = { templateId ->
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = templateId,
+                            imageUris = emptyList()
+                        ))
+                    },
+                    onNavigateToSearch = { backStack.add(AppRoute.Search) },
+                    onNavigateToTemplatePreviewerWithSong = { songId ->
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "",
+                            imageUris = emptyList(),
+                            overrideSongId = songId
+                        ))
                     }
                 )
             }
