@@ -3,20 +3,12 @@ package com.videomaker.aimusic.widget.appwidget
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.createBitmap
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -27,7 +19,6 @@ import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
-import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
@@ -45,39 +36,86 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.ui.theme.TextPrimary
-import com.videomaker.aimusic.ui.theme.TextSecondary
+import com.videomaker.aimusic.domain.model.MusicSong
+import com.videomaker.aimusic.domain.repository.SongRepository
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
  * Trending Song widget for home screen.
- * Displays trending song info and opens the app when tapped.
+ * Displays 3 featured songs with cover art loaded dynamically via Coil.
  */
-class TrendingSongAppWidget : GlanceAppWidget() {
+class TrendingSongAppWidget : GlanceAppWidget(), KoinComponent {
+
+    private val songRepository: SongRepository by inject()
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val songs = songRepository.getFeaturedSongs(limit = 3)
+            .getOrElse { emptyList() }
+
+        val bitmaps: List<Bitmap?> = songs.map { song ->
+            loadSongCoverBitmap(context, song.coverUrl)
+        }
+
         provideContent {
             GlanceTheme {
-                TrendingSongWidgetContent(context)
+                TrendingSongWidgetContent(
+                    context = context,
+                    songs = songs,
+                    bitmaps = bitmaps
+                )
             }
         }
     }
 }
 
+private suspend fun loadSongCoverBitmap(context: Context, url: String): Bitmap? {
+    if (url.isBlank()) return null
+    return try {
+        val request = ImageRequest.Builder(context)
+            .data(url)
+            .allowHardware(false)
+            .size(200, 200)
+            .build()
+
+        val result = context.imageLoader.execute(request)
+        if (result is SuccessResult) {
+            result.drawable.let { drawable ->
+                val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
+                val canvas = android.graphics.Canvas(bitmap)
+                drawable.setBounds(0, 0, canvas.width, canvas.height)
+                drawable.draw(canvas)
+                bitmap
+            }
+        } else null
+
+    } catch (_: Exception) {
+        null
+    }
+}
+
 @SuppressLint("RestrictedApi")
 @Composable
-private fun TrendingSongWidgetContent(context: Context) {
-    val intent = Intent(context, MainActivity::class.java).apply {
-        action = WidgetActions.ACTION_OPEN_TRENDING_SONG
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-    }
+private fun TrendingSongWidgetContent(
+    context: Context,
+    songs: List<MusicSong>,
+    bitmaps: List<Bitmap?>
+) {
+    val fallbackCovers = listOf(
+        R.drawable.img_song1,
+        R.drawable.img_song2,
+        R.drawable.img_song3
+    )
 
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
             .cornerRadius(24.dp)
-            .clickable(actionStartActivity(intent))
     ) {
         // Background image
         Image(
@@ -93,7 +131,7 @@ private fun TrendingSongWidgetContent(context: Context) {
                 .padding(top = 16.dp, bottom = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Centered Row: [app_icon_loading 24dp] [spacer 4dp] [widget_trending_song text]
+            // Centered header row
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -122,82 +160,57 @@ private fun TrendingSongWidgetContent(context: Context) {
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp),
             ) {
-                // Song card column 1
-                Column(
-                    modifier =  GlanceModifier
-                        .defaultWeight()
-                        .fillMaxHeight()
-                ) {
+                for (index in 0 until 3) {
+                    if (index > 0) {
+                        Spacer(modifier = GlanceModifier.width(7.dp))
+                    }
 
-                    Image(
-                        provider = ImageProvider(R.drawable.img_song1),
-                        contentDescription = null,
+                    val song = songs.getOrNull(index)
+                    val bitmap = bitmaps.getOrNull(index)
+                    val fallback = fallbackCovers[index]
+
+                    val songIntent = if (song != null) {
+                        Intent(context, MainActivity::class.java).apply {
+                            action = WidgetActions.ACTION_OPEN_TEMPLATE_WITH_SONG
+                            putExtra(WidgetActions.EXTRA_SONG_ID, song.id)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        }
+                    } else {
+                        Intent(context, MainActivity::class.java).apply {
+                            action = WidgetActions.ACTION_OPEN_TRENDING_SONG
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        }
+                    }
+
+                    val coverProvider = if (bitmap != null) {
+                        ImageProvider(bitmap)
+                    } else {
+                        ImageProvider(fallback)
+                    }
+
+                    // Song card column
+                    Column(
                         modifier = GlanceModifier
                             .defaultWeight()
-                            .cornerRadius(16.dp),
-                        contentScale = ContentScale.FillBounds
-                    )
-
-                    Spacer(modifier = GlanceModifier.height(4.dp))
-                    Row(
-                        modifier = GlanceModifier
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                            .fillMaxHeight()
+                            .clickable(actionStartActivity(songIntent))
                     ) {
-                        Column(modifier = GlanceModifier.defaultWeight()) {
-                            Text(
-                                text = "Hope Full",
-                                style = TextStyle(
-                                    color = ColorProvider(R.color.widget_text_secondary),
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            )
-                            Spacer(modifier = GlanceModifier.height(4.dp))
-                            Text(
-                                text = "Anora",
-                                style = TextStyle(
-                                    color = ColorProvider(R.color.widget_text_secondary),
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Normal
-                                )
-                            )
-                        }
+                        // Cover image with play icon overlay
                         Image(
-                            provider = ImageProvider(R.drawable.ic_lead_search),
-                            contentDescription = null,
+                            provider = coverProvider,
+                            contentDescription = song?.name,
                             modifier = GlanceModifier
-                                .size(24.dp),
+                                .defaultWeight()
+                                .fillMaxWidth()
+                                .cornerRadius(16.dp),
                             contentScale = ContentScale.FillBounds
                         )
-                    }
-                }
-                Spacer(modifier = GlanceModifier.width(7.dp))
-                // Song card column 2
-                Column(
-                    modifier =  GlanceModifier
-                        .defaultWeight()
-                        .fillMaxHeight()
-                ) {
 
-                    Image(
-                        provider = ImageProvider(R.drawable.img_song2),
-                        contentDescription = null,
-                        modifier = GlanceModifier
-                            .defaultWeight()
-                            .cornerRadius(16.dp),
-                        contentScale = ContentScale.FillBounds
-                    )
+                        Spacer(modifier = GlanceModifier.height(4.dp))
 
-                    Spacer(modifier = GlanceModifier.height(4.dp))
-                    Row(
-                        modifier = GlanceModifier
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = GlanceModifier.defaultWeight()) {
+                        Column(modifier = GlanceModifier.fillMaxWidth()) {
                             Text(
-                                text = "Love Me Easy",
+                                text = song?.name ?: "",
                                 style = TextStyle(
                                     color = ColorProvider(R.color.widget_text_secondary),
                                     fontSize = 15.sp,
@@ -207,72 +220,15 @@ private fun TrendingSongWidgetContent(context: Context) {
                             )
                             Spacer(modifier = GlanceModifier.height(4.dp))
                             Text(
-                                text = "Klayf",
+                                text = song?.artist ?: "",
                                 style = TextStyle(
                                     color = ColorProvider(R.color.widget_text_secondary),
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Normal
-                                )
+                                ),
+                                maxLines = 1
                             )
                         }
-                        Image(
-                            provider = ImageProvider(R.drawable.ic_lead_search),
-                            contentDescription = null,
-                            modifier = GlanceModifier
-                                .size(24.dp),
-                            contentScale = ContentScale.FillBounds
-                        )
-                    }
-                }
-                Spacer(modifier = GlanceModifier.width(7.dp))
-                // Song card column 3
-                Column(
-                    modifier =  GlanceModifier
-                        .defaultWeight()
-                        .fillMaxHeight()
-                ) {
-
-                    Image(
-                        provider = ImageProvider(R.drawable.img_song3),
-                        contentDescription = null,
-                        modifier = GlanceModifier
-                            .defaultWeight()
-                            .cornerRadius(16.dp),
-                        contentScale = ContentScale.FillBounds
-                    )
-
-                    Spacer(modifier = GlanceModifier.height(4.dp))
-                    Row(
-                        modifier = GlanceModifier
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = GlanceModifier.defaultWeight()) {
-                            Text(
-                                text = "Hope Full",
-                                style = TextStyle(
-                                    color = ColorProvider(R.color.widget_text_secondary),
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            )
-                            Spacer(modifier = GlanceModifier.height(4.dp))
-                            Text(
-                                text = "H.Nguyen",
-                                style = TextStyle(
-                                    color = ColorProvider(R.color.widget_text_secondary),
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Normal
-                                )
-                            )
-                        }
-                        Image(
-                            provider = ImageProvider(R.drawable.ic_lead_search),
-                            contentDescription = null,
-                            modifier = GlanceModifier
-                                .size(24.dp),
-                            contentScale = ContentScale.FillBounds
-                        )
                     }
                 }
             }

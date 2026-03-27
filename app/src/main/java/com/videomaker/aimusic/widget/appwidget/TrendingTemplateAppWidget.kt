@@ -3,6 +3,8 @@ package com.videomaker.aimusic.widget.appwidget
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -16,13 +18,13 @@ import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
-import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
@@ -32,40 +34,92 @@ import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import androidx.compose.ui.graphics.Color
-import androidx.glance.layout.fillMaxHeight
 import androidx.glance.unit.ColorProvider
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.domain.repository.TemplateRepository
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import androidx.core.graphics.createBitmap
 
 /**
  * Trending Template widget for home screen.
- * Displays trending template info and opens the app when tapped.
+ * Displays 2 featured template thumbnails loaded dynamically via Coil.
  */
-class TrendingTemplateAppWidget : GlanceAppWidget() {
+class TrendingTemplateAppWidget : GlanceAppWidget(), KoinComponent {
+
+    private val templateRepository: TemplateRepository by inject()
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val templates = templateRepository.getFeaturedTemplates(limit = 2)
+            .getOrElse { emptyList() }
+
+        val bitmaps: List<Bitmap?> = templates.map { template ->
+            loadTemplateThumbnailBitmap(context, template.thumbnailPath)
+        }
+
         provideContent {
             GlanceTheme {
-                TrendingTemplateWidgetContent(context)
+                TrendingTemplateWidgetContent(
+                    context = context,
+                    templates = templates,
+                    bitmaps = bitmaps
+                )
             }
         }
     }
 }
 
+private suspend fun loadTemplateThumbnailBitmap(context: Context, url: String): Bitmap? {
+    if (url.isBlank()) return null
+    return try {
+        val request = ImageRequest.Builder(context)
+            .data(url)
+            .allowHardware(false)
+            .size(300, 400)
+            .build()
+
+        val result = context.imageLoader.execute(request)
+        if (result is SuccessResult) {
+            result.drawable.let { drawable ->
+                val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
+                val canvas = android.graphics.Canvas(bitmap)
+                drawable.setBounds(0, 0, canvas.width, canvas.height)
+                drawable.draw(canvas)
+                bitmap
+            }
+        } else null
+
+    } catch (_: Exception) {
+        null
+    }
+}
+
 @SuppressLint("RestrictedApi")
 @Composable
-private fun TrendingTemplateWidgetContent(context: Context) {
-    val intent = Intent(context, MainActivity::class.java).apply {
-        action = WidgetActions.ACTION_OPEN_TRENDING_TEMPLATE
+private fun TrendingTemplateWidgetContent(
+    context: Context,
+    templates: List<VideoTemplate>,
+    bitmaps: List<Bitmap?>
+) {
+    val searchIntent = Intent(context, MainActivity::class.java).apply {
+        action = WidgetActions.ACTION_OPEN_SEARCH
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
     }
+
+    val fallbackDrawables = listOf(
+        R.drawable.img_template1,
+        R.drawable.img_template2
+    )
 
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
             .cornerRadius(24.dp)
-            .clickable(actionStartActivity(intent))
     ) {
         // Background image
         Image(
@@ -81,7 +135,7 @@ private fun TrendingTemplateWidgetContent(context: Context) {
                 .padding(top = 16.dp, bottom = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Centered Row: [app_icon_loading 24dp] [spacer 4dp] [widget_recently text]
+            // Centered header row
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -104,44 +158,58 @@ private fun TrendingTemplateWidgetContent(context: Context) {
 
             Spacer(modifier = GlanceModifier.height(14.dp))
 
-            // Row of 3 boxes: add button + 2 placeholders
+            // Row: add button + 2 template images
             Row(
                 modifier = GlanceModifier
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp),
             ) {
+                // Add button — opens search
                 Image(
                     provider = ImageProvider(R.drawable.img_template_add),
                     contentDescription = null,
                     modifier = GlanceModifier
                         .defaultWeight()
                         .fillMaxHeight()
-                        .cornerRadius(18.dp),
+                        .cornerRadius(18.dp)
+                        .clickable(actionStartActivity(searchIntent)),
                     contentScale = ContentScale.FillBounds
                 )
 
-                Spacer(modifier = GlanceModifier.width(7.dp))
-                // Placeholder 1
-                Image(
-                    provider = ImageProvider(R.drawable.img_template1),
-                    contentDescription = null,
-                    modifier = GlanceModifier
-                        .defaultWeight()
-                        .fillMaxHeight()
-                        .cornerRadius(18.dp),
-                    contentScale = ContentScale.FillBounds
-                )
-                Spacer(modifier = GlanceModifier.width(7.dp))
-                // Placeholder 2
-                Image(
-                    provider = ImageProvider(R.drawable.img_template2),
-                    contentDescription = null,
-                    modifier = GlanceModifier
-                        .defaultWeight()
-                        .fillMaxHeight()
-                        .cornerRadius(18.dp),
-                    contentScale = ContentScale.FillBounds
-                )
+                for (index in 0 until 2) {
+                    Spacer(modifier = GlanceModifier.width(7.dp))
+
+                    val template = templates.getOrNull(index)
+                    val bitmap = bitmaps.getOrNull(index)
+                    val fallback = fallbackDrawables[index]
+
+                    val templateIntent = if (template != null) {
+                        Intent(context, MainActivity::class.java).apply {
+                            action = WidgetActions.ACTION_OPEN_TEMPLATE_DETAIL
+                            putExtra(WidgetActions.EXTRA_TEMPLATE_ID, template.id)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        }
+                    } else {
+                        searchIntent
+                    }
+
+                    val imageProvider = if (bitmap != null) {
+                        ImageProvider(bitmap)
+                    } else {
+                        ImageProvider(fallback)
+                    }
+
+                    Image(
+                        provider = imageProvider,
+                        contentDescription = template?.name,
+                        modifier = GlanceModifier
+                            .defaultWeight()
+                            .fillMaxHeight()
+                            .cornerRadius(18.dp)
+                            .clickable(actionStartActivity(templateIntent)),
+                        contentScale = ContentScale.FillBounds
+                    )
+                }
             }
         }
     }

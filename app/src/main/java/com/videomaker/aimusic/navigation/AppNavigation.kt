@@ -1,6 +1,8 @@
 package com.videomaker.aimusic.navigation
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Intent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -15,11 +17,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.videomaker.aimusic.widget.appwidget.WidgetActions
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -81,10 +85,51 @@ private val slideAnimSpec = tween<IntOffset>(300)
  *
  * Onboarding is NOT a route here — it lives in OnboardingActivity (separate one-time flow).
  */
+@SuppressLint("ContextCastToActivity")
 @Composable
-fun AppNavigation(modifier: Modifier = Modifier) {
+fun AppNavigation(
+    modifier: Modifier = Modifier,
+    pendingDeepLink: Intent? = null,
+    onDeepLinkConsumed: () -> Unit = {}
+) {
     val activity = LocalContext.current as? Activity
     val backStack = rememberNavBackStack(AppRoute.Home())
+
+    // Handle deep-link intents from home screen widgets
+    LaunchedEffect(pendingDeepLink) {
+        val intent = pendingDeepLink ?: return@LaunchedEffect
+        when (intent.action) {
+            WidgetActions.ACTION_OPEN_SEARCH -> {
+                backStack.add(AppRoute.Search)
+            }
+            WidgetActions.ACTION_OPEN_TRENDING_TEMPLATE -> {
+                backStack.add(AppRoute.TemplateList())
+            }
+            WidgetActions.ACTION_OPEN_TRENDING_SONG -> {
+                backStack.add(AppRoute.SongSearch)
+            }
+            WidgetActions.ACTION_OPEN_TEMPLATE_DETAIL -> {
+                val templateId = intent.getStringExtra(WidgetActions.EXTRA_TEMPLATE_ID)
+                if (!templateId.isNullOrBlank()) {
+                    backStack.add(AppRoute.TemplatePreviewer(
+                        templateId = templateId,
+                        imageUris = emptyList()
+                    ))
+                }
+            }
+            WidgetActions.ACTION_OPEN_TEMPLATE_WITH_SONG -> {
+                val songId = intent.getLongExtra(WidgetActions.EXTRA_SONG_ID, -1L)
+                if (songId != -1L) {
+                    backStack.add(AppRoute.TemplatePreviewer(
+                        templateId = "",
+                        imageUris = emptyList(),
+                        overrideSongId = songId
+                    ))
+                }
+            }
+        }
+        onDeepLinkConsumed()
+    }
 
     NavDisplay(
         modifier = modifier.fillMaxSize(),

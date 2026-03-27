@@ -3,9 +3,12 @@ package com.videomaker.aimusic.widget.appwidget
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.createBitmap
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -34,37 +37,91 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.domain.repository.TemplateRepository
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
  * Smart Search widget for home screen.
- * Displays a search bar that opens the app's search screen when tapped.
+ * Displays a search bar and 3 trending template thumbnails loaded dynamically.
  */
-class SmartSearchAppWidget : GlanceAppWidget() {
+class SmartSearchAppWidget : GlanceAppWidget(), KoinComponent {
+
+    private val templateRepository: TemplateRepository by inject()
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val templates = templateRepository.getTemplates(limit = 3, offset = 0)
+            .getOrElse { emptyList() }
+
+        val bitmaps: List<Bitmap?> = templates.map { template ->
+            loadBitmap(context, template.thumbnailPath)
+        }
+
         provideContent {
             GlanceTheme {
-                SmartSearchWidgetContent(context)
+                SmartSearchWidgetContent(
+                    context = context,
+                    templates = templates,
+                    bitmaps = bitmaps
+                )
             }
         }
     }
 }
 
+private suspend fun loadBitmap(context: Context, url: String): Bitmap? {
+    if (url.isBlank()) return null
+    return try {
+        val request = ImageRequest.Builder(context)
+            .data(url)
+            .allowHardware(false)
+            .size(300, 400)
+            .build()
+
+        val result = context.imageLoader.execute(request)
+        if (result is SuccessResult) {
+            result.drawable.let { drawable ->
+                val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
+                val canvas = android.graphics.Canvas(bitmap)
+                drawable.setBounds(0, 0, canvas.width, canvas.height)
+                drawable.draw(canvas)
+                bitmap
+            }
+        } else null
+
+    } catch (_: Exception) {
+        null
+    }
+}
+
 @SuppressLint("RestrictedApi")
 @Composable
-private fun SmartSearchWidgetContent(context: Context) {
-    val intent = Intent(context, MainActivity::class.java).apply {
+private fun SmartSearchWidgetContent(
+    context: Context,
+    templates: List<VideoTemplate>,
+    bitmaps: List<Bitmap?>
+) {
+    val searchIntent = Intent(context, MainActivity::class.java).apply {
         action = WidgetActions.ACTION_OPEN_SEARCH
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
     }
+
+    val fallbackDrawables = listOf(
+        R.drawable.img_template1,
+        R.drawable.img_template2,
+        R.drawable.img_template3
+    )
 
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
             .cornerRadius(24.dp)
-            .clickable(actionStartActivity(intent))
     ) {
         // Background image
         Image(
@@ -80,13 +137,14 @@ private fun SmartSearchWidgetContent(context: Context) {
                 .fillMaxSize()
                 .padding(top = 16.dp, bottom = 12.dp, start = 12.dp, end = 12.dp),
         ) {
-            // Search bar: [app_icon_loading] [description text - flexible] [ic_lead_search]
+            // Search bar row — clickable to open search
             Row(
                 modifier = GlanceModifier
                     .fillMaxWidth()
                     .background(ColorProvider(R.color.widget_search_field_bg))
                     .cornerRadius(16.dp)
-                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                    .padding(vertical = 12.dp, horizontal = 16.dp)
+                    .clickable(actionStartActivity(searchIntent)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
@@ -127,41 +185,48 @@ private fun SmartSearchWidgetContent(context: Context) {
 
             Spacer(modifier = GlanceModifier.height(12.dp))
 
-            // Row of 3 equal placeholder boxes
+            // Row of 3 template images
             Row(
                 modifier = GlanceModifier
                     .fillMaxWidth()
                     .defaultWeight(),
             ) {
-                Image(
-                    provider = ImageProvider(R.drawable.img_template1),
-                    contentDescription = null,
-                    modifier = GlanceModifier
-                        .defaultWeight()
-                        .fillMaxHeight()
-                        .cornerRadius(18.dp),
-                    contentScale = ContentScale.FillBounds
-                )
-                Spacer(modifier = GlanceModifier.width(7.dp))
-                Image(
-                    provider = ImageProvider(R.drawable.img_template2),
-                    contentDescription = null,
-                    modifier = GlanceModifier
-                        .defaultWeight()
-                        .fillMaxHeight()
-                        .cornerRadius(18.dp),
-                    contentScale = ContentScale.FillBounds
-                )
-                Spacer(modifier = GlanceModifier.width(7.dp))
-                Image(
-                    provider = ImageProvider(R.drawable.img_template3),
-                    contentDescription = null,
-                    modifier = GlanceModifier
-                        .defaultWeight()
-                        .fillMaxHeight()
-                        .cornerRadius(18.dp),
-                    contentScale = ContentScale.FillBounds
-                )
+                for (index in 0 until 3) {
+                    if (index > 0) {
+                        Spacer(modifier = GlanceModifier.width(7.dp))
+                    }
+
+                    val template = templates.getOrNull(index)
+                    val bitmap = bitmaps.getOrNull(index)
+                    val fallback = fallbackDrawables[index]
+
+                    val templateIntent = if (template != null) {
+                        Intent(context, MainActivity::class.java).apply {
+                            action = WidgetActions.ACTION_OPEN_TEMPLATE_DETAIL
+                            putExtra(WidgetActions.EXTRA_TEMPLATE_ID, template.id)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        }
+                    } else {
+                        searchIntent
+                    }
+
+                    val imageProvider = if (bitmap != null) {
+                        ImageProvider(bitmap)
+                    } else {
+                        ImageProvider(fallback)
+                    }
+
+                    Image(
+                        provider = imageProvider,
+                        contentDescription = template?.name,
+                        modifier = GlanceModifier
+                            .defaultWeight()
+                            .fillMaxHeight()
+                            .cornerRadius(18.dp)
+                            .clickable(actionStartActivity(templateIntent)),
+                        contentScale = ContentScale.FillBounds
+                    )
+                }
             }
         }
     }
