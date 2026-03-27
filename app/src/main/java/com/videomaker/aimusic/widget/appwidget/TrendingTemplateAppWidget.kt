@@ -106,10 +106,19 @@ private fun TrendingTemplateWidgetContent(
     templates: List<VideoTemplate>,
     bitmaps: List<Bitmap?>
 ) {
-    val searchIntent = Intent(context, MainActivity::class.java).apply {
+    val fallbackIntent = Intent(context, MainActivity::class.java).apply {
         action = WidgetActions.ACTION_OPEN_SEARCH
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
     }
+
+    // Mirror GalleryViewModel.onCreateClick: open first template detail if available, else search
+    val addButtonIntent = templates.firstOrNull()?.let { firstTemplate ->
+        Intent(context, MainActivity::class.java).apply {
+            action = WidgetActions.ACTION_OPEN_TEMPLATE_DETAIL
+            putExtra(WidgetActions.EXTRA_TEMPLATE_ID, firstTemplate.id)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+    } ?: fallbackIntent
 
     val fallbackDrawables = listOf(
         R.drawable.img_template1,
@@ -164,7 +173,7 @@ private fun TrendingTemplateWidgetContent(
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp),
             ) {
-                // Add button — opens search
+                // Add button — opens first featured template (or search as fallback)
                 Image(
                     provider = ImageProvider(R.drawable.img_template_add),
                     contentDescription = null,
@@ -172,7 +181,7 @@ private fun TrendingTemplateWidgetContent(
                         .defaultWeight()
                         .fillMaxHeight()
                         .cornerRadius(18.dp)
-                        .clickable(actionStartActivity(searchIntent)),
+                        .clickable(actionStartActivity(addButtonIntent)),
                     contentScale = ContentScale.FillBounds
                 )
 
@@ -190,7 +199,7 @@ private fun TrendingTemplateWidgetContent(
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                         }
                     } else {
-                        searchIntent
+                        fallbackIntent
                     }
 
                     val imageProvider = if (bitmap != null) {
