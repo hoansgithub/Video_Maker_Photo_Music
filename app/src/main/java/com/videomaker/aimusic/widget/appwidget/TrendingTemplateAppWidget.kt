@@ -136,16 +136,29 @@ private fun TrendingTemplateWidgetContent(
                     .padding(horizontal = 12.dp),
             ) {
                 // Add button — opens first featured template (or search as fallback)
-                Image(
-                    provider = ImageProvider(R.drawable.img_template_add),
-                    contentDescription = null,
+                Box(
                     modifier = GlanceModifier
                         .defaultWeight()
                         .fillMaxHeight()
                         .cornerRadius(18.dp)
                         .clickable(actionStartActivity(addButtonIntent)),
-                    contentScale = ContentScale.FillBounds
-                )
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        provider = ImageProvider(R.drawable.img_template_add),
+                        contentDescription = null,
+                        modifier = GlanceModifier
+                            .fillMaxSize(),
+                        contentScale = ContentScale.FillBounds
+                    )
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_circle_plus_v2),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size(26.dp),
+                        contentScale = ContentScale.FillBounds
+                    )
+                }
+
 
                 for (index in 0 until 2) {
                     Spacer(modifier = GlanceModifier.width(7.dp))
