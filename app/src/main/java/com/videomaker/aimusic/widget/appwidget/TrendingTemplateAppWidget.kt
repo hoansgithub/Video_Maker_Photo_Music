@@ -2,9 +2,7 @@ package com.videomaker.aimusic.widget.appwidget
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,16 +33,11 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import coil.imageLoader
-import coil.request.ImageRequest
-import coil.request.SuccessResult
-import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import androidx.core.graphics.createBitmap
 
 /**
  * Trending Template widget for home screen.
@@ -59,7 +52,7 @@ class TrendingTemplateAppWidget : GlanceAppWidget(), KoinComponent {
             .getOrElse { emptyList() }
 
         val bitmaps: List<Bitmap?> = templates.map { template ->
-            loadTemplateThumbnailBitmap(context, template.thumbnailPath)
+            WidgetBitmapLoader.loadTemplateBitmap(context, template.thumbnailPath)
         }
 
         provideContent {
@@ -74,30 +67,6 @@ class TrendingTemplateAppWidget : GlanceAppWidget(), KoinComponent {
     }
 }
 
-private suspend fun loadTemplateThumbnailBitmap(context: Context, url: String): Bitmap? {
-    if (url.isBlank()) return null
-    return try {
-        val request = ImageRequest.Builder(context)
-            .data(url)
-            .allowHardware(false)
-            .size(300, 400)
-            .build()
-
-        val result = context.imageLoader.execute(request)
-        if (result is SuccessResult) {
-            result.drawable.let { drawable ->
-                val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
-                val canvas = android.graphics.Canvas(bitmap)
-                drawable.setBounds(0, 0, canvas.width, canvas.height)
-                drawable.draw(canvas)
-                bitmap
-            }
-        } else null
-
-    } catch (_: Exception) {
-        null
-    }
-}
 
 @SuppressLint("RestrictedApi")
 @Composable
@@ -106,18 +75,11 @@ private fun TrendingTemplateWidgetContent(
     templates: List<VideoTemplate>,
     bitmaps: List<Bitmap?>
 ) {
-    val fallbackIntent = Intent(context, MainActivity::class.java).apply {
-        action = WidgetActions.ACTION_OPEN_SEARCH
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-    }
+    val fallbackIntent = WidgetActions.openSearchIntent(context)
 
     // Mirror GalleryViewModel.onCreateClick: open first template detail if available, else search
     val addButtonIntent = templates.firstOrNull()?.let { firstTemplate ->
-        Intent(context, MainActivity::class.java).apply {
-            action = WidgetActions.ACTION_OPEN_TEMPLATE_DETAIL
-            putExtra(WidgetActions.EXTRA_TEMPLATE_ID, firstTemplate.id)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
+        WidgetActions.openTemplateDetailIntent(context, firstTemplate.id)
     } ?: fallbackIntent
 
     val fallbackDrawables = listOf(
@@ -193,11 +155,7 @@ private fun TrendingTemplateWidgetContent(
                     val fallback = fallbackDrawables[index]
 
                     val templateIntent = if (template != null) {
-                        Intent(context, MainActivity::class.java).apply {
-                            action = WidgetActions.ACTION_OPEN_TEMPLATE_DETAIL
-                            putExtra(WidgetActions.EXTRA_TEMPLATE_ID, template.id)
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                        }
+                        WidgetActions.openTemplateDetailIntent(context, template.id)
                     } else {
                         fallbackIntent
                     }

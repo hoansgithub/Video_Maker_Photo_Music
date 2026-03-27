@@ -2,13 +2,10 @@ package com.videomaker.aimusic.widget.appwidget
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.createBitmap
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -37,10 +34,6 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import coil.imageLoader
-import coil.request.ImageRequest
-import coil.request.SuccessResult
-import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.TemplateRepository
@@ -60,7 +53,7 @@ class SmartSearchAppWidget : GlanceAppWidget(), KoinComponent {
             .getOrElse { emptyList() }
 
         val bitmaps: List<Bitmap?> = templates.map { template ->
-            loadBitmap(context, template.thumbnailPath)
+            WidgetBitmapLoader.loadTemplateBitmap(context, template.thumbnailPath)
         }
 
         provideContent {
@@ -75,30 +68,6 @@ class SmartSearchAppWidget : GlanceAppWidget(), KoinComponent {
     }
 }
 
-private suspend fun loadBitmap(context: Context, url: String): Bitmap? {
-    if (url.isBlank()) return null
-    return try {
-        val request = ImageRequest.Builder(context)
-            .data(url)
-            .allowHardware(false)
-            .size(300, 400)
-            .build()
-
-        val result = context.imageLoader.execute(request)
-        if (result is SuccessResult) {
-            result.drawable.let { drawable ->
-                val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
-                val canvas = android.graphics.Canvas(bitmap)
-                drawable.setBounds(0, 0, canvas.width, canvas.height)
-                drawable.draw(canvas)
-                bitmap
-            }
-        } else null
-
-    } catch (_: Exception) {
-        null
-    }
-}
 
 @SuppressLint("RestrictedApi")
 @Composable
@@ -107,10 +76,7 @@ private fun SmartSearchWidgetContent(
     templates: List<VideoTemplate>,
     bitmaps: List<Bitmap?>
 ) {
-    val searchIntent = Intent(context, MainActivity::class.java).apply {
-        action = WidgetActions.ACTION_OPEN_SEARCH
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-    }
+    val searchIntent = WidgetActions.openSearchIntent(context)
 
     val fallbackDrawables = listOf(
         R.drawable.img_template1,
@@ -201,11 +167,7 @@ private fun SmartSearchWidgetContent(
                     val fallback = fallbackDrawables[index]
 
                     val templateIntent = if (template != null) {
-                        Intent(context, MainActivity::class.java).apply {
-                            action = WidgetActions.ACTION_OPEN_TEMPLATE_DETAIL
-                            putExtra(WidgetActions.EXTRA_TEMPLATE_ID, template.id)
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                        }
+                        WidgetActions.openTemplateDetailIntent(context, template.id)
                     } else {
                         searchIntent
                     }

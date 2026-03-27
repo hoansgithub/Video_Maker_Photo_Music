@@ -33,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -62,8 +61,6 @@ import com.videomaker.aimusic.widget.components.SmartSearchWidget
 import com.videomaker.aimusic.widget.components.TrendingSongWidget
 import com.videomaker.aimusic.widget.components.TrendingWidget
 import com.videomaker.aimusic.widget.model.WidgetType
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 private const val TAG = "WidgetScreen"
 
@@ -82,10 +79,10 @@ fun WidgetScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
+    val pinWidgetEvent by viewModel.pinWidgetEvent.collectAsStateWithLifecycle()
     val audioPreviewCache: AudioPreviewCache = koinInject()
 
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     // Handle navigation events - StateFlow-based (Google recommended pattern)
     LaunchedEffect(navigationEvent) {
@@ -101,13 +98,10 @@ fun WidgetScreen(
     }
 
     // Collect pin widget event (requires Context, so stays in composable)
-    LaunchedEffect(Unit) {
-        viewModel.pinWidgetEvent.collect { widgetType ->
-            requestPinWidget(
-                scope = coroutineScope,
-                context = context,
-                widgetType = widgetType
-            )
+    LaunchedEffect(pinWidgetEvent) {
+        pinWidgetEvent?.let { widgetType ->
+            requestPinWidget(context = context, widgetType = widgetType)
+            viewModel.onPinWidgetHandled()
         }
     }
 
@@ -269,47 +263,40 @@ fun WidgetScreen(
 /**
  * Request to pin a widget to the home screen using Glance AppWidgetManager.
  */
-private fun requestPinWidget(
-    scope: CoroutineScope,
-    context: Context,
-    widgetType: WidgetType
-) {
+private suspend fun requestPinWidget(context: Context, widgetType: WidgetType) {
     Log.d(TAG, "Requesting pin widget: $widgetType")
-
-    scope.launch {
-        try {
-            val glanceManager = GlanceAppWidgetManager(context)
-            val success = when (widgetType) {
-                WidgetType.SEARCH -> glanceManager.requestPinGlanceAppWidget(
-                    receiver = SmartSearchWidgetReceiver::class.java,
-                    preview = SmartSearchAppWidget(),
-                    previewState = WIDGET_SIZE
-                )
-                WidgetType.SONG -> glanceManager.requestPinGlanceAppWidget(
-                    receiver = TrendingSongWidgetReceiver::class.java,
-                    preview = TrendingSongAppWidget(),
-                    previewState = WIDGET_SIZE
-                )
-                WidgetType.TEMPLATE -> glanceManager.requestPinGlanceAppWidget(
-                    receiver = TrendingTemplateWidgetReceiver::class.java,
-                    preview = TrendingTemplateAppWidget(),
-                    previewState = WIDGET_SIZE
-                )
-            }
-            Log.d(TAG, "requestPinGlanceAppWidget result: $success")
-
-            if (success) {
-                Toast.makeText(context, R.string.widget_pin_request_sent, Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(context, R.string.widget_pin_not_supported, Toast.LENGTH_LONG).show()
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to pin widget", e)
-            Toast.makeText(
-                context,
-                context.getString(R.string.widget_add_failed, e.message),
-                Toast.LENGTH_LONG
-            ).show()
+    try {
+        val glanceManager = GlanceAppWidgetManager(context)
+        val success = when (widgetType) {
+            WidgetType.SEARCH -> glanceManager.requestPinGlanceAppWidget(
+                receiver = SmartSearchWidgetReceiver::class.java,
+                preview = SmartSearchAppWidget(),
+                previewState = WIDGET_SIZE
+            )
+            WidgetType.SONG -> glanceManager.requestPinGlanceAppWidget(
+                receiver = TrendingSongWidgetReceiver::class.java,
+                preview = TrendingSongAppWidget(),
+                previewState = WIDGET_SIZE
+            )
+            WidgetType.TEMPLATE -> glanceManager.requestPinGlanceAppWidget(
+                receiver = TrendingTemplateWidgetReceiver::class.java,
+                preview = TrendingTemplateAppWidget(),
+                previewState = WIDGET_SIZE
+            )
         }
+        Log.d(TAG, "requestPinGlanceAppWidget result: $success")
+
+        if (success) {
+            Toast.makeText(context, R.string.widget_pin_request_sent, Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, R.string.widget_pin_not_supported, Toast.LENGTH_LONG).show()
+        }
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to pin widget", e)
+        Toast.makeText(
+            context,
+            context.getString(R.string.widget_add_failed, e.message),
+            Toast.LENGTH_LONG
+        ).show()
     }
 }

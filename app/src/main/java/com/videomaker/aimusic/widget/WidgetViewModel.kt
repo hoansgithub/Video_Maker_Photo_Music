@@ -8,11 +8,9 @@ import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.widget.model.WidgetType
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 // ============================================
@@ -61,9 +59,9 @@ class WidgetViewModel(
     private val _selectedSong = MutableStateFlow<MusicSong?>(null)
     val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
 
-    // Pin widget event - Channel for one-time event (requires Context in composable)
-    private val _pinWidgetEvent = Channel<WidgetType>(Channel.BUFFERED)
-    val pinWidgetEvent = _pinWidgetEvent.receiveAsFlow()
+    // Pin widget event - StateFlow for one-time event (requires Context in composable)
+    private val _pinWidgetEvent = MutableStateFlow<WidgetType?>(null)
+    val pinWidgetEvent: StateFlow<WidgetType?> = _pinWidgetEvent.asStateFlow()
 
     init {
         loadData()
@@ -98,9 +96,11 @@ class WidgetViewModel(
     }
 
     fun onAddWidgetClick(widgetType: WidgetType) {
-        viewModelScope.launch {
-            _pinWidgetEvent.send(widgetType)
-        }
+        _pinWidgetEvent.value = widgetType
+    }
+
+    fun onPinWidgetHandled() {
+        _pinWidgetEvent.value = null
     }
 
     fun onTemplateClick(template: VideoTemplate) {

@@ -2,13 +2,10 @@ package com.videomaker.aimusic.widget.appwidget
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.createBitmap
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -36,10 +33,6 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import coil.imageLoader
-import coil.request.ImageRequest
-import coil.request.SuccessResult
-import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.repository.SongRepository
@@ -59,7 +52,7 @@ class TrendingSongAppWidget : GlanceAppWidget(), KoinComponent {
             .getOrElse { emptyList() }
 
         val bitmaps: List<Bitmap?> = songs.map { song ->
-            loadSongCoverBitmap(context, song.coverUrl)
+            WidgetBitmapLoader.loadSongCoverBitmap(context, song.coverUrl)
         }
 
         provideContent {
@@ -74,30 +67,6 @@ class TrendingSongAppWidget : GlanceAppWidget(), KoinComponent {
     }
 }
 
-private suspend fun loadSongCoverBitmap(context: Context, url: String): Bitmap? {
-    if (url.isBlank()) return null
-    return try {
-        val request = ImageRequest.Builder(context)
-            .data(url)
-            .allowHardware(false)
-            .size(200, 200)
-            .build()
-
-        val result = context.imageLoader.execute(request)
-        if (result is SuccessResult) {
-            result.drawable.let { drawable ->
-                val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
-                val canvas = android.graphics.Canvas(bitmap)
-                drawable.setBounds(0, 0, canvas.width, canvas.height)
-                drawable.draw(canvas)
-                bitmap
-            }
-        } else null
-
-    } catch (_: Exception) {
-        null
-    }
-}
 
 @SuppressLint("RestrictedApi")
 @Composable
@@ -166,16 +135,9 @@ private fun TrendingSongWidgetContent(
                     val fallback = fallbackCovers[index]
 
                     val songIntent = if (song != null) {
-                        Intent(context, MainActivity::class.java).apply {
-                            action = WidgetActions.ACTION_OPEN_SONG_PLAYER
-                            putExtra(WidgetActions.EXTRA_SONG_ID, song.id)
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                        }
+                        WidgetActions.openSongPlayerIntent(context, song.id)
                     } else {
-                        Intent(context, MainActivity::class.java).apply {
-                            action = WidgetActions.ACTION_OPEN_TRENDING_SONG
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                        }
+                        WidgetActions.openTrendingSongIntent(context)
                     }
 
                     Column(
