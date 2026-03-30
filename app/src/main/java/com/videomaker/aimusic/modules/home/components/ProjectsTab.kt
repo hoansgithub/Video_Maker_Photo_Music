@@ -284,7 +284,6 @@ fun ProjectTabRow(
                 .matchParentSize()
                 .background(
                     Color.White.copy(0.08f),
-                    RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
                 )
                 .blur(12.dp)
         )
@@ -293,7 +292,7 @@ fun ProjectTabRow(
             state = state,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp, bottom = 24.dp),
+                .padding(top = 16.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             contentPadding = PaddingValues(start = 10.dp, end = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
