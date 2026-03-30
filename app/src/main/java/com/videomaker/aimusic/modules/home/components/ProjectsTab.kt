@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.home.components
 
+import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
@@ -79,7 +80,9 @@ import coil.request.ImageRequest
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
+import com.videomaker.aimusic.modules.favourite_songs.ContentSong
 import com.videomaker.aimusic.modules.favourite_songs.LikeSongEmpty
+import com.videomaker.aimusic.modules.favourite_templates.ContentTemplate
 import com.videomaker.aimusic.modules.favourite_templates.LikeTemplateEmpty
 import com.videomaker.aimusic.modules.projects.ProjectsNavigationEvent
 import com.videomaker.aimusic.modules.projects.ProjectsUiState
@@ -99,7 +102,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
 fun ProjectsTabContent(
     viewModel: ProjectsViewModel,
@@ -115,9 +118,12 @@ fun ProjectsTabContent(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val templateState by viewModel.templateState.collectAsStateWithLifecycle()
+    val templateStateLocal by viewModel.templateStateLocal.collectAsStateWithLifecycle()
     val songState by viewModel.songState.collectAsStateWithLifecycle()
+    val songStateLocal by viewModel.songStateLocal.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
+    val likedSongIds by viewModel.likedSongIds.collectAsStateWithLifecycle()
     val audioPreviewCache: AudioPreviewCache = koinInject()
 
     LaunchedEffect(navigationEvent) {
@@ -235,19 +241,37 @@ fun ProjectsTabContent(
                             }
                         }
 
-                        1 -> LikeTemplateEmpty(
-                            state = templateState,
-                            onTemplateClick = onNavigateToTemplateDetail,
-                            onSeeAllClick = viewModel::onSeeAllTemplates,
-                            onSearch = viewModel::onTemplateSearch
-                        )
+                        1 -> {
+                            if (templateStateLocal.isNotEmpty()){
+                                ContentTemplate(
+                                    state = templateStateLocal,
+                                    onTemplateClick = onNavigateToTemplateDetail
+                                )
+                            } else {
+                                LikeTemplateEmpty(
+                                    state = templateState,
+                                    onTemplateClick = onNavigateToTemplateDetail,
+                                    onSeeAllClick = viewModel::onSeeAllTemplates,
+                                    onSearch = viewModel::onTemplateSearch
+                                )
+                            }
+                        }
 
-                        2 -> LikeSongEmpty(
-                            state = songState,
-                            onSeeAllClick = viewModel::onSeeAllSongs,
-                            onSearch = viewModel::onSongSearch,
-                            onSongClick = viewModel::onSongClick
-                        )
+                        2 -> {
+                            if (songStateLocal.isNotEmpty()){
+                                ContentSong(
+                                    songs = songStateLocal,
+                                    onSongClick = viewModel::onSongClick
+                                )
+                            } else {
+                                LikeSongEmpty(
+                                    state = songState,
+                                    onSeeAllClick = viewModel::onSeeAllSongs,
+                                    onSearch = viewModel::onSongSearch,
+                                    onSongClick = viewModel::onSongClick
+                                )
+                            }
+                        }
 
                         else -> Unit
                     }

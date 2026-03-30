@@ -9,10 +9,16 @@ import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.DeleteProjectUseCase
 import com.videomaker.aimusic.domain.usecase.GetAllProjectsUseCase
 import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
+import com.videomaker.aimusic.domain.usecase.LikeSongUseCase
+import com.videomaker.aimusic.domain.usecase.ObserveLikedSongsUseCase
+import com.videomaker.aimusic.domain.usecase.ObserveLikedTemplatesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 // ============================================
@@ -63,7 +69,10 @@ class ProjectsViewModel(
     private val getAllProjectsUseCase: GetAllProjectsUseCase,
     private val deleteProjectUseCase: DeleteProjectUseCase,
     private val templateRepository: TemplateRepository,
-    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase
+    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
+    private val observeLikedSongsUseCase: ObserveLikedSongsUseCase,
+    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
+    private val likeSongUseCase: LikeSongUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProjectsUiState>(ProjectsUiState.Loading)
@@ -81,6 +90,29 @@ class ProjectsViewModel(
     private val _selectedSong = MutableStateFlow<MusicSong?>(null)
     val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
 
+    val templateStateLocal: StateFlow<List<VideoTemplate>> = observeLikedTemplatesUseCase()
+        .catch { e -> emit(emptyList()) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    val songStateLocal: StateFlow<List<MusicSong>> = observeLikedSongsUseCase()
+        .catch { e -> emit(emptyList()) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    // Liked song IDs for heart icon state in the player bottom sheet
+    val likedSongIds: StateFlow<Set<Long>> = observeLikedSongsUseCase.ids()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptySet()
+        )
     private var isObserving = false
 
     /**
@@ -157,6 +189,12 @@ class ProjectsViewModel(
 
     fun onNavigationHandled() {
         _navigationEvent.value = null
+    }
+
+    fun onLikeSong(song: MusicSong) {
+        viewModelScope.launch {
+            likeSongUseCase(song)
+        }
     }
 
     fun onSongClick(song: MusicSong) {

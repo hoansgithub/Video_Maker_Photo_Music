@@ -82,6 +82,10 @@ import coil.size.Precision
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
+import com.videomaker.aimusic.ui.theme.CtaText
+import com.videomaker.aimusic.ui.theme.SecondaryLight
+import com.videomaker.aimusic.ui.theme.SurfaceLight
+import com.videomaker.aimusic.ui.theme.TextSecondary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -112,6 +116,7 @@ fun TemplatePreviewerScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val currentSong by viewModel.currentSong.collectAsStateWithLifecycle()
+    val likedTemplateIds by viewModel.likedTemplateIds.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
@@ -203,8 +208,10 @@ fun TemplatePreviewerScreen(
                 state = state,
                 currentSong = currentSong,
                 playerDurationMs = playerDurationMs,
+                likedTemplateIds = likedTemplateIds,
                 onPageChanged = viewModel::onPageChanged,
                 onUseThisTemplate = viewModel::onUseThisTemplate,
+                onLikeTemplate = viewModel::onLikeTemplate,
                 onNavigateBack = viewModel::onNavigateBack
             )
         }
@@ -241,8 +248,10 @@ private fun TemplatePreviewerReadyContent(
     state: TemplatePreviewerUiState.Ready,
     currentSong: SongLoadState,
     playerDurationMs: Long?,
+    likedTemplateIds: Set<String>,
     onPageChanged: (Int) -> Unit,
     onUseThisTemplate: (VideoTemplate, AspectRatio) -> Unit,
+    onLikeTemplate: (VideoTemplate) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val templates = state.templates
@@ -354,6 +363,44 @@ private fun TemplatePreviewerReadyContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                val currentTemplate = templates.getOrNull(pagerState.settledPage % templates.size)
+                val isLiked = currentTemplate?.id in likedTemplateIds
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (isLiked) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_heart_liked),
+                                tint = Primary,
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_heart),
+                                tint = SurfaceLight,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clickable { currentTemplate?.let { onLikeTemplate(it) } }
+                            )
+                        }
+
+                        Text(
+                            text = "Add",
+                            color = SurfaceLight,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
                 // Music info capsule
                 MusicInfoCapsule(currentSong = currentSong, playerDurationMs = playerDurationMs)
 
@@ -724,8 +771,10 @@ private fun PreviewTemplatePreviewerReady() {
                 ),
                 currentSong = previewSongReady,
                 playerDurationMs = 182000L,
+                likedTemplateIds = emptySet(),
                 onPageChanged = {},
                 onUseThisTemplate = { _, _ -> },
+                onLikeTemplate = {},
                 onNavigateBack = {}
             )
         }
@@ -749,8 +798,10 @@ private fun PreviewTemplatePreviewerMusicLoading() {
                 ),
                 currentSong = SongLoadState.Loading,
                 playerDurationMs = null,
+                likedTemplateIds = emptySet(),
                 onPageChanged = {},
                 onUseThisTemplate = { _, _ -> },
+                onLikeTemplate = {},
                 onNavigateBack = {}
             )
         }
@@ -774,8 +825,10 @@ private fun PreviewTemplatePreviewerNoMusic() {
                 ),
                 currentSong = SongLoadState.None,
                 playerDurationMs = null,
+                likedTemplateIds = emptySet(),
                 onPageChanged = {},
                 onUseThisTemplate = { _, _ -> },
+                onLikeTemplate = {},
                 onNavigateBack = {}
             )
         }
@@ -800,8 +853,10 @@ private fun PreviewTemplatePreviewerCreating() {
                 ),
                 currentSong = previewSongReady,
                 playerDurationMs = 182000L,
+                likedTemplateIds = setOf("t1"),
                 onPageChanged = {},
                 onUseThisTemplate = { _, _ -> },
+                onLikeTemplate = {},
                 onNavigateBack = {}
             )
         }

@@ -11,11 +11,16 @@ import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
+import com.videomaker.aimusic.domain.usecase.LikeTemplateUseCase
+import com.videomaker.aimusic.domain.usecase.ObserveLikedTemplatesUseCase
+import com.videomaker.aimusic.domain.usecase.UnlikeTemplateUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 // ============================================
@@ -73,7 +78,10 @@ class TemplatePreviewerViewModel(
     private val templateRepository: TemplateRepository,
     private val songRepository: SongRepository,
     private val createProjectUseCase: CreateProjectUseCase,
-    private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase
+    private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase,
+    private val likeTemplateUseCase: LikeTemplateUseCase,
+    private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
+    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase
 ) : ViewModel() {
 
     private val imageUris: List<Uri> = imageUrisStr.mapNotNull { uriStr ->
@@ -94,6 +102,14 @@ class TemplatePreviewerViewModel(
     // Current song for the visible page
     private val _currentSong = MutableStateFlow<SongLoadState>(SongLoadState.None)
     val currentSong: StateFlow<SongLoadState> = _currentSong.asStateFlow()
+
+    // Liked template IDs — observed from Room
+    val likedTemplateIds: StateFlow<Set<String>> = observeLikedTemplatesUseCase.ids()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptySet()
+        )
 
     // Pagination tracking
     private var currentOffset = 0
@@ -145,6 +161,16 @@ class TemplatePreviewerViewModel(
     /** Called by UI after navigation is handled — clears the event */
     fun onNavigationHandled() {
         _navigationEvent.value = null
+    }
+
+    fun onLikeTemplate(template: VideoTemplate) {
+        viewModelScope.launch {
+            if (template.id in likedTemplateIds.value) {
+                unlikeTemplateUseCase(template.id)
+            } else {
+                likeTemplateUseCase(template)
+            }
+        }
     }
 
     // ============================================

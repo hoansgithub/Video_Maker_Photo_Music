@@ -41,12 +41,18 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -59,6 +65,7 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.di.MusicPlayerViewModelFactory
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
@@ -88,6 +95,16 @@ fun MusicPlayerBottomSheet(
     onDismiss: () -> Unit,
     onUseToCreate: () -> Unit,
 ) {
+    val playerFactory = koinInject<MusicPlayerViewModelFactory>()
+    val viewModel: MusicPlayerViewModel = viewModel(
+        key = "player_${song.id}",
+        factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                playerFactory.create(song.id) as T
+        }
+    )
+    val isLiked by viewModel.isLiked.collectAsStateWithLifecycle()
     var isPlaying  by remember { mutableStateOf(false) }
     var isPrepared by remember { mutableStateOf(false) }
     var currentMs  by remember { mutableIntStateOf(0) }
@@ -225,7 +242,7 @@ fun MusicPlayerBottomSheet(
 
                         Spacer(Modifier.width(12.dp))
 
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column {
                             Text(
                                 text = song.name,
                                 fontSize = 15.sp,
@@ -247,6 +264,23 @@ fun MusicPlayerBottomSheet(
                         Spacer(Modifier.width(12.dp))
 
                         EqualizerBars(isPlaying = isPlaying)
+
+                        Spacer(Modifier.weight(1f))
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Icon(
+                            painter = painterResource(
+                                if (isLiked) R.drawable.ic_heart_liked else R.drawable.ic_heart
+                            ),
+                            tint = if (isLiked) Primary else TextSecondary,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clickable (
+                                    enabled = isLiked.not()
+                                ){ viewModel.toggleLike(song) }
+                        )
                     }
 
                     Spacer(Modifier.height(12.dp))

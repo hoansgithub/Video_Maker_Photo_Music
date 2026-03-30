@@ -5,24 +5,35 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.videomaker.aimusic.data.local.database.dao.AssetDao
+import com.videomaker.aimusic.data.local.database.dao.LikedSongDao
+import com.videomaker.aimusic.data.local.database.dao.LikedTemplateDao
 import com.videomaker.aimusic.data.local.database.dao.ProjectDao
 import com.videomaker.aimusic.data.local.database.entity.AssetEntity
+import com.videomaker.aimusic.data.local.database.entity.LikedSongEntity
+import com.videomaker.aimusic.data.local.database.entity.LikedTemplateEntity
 import com.videomaker.aimusic.data.local.database.entity.ProjectEntity
 
 /**
- * ProjectDatabase - Room database for storing projects and assets
+ * ProjectDatabase - Room database for storing projects, assets, and liked items
  *
  * Uses KSP2 for code generation (configured in build.gradle.kts)
  */
 @Database(
-    entities = [ProjectEntity::class, AssetEntity::class],
-    version = 6, // Bumped for musicSongName field (display cache separate from URL)
+    entities = [
+        ProjectEntity::class,
+        AssetEntity::class,
+        LikedSongEntity::class,
+        LikedTemplateEntity::class
+    ],
+    version = 7,
     exportSchema = true
 )
 abstract class ProjectDatabase : RoomDatabase() {
 
     abstract fun projectDao(): ProjectDao
     abstract fun assetDao(): AssetDao
+    abstract fun likedSongDao(): LikedSongDao
+    abstract fun likedTemplateDao(): LikedTemplateDao
 
     companion object {
         private const val DATABASE_NAME = "video_maker_database"
