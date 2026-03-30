@@ -91,6 +91,21 @@
     <string name="editor_save_and_exit">I-save at Lumabas</string>
     <string name="editor_discard_changes">Itapon ang mga Pagbabago</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Nilikha na Video</string>
+    <string name="projects_tab_liked_template">Liked na Template</string>
+    <string name="projects_tab_liked_song">Liked na Kanta</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Walang Kanta</string>
+    <string name="like_song_search_button">Maghanap ng Kanta</string>
+    <string name="like_song_section_header">Musika para sa Iyo</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Walang Template</string>
+    <string name="like_template_search_button">Maghanap ng Template</string>
+    <string name="like_template_section_header">Mga Video Template</string>
+
     <!-- Projects -->
     <string name="projects_title">Aking mga Proyekto</string>
     <string name="projects_empty">Wala pang proyekto</string>

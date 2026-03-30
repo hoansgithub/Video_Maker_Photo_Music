@@ -92,6 +92,21 @@
     <string name="editor_discard_changes">تجاهل التغييرات</string>
 
     <!-- Projects -->
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">الفيديوهات المنشأة</string>
+    <string name="projects_tab_liked_template">القوالب المفضلة</string>
+    <string name="projects_tab_liked_song">الأغاني المفضلة</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">الأغاني فارغة</string>
+    <string name="like_song_search_button">البحث عن أغاني</string>
+    <string name="like_song_section_header">موسيقى لك</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">القوالب فارغة</string>
+    <string name="like_template_search_button">البحث عن قوالب</string>
+    <string name="like_template_section_header">قوالب الفيديو</string>
+
     <string name="projects_title">مشاريعي</string>
     <string name="projects_empty">لا توجد مشاريع بعد</string>
     <string name="projects_empty_description">أنشئ مشروعك الأول لتراه هنا</string>

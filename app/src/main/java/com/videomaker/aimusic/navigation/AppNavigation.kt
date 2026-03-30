@@ -229,6 +229,7 @@ fun AppNavigation(
                             overrideSongId = songId
                         ))
                     },
+                    onNavigateToAllSongs = { backStack.add(AppRoute.SuggestedSongsList) },
                     onProjectClick = { projectId ->
                         backStack.add(AppRoute.Editor(projectId))
                     }

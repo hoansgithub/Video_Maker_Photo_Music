@@ -84,7 +84,8 @@ fun HomeScreen(
     onNavigateToWeeklyRankingList: () -> Unit = {},
     onNavigateToTemplateDetail: (String) -> Unit = {},
     onNavigateToAllTemplates: (String?) -> Unit = {},
-    onNavigateToAssetPicker: (songId: Long) -> Unit = {}
+    onNavigateToAssetPicker: (songId: Long) -> Unit = {},
+    onNavigateToAllSongs: () -> Unit = {}
 ) {
     val tabs = listOf(
         stringResource(R.string.home_tab_gallery),
@@ -132,6 +133,12 @@ fun HomeScreen(
                     viewModel = projectsViewModel,
                     onCreateClick = { onNavigateToTemplateDetail("") }, // Open template previewer with first template
                     onProjectClick = onProjectClick,
+                    onNavigateToTemplateDetail = onNavigateToTemplateDetail,
+                    onNavigateToSongSearch = onNavigateToSongSearch,
+                    onNavigateToAllSongs = onNavigateToAllSongs,
+                    onNavigateToTemplateSearch = onNavigateToSearch,
+                    onNavigateToAllTemplates = { onNavigateToAllTemplates(null) },
+                    onNavigateToAssetPicker = onNavigateToAssetPicker,
                     topBarHeight = topBarHeight
                 )
             }

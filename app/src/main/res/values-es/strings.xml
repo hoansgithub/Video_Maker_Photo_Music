@@ -91,6 +91,21 @@
     <string name="editor_save_and_exit">Guardar y Salir</string>
     <string name="editor_discard_changes">Descartar Cambios</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Video Creado</string>
+    <string name="projects_tab_liked_template">Plantilla Favorita</string>
+    <string name="projects_tab_liked_song">Canción Favorita</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">La canción está vacía</string>
+    <string name="like_song_search_button">Buscar Canciones</string>
+    <string name="like_song_section_header">Música para Ti</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">La plantilla está vacía</string>
+    <string name="like_template_search_button">Buscar Plantillas</string>
+    <string name="like_template_section_header">Plantillas de Video</string>
+
     <!-- Projects -->
     <string name="projects_title">Mis Proyectos</string>
     <string name="projects_empty">Aún no hay proyectos</string>

@@ -286,12 +286,16 @@ class ExportViewModelFactory(
  */
 class ProjectsViewModelFactory(
     private val getAllProjectsUseCase: GetAllProjectsUseCase,
-    private val deleteProjectUseCase: DeleteProjectUseCase
+    private val deleteProjectUseCase: DeleteProjectUseCase,
+    private val templateRepository: TemplateRepository,
+    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase
 ) {
     fun create(): ProjectsViewModel {
         return ProjectsViewModel(
             getAllProjectsUseCase = getAllProjectsUseCase,
-            deleteProjectUseCase = deleteProjectUseCase
+            deleteProjectUseCase = deleteProjectUseCase,
+            templateRepository = templateRepository,
+            getSuggestedSongsUseCase = getSuggestedSongsUseCase
         )
     }
 }
@@ -558,7 +562,9 @@ val presentationModule = module {
     single {
         ProjectsViewModelFactory(
             getAllProjectsUseCase = get(),
-            deleteProjectUseCase = get()
+            deleteProjectUseCase = get(),
+            templateRepository = get(),
+            getSuggestedSongsUseCase = get()
         )
     }
 

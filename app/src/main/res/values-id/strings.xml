@@ -91,6 +91,21 @@
     <string name="editor_save_and_exit">Simpan &amp; Keluar</string>
     <string name="editor_discard_changes">Buang Perubahan</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Video Dibuat</string>
+    <string name="projects_tab_liked_template">Template Disukai</string>
+    <string name="projects_tab_liked_song">Lagu Disukai</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Lagu Kosong</string>
+    <string name="like_song_search_button">Cari Lagu</string>
+    <string name="like_song_section_header">Musik untuk Anda</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Template Kosong</string>
+    <string name="like_template_search_button">Cari Template</string>
+    <string name="like_template_section_header">Template Video</string>
+
     <!-- Projects -->
     <string name="projects_title">Proyek Saya</string>
     <string name="projects_empty">Belum ada proyek</string>

@@ -111,6 +111,21 @@
     <string name="editor_effect_sets">Effect Sets</string>
     <string name="editor_retry">Retry</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Created Video</string>
+    <string name="projects_tab_liked_template">Liked Template</string>
+    <string name="projects_tab_liked_song">Liked Song</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Song is Empty</string>
+    <string name="like_song_search_button">Search Songs</string>
+    <string name="like_song_section_header">Music for You</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Template is Empty</string>
+    <string name="like_template_search_button">Search Templates</string>
+    <string name="like_template_section_header">Video Templates</string>
+
     <!-- Projects -->
     <string name="projects_title">My Projects</string>
     <string name="projects_menu">Project menu</string>

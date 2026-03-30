@@ -2,9 +2,13 @@ package com.videomaker.aimusic.modules.projects
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.Project
+import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.DeleteProjectUseCase
 import com.videomaker.aimusic.domain.usecase.GetAllProjectsUseCase
+import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,6 +18,20 @@ import kotlinx.coroutines.launch
 // ============================================
 // UI STATE
 // ============================================
+
+sealed class TemplateTabState {
+    data object Idle : TemplateTabState()
+    data object Loading : TemplateTabState()
+    data class Success(val templates: List<VideoTemplate>) : TemplateTabState()
+    data class Error(val message: String) : TemplateTabState()
+}
+
+sealed class SongTabState {
+    data object Idle : SongTabState()
+    data object Loading : SongTabState()
+    data class Success(val songs: List<MusicSong>) : SongTabState()
+    data class Error(val message: String) : SongTabState()
+}
 
 sealed class ProjectsUiState {
     data object Loading : ProjectsUiState()
@@ -29,6 +47,12 @@ sealed class ProjectsUiState {
 sealed class ProjectsNavigationEvent {
     data object NavigateBack : ProjectsNavigationEvent()
     data class NavigateToEditor(val projectId: String) : ProjectsNavigationEvent()
+    data class NavigateToTemplateDetail(val templateId: String) : ProjectsNavigationEvent()
+    data object NavigateToSongSearch : ProjectsNavigationEvent()
+    data object NavigateToAllSongs : ProjectsNavigationEvent()
+    data object NavigateToTemplateSearch : ProjectsNavigationEvent()
+    data object NavigateToAllTemplates : ProjectsNavigationEvent()
+    data class NavigateToAssetPickerForSong(val songId: Long) : ProjectsNavigationEvent()
 }
 
 // ============================================
@@ -37,7 +61,9 @@ sealed class ProjectsNavigationEvent {
 
 class ProjectsViewModel(
     private val getAllProjectsUseCase: GetAllProjectsUseCase,
-    private val deleteProjectUseCase: DeleteProjectUseCase
+    private val deleteProjectUseCase: DeleteProjectUseCase,
+    private val templateRepository: TemplateRepository,
+    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProjectsUiState>(ProjectsUiState.Loading)
@@ -45,6 +71,15 @@ class ProjectsViewModel(
 
     private val _navigationEvent = MutableStateFlow<ProjectsNavigationEvent?>(null)
     val navigationEvent: StateFlow<ProjectsNavigationEvent?> = _navigationEvent.asStateFlow()
+
+    private val _templateState = MutableStateFlow<TemplateTabState>(TemplateTabState.Idle)
+    val templateState: StateFlow<TemplateTabState> = _templateState.asStateFlow()
+
+    private val _songState = MutableStateFlow<SongTabState>(SongTabState.Idle)
+    val songState: StateFlow<SongTabState> = _songState.asStateFlow()
+
+    private val _selectedSong = MutableStateFlow<MusicSong?>(null)
+    val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
 
     private var isObserving = false
 
@@ -75,8 +110,39 @@ class ProjectsViewModel(
         }
     }
 
+    fun onTabSelected(index: Int) {
+        when (index) {
+            1 -> loadTemplates()
+            2 -> loadSongs()
+        }
+    }
+
+    private fun loadTemplates() {
+        if (_templateState.value is TemplateTabState.Success) return
+        viewModelScope.launch {
+            _templateState.value = TemplateTabState.Loading
+            templateRepository.getTemplates(limit = 20, offset = 0)
+                .onSuccess { _templateState.value = TemplateTabState.Success(it) }
+                .onFailure { _templateState.value = TemplateTabState.Error(it.message ?: "Failed to load templates") }
+        }
+    }
+
+    private fun loadSongs() {
+        if (_songState.value is SongTabState.Success) return
+        viewModelScope.launch {
+            _songState.value = SongTabState.Loading
+            getSuggestedSongsUseCase(limit = 20)
+                .onSuccess { _songState.value = SongTabState.Success(it) }
+                .onFailure { _songState.value = SongTabState.Error(it.message ?: "Failed to load songs") }
+        }
+    }
+
     fun onProjectClick(project: Project) {
         _navigationEvent.value = ProjectsNavigationEvent.NavigateToEditor(project.id)
+    }
+
+    fun onTemplateClick(template: VideoTemplate) {
+        _navigationEvent.value = ProjectsNavigationEvent.NavigateToTemplateDetail(template.id)
     }
 
     fun onDeleteProject(project: Project) {
@@ -91,5 +157,34 @@ class ProjectsViewModel(
 
     fun onNavigationHandled() {
         _navigationEvent.value = null
+    }
+
+    fun onSongClick(song: MusicSong) {
+        _selectedSong.value = song
+    }
+
+    fun onDismissPlayer() {
+        _selectedSong.value = null
+    }
+
+    fun onUseToCreateVideo(song: MusicSong) {
+        _selectedSong.value = null
+        _navigationEvent.value = ProjectsNavigationEvent.NavigateToAssetPickerForSong(song.id)
+    }
+
+    fun onSongSearch() {
+        _navigationEvent.value = ProjectsNavigationEvent.NavigateToSongSearch
+    }
+
+    fun onSeeAllSongs() {
+        _navigationEvent.value = ProjectsNavigationEvent.NavigateToAllSongs
+    }
+
+    fun onTemplateSearch() {
+        _navigationEvent.value = ProjectsNavigationEvent.NavigateToTemplateSearch
+    }
+
+    fun onSeeAllTemplates() {
+        _navigationEvent.value = ProjectsNavigationEvent.NavigateToAllTemplates
     }
 }

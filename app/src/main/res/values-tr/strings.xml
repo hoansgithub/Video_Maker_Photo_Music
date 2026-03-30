@@ -91,6 +91,21 @@
     <string name="editor_save_and_exit">Kaydet ve Çık</string>
     <string name="editor_discard_changes">Değişiklikleri At</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Oluşturulan Video</string>
+    <string name="projects_tab_liked_template">Beğenilen Şablon</string>
+    <string name="projects_tab_liked_song">Beğenilen Şarkı</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Şarkı Boş</string>
+    <string name="like_song_search_button">Şarkı Ara</string>
+    <string name="like_song_section_header">Sizin için Müzik</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Şablon Boş</string>
+    <string name="like_template_search_button">Şablon Ara</string>
+    <string name="like_template_section_header">Video Şablonları</string>
+
     <!-- Projects -->
     <string name="projects_title">Projelerim</string>
     <string name="projects_empty">Henüz proje yok</string>

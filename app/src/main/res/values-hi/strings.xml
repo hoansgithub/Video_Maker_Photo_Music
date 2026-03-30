@@ -91,6 +91,21 @@
     <string name="editor_save_and_exit">सहेजें और बाहर निकलें</string>
     <string name="editor_discard_changes">बदलाव छोड़ें</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">बनाए गए वीडियो</string>
+    <string name="projects_tab_liked_template">पसंदीदा टेम्पलेट</string>
+    <string name="projects_tab_liked_song">पसंदीदा गाना</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">गाना खाली है</string>
+    <string name="like_song_search_button">गाने खोजें</string>
+    <string name="like_song_section_header">आपके लिए संगीत</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">टेम्पलेट खाली है</string>
+    <string name="like_template_search_button">टेम्पलेट खोजें</string>
+    <string name="like_template_section_header">वीडियो टेम्पलेट</string>
+
     <!-- Projects -->
     <string name="projects_title">मेरे प्रोजेक्ट्स</string>
     <string name="projects_empty">अभी कोई प्रोजेक्ट नहीं</string>
