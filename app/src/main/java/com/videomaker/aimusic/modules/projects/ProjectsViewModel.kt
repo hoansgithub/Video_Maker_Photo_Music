@@ -12,6 +12,8 @@ import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.LikeSongUseCase
 import com.videomaker.aimusic.domain.usecase.ObserveLikedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.ObserveLikedTemplatesUseCase
+import com.videomaker.aimusic.domain.usecase.UnlikeSongUseCase
+import com.videomaker.aimusic.domain.usecase.UnlikeTemplateUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -72,7 +74,9 @@ class ProjectsViewModel(
     private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
     private val observeLikedSongsUseCase: ObserveLikedSongsUseCase,
     private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
-    private val likeSongUseCase: LikeSongUseCase
+    private val likeSongUseCase: LikeSongUseCase,
+    private val unlikeSongUseCase: UnlikeSongUseCase,
+    private val unlikeTemplateUseCase: UnlikeTemplateUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProjectsUiState>(ProjectsUiState.Loading)
@@ -194,6 +198,18 @@ class ProjectsViewModel(
     fun onLikeSong(song: MusicSong) {
         viewModelScope.launch {
             likeSongUseCase(song)
+        }
+    }
+
+    fun onUnlikeSong(song: MusicSong) {
+        viewModelScope.launch {
+            unlikeSongUseCase(song.id)
+        }
+    }
+
+    fun onUnlikeTemplate(templateId: String) {
+        viewModelScope.launch {
+            unlikeTemplateUseCase(templateId)
         }
     }
 

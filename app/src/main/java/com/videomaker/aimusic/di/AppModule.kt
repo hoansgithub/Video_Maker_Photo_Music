@@ -317,7 +317,9 @@ class ProjectsViewModelFactory(
     private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
     private val observeLikedSongsUseCase: ObserveLikedSongsUseCase,
     private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
-    private val likeSongUseCase: LikeSongUseCase
+    private val likeSongUseCase: LikeSongUseCase,
+    private val unlikeSongUseCase: UnlikeSongUseCase,
+    private val unlikeTemplateUseCase: UnlikeTemplateUseCase
 ) {
     fun create(): ProjectsViewModel {
         return ProjectsViewModel(
@@ -327,7 +329,9 @@ class ProjectsViewModelFactory(
             getSuggestedSongsUseCase = getSuggestedSongsUseCase,
             observeLikedSongsUseCase = observeLikedSongsUseCase,
             observeLikedTemplatesUseCase = observeLikedTemplatesUseCase,
-            likeSongUseCase = likeSongUseCase
+            likeSongUseCase = likeSongUseCase,
+            unlikeSongUseCase = unlikeSongUseCase,
+            unlikeTemplateUseCase = unlikeTemplateUseCase
         )
     }
 }
@@ -640,7 +644,9 @@ val presentationModule = module {
             getSuggestedSongsUseCase = get(),
             observeLikedSongsUseCase = get(),
             observeLikedTemplatesUseCase = get(),
-            likeSongUseCase = get()
+            likeSongUseCase = get(),
+            unlikeSongUseCase = get(),
+            unlikeTemplateUseCase = get()
         )
     }
 

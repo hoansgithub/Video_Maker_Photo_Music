@@ -23,6 +23,7 @@ import com.videomaker.aimusic.ui.theme.AppDimens
 fun ContentSong(
     songs: List<MusicSong>,
     onSongClick: (MusicSong) -> Unit,
+    onDeleteSongClick: (MusicSong) -> Unit,
 ) {
     val dimens = AppDimens.current
 
@@ -42,6 +43,10 @@ fun ContentSong(
                 name = song.name,
                 artist = song.artist,
                 coverUrl = song.coverUrl,
+                isShowOption = true,
+                onClickDelete = {
+                    onDeleteSongClick.invoke(song)
+                },
                 onSongClick = { onSongClick(song) },
                 modifier = Modifier
                     .fillMaxWidth()

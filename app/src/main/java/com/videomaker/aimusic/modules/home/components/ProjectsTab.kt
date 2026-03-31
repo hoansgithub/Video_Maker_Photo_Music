@@ -2,6 +2,7 @@ package com.videomaker.aimusic.modules.home.components
 
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
@@ -11,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -94,6 +96,7 @@ import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.StaggeredGrid
 import com.videomaker.aimusic.ui.components.TemplateCard
 import com.videomaker.aimusic.ui.theme.AppDimens
+import com.videomaker.aimusic.ui.theme.Neutral_Black
 import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -123,8 +126,15 @@ fun ProjectsTabContent(
     val songStateLocal by viewModel.songStateLocal.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
-    val likedSongIds by viewModel.likedSongIds.collectAsStateWithLifecycle()
     val audioPreviewCache: AudioPreviewCache = koinInject()
+    var showRemovedMessage by remember { mutableStateOf(false) }
+
+    LaunchedEffect(showRemovedMessage) {
+        if (showRemovedMessage) {
+            delay(2000)
+            showRemovedMessage = false
+        }
+    }
 
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
@@ -245,7 +255,11 @@ fun ProjectsTabContent(
                             if (templateStateLocal.isNotEmpty()){
                                 ContentTemplate(
                                     state = templateStateLocal,
-                                    onTemplateClick = onNavigateToTemplateDetail
+                                    onTemplateClick = onNavigateToTemplateDetail,
+                                    onDeleteTemplateClick = {
+                                        viewModel.onUnlikeTemplate(it)
+                                        showRemovedMessage = true
+                                    }
                                 )
                             } else {
                                 LikeTemplateEmpty(
@@ -261,7 +275,11 @@ fun ProjectsTabContent(
                             if (songStateLocal.isNotEmpty()){
                                 ContentSong(
                                     songs = songStateLocal,
-                                    onSongClick = viewModel::onSongClick
+                                    onSongClick = viewModel::onSongClick,
+                                    onDeleteSongClick = {
+                                        viewModel.onUnlikeSong(it)
+                                        showRemovedMessage = true
+                                    }
                                 )
                             } else {
                                 LikeSongEmpty(
@@ -275,6 +293,43 @@ fun ProjectsTabContent(
 
                         else -> Unit
                     }
+                }
+            }
+        }
+
+        // Removed-from-list feedback overlay
+        AnimatedVisibility(
+            visible = showRemovedMessage,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(bottom = 24.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Primary)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_circle_checkmark),
+                        contentDescription = null,
+                        tint = Neutral_Black,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = "Removed from list",
+                        color = Neutral_Black,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }

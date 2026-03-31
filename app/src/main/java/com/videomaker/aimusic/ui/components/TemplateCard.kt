@@ -9,23 +9,31 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
@@ -34,7 +42,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
-import com.videomaker.aimusic.ui.components.bottomGradientOverlay
+import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Black60
 import com.videomaker.aimusic.ui.theme.GoldAccent
@@ -62,13 +70,16 @@ fun TemplateCard(
     thumbnailPath: String,
     aspectRatio: Float,
     isPremium: Boolean,
+    isShowOption: Boolean = false,
     useCount: Long,
+    onClickDelete: () -> Unit = {},
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
     val context = LocalContext.current
 
+    var expanded by remember { mutableStateOf(false) }
     val imageRequest = remember(thumbnailPath) {
         ImageRequest.Builder(context)
             .data(thumbnailPath)
@@ -203,6 +214,58 @@ fun TemplateCard(
                     )
                 }
             }
+
+            if (isShowOption) {
+                TemplateMore(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                ){
+                    onClickDelete.invoke()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TemplateMore(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box (
+        modifier = modifier
+    ){
+        IconButton(
+            onClick = { expanded = true }
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_more_menu),
+                contentDescription = "More",
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xff282828).copy(0.7f))
+                    .border(1.dp, Color.White.copy(0.12f))
+                    .padding(4.dp),
+            )
+        }
+
+        CustomDropdownMenuWithPainter(
+            expanded = expanded,
+            offset = DpOffset(-110.dp, 0.dp),
+            onDismissRequest = { expanded = false }
+        ) {
+            CustomDropdownItemWithPainter(
+                painter = painterResource(id = R.drawable.ic_unheart),
+                title = "Unfavorite",
+                onClick = {
+                    onClick.invoke()
+                    expanded = false
+                },
+                showDivider = false
+            )
         }
     }
 }

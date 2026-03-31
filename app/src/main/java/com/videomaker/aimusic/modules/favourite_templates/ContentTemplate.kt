@@ -23,7 +23,8 @@ import com.videomaker.aimusic.ui.theme.AppDimens
 @Composable
 fun ContentTemplate(
     state: List<VideoTemplate>,
-    onTemplateClick: (String) -> Unit
+    onTemplateClick: (String) -> Unit,
+    onDeleteTemplateClick: (String) -> Unit,
 ) {
     val dimens = AppDimens.current
 
@@ -60,7 +61,11 @@ fun ContentTemplate(
                     thumbnailPath = state[index].thumbnailPath,
                     aspectRatio = aspectRatios[index],
                     isPremium = state[index].isPremium,
+                    isShowOption = true,
                     useCount = state[index].useCount,
+                    onClickDelete = {
+                        onDeleteTemplateClick.invoke(state[index].id)
+                    },
                     onClick = { onTemplateClick(state[index].id) }
                 )
             }
