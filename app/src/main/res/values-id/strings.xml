@@ -121,6 +121,7 @@
     <string name="projects_create_description">Mulai proyek slideshow baru</string>
     <string name="projects_delete_title">Hapus Proyek?</string>
     <string name="projects_delete_message">\"%s\" akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.</string>
+    <string name="projects_removed_from_list">Dihapus dari daftar</string>
 
     <!-- Export -->
     <string name="export_title">Ekspor Video</string>

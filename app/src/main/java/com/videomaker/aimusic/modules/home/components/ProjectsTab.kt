@@ -325,7 +325,7 @@ fun ProjectsTabContent(
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text = "Removed from list",
+                        text = stringResource(R.string.projects_removed_from_list),
                         color = Neutral_Black,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium

@@ -121,6 +121,7 @@
     <string name="projects_create_description">Yeni bir slayt gösterisi projesi başlat</string>
     <string name="projects_delete_title">Proje Silinsin mi?</string>
     <string name="projects_delete_message">\"%s\" kalıcı olarak silinecek. Bu işlem geri alınamaz.</string>
+    <string name="projects_removed_from_list">Listeden kaldırıldı</string>
 
     <!-- Export -->
     <string name="export_title">Videoyu Dışa Aktar</string>

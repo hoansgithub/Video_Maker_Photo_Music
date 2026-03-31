@@ -121,6 +121,7 @@
     <string name="projects_create_description">Iniciar un nuevo proyecto de presentación</string>
     <string name="projects_delete_title">¿Eliminar Proyecto?</string>
     <string name="projects_delete_message">\"%s\" se eliminará permanentemente. Esta acción no se puede deshacer.</string>
+    <string name="projects_removed_from_list">Eliminado de la lista</string>
 
     <!-- Export -->
     <string name="export_title">Exportar Vídeo</string>

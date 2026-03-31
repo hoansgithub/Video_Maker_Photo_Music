@@ -146,6 +146,7 @@
     <string name="projects_item_info">%1$d photos • %2$s</string>
     <string name="projects_delete_title">Delete Project?</string>
     <string name="projects_delete_message">\"%s\" will be permanently deleted. This action cannot be undone.</string>
+    <string name="projects_removed_from_list">Removed from list</string>
 
     <!-- Export -->
     <string name="export_title">Export Video</string>

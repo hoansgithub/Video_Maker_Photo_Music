@@ -121,6 +121,7 @@
     <string name="projects_create_description">Magsimula ng bagong slideshow na proyekto</string>
     <string name="projects_delete_title">Tanggalin ang Proyekto?</string>
     <string name="projects_delete_message">Permanenteng matatanggal ang \"%s\". Hindi ito mababawi.</string>
+    <string name="projects_removed_from_list">Tinanggal mula sa listahan</string>
 
     <!-- Export -->
     <string name="export_title">I-export ang Video</string>

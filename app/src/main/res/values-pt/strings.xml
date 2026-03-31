@@ -121,6 +121,7 @@
     <string name="projects_create_description">Iniciar um novo projeto de slideshow</string>
     <string name="projects_delete_title">Excluir Projeto?</string>
     <string name="projects_delete_message">\"%s\" será excluído permanentemente. Esta ação não pode ser desfeita.</string>
+    <string name="projects_removed_from_list">Removido da lista</string>
 
     <!-- Export -->
     <string name="export_title">Exportar Vídeo</string>
