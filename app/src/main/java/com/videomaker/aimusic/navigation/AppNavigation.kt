@@ -136,6 +136,9 @@ fun AppNavigation(
                     }
                 }
             }
+            WidgetActions.ACTION_CREATE_VIDEO -> {
+                backStack.add(AppRoute.AssetPicker())
+            }
         }
         onDeepLinkConsumed()
     }

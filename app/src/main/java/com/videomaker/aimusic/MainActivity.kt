@@ -77,7 +77,8 @@ class MainActivity : AppCompatActivity() {
             WidgetActions.ACTION_OPEN_TRENDING_SONG,
             WidgetActions.ACTION_OPEN_TEMPLATE_DETAIL,
             WidgetActions.ACTION_OPEN_TEMPLATE_WITH_SONG,
-            WidgetActions.ACTION_OPEN_SONG_PLAYER
+            WidgetActions.ACTION_OPEN_SONG_PLAYER,
+            WidgetActions.ACTION_CREATE_VIDEO
         )
     }
 }

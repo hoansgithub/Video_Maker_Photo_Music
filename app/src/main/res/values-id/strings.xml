@@ -282,4 +282,7 @@
     <string name="widget_recently">Terbaru</string>
     <string name="widget_trending_song">Lagu Trending</string>
     <string name="widget_trending_song_hot">Hot</string>
+    <string name="shortcut_trending_search_long">Pencarian Trending</string>
+    <string name="shortcut_create_video_long">Buat Video</string>
+    <string name="shortcut_choose_template_long">Pilih Template Video</string>
 </resources>
