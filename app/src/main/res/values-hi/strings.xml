@@ -63,6 +63,13 @@
     <string name="settings_language_description">ऐप की भाषा बदलें</string>
     <string name="settings_about">के बारे में</string>
     <string name="settings_version">संस्करण</string>
+    <string name="settings_uninstall">अनइंस्टॉल करें</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">इसे एक और मौका दें</string>
+    <string name="uninstall_description">क्या आप वाकई अनइंस्टॉल करना चाहते हैं?</string>
+    <string name="uninstall_confirm">फिर भी अनइंस्टॉल करें</string>
+    <string name="uninstall_cancel">अनइंस्टॉल न करें। और जानें</string>
     <string name="settings_app_widet">विजेट जोड़ें</string>
     <string name="settings_rate_us">हमें रेट करें</string>
     <string name="settings_share_with_friends">दोस्तों के साथ शेयर करें</string>
@@ -285,4 +292,5 @@
     <string name="shortcut_trending_search_long">ट्रेंडिंग सर्च</string>
     <string name="shortcut_create_video_long">वीडियो बनाएं</string>
     <string name="shortcut_choose_template_long">वीडियो टेम्पलेट चुनें</string>
+    <string name="shortcut_uninstall_long">ऐप अनइंस्टॉल करें</string>
 </resources>

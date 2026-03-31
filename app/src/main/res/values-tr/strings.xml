@@ -63,6 +63,13 @@
     <string name="settings_language_description">Uygulama dilini değiştir</string>
     <string name="settings_about">Hakkında</string>
     <string name="settings_version">Sürüm</string>
+    <string name="settings_uninstall">Kaldır</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Bir kez daha dene</string>
+    <string name="uninstall_description">Kaldırmak istediğine emin misin?</string>
+    <string name="uninstall_confirm">Yine de kaldır</string>
+    <string name="uninstall_cancel">Kaldırma. Daha fazlasını keşfet</string>
     <string name="settings_app_widet">Widget Ekle</string>
     <string name="settings_rate_us">Bizi Değerlendirin</string>
     <string name="settings_share_with_friends">Arkadaşlarla Paylaş</string>
@@ -285,4 +292,5 @@
     <string name="shortcut_trending_search_long">Trend Arama</string>
     <string name="shortcut_create_video_long">Video Oluştur</string>
     <string name="shortcut_choose_template_long">Video Şablonu Seç</string>
+    <string name="shortcut_uninstall_long">Uygulamayı Kaldır</string>
 </resources>

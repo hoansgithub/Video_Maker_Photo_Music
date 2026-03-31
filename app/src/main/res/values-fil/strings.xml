@@ -63,6 +63,13 @@
     <string name="settings_language_description">Baguhin ang wika ng app</string>
     <string name="settings_about">Tungkol sa</string>
     <string name="settings_version">Bersyon</string>
+    <string name="settings_uninstall">I-uninstall</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Subukan muli ito</string>
+    <string name="uninstall_description">Sigurado ka bang gusto mong i-uninstall?</string>
+    <string name="uninstall_confirm">I-uninstall pa rin</string>
+    <string name="uninstall_cancel">Huwag i-uninstall. Tuklasin pa</string>
     <string name="settings_app_widet">Magdagdag ng Widget</string>
     <string name="settings_rate_us">I-rate Kami</string>
     <string name="settings_share_with_friends">Ibahagi sa mga Kaibigan</string>
@@ -285,4 +292,5 @@
     <string name="shortcut_trending_search_long">Trending na Paghahanap</string>
     <string name="shortcut_create_video_long">Lumikha ng Video</string>
     <string name="shortcut_choose_template_long">Pumili ng Template ng Video</string>
+    <string name="shortcut_uninstall_long">I-uninstall ang App</string>
 </resources>

@@ -63,6 +63,13 @@
     <string name="settings_language_description">تغيير لغة التطبيق</string>
     <string name="settings_about">حول</string>
     <string name="settings_version">الإصدار</string>
+    <string name="settings_uninstall">إلغاء التثبيت</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">أعطها فرصة أخرى</string>
+    <string name="uninstall_description">هل أنت متأكد أنك تريد إلغاء التثبيت؟</string>
+    <string name="uninstall_confirm">إلغاء التثبيت على أي حال</string>
+    <string name="uninstall_cancel">لا تلغِ التثبيت. اكتشف المزيد</string>
     <string name="settings_app_widet">إضافة ويدجت</string>
     <string name="settings_rate_us">قيّمنا</string>
     <string name="settings_share_with_friends">شارك مع الأصدقاء</string>
@@ -285,4 +292,5 @@
     <string name="shortcut_trending_search_long">البحث عن الرائج</string>
     <string name="shortcut_create_video_long">إنشاء فيديو</string>
     <string name="shortcut_choose_template_long">اختر قالب فيديو</string>
+    <string name="shortcut_uninstall_long">إلغاء تثبيت التطبيق</string>
 </resources>

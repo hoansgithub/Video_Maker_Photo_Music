@@ -63,6 +63,13 @@
     <string name="settings_language_description">Ubah bahasa aplikasi</string>
     <string name="settings_about">Tentang</string>
     <string name="settings_version">Versi</string>
+    <string name="settings_uninstall">Hapus Instalan</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Coba lagi</string>
+    <string name="uninstall_description">Apakah kamu yakin ingin menghapus instalasi?</string>
+    <string name="uninstall_confirm">Tetap hapus instalasi</string>
+    <string name="uninstall_cancel">Jangan hapus. Temukan lebih banyak</string>
     <string name="settings_app_widet">Tambah Widget</string>
     <string name="settings_rate_us">Beri Nilai Kami</string>
     <string name="settings_share_with_friends">Bagikan ke Teman</string>
@@ -285,4 +292,5 @@
     <string name="shortcut_trending_search_long">Pencarian Trending</string>
     <string name="shortcut_create_video_long">Buat Video</string>
     <string name="shortcut_choose_template_long">Pilih Template Video</string>
+    <string name="shortcut_uninstall_long">Hapus Instalasi App</string>
 </resources>

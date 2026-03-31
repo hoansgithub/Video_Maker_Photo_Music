@@ -73,6 +73,7 @@ import com.videomaker.aimusic.modules.root.RootViewModel
 import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
 import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
+import com.videomaker.aimusic.modules.settings.UninstallViewModel
 import com.videomaker.aimusic.widget.WidgetViewModel
 
 /**
@@ -529,6 +530,25 @@ class MusicPlayerViewModelFactory(
 }
 
 /**
+ * Factory wrapper for UninstallViewModel.
+ */
+class UninstallViewModelFactory(
+    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
+    private val observeLikedSongsUseCase: ObserveLikedSongsUseCase,
+    private val templateRepository: TemplateRepository,
+    private val songRepository: SongRepository,
+) {
+    fun create(): UninstallViewModel {
+        return UninstallViewModel(
+            observeLikedTemplatesUseCase = observeLikedTemplatesUseCase,
+            observeLikedSongsUseCase = observeLikedSongsUseCase,
+            templateRepository = templateRepository,
+            songRepository = songRepository,
+        )
+    }
+}
+
+/**
  * Factory wrapper for WidgetViewModel.
  */
 class WidgetViewModelFactory(
@@ -714,6 +734,16 @@ val presentationModule = module {
     single {
         EffectSetViewModelFactory(
             getEffectSetsPagedUseCase = get()
+        )
+    }
+
+    // Uninstall ViewModel factory (singleton - stateless factory)
+    single {
+        UninstallViewModelFactory(
+            observeLikedTemplatesUseCase = get(),
+            observeLikedSongsUseCase = get(),
+            templateRepository = get(),
+            songRepository = get(),
         )
     }
 

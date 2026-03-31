@@ -37,13 +37,18 @@ class MainActivity : AppCompatActivity() {
     // Set only on first launch (not rotation) and on new widget intents.
     private var pendingDeepLink: Intent? by mutableStateOf(null)
 
+    // Set to true when launched via the "Uninstall App" shortcut.
+    private var navigateToUninstall: Boolean by mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Capture widget intent only on first launch, not on rotation restore
-        if (savedInstanceState == null && isWidgetIntent(intent)) {
-            pendingDeepLink = intent
+        if (savedInstanceState == null) {
+            when {
+                intent.action == ACTION_UNINSTALL_APP -> navigateToUninstall = true
+                isWidgetIntent(intent) -> pendingDeepLink = intent
+            }
         }
 
         setContent {
@@ -51,18 +56,21 @@ class MainActivity : AppCompatActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavigation(
                         pendingDeepLink = pendingDeepLink,
-                        onDeepLinkConsumed = { pendingDeepLink = null }
+                        onDeepLinkConsumed = { pendingDeepLink = null },
+                        navigateToUninstall = navigateToUninstall,
+                        onUninstallNavigationConsumed = { navigateToUninstall = false }
                     )
                 }
             }
         }
     }
 
-    // Called when the app is already running and a widget is tapped
+    // Called when the app is already running and a shortcut or widget is tapped
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (isWidgetIntent(intent)) {
-            pendingDeepLink = intent
+        when {
+            intent.action == ACTION_UNINSTALL_APP -> navigateToUninstall = true
+            isWidgetIntent(intent) -> pendingDeepLink = intent
         }
     }
 
@@ -71,6 +79,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        const val ACTION_UNINSTALL_APP = "com.videomaker.aimusic.action.UNINSTALL_APP"
+
         private val WIDGET_ACTIONS = setOf(
             WidgetActions.ACTION_OPEN_SEARCH,
             WidgetActions.ACTION_OPEN_TRENDING_TEMPLATE,

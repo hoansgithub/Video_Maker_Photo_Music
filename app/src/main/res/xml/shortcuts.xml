@@ -12,7 +12,6 @@
             android:action="com.videomaker.aimusic.action.OPEN_SEARCH"
             android:targetPackage="com.videomaker.aimusic"
             android:targetClass="com.videomaker.aimusic.MainActivity" />
-        <categories android:name="android.shortcut.conversation" />
     </shortcut>
 
     <!-- Shortcut 2: Create Video -->
@@ -26,7 +25,6 @@
             android:action="com.videomaker.aimusic.action.CREATE_VIDEO"
             android:targetPackage="com.videomaker.aimusic"
             android:targetClass="com.videomaker.aimusic.MainActivity" />
-        <categories android:name="android.shortcut.conversation" />
     </shortcut>
 
     <!-- Shortcut 3: Choose Video Template -->
@@ -40,7 +38,19 @@
             android:action="com.videomaker.aimusic.action.OPEN_TRENDING_TEMPLATE"
             android:targetPackage="com.videomaker.aimusic"
             android:targetClass="com.videomaker.aimusic.MainActivity" />
-        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+
+    <!-- Shortcut 4: Uninstall App -->
+    <shortcut
+        android:shortcutId="uninstall_app"
+        android:enabled="true"
+        android:icon="@drawable/ic_circle_cross"
+        android:shortcutShortLabel="@string/shortcut_uninstall_long"
+        android:shortcutLongLabel="@string/shortcut_uninstall_long">
+        <intent
+            android:action="com.videomaker.aimusic.action.UNINSTALL_APP"
+            android:targetPackage="com.videomaker.aimusic"
+            android:targetClass="com.videomaker.aimusic.MainActivity" />
     </shortcut>
 
 </shortcuts>
