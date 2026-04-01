@@ -788,7 +788,8 @@ private fun MusicInfoCapsule(currentSong: SongLoadState, playerDurationMs: Long?
 @Composable
 private fun TemplateThumbnailPage(template: VideoTemplate, isCurrentPage: Boolean) {
     val context = LocalContext.current
-    val thumbnailUrl = template.thumbnailPath.ifEmpty { null }
+    // Use high-resolution preview image for full-screen display
+    val thumbnailUrl = template.previewImagePath.ifEmpty { template.thumbnailPath.ifEmpty { null } }
 
     Box(
         modifier = Modifier.fillMaxSize().background(Color.Black),

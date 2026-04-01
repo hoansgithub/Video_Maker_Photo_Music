@@ -83,28 +83,45 @@ private class TransitionShaderProgram(
     private val transitionStartTimeUs: Long = clipStartTimeUs + clipDurationUs - transitionDurationUs
     private val transitionEndTimeUs: Long = clipStartTimeUs + clipDurationUs
 
+    companion object {
+        private const val TAG = "TransitionShaderProgram"
+        private const val VERTEX_SHADER = """
+attribute vec4 aPosition;
+attribute vec4 aTexCoords;
+varying vec2 vTexCoords;
+void main() {
+    gl_Position = aPosition;
+    vTexCoords = aTexCoords.xy;
+}
+"""
+    }
+
     override fun configure(inputWidth: Int, inputHeight: Int): Size {
         this.inputWidth = inputWidth
         this.inputHeight = inputHeight
 
-        // Initialize transition shader
+        // Initialize transition shader with comprehensive error handling
         if (glProgram == null) {
-            try {
+            // Validate shader code before compilation
+            val validationError = ShaderErrorHandler.validateShaderCode(transition.shaderCode)
+            if (validationError != null) {
+                android.util.Log.e(TAG, "Invalid shader '${transition.id}': $validationError")
+                // Use passthrough shader as fallback
+                val fallbackCode = ShaderErrorHandler.createPassthroughShader()
+                val fragmentShader = buildFragmentShader(fallbackCode)
+                initializeProgram(fragmentShader, "${transition.id} (fallback)")
+            } else {
+                // Attempt to compile user's shader
                 val fragmentShader = buildFragmentShader(transition.shaderCode)
-                val program = GlProgram(VERTEX_SHADER, fragmentShader)
-                program.setBufferAttribute(
-                    "aPosition",
-                    GlUtil.getNormalizedCoordinateBounds(),
-                    GlUtil.HOMOGENEOUS_COORDINATE_VECTOR_SIZE
-                )
-                program.setBufferAttribute(
-                    "aTexCoords",
-                    GlUtil.getTextureCoordinateBounds(),
-                    GlUtil.HOMOGENEOUS_COORDINATE_VECTOR_SIZE
-                )
-                glProgram = program
-            } catch (e: Exception) {
-                throw e
+                val success = initializeProgram(fragmentShader, transition.id)
+
+                // If compilation failed, fall back to passthrough shader
+                if (!success) {
+                    android.util.Log.w(TAG, "Falling back to passthrough shader for '${transition.id}'")
+                    val fallbackCode = ShaderErrorHandler.createPassthroughShader()
+                    val fallbackShader = buildFragmentShader(fallbackCode)
+                    initializeProgram(fallbackShader, "${transition.id} (fallback)")
+                }
             }
         }
 
@@ -120,6 +137,44 @@ private class TransitionShaderProgram(
 
         isConfigured = true
         return Size(inputWidth, inputHeight)
+    }
+
+    /**
+     * Initialize GL program with comprehensive error handling
+     * Returns true if successful, false if failed
+     */
+    private fun initializeProgram(fragmentShader: String, shaderName: String): Boolean {
+        val result = ShaderErrorHandler.createProgram(VERTEX_SHADER, fragmentShader)
+
+        return when (result) {
+            is ShaderErrorHandler.ShaderResult.Success -> {
+                val program = result.program
+                try {
+                    // Set up attributes
+                    program.setBufferAttribute(
+                        "aPosition",
+                        GlUtil.getNormalizedCoordinateBounds(),
+                        GlUtil.HOMOGENEOUS_COORDINATE_VECTOR_SIZE
+                    )
+                    program.setBufferAttribute(
+                        "aTexCoords",
+                        GlUtil.getTextureCoordinateBounds(),
+                        GlUtil.HOMOGENEOUS_COORDINATE_VECTOR_SIZE
+                    )
+                    glProgram = program
+                    android.util.Log.d(TAG, "Successfully initialized shader '$shaderName'")
+                    true
+                } catch (e: Exception) {
+                    android.util.Log.e(TAG, "Failed to set buffer attributes for '$shaderName': ${e.message}")
+                    program.delete()
+                    false
+                }
+            }
+            is ShaderErrorHandler.ShaderResult.Failure -> {
+                ShaderErrorHandler.logShaderError(result.error, shaderName)
+                false
+            }
+        }
     }
 
     override fun drawFrame(inputTexId: Int, presentationTimeUs: Long) {
@@ -149,26 +204,21 @@ private class TransitionShaderProgram(
         val fromTexId = if (fromTextureId != -1) fromTextureId else inputTexId
         val toTexId = if (toTextureId != -1) toTextureId else inputTexId
 
-        program.setSamplerTexIdUniform("uFromSampler", fromTexId, 0)
-        program.setSamplerTexIdUniform("uToSampler", toTexId, 1)
+        // Set samplers with error handling
+        ShaderErrorHandler.safeSetSamplerTexIdUniform(program, "uFromSampler", fromTexId, 0)
+        ShaderErrorHandler.safeSetSamplerTexIdUniform(program, "uToSampler", toTexId, 1)
 
-        // Set uniforms
-        try {
-            program.setFloatUniform("progress", progress)
-        } catch (_: Exception) {
+        // Set uniforms with error handling - shader may not use all of these
+        ShaderErrorHandler.safeSetFloatUniform(program, "progress", progress)
+        ShaderErrorHandler.safeSetFloatUniform(program, "ratio", inputWidth.toFloat() / inputHeight.toFloat())
+        ShaderErrorHandler.safeSetFloatUniform(program, "smoothness", 0.05f)
+        ShaderErrorHandler.safeSetFloatsUniform(program, "fadeColor", floatArrayOf(0f, 0f, 0f))
+
+        // Verify GL state before drawing
+        if (!ShaderErrorHandler.isGlStateValid()) {
+            android.util.Log.w(TAG, "Invalid GL state before drawing, skipping frame")
+            return
         }
-
-        try {
-            program.setFloatUniform("ratio", inputWidth.toFloat() / inputHeight.toFloat())
-        } catch (_: Exception) {}
-
-        try {
-            program.setFloatUniform("smoothness", 0.05f)
-        } catch (_: Exception) {}
-
-        try {
-            program.setFloatsUniform("fadeColor", floatArrayOf(0f, 0f, 0f))
-        } catch (_: Exception) {}
 
         program.bindAttributesAndUniforms()
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
@@ -259,15 +309,4 @@ void main() {
 """
     }
 
-    companion object {
-        private const val VERTEX_SHADER = """
-attribute vec4 aPosition;
-attribute vec4 aTexCoords;
-varying vec2 vTexCoords;
-void main() {
-    gl_Position = aPosition;
-    vTexCoords = aTexCoords.xy;
-}
-"""
-    }
 }

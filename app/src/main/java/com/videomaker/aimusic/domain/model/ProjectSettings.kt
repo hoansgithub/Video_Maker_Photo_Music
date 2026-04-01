@@ -60,25 +60,22 @@ data class ProjectSettings(
      * @return Validated ProjectSettings with corrected values
      */
     fun validate(): ProjectSettings {
-        val validImageDurations = IMAGE_DURATION_OPTIONS.map { it * 1000L }
-        val validTransitionPercentages = TRANSITION_PERCENTAGE_OPTIONS
+        val minDurationMs = (MIN_IMAGE_DURATION_SECONDS * 1000).toLong()
+        val maxDurationMs = (MAX_IMAGE_DURATION_SECONDS * 1000).toLong()
+        val stepMs = (IMAGE_DURATION_STEP * 1000).toLong()
 
         return copy(
-            // Ensure image duration is one of the valid options
-            imageDurationMs = if (imageDurationMs in validImageDurations) {
-                imageDurationMs
-            } else {
-                // Find closest valid option
-                validImageDurations.minByOrNull {
-                    kotlin.math.abs(it - imageDurationMs)
-                } ?: 3000L
+            // Ensure image duration is within valid range and rounded to nearest 0.1s step
+            imageDurationMs = imageDurationMs.coerceIn(minDurationMs, maxDurationMs).let { duration ->
+                // Round to nearest step (100ms for 0.1s)
+                ((duration + stepMs / 2) / stepMs) * stepMs
             },
             // Ensure transition percentage is one of the valid options
-            transitionPercentage = if (transitionPercentage in validTransitionPercentages) {
+            transitionPercentage = if (transitionPercentage in TRANSITION_PERCENTAGE_OPTIONS) {
                 transitionPercentage
             } else {
                 // Find closest valid option
-                validTransitionPercentages.minByOrNull {
+                TRANSITION_PERCENTAGE_OPTIONS.minByOrNull {
                     kotlin.math.abs(it - transitionPercentage)
                 } ?: 30
             },
@@ -90,8 +87,11 @@ data class ProjectSettings(
     companion object {
         val DEFAULT = ProjectSettings()
 
-        // Available image durations (in seconds): 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-        val IMAGE_DURATION_OPTIONS = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        // Image duration range in seconds with 0.1s increments
+        // Range covers all Supabase templates (min: 0.628s, max: 1.667s as of 2026-04-01)
+        const val MIN_IMAGE_DURATION_SECONDS = 0.5f
+        const val MAX_IMAGE_DURATION_SECONDS = 5.0f
+        const val IMAGE_DURATION_STEP = 0.1f
 
         // Available transition percentages: 10%, 20%, 30%, 40%, 50%
         val TRANSITION_PERCENTAGE_OPTIONS = listOf(10, 20, 30, 40, 50)

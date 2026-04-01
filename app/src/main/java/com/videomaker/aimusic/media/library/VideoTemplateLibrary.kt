@@ -87,6 +87,7 @@ private data class VideoTemplateJson(
         id = id,
         name = name,
         thumbnailPath = thumbnailPath,
+        previewImagePath = thumbnailPath, // Fallback uses same image for both
         songId = songId,
         effectSetId = effectSetId,
         aspectRatio = aspectRatio,
