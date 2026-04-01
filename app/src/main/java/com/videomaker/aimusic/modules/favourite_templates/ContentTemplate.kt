@@ -40,10 +40,7 @@ fun ContentTemplate(
     ) {
         item(key = "template_grid", contentType = "grid") {
             val aspectRatios = remember(state) {
-                val listSize = state.size
-                List(listSize) { index ->
-                    parseTemplateAspectRatio(index,listSize)
-                }
+                state.map { parseTemplateAspectRatio(it.aspectRatio) }
             }
 
             StaggeredGrid(
@@ -73,23 +70,17 @@ fun ContentTemplate(
     }
 }
 
-private fun parseTemplateAspectRatio(
-    index: Int,
-    listSize: Int
-): Float {
-    val isOddList = listSize % 2 != 0
-
-    return if (isOddList) {
-        if (index % 2 == 0) {
-            188f / 200f
+private fun parseTemplateAspectRatio(aspectRatio: String): Float {
+    return try {
+        val parts = aspectRatio.split(":")
+        if (parts.size == 2) {
+            val width = parts[0].toFloatOrNull() ?: 9f
+            val height = parts[1].toFloatOrNull() ?: 16f
+            width / height
         } else {
-            188f / 250f
+            9f / 16f
         }
-    } else {
-        if (index % 2 == 0) {
-            188f / 250f
-        } else {
-            188f / 200f
-        }
+    } catch (_: Exception) {
+        9f / 16f
     }
 }

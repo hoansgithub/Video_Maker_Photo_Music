@@ -188,7 +188,7 @@ fun ProjectsTabContent(
         // Content with top padding
         Column(
             modifier = Modifier
-                .padding(top = topBarHeight + 16.dp)
+                .padding(top = topBarHeight)
                 .fillMaxSize()
         ) {
             ProjectTabRow(
@@ -358,20 +358,11 @@ fun ProjectTabRow(
         modifier = modifier
             .fillMaxWidth()
     ) {
-        Spacer(
-            modifier = Modifier
-                .matchParentSize()
-                .background(
-                    Color.White.copy(0.08f),
-                )
-                .blur(12.dp)
-        )
-
         LazyRow(
             state = state,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp, bottom = 16.dp),
+                .padding(top = 8.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             contentPadding = PaddingValues(start = 10.dp, end = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
