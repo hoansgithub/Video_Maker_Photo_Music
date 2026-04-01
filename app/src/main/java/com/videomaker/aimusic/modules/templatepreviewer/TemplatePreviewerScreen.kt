@@ -449,7 +449,7 @@ private fun TemplatePreviewerReadyContent(
                     isLoading = ctaLoading,
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_circle_plus_v2),
+                            painter = painterResource(id = R.drawable.ic_circle_plus),
                             contentDescription = null,
                             tint = Color.Unspecified,
                             modifier = Modifier.size(24.dp)

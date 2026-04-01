@@ -1,7 +1,10 @@
 package com.videomaker.aimusic.modules.projects
 
+import android.content.Context
+import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.videomaker.aimusic.media.export.MediaStoreHelper
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoTemplate
@@ -14,6 +17,8 @@ import com.videomaker.aimusic.domain.usecase.ObserveLikedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.ObserveLikedTemplatesUseCase
 import com.videomaker.aimusic.domain.usecase.UnlikeSongUseCase
 import com.videomaker.aimusic.domain.usecase.UnlikeTemplateUseCase
+import com.videomaker.aimusic.ui.components.ProcessToastState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +27,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 // ============================================
 // UI STATE
@@ -93,6 +100,9 @@ class ProjectsViewModel(
 
     private val _selectedSong = MutableStateFlow<MusicSong?>(null)
     val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
+
+    private val _toastState = MutableStateFlow<ProcessToastState?>(null)
+    val toastState: StateFlow<ProcessToastState?> = _toastState.asStateFlow()
 
     val templateStateLocal: StateFlow<List<VideoTemplate>> = observeLikedTemplatesUseCase()
         .catch { e -> emit(emptyList()) }
@@ -240,5 +250,89 @@ class ProjectsViewModel(
 
     fun onSeeAllTemplates() {
         _navigationEvent.value = ProjectsNavigationEvent.NavigateToAllTemplates
+    }
+
+    /**
+     * Download project video to gallery
+     */
+    fun onDownloadProject(project: Project, context: Context) {
+        viewModelScope.launch {
+            _toastState.value = ProcessToastState.Loading("Downloading...")
+
+            val videoFile = findProjectVideoFile(context, project.id)
+            if (videoFile == null) {
+                _toastState.value = ProcessToastState.Error("Video file not found")
+                return@launch
+            }
+
+            val result = withContext(Dispatchers.IO) {
+                MediaStoreHelper.saveVideoToGallery(
+                    context = context.applicationContext,
+                    videoFile = videoFile,
+                    displayName = MediaStoreHelper.generateDisplayName(project.id)
+                )
+            }
+
+            _toastState.value = when (result) {
+                is MediaStoreHelper.SaveResult.Success -> {
+                    ProcessToastState.Success("Downloaded to gallery")
+                }
+                is MediaStoreHelper.SaveResult.Error -> {
+                    ProcessToastState.Error(result.message)
+                }
+            }
+        }
+    }
+
+    /**
+     * Get share video file for project
+     * Returns the video file if found, null otherwise
+     */
+    fun getShareVideoFile(context: Context, projectId: String): File? {
+        return findProjectVideoFile(context, projectId)
+    }
+
+    /**
+     * Show toast for share operation
+     */
+    fun onShareStarted() {
+        _toastState.value = ProcessToastState.Loading("Preparing to share...")
+    }
+
+    /**
+     * Show toast for share success
+     */
+    fun onShareCompleted() {
+        _toastState.value = ProcessToastState.Success("Shared")
+    }
+
+    /**
+     * Show toast for share error
+     */
+    fun onShareError(message: String) {
+        _toastState.value = ProcessToastState.Error(message)
+    }
+
+    /**
+     * Dismiss toast
+     */
+    fun onToastDismissed() {
+        _toastState.value = null
+    }
+
+    /**
+     * Find the most recent exported video file for a project
+     */
+    private fun findProjectVideoFile(context: Context, projectId: String): File? {
+        val moviesDir = context.getExternalFilesDir(Environment.DIRECTORY_MOVIES)
+            ?: context.filesDir
+
+        // Find all files matching the project ID pattern
+        val matchingFiles = moviesDir.listFiles { file ->
+            file.name.startsWith("video_${projectId}_") && file.extension == "mp4"
+        }
+
+        // Return the most recently modified file
+        return matchingFiles?.maxByOrNull { it.lastModified() }
     }
 }

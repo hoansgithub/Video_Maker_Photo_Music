@@ -545,6 +545,41 @@ private fun FeaturedTemplateCard(
                     .align(Alignment.BottomCenter)
             )
 
+            // Use count badge — top-right
+            if (template.useCount > 0) {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(dimens.spaceMd)
+                        .background(
+                            color = Color.Black.copy(alpha = 0.6f),
+                            shape = RoundedCornerShape(999.dp)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color.White.copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(999.dp)
+                        )
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_heart),
+                        contentDescription = null,
+                        tint = Gray200,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        text = formatUseCount(template.useCount),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray200,
+                        maxLines = 1
+                    )
+                }
+            }
+
             // Template name — bottom-left
             Text(
                 text = template.name,
@@ -559,6 +594,21 @@ private fun FeaturedTemplateCard(
             )
         }
     }
+}
+
+/**
+ * Format use count for display (1000 -> 1K, 1500000 -> 1.5M)
+ */
+private fun formatUseCount(count: Long): String = when {
+    count >= 1_000_000 -> {
+        val v = count / 1_000_000.0
+        if (v % 1.0 == 0.0) "${v.toLong()}M" else "%.1fM".format(v)
+    }
+    count >= 1_000 -> {
+        val v = count / 1_000.0
+        if (v % 1.0 == 0.0) "${v.toLong()}K" else "%.1fK".format(v)
+    }
+    else -> count.toString()
 }
 
 // ============================================

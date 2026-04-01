@@ -30,7 +30,7 @@
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galeri</string>
     <string name="home_tab_songs">Şarkılar</string>
-    <string name="home_tab_projects">Projelerim</string>
+    <string name="home_tab_projects">Kütüphane</string>
 
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">Sizin için</string>

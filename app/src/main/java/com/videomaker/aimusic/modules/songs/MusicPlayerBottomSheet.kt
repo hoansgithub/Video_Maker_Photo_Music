@@ -242,7 +242,7 @@ fun MusicPlayerBottomSheet(
 
                         Spacer(Modifier.width(12.dp))
 
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = song.name,
                                 fontSize = 15.sp,
@@ -264,8 +264,6 @@ fun MusicPlayerBottomSheet(
                         Spacer(Modifier.width(12.dp))
 
                         EqualizerBars(isPlaying = isPlaying)
-
-                        Spacer(Modifier.weight(1f))
 
                         Spacer(Modifier.width(12.dp))
 

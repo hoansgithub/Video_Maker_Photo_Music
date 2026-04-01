@@ -40,9 +40,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Folder
+import androidx.core.content.FileProvider
+import android.content.Intent
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -92,6 +96,7 @@ import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.projects.SongTabState
 import com.videomaker.aimusic.modules.projects.TemplateTabState
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
+import com.videomaker.aimusic.ui.components.ProcessToast
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.StaggeredGrid
 import com.videomaker.aimusic.ui.components.TemplateCard
@@ -126,8 +131,10 @@ fun ProjectsTabContent(
     val songStateLocal by viewModel.songStateLocal.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
+    val toastState by viewModel.toastState.collectAsStateWithLifecycle()
     val audioPreviewCache: AudioPreviewCache = koinInject()
     var showRemovedMessage by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(showRemovedMessage) {
         if (showRemovedMessage) {
@@ -234,6 +241,12 @@ fun ProjectsTabContent(
                                     onDeleteProject = { project ->
                                         viewModel.onDeleteProject(project)
                                     },
+                                    onDownloadProject = { project ->
+                                        viewModel.onDownloadProject(project, context)
+                                    },
+                                    onShareProject = { project ->
+                                        shareProjectVideo(context, project, viewModel)
+                                    },
                                     onCreateClick = onCreateClick
                                 )
                             }
@@ -333,6 +346,12 @@ fun ProjectsTabContent(
                 }
             }
         }
+
+        // Process toast (download/share)
+        ProcessToast(
+            state = toastState,
+            onDismiss = viewModel::onToastDismissed
+        )
     }
 
     // Music player bottom sheet — shown when a song is tapped
@@ -495,6 +514,8 @@ private fun ProjectsListContent(
     projects: List<Project>,
     onProjectClick: (Project) -> Unit,
     onDeleteProject: (Project) -> Unit,
+    onDownloadProject: (Project) -> Unit,
+    onShareProject: (Project) -> Unit,
     onCreateClick: () -> Unit
 ) {
     val dimens = AppDimens.current
@@ -515,6 +536,8 @@ private fun ProjectsListContent(
                     projects = projects,
                     onProjectClick = onProjectClick,
                     onDeleteProject = onDeleteProject,
+                    onDownloadProject = onDownloadProject,
+                    onShareProject = onShareProject,
                     spacing = dimens.spaceSm
                 )
             }
@@ -555,6 +578,8 @@ private fun ProjectsStaggeredGrid(
     projects: List<Project>,
     onProjectClick: (Project) -> Unit,
     onDeleteProject: (Project) -> Unit,
+    onDownloadProject: (Project) -> Unit,
+    onShareProject: (Project) -> Unit,
     spacing: Dp
 ) {
     if (projects.isEmpty()) return
@@ -574,7 +599,9 @@ private fun ProjectsStaggeredGrid(
         ProjectGridCard(
             project = project,
             onClick = { onProjectClick(project) },
-            onDelete = { onDeleteProject(project) }
+            onDelete = { onDeleteProject(project) },
+            onDownload = { onDownloadProject(project) },
+            onShare = { onShareProject(project) }
         )
     }
 }
@@ -608,7 +635,7 @@ private fun CreateProjectFloatingButton(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_circle_plus_v2),
+            painter = painterResource(id = R.drawable.ic_circle_plus),
             contentDescription = "Create New Project",
             modifier = Modifier.size(32.dp),
             tint = Color.Unspecified
@@ -623,7 +650,9 @@ private fun CreateProjectFloatingButton(
 private fun ProjectGridCard(
     project: Project,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onDownload: () -> Unit,
+    onShare: () -> Unit
 ) {
     val dimens = AppDimens.current
     val coroutineScope = rememberCoroutineScope()
@@ -789,6 +818,32 @@ private fun ProjectGridCard(
                     onDismissRequest = { showMenu = false }
                 ) {
                     DropdownMenuItem(
+                        text = { Text(stringResource(R.string.projects_download)) },
+                        onClick = {
+                            showMenu = false
+                            onDownload()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.projects_share)) },
+                        onClick = {
+                            showMenu = false
+                            onShare()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    DropdownMenuItem(
                         text = { Text(stringResource(R.string.projects_delete)) },
                         onClick = {
                             showMenu = false
@@ -816,3 +871,40 @@ private fun ProjectGridCard(
 private val projectDateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
 private fun formatProjectDate(timestamp: Long): String = projectDateFormatter.format(Date(timestamp))
+
+/**
+ * Share project video using system share sheet
+ */
+private fun shareProjectVideo(
+    context: android.content.Context,
+    project: Project,
+    viewModel: ProjectsViewModel
+) {
+    viewModel.onShareStarted()
+
+    try {
+        val videoFile = viewModel.getShareVideoFile(context, project.id)
+        if (videoFile == null || !videoFile.exists()) {
+            viewModel.onShareError(context.getString(R.string.export_error_file_not_found))
+            return
+        }
+
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            videoFile
+        )
+
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "video/mp4"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.export_share_video)))
+        viewModel.onShareCompleted()
+    } catch (e: Exception) {
+        android.util.Log.e("ProjectsTab", "Share failed", e)
+        viewModel.onShareError(e.message ?: context.getString(R.string.export_error_share_failed))
+    }
+}

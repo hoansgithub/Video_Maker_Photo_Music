@@ -30,7 +30,7 @@
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galeria</string>
     <string name="home_tab_songs">Músicas</string>
-    <string name="home_tab_projects">Meus Projetos</string>
+    <string name="home_tab_projects">Biblioteca</string>
 
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">Para você</string>

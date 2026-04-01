@@ -527,7 +527,7 @@ private fun SongCard(
                 Spacer(modifier = Modifier.height(dimens.spaceXxs))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_repeat),
+                        painter = painterResource(R.drawable.ic_heart),
                         contentDescription = null,
                         tint = Color.Unspecified,
                         modifier = Modifier.size(14.dp)

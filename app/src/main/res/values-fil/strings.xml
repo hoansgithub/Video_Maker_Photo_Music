@@ -30,7 +30,7 @@
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Gallery</string>
     <string name="home_tab_songs">Mga Kanta</string>
-    <string name="home_tab_projects">Aking mga Proyekto</string>
+    <string name="home_tab_projects">Aklatan</string>
 
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">Para sa iyo</string>

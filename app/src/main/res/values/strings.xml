@@ -29,7 +29,7 @@
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Gallery</string>
     <string name="home_tab_songs">Songs</string>
-    <string name="home_tab_projects">My Videos</string>
+    <string name="home_tab_projects">Library</string>
 
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">For you</string>
@@ -136,6 +136,8 @@
     <!-- Projects -->
     <string name="projects_title">My Projects</string>
     <string name="projects_menu">Project menu</string>
+    <string name="projects_download">Download</string>
+    <string name="projects_share">Share</string>
     <string name="projects_delete">Delete</string>
     <string name="projects_empty">No projects yet</string>
     <string name="projects_empty_description">Create your first project to see it here</string>

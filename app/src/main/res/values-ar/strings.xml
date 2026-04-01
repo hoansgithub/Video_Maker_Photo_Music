@@ -30,7 +30,7 @@
     <!-- Home Tabs -->
     <string name="home_tab_gallery">معرض</string>
     <string name="home_tab_songs">أغاني</string>
-    <string name="home_tab_projects">مشاريعي</string>
+    <string name="home_tab_projects">مكتبة</string>
 
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">لك</string>
