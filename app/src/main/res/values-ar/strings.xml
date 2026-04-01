@@ -63,6 +63,13 @@
     <string name="settings_language_description">تغيير لغة التطبيق</string>
     <string name="settings_about">حول</string>
     <string name="settings_version">الإصدار</string>
+    <string name="settings_uninstall">إلغاء التثبيت</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">أعطها فرصة أخرى</string>
+    <string name="uninstall_description">هل أنت متأكد أنك تريد إلغاء التثبيت؟</string>
+    <string name="uninstall_confirm">إلغاء التثبيت على أي حال</string>
+    <string name="uninstall_cancel">لا تلغِ التثبيت. اكتشف المزيد</string>
     <string name="settings_app_widet">إضافة ويدجت</string>
     <string name="settings_rate_us">قيّمنا</string>
     <string name="settings_share_with_friends">شارك مع الأصدقاء</string>
@@ -92,6 +99,21 @@
     <string name="editor_discard_changes">تجاهل التغييرات</string>
 
     <!-- Projects -->
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">الفيديوهات المنشأة</string>
+    <string name="projects_tab_liked_template">القوالب المفضلة</string>
+    <string name="projects_tab_liked_song">الأغاني المفضلة</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">الأغاني فارغة</string>
+    <string name="like_song_search_button">البحث عن أغاني</string>
+    <string name="like_song_section_header">موسيقى لك</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">القوالب فارغة</string>
+    <string name="like_template_search_button">البحث عن قوالب</string>
+    <string name="like_template_section_header">قوالب الفيديو</string>
+
     <string name="projects_title">مشاريعي</string>
     <string name="projects_empty">لا توجد مشاريع بعد</string>
     <string name="projects_empty_description">أنشئ مشروعك الأول لتراه هنا</string>
@@ -99,6 +121,7 @@
     <string name="projects_create_description">ابدأ مشروع عرض شرائح جديد</string>
     <string name="projects_delete_title">حذف المشروع؟</string>
     <string name="projects_delete_message">سيتم حذف \"%s\" نهائياً. لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="projects_removed_from_list">تمت الإزالة من القائمة</string>
 
     <!-- Export -->
     <string name="export_title">تصدير الفيديو</string>
@@ -267,4 +290,8 @@
     <string name="widget_recently">مؤخراً</string>
     <string name="widget_trending_song">أغنية رائجة</string>
     <string name="widget_trending_song_hot">ساخن</string>
+    <string name="shortcut_trending_search_long">البحث عن الرائج</string>
+    <string name="shortcut_create_video_long">إنشاء فيديو</string>
+    <string name="shortcut_choose_template_long">اختر قالب فيديو</string>
+    <string name="shortcut_uninstall_long">إلغاء تثبيت التطبيق</string>
 </resources>

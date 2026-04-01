@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Color
 
 val Primary = Color(0xFFCCFF00)         // App tint color (bright yellow-lime)
 val PrimaryVariant = Color(0xFFAACC00)  // Darker variant (80% brightness)
+val Primary_N500 = Color(0xFF6255F6)  // Darker variant (80% brightness)
 val PrimaryLight = Color(0xFFE6FF66)    // Lighter variant (40% white mix)
 val PrimaryDark = Color(0xFF99CC00)     // Darkest variant (60% brightness)
 
@@ -53,6 +54,8 @@ val FoundationBlack = Color(0xFF030303)    //foundation screen background
 val FoundationBlack_100 = Color(0xFFB2B2B2)
 val Neutral_Black = Color(0xFF333333)
 val Neutral_N500 = Color(0xFF999999)
+val Neutral_N800 = Color(0xFF4D4D4D)
+val Neutral_N100 = Color(0xFF151515)
 val BackgroundDark = Color(0xFF09090B)      // Zinc-950 (Figma background)
 val BackgroundDarkElevated = Color(0xFF18181B) // Zinc-900 (elevated surface)
 val SurfaceDark = Color(0xFF27272A)         // Zinc-800 (card/container surface)

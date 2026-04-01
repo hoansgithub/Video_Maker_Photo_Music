@@ -63,6 +63,13 @@
     <string name="settings_language_description">Ubah bahasa aplikasi</string>
     <string name="settings_about">Tentang</string>
     <string name="settings_version">Versi</string>
+    <string name="settings_uninstall">Hapus Instalan</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Coba lagi</string>
+    <string name="uninstall_description">Apakah kamu yakin ingin menghapus instalasi?</string>
+    <string name="uninstall_confirm">Tetap hapus instalasi</string>
+    <string name="uninstall_cancel">Jangan hapus. Temukan lebih banyak</string>
     <string name="settings_app_widet">Tambah Widget</string>
     <string name="settings_rate_us">Beri Nilai Kami</string>
     <string name="settings_share_with_friends">Bagikan ke Teman</string>
@@ -91,6 +98,21 @@
     <string name="editor_save_and_exit">Simpan &amp; Keluar</string>
     <string name="editor_discard_changes">Buang Perubahan</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Video Dibuat</string>
+    <string name="projects_tab_liked_template">Template Disukai</string>
+    <string name="projects_tab_liked_song">Lagu Disukai</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Lagu Kosong</string>
+    <string name="like_song_search_button">Cari Lagu</string>
+    <string name="like_song_section_header">Musik untuk Anda</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Template Kosong</string>
+    <string name="like_template_search_button">Cari Template</string>
+    <string name="like_template_section_header">Template Video</string>
+
     <!-- Projects -->
     <string name="projects_title">Proyek Saya</string>
     <string name="projects_empty">Belum ada proyek</string>
@@ -99,6 +121,7 @@
     <string name="projects_create_description">Mulai proyek slideshow baru</string>
     <string name="projects_delete_title">Hapus Proyek?</string>
     <string name="projects_delete_message">\"%s\" akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.</string>
+    <string name="projects_removed_from_list">Dihapus dari daftar</string>
 
     <!-- Export -->
     <string name="export_title">Ekspor Video</string>
@@ -267,4 +290,8 @@
     <string name="widget_recently">Terbaru</string>
     <string name="widget_trending_song">Lagu Trending</string>
     <string name="widget_trending_song_hot">Hot</string>
+    <string name="shortcut_trending_search_long">Pencarian Trending</string>
+    <string name="shortcut_create_video_long">Buat Video</string>
+    <string name="shortcut_choose_template_long">Pilih Template Video</string>
+    <string name="shortcut_uninstall_long">Hapus Instalasi App</string>
 </resources>

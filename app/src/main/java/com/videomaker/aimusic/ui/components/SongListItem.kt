@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
@@ -23,6 +25,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
@@ -36,10 +39,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
@@ -53,6 +59,8 @@ fun SongListItem(
     name: String,
     artist: String,
     coverUrl: String,
+    isShowOption: Boolean = false,
+    onClickDelete: () -> Unit = {},
     onSongClick: () -> Unit,
     modifier: Modifier = Modifier,
     isPlaying: Boolean = false,
@@ -153,6 +161,52 @@ fun SongListItem(
                     modifier = Modifier.size(24.dp)
                 )
             }
+
+            if (isShowOption){
+                Spacer(modifier = Modifier.width(dimens.spaceMd))
+                SongItemMore {
+                    onClickDelete.invoke()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SongItemMore(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box (
+        modifier = modifier
+    ){
+        IconButton(
+            onClick = { expanded = true }
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_more_menu),
+                contentDescription = "More",
+                modifier = Modifier
+                    .size(24.dp),
+            )
+        }
+
+        CustomDropdownMenuWithPainter(
+            expanded = expanded,
+            offset = DpOffset(-110.dp, 0.dp),
+            onDismissRequest = { expanded = false }
+        ) {
+            CustomDropdownItemWithPainter(
+                painter = painterResource(id = R.drawable.ic_unheart),
+                title = "Unfavorite",
+                onClick = {
+                    onClick.invoke()
+                    expanded = false
+                },
+                showDivider = false
+            )
         }
     }
 }

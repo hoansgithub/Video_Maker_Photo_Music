@@ -141,4 +141,7 @@ sealed interface AppRoute : NavKey {
 
     @Serializable
     data object WidgetScreen : AppRoute
+
+    @Serializable
+    data object ConfirmUninstall : AppRoute
 }

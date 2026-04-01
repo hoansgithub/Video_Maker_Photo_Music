@@ -63,6 +63,13 @@
     <string name="settings_language_description">Alterar o idioma do aplicativo</string>
     <string name="settings_about">Sobre</string>
     <string name="settings_version">Versão</string>
+    <string name="settings_uninstall">Desinstalar</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Dê mais uma chance</string>
+    <string name="uninstall_description">Tem certeza que quer desinstalar?</string>
+    <string name="uninstall_confirm">Desinstalar mesmo assim</string>
+    <string name="uninstall_cancel">Não desinstalar. Descobrir mais</string>
     <string name="settings_app_widet">Adicionar Widget</string>
     <string name="settings_rate_us">Avalie-nos</string>
     <string name="settings_share_with_friends">Compartilhar com Amigos</string>
@@ -91,6 +98,21 @@
     <string name="editor_save_and_exit">Salvar e Sair</string>
     <string name="editor_discard_changes">Descartar Alterações</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Vídeo Criado</string>
+    <string name="projects_tab_liked_template">Template Curtido</string>
+    <string name="projects_tab_liked_song">Música Curtida</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Música está vazia</string>
+    <string name="like_song_search_button">Buscar Músicas</string>
+    <string name="like_song_section_header">Música para Você</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Modelo está vazio</string>
+    <string name="like_template_search_button">Buscar Modelos</string>
+    <string name="like_template_section_header">Modelos de Vídeo</string>
+
     <!-- Projects -->
     <string name="projects_title">Meus Projetos</string>
     <string name="projects_empty">Nenhum projeto ainda</string>
@@ -99,6 +121,7 @@
     <string name="projects_create_description">Iniciar um novo projeto de slideshow</string>
     <string name="projects_delete_title">Excluir Projeto?</string>
     <string name="projects_delete_message">\"%s\" será excluído permanentemente. Esta ação não pode ser desfeita.</string>
+    <string name="projects_removed_from_list">Removido da lista</string>
 
     <!-- Export -->
     <string name="export_title">Exportar Vídeo</string>
@@ -267,4 +290,8 @@
     <string name="widget_recently">Recente</string>
     <string name="widget_trending_song">Música em Alta</string>
     <string name="widget_trending_song_hot">Hot</string>
+    <string name="shortcut_trending_search_long">Pesquisa em Alta</string>
+    <string name="shortcut_create_video_long">Criar Vídeo</string>
+    <string name="shortcut_choose_template_long">Escolher Modelo de Vídeo</string>
+    <string name="shortcut_uninstall_long">Desinstalar App</string>
 </resources>

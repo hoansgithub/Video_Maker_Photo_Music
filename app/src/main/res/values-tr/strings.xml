@@ -63,6 +63,13 @@
     <string name="settings_language_description">Uygulama dilini değiştir</string>
     <string name="settings_about">Hakkında</string>
     <string name="settings_version">Sürüm</string>
+    <string name="settings_uninstall">Kaldır</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Bir kez daha dene</string>
+    <string name="uninstall_description">Kaldırmak istediğine emin misin?</string>
+    <string name="uninstall_confirm">Yine de kaldır</string>
+    <string name="uninstall_cancel">Kaldırma. Daha fazlasını keşfet</string>
     <string name="settings_app_widet">Widget Ekle</string>
     <string name="settings_rate_us">Bizi Değerlendirin</string>
     <string name="settings_share_with_friends">Arkadaşlarla Paylaş</string>
@@ -91,6 +98,21 @@
     <string name="editor_save_and_exit">Kaydet ve Çık</string>
     <string name="editor_discard_changes">Değişiklikleri At</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Oluşturulan Video</string>
+    <string name="projects_tab_liked_template">Beğenilen Şablon</string>
+    <string name="projects_tab_liked_song">Beğenilen Şarkı</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Şarkı Boş</string>
+    <string name="like_song_search_button">Şarkı Ara</string>
+    <string name="like_song_section_header">Sizin için Müzik</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Şablon Boş</string>
+    <string name="like_template_search_button">Şablon Ara</string>
+    <string name="like_template_section_header">Video Şablonları</string>
+
     <!-- Projects -->
     <string name="projects_title">Projelerim</string>
     <string name="projects_empty">Henüz proje yok</string>
@@ -99,6 +121,7 @@
     <string name="projects_create_description">Yeni bir slayt gösterisi projesi başlat</string>
     <string name="projects_delete_title">Proje Silinsin mi?</string>
     <string name="projects_delete_message">\"%s\" kalıcı olarak silinecek. Bu işlem geri alınamaz.</string>
+    <string name="projects_removed_from_list">Listeden kaldırıldı</string>
 
     <!-- Export -->
     <string name="export_title">Videoyu Dışa Aktar</string>
@@ -267,4 +290,8 @@
     <string name="widget_recently">Son Zamanlarda</string>
     <string name="widget_trending_song">Trend Şarkı</string>
     <string name="widget_trending_song_hot">Hot</string>
+    <string name="shortcut_trending_search_long">Trend Arama</string>
+    <string name="shortcut_create_video_long">Video Oluştur</string>
+    <string name="shortcut_choose_template_long">Video Şablonu Seç</string>
+    <string name="shortcut_uninstall_long">Uygulamayı Kaldır</string>
 </resources>

@@ -72,6 +72,13 @@
     <string name="settings_language_description">Change the app language</string>
     <string name="settings_about">About</string>
     <string name="settings_version">Version</string>
+    <string name="settings_uninstall">Uninstall</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Give it another try</string>
+    <string name="uninstall_description">Are your sure you want to uninstall?</string>
+    <string name="uninstall_confirm">Still uninstall app</string>
+    <string name="uninstall_cancel">Don’t Uninstall. Discover more</string>
 
     <!-- Editor -->
     <string name="editor_title">Edit Project</string>
@@ -111,6 +118,21 @@
     <string name="editor_effect_sets">Effect Sets</string>
     <string name="editor_retry">Retry</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Created Video</string>
+    <string name="projects_tab_liked_template">Liked Template</string>
+    <string name="projects_tab_liked_song">Liked Song</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Song is Empty</string>
+    <string name="like_song_search_button">Search Songs</string>
+    <string name="like_song_section_header">Music for You</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Template is Empty</string>
+    <string name="like_template_search_button">Search Templates</string>
+    <string name="like_template_section_header">Video Templates</string>
+
     <!-- Projects -->
     <string name="projects_title">My Projects</string>
     <string name="projects_menu">Project menu</string>
@@ -124,6 +146,7 @@
     <string name="projects_item_info">%1$d photos • %2$s</string>
     <string name="projects_delete_title">Delete Project?</string>
     <string name="projects_delete_message">\"%s\" will be permanently deleted. This action cannot be undone.</string>
+    <string name="projects_removed_from_list">Removed from list</string>
 
     <!-- Export -->
     <string name="export_title">Export Video</string>
@@ -292,6 +315,12 @@
     <string name="genre_blues">Blues</string>
     <string name="genre_metal">Metal</string>
     <string name="genre_soul">Soul</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_trending_search_long">Trending Search</string>
+    <string name="shortcut_create_video_long">Create Video</string>
+    <string name="shortcut_choose_template_long">Choose Video Template</string>
+    <string name="shortcut_uninstall_long">Uninstall App</string>
 
     <!--  Widget  -->
     <string name="widget_title">Widget</string>

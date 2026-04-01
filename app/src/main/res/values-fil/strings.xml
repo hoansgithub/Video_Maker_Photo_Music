@@ -63,6 +63,13 @@
     <string name="settings_language_description">Baguhin ang wika ng app</string>
     <string name="settings_about">Tungkol sa</string>
     <string name="settings_version">Bersyon</string>
+    <string name="settings_uninstall">I-uninstall</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Subukan muli ito</string>
+    <string name="uninstall_description">Sigurado ka bang gusto mong i-uninstall?</string>
+    <string name="uninstall_confirm">I-uninstall pa rin</string>
+    <string name="uninstall_cancel">Huwag i-uninstall. Tuklasin pa</string>
     <string name="settings_app_widet">Magdagdag ng Widget</string>
     <string name="settings_rate_us">I-rate Kami</string>
     <string name="settings_share_with_friends">Ibahagi sa mga Kaibigan</string>
@@ -91,6 +98,21 @@
     <string name="editor_save_and_exit">I-save at Lumabas</string>
     <string name="editor_discard_changes">Itapon ang mga Pagbabago</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Nilikha na Video</string>
+    <string name="projects_tab_liked_template">Liked na Template</string>
+    <string name="projects_tab_liked_song">Liked na Kanta</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Walang Kanta</string>
+    <string name="like_song_search_button">Maghanap ng Kanta</string>
+    <string name="like_song_section_header">Musika para sa Iyo</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Walang Template</string>
+    <string name="like_template_search_button">Maghanap ng Template</string>
+    <string name="like_template_section_header">Mga Video Template</string>
+
     <!-- Projects -->
     <string name="projects_title">Aking mga Proyekto</string>
     <string name="projects_empty">Wala pang proyekto</string>
@@ -99,6 +121,7 @@
     <string name="projects_create_description">Magsimula ng bagong slideshow na proyekto</string>
     <string name="projects_delete_title">Tanggalin ang Proyekto?</string>
     <string name="projects_delete_message">Permanenteng matatanggal ang \"%s\". Hindi ito mababawi.</string>
+    <string name="projects_removed_from_list">Tinanggal mula sa listahan</string>
 
     <!-- Export -->
     <string name="export_title">I-export ang Video</string>
@@ -267,4 +290,8 @@
     <string name="widget_recently">Kamakailan</string>
     <string name="widget_trending_song">Trending na Kanta</string>
     <string name="widget_trending_song_hot">Hot</string>
+    <string name="shortcut_trending_search_long">Trending na Paghahanap</string>
+    <string name="shortcut_create_video_long">Lumikha ng Video</string>
+    <string name="shortcut_choose_template_long">Pumili ng Template ng Video</string>
+    <string name="shortcut_uninstall_long">I-uninstall ang App</string>
 </resources>
