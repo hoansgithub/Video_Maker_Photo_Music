@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,27 +30,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.outlined.Folder
 import androidx.core.content.FileProvider
 import android.content.Intent
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -75,14 +64,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
@@ -97,6 +83,7 @@ import com.videomaker.aimusic.modules.projects.SongTabState
 import com.videomaker.aimusic.modules.projects.TemplateTabState
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.ui.components.ProcessToast
+import com.videomaker.aimusic.ui.components.ProjectCard
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.StaggeredGrid
 import com.videomaker.aimusic.ui.components.TemplateCard
@@ -106,9 +93,6 @@ import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -584,9 +568,16 @@ private fun ProjectsStaggeredGrid(
 ) {
     if (projects.isEmpty()) return
 
-    // Calculate aspect ratios from project settings
+    // Calculate adjusted aspect ratios to account for info section height
+    // Info section needs ~40dp for: date+menu row (20dp) + padding (20dp)
+    val infoSectionHeightDp = 40f
     val aspectRatios = projects.map { project ->
-        project.settings.aspectRatio.ratio
+        val thumbnailRatio = project.settings.aspectRatio.ratio
+        // Adjust ratio: assume card width of 180dp as baseline
+        val cardWidth = 180f
+        val thumbnailHeight = cardWidth / thumbnailRatio
+        val totalCardHeight = thumbnailHeight + infoSectionHeightDp
+        cardWidth / totalCardHeight // Adjusted ratio for full card including info section
     }
 
     StaggeredGrid(
@@ -596,7 +587,7 @@ private fun ProjectsStaggeredGrid(
         spacing = spacing,
         key = { project -> project.id }
     ) { project ->
-        ProjectGridCard(
+        ProjectCard(
             project = project,
             onClick = { onProjectClick(project) },
             onDelete = { onDeleteProject(project) },
@@ -642,235 +633,6 @@ private fun CreateProjectFloatingButton(
         )
     }
 }
-
-/**
- * Project card for grid layout (staggered)
- */
-@Composable
-private fun ProjectGridCard(
-    project: Project,
-    onClick: () -> Unit,
-    onDelete: () -> Unit,
-    onDownload: () -> Unit,
-    onShare: () -> Unit
-) {
-    val dimens = AppDimens.current
-    val coroutineScope = rememberCoroutineScope()
-    var showMenu by remember { mutableStateOf(false) }
-    var isVisible by remember { mutableStateOf(true) }
-
-    AnimatedVisibility(
-        visible = isVisible,
-        exit = shrinkVertically() + fadeOut()
-    ) {
-        Box {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(dimens.radiusMd))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                    .clickable(onClick = onClick)
-            ) {
-        // Thumbnail with aspect ratio
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(project.settings.aspectRatio.ratio)
-                .clip(RoundedCornerShape(topStart = dimens.radiusMd, topEnd = dimens.radiusMd))
-                .background(Color.Black.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            if (project.thumbnailUri != null) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(project.thumbnailUri)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = project.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else if (project.assets.isNotEmpty()) {
-                // Use first asset as thumbnail
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(project.assets.first().uri)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = project.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Outlined.Folder,
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-                )
-            }
-
-            // Duration badge at bottom-right
-            if (project.assets.isNotEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(dimens.spaceXs)
-                        .background(
-                            color = Color.Black.copy(alpha = 0.7f),
-                            shape = RoundedCornerShape(dimens.radiusSm)
-                        )
-                        .padding(horizontal = dimens.spaceXs, vertical = dimens.spaceXxs)
-                ) {
-                    Text(
-                        text = project.formattedDuration,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 10.sp,
-                        color = Color.White
-                    )
-                }
-            }
-
-            // Creation time badge at bottom-left
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(dimens.spaceXs)
-                    .background(
-                        color = Color.Black.copy(alpha = 0.7f),
-                        shape = RoundedCornerShape(dimens.radiusSm)
-                    )
-                    .padding(horizontal = dimens.spaceXs, vertical = dimens.spaceXxs)
-            ) {
-                Text(
-                    text = formatProjectDate(project.createdAt),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontSize = 10.sp,
-                    color = Color.White
-                )
-            }
-
-            // Play icon at center
-            Icon(
-                imageVector = Icons.Default.PlayArrow,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(
-                        color = Color.Black.copy(alpha = 0.5f),
-                        shape = CircleShape
-                    )
-                    .padding(8.dp),
-                tint = Color.White
-            )
-        }
-
-                // Project Info
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(dimens.spaceSm)
-                ) {
-                    Text(
-                        text = project.name,
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.height(dimens.spaceXxs))
-                    Text(
-                        text = stringResource(
-                            R.string.projects_item_info,
-                            project.assets.size,
-                            project.formattedDuration
-                        ),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
-            }
-
-            // Menu button (top right) - positioned absolutely with circular dark background
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(dimens.spaceXs)
-                    .size(28.dp)
-                    .background(
-                        color = Color.Black.copy(alpha = 0.6f),
-                        shape = CircleShape
-                    )
-                    .clickable { showMenu = true },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = stringResource(R.string.projects_menu),
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
-
-                // Dropdown menu
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.projects_download)) },
-                        onClick = {
-                            showMenu = false
-                            onDownload()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Download,
-                                contentDescription = null
-                            )
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.projects_share)) },
-                        onClick = {
-                            showMenu = false
-                            onShare()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = null
-                            )
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.projects_delete)) },
-                        onClick = {
-                            showMenu = false
-                            isVisible = false
-                            // Delay actual deletion to allow animation to complete
-                            coroutineScope.launch {
-                                delay(300) // Animation duration
-                                onDelete()
-                            }
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-private val projectDateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-
-private fun formatProjectDate(timestamp: Long): String = projectDateFormatter.format(Date(timestamp))
 
 /**
  * Share project video using system share sheet

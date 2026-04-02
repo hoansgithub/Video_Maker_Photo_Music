@@ -115,6 +115,14 @@
 
     <!-- Projects -->
     <string name="projects_title">Projelerim</string>
+    <string name="projects_menu">Proje menüsü</string>
+    <string name="projects_download">İndir</string>
+    <string name="projects_share">Paylaş</string>
+    <string name="projects_delete">Sil</string>
+    <string name="projects_delete_confirmation_title">Video Silinsin mi?</string>
+    <string name="projects_delete_confirmation_message">Bu video kalıcı olarak silinecek. Bu işlem geri alınamaz.</string>
+    <string name="projects_delete_confirm">Sil</string>
+    <string name="projects_delete_cancel">İptal</string>
     <string name="projects_empty">Henüz proje yok</string>
     <string name="projects_empty_description">İlk projenizi oluşturun ve burada görün</string>
     <string name="projects_item_info">%1$d fotoğraf • %2$s</string>

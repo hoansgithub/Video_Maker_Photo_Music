@@ -115,6 +115,14 @@
 
     <!-- Projects -->
     <string name="projects_title">Mis Proyectos</string>
+    <string name="projects_menu">Menú del proyecto</string>
+    <string name="projects_download">Descargar</string>
+    <string name="projects_share">Compartir</string>
+    <string name="projects_delete">Eliminar</string>
+    <string name="projects_delete_confirmation_title">¿Eliminar Vídeo?</string>
+    <string name="projects_delete_confirmation_message">Este vídeo se eliminará permanentemente. Esta acción no se puede deshacer.</string>
+    <string name="projects_delete_confirm">Eliminar</string>
+    <string name="projects_delete_cancel">Cancelar</string>
     <string name="projects_empty">Aún no hay proyectos</string>
     <string name="projects_empty_description">Crea tu primer proyecto para verlo aquí</string>
     <string name="projects_item_info">%1$d fotos • %2$s</string>

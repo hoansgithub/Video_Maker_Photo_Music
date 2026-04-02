@@ -115,6 +115,14 @@
 
     <!-- Projects -->
     <string name="projects_title">Proyek Saya</string>
+    <string name="projects_menu">Menu proyek</string>
+    <string name="projects_download">Unduh</string>
+    <string name="projects_share">Bagikan</string>
+    <string name="projects_delete">Hapus</string>
+    <string name="projects_delete_confirmation_title">Hapus Video?</string>
+    <string name="projects_delete_confirmation_message">Video ini akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.</string>
+    <string name="projects_delete_confirm">Hapus</string>
+    <string name="projects_delete_cancel">Batal</string>
     <string name="projects_empty">Belum ada proyek</string>
     <string name="projects_empty_description">Buat proyek pertama Anda untuk melihatnya di sini</string>
     <string name="projects_item_info">%1$d foto • %2$s</string>

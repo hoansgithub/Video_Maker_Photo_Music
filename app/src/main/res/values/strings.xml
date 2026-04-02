@@ -139,6 +139,10 @@
     <string name="projects_download">Download</string>
     <string name="projects_share">Share</string>
     <string name="projects_delete">Delete</string>
+    <string name="projects_delete_confirmation_title">Delete Video?</string>
+    <string name="projects_delete_confirmation_message">This video will be permanently deleted. This action cannot be undone.</string>
+    <string name="projects_delete_confirm">Delete</string>
+    <string name="projects_delete_cancel">Cancel</string>
     <string name="projects_empty">No projects yet</string>
     <string name="projects_empty_description">Create your first project to see it here</string>
     <string name="projects_empty_title">Start your journey</string>

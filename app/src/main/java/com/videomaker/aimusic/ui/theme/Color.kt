@@ -81,6 +81,7 @@ val TextPrimaryDark = Color(0xFFF8FAFC)     // Near white (primary text on dark)
 val TextSecondaryDark = Color(0xFFB3B3B3)   // Secondary text on dark
 val TextTertiaryDark = Color(0xFF8C8C8C)    // Tertiary/hint text on dark
 val TextDisabledDark = Color(0xFF666666)    // Disabled text on dark
+val TextMuted = Color(0xFFC6C5C8)           // Muted text (date labels, subtle info)
 
 // Light theme text
 val TextPrimaryLight = Color(0xFF1C1C1C)    // Near black (primary text on light)

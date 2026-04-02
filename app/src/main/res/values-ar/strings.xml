@@ -115,6 +115,14 @@
     <string name="like_template_section_header">قوالب الفيديو</string>
 
     <string name="projects_title">مشاريعي</string>
+    <string name="projects_menu">قائمة المشروع</string>
+    <string name="projects_download">تحميل</string>
+    <string name="projects_share">مشاركة</string>
+    <string name="projects_delete">حذف</string>
+    <string name="projects_delete_confirmation_title">حذف الفيديو؟</string>
+    <string name="projects_delete_confirmation_message">سيتم حذف هذا الفيديو نهائياً. لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="projects_delete_confirm">حذف</string>
+    <string name="projects_delete_cancel">إلغاء</string>
     <string name="projects_empty">لا توجد مشاريع بعد</string>
     <string name="projects_empty_description">أنشئ مشروعك الأول لتراه هنا</string>
     <string name="projects_item_info">%1$d صور • %2$s</string>

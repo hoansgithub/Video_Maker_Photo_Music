@@ -115,6 +115,14 @@
 
     <!-- Projects -->
     <string name="projects_title">Aking mga Proyekto</string>
+    <string name="projects_menu">Menu ng proyekto</string>
+    <string name="projects_download">I-download</string>
+    <string name="projects_share">Ibahagi</string>
+    <string name="projects_delete">Tanggalin</string>
+    <string name="projects_delete_confirmation_title">Tanggalin ang Video?</string>
+    <string name="projects_delete_confirmation_message">Permanenteng matatanggal ang video na ito. Hindi ito mababawi.</string>
+    <string name="projects_delete_confirm">Tanggalin</string>
+    <string name="projects_delete_cancel">Kanselahin</string>
     <string name="projects_empty">Wala pang proyekto</string>
     <string name="projects_empty_description">Gumawa ng iyong unang proyekto para makita ito dito</string>
     <string name="projects_item_info">%1$d larawan • %2$s</string>
