@@ -199,7 +199,9 @@ class TemplatePreviewerViewModel(
                     // If the clicked template is not in the first page and we found it by ID,
                     // insert it at the beginning of the list
                     if (initialPage < 0 && initialTemplate != null) {
-                        finalTemplates = listOf(initialTemplate) + templates
+                        // Remove it from templates first if it exists (shouldn't happen, but be safe)
+                        val templatesWithoutInitial = templates.filterNot { it.id == initialTemplateId }
+                        finalTemplates = listOf(initialTemplate) + templatesWithoutInitial
                         initialPage = 0
                     } else if (initialPage < 0) {
                         // Template not found anywhere, default to first template
@@ -243,8 +245,12 @@ class TemplatePreviewerViewModel(
 
                         val currentState = _uiState.value as? TemplatePreviewerUiState.Ready
                         if (currentState != null && newTemplates.isNotEmpty()) {
+                            // Filter out duplicates - keep track of existing IDs
+                            val existingIds = currentState.templates.map { it.id }.toSet()
+                            val uniqueNewTemplates = newTemplates.filterNot { it.id in existingIds }
+
                             _uiState.value = currentState.copy(
-                                templates = currentState.templates + newTemplates
+                                templates = currentState.templates + uniqueNewTemplates
                             )
                         }
                     }
