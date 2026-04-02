@@ -5,6 +5,12 @@ import com.videomaker.aimusic.domain.model.VideoTemplate
 
 interface TemplateRepository {
     /**
+     * Get a single template by ID.
+     * Priority: cache → Supabase → local JSON fallback.
+     */
+    suspend fun getTemplateById(id: String): Result<VideoTemplate?>
+
+    /**
      * Get a page of active templates ordered by sort_order.
      * Priority: cache → Supabase → local JSON fallback.
      */

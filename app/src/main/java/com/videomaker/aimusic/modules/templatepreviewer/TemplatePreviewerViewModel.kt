@@ -183,25 +183,49 @@ class TemplatePreviewerViewModel(
             currentOffset = 0
             hasMorePages = true
 
+            // First, get the specific template by ID to ensure we show the correct one
+            val initialTemplateResult = templateRepository.getTemplateById(initialTemplateId)
+            val initialTemplate = initialTemplateResult.getOrNull()
+
             templateRepository.getTemplates(limit = PAGE_SIZE, offset = 0)
                 .onSuccess { templates ->
                     currentOffset = templates.size
                     hasMorePages = templates.size >= PAGE_SIZE
 
-                    val initialPage = templates.indexOfFirst { it.id == initialTemplateId }
-                        .takeIf { it >= 0 } ?: 0
+                    // Find the initial template in the list
+                    var initialPage = templates.indexOfFirst { it.id == initialTemplateId }
+                    var finalTemplates = templates
+
+                    // If the clicked template is not in the first page and we found it by ID,
+                    // insert it at the beginning of the list
+                    if (initialPage < 0 && initialTemplate != null) {
+                        finalTemplates = listOf(initialTemplate) + templates
+                        initialPage = 0
+                    } else if (initialPage < 0) {
+                        // Template not found anywhere, default to first template
+                        initialPage = 0
+                    }
 
                     _uiState.value = TemplatePreviewerUiState.Ready(
-                        templates = templates,
+                        templates = finalTemplates,
                         initialPage = initialPage
                     )
                     // Kick off song load for the initial page
-                    loadSongForTemplate(templates[initialPage])
+                    loadSongForTemplate(finalTemplates[initialPage])
                 }
                 .onFailure { error ->
-                    _uiState.value = TemplatePreviewerUiState.Error(
-                        error.message ?: "Failed to load templates"
-                    )
+                    // Even if templates list fails, try to show the initial template
+                    if (initialTemplate != null) {
+                        _uiState.value = TemplatePreviewerUiState.Ready(
+                            templates = listOf(initialTemplate),
+                            initialPage = 0
+                        )
+                        loadSongForTemplate(initialTemplate)
+                    } else {
+                        _uiState.value = TemplatePreviewerUiState.Error(
+                            error.message ?: "Failed to load templates"
+                        )
+                    }
                 }
         }
     }
