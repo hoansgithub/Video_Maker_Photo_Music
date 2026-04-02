@@ -427,6 +427,18 @@ fun AppNavigation(
                             clear()
                             add(AppRoute.Home(initialTab = 2)) // Tab 2 = My Videos
                         }
+                    },
+                    onNavigateToTemplateDetail = { templateId ->
+                        backStack.apply {
+                            val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home()
+                            clear()
+                            add(home)
+                            add(AppRoute.TemplatePreviewer(
+                                templateId = templateId,
+                                imageUris = emptyList(),
+                                overrideSongId = -1L
+                            ))
+                        }
                     }
                 )
             }

@@ -132,8 +132,20 @@
     <string name="export_preparing">Inihahanda ang export…</string>
     <string name="export_exporting">Ine-export ang video…</string>
     <string name="export_dont_close">Huwag isara ang app</string>
+    <string name="export_tip_1">Ginagawa ang iyong obra…</string>
+    <string name="export_tip_2">Nilalagyan ng mahika…</string>
+    <string name="export_tip_3">Binubuhay ang iyong mga alaala…</string>
+    <string name="export_tip_4">Pinipino ang bawat frame…</string>
+    <string name="export_tip_5">Ginagawang perpekto…</string>
+    <string name="export_tip_6">Hinihabi ang iyong kuwento…</string>
+    <string name="export_tip_7">Lumilikha ng espesyal…</string>
+    <string name="export_tip_8">Malapit na! Maganda tignan…</string>
+    <string name="export_tip_9">Inaayos ang mga detalye…</string>
+    <string name="export_tip_10">Huling himas…</string>
     <string name="export_video_saved">Na-save na ang iyong video</string>
     <string name="export_saved_to_gallery">Na-save sa Gallery</string>
+    <string name="export_saving_to_gallery">Sine-save sa gallery…</string>
+    <string name="export_error_save_failed">Hindi ma-save sa gallery</string>
     <string name="export_share_video">Ibahagi ang Video</string>
     <string name="export_failed">Nabigo ang Export</string>
     <string name="export_try_again">Subukan Muli</string>
@@ -145,6 +157,8 @@
     <string name="export_cancel_message">Sigurado ka bang gusto mong kanselahin ang export? Mawawala ang lahat ng progreso.</string>
     <string name="export_continue">Magpatuloy</string>
     <string name="export_cancel_export">Kanselahin ang Export</string>
+    <string name="export_try_another_templates">Subukan ang Iba Pang Template</string>
+    <string name="export_templates_load_failed">Nabigo ang pag-load ng mga template</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Pumili ng Larawan</string>

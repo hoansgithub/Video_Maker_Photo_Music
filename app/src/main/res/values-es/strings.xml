@@ -132,8 +132,20 @@
     <string name="export_preparing">Preparando exportación…</string>
     <string name="export_exporting">Exportando vídeo…</string>
     <string name="export_dont_close">Por favor, no cierres la app</string>
+    <string name="export_tip_1">Creando tu obra maestra…</string>
+    <string name="export_tip_2">Añadiendo magia cinematográfica…</string>
+    <string name="export_tip_3">Dando vida a tus recuerdos…</string>
+    <string name="export_tip_4">Puliendo cada fotograma…</string>
+    <string name="export_tip_5">Haciéndolo perfecto…</string>
+    <string name="export_tip_6">Tejiendo tu historia…</string>
+    <string name="export_tip_7">Creando algo especial…</string>
+    <string name="export_tip_8">¡Casi listo! Se ve genial…</string>
+    <string name="export_tip_9">Ajustando los detalles…</string>
+    <string name="export_tip_10">Dando los toques finales…</string>
     <string name="export_video_saved">Tu vídeo ha sido guardado</string>
     <string name="export_saved_to_gallery">Guardado en Galería</string>
+    <string name="export_saving_to_gallery">Guardando en la galería…</string>
+    <string name="export_error_save_failed">Error al guardar en la galería</string>
     <string name="export_share_video">Compartir Vídeo</string>
     <string name="export_failed">Error de Exportación</string>
     <string name="export_try_again">Intentar de Nuevo</string>
@@ -145,6 +157,8 @@
     <string name="export_cancel_message">¿Seguro que deseas cancelar la exportación? Se perderá todo el progreso.</string>
     <string name="export_continue">Continuar</string>
     <string name="export_cancel_export">Cancelar Exportación</string>
+    <string name="export_try_another_templates">Prueba Otras Plantillas</string>
+    <string name="export_templates_load_failed">Error al cargar plantillas</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Seleccionar Fotos</string>

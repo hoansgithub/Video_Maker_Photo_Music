@@ -161,8 +161,20 @@
     <string name="export_please_wait">Hold on a sec, getting your video ready!\nPlease don\'t close the app</string>
     <string name="export_exporting">Exporting video…</string>
     <string name="export_dont_close">Please don\'t close the app</string>
+    <string name="export_tip_1">Crafting your masterpiece…</string>
+    <string name="export_tip_2">Adding some movie magic…</string>
+    <string name="export_tip_3">Bringing your memories to life…</string>
+    <string name="export_tip_4">Polishing every frame…</string>
+    <string name="export_tip_5">Making it picture perfect…</string>
+    <string name="export_tip_6">Weaving your story together…</string>
+    <string name="export_tip_7">Creating something special…</string>
+    <string name="export_tip_8">Almost there! Looking great…</string>
+    <string name="export_tip_9">Fine-tuning the details…</string>
+    <string name="export_tip_10">Putting the final touches…</string>
     <string name="export_video_saved">Your video has been saved</string>
     <string name="export_saved_to_gallery">Saved to Gallery</string>
+    <string name="export_saving_to_gallery">Saving to gallery…</string>
+    <string name="export_error_save_failed">Failed to save to gallery</string>
     <string name="export_share_video">Share Video</string>
     <string name="export_failed">Export Failed</string>
     <string name="export_try_again">Try Again</string>
@@ -176,6 +188,8 @@
     <string name="export_cancel_export">Cancel Export</string>
     <string name="export_error_file_not_found">Video file not found</string>
     <string name="export_error_share_failed">Failed to share video</string>
+    <string name="export_try_another_templates">Try Another Templates</string>
+    <string name="export_templates_load_failed">Failed to load templates</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Select Photos</string>

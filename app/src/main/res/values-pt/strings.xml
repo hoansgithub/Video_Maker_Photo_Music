@@ -132,8 +132,20 @@
     <string name="export_preparing">Preparando exportação…</string>
     <string name="export_exporting">Exportando vídeo…</string>
     <string name="export_dont_close">Por favor, não feche o aplicativo</string>
+    <string name="export_tip_1">Criando sua obra-prima…</string>
+    <string name="export_tip_2">Adicionando mágica cinematográfica…</string>
+    <string name="export_tip_3">Dando vida às suas memórias…</string>
+    <string name="export_tip_4">Polindo cada quadro…</string>
+    <string name="export_tip_5">Deixando perfeito…</string>
+    <string name="export_tip_6">Tecendo sua história…</string>
+    <string name="export_tip_7">Criando algo especial…</string>
+    <string name="export_tip_8">Quase pronto! Ficando ótimo…</string>
+    <string name="export_tip_9">Ajustando os detalhes…</string>
+    <string name="export_tip_10">Dando os toques finais…</string>
     <string name="export_video_saved">Seu vídeo foi salvo</string>
     <string name="export_saved_to_gallery">Salvo na Galeria</string>
+    <string name="export_saving_to_gallery">Salvando na galeria…</string>
+    <string name="export_error_save_failed">Falha ao salvar na galeria</string>
     <string name="export_share_video">Compartilhar Vídeo</string>
     <string name="export_failed">Falha na Exportação</string>
     <string name="export_try_again">Tentar Novamente</string>
@@ -145,6 +157,8 @@
     <string name="export_cancel_message">Tem certeza que deseja cancelar a exportação? Todo o progresso será perdido.</string>
     <string name="export_continue">Continuar</string>
     <string name="export_cancel_export">Cancelar Exportação</string>
+    <string name="export_try_another_templates">Experimente Outros Modelos</string>
+    <string name="export_templates_load_failed">Falha ao carregar modelos</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Selecionar Fotos</string>

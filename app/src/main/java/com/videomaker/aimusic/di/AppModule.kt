@@ -296,13 +296,15 @@ class EditorViewModelFactory(
  */
 class ExportViewModelFactory(
     private val exportRepository: ExportRepository,
-    private val projectRepository: ProjectRepository
+    private val projectRepository: ProjectRepository,
+    private val templateRepository: TemplateRepository
 ) {
     fun create(projectId: String): ExportViewModel {
         return ExportViewModel(
             projectId = projectId,
             exportRepository = exportRepository,
-            projectRepository = projectRepository
+            projectRepository = projectRepository,
+            templateRepository = templateRepository
         )
     }
 }
@@ -631,7 +633,8 @@ val presentationModule = module {
     single {
         ExportViewModelFactory(
             exportRepository = get(),
-            projectRepository = get()
+            projectRepository = get(),
+            templateRepository = get()
         )
     }
 

@@ -132,8 +132,20 @@
     <string name="export_preparing">एक्सपोर्ट की तैयारी हो रही है…</string>
     <string name="export_exporting">वीडियो एक्सपोर्ट हो रहा है…</string>
     <string name="export_dont_close">कृपया ऐप बंद न करें</string>
+    <string name="export_tip_1">आपकी उत्कृष्ट कृति बनाई जा रही है…</string>
+    <string name="export_tip_2">फिल्मी जादू जोड़ा जा रहा है…</string>
+    <string name="export_tip_3">आपकी यादों को जीवंत किया जा रहा है…</string>
+    <string name="export_tip_4">हर फ्रेम को चमकाया जा रहा है…</string>
+    <string name="export_tip_5">इसे एकदम सही बनाया जा रहा है…</string>
+    <string name="export_tip_6">आपकी कहानी बुनी जा रही है…</string>
+    <string name="export_tip_7">कुछ खास बनाया जा रहा है…</string>
+    <string name="export_tip_8">लगभग तैयार! शानदार दिख रहा है…</string>
+    <string name="export_tip_9">विवरण को सुधारा जा रहा है…</string>
+    <string name="export_tip_10">अंतिम स्पर्श दिया जा रहा है…</string>
     <string name="export_video_saved">आपका वीडियो सहेज लिया गया है</string>
     <string name="export_saved_to_gallery">गैलरी में सहेजा गया</string>
+    <string name="export_saving_to_gallery">गैलरी में सहेजा जा रहा है…</string>
+    <string name="export_error_save_failed">गैलरी में सहेजने में विफल</string>
     <string name="export_share_video">वीडियो शेयर करें</string>
     <string name="export_failed">एक्सपोर्ट विफल</string>
     <string name="export_try_again">पुनः प्रयास करें</string>
@@ -145,6 +157,8 @@
     <string name="export_cancel_message">क्या आप वाकई एक्सपोर्ट रद्द करना चाहते हैं? सारी प्रगति खो जाएगी।</string>
     <string name="export_continue">जारी रखें</string>
     <string name="export_cancel_export">एक्सपोर्ट रद्द करें</string>
+    <string name="export_try_another_templates">अन्य टेम्पलेट आज़माएं</string>
+    <string name="export_templates_load_failed">टेम्पलेट लोड करने में विफल</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">फ़ोटो चुनें</string>

@@ -132,8 +132,20 @@
     <string name="export_preparing">جاري التحضير للتصدير…</string>
     <string name="export_exporting">جاري تصدير الفيديو…</string>
     <string name="export_dont_close">يرجى عدم إغلاق التطبيق</string>
+    <string name="export_tip_1">نصنع تحفتك الفنية…</string>
+    <string name="export_tip_2">نضيف بعض السحر السينمائي…</string>
+    <string name="export_tip_3">نحيي ذكرياتك…</string>
+    <string name="export_tip_4">نصقل كل إطار…</string>
+    <string name="export_tip_5">نجعلها مثالية…</string>
+    <string name="export_tip_6">ننسج قصتك معاً…</string>
+    <string name="export_tip_7">نصنع شيئاً مميزاً…</string>
+    <string name="export_tip_8">أوشكنا على الانتهاء! تبدو رائعة…</string>
+    <string name="export_tip_9">نضبط التفاصيل الدقيقة…</string>
+    <string name="export_tip_10">نضع اللمسات الأخيرة…</string>
     <string name="export_video_saved">تم حفظ الفيديو الخاص بك</string>
     <string name="export_saved_to_gallery">تم الحفظ في المعرض</string>
+    <string name="export_saving_to_gallery">جارٍ الحفظ في المعرض…</string>
+    <string name="export_error_save_failed">فشل الحفظ في المعرض</string>
     <string name="export_share_video">مشاركة الفيديو</string>
     <string name="export_failed">فشل التصدير</string>
     <string name="export_try_again">حاول مرة أخرى</string>
@@ -145,6 +157,8 @@
     <string name="export_cancel_message">هل أنت متأكد من إلغاء التصدير؟ ستفقد كل التقدم.</string>
     <string name="export_continue">متابعة</string>
     <string name="export_cancel_export">إلغاء التصدير</string>
+    <string name="export_try_another_templates">جرب قوالب أخرى</string>
+    <string name="export_templates_load_failed">فشل تحميل القوالب</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">اختر الصور</string>

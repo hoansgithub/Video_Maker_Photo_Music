@@ -132,8 +132,20 @@
     <string name="export_preparing">Menyiapkan ekspor…</string>
     <string name="export_exporting">Mengekspor video…</string>
     <string name="export_dont_close">Mohon jangan tutup aplikasi</string>
+    <string name="export_tip_1">Membuat karya agung Anda…</string>
+    <string name="export_tip_2">Menambahkan keajaiban sinema…</string>
+    <string name="export_tip_3">Menghidupkan kenangan Anda…</string>
+    <string name="export_tip_4">Memoles setiap frame…</string>
+    <string name="export_tip_5">Menyempurnakannya…</string>
+    <string name="export_tip_6">Merangkai cerita Anda…</string>
+    <string name="export_tip_7">Menciptakan sesuatu yang istimewa…</string>
+    <string name="export_tip_8">Hampir selesai! Terlihat keren…</string>
+    <string name="export_tip_9">Menyempurnakan detail…</string>
+    <string name="export_tip_10">Sentuhan akhir…</string>
     <string name="export_video_saved">Video Anda telah disimpan</string>
     <string name="export_saved_to_gallery">Tersimpan di Galeri</string>
+    <string name="export_saving_to_gallery">Menyimpan ke galeri…</string>
+    <string name="export_error_save_failed">Gagal menyimpan ke galeri</string>
     <string name="export_share_video">Bagikan Video</string>
     <string name="export_failed">Ekspor Gagal</string>
     <string name="export_try_again">Coba Lagi</string>
@@ -145,6 +157,8 @@
     <string name="export_cancel_message">Apakah Anda yakin ingin membatalkan ekspor? Semua progres akan hilang.</string>
     <string name="export_continue">Lanjutkan</string>
     <string name="export_cancel_export">Batalkan Ekspor</string>
+    <string name="export_try_another_templates">Coba Template Lain</string>
+    <string name="export_templates_load_failed">Gagal memuat template</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Pilih Foto</string>
