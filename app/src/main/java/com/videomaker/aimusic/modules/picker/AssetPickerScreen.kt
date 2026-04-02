@@ -43,7 +43,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Photo
@@ -82,7 +82,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.glance.BackgroundModifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
 import coil.compose.SubcomposeAsyncImage
@@ -295,11 +294,10 @@ fun AssetPickerScreen(
             AssetPickerContent(
                 uiState = uiState,
                 minSelection = viewModel.minSelection,
-                isTemplateMode = viewModel.isTemplateMode,
                 onAlbumSelect = { albumId -> viewModel.selectAlbum(albumId) },
                 onAssetClick = { asset -> viewModel.toggleAssetSelection(asset) },
                 onConfirmClick = { viewModel.confirmSelection() },
-                onClearAsset = {viewModel.clearSelection()},
+                onClearSelection = {viewModel.clearSelection()},
                 onCloseClick = {
                     showBottomSheet = false
                     viewModel.navigateBack()
@@ -317,11 +315,10 @@ fun AssetPickerScreen(
 private fun AssetPickerContent(
     uiState: AssetPickerUiState,
     minSelection: Int,
-    isTemplateMode: Boolean,
     onAlbumSelect: (String) -> Unit,
     onAssetClick: (GalleryAsset) -> Unit,
     onConfirmClick: () -> Unit,
-    onClearAsset: () -> Unit,
+    onClearSelection: () -> Unit,
     onCloseClick: () -> Unit,
     onGoToSettings: () -> Unit,
     onAddMorePhotos: () -> Unit,
@@ -347,7 +344,7 @@ private fun AssetPickerContent(
         ) {
             IconButton(onClick = onCloseClick) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.close)
                 )
             }
@@ -439,7 +436,7 @@ private fun AssetPickerContent(
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clickable {
-                                        onClearAsset.invoke()
+                                        onClearSelection.invoke()
                                     }
                             )
 
@@ -492,7 +489,7 @@ private fun AssetPickerContent(
                             }
                         }
 
-                        items(3 - uiState.selectedAssets.take(3).size){
+                        items(maxOf(0, minSelection - uiState.selectedAssets.size)){
                             Image(
                                 painter = painterResource(R.drawable.img_out_line),
                                 contentDescription = null,
@@ -612,12 +609,10 @@ private fun ImageGrid(
             key = { it.id }
         ) { asset ->
             val isSelected = selectedAssets.any { it.id == asset.id }
-            val selectionIndex = selectedAssets.indexOfFirst { it.id == asset.id }
 
             ImageGridItem(
                 asset = asset,
                 isSelected = isSelected,
-                selectionIndex = if (isSelected) selectionIndex + 1 else null,
                 onClick = { onAssetClick(asset) }
             )
         }
@@ -625,83 +620,81 @@ private fun ImageGrid(
 }
 
 @Composable
-private fun ImageGridItem(
+private fun AssetThumbnail(
     asset: GalleryAsset,
-    isSelected: Boolean,
-    selectionIndex: Int?,
-    onClick: () -> Unit
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
-
     val thumbnailSizePx = with(density) { THUMBNAIL_SIZE_DP.dp.roundToPx() }
 
+    SubcomposeAsyncImage(
+        model = ImageRequest.Builder(context)
+            .data(asset.uri)
+            .size(Size(thumbnailSizePx, thumbnailSizePx))
+            .bitmapConfig(Bitmap.Config.RGB_565)
+            .precision(Precision.INEXACT)
+            .allowHardware(true)
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .memoryCacheKey("thumb_${asset.id}")
+            .diskCacheKey("thumb_${asset.id}_${asset.dateAdded}")
+            .crossfade(100)
+            .build(),
+        contentDescription = asset.displayName,
+        contentScale = ContentScale.Crop,
+        modifier = modifier.fillMaxSize(),
+        loading = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                )
+            }
+        },
+        error = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.errorContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Photo,
+                    contentDescription = stringResource(R.string.error),
+                    tint = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.5f)
+                )
+            }
+        }
+    )
+}
+
+@Composable
+private fun ImageGridItem(
+    asset: GalleryAsset,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
     Box(
         modifier = Modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
     ) {
-        // Optimized image loading with Coil
-        // Memory optimizations:
-        // - RGB_565: 2 bytes/pixel vs ARGB_8888's 4 bytes = 50% memory reduction
-        // - INEXACT precision: allows slightly smaller images, saving memory
-        // - allowHardware(true): GPU acceleration for faster rendering
-        // - Reduced crossfade: 100ms instead of 150ms for snappier feel
-        SubcomposeAsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(asset.uri)
-                .size(Size(thumbnailSizePx, thumbnailSizePx)) // Fixed thumbnail size
-                .bitmapConfig(Bitmap.Config.RGB_565) // Half memory vs ARGB_8888
-                .precision(Precision.INEXACT) // Allow slightly smaller size for memory savings
-                .allowHardware(true) // GPU acceleration - better for scrolling performance
-                .memoryCachePolicy(CachePolicy.ENABLED)
-                .diskCachePolicy(CachePolicy.ENABLED)
-                .memoryCacheKey("thumb_${asset.id}")
-                .diskCacheKey("thumb_${asset.id}_${asset.dateAdded}") // Time-based cache key
-                .crossfade(100) // Faster crossfade for snappier feel
-                .build(),
-            contentDescription = asset.displayName,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-            loading = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                    )
-                }
-            },
-            error = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.errorContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Photo,
-                        contentDescription = stringResource(R.string.error),
-                        tint = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.5f)
-                    )
-                }
-            }
-        )
+        AssetThumbnail(asset = asset)
 
-        // Selection overlay
         if (isSelected) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color(0xFF2C2C2C).copy(alpha = 0.4f))
             )
-
             Image(
                 painter = painterResource(R.drawable.ic_choose_img),
                 contentDescription = stringResource(R.string.picker_selected),
@@ -718,68 +711,13 @@ private fun ImageGridChooseItem(
     asset: GalleryAsset,
     onClick: () -> Unit
 ) {
-    val context = LocalContext.current
-    val density = LocalDensity.current
-
-    val thumbnailSizePx = with(density) { THUMBNAIL_SIZE_DP.dp.roundToPx() }
-
     Box(
         modifier = Modifier
             .size(80.dp)
             .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
     ) {
-        // Optimized image loading with Coil
-        // Memory optimizations:
-        // - RGB_565: 2 bytes/pixel vs ARGB_8888's 4 bytes = 50% memory reduction
-        // - INEXACT precision: allows slightly smaller images, saving memory
-        // - allowHardware(true): GPU acceleration for faster rendering
-        // - Reduced crossfade: 100ms instead of 150ms for snappier feel
-        SubcomposeAsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(asset.uri)
-                .size(Size(thumbnailSizePx, thumbnailSizePx)) // Fixed thumbnail size
-                .bitmapConfig(Bitmap.Config.RGB_565) // Half memory vs ARGB_8888
-                .precision(Precision.INEXACT) // Allow slightly smaller size for memory savings
-                .allowHardware(true) // GPU acceleration - better for scrolling performance
-                .memoryCachePolicy(CachePolicy.ENABLED)
-                .diskCachePolicy(CachePolicy.ENABLED)
-                .memoryCacheKey("thumb_${asset.id}")
-                .diskCacheKey("thumb_${asset.id}_${asset.dateAdded}") // Time-based cache key
-                .crossfade(100) // Faster crossfade for snappier feel
-                .build(),
-            contentDescription = asset.displayName,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-            loading = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                    )
-                }
-            },
-            error = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.errorContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Photo,
-                        contentDescription = stringResource(R.string.error),
-                        tint = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.5f)
-                    )
-                }
-            }
-        )
+        AssetThumbnail(asset = asset)
 
         Image(
             painter = painterResource(R.drawable.ic_close_fill),
@@ -787,9 +725,7 @@ private fun ImageGridChooseItem(
             modifier = Modifier
                 .padding(4.dp)
                 .size(20.dp)
-                .clickable {
-                    onClick.invoke()
-                }
+                .clickable { onClick() }
                 .align(Alignment.TopEnd)
         )
     }

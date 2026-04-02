@@ -252,7 +252,7 @@ class AssetPickerViewModel(
      * Load images from device gallery.
      * Produces AllPermission state for full access, LimitPermission for partial access.
      */
-    fun loadImages() {
+    private fun loadImages() {
         viewModelScope.launch {
             _uiState.value = AssetPickerUiState.Loading
 
