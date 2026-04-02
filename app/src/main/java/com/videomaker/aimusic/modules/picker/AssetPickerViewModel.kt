@@ -7,10 +7,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.EditorInitialData
 import com.videomaker.aimusic.domain.repository.SongRepository
@@ -59,18 +57,78 @@ object AlbumFilterType {
 
 /**
  * UI State for Asset Picker
+ *
+ * - Initial/Loading: transitional states
+ * - WithAssets.AllPermission: full photo access granted — all gallery images loaded
+ * - WithAssets.LimitPermission: limited/partial access (Android 14+) — only user-selected images loaded
+ * - DeniedPermission: permission denied — show "Go to Settings" prompt
  */
 sealed class AssetPickerUiState {
     data object Initial : AssetPickerUiState()
     data object Loading : AssetPickerUiState()
-    data class Success(
-        val assets: List<GalleryAsset>,
-        val filteredAssets: List<GalleryAsset>,
-        val selectedAssets: List<GalleryAsset> = emptyList(),
-        val albums: List<AlbumFilter> = emptyList(),
-        val selectedAlbumId: String = AlbumFilterType.ALL
-    ) : AssetPickerUiState()
-    data class Error(val message: String) : AssetPickerUiState()
+    data object DeniedPermission : AssetPickerUiState()
+
+    sealed class WithAssets : AssetPickerUiState() {
+        abstract val assets: List<GalleryAsset>
+        abstract val filteredAssets: List<GalleryAsset>
+        abstract val selectedAssets: List<GalleryAsset>
+        abstract val albums: List<AlbumFilter>
+        abstract val selectedAlbumId: String
+
+        abstract fun copyAssets(
+            assets: List<GalleryAsset> = this.assets,
+            filteredAssets: List<GalleryAsset> = this.filteredAssets,
+            selectedAssets: List<GalleryAsset> = this.selectedAssets,
+            albums: List<AlbumFilter> = this.albums,
+            selectedAlbumId: String = this.selectedAlbumId
+        ): WithAssets
+
+        /** Full permission — entire gallery is accessible */
+        data class AllPermission(
+            override val assets: List<GalleryAsset>,
+            override val filteredAssets: List<GalleryAsset>,
+            override val selectedAssets: List<GalleryAsset> = emptyList(),
+            override val albums: List<AlbumFilter> = emptyList(),
+            override val selectedAlbumId: String = AlbumFilterType.ALL
+        ) : WithAssets() {
+            override fun copyAssets(
+                assets: List<GalleryAsset>,
+                filteredAssets: List<GalleryAsset>,
+                selectedAssets: List<GalleryAsset>,
+                albums: List<AlbumFilter>,
+                selectedAlbumId: String
+            ): WithAssets = copy(
+                assets = assets,
+                filteredAssets = filteredAssets,
+                selectedAssets = selectedAssets,
+                albums = albums,
+                selectedAlbumId = selectedAlbumId
+            )
+        }
+
+        /** Limited permission (Android 14+ READ_MEDIA_VISUAL_USER_SELECTED) — only chosen images */
+        data class LimitPermission(
+            override val assets: List<GalleryAsset>,
+            override val filteredAssets: List<GalleryAsset>,
+            override val selectedAssets: List<GalleryAsset> = emptyList(),
+            override val albums: List<AlbumFilter> = emptyList(),
+            override val selectedAlbumId: String = AlbumFilterType.ALL
+        ) : WithAssets() {
+            override fun copyAssets(
+                assets: List<GalleryAsset>,
+                filteredAssets: List<GalleryAsset>,
+                selectedAssets: List<GalleryAsset>,
+                albums: List<AlbumFilter>,
+                selectedAlbumId: String
+            ): WithAssets = copy(
+                assets = assets,
+                filteredAssets = filteredAssets,
+                selectedAssets = selectedAssets,
+                albums = albums,
+                selectedAlbumId = selectedAlbumId
+            )
+        }
+    }
 }
 
 /**
@@ -135,7 +193,7 @@ class AssetPickerViewModel(
     val isSongToVideoMode: Boolean get() = overrideSongId >= 0L
 
     /** Minimum number of images required before confirming */
-    val minSelection: Int get() = if (isTemplateMode) 2 else 1
+    val minSelection: Int get() = if (isTemplateMode) 3 else 1
 
     // ============================================
     // STATE
@@ -144,8 +202,8 @@ class AssetPickerViewModel(
     private val _uiState = MutableStateFlow<AssetPickerUiState>(AssetPickerUiState.Initial)
     val uiState: StateFlow<AssetPickerUiState> = _uiState.asStateFlow()
 
-    private val _permissionGranted = MutableStateFlow(false)
-    val permissionGranted: StateFlow<Boolean> = _permissionGranted.asStateFlow()
+    // Tracks whether the current permission is limited (Android 14+ partial access)
+    private var isLimitedPermission = false
 
     // ============================================
     // NAVIGATION EVENTS (StateFlow-based - Google recommended)
@@ -172,10 +230,14 @@ class AssetPickerViewModel(
     // ============================================
 
     /**
-     * Called when permission is granted
+     * Called when full or limited permission is granted.
+     * @param isLimited true when only READ_MEDIA_VISUAL_USER_SELECTED is granted (Android 14+)
+     *
+     * When full access is granted the saved picked_assets are no longer needed — MediaStore
+     * now covers the entire gallery — so the table is cleared before loading.
      */
-    fun onPermissionGranted() {
-        _permissionGranted.value = true
+    fun onPermissionGranted(isLimited: Boolean = false) {
+        isLimitedPermission = isLimited
         loadImages()
     }
 
@@ -183,32 +245,51 @@ class AssetPickerViewModel(
      * Called when permission is denied
      */
     fun onPermissionDenied() {
-        _permissionGranted.value = false
-        _uiState.value = AssetPickerUiState.Error("Photo library permission is required to select images")
+        _uiState.value = AssetPickerUiState.DeniedPermission
     }
 
     /**
-     * Load images from device gallery
+     * Load images from device gallery.
+     * Produces AllPermission state for full access, LimitPermission for partial access.
      */
-    fun loadImages() {
+    private fun loadImages() {
         viewModelScope.launch {
             _uiState.value = AssetPickerUiState.Loading
 
             try {
-                val images = queryGalleryImages()
+                val mediaStoreImages = queryGalleryImages()
+
+                val persistedUris = appContext.contentResolver.persistedUriPermissions
+                    .map { it.uri }
+
+                // Chuyển đổi Uri thành Asset model của bạn
+                val persistedAssets = withContext(Dispatchers.IO) {
+                    persistedUris.map { uri -> createAssetFromUri(uri) }
+                }
+
+                val images = mediaStoreImages + persistedAssets
+
                 val albums = buildAlbumFilters(images)
 
-                _uiState.value = AssetPickerUiState.Success(
-                    assets = images,
-                    filteredAssets = images,
-                    selectedAssets = emptyList(),
-                    albums = albums,
-                    selectedAlbumId = AlbumFilterType.ALL
-                )
+                _uiState.value = if (isLimitedPermission) {
+                    AssetPickerUiState.WithAssets.LimitPermission(
+                        assets = images,
+                        filteredAssets = images,
+                        selectedAssets = emptyList(),
+                        albums = albums,
+                        selectedAlbumId = AlbumFilterType.ALL
+                    )
+                } else {
+                    AssetPickerUiState.WithAssets.AllPermission(
+                        assets = images,
+                        filteredAssets = images,
+                        selectedAssets = emptyList(),
+                        albums = albums,
+                        selectedAlbumId = AlbumFilterType.ALL
+                    )
+                }
             } catch (e: Exception) {
-                _uiState.value = AssetPickerUiState.Error(
-                    e.message ?: "Failed to load images"
-                )
+                _messageEvent.value = e.message ?: "Failed to load images"
             }
         }
     }
@@ -217,38 +298,64 @@ class AssetPickerViewModel(
      * Select an album filter
      */
     fun selectAlbum(albumId: String) {
-        val currentState = _uiState.value
-        if (currentState is AssetPickerUiState.Success) {
-            val filteredAssets = filterAssetsByAlbum(currentState.assets, albumId, currentState.albums)
-            _uiState.value = currentState.copy(
-                filteredAssets = filteredAssets,
-                selectedAlbumId = albumId
-            )
-        }
+        val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
+        val filteredAssets = filterAssetsByAlbum(currentState.assets, albumId, currentState.albums)
+        _uiState.value = currentState.copyAssets(
+            filteredAssets = filteredAssets,
+            selectedAlbumId = albumId
+        )
     }
 
     /**
      * Toggle selection of an asset
      */
     fun toggleAssetSelection(asset: GalleryAsset) {
-        val currentState = _uiState.value
-        if (currentState is AssetPickerUiState.Success) {
-            val currentSelection = currentState.selectedAssets.toMutableList()
+        val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
+        val currentSelection = currentState.selectedAssets.toMutableList()
 
-            if (currentSelection.contains(asset)) {
-                // Deselect
-                currentSelection.remove(asset)
-            } else {
-                // Check max selection limit before adding
-                if (currentSelection.size >= MAX_SELECTION) {
-                    // Show user feedback about max limit
-                    _messageEvent.value = "Maximum $MAX_SELECTION images can be selected"
-                    return
-                }
-                currentSelection.add(asset)
+        if (currentSelection.contains(asset)) {
+            currentSelection.remove(asset)
+        } else {
+            if (currentSelection.size >= MAX_SELECTION) {
+                _messageEvent.value = "Maximum $MAX_SELECTION images can be selected"
+                return
             }
+            currentSelection.add(asset)
+        }
 
-            _uiState.value = currentState.copy(selectedAssets = currentSelection)
+        _uiState.value = currentState.copyAssets(selectedAssets = currentSelection)
+    }
+
+    /**
+     * Called when a photo is captured via the system camera.
+     * Prepends the captured image to the asset list and auto-selects it.
+     * If gallery is not yet loaded, creates a minimal WithAssets state from the captured image.
+     */
+    fun onCameraImageCaptured(uri: Uri) {
+        viewModelScope.launch {
+            val newAsset = withContext(Dispatchers.IO) { createAssetFromUri(uri) }
+
+            val currentState = _uiState.value
+            if (currentState is AssetPickerUiState.WithAssets) {
+                val updatedAssets = listOf(newAsset) + currentState.assets
+                val updatedFiltered = listOf(newAsset) + currentState.filteredAssets
+                val updatedSelected = if (currentState.selectedAssets.size < MAX_SELECTION) {
+                    currentState.selectedAssets + newAsset
+                } else {
+                    currentState.selectedAssets
+                }
+                _uiState.value = currentState.copyAssets(
+                    assets = updatedAssets,
+                    filteredAssets = updatedFiltered,
+                    selectedAssets = updatedSelected
+                )
+            } else {
+                _uiState.value = AssetPickerUiState.WithAssets.AllPermission(
+                    assets = listOf(newAsset),
+                    filteredAssets = listOf(newAsset),
+                    selectedAssets = listOf(newAsset)
+                )
+            }
         }
     }
 
@@ -256,10 +363,8 @@ class AssetPickerViewModel(
      * Clear all selections
      */
     fun clearSelection() {
-        val currentState = _uiState.value
-        if (currentState is AssetPickerUiState.Success) {
-            _uiState.value = currentState.copy(selectedAssets = emptyList())
-        }
+        val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
+        _uiState.value = currentState.copyAssets(selectedAssets = emptyList())
     }
 
     /**
@@ -268,85 +373,79 @@ class AssetPickerViewModel(
      * - Add mode: Add assets to existing project and go back
      */
     fun confirmSelection() {
-        val currentState = _uiState.value
-        if (currentState is AssetPickerUiState.Success && currentState.selectedAssets.size >= minSelection) {
-            viewModelScope.launch {
-                val uris = currentState.selectedAssets.map { it.uri }
+        val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
+        if (currentState.selectedAssets.size < minSelection) return
 
-                when {
-                    // PRIORITY 1: Template already selected - go directly to Editor
-                    // This handles both:
-                    // - Gallery → Template → Image → Editor
-                    // - Music → Template → Image → Editor (templateId + overrideSongId both set)
-                    templateId != null -> {
-                        // Fetch templates and find by ID
-                        templateRepository.getTemplates(limit = 100, offset = 0)
-                            .onSuccess { templates ->
-                                val template = templates.find { it.id == templateId }
-                                if (template != null) {
-                                    // Determine song ID (override or template's song)
-                                    val songId = if (overrideSongId >= 0L) overrideSongId
-                                                else template.songId.takeIf { it > 0L }
+        viewModelScope.launch {
+            val uris = currentState.selectedAssets.map { it.uri }
 
-                                    // Fetch song name (avoid extra network request in Editor)
-                                    val songName = songId?.let { id ->
-                                        songRepository.getSongById(id).getOrNull()?.name
-                                    }
+            when {
+                // PRIORITY 1: Template already selected - go directly to Editor
+                // This handles both:
+                // - Gallery → Template → Image → Editor
+                // - Music → Template → Image → Editor (templateId + overrideSongId both set)
+                templateId != null -> {
+                    // Fetch templates and find by ID
+                    templateRepository.getTemplates(limit = 100, offset = 0)
+                        .onSuccess { templates ->
+                            val template = templates.find { it.id == templateId }
+                            if (template != null) {
+                                // Determine song ID (override or template's song)
+                                val songId = if (overrideSongId >= 0L) overrideSongId
+                                            else template.songId.takeIf { it > 0L }
 
-                                    val initialData = EditorInitialData(
-                                        imageUris = uris.map { it.toString() },
-                                        effectSetId = template.effectSetId,
-                                        imageDurationMs = template.imageDurationMs.toLong(),
-                                        transitionPercentage = template.transitionPct,
-                                        musicSongId = songId,
-                                        musicSongName = songName,
-                                        aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio)
-                                    )
-
-                                    _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditorWithData(initialData)
-                                } else {
-                                    _uiState.value = AssetPickerUiState.Error("Template not found")
+                                // Fetch song name (avoid extra network request in Editor)
+                                val songName = songId?.let { id ->
+                                    songRepository.getSongById(id).getOrNull()?.name
                                 }
-                            }
-                            .onFailure { error ->
-                                _uiState.value = AssetPickerUiState.Error(
-                                    error.message ?: "Failed to load template"
+
+                                val initialData = EditorInitialData(
+                                    imageUris = uris.map { it.toString() },
+                                    effectSetId = template.effectSetId,
+                                    imageDurationMs = template.imageDurationMs.toLong(),
+                                    transitionPercentage = template.transitionPct,
+                                    musicSongId = songId,
+                                    musicSongName = songName,
+                                    aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio)
                                 )
+
+                                _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditorWithData(initialData)
+                            } else {
+                                _messageEvent.value = "Template not found"
                             }
-                    }
-                    // PRIORITY 2: Song-to-video mode WITHOUT template selected
-                    // Navigate to template selector with the chosen song
-                    isSongToVideoMode -> {
-                        _navigationEvent.value = AssetPickerNavigationEvent.NavigateToTemplatePreviewer(
-                            templateId = "",
-                            imageUris = uris.map { it.toString() },
-                            overrideSongId = overrideSongId
-                        )
-                    }
-                    projectId != null -> {
-                        // Add mode - add to existing project
-                        addAssetsUseCase(projectId, uris)
-                            .onSuccess {
-                                _navigationEvent.value = AssetPickerNavigationEvent.AssetsAdded
-                            }
-                            .onFailure { error ->
-                                _uiState.value = AssetPickerUiState.Error(
-                                    error.message ?: "Failed to add assets"
-                                )
-                            }
-                    }
-                    else -> {
-                        // Create mode - create new project
-                        createProjectUseCase(uris)
-                            .onSuccess { project ->
-                                _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditor(project.id)
-                            }
-                            .onFailure { error ->
-                                _uiState.value = AssetPickerUiState.Error(
-                                    error.message ?: "Failed to create project"
-                                )
-                            }
-                    }
+                        }
+                        .onFailure { error ->
+                            _messageEvent.value = error.message ?: "Failed to load template"
+                        }
+                }
+                // PRIORITY 2: Song-to-video mode WITHOUT template selected
+                // Navigate to template selector with the chosen song
+                isSongToVideoMode -> {
+                    _navigationEvent.value = AssetPickerNavigationEvent.NavigateToTemplatePreviewer(
+                        templateId = "",
+                        imageUris = uris.map { it.toString() },
+                        overrideSongId = overrideSongId
+                    )
+                }
+                projectId != null -> {
+                    // Add mode - add to existing project
+                    addAssetsUseCase(projectId, uris)
+                        .onSuccess {
+                            _navigationEvent.value = AssetPickerNavigationEvent.AssetsAdded
+                        }
+                        .onFailure { error ->
+                            _messageEvent.value = error.message ?: "Failed to add assets"
+                        }
+                }
+                else -> {
+                    // Create mode - create new project
+                    createProjectUseCase(uris)
+                        .onSuccess { project ->
+                            _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditor(project.id)
+                        }
+                        .onFailure { error ->
+                            _messageEvent.value = error.message ?: "Failed to create project"
+                        }
                 }
             }
         }
@@ -443,6 +542,58 @@ class AssetPickerViewModel(
 
         return filters
     }
+
+    /**
+     * Builds a GalleryAsset from a Photo Picker URI.
+     * Queries MediaStore for available metadata; falls back to minimal data on failure.
+     * Photo Picker URIs support a subset of MediaStore columns, so each column index
+     * is checked before use.
+     */
+    private fun createAssetFromUri(uri: Uri): GalleryAsset {
+        val projection = arrayOf(
+            MediaStore.Images.Media.DISPLAY_NAME,
+            MediaStore.Images.Media.DATE_ADDED,
+            MediaStore.Images.Media.WIDTH,
+            MediaStore.Images.Media.HEIGHT,
+            MediaStore.Images.Media.BUCKET_ID,
+            MediaStore.Images.Media.BUCKET_DISPLAY_NAME
+        )
+        return try {
+            appContext.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val nameIdx = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)
+                    val dateIdx = cursor.getColumnIndex(MediaStore.Images.Media.DATE_ADDED)
+                    val widthIdx = cursor.getColumnIndex(MediaStore.Images.Media.WIDTH)
+                    val heightIdx = cursor.getColumnIndex(MediaStore.Images.Media.HEIGHT)
+                    val bucketIdIdx = cursor.getColumnIndex(MediaStore.Images.Media.BUCKET_ID)
+                    val bucketNameIdx = cursor.getColumnIndex(MediaStore.Images.Media.BUCKET_DISPLAY_NAME)
+                    GalleryAsset(
+                        id = uri.toString().hashCode().toLong(),
+                        uri = uri,
+                        displayName = if (nameIdx >= 0) cursor.getString(nameIdx) ?: "Photo" else "Photo",
+                        dateAdded = if (dateIdx >= 0) cursor.getLong(dateIdx) else System.currentTimeMillis() / 1000,
+                        width = if (widthIdx >= 0) cursor.getInt(widthIdx) else 0,
+                        height = if (heightIdx >= 0) cursor.getInt(heightIdx) else 0,
+                        bucketId = if (bucketIdIdx >= 0) cursor.getLong(bucketIdIdx) else -1L,
+                        bucketName = if (bucketNameIdx >= 0) cursor.getString(bucketNameIdx) ?: "Photos" else "Photos",
+                    )
+                } else createMinimalAsset(uri)
+            } ?: createMinimalAsset(uri)
+        } catch (e: Exception) {
+            createMinimalAsset(uri)
+        }
+    }
+
+    private fun createMinimalAsset(uri: Uri): GalleryAsset = GalleryAsset(
+        id = uri.toString().hashCode().toLong(),
+        uri = uri,
+        displayName = uri.lastPathSegment ?: "Photo",
+        dateAdded = System.currentTimeMillis() / 1000,
+        width = 0,
+        height = 0,
+        bucketId = -1L,
+        bucketName = "Photos",
+    )
 
     private fun filterAssetsByAlbum(
         assets: List<GalleryAsset>,
