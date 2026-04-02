@@ -7,6 +7,8 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.core.content.FileProvider
+import java.io.File
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -237,6 +239,47 @@ fun AssetPickerScreen(
         )
     }
 
+    // Camera URI state — created before launching TakePicture so it survives recomposition
+    var cameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Camera capture launcher — called after permission is confirmed
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            cameraUri?.let { uri -> viewModel.onCameraImageCaptured(uri) }
+        }
+    }
+
+    // Camera permission launcher
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            cameraUri?.let { cameraLauncher.launch(it) }
+        }
+    }
+
+    // Creates a temp file URI via FileProvider and launches the camera
+    val onCameraClick = {
+        val photoFile = File(context.cacheDir, "images/camera_${System.currentTimeMillis()}.jpg")
+        photoFile.parentFile?.mkdirs()
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            photoFile
+        )
+        cameraUri = uri
+        val hasCameraPermission = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+        if (hasCameraPermission) {
+            cameraLauncher.launch(uri)
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
     // Bottom Sheet
     if (showBottomSheet) {
         ModalBottomSheet(
@@ -262,7 +305,8 @@ fun AssetPickerScreen(
                     viewModel.navigateBack()
                 },
                 onGoToSettings = goToAppSettings,
-                onAddMorePhotos = onAddMorePhotos
+                onAddMorePhotos = onAddMorePhotos,
+                onCameraClick = onCameraClick
             )
         }
     }
@@ -280,7 +324,8 @@ private fun AssetPickerContent(
     onClearAsset: () -> Unit,
     onCloseClick: () -> Unit,
     onGoToSettings: () -> Unit,
-    onAddMorePhotos: () -> Unit
+    onAddMorePhotos: () -> Unit,
+    onCameraClick: () -> Unit
 ) {
     // Selection count and confirm button
     val selectedCount = if (uiState is AssetPickerUiState.WithAssets) uiState.selectedAssets.size else 0
@@ -312,9 +357,7 @@ private fun AssetPickerContent(
                 style = MaterialTheme.typography.titleLarge
             )
 
-            IconButton(onClick = {
-
-            }) {
+            IconButton(onClick = onCameraClick) {
                 Icon(
                     painter = painterResource(R.drawable.ic_camera),
                     contentDescription = stringResource(R.string.close)

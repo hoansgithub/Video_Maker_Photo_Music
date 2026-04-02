@@ -327,6 +327,39 @@ class AssetPickerViewModel(
     }
 
     /**
+     * Called when a photo is captured via the system camera.
+     * Prepends the captured image to the asset list and auto-selects it.
+     * If gallery is not yet loaded, creates a minimal WithAssets state from the captured image.
+     */
+    fun onCameraImageCaptured(uri: Uri) {
+        viewModelScope.launch {
+            val newAsset = withContext(Dispatchers.IO) { createAssetFromUri(uri) }
+
+            val currentState = _uiState.value
+            if (currentState is AssetPickerUiState.WithAssets) {
+                val updatedAssets = listOf(newAsset) + currentState.assets
+                val updatedFiltered = listOf(newAsset) + currentState.filteredAssets
+                val updatedSelected = if (currentState.selectedAssets.size < MAX_SELECTION) {
+                    currentState.selectedAssets + newAsset
+                } else {
+                    currentState.selectedAssets
+                }
+                _uiState.value = currentState.copyAssets(
+                    assets = updatedAssets,
+                    filteredAssets = updatedFiltered,
+                    selectedAssets = updatedSelected
+                )
+            } else {
+                _uiState.value = AssetPickerUiState.WithAssets.AllPermission(
+                    assets = listOf(newAsset),
+                    filteredAssets = listOf(newAsset),
+                    selectedAssets = listOf(newAsset)
+                )
+            }
+        }
+    }
+
+    /**
      * Clear all selections
      */
     fun clearSelection() {
