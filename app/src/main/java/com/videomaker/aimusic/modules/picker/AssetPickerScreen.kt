@@ -260,22 +260,27 @@ fun AssetPickerScreen(
     }
 
     // Creates a temp file URI via FileProvider and launches the camera
-    val onCameraClick = {
-        val photoFile = File(context.cacheDir, "images/camera_${System.currentTimeMillis()}.jpg")
-        photoFile.parentFile?.mkdirs()
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            photoFile
-        )
-        cameraUri = uri
-        val hasCameraPermission = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
-        if (hasCameraPermission) {
-            cameraLauncher.launch(uri)
-        } else {
-            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+    val onCameraClick: () -> Unit = {
+        try {
+            val photoFile = File(context.cacheDir, "images/camera_${System.currentTimeMillis()}.jpg")
+            photoFile.parentFile?.mkdirs()
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                photoFile
+            )
+            cameraUri = uri
+            val hasCameraPermission = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+            if (hasCameraPermission) {
+                cameraLauncher.launch(uri)
+            } else {
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        } catch (e: IllegalArgumentException) {
+            // FileProvider configuration error - log and ignore
+            android.util.Log.e("AssetPicker", "Failed to create camera URI: ${e.message}")
         }
     }
 
