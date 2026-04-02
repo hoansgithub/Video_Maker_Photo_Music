@@ -1,11 +1,16 @@
 package com.videomaker.aimusic.modules.picker
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,14 +31,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Photo
@@ -47,8 +55,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,15 +67,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.glance.BackgroundModifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
 import coil.compose.SubcomposeAsyncImage
@@ -75,6 +88,10 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
+import com.videomaker.aimusic.ui.theme.FoundationBlack_100
+import com.videomaker.aimusic.ui.theme.PlayerCardBackground
+import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.TextPrimaryDark
 
 /**
  * Thumbnail size in pixels for image grid
@@ -92,12 +109,10 @@ private const val SHEET_ANIMATION_DELAY_MS = 350L
 /**
  * AssetPickerScreen - Bottom sheet image picker with permission handling
  *
- * Features:
- * - Requests photo library permission on first load
- * - Album filter chips (All, Camera, Screenshots, etc.)
- * - Displays images in a grid from bottom sheet
- * - Multi-select with visual indicators
- * - Confirm selection to proceed to editor
+ * Permission states:
+ * - Full access (READ_MEDIA_IMAGES / READ_EXTERNAL_STORAGE) → AllPermission: loads entire gallery
+ * - Limited access (READ_MEDIA_VISUAL_USER_SELECTED, Android 14+) → LimitPermission: loads selected photos only
+ * - Denied → DeniedPermission: shows "Go to Settings" prompt inside the sheet
  *
  * Performance optimizations:
  * - LazyVerticalGrid for virtualized rendering
@@ -118,32 +133,44 @@ fun AssetPickerScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val permissionGranted by viewModel.permissionGranted.collectAsStateWithLifecycle()
 
     // Show bottom sheet immediately for smooth transition
     var showBottomSheet by remember { mutableStateOf(true) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Determine the correct permission based on Android version
-    val permission = if (Build.VERSION.SDK_INT >= 33) {  // Android 13+
-        Manifest.permission.READ_MEDIA_IMAGES
-    } else {
-        Manifest.permission.READ_EXTERNAL_STORAGE
+    // Permissions to request, based on Android version:
+    // - API 34+: request both full and limited so the system dialog shows all 3 options
+    // - API 33: request full images permission
+    // - API < 33: request external storage
+    val permissionsToRequest = remember {
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ->
+                arrayOf(
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+                )
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
+                arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
+            else ->
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
     }
 
-    // Permission launcher
+    // Permission launcher - handles full, limited, and denied results
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            viewModel.onPermissionGranted()
-        } else {
-            viewModel.onPermissionDenied()
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        val fullGranted = result[Manifest.permission.READ_MEDIA_IMAGES] == true
+                       || result[Manifest.permission.READ_EXTERNAL_STORAGE] == true
+        val limitedGranted = result[Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED] == true
+        when {
+            fullGranted -> viewModel.onPermissionGranted(isLimited = false)
+            limitedGranted -> viewModel.onPermissionGranted(isLimited = true)
+            else -> viewModel.onPermissionDenied()
         }
     }
 
     // Handle navigation events - StateFlow-based (Google recommended pattern)
-    // Observe navigationEvent StateFlow and call onNavigationHandled() after navigating
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
@@ -160,21 +187,54 @@ fun AssetPickerScreen(
     }
 
     // Wait for sheet animation to complete, then check permission and load images
-    // Using LaunchedEffect(Unit) for one-time initialization
     LaunchedEffect(Unit) {
-        // Wait for sheet animation to complete before requesting permission
         kotlinx.coroutines.delay(SHEET_ANIMATION_DELAY_MS)
 
-        val hasPermission = ContextCompat.checkSelfPermission(
-            context,
-            permission
-        ) == PackageManager.PERMISSION_GRANTED
-
-        if (hasPermission) {
-            viewModel.onPermissionGranted()
-        } else {
-            permissionLauncher.launch(permission)
+        val hasFullPermission = when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
+                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
+            else ->
+                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
         }
+        val hasLimitedPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED) == PackageManager.PERMISSION_GRANTED
+
+        when {
+            hasFullPermission -> viewModel.onPermissionGranted(isLimited = false)
+            hasLimitedPermission -> viewModel.onPermissionGranted(isLimited = true)
+            else -> permissionLauncher.launch(permissionsToRequest)
+        }
+    }
+
+    // Opens app's system settings page (used by DeniedPermission "Go to Settings" button)
+    val goToAppSettings = {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+        }
+        context.startActivity(intent)
+    }
+
+    // Photo picker launcher for "Add more photos" in LimitPermission state.
+    // Using PickMultipleVisualMedia instead of re-requesting READ_MEDIA_VISUAL_USER_SELECTED
+    // because re-requesting an already-granted permission returns silently with no UI on most devices.
+    // On Android 14+, photos selected via the system photo picker are automatically added to
+    // the READ_MEDIA_VISUAL_USER_SELECTED grant, so the MediaStore query will include them after reload.
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(20)
+    ) { uris ->
+        uris.forEach { uri ->
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        }
+        viewModel.onPermissionGranted(isLimited = true)
+    }
+
+    val onAddMorePhotos = {
+        photoPickerLauncher.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        )
     }
 
     // Bottom Sheet
@@ -196,20 +256,15 @@ fun AssetPickerScreen(
                 onAlbumSelect = { albumId -> viewModel.selectAlbum(albumId) },
                 onAssetClick = { asset -> viewModel.toggleAssetSelection(asset) },
                 onConfirmClick = { viewModel.confirmSelection() },
+                onClearAsset = {viewModel.clearSelection()},
                 onCloseClick = {
                     showBottomSheet = false
                     viewModel.navigateBack()
-                }
+                },
+                onGoToSettings = goToAppSettings,
+                onAddMorePhotos = onAddMorePhotos
             )
         }
-    }
-
-    // Permission denied state
-    if (!permissionGranted && uiState is AssetPickerUiState.Error) {
-        PermissionDeniedContent(
-            onRetryClick = { permissionLauncher.launch(permission) },
-            onBackClick = { viewModel.navigateBack() }
-        )
     }
 }
 
@@ -222,8 +277,16 @@ private fun AssetPickerContent(
     onAlbumSelect: (String) -> Unit,
     onAssetClick: (GalleryAsset) -> Unit,
     onConfirmClick: () -> Unit,
-    onCloseClick: () -> Unit
+    onClearAsset: () -> Unit,
+    onCloseClick: () -> Unit,
+    onGoToSettings: () -> Unit,
+    onAddMorePhotos: () -> Unit
 ) {
+    // Selection count and confirm button
+    val selectedCount = if (uiState is AssetPickerUiState.WithAssets) uiState.selectedAssets.size else 0
+    val canConfirm = selectedCount >= minSelection
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -239,47 +302,29 @@ private fun AssetPickerContent(
         ) {
             IconButton(onClick = onCloseClick) {
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    imageVector = Icons.Default.ArrowBack,
                     contentDescription = stringResource(R.string.close)
                 )
             }
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = stringResource(R.string.picker_title),
-                    style = MaterialTheme.typography.titleLarge
+            Text(
+                text = stringResource(R.string.picker_title),
+                style = MaterialTheme.typography.titleLarge
+            )
+
+            IconButton(onClick = {
+
+            }) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_camera),
+                    contentDescription = stringResource(R.string.close)
                 )
-                if (isTemplateMode) {
-                    Text(
-                        text = stringResource(R.string.picker_min_selection, minSelection),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
 
-            // Selection count and confirm button
-            val selectedCount = if (uiState is AssetPickerUiState.Success) uiState.selectedAssets.size else 0
-            val canConfirm = selectedCount >= minSelection
-            if (selectedCount > 0) {
-                Button(
-                    onClick = onConfirmClick,
-                    enabled = canConfirm,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                    ),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text(stringResource(R.string.picker_done, selectedCount, AssetPickerViewModel.MAX_SELECTION))
-                }
-            } else {
-                Spacer(modifier = Modifier.width(48.dp))
-            }
         }
 
-        // Album filter chips
-        if (uiState is AssetPickerUiState.Success && uiState.albums.isNotEmpty()) {
+        // Album filter chips — only shown when assets are loaded
+        if (uiState is AssetPickerUiState.WithAssets.AllPermission && uiState.albums.isNotEmpty()) {
             AlbumFilterChips(
                 albums = uiState.albums,
                 selectedAlbumId = uiState.selectedAlbumId,
@@ -289,7 +334,6 @@ private fun AssetPickerContent(
 
         // Content based on state
         when (uiState) {
-            is AssetPickerUiState.Initial,
             is AssetPickerUiState.Loading -> {
                 Box(
                     modifier = Modifier
@@ -301,11 +345,14 @@ private fun AssetPickerContent(
                 }
             }
 
-            is AssetPickerUiState.Success -> {
+            is AssetPickerUiState.WithAssets -> {
+                // Limited access banner — shown only for partial permission (Android 14+)
+                if (uiState is AssetPickerUiState.WithAssets.LimitPermission) {
+                    LimitedAccessBanner(onAddMoreClick = onAddMorePhotos)
+                }
+
                 if (uiState.filteredAssets.isEmpty()) {
-                    EmptyGalleryContent(
-                        modifier = Modifier.weight(1f)
-                    )
+                    EmptyGalleryContent(modifier = Modifier.weight(1f))
                 } else {
                     ImageGrid(
                         assets = uiState.filteredAssets,
@@ -314,21 +361,112 @@ private fun AssetPickerContent(
                         modifier = Modifier.weight(1f)
                     )
                 }
+
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp, vertical = 14.dp)
+                        .fillMaxWidth()
+                        .background(Color.White.copy(0.1f), RoundedCornerShape(16.dp)),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+
+                        if (uiState.selectedAssets.isEmpty()){
+                            Text(
+                                text = stringResource(R.string.picker_min_selection, minSelection),
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 14.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .weight(1f)
+                            )
+                        } else {
+
+                            Icon(
+                                painter = painterResource(R.drawable.ic_trash),
+                                tint = Color.White,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clickable {
+                                        onClearAsset.invoke()
+                                    }
+                            )
+
+                            Text(
+                                text = stringResource(R.string.picker_current_selection, uiState.selectedAssets.size),
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 14.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .weight(1f)
+                            )
+                        }
+
+                        Button(
+                            onClick = onConfirmClick,
+                            enabled = canConfirm,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(stringResource(R.string.picker_done))
+                        }
+                    }
+
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(PlayerCardBackground)
+                    )
+
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp)
+                    ) {
+
+                        items(
+                            items = uiState.selectedAssets,
+                            key = { it.id }
+                        ) { asset ->
+                            ImageGridChooseItem(
+                                asset
+                            ){
+                                onAssetClick.invoke(asset)
+                            }
+                        }
+
+                        items(3 - uiState.selectedAssets.take(3).size){
+                            Image(
+                                painter = painterResource(R.drawable.img_out_line),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(80.dp)
+                            )
+                        }
+                    }
+                }
             }
 
-            is AssetPickerUiState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = uiState.message,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
-                    )
-                }
+
+            is AssetPickerUiState.Initial,
+            AssetPickerUiState.DeniedPermission -> {
+                PermissionDeniedContent(
+                    onGoToSettings = onGoToSettings
+                )
             }
         }
     }
@@ -370,6 +508,45 @@ private fun AlbumFilterChips(
 }
 
 @Composable
+private fun LimitedAccessBanner(
+    onAddMoreClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth()
+            .background(Color.White.copy(0.1f), RoundedCornerShape(8.dp))
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = stringResource(R.string.picker_limited_access_message),
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = FontWeight.W400,
+                fontSize = 14.sp
+            ),
+            color = TextPrimaryDark,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = stringResource(R.string.picker_add_more_photos),
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = Primary,
+                fontSize = 16.sp
+            ),
+            modifier = Modifier
+                .background(TextPrimaryDark.copy(0.12f), RoundedCornerShape(12.dp))
+                .clickable {
+                    onAddMoreClick.invoke()
+                }
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+    }
+}
+
+@Composable
 private fun ImageGrid(
     assets: List<GalleryAsset>,
     selectedAssets: List<GalleryAsset>,
@@ -381,16 +558,15 @@ private fun ImageGrid(
     LazyVerticalGrid(
         columns = GridCells.Fixed(GRID_COLUMNS),
         state = gridState,
-        contentPadding = PaddingValues(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        contentPadding = PaddingValues(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier,
-        // Performance: Show recent photos first (bottom to top)
-        reverseLayout = false // Keep normal layout, assets are already sorted by dateAdded DESC
+        reverseLayout = false
     ) {
         items(
             items = assets,
-            key = { it.id } // Stable key for efficient recomposition
+            key = { it.id }
         ) { asset ->
             val isSelected = selectedAssets.any { it.id == asset.id }
             val selectionIndex = selectedAssets.indexOfFirst { it.id == asset.id }
@@ -415,7 +591,6 @@ private fun ImageGridItem(
     val context = LocalContext.current
     val density = LocalDensity.current
 
-    // Calculate thumbnail size in pixels for Coil
     val thumbnailSizePx = with(density) { THUMBNAIL_SIZE_DP.dp.roundToPx() }
 
     Box(
@@ -423,17 +598,6 @@ private fun ImageGridItem(
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
-            .then(
-                if (isSelected) {
-                    Modifier.border(
-                        width = 3.dp,
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                } else {
-                    Modifier
-                }
-            )
     ) {
         // Optimized image loading with Coil
         // Memory optimizations:
@@ -492,39 +656,99 @@ private fun ImageGridItem(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.3f))
+                    .background(Color(0xFF2C2C2C).copy(alpha = 0.4f))
             )
 
-            // Selection number badge - Primary (lime) background with dark text
-            Box(
+            Image(
+                painter = painterResource(R.drawable.ic_choose_img),
+                contentDescription = stringResource(R.string.picker_selected),
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(6.dp)
-                    .size(26.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.primary, // Lime color from theme
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                if (selectionIndex != null) {
-                    Text(
-                        text = selectionIndex.toString(),
-                        color = MaterialTheme.colorScheme.onPrimary, // Dark text on primary from theme
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        )
+                    .size(40.dp)
+                    .align(Alignment.Center)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ImageGridChooseItem(
+    asset: GalleryAsset,
+    onClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val density = LocalDensity.current
+
+    val thumbnailSizePx = with(density) { THUMBNAIL_SIZE_DP.dp.roundToPx() }
+
+    Box(
+        modifier = Modifier
+            .size(80.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+    ) {
+        // Optimized image loading with Coil
+        // Memory optimizations:
+        // - RGB_565: 2 bytes/pixel vs ARGB_8888's 4 bytes = 50% memory reduction
+        // - INEXACT precision: allows slightly smaller images, saving memory
+        // - allowHardware(true): GPU acceleration for faster rendering
+        // - Reduced crossfade: 100ms instead of 150ms for snappier feel
+        SubcomposeAsyncImage(
+            model = ImageRequest.Builder(context)
+                .data(asset.uri)
+                .size(Size(thumbnailSizePx, thumbnailSizePx)) // Fixed thumbnail size
+                .bitmapConfig(Bitmap.Config.RGB_565) // Half memory vs ARGB_8888
+                .precision(Precision.INEXACT) // Allow slightly smaller size for memory savings
+                .allowHardware(true) // GPU acceleration - better for scrolling performance
+                .memoryCachePolicy(CachePolicy.ENABLED)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .memoryCacheKey("thumb_${asset.id}")
+                .diskCacheKey("thumb_${asset.id}_${asset.dateAdded}") // Time-based cache key
+                .crossfade(100) // Faster crossfade for snappier feel
+                .build(),
+            contentDescription = asset.displayName,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+            loading = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                     )
-                } else {
+                }
+            },
+            error = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.errorContainer),
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = stringResource(R.string.picker_selected),
-                        tint = MaterialTheme.colorScheme.onPrimary, // Dark text on primary from theme
-                        modifier = Modifier.size(16.dp)
+                        imageVector = Icons.Default.Photo,
+                        contentDescription = stringResource(R.string.error),
+                        tint = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.5f)
                     )
                 }
             }
-        }
+        )
+
+        Image(
+            painter = painterResource(R.drawable.ic_close_fill),
+            contentDescription = stringResource(R.string.picker_selected),
+            modifier = Modifier
+                .padding(4.dp)
+                .size(20.dp)
+                .clickable {
+                    onClick.invoke()
+                }
+                .align(Alignment.TopEnd)
+        )
     }
 }
 
@@ -562,32 +786,72 @@ private fun EmptyGalleryContent(
 
 @Composable
 private fun PermissionDeniedContent(
-    onRetryClick: () -> Unit,
-    onBackClick: () -> Unit
+    onGoToSettings: () -> Unit
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.surface
-    ) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+    ){
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            contentPadding = PaddingValues(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(3) {
+                Box(
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color(0xFFD9D9D9).copy(0.05f))
+                )
+            }
+            items(3) {
+                Box(
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFFD9D9D9).copy(0.04f),
+                                    Color(0xFFD9D9D9).copy(0.02f),
+                                )
+                            )
+                        )
+                )
+            }
+            items(3) {
+                Box(
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFFD9D9D9).copy(0.01f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+            }
+        }
+
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .matchParentSize()
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Photo,
-                contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = stringResource(R.string.picker_permission_title),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 24.sp
+                ),
                 textAlign = TextAlign.Center
             )
 
@@ -596,33 +860,21 @@ private fun PermissionDeniedContent(
             Text(
                 text = stringResource(R.string.picker_permission_message),
                 style = MaterialTheme.typography.bodyLarge,
+                fontSize = 16.sp,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = FoundationBlack_100
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = onRetryClick,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                onClick = onGoToSettings,
+                shape = RoundedCornerShape(120.dp)
             ) {
-                Text(stringResource(R.string.picker_allow_access), modifier = Modifier.padding(vertical = 8.dp))
+                Text(stringResource(R.string.picker_go_to_settings), modifier = Modifier.padding(vertical = 8.dp))
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Button(
-                onClick = onBackClick,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(stringResource(R.string.export_go_back), modifier = Modifier.padding(vertical = 8.dp))
-            }
         }
     }
+
 }

@@ -9,6 +9,8 @@
     <!-- Photo Library Access -->
     <!-- Android 13+ (API 33+) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Android 14+ (API 34+): Limited photo access -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
 
     <!-- Audio Library Access (for custom background music) -->
     <!-- Android 13+ (API 33+) -->
