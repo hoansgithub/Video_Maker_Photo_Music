@@ -9,7 +9,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -72,6 +75,7 @@ class RootViewActivity : AppCompatActivity() {
             val isLoading by rootViewModel.isLoading.collectAsStateWithLifecycle()
             val loadingMessage by rootViewModel.loadingMessage.collectAsStateWithLifecycle()
             val navigationEvent by rootViewModel.navigationEvent.collectAsStateWithLifecycle()
+            val showNoInternetDialog by rootViewModel.showNoInternetDialog.collectAsStateWithLifecycle()
 
             // Handle navigation events
             LaunchedEffect(navigationEvent) {
@@ -94,6 +98,24 @@ class RootViewActivity : AppCompatActivity() {
                         isLoading = isLoading,
                         message = loadingMessage
                     )
+
+                    if (showNoInternetDialog) {
+                        AlertDialog(
+                            onDismissRequest = { rootViewModel.dismissNoInternetDialog() },
+                            title = { Text("No Internet Connection") },
+                            text = { Text("Please check your internet connection and try again.") },
+                            confirmButton = {
+                                TextButton(onClick = { rootViewModel.retryInitialization() }) {
+                                    Text("Retry")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { rootViewModel.dismissNoInternetDialog() }) {
+                                    Text("Cancel")
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }

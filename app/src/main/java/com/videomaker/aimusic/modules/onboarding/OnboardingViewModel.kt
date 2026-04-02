@@ -27,8 +27,7 @@ class OnboardingViewModel(
         _currentStep.value = when (_currentStep.value) {
             OnboardingStep.WELCOME_1 -> OnboardingStep.WELCOME_2
             OnboardingStep.WELCOME_2 -> OnboardingStep.WELCOME_3
-            OnboardingStep.WELCOME_3 -> OnboardingStep.GENRE_SELECTION
-            OnboardingStep.GENRE_SELECTION -> OnboardingStep.GENRE_SELECTION
+            OnboardingStep.WELCOME_3 -> OnboardingStep.WELCOME_3
         }
     }
 
@@ -41,7 +40,6 @@ class OnboardingViewModel(
             OnboardingStep.WELCOME_1 -> return false
             OnboardingStep.WELCOME_2 -> OnboardingStep.WELCOME_1
             OnboardingStep.WELCOME_3 -> OnboardingStep.WELCOME_2
-            OnboardingStep.GENRE_SELECTION -> OnboardingStep.WELCOME_3
         }
         _currentStep.value = previous
         return true

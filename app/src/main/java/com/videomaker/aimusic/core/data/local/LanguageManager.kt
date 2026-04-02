@@ -35,6 +35,7 @@ class LanguageManager(private val context: Context) {
         private const val PREFS_NAME = "language_prefs"
         private const val KEY_SELECTED_LANGUAGE = "selected_language"
         private const val KEY_LANGUAGE_SELECTION_COMPLETE = "language_selection_complete"
+        private const val KEY_GENRE_SELECTION_PENDING = "genre_selection_pending"
 
         // Supported language codes
         const val LANGUAGE_ENGLISH = "en"
@@ -112,6 +113,21 @@ class LanguageManager(private val context: Context) {
         val localeList = LocaleListCompat.forLanguageTags(savedLanguage)
         AppCompatDelegate.setApplicationLocales(localeList)
     }
+
+    /**
+     * Returns true if the user confirmed language selection but has not yet completed
+     * the genre survey step. Used to re-route back to LanguageSelectionActivity on relaunch.
+     */
+    fun isGenreSelectionPending(): Boolean =
+        prefs.getBoolean(KEY_GENRE_SELECTION_PENDING, false)
+
+    /** Called when the user presses Continue on the language step. */
+    fun markGenreSelectionPending() =
+        prefs.edit { putBoolean(KEY_GENRE_SELECTION_PENDING, true) }
+
+    /** Called after the genre survey is saved — clears the pending flag. */
+    fun clearGenreSelectionPending() =
+        prefs.edit { putBoolean(KEY_GENRE_SELECTION_PENDING, false) }
 
     /**
      * Check if current language is RTL (Right-to-Left).
