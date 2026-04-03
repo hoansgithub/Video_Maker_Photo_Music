@@ -15,7 +15,7 @@
 
     <!-- Onboarding -->
     <string name="onboarding_next">Next</string>
-    <string name="onboarding_get_started">Get Started</string>
+    <string name="onboarding_get_started">Done</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Create Magic in Seconds</string>
     <string name="onboarding_page1_subtitle">Stunning Video in a few taps. Simple and fast</string>
@@ -25,6 +25,14 @@
     <!-- Page 3 -->
     <string name="onboarding_page3_title">Better Together!</string>
     <string name="onboarding_page3_subtitle">Better together. Invite friends to share the fun</string>
+    <string name="onboarding_swipe_next">Swipe to next</string>
+    <string name="onboarding_exit_title">Exit Setup?</string>
+    <string name="onboarding_exit_message">You can always change your preferences later in Settings.</string>
+    <string name="onboarding_exit_confirm">Exit</string>
+    <string name="onboarding_exit_dismiss">Continue</string>
+    <string name="root_no_internet_title">No Internet Connection</string>
+    <string name="root_no_internet_message">Your device is currently offline. Please reconnect to continue your progress</string>
+    <string name="root_try_again">Try Again</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Gallery</string>
@@ -316,7 +324,7 @@
     <string name="song_search_idle_hint">Start typing to search for songs</string>
 
     <!-- Onboarding Page 4 — Feature Survey -->
-    <string name="onboarding_page4_title">Start your journey</string>
+    <string name="onboarding_page4_title">How do you want to  start ?</string>
     <string name="onboarding_page4_subtitle">This helps us recommend the most relevant content for you.</string>
     <string name="feature_music_video_instant">Make a music video instantly</string>
     <string name="feature_photos_to_video">Turn photos into a music video</string>

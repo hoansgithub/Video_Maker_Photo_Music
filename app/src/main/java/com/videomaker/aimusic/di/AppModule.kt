@@ -75,6 +75,7 @@ import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
 import com.videomaker.aimusic.modules.settings.UninstallViewModel
 import com.videomaker.aimusic.widget.WidgetViewModel
+import org.koin.android.ext.koin.androidApplication
 
 /**
  * ACCDI Dependency Injection Modules
@@ -573,6 +574,7 @@ val presentationModule = module {
     // Root ViewModel for RootViewActivity (handles loading, Firebase, navigation)
     viewModel {
         RootViewModel(
+            application = androidApplication(),
             checkOnboardingStatusUseCase = get(),
             checkLanguageSelectedUseCase = get(),
             remoteConfig = get()  // Firebase Remote Config (from firebaseModule)
