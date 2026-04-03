@@ -140,7 +140,7 @@ class RootViewActivity : AppCompatActivity() {
                                 )
 
                                 Text(
-                                    text = "No Internet Connection",
+                                    text = stringResource(R.string.root_no_internet_title),
                                     fontSize = 24.sp,
                                     fontWeight = FontWeight.W700,
                                     color = MaterialTheme.colorScheme.onBackground,
@@ -148,7 +148,7 @@ class RootViewActivity : AppCompatActivity() {
                                 )
 
                                 Text(
-                                    text = "Your device is currently offline. Please reconnect to continue your progress",
+                                    text = stringResource(R.string.root_no_internet_message),
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.W500,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -164,7 +164,7 @@ class RootViewActivity : AppCompatActivity() {
                                         .padding(horizontal = 10.dp)
                                 ) {
                                     Text(
-                                        text = "Try Again",
+                                        text = stringResource(R.string.root_try_again),
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = FoundationBlack

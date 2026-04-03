@@ -167,7 +167,7 @@ fun OnboardingScreen(
                             .size(90.dp)
                     )
                     Text(
-                        text = "Swipe to next",
+                        text = stringResource(R.string.onboarding_swipe_next),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.W500,
                         color = MaterialTheme.colorScheme.onBackground

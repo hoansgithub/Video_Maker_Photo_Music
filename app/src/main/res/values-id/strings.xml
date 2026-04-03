@@ -26,6 +26,14 @@
     <!-- Page 3 -->
     <string name="onboarding_page3_title">Lebih Baik Bersama!</string>
     <string name="onboarding_page3_subtitle">Lebih baik bersama. Ajak teman-temanmu untuk berbagi kesenangan.</string>
+    <string name="onboarding_swipe_next">Geser untuk lanjut</string>
+    <string name="onboarding_exit_title">Keluar dari pengaturan?</string>
+    <string name="onboarding_exit_message">Anda selalu dapat mengubah preferensi nanti di Pengaturan.</string>
+    <string name="onboarding_exit_confirm">Keluar</string>
+    <string name="onboarding_exit_dismiss">Lanjutkan</string>
+    <string name="root_no_internet_title">Tidak Ada Koneksi Internet</string>
+    <string name="root_no_internet_message">Perangkat Anda sedang offline. Silakan sambungkan kembali untuk melanjutkan.</string>
+    <string name="root_try_again">Coba Lagi</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galeri</string>

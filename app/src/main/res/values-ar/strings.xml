@@ -26,6 +26,14 @@
     <!-- Page 3 -->
     <string name="onboarding_page3_title">معاً نكون أفضل!</string>
     <string name="onboarding_page3_subtitle">معاً نكون أفضل. ادعُ أصدقاءك لمشاركة المتعة</string>
+    <string name="onboarding_swipe_next">اسحب للانتقال إلى التالي</string>
+    <string name="onboarding_exit_title">هل تريد الخروج من الإعداد؟</string>
+    <string name="onboarding_exit_message">يمكنك دائماً تغيير تفضيلاتك لاحقاً من الإعدادات.</string>
+    <string name="onboarding_exit_confirm">خروج</string>
+    <string name="onboarding_exit_dismiss">متابعة</string>
+    <string name="root_no_internet_title">لا يوجد اتصال بالإنترنت</string>
+    <string name="root_no_internet_message">جهازك غير متصل حالياً. يُرجى إعادة الاتصال للمتابعة.</string>
+    <string name="root_try_again">حاول مرة أخرى</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">معرض</string>

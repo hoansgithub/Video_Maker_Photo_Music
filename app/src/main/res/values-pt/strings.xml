@@ -26,6 +26,14 @@
     <!-- Page 3 -->
     <string name="onboarding_page3_title">Juntos é Melhor!</string>
     <string name="onboarding_page3_subtitle">Juntos é melhor. Convide seus amigos para compartilhar a diversão.</string>
+    <string name="onboarding_swipe_next">Deslize para continuar</string>
+    <string name="onboarding_exit_title">Sair da configuração?</string>
+    <string name="onboarding_exit_message">Você sempre pode alterar suas preferências depois em Configurações.</string>
+    <string name="onboarding_exit_confirm">Sair</string>
+    <string name="onboarding_exit_dismiss">Continuar</string>
+    <string name="root_no_internet_title">Sem conexão com a Internet</string>
+    <string name="root_no_internet_message">Seu dispositivo está offline no momento. Reconecte-se para continuar seu progresso.</string>
+    <string name="root_try_again">Tentar Novamente</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galeria</string>

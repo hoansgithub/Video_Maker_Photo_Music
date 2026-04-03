@@ -26,6 +26,14 @@
     <!-- Page 3 -->
     <string name="onboarding_page3_title">Birlikte Daha İyi!</string>
     <string name="onboarding_page3_subtitle">Birlikte daha iyi. Arkadaşlarınızı eğlenceyi paylaşmaya davet edin.</string>
+    <string name="onboarding_swipe_next">Devam etmek için kaydır</string>
+    <string name="onboarding_exit_title">Kurulumdan çıkılsın mı?</string>
+    <string name="onboarding_exit_message">Tercihlerinizi daha sonra Ayarlar\'dan her zaman değiştirebilirsiniz.</string>
+    <string name="onboarding_exit_confirm">Çık</string>
+    <string name="onboarding_exit_dismiss">Devam Et</string>
+    <string name="root_no_internet_title">İnternet Bağlantısı Yok</string>
+    <string name="root_no_internet_message">Cihazınız şu anda çevrimdışı. Devam etmek için lütfen yeniden bağlanın.</string>
+    <string name="root_try_again">Tekrar Dene</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galeri</string>
