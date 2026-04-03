@@ -38,8 +38,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -54,6 +56,7 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.ui.theme.Black12
 import com.videomaker.aimusic.ui.theme.Black20
 import com.videomaker.aimusic.ui.theme.Gray700
+import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.White20
 import com.videomaker.aimusic.ui.theme.White40
 
@@ -105,7 +108,7 @@ fun LanguageSelectionScreen(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             } else {
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(70.dp))
             }
 
             Text(
@@ -113,7 +116,7 @@ fun LanguageSelectionScreen(
                 fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Start,
+                textAlign = if (showBackButton) TextAlign.Start else TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -123,7 +126,7 @@ fun LanguageSelectionScreen(
                 text = stringResource(R.string.language_select_subtitle),
                 fontSize = 17.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Start,
+                textAlign = if (showBackButton) TextAlign.Start else TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -148,17 +151,33 @@ fun LanguageSelectionScreen(
         }
 
         // Fixed CTA at bottom
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 48.dp)
-        ) {
-            OnboardingCtaButton(
-                text = stringResource(R.string.language_continue),
-                onClick = onContinue,
-                enabled = selectedLanguage != null
-            )
+        if (showBackButton){
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 48.dp)
+            ) {
+                OnboardingCtaMaxWidthButton(
+                    text = stringResource(R.string.language_continue),
+                    onClick = onContinue,
+                    enabled = selectedLanguage != null
+                )
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(24.dp)
+            ) {
+                OnboardingCtaButton(
+                    text = stringResource(R.string.onboarding_next),
+                    icon = R.drawable.ic_right_arrow,
+                    color = Primary,
+                    onClick = onContinue,
+                    enabled = selectedLanguage != null
+                )
+            }
         }
     }
 }
@@ -239,13 +258,76 @@ private fun LanguageCard(
 internal fun OnboardingCtaButton(
     text: String,
     onClick: () -> Unit,
+    icon: Int? = null,
+    color: Color = MaterialTheme.colorScheme.onBackground,
     enabled: Boolean = true
 ) {
     val shape = RoundedCornerShape(50)
     val baseColor = MaterialTheme.colorScheme.primaryContainer
 
-    Box(
-        contentAlignment = Alignment.Center,
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier
+            .alpha(if (enabled) 1f else 0.35f)
+            .clip(shape)
+            .drawBehind {
+                // 1. Base glass fill
+                drawRect(baseColor)
+                // 2. Top inner highlight — light catching the top of the glass
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(White40, Color.Transparent),
+                        startY = 0f,
+                        endY = size.height * 0.45f
+                    )
+                )
+                // 3. Bottom inner shadow — subtle depth below the glass
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color.Transparent, Black12),
+                        startY = size.height * 0.65f,
+                        endY = size.height
+                    )
+                )
+            }
+            .border(1.dp, White20, shape)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 20.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = color
+        )
+
+        icon?.let { 
+            Icon(
+                painter = painterResource(it),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier
+                    .size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+internal fun OnboardingCtaMaxWidthButton(
+    text: String,
+    onClick: () -> Unit,
+    icon: Int? = null,
+    color: Color = MaterialTheme.colorScheme.onBackground,
+    enabled: Boolean = true
+) {
+    val shape = RoundedCornerShape(50)
+    val baseColor = MaterialTheme.colorScheme.primaryContainer
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
@@ -273,13 +355,25 @@ internal fun OnboardingCtaButton(
             }
             .border(1.dp, White20, shape)
             .clickable(enabled = enabled, onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 20.dp)
     ) {
         Text(
             text = text,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground
+            color = color
         )
+
+        icon?.let {
+            Icon(
+                painter = painterResource(it),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier
+                    .padding(start = 12.dp)
+                    .size(20.dp)
+            )
+        }
     }
 }
 

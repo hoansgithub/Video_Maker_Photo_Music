@@ -255,6 +255,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
     implementation(libs.coil.video)
+    implementation(libs.lottie.compose)
 
     // ============================================
     // PLAY SERVICES (Optional)

@@ -30,6 +30,7 @@ import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSe
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
 import com.videomaker.aimusic.modules.onboarding.OnboardingViewModel
 import com.videomaker.aimusic.modules.onboarding.pages.FeatureSurveyPage
+import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
 /**
@@ -95,12 +96,13 @@ class LanguageSelectionActivity : AppCompatActivity() {
 
                         Box(
                             modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .fillMaxWidth()
+                                .align(Alignment.TopEnd)
                                 .padding(horizontal = 24.dp, vertical = 48.dp)
                         ) {
                             OnboardingCtaButton(
                                 text = stringResource(R.string.onboarding_get_started),
+                                icon = R.drawable.ic_checkmark,
+                                color = Primary,
                                 onClick = {
                                     onboardingViewModel.saveFeatures(onSaved = {
                                         languageManager.clearGenreSelectionPending()

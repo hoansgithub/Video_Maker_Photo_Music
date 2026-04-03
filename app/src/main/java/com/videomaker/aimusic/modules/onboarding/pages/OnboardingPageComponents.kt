@@ -3,8 +3,10 @@ package com.videomaker.aimusic.modules.onboarding.pages
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -30,7 +32,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.videomaker.aimusic.R
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
+import com.videomaker.aimusic.ui.theme.Primary
 
 // ============================================
 // WELCOME PAGE TEMPLATE
@@ -48,9 +52,6 @@ internal fun WelcomePage(
     ctaText: String,
     onCta: () -> Unit
 ) {
-    val density = LocalDensity.current
-    var bottomSectionHeight by remember { mutableIntStateOf(0) }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -68,49 +69,34 @@ internal fun WelcomePage(
                 contentScale = ContentScale.Crop
             )
 
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 28.dp)
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 48.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = title,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    text = subtitle,
-                    fontSize = 17.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                ) {
+                    Text(
+                        text = title,
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = subtitle,
+                        fontSize = 17.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                OnboardingCtaButton(text = ctaText, onClick = onCta, color = Primary, icon = R.drawable.ic_right_arrow)
             }
-
-            // Auto-scaling gap: grows to ensure content never hides under
-            // the bottom section. Adding a future ad slot only expands
-            // bottomSectionHeight — nothing else needs to change.
-            Spacer(
-                modifier = Modifier.height(
-                    with(density) { bottomSectionHeight.toDp() } + 24.dp
-                )
-            )
-        }
-
-        // ── Bottom section (CTA + future ad slot) ────────────────────────
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .onSizeChanged { bottomSectionHeight = it.height }
-                .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(horizontal = 24.dp, vertical = 32.dp)
-        ) {
-            OnboardingCtaButton(text = ctaText, onClick = onCta)
-            // Future native ad slot:
-            // Spacer(Modifier.height(16.dp))
-            // NativeAdView(placement = NATIVE_ONBOARDING, modifier = Modifier.fillMaxWidth())
         }
     }
 }
