@@ -361,4 +361,10 @@
     <string name="widget_pin_not_supported">Widget pinning not supported on this device</string>
     <string name="widget_add_failed">Failed to add widget: %s</string>
 
+    <!-- Content Tags -->
+    <string name="tag_hot">Hot</string>
+    <string name="tag_trending">Trending</string>
+    <string name="tag_new">New</string>
+    <string name="tag_featured">Featured</string>
+
 </resources>

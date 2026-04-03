@@ -66,7 +66,7 @@ android {
     // Only include supported languages
     // This reduces APK size by ~5-10MB
     androidResources {
-        localeFilters += listOf("en", "zh-rCN", "de", "in", "ja", "pt-rBR", "es", "hi", "ms", "ar", "my", "vi")
+        localeFilters += listOf("en", "zh-rCN", "de", "in", "ja", "pt-rBR", "es", "hi", "ms", "ar", "my", "vi", "fil", "tr")
     }
 
     // ============================================
@@ -131,7 +131,8 @@ android {
                 "META-INF/notice.txt",
                 "META-INF/*.kotlin_module",
                 "META-INF/AL2.0",
-                "META-INF/LGPL2.1"
+                "META-INF/LGPL2.1",
+                "META-INF/INDEX.LIST"
             )
         }
     }

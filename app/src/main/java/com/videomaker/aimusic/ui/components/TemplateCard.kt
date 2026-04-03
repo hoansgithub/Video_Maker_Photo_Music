@@ -41,6 +41,8 @@ import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.ContentTag
+import com.videomaker.aimusic.ui.components.ContentTags
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Black60
 import com.videomaker.aimusic.ui.theme.GoldAccent
@@ -69,6 +71,7 @@ fun TemplateCard(
     aspectRatio: Float,
     isPremium: Boolean,
     isShowOption: Boolean = false,
+    showHotTag: Boolean = false,  // Only show in Gallery tab
     useCount: Long,
     onClickDelete: () -> Unit = {},
     onClick: () -> Unit,
@@ -151,6 +154,16 @@ fun TemplateCard(
                     .fillMaxSize()
                     .bottomGradientOverlay(listOf(Color.Transparent, Color.Transparent, Black60))
             )
+
+            // Content tag — top-start (only in Gallery tab)
+            if (showHotTag) {
+                ContentTags(
+                    tags = listOf(ContentTag.HOT),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(dimens.spaceSm)
+                )
+            }
 
             // PRO badge — top-end
             if (isPremium) {

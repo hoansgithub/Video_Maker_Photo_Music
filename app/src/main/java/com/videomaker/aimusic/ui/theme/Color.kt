@@ -266,6 +266,22 @@ val MusicNoteWhite = TextOnPrimary              // White music note
 val MusicNoteGray = SurfaceLight                // Gray variant
 
 // ============================================
+// TAG GRADIENTS (for Hot, Trending badges)
+// ============================================
+
+// Hot tag gradient (vertical): #ED4523 → #F751C8
+val TagHotGradientStart = Color(0xFFED4523)     // Red-orange (top)
+val TagHotGradientEnd = Color(0xFFF751C8)       // Pink (bottom)
+
+// Trending tag gradient (vertical): #2334ED → #8E51F7
+val TagTrendingGradientStart = Color(0xFF2334ED)  // Blue (top)
+val TagTrendingGradientEnd = Color(0xFF8E51F7)    // Purple (bottom)
+
+// Tag gradient collections for easy use
+val HotGradient = listOf(TagHotGradientStart, TagHotGradientEnd)
+val TrendingGradient = listOf(TagTrendingGradientStart, TagTrendingGradientEnd)
+
+// ============================================
 // TEMPLATE CARD
 // ============================================
 val TemplateBadgeBackground = Color(0xE5282828) // Use-count badge bg (#282828, 90% opacity)

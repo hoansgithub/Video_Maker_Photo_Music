@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.MusicSong
+import com.videomaker.aimusic.ui.components.ContentTag
+import com.videomaker.aimusic.ui.components.ContentTags
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Gray200
 import com.videomaker.aimusic.ui.theme.PlaceholderBackground
@@ -73,6 +75,14 @@ fun SuggestSongCard(
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(16.dp))
+                )
+
+                // Hot tag — top-start
+                ContentTags(
+                    tags = listOf(ContentTag.HOT),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(dimens.spaceSm)
                 )
 
                 // Usage count badge — bottom-end
