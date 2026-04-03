@@ -179,7 +179,7 @@ val domainModule = module {
     factory { CheckLanguageSelectedUseCase(get()) }
     factory { CompleteLanguageSelectionUseCase(get()) }
     factory { GetSelectedLanguageUseCase(get()) }
-    factory { SaveLanguagePreferenceUseCase(get()) }
+    factory { SaveLanguagePreferenceUseCase(get(), get()) }  // Inject RegionProvider to invalidate cache on language change
     factory { ApplyLanguageUseCase(get()) }
 
     // Project use cases

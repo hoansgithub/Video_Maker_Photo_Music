@@ -1,6 +1,7 @@
 package com.videomaker.aimusic.modules.language.domain.usecase
 
 import com.videomaker.aimusic.core.data.local.LanguageManager
+import com.videomaker.aimusic.core.data.local.RegionProvider
 
 /**
  * Returns true if user hasn't completed language selection yet.
@@ -33,12 +34,16 @@ class GetSelectedLanguageUseCase(
 
 /**
  * Save language preference without applying — no Activity recreation.
+ * Also invalidates RegionProvider cache so region is re-derived from new language.
  */
 class SaveLanguagePreferenceUseCase(
-    private val languageManager: LanguageManager
+    private val languageManager: LanguageManager,
+    private val regionProvider: RegionProvider
 ) {
     operator fun invoke(languageCode: String) {
         languageManager.saveLanguagePreference(languageCode)
+        // Clear region cache - will be re-derived from new language on next access
+        regionProvider.invalidate()
     }
 }
 
