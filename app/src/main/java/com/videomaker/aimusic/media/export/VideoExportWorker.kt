@@ -36,6 +36,7 @@ class VideoExportWorker(
 
     private val projectRepository: ProjectRepository by inject()
     private val compositionFactory: CompositionFactory by inject()
+    private val audioCache: com.videomaker.aimusic.media.audio.AudioPreviewCache by inject()
 
     companion object {
         private const val TAG = "VideoExportWorker"
@@ -56,6 +57,8 @@ class VideoExportWorker(
         return try {
             val project = projectRepository.getProject(projectId)
                 ?: return Result.failure(workDataOf(KEY_ERROR to "Project not found"))
+
+            android.util.Log.d("VideoExportWorker", "Loaded project: id=$projectId, trimStart=${project.settings.musicTrimStartMs}, trimEnd=${project.settings.musicTrimEndMs}")
 
             if (project.assets.isEmpty()) {
                 return Result.failure(workDataOf(KEY_ERROR to "Project has no assets"))
@@ -96,6 +99,8 @@ class VideoExportWorker(
             // Transformer must be created and started on the main thread
             mainHandler.post {
                 try {
+                    // SimpleCache is global - if music was cached during preview,
+                    // Transformer will use the cached version automatically
                     transformer = Transformer.Builder(applicationContext)
                         .addListener(object : Transformer.Listener {
                             override fun onCompleted(composition: Composition, result: ExportResult) {

@@ -1,0 +1,326 @@
+package com.videomaker.aimusic.modules.editor.components
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.dp
+import com.videomaker.aimusic.ui.theme.Gray500
+import com.videomaker.aimusic.ui.theme.TextPrimary
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.sin
+
+/**
+ * MusicWaveformView - Waveform visualization with two draggable trim handles
+ *
+ * Features:
+ * - Waveform amplitude visualization (generated from audio samples or placeholder)
+ * - Two draggable handles (start and end) to select middle portion
+ * - Minimum 5-second gap constraint between handles
+ * - Playhead indicator showing current playback position
+ * - Real-time preview during drag
+ *
+ * @param songDurationMs Total duration of the song in milliseconds
+ * @param trimStartMs Current trim start position in milliseconds
+ * @param trimEndMs Current trim end position in milliseconds
+ * @param currentPositionMs Current playback position in milliseconds (for playhead)
+ * @param waveformData List of amplitude values (0.0 to 1.0), or null for placeholder
+ * @param onTrimChange Callback when trim positions change (during drag)
+ * @param onDragStateChange Callback when drag state changes (true = dragging, false = released)
+ * @param minTrimDurationMs Minimum allowed gap between handles (default 5 seconds)
+ */
+@Composable
+fun MusicWaveformView(
+    songDurationMs: Long,
+    trimStartMs: Long,
+    trimEndMs: Long,
+    currentPositionMs: Long,
+    waveformData: List<Float>? = null,
+    onTrimChange: (startMs: Long, endMs: Long) -> Unit,
+    onDragStateChange: (Boolean) -> Unit = {},
+    minTrimDurationMs: Long = 5000L,
+    modifier: Modifier = Modifier
+) {
+    // Track which handle is being dragged
+    var draggingHandle by remember { mutableStateOf<DragHandle?>(null) }
+    var localTrimStart by remember(trimStartMs) { mutableFloatStateOf(trimStartMs.toFloat()) }
+    var localTrimEnd by remember(trimEndMs) { mutableFloatStateOf(trimEndMs.toFloat()) }
+
+    // Use provided waveform data or empty list (will show loading indicator)
+    val waveform = waveformData ?: emptyList()
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(120.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.Black.copy(alpha = 0.3f))
+            .pointerInput(songDurationMs, minTrimDurationMs) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        // Determine which handle to drag based on tap position
+                        val width = size.width.toFloat()
+                        val tapX = offset.x
+                        val startHandleX = (localTrimStart / songDurationMs) * width
+                        val endHandleX = (localTrimEnd / songDurationMs) * width
+
+                        // Larger touch target for easier dragging
+                        val touchTarget = 80.dp.toPx()
+
+                        draggingHandle = when {
+                            abs(tapX - startHandleX) < touchTarget -> DragHandle.START
+                            abs(tapX - endHandleX) < touchTarget -> DragHandle.END
+                            else -> null
+                        }
+
+                        if (draggingHandle != null) {
+                            onDragStateChange(true)
+                        }
+                    },
+                    onDrag = { change, dragAmount ->
+                        val width = size.width.toFloat()
+                        val deltaMs = (dragAmount.x / width) * songDurationMs
+
+                        when (draggingHandle) {
+                            DragHandle.START -> {
+                                val newStart = (localTrimStart + deltaMs)
+                                    .coerceIn(0f, (localTrimEnd - minTrimDurationMs).toFloat())
+                                localTrimStart = newStart
+                                onTrimChange(newStart.toLong(), localTrimEnd.toLong())
+                            }
+                            DragHandle.END -> {
+                                val newEnd = (localTrimEnd + deltaMs)
+                                    .coerceIn((localTrimStart + minTrimDurationMs).toFloat(), songDurationMs.toFloat())
+                                localTrimEnd = newEnd
+                                onTrimChange(localTrimStart.toLong(), newEnd.toLong())
+                            }
+                            null -> {} // Not dragging a handle
+                        }
+                        change.consume()
+                    },
+                    onDragEnd = {
+                        if (draggingHandle != null) {
+                            onDragStateChange(false) // Triggers auto-play
+                        }
+                        draggingHandle = null
+                    }
+                )
+            }
+            .pointerInput(songDurationMs) {
+                // Allow tapping on waveform to seek (future enhancement)
+                detectTapGestures { offset ->
+                    // Could add seek-to-position feature here
+                }
+            }
+    ) {
+        Canvas(modifier = Modifier.matchParentSize()) {
+            val width = size.width
+            val height = size.height
+            val centerY = height / 2f
+
+            // Calculate positions
+            val startX = (localTrimStart / songDurationMs) * width
+            val endX = (localTrimEnd / songDurationMs) * width
+            val playheadX = (currentPositionMs / songDurationMs.toFloat()) * width
+
+            if (waveform.isEmpty()) {
+                // Show simple loading indicator - just a horizontal line
+                drawLine(
+                    color = Gray500.copy(alpha = 0.5f),
+                    start = Offset(0f, centerY),
+                    end = Offset(width, centerY),
+                    strokeWidth = 2f,
+                    cap = StrokeCap.Round
+                )
+            } else {
+                // Draw waveform
+                val barWidth = width / waveform.size.toFloat()
+                waveform.forEachIndexed { index, amplitude ->
+                    val x = index * barWidth
+                    val barHeight = amplitude * (height * 0.7f) // 70% of container height
+
+                    // Determine color based on whether this bar is in the selected region
+                    val color = if (x >= startX && x <= endX) {
+                        TextPrimary.copy(alpha = 0.9f)
+                    } else {
+                        Gray500.copy(alpha = 0.3f)
+                    }
+
+                    // Draw waveform bar (vertical line centered)
+                    drawLine(
+                        color = color,
+                        start = Offset(x, centerY - barHeight / 2),
+                        end = Offset(x, centerY + barHeight / 2),
+                        strokeWidth = max(barWidth * 0.8f, 2f),
+                        cap = StrokeCap.Round
+                    )
+                }
+            }
+
+            // Draw selection overlay (semi-transparent area)
+            drawRect(
+                color = TextPrimary.copy(alpha = 0.1f),
+                topLeft = Offset(startX, 0f),
+                size = Size(endX - startX, height)
+            )
+
+            // Draw start handle
+            drawHandle(
+                x = startX,
+                height = height,
+                color = TextPrimary,
+                isLeft = true
+            )
+
+            // Draw end handle
+            drawHandle(
+                x = endX,
+                height = height,
+                color = TextPrimary,
+                isLeft = false
+            )
+
+            // Draw playhead indicator (thin vertical line)
+            if (playheadX in startX..endX) {
+                drawLine(
+                    color = Color.White,
+                    start = Offset(playheadX, 0f),
+                    end = Offset(playheadX, height),
+                    strokeWidth = 3f,
+                    cap = StrokeCap.Round
+                )
+
+                // Draw playhead circle at top
+                drawCircle(
+                    color = Color.White,
+                    radius = 6f,
+                    center = Offset(playheadX, 8f)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Helper function to draw a trim handle (more visible version)
+ */
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHandle(
+    x: Float,
+    height: Float,
+    color: Color,
+    isLeft: Boolean
+) {
+    val handleWidth = 8f
+    val gripWidth = 32f
+    val gripHeight = 80f
+
+    // Draw white outline for better visibility
+    drawLine(
+        color = Color.White,
+        start = Offset(x, 0f),
+        end = Offset(x, height),
+        strokeWidth = handleWidth + 4f,
+        cap = StrokeCap.Square
+    )
+
+    // Draw vertical line (full height)
+    drawLine(
+        color = color,
+        start = Offset(x, 0f),
+        end = Offset(x, height),
+        strokeWidth = handleWidth,
+        cap = StrokeCap.Square
+    )
+
+    // Draw grip indicator (rounded rect at center)
+    val gripY = (height - gripHeight) / 2f
+    val gripPath = Path().apply {
+        val gripX = if (isLeft) x + 2f else x - gripWidth - 2f
+        addRoundRect(
+            androidx.compose.ui.geometry.RoundRect(
+                left = gripX,
+                top = gripY,
+                right = gripX + gripWidth,
+                bottom = gripY + gripHeight,
+                radiusX = 8f,
+                radiusY = 8f
+            )
+        )
+    }
+
+    // Draw white outline for grip
+    drawPath(
+        path = gripPath,
+        color = Color.White,
+        style = Stroke(width = 3f)
+    )
+
+    // Draw grip background
+    drawPath(
+        path = gripPath,
+        color = color,
+        style = Fill
+    )
+
+    // Draw grip lines (visual indicator for dragging)
+    val lineSpacing = 8f
+    for (i in 0..2) {
+        val lineY = gripY + gripHeight / 2f + (i - 1) * lineSpacing
+        val lineStartX = if (isLeft) x + 6f else x - gripWidth + 2f
+        val lineEndX = lineStartX + gripWidth - 8f
+
+        drawLine(
+            color = Color.White,
+            start = Offset(lineStartX, lineY),
+            end = Offset(lineEndX, lineY),
+            strokeWidth = 3f,
+            cap = StrokeCap.Round
+        )
+    }
+}
+
+/**
+ * Generates placeholder waveform data (sine wave pattern)
+ * Used when actual audio sample data is not available
+ */
+private fun generatePlaceholderWaveform(sampleCount: Int): List<Float> {
+    return List(sampleCount) { index ->
+        // Create varying amplitude using sine waves at different frequencies
+        val baseWave = sin(index * 0.1).toFloat() * 0.5f + 0.5f // Slow wave
+        val detailWave = sin(index * 0.5).toFloat() * 0.3f // Fast wave for detail
+        val variation = (kotlin.random.Random.nextFloat() - 0.5f) * 0.2f // Random variation
+
+        ((baseWave + detailWave + variation + 0.3f) * 0.8f)
+            .coerceIn(0.1f, 1.0f)
+    }
+}
+
+/**
+ * Enum for tracking which handle is being dragged
+ */
+private enum class DragHandle {
+    START, END
+}
+

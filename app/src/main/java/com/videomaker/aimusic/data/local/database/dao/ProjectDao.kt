@@ -55,8 +55,12 @@ interface ProjectDao {
             musicSongId = :musicSongId,
             musicSongName = :musicSongName,
             musicSongUrl = :musicSongUrl,
+            musicSongCoverUrl = :musicSongCoverUrl,
             customAudioUri = :customAudioUri,
+            processedAudioUri = :processedAudioUri,
             audioVolume = :audioVolume,
+            musicTrimStartMs = :musicTrimStartMs,
+            musicTrimEndMs = :musicTrimEndMs,
             aspectRatio = :aspectRatio,
             updatedAt = :updatedAt
         WHERE id = :id
@@ -70,8 +74,12 @@ interface ProjectDao {
         musicSongId: Long?,
         musicSongName: String?,
         musicSongUrl: String?,
+        musicSongCoverUrl: String?,
         customAudioUri: String?,
+        processedAudioUri: String?,
         audioVolume: Float,
+        musicTrimStartMs: Long,
+        musicTrimEndMs: Long?,
         aspectRatio: String,
         updatedAt: Long
     )

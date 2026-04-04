@@ -102,6 +102,23 @@
     <string name="editor_play">Play</string>
     <string name="editor_pause">Pause</string>
     <string name="editor_duration_format">Duration: %s</string>
+
+    <!-- Music Trim Feature (NOT video trim) -->
+    <string name="editor_music_trim">Trim Music</string>
+    <string name="editor_music_trim_from_start">Trim from Start</string>
+    <string name="editor_music_trim_from_end">Trim from End</string>
+    <string name="editor_music_trim_edit">Edit Music Trim</string>
+    <string name="editor_music_trim_title">Trim Music</string>
+    <string name="editor_music_trim_subtitle">Select which part of the song to use</string>
+    <string name="editor_music_trim_start">Music Start</string>
+    <string name="editor_music_trim_end">Music End</string>
+    <string name="editor_music_trim_duration">Music Duration</string>
+    <string name="editor_music_trim_min_duration">Music must be at least 5 seconds</string>
+    <string name="editor_music_trim_will_loop">Music will loop if needed for your video</string>
+    <string name="editor_music_trimmed_info">Music: %1$s</string>
+    <string name="editor_music_trim_play_selection">Play Selection</string>
+    <string name="editor_music_trim_skip_to_start">Jump to Start</string>
+    <string name="editor_music_trim_skip_to_end">Jump to End</string>
     <string name="editor_photos_count">%d photos</string>
     <string name="editor_save_dialog_title">Save Project?</string>
     <string name="editor_save_dialog_message">Your project will be saved and available in My Projects.</string>

@@ -73,8 +73,11 @@ class ProjectRepositoryImpl(
             musicSongId = settings.musicSongId,
             musicSongName = settings.musicSongName,
             musicSongUrl = settings.musicSongUrl,
+            musicSongCoverUrl = settings.musicSongCoverUrl,
             customAudioUri = settings.customAudioUri?.toString(),
             audioVolume = settings.audioVolume,
+            musicTrimStartMs = settings.musicTrimStartMs,  // CRITICAL: Save trim settings!
+            musicTrimEndMs = settings.musicTrimEndMs,      // CRITICAL: Save trim settings!
             aspectRatio = settings.aspectRatio.name
         )
 
@@ -128,8 +131,12 @@ class ProjectRepositoryImpl(
             musicSongId = settings.musicSongId,
             musicSongName = settings.musicSongName,
             musicSongUrl = settings.musicSongUrl,
+            musicSongCoverUrl = settings.musicSongCoverUrl,
             customAudioUri = settings.customAudioUri?.toString(),
+            processedAudioUri = settings.processedAudioUri?.toString(),
             audioVolume = settings.audioVolume,
+            musicTrimStartMs = settings.musicTrimStartMs,  // CRITICAL: Save trim settings!
+            musicTrimEndMs = settings.musicTrimEndMs,      // CRITICAL: Save trim settings!
             aspectRatio = settings.aspectRatio.name,
             updatedAt = System.currentTimeMillis()
         )

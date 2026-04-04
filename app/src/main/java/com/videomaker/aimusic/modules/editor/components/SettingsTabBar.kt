@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -33,18 +33,19 @@ import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 
 /**
- * Settings Tab Bar - Effect, Duration, Ratio, Volume tabs
+ * Settings Tab Bar - Effect, Duration, Ratio, Music (trim + volume)
  */
 @Composable
 internal fun SettingsTabBar(
     currentEffectSetName: String,
-    currentVolume: Float,
     currentRatio: AspectRatio,
     currentDurationMs: Long,
+    showMusicButton: Boolean,
+    musicLabel: String?,
     onEffectClick: () -> Unit,
     onImageDurationClick: () -> Unit,
     onRatioClick: () -> Unit,
-    onVolumeClick: () -> Unit,
+    onMusicClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -78,13 +79,15 @@ internal fun SettingsTabBar(
             modifier = Modifier.weight(1f)
         )
 
-        // Volume button - shows current percentage
-        SettingsTabButton(
-            icon = Icons.AutoMirrored.Filled.VolumeUp,
-            label = "${(currentVolume * 100).toInt()}%",
-            onClick = onVolumeClick,
-            modifier = Modifier.weight(1f)
-        )
+        // Music button - trim + volume (only show if music is selected)
+        if (showMusicButton) {
+            SettingsTabButton(
+                icon = Icons.Default.MusicNote,
+                label = musicLabel ?: stringResource(R.string.editor_music),
+                onClick = onMusicClick,
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 

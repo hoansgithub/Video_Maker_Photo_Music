@@ -69,11 +69,11 @@ import com.videomaker.aimusic.modules.editor.components.DurationBottomSheet
 import com.videomaker.aimusic.modules.editor.components.EffectSetBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSection
+import com.videomaker.aimusic.modules.editor.components.MusicSettingsBottomSheet
 import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
 // import com.videomaker.aimusic.modules.editor.components.SettingsPanel // Removed - using individual bottom sheets
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
 import com.videomaker.aimusic.modules.editor.components.VideoPreviewPlayer
-import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.modules.editor.EffectSetViewModel
 // import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen // Commented out - using Supabase only
 import com.videomaker.aimusic.ui.components.QualityPicker
@@ -110,11 +110,11 @@ fun EditorScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showExitConfirmation by remember { mutableStateOf(false) }
     // var showMusicPicker by remember { mutableStateOf(false) } // Commented out - using Supabase only
-    var showVolumeSheet by remember { mutableStateOf(false) }
     var showRatioSheet by remember { mutableStateOf(false) }
     var showDurationSheet by remember { mutableStateOf(false) }
     var showEffectSetSheet by remember { mutableStateOf(false) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
+    var showMusicTrimSheet by remember { mutableStateOf(false) }
     var wasPlayingBeforeMusicSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -160,7 +160,9 @@ fun EditorScreen(
                 val successState = uiState as? EditorUiState.Success
                 EditorTopBar(
                     selectedQuality = successState?.selectedQuality ?: VideoQuality.DEFAULT,
-                    canExport = !isPreviewBuilding,
+                    canExport = !isPreviewBuilding &&
+                                (successState?.isMusicCached ?: true) &&
+                                !(successState?.isCachingMusic ?: false),
                     onBackClick = { showExitConfirmation = true },
                     onQualityChange = viewModel::updateQuality,
                     onDoneClick = viewModel::navigateToExport
@@ -202,8 +204,8 @@ fun EditorScreen(
                         onEffectClick = { showEffectSetSheet = true },
                         onImageDurationClick = { showDurationSheet = true },
                         onRatioClick = { showRatioSheet = true },
-                        onVolumeClick = { showVolumeSheet = true },
                         onMusicClick = { showMusicSearchSheet = true },
+                        onTrimClick = { showMusicTrimSheet = true },
                         modifier = Modifier.padding(paddingValues)
                     )
                 }
@@ -287,20 +289,6 @@ fun EditorScreen(
         //     )
         // }
 
-        // Volume Bottom Sheet
-        if (showVolumeSheet) {
-            val successState = uiState as? EditorUiState.Success
-            if (successState != null) {
-                VolumeBottomSheet(
-                    currentVolume = successState.displaySettings.audioVolume,
-                    onVolumeChange = viewModel::updateAudioVolume, // Live updates
-                    onDismiss = {
-                        showVolumeSheet = false
-                    }
-                )
-            }
-        }
-
         // Ratio Bottom Sheet
         if (showRatioSheet) {
             val successState = uiState as? EditorUiState.Success
@@ -379,6 +367,48 @@ fun EditorScreen(
                     }
                 }
             )
+        }
+
+        // Music Trimmer Bottom Sheet
+        if (showMusicTrimSheet) {
+            val successState = uiState as? EditorUiState.Success
+            val musicTrimState by viewModel.musicTrimmerState.collectAsStateWithLifecycle()
+
+            // Open trimmer when sheet is shown
+            LaunchedEffect(Unit) {
+                viewModel.openMusicTrimmer()
+            }
+
+            // Show bottom sheet when music settings is open
+            if (musicTrimState is MusicTrimmerState.Open) {
+                val trimState = musicTrimState as MusicTrimmerState.Open
+
+                MusicSettingsBottomSheet(
+                    songName = trimState.songName,
+                    songUrl = successState?.displaySettings?.musicSongUrl ?: "",
+                    songDurationMs = trimState.songDurationMs,
+                    trimStartMs = trimState.trimStartMs,
+                    trimEndMs = trimState.trimEndMs,
+                    currentVolume = successState?.displaySettings?.audioVolume ?: 1f,
+                    onTrimChange = { startMs, endMs ->
+                        viewModel.updateMusicTrimPreview(startMs, endMs)
+                    },
+                    onVolumeChange = { volume ->
+                        viewModel.updateAudioVolume(volume)
+                    },
+                    onDurationReady = { durationMs ->
+                        viewModel.updateMusicTrimDuration(durationMs)
+                    },
+                    onApply = {
+                        viewModel.applyMusicTrim()
+                        showMusicTrimSheet = false
+                    },
+                    onDismiss = {
+                        viewModel.closeMusicTrimmer(applyChanges = false)
+                        showMusicTrimSheet = false
+                    }
+                )
+            }
         }
 
         // Fullscreen Processing Overlay - blocks all interactions, content is blurred
@@ -524,8 +554,8 @@ internal fun EditorMainContent(
     onEffectClick: () -> Unit,
     onImageDurationClick: () -> Unit,
     onRatioClick: () -> Unit,
-    onVolumeClick: () -> Unit,
     onMusicClick: () -> Unit,
+    onTrimClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -594,13 +624,14 @@ internal fun EditorMainContent(
         // Settings Tab Bar - Effect, Duration, Ratio, Volume
         SettingsTabBar(
             currentEffectSetName = effectSetName,
-            currentVolume = project.settings.audioVolume,
             currentRatio = project.settings.aspectRatio,
             currentDurationMs = project.settings.imageDurationMs,
+            showMusicButton = project.settings.musicSongName != null,
+            musicLabel = project.settings.formatMusicTrimInfo(),
             onEffectClick = onEffectClick,
             onImageDurationClick = onImageDurationClick,
             onRatioClick = onRatioClick,
-            onVolumeClick = onVolumeClick,
+            onMusicClick = onTrimClick, // Opens combined music settings sheet
             modifier = Modifier.fillMaxWidth()
         )
     }
