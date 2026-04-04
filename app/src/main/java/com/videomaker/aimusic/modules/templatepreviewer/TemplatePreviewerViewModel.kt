@@ -50,6 +50,10 @@ sealed class SongLoadState {
      *   player restarts from the beginning on each swipe.
      */
     data class Ready(val song: MusicSong, val nonce: Int) : SongLoadState()
+    /**
+     * Error state when song fails to load (network error, API failure, etc.)
+     */
+    data class Error(val message: String) : SongLoadState()
 }
 
 // ============================================
@@ -280,7 +284,11 @@ class TemplatePreviewerViewModel(
         songLoadJob = viewModelScope.launch {
             songRepository.getSongById(songId)
                 .onSuccess { song -> _currentSong.value = SongLoadState.Ready(song, nonce) }
-                .onFailure { _currentSong.value = SongLoadState.None }
+                .onFailure { error ->
+                    android.util.Log.e("TemplatePreviewerVM", "Failed to load song $songId", error)
+                    // Use generic error message - will be localized in UI layer
+                    _currentSong.value = SongLoadState.Error("SONG_LOAD_FAILED")
+                }
         }
     }
 

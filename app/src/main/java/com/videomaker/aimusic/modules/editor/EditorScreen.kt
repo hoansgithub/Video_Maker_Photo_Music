@@ -77,6 +77,8 @@ import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
 import com.videomaker.aimusic.modules.editor.components.VideoPreviewPlayer
 import com.videomaker.aimusic.modules.editor.EffectSetViewModel
 // import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen // Commented out - using Supabase only
+import com.videomaker.aimusic.ui.components.ErrorOverlay
+import com.videomaker.aimusic.ui.components.ErrorType
 import com.videomaker.aimusic.ui.components.QualityPicker
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
@@ -458,39 +460,34 @@ fun EditorScreen(
             }
         }
 
-        // Network error dialog - blocks entire editor screen
-        musicLoadError?.let { errorMessage ->
-            androidx.compose.material3.AlertDialog(
-                onDismissRequest = {
-                    musicLoadError = null
+        // Error overlay - shows both preview errors and music trimmer errors
+        // Preview errors (PreviewState.Error)
+        val previewErrorMessage = (previewState as? com.videomaker.aimusic.modules.editor.components.PreviewState.Error)?.message
+
+        // Music trimmer errors
+        val trimmerErrorMessage = musicLoadError
+
+        // Show error overlay if any error exists
+        val errorMessage = previewErrorMessage ?: trimmerErrorMessage
+        if (errorMessage != null) {
+            ErrorOverlay(
+                errorType = ErrorType.MusicLoading,
+                title = stringResource(R.string.error_preview_title),
+                message = errorMessage,
+                onRetry = {
+                    // Clear error and trigger rebuild
+                    if (previewErrorMessage != null) {
+                        previewState = com.videomaker.aimusic.modules.editor.components.PreviewState.Building
+                    } else {
+                        musicLoadError = null
+                    }
                 },
-                containerColor = SplashBackground,
-                title = {
-                    Text(
-                        text = stringResource(R.string.error_network_title),
-                        color = TextPrimary,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                text = {
-                    Text(
-                        text = errorMessage,
-                        color = TextPrimary,
-                        fontSize = 14.sp
-                    )
-                },
-                confirmButton = {
-                    androidx.compose.material3.TextButton(
-                        onClick = {
-                            musicLoadError = null
-                        }
-                    ) {
-                        Text(
-                            text = stringResource(R.string.dialog_ok),
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Medium
-                        )
+                onDismiss = {
+                    // Clear error state
+                    if (previewErrorMessage != null) {
+                        previewState = com.videomaker.aimusic.modules.editor.components.PreviewState.Building
+                    } else {
+                        musicLoadError = null
                     }
                 }
             )

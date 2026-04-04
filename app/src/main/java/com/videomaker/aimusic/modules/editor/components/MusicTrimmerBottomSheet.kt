@@ -115,7 +115,7 @@ fun MusicSettingsBottomSheet(
     // Extract real waveform data
     LaunchedEffect(songUrl) {
         waveformData = withContext(Dispatchers.IO) {
-            extractWaveformData(songUrl, sampleCount = 200)
+            extractWaveformData(songUrl, sampleCount = 100) // Reduced from 200 for better performance
         }
     }
 
@@ -381,8 +381,11 @@ private fun extractWaveformData(audioPath: String, sampleCount: Int): List<Float
         val step = amplitudes.size.toFloat() / sampleCount
 
         for (i in 0 until sampleCount) {
-            val index = (i * step).toInt().coerceIn(0, amplitudes.lastIndex)
-            downsampledAmplitudes.add(amplitudes[index])
+            // Use max amplitude in chunk for better visual representation
+            val startIndex = (i * step).toInt()
+            val endIndex = ((i + 1) * step).toInt().coerceAtMost(amplitudes.size)
+            val maxInChunk = amplitudes.subList(startIndex, endIndex).maxOrNull() ?: 0f
+            downsampledAmplitudes.add(maxInChunk)
         }
 
         // Normalize to 0.0 - 1.0 range

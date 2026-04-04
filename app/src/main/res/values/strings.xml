@@ -336,6 +336,10 @@
     <string name="error_network_title">Network Error</string>
     <string name="error_network_message">Failed to load music. Please check your connection and try again.</string>
     <string name="error_network_timeout">Network timeout. Please check your connection and try again.</string>
+    <string name="error_preview_title">Preview Error</string>
+    <string name="error_preview_music_network">Network error loading music. Please check your connection and try again.</string>
+    <string name="error_preview_music_failed">Failed to load music. Please try again.</string>
+    <string name="error_template_music_failed">Failed to load song. Please check your connection and try again.</string>
     <string name="dialog_ok">OK</string>
 
     <!-- Songs -->

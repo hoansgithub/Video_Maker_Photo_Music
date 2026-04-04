@@ -278,6 +278,10 @@
     <string name="error_network_title">Ağ Hatası</string>
     <string name="error_network_message">Müzik yüklenemedi. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
     <string name="error_network_timeout">Ağ zaman aşımı. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="error_preview_title">Önizleme Hatası</string>
+    <string name="error_preview_music_network">Müzik yüklenirken ağ hatası. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="error_preview_music_failed">Müzik yüklenemedi. Lütfen tekrar deneyin.</string>
+    <string name="error_template_music_failed">Şarkı yüklenemedi. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
     <string name="dialog_ok">Tamam</string>
 
     <!-- Songs -->

@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.videomaker.aimusic.R
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -492,6 +493,7 @@ fun VideoPreviewPlayer(
                         android.util.Log.d("VideoPreviewPlayer", "Music no trim: waiting for actual duration")
 
                         // Add listener to update repeat mode when actual duration is known
+                        // AND handle audio loading errors
                         audio.addListener(object : Player.Listener {
                             override fun onPlaybackStateChanged(playbackState: Int) {
                                 if (playbackState == Player.STATE_READY) {
@@ -515,6 +517,25 @@ fun VideoPreviewPlayer(
                                         audio.removeListener(this)
                                     }
                                 }
+                            }
+
+                            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                                android.util.Log.e("VideoPreviewPlayer", "Audio player error occurred", error)
+                                android.util.Log.e("VideoPreviewPlayer", "Audio error code: ${error.errorCode}")
+                                android.util.Log.e("VideoPreviewPlayer", "Audio error message: ${error.message}")
+
+                                // Set error state - will show error overlay with localized message
+                                val errorMsg = when {
+                                    error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
+                                    error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
+                                        context.getString(R.string.error_preview_music_network)
+                                    else ->
+                                        context.getString(R.string.error_preview_music_failed)
+                                }
+
+                                previewState = PreviewState.Error(errorMsg)
+                                playerReadyFlow.value = false
+                                audio.removeListener(this)
                             }
                         })
                     }
