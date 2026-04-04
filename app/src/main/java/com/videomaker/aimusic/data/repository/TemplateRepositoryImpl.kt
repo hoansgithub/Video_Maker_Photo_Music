@@ -219,6 +219,13 @@ class TemplateRepositoryImpl(
             }
         }
 
+    override suspend fun searchTemplates(
+        query: String,
+        limit: Int,
+        offset: Int
+    ): Result<List<VideoTemplate>> = searchTemplates(query)
+        .map { templates -> templates.drop(offset).take(limit) }
+
     override suspend fun clearCache() {
         apiCacheManager.clearTemplateCache()
     }

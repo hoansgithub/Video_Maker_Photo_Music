@@ -399,6 +399,16 @@
     <string name="widget_pin_not_supported">Widget pinning not supported on this device</string>
     <string name="widget_add_failed">Failed to add widget: %s</string>
 
+    <!-- Unified search   -->
+    <string name="unified_search_templates">Templates</string>
+    <string name="unified_search_music">Music</string>
+    <string name="unified_search_see_more">See more</string>
+    <string name="unified_search_loading_more">Loading…</string>
+    <string name="unified_search_explore_more">Explore More</string>
+    <string name="unified_search_explore_suggestions">Explore Suggestions</string>
+    <string name="unified_search_no_results_title">No results found</string>
+    <string name="unified_search_keep_typing">Keep typing to refine your search</string>
+
     <!-- Content Tags -->
     <string name="tag_hot">Hot</string>
     <string name="tag_trending">Trending</string>

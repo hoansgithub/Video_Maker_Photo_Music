@@ -38,6 +38,12 @@ interface TemplateRepository {
      */
     suspend fun searchTemplates(query: String): Result<List<VideoTemplate>>
 
+    /**
+     * Search templates by name (ILIKE) with pagination.
+     * Not cached — search results are query-specific.
+     */
+    suspend fun searchTemplates(query: String, limit: Int, offset: Int): Result<List<VideoTemplate>>
+
     /** Clears cached template data. Call before pull-to-refresh. */
     suspend fun clearCache()
 }

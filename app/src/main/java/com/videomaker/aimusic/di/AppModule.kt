@@ -43,7 +43,9 @@ import com.videomaker.aimusic.domain.usecase.ObserveLikedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.ObserveLikedTemplatesUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
 import com.videomaker.aimusic.domain.usecase.SearchSongsUseCase
+import com.videomaker.aimusic.domain.usecase.SearchSongsPagedUseCase
 import com.videomaker.aimusic.domain.usecase.SearchTemplatesUseCase
+import com.videomaker.aimusic.domain.usecase.SearchTemplatesPagedUseCase
 import com.videomaker.aimusic.domain.usecase.UnlikeSongUseCase
 import com.videomaker.aimusic.domain.usecase.UnlikeTemplateUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
@@ -70,10 +72,10 @@ import com.videomaker.aimusic.modules.songs.SongsViewModel
 import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.root.RootViewModel
-import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
 import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
 import com.videomaker.aimusic.modules.settings.UninstallViewModel
+import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchViewModelFactory
 import com.videomaker.aimusic.widget.WidgetViewModel
 import org.koin.android.ext.koin.androidApplication
 
@@ -202,6 +204,8 @@ val domainModule = module {
     single { ClearSongCacheUseCase(get()) }
     single { SearchSongsUseCase(get()) }
     single { SearchTemplatesUseCase(get()) }
+    single { SearchSongsPagedUseCase(get()) }
+    single { SearchTemplatesPagedUseCase(get()) }
 
     // Effect Set use cases
     single { GetEffectSetsPagedUseCase(get()) }
@@ -472,44 +476,6 @@ class WeeklyRankingListViewModelFactory(
 }
 
 /**
- * Factory wrapper for SongSearchViewModel.
- */
-class SongSearchViewModelFactory(
-    private val preferencesManager: PreferencesManager,
-    private val searchSongsUseCase: SearchSongsUseCase,
-    private val getGenresUseCase: GetGenresUseCase,
-    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
-    private val getSongsByGenreUseCase: GetSongsByGenreUseCase
-) {
-    fun create(): SongSearchViewModel {
-        return SongSearchViewModel(
-            preferencesManager = preferencesManager,
-            searchSongsUseCase = searchSongsUseCase,
-            getGenresUseCase = getGenresUseCase,
-            getSuggestedSongsUseCase = getSuggestedSongsUseCase,
-            getSongsByGenreUseCase = getSongsByGenreUseCase
-        )
-    }
-}
-
-/**
- * Factory wrapper for SearchViewModel.
- */
-class GallerySearchViewModelFactory(
-    private val preferencesManager: PreferencesManager,
-    private val templateRepository: TemplateRepository,
-    private val searchTemplatesUseCase: SearchTemplatesUseCase
-) {
-    fun create(): GallerySearchViewModel {
-        return GallerySearchViewModel(
-            preferencesManager = preferencesManager,
-            templateRepository = templateRepository,
-            searchTemplatesUseCase = searchTemplatesUseCase
-        )
-    }
-}
-
-/**
  * Factory wrapper for EffectSetViewModel.
  */
 class EffectSetViewModelFactory(
@@ -592,7 +558,7 @@ val presentationModule = module {
 
     // Song Search ViewModel
     viewModel {
-        com.videomaker.aimusic.modules.songsearch.SongSearchViewModel(
+        SongSearchViewModel(
             preferencesManager = get(),
             searchSongsUseCase = get(),
             getGenresUseCase = get(),
@@ -677,15 +643,6 @@ val presentationModule = module {
         )
     }
 
-    // Gallery Search ViewModel factory (singleton - stateless factory)
-    single {
-        GallerySearchViewModelFactory(
-            preferencesManager = get(),
-            templateRepository = get(),
-            searchTemplatesUseCase = get()
-        )
-    }
-
     // Songs ViewModel factory (singleton - stateless factory)
     single {
         SongsViewModelFactory(
@@ -699,14 +656,15 @@ val presentationModule = module {
         )
     }
 
-    // Song Search ViewModel factory (singleton - stateless factory)
+    // Unified Search ViewModel factory (singleton - stateless factory)
     single {
-        SongSearchViewModelFactory(
+        UnifiedSearchViewModelFactory(
             preferencesManager = get(),
-            searchSongsUseCase = get(),
+            searchTemplatesPagedUseCase = get(),
+            searchSongsPagedUseCase = get(),
+            templateRepository = get(),
             getGenresUseCase = get(),
-            getSuggestedSongsUseCase = get(),
-            getSongsByGenreUseCase = get()
+            getSuggestedSongsUseCase = get()
         )
     }
 
