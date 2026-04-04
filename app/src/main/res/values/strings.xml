@@ -263,6 +263,7 @@
     <string name="settings_add">+ Add</string>
     <string name="settings_add_audio">+ Add</string>
     <string name="settings_volume">Volume</string>
+    <string name="settings_clip_music">Clip Music</string>
     <string name="settings_aspect_ratio">Aspect Ratio</string>
     <string name="settings_transition_effect">Transition Effect</string>
     <string name="settings_transition_duration">Transition Duration</string>
