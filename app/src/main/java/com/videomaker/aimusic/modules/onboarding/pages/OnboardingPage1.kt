@@ -20,5 +20,5 @@ fun OnboardingPage1(ctaText: String, onCta: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 private fun OnboardingPage1Preview() {
-    VideoMakerTheme { OnboardingPage1("Next", {}) }
+    VideoMakerTheme { OnboardingPage1(stringResource(R.string.onboarding_next), {}) }
 }

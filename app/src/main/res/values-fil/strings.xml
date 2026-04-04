@@ -26,6 +26,14 @@
     <!-- Page 3 -->
     <string name="onboarding_page3_title">Mas Maganda Kapag Magkasama!</string>
     <string name="onboarding_page3_subtitle">Mas maganda kapag magkasama. Imbitahan ang iyong mga kaibigan para magsaya.</string>
+    <string name="onboarding_swipe_next">Mag-swipe para magpatuloy</string>
+    <string name="onboarding_exit_title">Lumabas sa setup?</string>
+    <string name="onboarding_exit_message">Maaari mong baguhin ang iyong mga preference sa Settings anumang oras.</string>
+    <string name="onboarding_exit_confirm">Lumabas</string>
+    <string name="onboarding_exit_dismiss">Magpatuloy</string>
+    <string name="root_no_internet_title">Walang koneksyon sa internet</string>
+    <string name="root_no_internet_message">Kasalukuyang offline ang iyong device. Kumonekta muli para magpatuloy.</string>
+    <string name="root_try_again">Subukan Muli</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Gallery</string>

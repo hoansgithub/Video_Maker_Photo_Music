@@ -17,6 +17,8 @@ import androidx.lifecycle.lifecycleScope
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.videomaker.aimusic.MainActivity
+import com.videomaker.aimusic.modules.language.LanguageSelectionActivity
+import com.videomaker.aimusic.modules.language.domain.usecase.CheckLanguageSelectedUseCase
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepository
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
@@ -39,6 +41,7 @@ import kotlinx.coroutines.launch
 class OnboardingActivity : AppCompatActivity() {
 
     private val completeOnboardingUseCase: CompleteOnboardingUseCase by inject()
+    private val checkLanguageSelectedUseCase: CheckLanguageSelectedUseCase by inject()
     private val onboardingViewModel: OnboardingViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,7 +79,12 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     private fun navigateToMain() {
-        startActivity(Intent(this, MainActivity::class.java))
+        val destination = if (checkLanguageSelectedUseCase()) {
+            LanguageSelectionActivity::class.java
+        } else {
+            MainActivity::class.java
+        }
+        startActivity(Intent(this, destination))
         finish()
     }
 }
