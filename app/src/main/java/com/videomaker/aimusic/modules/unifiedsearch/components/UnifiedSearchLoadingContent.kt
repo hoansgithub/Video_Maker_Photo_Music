@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +31,10 @@ fun UnifiedSearchLoadingContent() {
             contentPadding = PaddingValues(vertical = dimens.spaceMd),
             userScrollEnabled = false
         ) {
+            item {
+                Spacer(Modifier.height(100.dp))
+            }
+
             item(key = "templates_header") {
                 ShimmerBox(
                     modifier = Modifier

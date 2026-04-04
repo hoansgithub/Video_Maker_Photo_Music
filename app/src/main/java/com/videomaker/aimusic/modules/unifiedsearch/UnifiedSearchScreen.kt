@@ -96,6 +96,7 @@ fun UnifiedSearchScreen(
             )
 
             is UnifiedSearchUiState.Typing -> UnifiedSearchTypingOverlay(
+                currentText = state.currentText,
                 suggestions = state.suggestions,
                 onSuggestionClick = viewModel::onSuggestionClick
             )

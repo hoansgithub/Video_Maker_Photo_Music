@@ -48,6 +48,7 @@ sealed class UnifiedSearchUiState {
     data object Idle : UnifiedSearchUiState()
 
     data class Typing(
+        val currentText: String,
         val suggestions: List<String>
     ) : UnifiedSearchUiState()
 
@@ -195,7 +196,7 @@ class UnifiedSearchViewModel(
         _uiState.value = when {
             normalized.isBlank() -> UnifiedSearchUiState.Idle
             normalized.length >= MIN_TYPING_LENGTH ->
-                UnifiedSearchUiState.Typing(suggestionsFor(normalized))
+                UnifiedSearchUiState.Typing(newQuery, suggestionsFor(normalized))
             else -> UnifiedSearchUiState.Idle
         }
     }
@@ -428,11 +429,7 @@ class UnifiedSearchViewModel(
         val q = query.trim()
         return when {
             q.isBlank() -> UnifiedSearchUiState.Idle
-            q.length < MIN_TYPING_LENGTH -> UnifiedSearchUiState.Typing(suggestionsFor(q))
-            else -> {
-                _uiState.value = UnifiedSearchUiState.Loading
-                runParallelSearch(q)
-            }
+            else -> UnifiedSearchUiState.Typing(query, suggestionsFor(q))
         }
     }
 

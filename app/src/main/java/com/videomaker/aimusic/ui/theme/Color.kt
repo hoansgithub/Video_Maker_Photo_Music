@@ -54,6 +54,7 @@ val FoundationBlack = Color(0xFF030303)    //foundation screen background
 val FoundationBlack_100 = Color(0xFFB2B2B2)
 val Neutral_Black = Color(0xFF333333)
 val Neutral_N500 = Color(0xFF999999)
+val Neutral_N400 = Color(0xFFB3B3B3)
 val Neutral_N800 = Color(0xFF4D4D4D)
 val Neutral_N600 = Color(0xFF808080)
 val Neutral_N100 = Color(0xFF151515)
