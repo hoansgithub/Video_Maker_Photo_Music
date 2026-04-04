@@ -120,8 +120,9 @@ fun MusicSettingsBottomSheet(
 
     // Update actual duration when player is ready
     LaunchedEffect(musicPlayer) {
-        // ✅ Wait for player to be ready with timeout (10s max)
-        val duration = withTimeoutOrNull(10_000L) {
+        // ✅ Wait for player to be ready with timeout (30s for slow networks)
+        // Duration detection only reads file metadata, not the full audio
+        val duration = withTimeoutOrNull(30_000L) {
             while (musicPlayer.duration == androidx.media3.common.C.TIME_UNSET) {
                 delay(100)
             }
@@ -132,7 +133,7 @@ fun MusicSettingsBottomSheet(
             actualDurationMs = duration
             onDurationReady(duration)
         } else {
-            android.util.Log.w("MusicTrimmer", "Timeout or invalid duration: $duration")
+            android.util.Log.w("MusicTrimmer", "Timeout waiting for music duration (network issue?)")
         }
     }
 
