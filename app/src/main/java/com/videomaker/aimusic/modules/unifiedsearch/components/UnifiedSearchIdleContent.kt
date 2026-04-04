@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -30,6 +31,7 @@ import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.navigation.SearchSection
+import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.TextSecondary
@@ -107,6 +109,34 @@ fun UnifiedSearchIdleContent(
             when (section) {
                 SearchSection.TEMPLATES -> {
                     if (featuredTemplates.isNotEmpty()) {
+
+                        if (suggestionVibeTags.isNotEmpty()) {
+                            item(key = "theme_header") {
+                                Text(
+                                    text = stringResource(R.string.search_browse_by_theme),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                                )
+                                Spacer(modifier = Modifier.height(dimens.spaceSm))
+                            }
+
+                            item(key = "theme_chips") {
+                                LazyRow(
+                                    contentPadding = PaddingValues(horizontal = dimens.spaceLg),
+                                    horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+                                ) {
+                                    items(suggestionVibeTags, key = { it.id }) { tag ->
+                                        AppFilterChip(
+                                            text = if (tag.emoji.isNotEmpty()) "${tag.emoji} ${tag.displayName}" else tag.displayName,
+                                            onClick = { onVibeTagClick(tag) }
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(dimens.spaceSm))
+                            }
+                        }
+
                         item(key = "featured_header") {
                             UnifiedSectionHeader(text = "Templates Suggestions")
                         }
@@ -132,6 +162,32 @@ fun UnifiedSearchIdleContent(
 
                 SearchSection.MUSIC -> {
                     if (suggestedSongs.isNotEmpty()) {
+                        if (genres.isNotEmpty()) {
+                            item(key = "genre_header") {
+                                Text(
+                                    text = stringResource(R.string.song_search_explore_by_genre),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                                )
+                                Spacer(modifier = Modifier.height(dimens.spaceSm))
+                            }
+                            item(key = "genre_chips") {
+                                LazyRow(
+                                    contentPadding = PaddingValues(horizontal = dimens.spaceLg),
+                                    horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
+                                ) {
+                                    items(genres, key = { it.id }) { genre ->
+                                        AppFilterChip(
+                                            text = genre.displayName,
+                                            onClick = { onGenreClick(genre) }
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(dimens.spaceSm))
+                            }
+                        }
+
                         item(key = "suggested_header") {
                             UnifiedSectionHeader(text = "Music Suggestion")
                         }
