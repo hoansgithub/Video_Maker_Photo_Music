@@ -107,32 +107,18 @@ class SongRepositoryImpl(
      * The DB function runs FTS (GIN index) + ILIKE + genre-contains in a single
      * query with server-side dedup and ranking — 1 round trip instead of 3.
      */
-    override suspend fun searchSongs(query: String): Result<List<MusicSong>> =
-        searchSongs(query = query, limit = 30, offset = 0)
-
-    override suspend fun searchSongs(
-        query: String,
-        limit: Int,
-        offset: Int
-    ): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
+    override suspend fun searchSongs(query: String): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
         val q = query.trim()
-        if (q.isEmpty() || limit <= 0 || offset < 0) return@withContext Result.success(emptyList())
+        if (q.isEmpty()) return@withContext Result.success(emptyList())
 
         try {
-            val fetchLimit = offset + limit
             val songs = supabaseClient.postgrest
                 .rpc(FN_SEARCH_SONGS, buildJsonObject {
                     put("search_query", q)
-                    put("result_limit", fetchLimit)
-                }) {
-                    range(offset.toLong(), (offset + limit - 1).toLong())
-                }
+                    put("result_limit", 30)
+                })
                 .decodeList<SongDto>()
-                .toMusicSongs()
-
-            // Defensive fallback if the backend ignores range for this RPC.
-            val paged = if (songs.size > limit) songs.drop(offset).take(limit) else songs
-            Result.success(paged)
+            Result.success(songs.toMusicSongs())
         } catch (e: Exception) {
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }

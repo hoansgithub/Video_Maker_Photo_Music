@@ -72,6 +72,7 @@ fun UnifiedSearchScreen(
     ) {
         when (val state = uiState) {
             is UnifiedSearchUiState.Idle -> UnifiedSearchIdleContent(
+                initialSection = state.initialSection,
                 recentSearches = recentSearches,
                 suggestionVibeTags = suggestionVibeTags,
                 genres = genres,

@@ -69,6 +69,11 @@ fun UnifiedSearchResultsContent(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = dimens.spaceMd)
     ) {
+
+        item {
+            Spacer(Modifier.height(100.dp))
+        }
+
         val renderOrder = if (state.initialSection == SearchSection.TEMPLATES) {
             listOf(SearchSection.TEMPLATES, SearchSection.MUSIC)
         } else {
@@ -78,50 +83,52 @@ fun UnifiedSearchResultsContent(
         renderOrder.forEach { section ->
             when (section) {
                 SearchSection.TEMPLATES -> {
-                    if (state.templates.items.isNotEmpty()) {
-                        item(key = "templates_header") {
-                            UnifiedSectionHeader(text = stringResource(R.string.unified_search_templates))
-                        }
-                        item(key = "templates_grid") {
-                            UnifiedTemplateGrid(
-                                templates = state.templates.items,
-                                onTemplateClick = onTemplateClick,
-                                modifier = Modifier.padding(horizontal = dimens.spaceLg)
-                            )
-                        }
-                        item(key = "templates_see_more") {
-                            UnifiedSeeMore(
-                                visible = state.templates.hasMore,
-                                isLoading = state.templates.isLoadingMore,
-                                onClick = onSeeMoreTemplates
-                            )
-                        }
+                    item(key = "templates_header") {
+                        UnifiedSectionHeader(
+                            text = stringResource(R.string.unified_search_templates),
+                            count = state.templates.totalCount
+                        )
+                    }
+                    item(key = "templates_grid") {
+                        UnifiedTemplateGrid(
+                            templates = state.templates.items,
+                            onTemplateClick = onTemplateClick,
+                            modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                        )
+                    }
+                    item(key = "templates_see_more") {
+                        UnifiedSeeMore(
+                            visible = state.templates.hasMore,
+                            isLoading = state.templates.isLoadingMore,
+                            onClick = onSeeMoreTemplates
+                        )
                     }
                 }
 
                 SearchSection.MUSIC -> {
-                    if (state.music.songs.isNotEmpty()) {
-                        item(key = "music_header") {
-                            UnifiedSectionHeader(text = stringResource(R.string.unified_search_music))
-                        }
-                        items(
-                            items = state.music.songs,
-                            key = { "song_${it.id}" }
-                        ) { song ->
-                            SongListItem(
-                                name = song.name,
-                                artist = song.artist,
-                                coverUrl = song.coverUrl,
-                                onSongClick = { onSongClick(song) }
-                            )
-                        }
-                        item(key = "music_see_more") {
-                            UnifiedSeeMore(
-                                visible = state.music.hasMore,
-                                isLoading = state.music.isLoadingMore,
-                                onClick = onSeeMoreMusic
-                            )
-                        }
+                    item(key = "music_header") {
+                        UnifiedSectionHeader(
+                            text = stringResource(R.string.unified_search_music),
+                            count = state.music.totalCount
+                        )
+                    }
+                    items(
+                        items = state.music.songs,
+                        key = { "song_${it.id}" }
+                    ) { song ->
+                        SongListItem(
+                            name = song.name,
+                            artist = song.artist,
+                            coverUrl = song.coverUrl,
+                            onSongClick = { onSongClick(song) }
+                        )
+                    }
+                    item(key = "music_see_more") {
+                        UnifiedSeeMore(
+                            visible = state.music.hasMore,
+                            isLoading = state.music.isLoadingMore,
+                            onClick = onSeeMoreMusic
+                        )
                     }
                 }
             }
@@ -184,10 +191,11 @@ internal fun UnifiedMusicSection(
 }
 
 @Composable
-internal fun UnifiedSectionHeader(text: String) {
+internal fun UnifiedSectionHeader(text: String, count: Int = 0) {
     val dimens = AppDimens.current
+    val displayText = if (count > 0) "$text ($count)" else text
     Text(
-        text = text,
+        text = displayText,
         style = MaterialTheme.typography.titleSmall,
         fontSize = 22.sp,
         fontWeight = FontWeight.W600,

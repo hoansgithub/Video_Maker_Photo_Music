@@ -29,6 +29,7 @@ import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.navigation.SearchSection
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.TextSecondary
@@ -36,6 +37,7 @@ import com.videomaker.aimusic.ui.theme.TextTertiary
 
 @Composable
 fun UnifiedSearchIdleContent(
+    initialSection: SearchSection,
     recentSearches: List<String>,
     suggestionVibeTags: List<VibeTag>,
     genres: List<SongGenre>,
@@ -83,7 +85,7 @@ fun UnifiedSearchIdleContent(
                 Spacer(modifier = Modifier.height(dimens.spaceSm))
             }
 
-            items(recentSearches, key = { "recent_$it" }) { search ->
+            items(recentSearches.take(3), key = { "recent_$it" }) { search ->
                 UnifiedRecentSearchItem(
                     query = search,
                     onClick = { onRecentClick(search) },
@@ -96,49 +98,62 @@ fun UnifiedSearchIdleContent(
             }
         }
 
-        if (featuredTemplates.isNotEmpty()) {
-            item(key = "featured_header") {
-                UnifiedSectionHeader(text = "Templates Suggestions")
-            }
-            item(key = "featured_grid") {
-                Spacer(modifier = Modifier.height(dimens.spaceSm))
-                UnifiedTemplateGrid(
-                    templates = featuredTemplates,
-                    onTemplateClick = onTemplateClick,
-                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
-                )
-                Spacer(modifier = Modifier.height(dimens.spaceXl))
-            }
-            item(key = "featured_see_more") {
-                UnifiedSeeMore(
-                    visible = hasMoreFeaturedTemplates,
-                    isLoading = isLoadingMoreFeaturedTemplates,
-                    onClick = onSeeMoreTemplates
-                )
-                Spacer(modifier = Modifier.height(dimens.spaceXl))
-            }
+        val renderOrder = if (initialSection == SearchSection.TEMPLATES) {
+            listOf(SearchSection.TEMPLATES, SearchSection.MUSIC)
+        } else {
+            listOf(SearchSection.MUSIC, SearchSection.TEMPLATES)
         }
+        renderOrder.forEach { section ->
+            when (section) {
+                SearchSection.TEMPLATES -> {
+                    if (featuredTemplates.isNotEmpty()) {
+                        item(key = "featured_header") {
+                            UnifiedSectionHeader(text = "Templates Suggestions")
+                        }
+                        item(key = "featured_grid") {
+                            Spacer(modifier = Modifier.height(dimens.spaceSm))
+                            UnifiedTemplateGrid(
+                                templates = featuredTemplates,
+                                onTemplateClick = onTemplateClick,
+                                modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                            )
+                            Spacer(modifier = Modifier.height(dimens.spaceXl))
+                        }
+                        item(key = "featured_see_more") {
+                            UnifiedSeeMore(
+                                visible = hasMoreFeaturedTemplates,
+                                isLoading = isLoadingMoreFeaturedTemplates,
+                                onClick = onSeeMoreTemplates
+                            )
+                            Spacer(modifier = Modifier.height(dimens.spaceXl))
+                        }
+                    }
+                }
 
-        if (suggestedSongs.isNotEmpty()) {
-            item(key = "suggested_header") {
-                UnifiedSectionHeader(text = "Music Suggestion")
-            }
-            items(suggestedSongs, key = { "suggested_${it.id}" }) { song ->
-                SongListItem(
-                    name = song.name,
-                    artist = song.artist,
-                    coverUrl = song.coverUrl,
-                    onSongClick = { onSongClick(song) }
-                )
-            }
+                SearchSection.MUSIC -> {
+                    if (suggestedSongs.isNotEmpty()) {
+                        item(key = "suggested_header") {
+                            UnifiedSectionHeader(text = "Music Suggestion")
+                        }
+                        items(suggestedSongs, key = { "suggested_${it.id}" }) { song ->
+                            SongListItem(
+                                name = song.name,
+                                artist = song.artist,
+                                coverUrl = song.coverUrl,
+                                onSongClick = { onSongClick(song) }
+                            )
+                        }
 
-            item(key = "suggested_see_more") {
-                Spacer(modifier = Modifier.height(dimens.spaceXl))
-                UnifiedSeeMore(
-                    visible = hasMoreSuggestedSongs,
-                    isLoading = isLoadingMoreSuggestedSongs,
-                    onClick = onSeeMoreSongs
-                )
+                        item(key = "suggested_see_more") {
+                            Spacer(modifier = Modifier.height(dimens.spaceXl))
+                            UnifiedSeeMore(
+                                visible = hasMoreSuggestedSongs,
+                                isLoading = isLoadingMoreSuggestedSongs,
+                                onClick = onSeeMoreSongs
+                            )
+                        }
+                    }
+                }
             }
         }
     }

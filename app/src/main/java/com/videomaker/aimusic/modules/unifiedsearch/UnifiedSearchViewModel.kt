@@ -33,7 +33,8 @@ data class TemplateSectionState(
     val items: List<VideoTemplate> = emptyList(),
     val hasMore: Boolean = false,
     val isLoadingMore: Boolean = false,
-    val totalLoaded: Int = 0
+    val totalLoaded: Int = 0,
+    val totalCount: Int = 0
 )
 
 @Immutable
@@ -41,11 +42,14 @@ data class MusicSectionState(
     val songs: List<MusicSong> = emptyList(),
     val hasMore: Boolean = false,
     val isLoadingMore: Boolean = false,
-    val totalLoaded: Int = 0
+    val totalLoaded: Int = 0,
+    val totalCount: Int = 0
 )
 
 sealed class UnifiedSearchUiState {
-    data object Idle : UnifiedSearchUiState()
+    data class Idle (
+        val initialSection: SearchSection
+    ): UnifiedSearchUiState()
 
     data class Typing(
         val currentText: String,
@@ -94,7 +98,7 @@ class UnifiedSearchViewModel(
         private const val MIN_TYPING_LENGTH = 2
     }
 
-    private val _uiState = MutableStateFlow<UnifiedSearchUiState>(UnifiedSearchUiState.Idle)
+    private val _uiState = MutableStateFlow<UnifiedSearchUiState>(UnifiedSearchUiState.Idle(initialSection))
     val uiState: StateFlow<UnifiedSearchUiState> = _uiState.asStateFlow()
 
     private val _displayText = MutableStateFlow("")
@@ -134,6 +138,10 @@ class UnifiedSearchViewModel(
 
     private var explicitSearchJob: Job? = null
     private var debounceLockedOut = false
+
+    // Full server results cached for client-side "See More" (no re-fetch needed)
+    private var cachedSearchTemplates: List<VideoTemplate> = emptyList()
+    private var cachedSearchSongs: List<MusicSong> = emptyList()
 
     init {
         _recentSearches.value = preferencesManager.getRecentSearches()
@@ -194,10 +202,10 @@ class UnifiedSearchViewModel(
         _query.value = normalized
 
         _uiState.value = when {
-            normalized.isBlank() -> UnifiedSearchUiState.Idle
+            normalized.isBlank() -> UnifiedSearchUiState.Idle(initialSection)
             normalized.length >= MIN_TYPING_LENGTH ->
                 UnifiedSearchUiState.Typing(newQuery, suggestionsFor(normalized))
-            else -> UnifiedSearchUiState.Idle
+            else -> UnifiedSearchUiState.Idle(initialSection)
         }
     }
 
@@ -225,7 +233,6 @@ class UnifiedSearchViewModel(
         debounceLockedOut = false
         _displayText.value = ""
         _query.value = ""
-        _uiState.value = UnifiedSearchUiState.Idle
     }
 
     fun onRecentSearchClick(query: String) {
@@ -328,66 +335,36 @@ class UnifiedSearchViewModel(
 
     fun onSeeMoreTemplates() {
         val current = _uiState.value as? UnifiedSearchUiState.Results ?: return
-        if (current.templates.isLoadingMore || !current.templates.hasMore) return
+        if (!current.templates.hasMore) return
 
+        val nextItems = cachedSearchTemplates.take(current.templates.totalLoaded + PAGE_SIZE)
         _uiState.value = current.copy(
-            templates = current.templates.copy(isLoadingMore = true)
+            templates = current.templates.copy(
+                items = nextItems,
+                hasMore = nextItems.size < cachedSearchTemplates.size,
+                isLoadingMore = false,
+                totalLoaded = nextItems.size
+            )
         )
-
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = searchTemplatesPagedUseCase(
-                query = current.query,
-                limit = PAGE_SIZE,
-                offset = current.templates.totalLoaded
-            )
-
-            val previous = _uiState.value as? UnifiedSearchUiState.Results ?: return@launch
-            if (previous.query != current.query) return@launch
-
-            val next = result.getOrElse { emptyList() }
-            _uiState.value = previous.copy(
-                templates = previous.templates.copy(
-                    items = previous.templates.items + next,
-                    hasMore = next.size == PAGE_SIZE,
-                    isLoadingMore = false,
-                    totalLoaded = previous.templates.items.size + next.size
-                )
-            )
-        }
     }
 
     fun onSeeMoreMusic() {
         val current = _uiState.value as? UnifiedSearchUiState.Results ?: return
-        if (current.music.isLoadingMore || !current.music.hasMore) return
+        if (!current.music.hasMore) return
 
+        val nextSongs = cachedSearchSongs.take(current.music.totalLoaded + PAGE_SIZE)
         _uiState.value = current.copy(
-            music = current.music.copy(isLoadingMore = true)
+            music = current.music.copy(
+                songs = nextSongs,
+                hasMore = nextSongs.size < cachedSearchSongs.size,
+                isLoadingMore = false,
+                totalLoaded = nextSongs.size
+            )
         )
-
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = searchSongsPagedUseCase(
-                query = current.query,
-                limit = PAGE_SIZE,
-                offset = current.music.totalLoaded
-            )
-
-            val previous = _uiState.value as? UnifiedSearchUiState.Results ?: return@launch
-            if (previous.query != current.query) return@launch
-
-            val next = result.getOrElse { emptyList() }
-            _uiState.value = previous.copy(
-                music = previous.music.copy(
-                    songs = previous.music.songs + next,
-                    hasMore = next.size == PAGE_SIZE,
-                    isLoadingMore = false,
-                    totalLoaded = previous.music.songs.size + next.size
-                )
-            )
-        }
     }
 
     fun onExploreMore() {
-        _uiState.value = UnifiedSearchUiState.Idle
+        _uiState.value = UnifiedSearchUiState.Idle(initialSection)
     }
 
     private fun rememberQuery(query: String) {
@@ -402,6 +379,8 @@ class UnifiedSearchViewModel(
     }
 
     private fun launchExplicitSearch(query: String) {
+        cachedSearchTemplates = emptyList()
+        cachedSearchSongs = emptyList()
         _uiState.value = UnifiedSearchUiState.Loading
         explicitSearchJob = viewModelScope.launch {
             _uiState.value = runParallelSearch(query)
@@ -411,17 +390,18 @@ class UnifiedSearchViewModel(
     private suspend fun runDebouncedSearch(query: String): UnifiedSearchUiState {
         val q = query.trim()
         return when {
-            q.isBlank() -> UnifiedSearchUiState.Idle
+            q.isBlank() -> UnifiedSearchUiState.Idle(initialSection)
             else -> UnifiedSearchUiState.Typing(query, suggestionsFor(q))
         }
     }
 
     private suspend fun runParallelSearch(query: String): UnifiedSearchUiState = coroutineScope {
+        // Fetch all results from server in one shot — client-side paging handles "See More"
         val templateDeferred = async(Dispatchers.IO) {
-            searchTemplatesPagedUseCase(query = query, limit = PAGE_SIZE, offset = 0)
+            searchTemplatesPagedUseCase(query = query, limit = Int.MAX_VALUE, offset = 0)
         }
         val musicDeferred = async(Dispatchers.IO) {
-            searchSongsPagedUseCase(query = query, limit = PAGE_SIZE, offset = 0)
+            searchSongsPagedUseCase(query = query, limit = Int.MAX_VALUE, offset = 0)
         }
 
         val templatesResult = templateDeferred.await()
@@ -431,24 +411,33 @@ class UnifiedSearchViewModel(
             return@coroutineScope UnifiedSearchUiState.Error("Search failed. Please try again.")
         }
 
-        val templates = templatesResult.getOrElse { emptyList() }
-        val songs = musicResult.getOrElse { emptyList() }
+        val allTemplates = templatesResult.getOrElse { emptyList() }
+        val allSongs = musicResult.getOrElse { emptyList() }
 
-        if (templates.isEmpty() && songs.isEmpty()) {
+        // Cache full lists for instant client-side "See More"
+        cachedSearchTemplates = allTemplates
+        cachedSearchSongs = allSongs
+
+        if (allTemplates.isEmpty() && allSongs.isEmpty()) {
             return@coroutineScope UnifiedSearchUiState.Empty(query = query)
         }
+
+        val visibleTemplates = allTemplates.take(PAGE_SIZE)
+        val visibleSongs = allSongs.take(PAGE_SIZE)
 
         UnifiedSearchUiState.Results(
             query = query,
             templates = TemplateSectionState(
-                items = templates,
-                hasMore = templates.size == PAGE_SIZE,
-                totalLoaded = templates.size
+                items = visibleTemplates,
+                hasMore = allTemplates.size > PAGE_SIZE,
+                totalLoaded = visibleTemplates.size,
+                totalCount = allTemplates.size
             ),
             music = MusicSectionState(
-                songs = songs,
-                hasMore = songs.size == PAGE_SIZE,
-                totalLoaded = songs.size
+                songs = visibleSongs,
+                hasMore = allSongs.size > PAGE_SIZE,
+                totalLoaded = visibleSongs.size,
+                totalCount = allSongs.size
             ),
             initialSection = initialSection
         )

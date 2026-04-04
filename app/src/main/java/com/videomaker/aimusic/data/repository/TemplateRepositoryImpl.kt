@@ -196,18 +196,9 @@ class TemplateRepositoryImpl(
         }
 
     override suspend fun searchTemplates(query: String): Result<List<VideoTemplate>> =
-        searchTemplates(query = query, limit = 15, offset = 0)
-
-    override suspend fun searchTemplates(
-        query: String,
-        limit: Int,
-        offset: Int
-    ): Result<List<VideoTemplate>> =
         withContext(Dispatchers.IO) {
             val q = query.trim()
-            if (q.isEmpty() || limit <= 0 || offset < 0) {
-                return@withContext Result.success(emptyList())
-            }
+            if (q.isEmpty()) return@withContext Result.success(emptyList())
 
             try {
                 val templates = supabaseClient.from(TABLE_TEMPLATES)
@@ -217,8 +208,7 @@ class TemplateRepositoryImpl(
                             ilike("name", "%$q%")
                         }
                         order("use_count", Order.DESCENDING)
-                        limit(limit.toLong())
-                        range(offset.toLong(), (offset + limit - 1).toLong())
+                        limit(15)
                     }
                     .decodeList<TemplateDto>()
                     .map { it.toDomain() }
@@ -228,6 +218,13 @@ class TemplateRepositoryImpl(
                 Result.failure(Exception("Failed to search templates", e))
             }
         }
+
+    override suspend fun searchTemplates(
+        query: String,
+        limit: Int,
+        offset: Int
+    ): Result<List<VideoTemplate>> = searchTemplates(query)
+        .map { templates -> templates.drop(offset).take(limit) }
 
     override suspend fun clearCache() {
         apiCacheManager.clearTemplateCache()

@@ -10,5 +10,6 @@ class SearchSongsPagedUseCase(
         query: String,
         limit: Int,
         offset: Int
-    ): Result<List<MusicSong>> = repository.searchSongs(query, limit, offset)
+    ): Result<List<MusicSong>> = repository.searchSongs(query)
+        .map { songs -> songs.drop(offset).take(limit) }
 }
