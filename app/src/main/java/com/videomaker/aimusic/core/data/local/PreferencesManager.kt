@@ -25,7 +25,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_USER_REGION = "user_region"
         private const val RECENT_SEARCHES_DELIMITER = "\u001F" // Unit Separator
         private const val GENRES_DELIMITER = ","
-        private const val MAX_RECENT_SEARCHES = 10
+        private const val MAX_RECENT_SEARCHES = 3 // FIFO: First In First Out
     }
 
     /** Music genre preferences selected during onboarding. Empty = no preference set. */

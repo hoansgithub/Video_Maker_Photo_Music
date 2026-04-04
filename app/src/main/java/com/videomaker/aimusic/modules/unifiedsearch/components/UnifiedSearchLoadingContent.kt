@@ -33,17 +33,35 @@ import com.videomaker.aimusic.ui.theme.FoundationBlack_100
 import com.videomaker.aimusic.ui.theme.FoundationBlack_Gray_100
 
 @Composable
-fun UnifiedSearchLoadingContent() {
+fun UnifiedSearchLoadingContent(
+    query: String = "",
+    relatedSearches: List<String> = emptyList(),
+    onRelatedSearchClick: (String) -> Unit = {}
+) {
     val dimens = AppDimens.current
 
     ProvideShimmerEffect {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(vertical = dimens.spaceMd),
-            userScrollEnabled = false
+            userScrollEnabled = true  // Enable scrolling for related searches
         ) {
             item {
                 Spacer(Modifier.height(100.dp))
+            }
+
+            // Related searches - same as Results
+            if (relatedSearches.isNotEmpty()) {
+                items(
+                    items = relatedSearches,
+                    key = { "related_loading_$it" }
+                ) { suggestion ->
+                    RelatedSearchRow(
+                        query = query,
+                        suggestion = suggestion,
+                        onClick = { onRelatedSearchClick(suggestion) }
+                    )
+                }
             }
 
             item {

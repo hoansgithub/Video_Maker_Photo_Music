@@ -38,6 +38,7 @@ import com.videomaker.aimusic.ui.theme.TextSecondary
 fun UnifiedSearchTypingOverlay(
     currentText: String,
     suggestions: List<String>,
+    persistentRelatedSearches: List<String> = emptyList(),
     onSuggestionClick: (String) -> Unit
 ) {
     val dimens = AppDimens.current
@@ -49,28 +50,32 @@ fun UnifiedSearchTypingOverlay(
         item {
             Spacer(Modifier.height(100.dp))
         }
-        item(key = "suggestions_header") {
-            Text(
-                text = "Result",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.W600,
-                fontSize = 22.sp,
-                modifier = Modifier.padding(horizontal = dimens.spaceLg)
-            )
-            Spacer(modifier = Modifier.height(dimens.spaceSm))
-        }
 
-        if (suggestions.isEmpty()) {
-            item(key = "suggestions_empty") {
-                Text(
-                    text = stringResource(R.string.unified_search_keep_typing),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary,
-                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
+        // Show persistent related keywords from previous search (if available)
+        if (persistentRelatedSearches.isNotEmpty()) {
+            items(
+                items = persistentRelatedSearches,
+                key = { "persistent_typing_$it" }
+            ) { keyword ->
+                RelatedSearchRow(
+                    query = currentText,
+                    suggestion = keyword,
+                    onClick = { onSuggestionClick(keyword) }
                 )
             }
-        } else {
+        }
+        if (suggestions.isNotEmpty()) {
+            item(key = "suggestions_header") {
+                Text(
+                    text = "Result",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.W600,
+                    fontSize = 22.sp,
+                    modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                )
+                Spacer(modifier = Modifier.height(dimens.spaceSm))
+            }
 
             items(suggestions, key = { "suggestion_row_$it" }) { suggestion ->
                 val annotatedText = remember(suggestion, currentText) {
