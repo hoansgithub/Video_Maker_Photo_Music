@@ -23,6 +23,11 @@ interface SongRepository {
     suspend fun searchSongs(query: String): Result<List<MusicSong>>
 
     /**
+     * Search songs by name or artist with pagination
+     */
+    suspend fun searchSongs(query: String, limit: Int, offset: Int): Result<List<MusicSong>>
+
+    /**
      * Get all distinct genre strings from active songs, sorted alphabetically.
      */
     suspend fun getGenres(): Result<List<SongGenre>>

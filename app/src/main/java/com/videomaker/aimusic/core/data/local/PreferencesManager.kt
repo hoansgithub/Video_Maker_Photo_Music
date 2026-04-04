@@ -25,7 +25,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_USER_REGION = "user_region"
         private const val RECENT_SEARCHES_DELIMITER = "\u001F" // Unit Separator
         private const val GENRES_DELIMITER = ","
-        private const val MAX_RECENT_SEARCHES = 10
+        private const val MAX_RECENT_SEARCHES = 3
     }
 
     /** Music genre preferences selected during onboarding. Empty = no preference set. */
@@ -82,7 +82,7 @@ class PreferencesManager(context: Context) {
     }
 
     /**
-     * Add a search query to recent searches (most recent first, max 10)
+     * Add a search query to recent searches (most recent first, max 3)
      */
     @Synchronized
     fun addRecentSearch(query: String) {
