@@ -269,7 +269,6 @@
     <!-- Tab labels -->
     <string name="tab_volume">Volume</string>
     <string name="tab_music_clip">Music Clip</string>
-    <string name="tab_music_clip_active">Music Clip ✓</string>
     <string name="settings_transition_effect">Transition Effect</string>
     <string name="settings_transition_duration">Transition Duration</string>
     <string name="settings_transition_duration_value">%.1fs</string>
@@ -326,6 +325,10 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Failed to load. Pull down to retry.</string>
+    <string name="error_network_title">Network Error</string>
+    <string name="error_network_message">Failed to load music. Please check your connection and try again.</string>
+    <string name="error_network_timeout">Network timeout. Please check your connection and try again.</string>
+    <string name="dialog_ok">OK</string>
 
     <!-- Songs -->
     <string name="start_project">Start project</string>

@@ -267,6 +267,10 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Error al cargar. Desliza hacia abajo para reintentar.</string>
+    <string name="error_network_title">Error de Red</string>
+    <string name="error_network_message">No se pudo cargar la música. Verifica tu conexión e inténtalo de nuevo.</string>
+    <string name="error_network_timeout">Tiempo de espera de red agotado. Verifica tu conexión e inténtalo de nuevo.</string>
+    <string name="dialog_ok">Aceptar</string>
 
     <!-- Songs -->
     <string name="start_project">Iniciar proyecto</string>

@@ -89,6 +89,7 @@ fun MusicSettingsBottomSheet(
     onTrimChange: (startMs: Long, endMs: Long) -> Unit,
     onVolumeChange: (Float) -> Unit,
     onDurationReady: (Long) -> Unit = {}, // Called when actual duration is loaded
+    onError: (String) -> Unit = {}, // Called when network/loading error occurs
     onApply: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -134,6 +135,8 @@ fun MusicSettingsBottomSheet(
             onDurationReady(duration)
         } else {
             android.util.Log.w("MusicTrimmer", "Timeout waiting for music duration (network issue?)")
+            onError(context.getString(R.string.error_network_timeout))
+            onDismiss()
         }
     }
 
@@ -166,11 +169,24 @@ fun MusicSettingsBottomSheet(
         }
     }
 
-    // Player listener for state changes
+    // Player listener for state changes and errors
     DisposableEffect(musicPlayer) {
         val listener = object : Player.Listener {
             override fun onIsPlayingChanged(playing: Boolean) {
                 isPlaying = playing
+            }
+
+            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                android.util.Log.e("MusicTrimmer", "Player error: ${error.message}", error)
+                val errorMsg = when {
+                    error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
+                    error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
+                        context.getString(R.string.error_network_message)
+                    else ->
+                        context.getString(R.string.error_network_message)
+                }
+                onError(errorMsg)
+                onDismiss()
             }
         }
         musicPlayer.addListener(listener)

@@ -267,6 +267,10 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Yüklenemedi. Yeniden denemek için aşağı çekin.</string>
+    <string name="error_network_title">Ağ Hatası</string>
+    <string name="error_network_message">Müzik yüklenemedi. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="error_network_timeout">Ağ zaman aşımı. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="dialog_ok">Tamam</string>
 
     <!-- Songs -->
     <string name="start_project">Projeyi başlat</string>

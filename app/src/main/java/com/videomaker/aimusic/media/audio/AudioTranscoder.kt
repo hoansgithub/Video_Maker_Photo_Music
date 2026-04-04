@@ -117,16 +117,27 @@ object AudioTranscoder {
             outputFile.delete()
             false
         } finally {
-            try {
-                decoder?.stop()
-                decoder?.release()
-                encoder?.stop()
-                encoder?.release()
-                muxer?.stop()
-                muxer?.release()
-                extractor.release()
-            } catch (e: Exception) {
-                android.util.Log.e(TAG, "Cleanup error", e)
+            // Release each resource independently to prevent cascade failures
+            runCatching { decoder?.stop() }.onFailure {
+                android.util.Log.w(TAG, "Decoder stop failed", it)
+            }
+            runCatching { decoder?.release() }.onFailure {
+                android.util.Log.w(TAG, "Decoder release failed", it)
+            }
+            runCatching { encoder?.stop() }.onFailure {
+                android.util.Log.w(TAG, "Encoder stop failed", it)
+            }
+            runCatching { encoder?.release() }.onFailure {
+                android.util.Log.w(TAG, "Encoder release failed", it)
+            }
+            runCatching { muxer?.stop() }.onFailure {
+                android.util.Log.w(TAG, "Muxer stop failed", it)
+            }
+            runCatching { muxer?.release() }.onFailure {
+                android.util.Log.w(TAG, "Muxer release failed", it)
+            }
+            runCatching { extractor.release() }.onFailure {
+                android.util.Log.w(TAG, "Extractor release failed", it)
             }
         }
     }
@@ -158,7 +169,10 @@ object AudioTranscoder {
             if (!decoderInputDone) {
                 val inputIndex = decoder.dequeueInputBuffer(TIMEOUT_US)
                 if (inputIndex >= 0) {
-                    val inputBuffer = decoder.getInputBuffer(inputIndex)!!
+                    val inputBuffer = decoder.getInputBuffer(inputIndex) ?: run {
+                        android.util.Log.e("AudioTranscoder", "Failed to get decoder input buffer at index $inputIndex")
+                        continue
+                    }
                     val sampleSize = extractor.readSampleData(inputBuffer, 0)
 
                     if (sampleSize < 0 || extractor.sampleTime > trimEndUs) {
@@ -177,7 +191,11 @@ object AudioTranscoder {
 
             when {
                 outputIndex >= 0 -> {
-                    val outputBuffer = decoder.getOutputBuffer(outputIndex)!!
+                    val outputBuffer = decoder.getOutputBuffer(outputIndex) ?: run {
+                        android.util.Log.e("AudioTranscoder", "Failed to get decoder output buffer at index $outputIndex")
+                        decoder.releaseOutputBuffer(outputIndex, false)
+                        continue
+                    }
                     if (bufferInfo.size > 0) {
                         // Store decoded PCM
                         val pcmData = ByteBuffer.allocate(bufferInfo.size)
@@ -210,7 +228,10 @@ object AudioTranscoder {
             if (!encoderInputDone) {
                 val inputIndex = encoder.dequeueInputBuffer(TIMEOUT_US)
                 if (inputIndex >= 0) {
-                    val inputBuffer = encoder.getInputBuffer(inputIndex)!!
+                    val inputBuffer = encoder.getInputBuffer(inputIndex) ?: run {
+                        android.util.Log.e("AudioTranscoder", "Failed to get encoder input buffer at index $inputIndex")
+                        continue
+                    }
 
                     if (currentBufferIndex < decoderBuffers.size) {
                         val pcmData = decoderBuffers[currentBufferIndex]
@@ -258,7 +279,11 @@ object AudioTranscoder {
                     }
                 }
                 outputIndex >= 0 -> {
-                    val outputBuffer = encoder.getOutputBuffer(outputIndex)!!
+                    val outputBuffer = encoder.getOutputBuffer(outputIndex) ?: run {
+                        android.util.Log.e("AudioTranscoder", "Failed to get encoder output buffer at index $outputIndex")
+                        encoder.releaseOutputBuffer(outputIndex, false)
+                        continue
+                    }
 
                     if (bufferInfo.size > 0 && muxerStarted) {
                         muxer.writeSampleData(muxerTrackIndex, outputBuffer, bufferInfo)

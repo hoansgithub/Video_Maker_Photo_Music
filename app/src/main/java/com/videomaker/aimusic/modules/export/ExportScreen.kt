@@ -658,38 +658,26 @@ private fun SuccessContent(
                     )
                 }
 
-                // Save to Gallery button - right side
+                // Save to Gallery button - right side (always enabled, no state change)
                 Button(
                     onClick = onSaveToGalleryClick,
                     modifier = Modifier
                         .weight(3f)
                         .height(56.dp),
                     shape = RoundedCornerShape(12.dp),
-                    // White background with dark tint
-                    colors = if (savedToGallery) {
-                        ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    } else {
-                        ButtonDefaults.buttonColors(
-                            containerColor = BackgroundLight,
-                            contentColor = SurfaceDark
-                        )
-                    }
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = BackgroundLight,
+                        contentColor = SurfaceDark
+                    )
                 ) {
                     Icon(
-                        imageVector = if (savedToGallery) Icons.Default.Check else Icons.Default.Download,
+                        imageVector = Icons.Default.Download,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (savedToGallery) {
-                            stringResource(R.string.export_saved_to_gallery)
-                        } else {
-                            stringResource(R.string.export_save)
-                        },
+                        text = stringResource(R.string.export_save),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,

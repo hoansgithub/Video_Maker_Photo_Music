@@ -565,11 +565,24 @@ fun VideoPreviewPlayer(
                 }
             })
 
-            // Atomically swap players - assign new ones first, then release old
-            videoPlayer = newVideoPlayer
-            audioPlayer = newAudioPlayer
-            oldVideoPlayer?.releaseAsync()
-            oldAudioPlayer?.release()
+            // Atomically swap players with rollback on error
+            try {
+                val oldVideo = videoPlayer
+                val oldAudio = audioPlayer
+
+                videoPlayer = newVideoPlayer
+                audioPlayer = newAudioPlayer
+
+                // Release old players - guaranteed execution
+                oldVideo?.releaseAsync()
+                oldAudio?.release()
+            } catch (e: Exception) {
+                // Rollback on error - release new players and restore old state
+                android.util.Log.e("VideoPreviewPlayer", "Player swap failed, rolling back", e)
+                newVideoPlayer.releaseAsync()
+                newAudioPlayer?.release()
+                throw e
+            }
 
             // Await for video player to be truly ready using suspend function (no delay!)
             val isReady = newVideoPlayer.awaitReady()

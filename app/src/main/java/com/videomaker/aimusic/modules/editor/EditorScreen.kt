@@ -118,6 +118,7 @@ fun EditorScreen(
     var showVolumeSheet by remember { mutableStateOf(false) }
     var showMusicTrimSheet by remember { mutableStateOf(false) }
     var wasPlayingBeforeMusicSheet by remember { mutableStateOf(false) }
+    var musicLoadError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     // Music Picker ViewModel - created once and reused
@@ -414,6 +415,9 @@ fun EditorScreen(
                     onDurationReady = { durationMs ->
                         viewModel.updateMusicTrimDuration(durationMs)
                     },
+                    onError = { errorMessage ->
+                        musicLoadError = errorMessage
+                    },
                     onApply = {
                         viewModel.applyMusicTrim()
                         showMusicTrimSheet = false
@@ -452,6 +456,44 @@ fun EditorScreen(
                     )
                 }
             }
+        }
+
+        // Network error dialog - blocks entire editor screen
+        musicLoadError?.let { errorMessage ->
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = {
+                    musicLoadError = null
+                },
+                containerColor = SplashBackground,
+                title = {
+                    Text(
+                        text = stringResource(R.string.error_network_title),
+                        color = TextPrimary,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Text(
+                        text = errorMessage,
+                        color = TextPrimary,
+                        fontSize = 14.sp
+                    )
+                },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(
+                        onClick = {
+                            musicLoadError = null
+                        }
+                    ) {
+                        Text(
+                            text = stringResource(R.string.dialog_ok),
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            )
         }
 
     }
@@ -645,7 +687,6 @@ internal fun EditorMainContent(
             currentDurationMs = project.settings.imageDurationMs,
             showMusicControls = hasMusic,
             currentVolume = project.settings.audioVolume,
-            isMusicClipped = project.settings.isMusicTrimmed,
             onEffectClick = onEffectClick,
             onImageDurationClick = onImageDurationClick,
             onRatioClick = onRatioClick,

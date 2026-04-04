@@ -267,6 +267,10 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Nabigo ang pag-load. Mag-swipe pababa para subukan muli.</string>
+    <string name="error_network_title">Network Error</string>
+    <string name="error_network_message">Hindi ma-load ang musika. Pakisuri ang iyong koneksyon at subukang muli.</string>
+    <string name="error_network_timeout">Network timeout. Pakisuri ang iyong koneksyon at subukang muli.</string>
+    <string name="dialog_ok">OK</string>
 
     <!-- Songs -->
     <string name="start_project">Simulan ang proyekto</string>
