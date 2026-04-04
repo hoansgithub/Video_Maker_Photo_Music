@@ -96,6 +96,7 @@ class UnifiedSearchViewModel(
 
     companion object {
         private const val PAGE_SIZE = 6
+        private const val EXPLORE_SUGGESTION_LIMIT = 10
         private const val SEARCH_DEBOUNCE_MS = 400L
         private const val MIN_TYPING_LENGTH = 2
     }
@@ -140,6 +141,8 @@ class UnifiedSearchViewModel(
 
     private var explicitSearchJob: Job? = null
     private var debounceLockedOut = false
+    @Volatile
+    private var searchSessionId: Int = 0
 
     // Full server results cached for client-side "See More" (no re-fetch needed)
     private var cachedSearchTemplates: List<VideoTemplate> = emptyList()
@@ -369,6 +372,35 @@ class UnifiedSearchViewModel(
         _uiState.value = UnifiedSearchUiState.Idle(initialSection)
     }
 
+    fun onExplore(section: SearchSection) {
+        _uiState.value as? UnifiedSearchUiState.Results ?: return
+        val sessionAtStart = searchSessionId
+        viewModelScope.launch(Dispatchers.IO) {
+            when (section) {
+                SearchSection.TEMPLATES -> {
+                    val suggestions = templateRepository
+                        .getFeaturedTemplates(limit = EXPLORE_SUGGESTION_LIMIT)
+                        .getOrElse { emptyList() }
+                        .take(EXPLORE_SUGGESTION_LIMIT)
+
+                    val latest = _uiState.value as? UnifiedSearchUiState.Results ?: return@launch
+                    if (sessionAtStart != searchSessionId) return@launch
+                    _uiState.value = latest.copy(templateEmpty = suggestions)
+                }
+
+                SearchSection.MUSIC -> {
+                    val suggestions = getSuggestedSongsUseCase(limit = EXPLORE_SUGGESTION_LIMIT)
+                        .getOrElse { emptyList() }
+                        .take(EXPLORE_SUGGESTION_LIMIT)
+
+                    val latest = _uiState.value as? UnifiedSearchUiState.Results ?: return@launch
+                    if (sessionAtStart != searchSessionId) return@launch
+                    _uiState.value = latest.copy(songEmpty = suggestions)
+                }
+            }
+        }
+    }
+
     private fun rememberQuery(query: String) {
         preferencesManager.addRecentSearch(query)
         _recentSearches.value = preferencesManager.getRecentSearches()
@@ -381,6 +413,7 @@ class UnifiedSearchViewModel(
     }
 
     private fun launchExplicitSearch(query: String) {
+        searchSessionId += 1
         cachedSearchTemplates = emptyList()
         cachedSearchSongs = emptyList()
         _uiState.value = UnifiedSearchUiState.Loading

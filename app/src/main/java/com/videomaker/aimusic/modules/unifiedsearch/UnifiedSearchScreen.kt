@@ -113,7 +113,7 @@ fun UnifiedSearchScreen(
                 },
                 onSeeMoreTemplates = viewModel::onSeeMoreTemplates,
                 onSeeMoreMusic = viewModel::onSeeMoreMusic,
-                onExplore = {},
+                onExplore = viewModel::onExplore,
                 onScrollStarted = { keyboardController?.hide() }
             )
 

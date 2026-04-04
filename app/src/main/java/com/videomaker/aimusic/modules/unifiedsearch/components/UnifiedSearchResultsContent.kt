@@ -91,10 +91,9 @@ fun UnifiedSearchResultsContent(
             when (section) {
                 SearchSection.TEMPLATES -> {
                     if (state.templateEmpty.isNotEmpty()){
-                        item(key = "templates_header") {
+                        item(key = "templates_suggestions_header") {
                             UnifiedSectionHeader(
-                                text = "Template Suggestions",
-                                count = state.templates.totalCount
+                                text = "Template Suggestions"
                             )
                             Spacer(modifier = Modifier.height(dimens.spaceSm))
                         }
@@ -197,11 +196,10 @@ fun UnifiedSearchResultsContent(
 
                 SearchSection.MUSIC -> {
 
-                    if (state.templateEmpty.isNotEmpty()){
-                        item(key = "templates_header") {
+                    if (state.songEmpty.isNotEmpty()){
+                        item(key = "music_suggestions_header") {
                             UnifiedSectionHeader(
-                                text = "Music Suggestions",
-                                count = state.templates.totalCount
+                                text = "Music Suggestions"
                             )
                             Spacer(modifier = Modifier.height(dimens.spaceSm))
                         }
