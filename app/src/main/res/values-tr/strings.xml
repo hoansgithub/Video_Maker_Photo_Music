@@ -26,11 +26,19 @@
     <!-- Page 3 -->
     <string name="onboarding_page3_title">Birlikte Daha İyi!</string>
     <string name="onboarding_page3_subtitle">Birlikte daha iyi. Arkadaşlarınızı eğlenceyi paylaşmaya davet edin.</string>
+    <string name="onboarding_swipe_next">Devam etmek için kaydır</string>
+    <string name="onboarding_exit_title">Kurulumdan çıkılsın mı?</string>
+    <string name="onboarding_exit_message">Tercihlerinizi daha sonra Ayarlar\'dan her zaman değiştirebilirsiniz.</string>
+    <string name="onboarding_exit_confirm">Çık</string>
+    <string name="onboarding_exit_dismiss">Devam Et</string>
+    <string name="root_no_internet_title">İnternet Bağlantısı Yok</string>
+    <string name="root_no_internet_message">Cihazınız şu anda çevrimdışı. Devam etmek için lütfen yeniden bağlanın.</string>
+    <string name="root_try_again">Tekrar Dene</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galeri</string>
     <string name="home_tab_songs">Şarkılar</string>
-    <string name="home_tab_projects">Projelerim</string>
+    <string name="home_tab_projects">Kütüphane</string>
 
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">Sizin için</string>
@@ -63,6 +71,13 @@
     <string name="settings_language_description">Uygulama dilini değiştir</string>
     <string name="settings_about">Hakkında</string>
     <string name="settings_version">Sürüm</string>
+    <string name="settings_uninstall">Kaldır</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Bir kez daha dene</string>
+    <string name="uninstall_description">Kaldırmak istediğine emin misin?</string>
+    <string name="uninstall_confirm">Yine de kaldır</string>
+    <string name="uninstall_cancel">Kaldırma. Daha fazlasını keşfet</string>
     <string name="settings_app_widet">Widget Ekle</string>
     <string name="settings_rate_us">Bizi Değerlendirin</string>
     <string name="settings_share_with_friends">Arkadaşlarla Paylaş</string>
@@ -91,14 +106,38 @@
     <string name="editor_save_and_exit">Kaydet ve Çık</string>
     <string name="editor_discard_changes">Değişiklikleri At</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Oluşturulan Video</string>
+    <string name="projects_tab_liked_template">Beğenilen Şablon</string>
+    <string name="projects_tab_liked_song">Beğenilen Şarkı</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Şarkı Boş</string>
+    <string name="like_song_search_button">Şarkı Ara</string>
+    <string name="like_song_section_header">Sizin için Müzik</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Şablon Boş</string>
+    <string name="like_template_search_button">Şablon Ara</string>
+    <string name="like_template_section_header">Video Şablonları</string>
+
     <!-- Projects -->
     <string name="projects_title">Projelerim</string>
+    <string name="projects_menu">Proje menüsü</string>
+    <string name="projects_download">İndir</string>
+    <string name="projects_share">Paylaş</string>
+    <string name="projects_delete">Sil</string>
+    <string name="projects_delete_confirmation_title">Video Silinsin mi?</string>
+    <string name="projects_delete_confirmation_message">Bu video kalıcı olarak silinecek. Bu işlem geri alınamaz.</string>
+    <string name="projects_delete_confirm">Sil</string>
+    <string name="projects_delete_cancel">İptal</string>
     <string name="projects_empty">Henüz proje yok</string>
     <string name="projects_empty_description">İlk projenizi oluşturun ve burada görün</string>
     <string name="projects_item_info">%1$d fotoğraf • %2$s</string>
     <string name="projects_create_description">Yeni bir slayt gösterisi projesi başlat</string>
     <string name="projects_delete_title">Proje Silinsin mi?</string>
     <string name="projects_delete_message">\"%s\" kalıcı olarak silinecek. Bu işlem geri alınamaz.</string>
+    <string name="projects_removed_from_list">Listeden kaldırıldı</string>
 
     <!-- Export -->
     <string name="export_title">Videoyu Dışa Aktar</string>
@@ -109,8 +148,20 @@
     <string name="export_preparing">Dışa aktarma hazırlanıyor…</string>
     <string name="export_exporting">Video dışa aktarılıyor…</string>
     <string name="export_dont_close">Lütfen uygulamayı kapatmayın</string>
+    <string name="export_tip_1">Başyapıtınız hazırlanıyor…</string>
+    <string name="export_tip_2">Sinema büyüsü ekleniyor…</string>
+    <string name="export_tip_3">Anılarınız canlandırılıyor…</string>
+    <string name="export_tip_4">Her kare cilalanıyor…</string>
+    <string name="export_tip_5">Mükemmel hale getiriliyor…</string>
+    <string name="export_tip_6">Hikayeniz örülüyor…</string>
+    <string name="export_tip_7">Özel bir şey yaratılıyor…</string>
+    <string name="export_tip_8">Neredeyse bitti! Harika görünüyor…</string>
+    <string name="export_tip_9">Detaylar ayarlanıyor…</string>
+    <string name="export_tip_10">Son rötuşlar yapılıyor…</string>
     <string name="export_video_saved">Videonuz kaydedildi</string>
     <string name="export_saved_to_gallery">Galeriye Kaydedildi</string>
+    <string name="export_saving_to_gallery">Galeriye kaydediliyor…</string>
+    <string name="export_error_save_failed">Galeriye kaydetme başarısız</string>
     <string name="export_share_video">Videoyu Paylaş</string>
     <string name="export_failed">Dışa Aktarma Başarısız</string>
     <string name="export_try_again">Tekrar Dene</string>
@@ -122,6 +173,8 @@
     <string name="export_cancel_message">Dışa aktarmayı iptal etmek istediğinizden emin misiniz? Tüm ilerleme kaybolacak.</string>
     <string name="export_continue">Devam Et</string>
     <string name="export_cancel_export">Dışa Aktarmayı İptal Et</string>
+    <string name="export_try_another_templates">Başka Şablonları Deneyin</string>
+    <string name="export_templates_load_failed">Şablonlar yüklenemedi</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Fotoğraf Seç</string>
@@ -222,6 +275,14 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Yüklenemedi. Yeniden denemek için aşağı çekin.</string>
+    <string name="error_network_title">Ağ Hatası</string>
+    <string name="error_network_message">Müzik yüklenemedi. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="error_network_timeout">Ağ zaman aşımı. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="error_preview_title">Önizleme Hatası</string>
+    <string name="error_preview_music_network">Müzik yüklenirken ağ hatası. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="error_preview_music_failed">Müzik yüklenemedi. Lütfen tekrar deneyin.</string>
+    <string name="error_template_music_failed">Şarkı yüklenemedi. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="dialog_ok">Tamam</string>
 
     <!-- Songs -->
     <string name="start_project">Projeyi başlat</string>
@@ -267,4 +328,8 @@
     <string name="widget_recently">Son Zamanlarda</string>
     <string name="widget_trending_song">Trend Şarkı</string>
     <string name="widget_trending_song_hot">Hot</string>
+    <string name="shortcut_trending_search_long">Trend Arama</string>
+    <string name="shortcut_create_video_long">Video Oluştur</string>
+    <string name="shortcut_choose_template_long">Video Şablonu Seç</string>
+    <string name="shortcut_uninstall_long">Uygulamayı Kaldır</string>
 </resources>

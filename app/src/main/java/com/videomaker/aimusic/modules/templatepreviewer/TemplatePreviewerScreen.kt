@@ -1,17 +1,30 @@
 package com.videomaker.aimusic.modules.templatepreviewer
 
+import android.content.Context
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -55,11 +68,14 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,6 +83,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.ui.components.ErrorOverlay
+import com.videomaker.aimusic.ui.components.ErrorType
 import com.videomaker.aimusic.ui.components.PrimaryButton
 import com.videomaker.aimusic.ui.theme.Black60
 import com.videomaker.aimusic.ui.theme.Primary
@@ -82,11 +100,17 @@ import coil.size.Precision
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
+import com.videomaker.aimusic.ui.theme.CtaText
+import com.videomaker.aimusic.ui.theme.FoundationBlack
+import com.videomaker.aimusic.ui.theme.SecondaryLight
+import com.videomaker.aimusic.ui.theme.SurfaceLight
+import com.videomaker.aimusic.ui.theme.TextSecondary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import androidx.core.content.edit
 
 // Virtual page count for infinite-scroll illusion.
 private const val VIRTUAL_PAGE_COUNT = 10_000
@@ -112,14 +136,24 @@ fun TemplatePreviewerScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val currentSong by viewModel.currentSong.collectAsStateWithLifecycle()
+    val likedTemplateIds by viewModel.likedTemplateIds.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
-    LaunchedEffect(navigationEvent) {
+    // Track song loading error
+    var songError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(navigationEvent, songError) {
         navigationEvent?.let { event ->
             when (event) {
-                is TemplatePreviewerNavigationEvent.NavigateToAssetPicker ->
-                    onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
+                is TemplatePreviewerNavigationEvent.NavigateToAssetPicker -> {
+                    // Block navigation if music failed to load
+                    if (songError == null) {
+                        onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
+                    } else {
+                        android.util.Log.w("TemplatePreviewerScreen", "Navigation blocked due to music loading error")
+                    }
+                }
                 is TemplatePreviewerNavigationEvent.NavigateBack -> onNavigateBack()
             }
             viewModel.onNavigationHandled()
@@ -157,17 +191,30 @@ fun TemplatePreviewerScreen(
     // Loading state: keep current track playing while the next song is being fetched.
     // Ready: fade out → swap track → fade in.
     // None: fade out and stop.
+    // Error: show error overlay.
     LaunchedEffect(currentSong) {
         when (val state = currentSong) {
-            is SongLoadState.Loading -> Unit // keep playing previous track
+            is SongLoadState.Loading -> {
+                songError = null // Clear any previous error
+            }
 
             is SongLoadState.None -> {
+                playerDurationMs = null
+                fadeVolume(player, to = 0f)
+                player.stop()
+                songError = null
+            }
+
+            is SongLoadState.Error -> {
+                // Show error overlay with localized message
+                songError = context.getString(R.string.error_template_music_failed)
                 playerDurationMs = null
                 fadeVolume(player, to = 0f)
                 player.stop()
             }
 
             is SongLoadState.Ready -> {
+                songError = null // Clear any previous error
                 playerDurationMs = null  // clear stale duration until new track is ready
                 // Use full track (mp3Url) for consistency with Editor, not short preview clip
                 val url = state.song.mp3Url.ifEmpty { state.song.previewUrl }
@@ -203,8 +250,10 @@ fun TemplatePreviewerScreen(
                 state = state,
                 currentSong = currentSong,
                 playerDurationMs = playerDurationMs,
+                likedTemplateIds = likedTemplateIds,
                 onPageChanged = viewModel::onPageChanged,
                 onUseThisTemplate = viewModel::onUseThisTemplate,
+                onLikeTemplate = viewModel::onLikeTemplate,
                 onNavigateBack = viewModel::onNavigateBack
             )
         }
@@ -229,6 +278,18 @@ fun TemplatePreviewerScreen(
             }
         }
     }
+
+    // Error overlay for song loading failures
+    songError?.let { errorMessage ->
+        ErrorOverlay(
+            errorType = ErrorType.MusicLoading,
+            title = context.getString(R.string.error_network_title),
+            message = errorMessage,
+            onDismiss = {
+                songError = null
+            }
+        )
+    }
 }
 
 // ============================================
@@ -241,8 +302,10 @@ private fun TemplatePreviewerReadyContent(
     state: TemplatePreviewerUiState.Ready,
     currentSong: SongLoadState,
     playerDurationMs: Long?,
+    likedTemplateIds: Set<String>,
     onPageChanged: (Int) -> Unit,
     onUseThisTemplate: (VideoTemplate, AspectRatio) -> Unit,
+    onLikeTemplate: (VideoTemplate) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val templates = state.templates
@@ -253,6 +316,20 @@ private fun TemplatePreviewerReadyContent(
 
     // Bottom sheet state — non-null while the sheet is visible
     var pendingTemplate by remember { mutableStateOf<VideoTemplate?>(null) }
+
+    // First-user swipe hint — shown only on first launch, hidden after 3s or on swipe
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE) }
+    val isFirstUser = remember { prefs.getBoolean("is_first_user_template_previewer", true) }
+    var showSwipeHint by remember { mutableStateOf(isFirstUser) }
+
+    LaunchedEffect(showSwipeHint) {
+        if (showSwipeHint) {
+            delay(3000L)
+            showSwipeHint = false
+            prefs.edit { putBoolean("is_first_user_template_previewer", false) }
+        }
+    }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
@@ -354,6 +431,44 @@ private fun TemplatePreviewerReadyContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                val currentTemplate = templates.getOrNull(pagerState.settledPage % templates.size)
+                val isLiked = currentTemplate?.id in likedTemplateIds
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (isLiked) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_heart_liked),
+                                tint = Primary,
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_heart),
+                                tint = SurfaceLight,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clickable { currentTemplate?.let { onLikeTemplate(it) } }
+                            )
+                        }
+
+                        Text(
+                            text = "Add",
+                            color = SurfaceLight,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
                 // Music info capsule
                 MusicInfoCapsule(currentSong = currentSong, playerDurationMs = playerDurationMs)
 
@@ -371,7 +486,7 @@ private fun TemplatePreviewerReadyContent(
                     isLoading = ctaLoading,
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_circle_plus_v2),
+                            painter = painterResource(id = R.drawable.ic_circle_plus),
                             contentDescription = null,
                             tint = Color.Unspecified,
                             modifier = Modifier.size(24.dp)
@@ -396,8 +511,111 @@ private fun TemplatePreviewerReadyContent(
                 }
             )
         }
+
+        AnimatedVisibility(
+            visible = showSwipeHint,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(0.65f))
+                    .pointerInput(Unit) {
+                        detectVerticalDragGestures(
+                            onVerticalDrag = { _, dragAmount ->
+                            },
+                            onDragEnd = {
+                                if (showSwipeHint) {
+                                    showSwipeHint = false
+                                    prefs.edit { putBoolean("is_first_user_template_previewer", false) }
+                                }
+                            }
+                        )
+                    }
+                    .clickable {},
+                contentAlignment = Alignment.Center
+            ) {
+                CenterSwipeContent()
+            }
+        }
     }
 }
+
+@Composable
+private fun CenterSwipeContent(modifier: Modifier = Modifier) {
+    // Bounce animation for the swipe icon
+    val infiniteTransition = rememberInfiniteTransition(label = "swipe_bounce")
+    val offsetY by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -16f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = EaseInOutCubic),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bounce_y"
+    )
+
+    Column(
+        modifier = modifier.offset(y = 30.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box {
+
+            Box(
+                modifier = Modifier
+                    .size(width = 81.dp, height = 122.dp)
+                    .clip(RoundedCornerShape(topStart = 317.95.dp, topEnd = 317.95.dp))
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFCCFF00), // 0%
+                                Color(0xFFCCFF00), // 39.61%
+                                Color(0x00CCFF00)  // transparent at 69.18%
+                            ),
+                            startY = 0f,
+                            endY = Float.POSITIVE_INFINITY
+                        )
+                    )
+            )
+
+            Icon(
+                painter = painterResource(R.drawable.ic_hand_swipe),
+                contentDescription = null,
+                tint = FoundationBlack,
+                modifier = Modifier
+                    .offset(y = offsetY.dp)
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .padding(15.dp)
+                    .align(Alignment.TopCenter)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // "Swipe up" text
+        Text(
+            text = "Swipe up",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Subtitle
+        Text(
+            text = "To enjoy you templates",
+            fontSize = 14.sp,
+            color = Color.White,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
 
 // ============================================
 // RATIO SELECTION BOTTOM SHEET
@@ -595,6 +813,15 @@ private fun MusicInfoCapsule(currentSong: SongLoadState, playerDurationMs: Long?
                     fontWeight = FontWeight.Normal
                 )
             }
+            is SongLoadState.Error -> {
+                Text(
+                    text = stringResource(R.string.error_template_music_failed),
+                    color = com.videomaker.aimusic.ui.theme.Error,
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f)
+                )
+            }
             is SongLoadState.None -> Unit
         }
     }
@@ -607,7 +834,8 @@ private fun MusicInfoCapsule(currentSong: SongLoadState, playerDurationMs: Long?
 @Composable
 private fun TemplateThumbnailPage(template: VideoTemplate, isCurrentPage: Boolean) {
     val context = LocalContext.current
-    val thumbnailUrl = template.thumbnailPath.ifEmpty { null }
+    // Use high-resolution preview image for full-screen display
+    val thumbnailUrl = template.previewImagePath.ifEmpty { template.thumbnailPath.ifEmpty { null } }
 
     Box(
         modifier = Modifier.fillMaxSize().background(Color.Black),
@@ -724,8 +952,10 @@ private fun PreviewTemplatePreviewerReady() {
                 ),
                 currentSong = previewSongReady,
                 playerDurationMs = 182000L,
+                likedTemplateIds = emptySet(),
                 onPageChanged = {},
                 onUseThisTemplate = { _, _ -> },
+                onLikeTemplate = {},
                 onNavigateBack = {}
             )
         }
@@ -749,8 +979,10 @@ private fun PreviewTemplatePreviewerMusicLoading() {
                 ),
                 currentSong = SongLoadState.Loading,
                 playerDurationMs = null,
+                likedTemplateIds = emptySet(),
                 onPageChanged = {},
                 onUseThisTemplate = { _, _ -> },
+                onLikeTemplate = {},
                 onNavigateBack = {}
             )
         }
@@ -774,8 +1006,10 @@ private fun PreviewTemplatePreviewerNoMusic() {
                 ),
                 currentSong = SongLoadState.None,
                 playerDurationMs = null,
+                likedTemplateIds = emptySet(),
                 onPageChanged = {},
                 onUseThisTemplate = { _, _ -> },
+                onLikeTemplate = {},
                 onNavigateBack = {}
             )
         }
@@ -800,8 +1034,10 @@ private fun PreviewTemplatePreviewerCreating() {
                 ),
                 currentSong = previewSongReady,
                 playerDurationMs = 182000L,
+                likedTemplateIds = setOf("t1"),
                 onPageChanged = {},
                 onUseThisTemplate = { _, _ -> },
+                onLikeTemplate = {},
                 onNavigateBack = {}
             )
         }

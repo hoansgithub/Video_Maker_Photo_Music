@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.EditedMediaItemSequence
@@ -23,6 +25,8 @@ import com.videomaker.aimusic.media.library.TransitionSetLibrary
 import com.videomaker.aimusic.media.library.TransitionShaderLibrary
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 /**
  * CompositionFactory - Creates Media3 Composition from Project domain model
@@ -504,42 +508,323 @@ class CompositionFactory(
         totalVideoDurationMs: Long,
         forExport: Boolean
     ): EditedMediaItemSequence? {
-        val audioUri = getAudioUri(settings) ?: return null
-
-        val totalVideoDurationUs = totalVideoDurationMs * 1000L
         val volume = settings.audioVolume.coerceIn(0f, 1f)
 
-        val audioItem = MediaItem.Builder()
-            .setUri(audioUri)
-            .setClippingConfiguration(
-                MediaItem.ClippingConfiguration.Builder()
-                    .setEndPositionMs(totalVideoDurationMs)
-                    .build()
-            )
-            .build()
-
-        // Create audio effects with volume processor
-        // PREVIEW: Don't apply VolumeAudioProcessor - use player.setVolume() for instant changes
-        // EXPORT: Apply VolumeAudioProcessor to bake volume into output file
+        // Volume effects (preview uses player.volume, export bakes it in)
         val audioEffects = if (forExport && volume != 1.0f) {
-            Effects(
-                /* audioProcessors= */ listOf(VolumeAudioProcessor(volume)),
-                /* videoEffects= */ emptyList()
-            )
+            Effects(listOf(VolumeAudioProcessor(volume)), emptyList())
         } else {
-            Effects(
-                /* audioProcessors= */ emptyList(),
-                /* videoEffects= */ emptyList()
-            )
+            Effects(emptyList(), emptyList())
         }
 
-        val editedAudioItem = EditedMediaItem.Builder(audioItem)
-            .setRemoveVideo(true)
-            .setDurationUs(totalVideoDurationUs)
-            .setEffects(audioEffects)
-            .build()
+        // Priority 1: Use processed audio if available
+        // This can be either:
+        // - Transcoded AAC from MP3 (already looped to video duration)
+        // - Extracted segment from AAC (needs manual looping)
+        if (settings.processedAudioUri != null) {
+            val processedFilename = settings.processedAudioUri.lastPathSegment ?: ""
 
-        return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
+            // Check if this is a transcoded file (contains "looped_aac") or extracted segment
+            val isTranscodedLooped = processedFilename.contains("looped_aac")
+
+            if (isTranscodedLooped) {
+                // Transcoded file - already looped to match video duration
+                android.util.Log.d("CompositionFactory", "Using transcoded looped audio: ${settings.processedAudioUri}")
+
+                val mediaItem = MediaItem.Builder()
+                    .setUri(settings.processedAudioUri)
+                    .build()
+
+                val editedAudioItem = EditedMediaItem.Builder(mediaItem)
+                    .setRemoveVideo(true)
+                    .setEffects(audioEffects)
+                    .setDurationUs(totalVideoDurationMs * 1000L)
+                    .build()
+
+                return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
+            } else {
+                // Extracted segment - needs manual looping
+                android.util.Log.d("CompositionFactory", "Using extracted segment with manual looping: ${settings.processedAudioUri}")
+
+                // Calculate segment duration from trim positions
+                val segmentDurationMs = if (settings.musicTrimEndMs != null && settings.musicTrimStartMs > 0) {
+                    settings.musicTrimEndMs - settings.musicTrimStartMs
+                } else {
+                    totalVideoDurationMs // Fallback
+                }
+
+                // Calculate how many times to loop
+                val loopCount = if (segmentDurationMs > 0) {
+                    kotlin.math.ceil(totalVideoDurationMs.toDouble() / segmentDurationMs.toDouble()).toInt()
+                } else {
+                    1
+                }
+
+                android.util.Log.d("CompositionFactory", "Looping segment: segmentDuration=${segmentDurationMs}ms, videoDuration=${totalVideoDurationMs}ms, loops=$loopCount")
+
+                // Create multiple MediaItem instances for looping
+                val loopedItems = List(loopCount) {
+                    val mediaItem = MediaItem.Builder()
+                        .setUri(settings.processedAudioUri)
+                        .build()
+
+                    EditedMediaItem.Builder(mediaItem)
+                        .setRemoveVideo(true)
+                        .setEffects(audioEffects)
+                        .build()
+                }
+
+                return EditedMediaItemSequence.Builder(loopedItems).build()
+            }
+        }
+
+        // Priority 2: Get source audio URI (song or custom)
+        val audioUri = getAudioUri(settings) ?: return null
+        val trimStartMs = settings.musicTrimStartMs
+        val trimEndMs = settings.musicTrimEndMs
+
+        // Check if trimming is applied
+        val hasTrim = trimStartMs > 0 || trimEndMs != null
+
+        android.util.Log.d("CompositionFactory", "Audio sequence: trimStart=$trimStartMs, trimEnd=$trimEndMs, hasTrim=$hasTrim, forExport=$forExport, videoLength=${totalVideoDurationMs}ms")
+
+        if (hasTrim) {
+            android.util.Log.d("CompositionFactory", "Using trimmed audio: start=$trimStartMs, end=$trimEndMs (${if (forExport) "export" else "preview"})")
+
+            if (forExport) {
+                // EXPORT: Smart looping based on segment vs video duration
+                val segmentDurationMs = if (trimEndMs != null) {
+                    trimEndMs - trimStartMs
+                } else {
+                    totalVideoDurationMs
+                }
+
+                if (segmentDurationMs < totalVideoDurationMs) {
+                    // LOOP: Segment shorter than video - loop to fill duration
+                    val loopCount = kotlin.math.ceil(totalVideoDurationMs.toDouble() / segmentDurationMs.toDouble()).toInt()
+
+                    android.util.Log.d("CompositionFactory", "Export: Looping segment ${loopCount} times (segment=${segmentDurationMs}ms < video=${totalVideoDurationMs}ms)")
+
+                    val loopedItems = List(loopCount) { index ->
+                        val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
+                            .setStartPositionMs(trimStartMs)
+
+                        if (trimEndMs != null) {
+                            clippingBuilder.setEndPositionMs(trimEndMs)
+                        }
+
+                        val mediaItem = MediaItem.Builder()
+                            .setUri(audioUri)
+                            .setMediaId("loop_${index}_${audioUri.hashCode()}")
+                            .setClippingConfiguration(clippingBuilder.build())
+                            .build()
+
+                        EditedMediaItem.Builder(mediaItem)
+                            .setRemoveVideo(true)
+                            .setEffects(audioEffects)
+                            .build()
+                    }
+
+                    return EditedMediaItemSequence.Builder(loopedItems).build()
+                } else {
+                    // NO LOOP: Segment equal or longer - clip to video duration
+                    android.util.Log.d("CompositionFactory", "Export: No loop (segment=${segmentDurationMs}ms >= video=${totalVideoDurationMs}ms), clipping to video duration")
+
+                    // Clip audio to match video duration exactly
+                    val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
+                        .setStartPositionMs(trimStartMs)
+                        .setEndPositionMs(trimStartMs + totalVideoDurationMs) // Stop at video end
+
+                    val mediaItem = MediaItem.Builder()
+                        .setUri(audioUri)
+                        .setClippingConfiguration(clippingBuilder.build())
+                        .build()
+
+                    val editedAudioItem = EditedMediaItem.Builder(mediaItem)
+                        .setRemoveVideo(true)
+                        .setEffects(audioEffects)
+                        .build()
+
+                    return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
+                }
+            } else {
+                // PREVIEW: Single trimmed item, preview player handles stopping at video end
+                android.util.Log.d("CompositionFactory", "Preview: Single trimmed audio (player stops at video end)")
+
+                val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
+                    .setStartPositionMs(trimStartMs)
+
+                if (trimEndMs != null) {
+                    clippingBuilder.setEndPositionMs(trimEndMs)
+                }
+
+                val mediaItem = MediaItem.Builder()
+                    .setUri(audioUri)
+                    .setClippingConfiguration(clippingBuilder.build())
+                    .build()
+
+                val editedAudioItem = EditedMediaItem.Builder(mediaItem)
+                    .setRemoveVideo(true)
+                    .setEffects(audioEffects)
+                    .build()
+
+                return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
+            }
+        } else {
+            // No manual trim - get actual audio duration and apply smart logic
+            android.util.Log.d("CompositionFactory", "No manual trim detected - detecting actual audio duration for smart logic")
+
+            // Get actual audio duration
+            val actualAudioDurationMs = getAudioDuration(audioUri)
+
+            if (actualAudioDurationMs != null && actualAudioDurationMs > 0) {
+                android.util.Log.d("CompositionFactory", "Actual audio duration: ${actualAudioDurationMs}ms, video: ${totalVideoDurationMs}ms")
+
+                if (forExport) {
+                    // EXPORT: Apply smart looping/clipping based on actual duration
+                    if (actualAudioDurationMs < totalVideoDurationMs) {
+                        // LOOP: Audio shorter than video - loop to fill duration
+                        val loopCount = kotlin.math.ceil(totalVideoDurationMs.toDouble() / actualAudioDurationMs.toDouble()).toInt()
+
+                        android.util.Log.d("CompositionFactory", "Export (untrimmed): Looping ${loopCount} times (audio=${actualAudioDurationMs}ms < video=${totalVideoDurationMs}ms)")
+
+                        val loopedItems = List(loopCount) { index ->
+                            val mediaItem = MediaItem.Builder()
+                                .setUri(audioUri)
+                                .setMediaId("loop_${index}_${audioUri.hashCode()}")
+                                .build()
+
+                            EditedMediaItem.Builder(mediaItem)
+                                .setRemoveVideo(true)
+                                .setEffects(audioEffects)
+                                .build()
+                        }
+
+                        return EditedMediaItemSequence.Builder(loopedItems).build()
+                    } else {
+                        // NO LOOP: Audio equal or longer - clip to video duration
+                        android.util.Log.d("CompositionFactory", "Export (untrimmed): Clipping to video duration (audio=${actualAudioDurationMs}ms >= video=${totalVideoDurationMs}ms)")
+
+                        val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
+                            .setStartPositionMs(0L)
+                            .setEndPositionMs(totalVideoDurationMs) // Clip to exact video duration
+
+                        val mediaItem = MediaItem.Builder()
+                            .setUri(audioUri)
+                            .setClippingConfiguration(clippingBuilder.build())
+                            .build()
+
+                        val editedAudioItem = EditedMediaItem.Builder(mediaItem)
+                            .setRemoveVideo(true)
+                            .setEffects(audioEffects)
+                            .build()
+
+                        return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
+                    }
+                } else {
+                    // PREVIEW: Single item (preview player handles looping/stopping)
+                    android.util.Log.d("CompositionFactory", "Preview (untrimmed): Single audio item (player handles looping)")
+
+                    val mediaItem = MediaItem.Builder()
+                        .setUri(audioUri)
+                        .build()
+
+                    val editedAudioItem = EditedMediaItem.Builder(mediaItem)
+                        .setRemoveVideo(true)
+                        .setEffects(audioEffects)
+                        .build()
+
+                    return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
+                }
+            } else {
+                // Fallback: Could not determine duration - use duration hint
+                android.util.Log.w("CompositionFactory", "Could not determine audio duration - using hint: ${totalVideoDurationMs}ms")
+
+                val mediaItem = MediaItem.Builder()
+                    .setUri(audioUri)
+                    .build()
+
+                val editedAudioItem = EditedMediaItem.Builder(mediaItem)
+                    .setRemoveVideo(true)
+                    .setEffects(audioEffects)
+                    .setDurationUs(totalVideoDurationMs * 1000L)
+                    .build()
+
+                return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
+            }
+        }
+    }
+
+    /**
+     * Get actual audio duration in milliseconds
+     * Uses ExoPlayer for remote URLs (HTTP/HTTPS) and MediaMetadataRetriever for local files
+     * Returns null if duration cannot be determined
+     */
+    private suspend fun getAudioDuration(audioUri: Uri): Long? {
+        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val uriScheme = audioUri.scheme?.lowercase()
+
+                if (uriScheme == "http" || uriScheme == "https") {
+                    // Remote URL: Use ExoPlayer to get duration
+                    android.util.Log.d("CompositionFactory", "Getting duration for remote URL: $audioUri")
+
+                    kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+                        val player = ExoPlayer.Builder(context).build()
+
+                        val listener = object : Player.Listener {
+                            override fun onPlaybackStateChanged(playbackState: Int) {
+                                if (playbackState == Player.STATE_READY) {
+                                    val duration = player.duration
+                                    player.removeListener(this)
+                                    player.release()
+
+                                    if (continuation.isActive) {
+                                        android.util.Log.d("CompositionFactory", "Remote audio duration: ${duration}ms")
+                                        continuation.resume(if (duration > 0) duration else null, null)
+                                    }
+                                }
+                            }
+
+                            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                                player.removeListener(this)
+                                player.release()
+
+                                if (continuation.isActive) {
+                                    android.util.Log.e("CompositionFactory", "Failed to get remote audio duration", error)
+                                    continuation.resume(null, null)
+                                }
+                            }
+                        }
+
+                        player.addListener(listener)
+                        player.setMediaItem(MediaItem.fromUri(audioUri))
+                        player.prepare()
+
+                        continuation.invokeOnCancellation {
+                            player.release()
+                        }
+                    }
+                } else {
+                    // Local file: Use MediaMetadataRetriever
+                    android.util.Log.d("CompositionFactory", "Getting duration for local file: $audioUri")
+
+                    val retriever = android.media.MediaMetadataRetriever()
+                    try {
+                        retriever.setDataSource(context, audioUri)
+                        val durationStr = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
+                        val duration = durationStr?.toLongOrNull()
+                        android.util.Log.d("CompositionFactory", "Local audio duration: ${duration}ms")
+                        duration
+                    } finally {
+                        retriever.release()
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CompositionFactory", "Failed to get audio duration for $audioUri", e)
+                null
+            }
+        }
     }
 
     private suspend fun getAudioUri(settings: ProjectSettings): Uri? {

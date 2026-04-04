@@ -401,7 +401,11 @@ private fun ImageDurationSelector(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.horizontalScroll(rememberScrollState())
         ) {
-            ProjectSettings.IMAGE_DURATION_OPTIONS.forEach { seconds ->
+            // Quick-select chips for common whole-second durations (1s - 5s)
+            // For sub-1s control (0.5s-0.9s) and 0.1s increments, users tap to open the slider sheet
+            val quickSelectOptions = (1..ProjectSettings.MAX_IMAGE_DURATION_SECONDS.toInt()).toList()
+
+            quickSelectOptions.forEach { seconds ->
                 val durationMs = seconds * 1000L
                 SelectableChip(
                     text = stringResource(R.string.settings_duration_seconds, seconds),
@@ -605,32 +609,8 @@ private fun AudioSection(
             }
         }
 
-        // Volume slider (show if audio is selected)
-        if (hasAudio) {
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = stringResource(R.string.settings_volume),
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = "${(volumeValue * 100).toInt()}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Slider(
-                value = volumeValue,
-                onValueChange = { volumeValue = it },
-                onValueChangeFinished = { onVolumeChange(volumeValue) },
-                valueRange = 0f..1f
-            )
-        }
+        // Note: Volume and Clip controls moved to separate bottom sheets
+        // Accessed via tabs in SettingsTabBar
     }
 }
 

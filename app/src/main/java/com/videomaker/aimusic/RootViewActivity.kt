@@ -8,11 +8,31 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.core.os.LocaleListCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -23,6 +43,10 @@ import com.videomaker.aimusic.modules.root.LoadingScreen
 import com.videomaker.aimusic.modules.root.RootNavigationEvent
 import com.videomaker.aimusic.modules.root.RootViewModel
 import com.videomaker.aimusic.navigation.AppRoute
+import com.videomaker.aimusic.ui.theme.FoundationBlack
+import com.videomaker.aimusic.ui.theme.FoundationBlack_100
+import com.videomaker.aimusic.ui.theme.PlayerCardBackground
+import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
 /**
@@ -72,6 +96,7 @@ class RootViewActivity : AppCompatActivity() {
             val isLoading by rootViewModel.isLoading.collectAsStateWithLifecycle()
             val loadingMessage by rootViewModel.loadingMessage.collectAsStateWithLifecycle()
             val navigationEvent by rootViewModel.navigationEvent.collectAsStateWithLifecycle()
+            val showNoInternetDialog by rootViewModel.showNoInternetDialog.collectAsStateWithLifecycle()
 
             // Handle navigation events
             LaunchedEffect(navigationEvent) {
@@ -94,6 +119,60 @@ class RootViewActivity : AppCompatActivity() {
                         isLoading = isLoading,
                         message = loadingMessage
                     )
+
+                    if (showNoInternetDialog) {
+                        Dialog(
+                            {}
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(PlayerCardBackground, RoundedCornerShape(16.dp))
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Image(
+                                    painter = painterResource(R.drawable.img_error_server),
+                                    contentDescription = "",
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.5f),
+                                    contentScale = ContentScale.FillWidth
+                                )
+
+                                Text(
+                                    text = stringResource(R.string.root_no_internet_title),
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.W700,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    textAlign = TextAlign.Center
+                                )
+
+                                Text(
+                                    text = stringResource(R.string.root_no_internet_message),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.W500,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                        .padding(top = 12.dp, bottom = 24.dp)
+                                )
+
+                                TextButton(
+                                    onClick = { rootViewModel.retryInitialization() },
+                                    modifier = Modifier
+                                        .background(Primary,RoundedCornerShape(160.dp))
+                                        .padding(horizontal = 10.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.root_try_again),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = FoundationBlack
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

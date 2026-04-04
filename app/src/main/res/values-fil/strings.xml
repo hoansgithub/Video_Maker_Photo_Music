@@ -26,11 +26,19 @@
     <!-- Page 3 -->
     <string name="onboarding_page3_title">Mas Maganda Kapag Magkasama!</string>
     <string name="onboarding_page3_subtitle">Mas maganda kapag magkasama. Imbitahan ang iyong mga kaibigan para magsaya.</string>
+    <string name="onboarding_swipe_next">Mag-swipe para magpatuloy</string>
+    <string name="onboarding_exit_title">Lumabas sa setup?</string>
+    <string name="onboarding_exit_message">Maaari mong baguhin ang iyong mga preference sa Settings anumang oras.</string>
+    <string name="onboarding_exit_confirm">Lumabas</string>
+    <string name="onboarding_exit_dismiss">Magpatuloy</string>
+    <string name="root_no_internet_title">Walang koneksyon sa internet</string>
+    <string name="root_no_internet_message">Kasalukuyang offline ang iyong device. Kumonekta muli para magpatuloy.</string>
+    <string name="root_try_again">Subukan Muli</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Gallery</string>
     <string name="home_tab_songs">Mga Kanta</string>
-    <string name="home_tab_projects">Aking mga Proyekto</string>
+    <string name="home_tab_projects">Aklatan</string>
 
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">Para sa iyo</string>
@@ -63,6 +71,13 @@
     <string name="settings_language_description">Baguhin ang wika ng app</string>
     <string name="settings_about">Tungkol sa</string>
     <string name="settings_version">Bersyon</string>
+    <string name="settings_uninstall">I-uninstall</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Subukan muli ito</string>
+    <string name="uninstall_description">Sigurado ka bang gusto mong i-uninstall?</string>
+    <string name="uninstall_confirm">I-uninstall pa rin</string>
+    <string name="uninstall_cancel">Huwag i-uninstall. Tuklasin pa</string>
     <string name="settings_app_widet">Magdagdag ng Widget</string>
     <string name="settings_rate_us">I-rate Kami</string>
     <string name="settings_share_with_friends">Ibahagi sa mga Kaibigan</string>
@@ -91,14 +106,38 @@
     <string name="editor_save_and_exit">I-save at Lumabas</string>
     <string name="editor_discard_changes">Itapon ang mga Pagbabago</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Nilikha na Video</string>
+    <string name="projects_tab_liked_template">Liked na Template</string>
+    <string name="projects_tab_liked_song">Liked na Kanta</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Walang Kanta</string>
+    <string name="like_song_search_button">Maghanap ng Kanta</string>
+    <string name="like_song_section_header">Musika para sa Iyo</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Walang Template</string>
+    <string name="like_template_search_button">Maghanap ng Template</string>
+    <string name="like_template_section_header">Mga Video Template</string>
+
     <!-- Projects -->
     <string name="projects_title">Aking mga Proyekto</string>
+    <string name="projects_menu">Menu ng proyekto</string>
+    <string name="projects_download">I-download</string>
+    <string name="projects_share">Ibahagi</string>
+    <string name="projects_delete">Tanggalin</string>
+    <string name="projects_delete_confirmation_title">Tanggalin ang Video?</string>
+    <string name="projects_delete_confirmation_message">Permanenteng matatanggal ang video na ito. Hindi ito mababawi.</string>
+    <string name="projects_delete_confirm">Tanggalin</string>
+    <string name="projects_delete_cancel">Kanselahin</string>
     <string name="projects_empty">Wala pang proyekto</string>
     <string name="projects_empty_description">Gumawa ng iyong unang proyekto para makita ito dito</string>
     <string name="projects_item_info">%1$d larawan • %2$s</string>
     <string name="projects_create_description">Magsimula ng bagong slideshow na proyekto</string>
     <string name="projects_delete_title">Tanggalin ang Proyekto?</string>
     <string name="projects_delete_message">Permanenteng matatanggal ang \"%s\". Hindi ito mababawi.</string>
+    <string name="projects_removed_from_list">Tinanggal mula sa listahan</string>
 
     <!-- Export -->
     <string name="export_title">I-export ang Video</string>
@@ -109,8 +148,20 @@
     <string name="export_preparing">Inihahanda ang export…</string>
     <string name="export_exporting">Ine-export ang video…</string>
     <string name="export_dont_close">Huwag isara ang app</string>
+    <string name="export_tip_1">Ginagawa ang iyong obra…</string>
+    <string name="export_tip_2">Nilalagyan ng mahika…</string>
+    <string name="export_tip_3">Binubuhay ang iyong mga alaala…</string>
+    <string name="export_tip_4">Pinipino ang bawat frame…</string>
+    <string name="export_tip_5">Ginagawang perpekto…</string>
+    <string name="export_tip_6">Hinihabi ang iyong kuwento…</string>
+    <string name="export_tip_7">Lumilikha ng espesyal…</string>
+    <string name="export_tip_8">Malapit na! Maganda tignan…</string>
+    <string name="export_tip_9">Inaayos ang mga detalye…</string>
+    <string name="export_tip_10">Huling himas…</string>
     <string name="export_video_saved">Na-save na ang iyong video</string>
     <string name="export_saved_to_gallery">Na-save sa Gallery</string>
+    <string name="export_saving_to_gallery">Sine-save sa gallery…</string>
+    <string name="export_error_save_failed">Hindi ma-save sa gallery</string>
     <string name="export_share_video">Ibahagi ang Video</string>
     <string name="export_failed">Nabigo ang Export</string>
     <string name="export_try_again">Subukan Muli</string>
@@ -122,6 +173,8 @@
     <string name="export_cancel_message">Sigurado ka bang gusto mong kanselahin ang export? Mawawala ang lahat ng progreso.</string>
     <string name="export_continue">Magpatuloy</string>
     <string name="export_cancel_export">Kanselahin ang Export</string>
+    <string name="export_try_another_templates">Subukan ang Iba Pang Template</string>
+    <string name="export_templates_load_failed">Nabigo ang pag-load ng mga template</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Pumili ng Larawan</string>
@@ -222,6 +275,14 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Nabigo ang pag-load. Mag-swipe pababa para subukan muli.</string>
+    <string name="error_network_title">Network Error</string>
+    <string name="error_network_message">Hindi ma-load ang musika. Pakisuri ang iyong koneksyon at subukang muli.</string>
+    <string name="error_network_timeout">Network timeout. Pakisuri ang iyong koneksyon at subukang muli.</string>
+    <string name="error_preview_title">Preview Error</string>
+    <string name="error_preview_music_network">Network error sa pag-load ng musika. Pakisuri ang iyong koneksyon at subukang muli.</string>
+    <string name="error_preview_music_failed">Hindi ma-load ang musika. Subukan muli.</string>
+    <string name="error_template_music_failed">Hindi ma-load ang kanta. Pakisuri ang iyong koneksyon at subukang muli.</string>
+    <string name="dialog_ok">OK</string>
 
     <!-- Songs -->
     <string name="start_project">Simulan ang proyekto</string>
@@ -267,4 +328,8 @@
     <string name="widget_recently">Kamakailan</string>
     <string name="widget_trending_song">Trending na Kanta</string>
     <string name="widget_trending_song_hot">Hot</string>
+    <string name="shortcut_trending_search_long">Trending na Paghahanap</string>
+    <string name="shortcut_create_video_long">Lumikha ng Video</string>
+    <string name="shortcut_choose_template_long">Pumili ng Template ng Video</string>
+    <string name="shortcut_uninstall_long">I-uninstall ang App</string>
 </resources>

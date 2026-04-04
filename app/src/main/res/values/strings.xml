@@ -15,7 +15,7 @@
 
     <!-- Onboarding -->
     <string name="onboarding_next">Next</string>
-    <string name="onboarding_get_started">Get Started</string>
+    <string name="onboarding_get_started">Done</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Create Magic in Seconds</string>
     <string name="onboarding_page1_subtitle">Stunning Video in a few taps. Simple and fast</string>
@@ -25,11 +25,19 @@
     <!-- Page 3 -->
     <string name="onboarding_page3_title">Better Together!</string>
     <string name="onboarding_page3_subtitle">Better together. Invite friends to share the fun</string>
+    <string name="onboarding_swipe_next">Swipe to next</string>
+    <string name="onboarding_exit_title">Exit Setup?</string>
+    <string name="onboarding_exit_message">You can always change your preferences later in Settings.</string>
+    <string name="onboarding_exit_confirm">Exit</string>
+    <string name="onboarding_exit_dismiss">Continue</string>
+    <string name="root_no_internet_title">No Internet Connection</string>
+    <string name="root_no_internet_message">Your device is currently offline. Please reconnect to continue your progress</string>
+    <string name="root_try_again">Try Again</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Gallery</string>
     <string name="home_tab_songs">Songs</string>
-    <string name="home_tab_projects">My Videos</string>
+    <string name="home_tab_projects">Library</string>
 
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">For you</string>
@@ -72,6 +80,13 @@
     <string name="settings_language_description">Change the app language</string>
     <string name="settings_about">About</string>
     <string name="settings_version">Version</string>
+    <string name="settings_uninstall">Uninstall</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Give it another try</string>
+    <string name="uninstall_description">Are your sure you want to uninstall?</string>
+    <string name="uninstall_confirm">Still uninstall app</string>
+    <string name="uninstall_cancel">Don’t Uninstall. Discover more</string>
 
     <!-- Editor -->
     <string name="editor_title">Edit Project</string>
@@ -95,6 +110,23 @@
     <string name="editor_play">Play</string>
     <string name="editor_pause">Pause</string>
     <string name="editor_duration_format">Duration: %s</string>
+
+    <!-- Music Trim Feature (NOT video trim) -->
+    <string name="editor_music_trim">Trim Music</string>
+    <string name="editor_music_trim_from_start">Trim from Start</string>
+    <string name="editor_music_trim_from_end">Trim from End</string>
+    <string name="editor_music_trim_edit">Edit Music Trim</string>
+    <string name="editor_music_trim_title">Trim Music</string>
+    <string name="editor_music_trim_subtitle">Select which part of the song to use</string>
+    <string name="editor_music_trim_start">Music Start</string>
+    <string name="editor_music_trim_end">Music End</string>
+    <string name="editor_music_trim_duration">Music Duration</string>
+    <string name="editor_music_trim_min_duration">Music must be at least 5 seconds</string>
+    <string name="editor_music_trim_will_loop">Music will loop if needed for your video</string>
+    <string name="editor_music_trimmed_info">Music: %1$s</string>
+    <string name="editor_music_trim_play_selection">Play Selection</string>
+    <string name="editor_music_trim_skip_to_start">Jump to Start</string>
+    <string name="editor_music_trim_skip_to_end">Jump to End</string>
     <string name="editor_photos_count">%d photos</string>
     <string name="editor_save_dialog_title">Save Project?</string>
     <string name="editor_save_dialog_message">Your project will be saved and available in My Projects.</string>
@@ -111,10 +143,31 @@
     <string name="editor_effect_sets">Effect Sets</string>
     <string name="editor_retry">Retry</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Created Video</string>
+    <string name="projects_tab_liked_template">Liked Template</string>
+    <string name="projects_tab_liked_song">Liked Song</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Song is Empty</string>
+    <string name="like_song_search_button">Search Songs</string>
+    <string name="like_song_section_header">Music for You</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Template is Empty</string>
+    <string name="like_template_search_button">Search Templates</string>
+    <string name="like_template_section_header">Video Templates</string>
+
     <!-- Projects -->
     <string name="projects_title">My Projects</string>
     <string name="projects_menu">Project menu</string>
+    <string name="projects_download">Download</string>
+    <string name="projects_share">Share</string>
     <string name="projects_delete">Delete</string>
+    <string name="projects_delete_confirmation_title">Delete Video?</string>
+    <string name="projects_delete_confirmation_message">This video will be permanently deleted. This action cannot be undone.</string>
+    <string name="projects_delete_confirm">Delete</string>
+    <string name="projects_delete_cancel">Cancel</string>
     <string name="projects_empty">No projects yet</string>
     <string name="projects_empty_description">Create your first project to see it here</string>
     <string name="projects_empty_title">Start your journey</string>
@@ -124,6 +177,7 @@
     <string name="projects_item_info">%1$d photos • %2$s</string>
     <string name="projects_delete_title">Delete Project?</string>
     <string name="projects_delete_message">\"%s\" will be permanently deleted. This action cannot be undone.</string>
+    <string name="projects_removed_from_list">Removed from list</string>
 
     <!-- Export -->
     <string name="export_title">Export Video</string>
@@ -136,8 +190,20 @@
     <string name="export_please_wait">Hold on a sec, getting your video ready!\nPlease don\'t close the app</string>
     <string name="export_exporting">Exporting video…</string>
     <string name="export_dont_close">Please don\'t close the app</string>
+    <string name="export_tip_1">Crafting your masterpiece…</string>
+    <string name="export_tip_2">Adding some movie magic…</string>
+    <string name="export_tip_3">Bringing your memories to life…</string>
+    <string name="export_tip_4">Polishing every frame…</string>
+    <string name="export_tip_5">Making it picture perfect…</string>
+    <string name="export_tip_6">Weaving your story together…</string>
+    <string name="export_tip_7">Creating something special…</string>
+    <string name="export_tip_8">Almost there! Looking great…</string>
+    <string name="export_tip_9">Fine-tuning the details…</string>
+    <string name="export_tip_10">Putting the final touches…</string>
     <string name="export_video_saved">Your video has been saved</string>
     <string name="export_saved_to_gallery">Saved to Gallery</string>
+    <string name="export_saving_to_gallery">Saving to gallery…</string>
+    <string name="export_error_save_failed">Failed to save to gallery</string>
     <string name="export_share_video">Share Video</string>
     <string name="export_failed">Export Failed</string>
     <string name="export_try_again">Try Again</string>
@@ -151,18 +217,24 @@
     <string name="export_cancel_export">Cancel Export</string>
     <string name="export_error_file_not_found">Video file not found</string>
     <string name="export_error_share_failed">Failed to share video</string>
+    <string name="export_try_another_templates">Try Another Templates</string>
+    <string name="export_templates_load_failed">Failed to load templates</string>
 
     <!-- Asset Picker -->
-    <string name="picker_title">Select Photos</string>
-    <string name="picker_done">Done (%1$d/%2$d)</string>
+    <string name="picker_title">Select your image</string>
+    <string name="picker_done">Done</string>
     <string name="picker_close">Close</string>
     <string name="picker_selected">Selected</string>
     <string name="picker_no_photos">No photos found</string>
     <string name="picker_no_photos_hint">Take some photos to get started</string>
-    <string name="picker_permission_title">Photo Access Required</string>
-    <string name="picker_permission_message">To create videos from your photos, we need permission to access your photo library.</string>
+    <string name="picker_permission_title">Allow access to photos</string>
+    <string name="picker_permission_message">To continue, Rehancer need your permission to access your Photos</string>
     <string name="picker_allow_access">Allow Access</string>
-    <string name="picker_min_selection">Select at least %d photos</string>
+    <string name="picker_limited_access_message">You\'ve given Video Make access to a select number of photo.</string>
+    <string name="picker_add_more_photos">Add</string>
+    <string name="picker_go_to_settings">Go to Settings</string>
+    <string name="picker_min_selection">Please select at least %d images.</string>
+    <string name="picker_current_selection">%d  image Selected</string>
 
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Music Player</string>
@@ -199,7 +271,12 @@
     <string name="settings_add">+ Add</string>
     <string name="settings_add_audio">+ Add</string>
     <string name="settings_volume">Volume</string>
+    <string name="settings_clip_music">Clip Music</string>
     <string name="settings_aspect_ratio">Aspect Ratio</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">Volume</string>
+    <string name="tab_music_clip">Music Clip</string>
     <string name="settings_transition_effect">Transition Effect</string>
     <string name="settings_transition_duration">Transition Duration</string>
     <string name="settings_transition_duration_value">%.1fs</string>
@@ -256,6 +333,14 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Failed to load. Pull down to retry.</string>
+    <string name="error_network_title">Network Error</string>
+    <string name="error_network_message">Failed to load music. Please check your connection and try again.</string>
+    <string name="error_network_timeout">Network timeout. Please check your connection and try again.</string>
+    <string name="error_preview_title">Preview Error</string>
+    <string name="error_preview_music_network">Network error loading music. Please check your connection and try again.</string>
+    <string name="error_preview_music_failed">Failed to load music. Please try again.</string>
+    <string name="error_template_music_failed">Failed to load song. Please check your connection and try again.</string>
+    <string name="dialog_ok">OK</string>
 
     <!-- Songs -->
     <string name="start_project">Start project</string>
@@ -269,7 +354,7 @@
     <string name="song_search_idle_hint">Start typing to search for songs</string>
 
     <!-- Onboarding Page 4 — Feature Survey -->
-    <string name="onboarding_page4_title">Start your journey</string>
+    <string name="onboarding_page4_title">How do you want to  start ?</string>
     <string name="onboarding_page4_subtitle">This helps us recommend the most relevant content for you.</string>
     <string name="feature_music_video_instant">Make a music video instantly</string>
     <string name="feature_photos_to_video">Turn photos into a music video</string>
@@ -293,6 +378,12 @@
     <string name="genre_metal">Metal</string>
     <string name="genre_soul">Soul</string>
 
+    <!-- App Shortcuts -->
+    <string name="shortcut_trending_search_long">Trending Search</string>
+    <string name="shortcut_create_video_long">Create Video</string>
+    <string name="shortcut_choose_template_long">Choose Video Template</string>
+    <string name="shortcut_uninstall_long">Uninstall App</string>
+
     <!--  Widget  -->
     <string name="widget_title">Widget</string>
     <string name="widget_bts">Add Widget</string>
@@ -307,5 +398,11 @@
     <string name="widget_pin_request_sent">Widget added to home screen</string>
     <string name="widget_pin_not_supported">Widget pinning not supported on this device</string>
     <string name="widget_add_failed">Failed to add widget: %s</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">Hot</string>
+    <string name="tag_trending">Trending</string>
+    <string name="tag_new">New</string>
+    <string name="tag_featured">Featured</string>
 
 </resources>

@@ -9,4 +9,9 @@
     <files-path
         name="internal_movies"
         path="." />
+
+    <!-- Cache directory for camera capture temp files -->
+    <cache-path
+        name="camera_images"
+        path="images/" />
 </paths>

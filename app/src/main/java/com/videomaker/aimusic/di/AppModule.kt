@@ -13,11 +13,15 @@ import com.videomaker.aimusic.data.local.database.ProjectDatabase
 import com.videomaker.aimusic.data.remote.SupabaseClientProvider
 import com.videomaker.aimusic.data.repository.EffectSetRepositoryImpl
 import com.videomaker.aimusic.data.repository.ExportRepositoryImpl
+import com.videomaker.aimusic.data.repository.LikedSongRepositoryImpl
+import com.videomaker.aimusic.data.repository.LikedTemplateRepositoryImpl
 import com.videomaker.aimusic.data.repository.ProjectRepositoryImpl
 import com.videomaker.aimusic.data.repository.SongRepositoryImpl
 import com.videomaker.aimusic.data.repository.TemplateRepositoryImpl
 import com.videomaker.aimusic.domain.repository.EffectSetRepository
 import com.videomaker.aimusic.domain.repository.ExportRepository
+import com.videomaker.aimusic.domain.repository.LikedSongRepository
+import com.videomaker.aimusic.domain.repository.LikedTemplateRepository
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
@@ -33,9 +37,15 @@ import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import com.videomaker.aimusic.domain.usecase.DeleteProjectUseCase
 import com.videomaker.aimusic.domain.usecase.GetAllProjectsUseCase
 import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
+import com.videomaker.aimusic.domain.usecase.LikeSongUseCase
+import com.videomaker.aimusic.domain.usecase.LikeTemplateUseCase
+import com.videomaker.aimusic.domain.usecase.ObserveLikedSongsUseCase
+import com.videomaker.aimusic.domain.usecase.ObserveLikedTemplatesUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
 import com.videomaker.aimusic.domain.usecase.SearchSongsUseCase
 import com.videomaker.aimusic.domain.usecase.SearchTemplatesUseCase
+import com.videomaker.aimusic.domain.usecase.UnlikeSongUseCase
+import com.videomaker.aimusic.domain.usecase.UnlikeTemplateUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CheckLanguageSelectedUseCase
@@ -55,6 +65,7 @@ import android.content.Context
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
 // import com.videomaker.aimusic.modules.musicpicker.MusicPickerViewModel
+import com.videomaker.aimusic.modules.songs.MusicPlayerViewModel
 import com.videomaker.aimusic.modules.songs.SongsViewModel
 import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
@@ -62,7 +73,9 @@ import com.videomaker.aimusic.modules.root.RootViewModel
 import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
 import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
+import com.videomaker.aimusic.modules.settings.UninstallViewModel
 import com.videomaker.aimusic.widget.WidgetViewModel
+import org.koin.android.ext.koin.androidApplication
 
 /**
  * ACCDI Dependency Injection Modules
@@ -99,6 +112,8 @@ val dataModule = module {
     single { ProjectDatabase.getInstance(androidContext()) }
     single { get<ProjectDatabase>().projectDao() }
     single { get<ProjectDatabase>().assetDao() }
+    single { get<ProjectDatabase>().likedSongDao() }
+    single { get<ProjectDatabase>().likedTemplateDao() }
 
     // Supabase client (singleton)
     single { SupabaseClientProvider.instance }
@@ -118,6 +133,8 @@ val dataModule = module {
     single<SongRepository> { SongRepositoryImpl(get(), get(), regionProvider = get()) }
     single<TemplateRepository> { TemplateRepositoryImpl(get(), get(), regionProvider = get()) }
     single<EffectSetRepository> { EffectSetRepositoryImpl(get(), get(), get()) }
+    single<LikedSongRepository> { LikedSongRepositoryImpl(get()) }
+    single<LikedTemplateRepository> { LikedTemplateRepositoryImpl(get()) }
 }
 
 // ========== MEDIA LAYER MODULE ==========
@@ -163,7 +180,7 @@ val domainModule = module {
     factory { CheckLanguageSelectedUseCase(get()) }
     factory { CompleteLanguageSelectionUseCase(get()) }
     factory { GetSelectedLanguageUseCase(get()) }
-    factory { SaveLanguagePreferenceUseCase(get()) }
+    factory { SaveLanguagePreferenceUseCase(get(), get()) }  // Inject RegionProvider to invalidate cache on language change
     factory { ApplyLanguageUseCase(get()) }
 
     // Project use cases
@@ -188,6 +205,16 @@ val domainModule = module {
 
     // Effect Set use cases
     single { GetEffectSetsPagedUseCase(get()) }
+
+    // Liked song use cases
+    factory { LikeSongUseCase(get()) }
+    factory { UnlikeSongUseCase(get()) }
+    single { ObserveLikedSongsUseCase(get()) }
+
+    // Liked template use cases
+    factory { LikeTemplateUseCase(get()) }
+    factory { UnlikeTemplateUseCase(get()) }
+    single { ObserveLikedTemplatesUseCase(get()) }
 }
 
 // ========== PRESENTATION LAYER MODULE ==========
@@ -239,6 +266,7 @@ class AssetPickerViewModelFactory(
  * because ACCDI cannot distinguish between different lambda types at runtime.
  */
 class EditorViewModelFactory(
+    private val context: Context,
     private val getProjectUseCase: GetProjectUseCase,
     private val createProjectUseCase: CreateProjectUseCase,
     private val updateSettingsUseCase: UpdateProjectSettingsUseCase,
@@ -252,6 +280,7 @@ class EditorViewModelFactory(
         initialData: com.videomaker.aimusic.domain.model.EditorInitialData?
     ): EditorViewModel {
         return EditorViewModel(
+            context = context,
             projectId = projectId,
             initialData = initialData,
             getProjectUseCase = getProjectUseCase,
@@ -270,13 +299,15 @@ class EditorViewModelFactory(
  */
 class ExportViewModelFactory(
     private val exportRepository: ExportRepository,
-    private val projectRepository: ProjectRepository
+    private val projectRepository: ProjectRepository,
+    private val templateRepository: TemplateRepository
 ) {
     fun create(projectId: String): ExportViewModel {
         return ExportViewModel(
             projectId = projectId,
             exportRepository = exportRepository,
-            projectRepository = projectRepository
+            projectRepository = projectRepository,
+            templateRepository = templateRepository
         )
     }
 }
@@ -286,12 +317,26 @@ class ExportViewModelFactory(
  */
 class ProjectsViewModelFactory(
     private val getAllProjectsUseCase: GetAllProjectsUseCase,
-    private val deleteProjectUseCase: DeleteProjectUseCase
+    private val deleteProjectUseCase: DeleteProjectUseCase,
+    private val templateRepository: TemplateRepository,
+    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
+    private val observeLikedSongsUseCase: ObserveLikedSongsUseCase,
+    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
+    private val likeSongUseCase: LikeSongUseCase,
+    private val unlikeSongUseCase: UnlikeSongUseCase,
+    private val unlikeTemplateUseCase: UnlikeTemplateUseCase
 ) {
     fun create(): ProjectsViewModel {
         return ProjectsViewModel(
             getAllProjectsUseCase = getAllProjectsUseCase,
-            deleteProjectUseCase = deleteProjectUseCase
+            deleteProjectUseCase = deleteProjectUseCase,
+            templateRepository = templateRepository,
+            getSuggestedSongsUseCase = getSuggestedSongsUseCase,
+            observeLikedSongsUseCase = observeLikedSongsUseCase,
+            observeLikedTemplatesUseCase = observeLikedTemplatesUseCase,
+            likeSongUseCase = likeSongUseCase,
+            unlikeSongUseCase = unlikeSongUseCase,
+            unlikeTemplateUseCase = unlikeTemplateUseCase
         )
     }
 }
@@ -361,7 +406,10 @@ class TemplatePreviewerViewModelFactory(
     private val templateRepository: TemplateRepository,
     private val songRepository: SongRepository,
     private val createProjectUseCase: CreateProjectUseCase,
-    private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase
+    private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase,
+    private val likeTemplateUseCase: LikeTemplateUseCase,
+    private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
+    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase
 ) {
     fun create(
         templateId: String,
@@ -375,7 +423,10 @@ class TemplatePreviewerViewModelFactory(
             templateRepository = templateRepository,
             songRepository = songRepository,
             createProjectUseCase = createProjectUseCase,
-            updateProjectSettingsUseCase = updateProjectSettingsUseCase
+            updateProjectSettingsUseCase = updateProjectSettingsUseCase,
+            likeTemplateUseCase = likeTemplateUseCase,
+            unlikeTemplateUseCase = unlikeTemplateUseCase,
+            observeLikedTemplatesUseCase = observeLikedTemplatesUseCase
         )
     }
 }
@@ -472,6 +523,41 @@ class EffectSetViewModelFactory(
 }
 
 /**
+ * Factory wrapper for MusicPlayerViewModel to support songId parameter.
+ */
+class MusicPlayerViewModelFactory(
+    private val likeSongUseCase: LikeSongUseCase,
+    private val unlikeSongUseCase: UnlikeSongUseCase,
+    private val likedSongRepository: LikedSongRepository
+) {
+    fun create(songId: Long): MusicPlayerViewModel = MusicPlayerViewModel(
+        songId = songId,
+        likeSongUseCase = likeSongUseCase,
+        unlikeSongUseCase = unlikeSongUseCase,
+        likedSongRepository = likedSongRepository
+    )
+}
+
+/**
+ * Factory wrapper for UninstallViewModel.
+ */
+class UninstallViewModelFactory(
+    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
+    private val observeLikedSongsUseCase: ObserveLikedSongsUseCase,
+    private val templateRepository: TemplateRepository,
+    private val songRepository: SongRepository,
+) {
+    fun create(): UninstallViewModel {
+        return UninstallViewModel(
+            observeLikedTemplatesUseCase = observeLikedTemplatesUseCase,
+            observeLikedSongsUseCase = observeLikedSongsUseCase,
+            templateRepository = templateRepository,
+            songRepository = songRepository,
+        )
+    }
+}
+
+/**
  * Factory wrapper for WidgetViewModel.
  */
 class WidgetViewModelFactory(
@@ -490,6 +576,7 @@ val presentationModule = module {
     // Root ViewModel for RootViewActivity (handles loading, Firebase, navigation)
     viewModel {
         RootViewModel(
+            application = androidApplication(),
             checkOnboardingStatusUseCase = get(),
             checkLanguageSelectedUseCase = get(),
             remoteConfig = get()  // Firebase Remote Config (from firebaseModule)
@@ -536,6 +623,7 @@ val presentationModule = module {
     // Editor ViewModel factory (singleton - stateless factory)
     single {
         EditorViewModelFactory(
+            context = androidContext(),
             getProjectUseCase = get(),
             createProjectUseCase = get(),
             updateSettingsUseCase = get(),
@@ -550,7 +638,8 @@ val presentationModule = module {
     single {
         ExportViewModelFactory(
             exportRepository = get(),
-            projectRepository = get()
+            projectRepository = get(),
+            templateRepository = get()
         )
     }
 
@@ -558,7 +647,14 @@ val presentationModule = module {
     single {
         ProjectsViewModelFactory(
             getAllProjectsUseCase = get(),
-            deleteProjectUseCase = get()
+            deleteProjectUseCase = get(),
+            templateRepository = get(),
+            getSuggestedSongsUseCase = get(),
+            observeLikedSongsUseCase = get(),
+            observeLikedTemplatesUseCase = get(),
+            likeSongUseCase = get(),
+            unlikeSongUseCase = get(),
+            unlikeTemplateUseCase = get()
         )
     }
 
@@ -620,7 +716,10 @@ val presentationModule = module {
             templateRepository = get(),
             songRepository = get(),
             createProjectUseCase = get(),
-            updateProjectSettingsUseCase = get()
+            updateProjectSettingsUseCase = get(),
+            likeTemplateUseCase = get(),
+            unlikeTemplateUseCase = get(),
+            observeLikedTemplatesUseCase = get()
         )
     }
 
@@ -652,11 +751,30 @@ val presentationModule = module {
         )
     }
 
+    // Uninstall ViewModel factory (singleton - stateless factory)
+    single {
+        UninstallViewModelFactory(
+            observeLikedTemplatesUseCase = get(),
+            observeLikedSongsUseCase = get(),
+            templateRepository = get(),
+            songRepository = get(),
+        )
+    }
+
     // Widget ViewModel factory (singleton - stateless factory)
     single {
         WidgetViewModelFactory(
             templateRepository = get(),
             songRepository = get()
+        )
+    }
+
+    // Music Player ViewModel factory (singleton - stateless factory)
+    single {
+        MusicPlayerViewModelFactory(
+            likeSongUseCase = get(),
+            unlikeSongUseCase = get(),
+            likedSongRepository = get()
         )
     }
 }

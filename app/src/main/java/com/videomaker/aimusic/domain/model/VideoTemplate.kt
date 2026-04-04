@@ -9,12 +9,17 @@ import androidx.compose.runtime.Immutable
  * create videos with curated combinations of music and effects.
  *
  * vibeTags: from vibe_tags table (e.g. birthday, wedding, travel, party, love, ...)
+ *
+ * Image URLs:
+ * - thumbnailPath: Lower-res image for gallery/list views (template-thumbnails bucket)
+ * - previewImagePath: Higher-res image for full-screen previewer (template-previews bucket)
  */
 @Immutable
 data class VideoTemplate(
     val id: String,
     val name: String,
     val thumbnailPath: String = "",
+    val previewImagePath: String = "",
     val songId: Long,
     val effectSetId: String,
     val aspectRatio: String = "9:16",

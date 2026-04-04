@@ -45,7 +45,9 @@ import com.videomaker.aimusic.di.SuggestedSongsListViewModelFactory
 import com.videomaker.aimusic.di.WeeklyRankingListViewModelFactory
 import com.videomaker.aimusic.di.TemplateListViewModelFactory
 import com.videomaker.aimusic.di.TemplatePreviewerViewModelFactory
+import com.videomaker.aimusic.di.UninstallViewModelFactory
 import com.videomaker.aimusic.di.WidgetViewModelFactory
+import com.videomaker.aimusic.modules.settings.UninstallViewModel
 import com.videomaker.aimusic.widget.WidgetViewModel
 import com.videomaker.aimusic.modules.editor.EditorScreen
 import com.videomaker.aimusic.modules.editor.EditorViewModel
@@ -67,6 +69,7 @@ import com.videomaker.aimusic.modules.language.LanguageSelectionScreen
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
 import com.videomaker.aimusic.modules.settings.SettingsScreen
+import com.videomaker.aimusic.modules.settings.UninstallScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
 import com.videomaker.aimusic.widget.WidgetScreen
@@ -90,10 +93,20 @@ private val slideAnimSpec = tween<IntOffset>(300)
 fun AppNavigation(
     modifier: Modifier = Modifier,
     pendingDeepLink: Intent? = null,
-    onDeepLinkConsumed: () -> Unit = {}
+    onDeepLinkConsumed: () -> Unit = {},
+    navigateToUninstall: Boolean = false,
+    onUninstallNavigationConsumed: () -> Unit = {}
 ) {
     val activity = LocalContext.current as? Activity
     val backStack = rememberNavBackStack(AppRoute.Home())
+
+    // Handle "Uninstall App" shortcut tap
+    LaunchedEffect(navigateToUninstall) {
+        if (navigateToUninstall) {
+            backStack.add(AppRoute.ConfirmUninstall)
+            onUninstallNavigationConsumed()
+        }
+    }
 
     // Handle deep-link intents from home screen widgets
     LaunchedEffect(pendingDeepLink) {
@@ -135,6 +148,9 @@ fun AppNavigation(
                         add(AppRoute.Home(initialTab = 1, initialSongId = songId))
                     }
                 }
+            }
+            WidgetActions.ACTION_CREATE_VIDEO -> {
+                backStack.add(AppRoute.AssetPicker())
             }
         }
         onDeepLinkConsumed()
@@ -229,6 +245,7 @@ fun AppNavigation(
                             overrideSongId = songId
                         ))
                     },
+                    onNavigateToAllSongs = { backStack.add(AppRoute.SuggestedSongsList) },
                     onProjectClick = { projectId ->
                         backStack.add(AppRoute.Editor(projectId))
                     }
@@ -410,6 +427,18 @@ fun AppNavigation(
                             clear()
                             add(AppRoute.Home(initialTab = 2)) // Tab 2 = My Videos
                         }
+                    },
+                    onNavigateToTemplateDetail = { templateId ->
+                        backStack.apply {
+                            val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home()
+                            clear()
+                            add(home)
+                            add(AppRoute.TemplatePreviewer(
+                                templateId = templateId,
+                                imageUris = emptyList(),
+                                overrideSongId = -1L
+                            ))
+                        }
                     }
                 )
             }
@@ -478,6 +507,33 @@ fun AppNavigation(
                 )
             }
 
+            entry<AppRoute.ConfirmUninstall> {
+                val factory: UninstallViewModelFactory = koinInject()
+                val uninstallViewModel: UninstallViewModel = viewModel(
+                    key = "confirm_uninstall",
+                    factory = createSafeViewModelFactory { factory.create() }
+                )
+                UninstallScreen(
+                    viewModel = uninstallViewModel,
+                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateToTemplatePreviewer = { templateId ->
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = templateId,
+                            imageUris = emptyList()
+                        ))
+                    },
+                    onNavigateToTemplates = { backStack.add(AppRoute.TemplateList()) },
+                    onNavigateToAllSongs = { backStack.add(AppRoute.SuggestedSongsList) },
+                    onNavigateToTemplatePreviewerWithSong = { songId ->
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "",
+                            imageUris = emptyList(),
+                            overrideSongId = songId
+                        ))
+                    }
+                )
+            }
+
             entry<AppRoute.LanguageSettings> {
                 val saveLanguage: SaveLanguagePreferenceUseCase = koinInject()
                 val applyLanguage: ApplyLanguageUseCase = koinInject()
@@ -491,6 +547,7 @@ fun AppNavigation(
                     onContinue = {
                         applyLanguage()
                         activity?.recreate()
+                        backStack.removeLastOrNull()
                     }
                 )
             }

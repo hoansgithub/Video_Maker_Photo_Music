@@ -37,6 +37,37 @@ class TemplateRepositoryImpl(
         )
     }
 
+    override suspend fun getTemplateById(id: String): Result<VideoTemplate?> =
+        withContext(Dispatchers.IO) {
+            try {
+                // First try to get from cache
+                val cachedTemplates = apiCacheManager.get<List<VideoTemplate>>(
+                    ApiCacheManager.keyTemplates(regionProvider.getRegionCode(), 100, 0)
+                )
+                cachedTemplates?.firstOrNull { it.id == id }
+                    ?.let { return@withContext Result.success(it) }
+
+                // Then try Supabase
+                val template = supabaseClient.postgrest
+                    .from(TABLE_TEMPLATES)
+                    .select(COLUMNS_TEMPLATE) {
+                        filter {
+                            eq("id", id)
+                            eq("is_active", true)
+                        }
+                    }
+                    .decodeSingleOrNull<TemplateDto>()
+                    ?.toDomain()
+
+                Result.success(template)
+            } catch (e: Exception) {
+                android.util.Log.e("TemplateRepository", "getTemplateById failed: ${e.message}")
+                // Final fallback: local JSON asset
+                val fallback = templateLibrary.getAll().firstOrNull { it.id == id }
+                Result.success(fallback)
+            }
+        }
+
     override suspend fun getTemplates(limit: Int, offset: Int): Result<List<VideoTemplate>> =
         withContext(Dispatchers.IO) {
             val region = regionProvider.getRegionCode()
@@ -197,8 +228,13 @@ class TemplateRepositoryImpl(
 // DTO
 // ============================================
 
+// Lower-res thumbnails for gallery/list views
 private const val THUMBNAIL_BASE_URL =
     "https://zdydtiwglotssklnkwjh.supabase.co/storage/v1/object/public/template-thumbnails/"
+
+// Higher-res images for full-screen template previewer
+private const val PREVIEW_IMAGE_BASE_URL =
+    "https://zdydtiwglotssklnkwjh.supabase.co/storage/v1/object/public/template-previews/"
 
 @Serializable
 private data class TemplateDto(
@@ -221,6 +257,7 @@ private data class TemplateDto(
         id = id,
         name = name,
         thumbnailPath = if (!thumbnailPath.isNullOrEmpty()) THUMBNAIL_BASE_URL + thumbnailPath else "",
+        previewImagePath = if (!thumbnailPath.isNullOrEmpty()) PREVIEW_IMAGE_BASE_URL + thumbnailPath else "",
         songId = songId,
         effectSetId = effectSetId,
         aspectRatio = aspectRatio,

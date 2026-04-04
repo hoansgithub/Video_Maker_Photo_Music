@@ -12,8 +12,10 @@ import java.util.Locale
  * 4. Device locale country (for ambiguous languages: en, es, ar)
  * 5. Hardcoded fallback "us"
  *
- * Used by SongRepositoryImpl and TemplateRepositoryImpl to filter
- * content to the user's region + global content (empty target_regions).
+ * Used by SongRepositoryImpl and TemplateRepositoryImpl to filter and prioritize content:
+ * - Priority 1: Content targeting user's region (target_regions = ["us"])
+ * - Priority 2: Explicit global content (target_regions = ["all"])
+ * - Priority 3: Implicit global content (target_regions = [] empty)
  */
 class RegionProvider(
     private val languageManager: LanguageManager,
@@ -29,6 +31,7 @@ class RegionProvider(
     fun getRegionCode(): String {
         cached?.let { return it }
         val region = preferencesManager.getUserRegion()
+            ?.takeIf { it.isNotBlank() }  // Treat empty string as null
             ?: deriveFromLanguage().also { preferencesManager.setUserRegion(it) }
         cached = region
         return region

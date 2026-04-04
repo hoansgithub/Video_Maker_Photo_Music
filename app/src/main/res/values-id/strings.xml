@@ -26,11 +26,19 @@
     <!-- Page 3 -->
     <string name="onboarding_page3_title">Lebih Baik Bersama!</string>
     <string name="onboarding_page3_subtitle">Lebih baik bersama. Ajak teman-temanmu untuk berbagi kesenangan.</string>
+    <string name="onboarding_swipe_next">Geser untuk lanjut</string>
+    <string name="onboarding_exit_title">Keluar dari pengaturan?</string>
+    <string name="onboarding_exit_message">Anda selalu dapat mengubah preferensi nanti di Pengaturan.</string>
+    <string name="onboarding_exit_confirm">Keluar</string>
+    <string name="onboarding_exit_dismiss">Lanjutkan</string>
+    <string name="root_no_internet_title">Tidak Ada Koneksi Internet</string>
+    <string name="root_no_internet_message">Perangkat Anda sedang offline. Silakan sambungkan kembali untuk melanjutkan.</string>
+    <string name="root_try_again">Coba Lagi</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galeri</string>
     <string name="home_tab_songs">Lagu</string>
-    <string name="home_tab_projects">Proyek Saya</string>
+    <string name="home_tab_projects">Perpustakaan</string>
 
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">Untuk kamu</string>
@@ -63,6 +71,13 @@
     <string name="settings_language_description">Ubah bahasa aplikasi</string>
     <string name="settings_about">Tentang</string>
     <string name="settings_version">Versi</string>
+    <string name="settings_uninstall">Hapus Instalan</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Coba lagi</string>
+    <string name="uninstall_description">Apakah kamu yakin ingin menghapus instalasi?</string>
+    <string name="uninstall_confirm">Tetap hapus instalasi</string>
+    <string name="uninstall_cancel">Jangan hapus. Temukan lebih banyak</string>
     <string name="settings_app_widet">Tambah Widget</string>
     <string name="settings_rate_us">Beri Nilai Kami</string>
     <string name="settings_share_with_friends">Bagikan ke Teman</string>
@@ -91,14 +106,38 @@
     <string name="editor_save_and_exit">Simpan &amp; Keluar</string>
     <string name="editor_discard_changes">Buang Perubahan</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Video Dibuat</string>
+    <string name="projects_tab_liked_template">Template Disukai</string>
+    <string name="projects_tab_liked_song">Lagu Disukai</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Lagu Kosong</string>
+    <string name="like_song_search_button">Cari Lagu</string>
+    <string name="like_song_section_header">Musik untuk Anda</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Template Kosong</string>
+    <string name="like_template_search_button">Cari Template</string>
+    <string name="like_template_section_header">Template Video</string>
+
     <!-- Projects -->
     <string name="projects_title">Proyek Saya</string>
+    <string name="projects_menu">Menu proyek</string>
+    <string name="projects_download">Unduh</string>
+    <string name="projects_share">Bagikan</string>
+    <string name="projects_delete">Hapus</string>
+    <string name="projects_delete_confirmation_title">Hapus Video?</string>
+    <string name="projects_delete_confirmation_message">Video ini akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.</string>
+    <string name="projects_delete_confirm">Hapus</string>
+    <string name="projects_delete_cancel">Batal</string>
     <string name="projects_empty">Belum ada proyek</string>
     <string name="projects_empty_description">Buat proyek pertama Anda untuk melihatnya di sini</string>
     <string name="projects_item_info">%1$d foto • %2$s</string>
     <string name="projects_create_description">Mulai proyek slideshow baru</string>
     <string name="projects_delete_title">Hapus Proyek?</string>
     <string name="projects_delete_message">\"%s\" akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.</string>
+    <string name="projects_removed_from_list">Dihapus dari daftar</string>
 
     <!-- Export -->
     <string name="export_title">Ekspor Video</string>
@@ -109,8 +148,20 @@
     <string name="export_preparing">Menyiapkan ekspor…</string>
     <string name="export_exporting">Mengekspor video…</string>
     <string name="export_dont_close">Mohon jangan tutup aplikasi</string>
+    <string name="export_tip_1">Membuat karya agung Anda…</string>
+    <string name="export_tip_2">Menambahkan keajaiban sinema…</string>
+    <string name="export_tip_3">Menghidupkan kenangan Anda…</string>
+    <string name="export_tip_4">Memoles setiap frame…</string>
+    <string name="export_tip_5">Menyempurnakannya…</string>
+    <string name="export_tip_6">Merangkai cerita Anda…</string>
+    <string name="export_tip_7">Menciptakan sesuatu yang istimewa…</string>
+    <string name="export_tip_8">Hampir selesai! Terlihat keren…</string>
+    <string name="export_tip_9">Menyempurnakan detail…</string>
+    <string name="export_tip_10">Sentuhan akhir…</string>
     <string name="export_video_saved">Video Anda telah disimpan</string>
     <string name="export_saved_to_gallery">Tersimpan di Galeri</string>
+    <string name="export_saving_to_gallery">Menyimpan ke galeri…</string>
+    <string name="export_error_save_failed">Gagal menyimpan ke galeri</string>
     <string name="export_share_video">Bagikan Video</string>
     <string name="export_failed">Ekspor Gagal</string>
     <string name="export_try_again">Coba Lagi</string>
@@ -122,6 +173,8 @@
     <string name="export_cancel_message">Apakah Anda yakin ingin membatalkan ekspor? Semua progres akan hilang.</string>
     <string name="export_continue">Lanjutkan</string>
     <string name="export_cancel_export">Batalkan Ekspor</string>
+    <string name="export_try_another_templates">Coba Template Lain</string>
+    <string name="export_templates_load_failed">Gagal memuat template</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Pilih Foto</string>
@@ -222,6 +275,14 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Gagal memuat. Tarik ke bawah untuk mencoba lagi.</string>
+    <string name="error_network_title">Kesalahan Jaringan</string>
+    <string name="error_network_message">Gagal memuat musik. Periksa koneksi Anda dan coba lagi.</string>
+    <string name="error_network_timeout">Waktu jaringan habis. Periksa koneksi Anda dan coba lagi.</string>
+    <string name="error_preview_title">Kesalahan Pratinjau</string>
+    <string name="error_preview_music_network">Kesalahan jaringan saat memuat musik. Periksa koneksi Anda dan coba lagi.</string>
+    <string name="error_preview_music_failed">Gagal memuat musik. Silakan coba lagi.</string>
+    <string name="error_template_music_failed">Gagal memuat lagu. Periksa koneksi Anda dan coba lagi.</string>
+    <string name="dialog_ok">OK</string>
 
     <!-- Songs -->
     <string name="start_project">Mulai proyek</string>
@@ -267,4 +328,8 @@
     <string name="widget_recently">Terbaru</string>
     <string name="widget_trending_song">Lagu Trending</string>
     <string name="widget_trending_song_hot">Hot</string>
+    <string name="shortcut_trending_search_long">Pencarian Trending</string>
+    <string name="shortcut_create_video_long">Buat Video</string>
+    <string name="shortcut_choose_template_long">Pilih Template Video</string>
+    <string name="shortcut_uninstall_long">Hapus Instalasi App</string>
 </resources>

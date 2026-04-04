@@ -6,6 +6,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,8 +37,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,6 +48,7 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.ui.theme.Black20
 import com.videomaker.aimusic.ui.theme.Gray700
+import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -51,13 +56,13 @@ import kotlinx.coroutines.launch
 // FEATURE DATA
 // ============================================
 
-internal data class FeatureItem(val id: String, val icon: ImageVector, val nameResId: Int)
+internal data class FeatureItem(val id: String, val icon: Int, val nameResId: Int)
 
 internal val featureItems = listOf(
-    FeatureItem("music_video_instant", Icons.Default.Videocam,     R.string.feature_music_video_instant),
-    FeatureItem("photos_to_video",     Icons.Default.PhotoLibrary, R.string.feature_photos_to_video),
-    FeatureItem("trending_templates",  Icons.Default.AutoAwesome,  R.string.feature_trending_templates),
-    FeatureItem("trending_music",      Icons.Default.MusicNote,    R.string.feature_trending_music),
+    FeatureItem("music_video_instant", R.drawable.ic_lead_search,     R.string.feature_music_video_instant),
+    FeatureItem("photos_to_video",     R.drawable.ic_lead_search, R.string.feature_photos_to_video),
+//    FeatureItem("trending_templates",  Icons.Default.AutoAwesome,  R.string.feature_trending_templates),
+//    FeatureItem("trending_music",      Icons.Default.MusicNote,    R.string.feature_trending_music),
 )
 
 // ============================================
@@ -89,13 +94,15 @@ fun FeatureSurveyPage(
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
-            .padding(top = 120.dp, bottom = 200.dp)
+            .padding(top = 140.dp, bottom = 200.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = stringResource(R.string.onboarding_page4_title),
-            fontSize = 32.sp,
+            fontSize = 28.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center
         )
 
         Spacer(Modifier.height(10.dp))
@@ -103,7 +110,8 @@ fun FeatureSurveyPage(
         Text(
             text = stringResource(R.string.onboarding_page4_subtitle),
             fontSize = 17.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
         )
 
         Spacer(Modifier.height(36.dp))
@@ -111,7 +119,7 @@ fun FeatureSurveyPage(
         featureItems.forEachIndexed { index, item ->
             val (alpha, translateY) = cardAnimations[index]
             val isSelected = selectedFeatures.contains(item.id)
-
+            Spacer(Modifier.height(16.dp))
             FeatureCard(
                 item = item,
                 isSelected = isSelected,
@@ -136,11 +144,10 @@ private fun FeatureCard(
     isSelected: Boolean, onFeatureToggle: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardShape = RoundedCornerShape(50)
+    val cardShape = RoundedCornerShape(40)
     val selectedColor = MaterialTheme.colorScheme.primary
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(cardShape)
@@ -151,31 +158,43 @@ private fun FeatureCard(
                 shape = cardShape
             )
             .clickable { onFeatureToggle(item.id) }
-            .padding(horizontal = 20.dp, vertical = 18.dp)
+            .padding(vertical = 24.dp, horizontal = 16.dp)
     ) {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onBackground,
+        Column(
             modifier = Modifier
-                .padding(end = 16.dp)
-                .size(26.dp)
-        )
+                .fillMaxWidth()
+                .align(Alignment.Center),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                painter = painterResource(item.icon),
+                contentDescription = null,
+                tint = if (isSelected) Primary else MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier
+                    .size(36.dp)
+            )
 
-        Text(
-            text = stringResource(item.nameResId),
-            fontSize = 16.sp,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.weight(1f)
-        )
+            Text(
+                text = stringResource(item.nameResId),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.W500,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 50.dp),
+                textAlign = TextAlign.Center
+            )
+        }
 
         if (isSelected) {
             Icon(
                 imageVector = Icons.Filled.CheckCircle,
                 contentDescription = null,
                 tint = selectedColor,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier
+                    .size(22.dp)
+                    .align(Alignment.TopEnd)
             )
         }
     }

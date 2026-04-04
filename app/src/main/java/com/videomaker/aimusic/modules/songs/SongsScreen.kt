@@ -67,18 +67,21 @@ import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
+import com.videomaker.aimusic.ui.components.RankingSongCard
+import com.videomaker.aimusic.ui.components.RankingSongCardPlaceholder
 import com.videomaker.aimusic.ui.components.SectionHeader
 import com.videomaker.aimusic.ui.components.ShimmerBox
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
+import com.videomaker.aimusic.ui.components.SongsSearchField
+import com.videomaker.aimusic.ui.components.SuggestSongCard
+import com.videomaker.aimusic.ui.components.SuggestSongCardPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Black40
 import com.videomaker.aimusic.ui.theme.GoldAccent
 import com.videomaker.aimusic.ui.theme.Gray400
 import com.videomaker.aimusic.ui.theme.PlaceholderBackground
 import com.videomaker.aimusic.ui.theme.Primary
-import com.videomaker.aimusic.ui.theme.SearchFieldBackground
-import com.videomaker.aimusic.ui.theme.SearchFieldBorder
 import com.videomaker.aimusic.ui.theme.TextBright
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
@@ -278,53 +281,6 @@ private fun SongsContent(
 // SEARCH FIELD
 // ============================================
 
-@Composable
-private fun SongsSearchField(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    hint: String = "Search songs"
-) {
-    val dimens = AppDimens.current
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                color = SearchFieldBackground,
-                shape = RoundedCornerShape(dimens.radiusXl)
-            )
-            .border(
-                width = 1.dp,
-                color = SearchFieldBorder,
-                shape = RoundedCornerShape(dimens.radiusXl)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = dimens.spaceMd, vertical = dimens.spaceMd),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            painter = painterResource(id = R.drawable.ic_music_note),
-            contentDescription = null,
-            tint = Color.Unspecified,
-            modifier = Modifier.size(24.dp)
-        )
-
-        Spacer(modifier = Modifier.width(dimens.spaceSm))
-
-        Text(
-            text = hint,
-            style = MaterialTheme.typography.titleSmall,
-            color = TextTertiary,
-            modifier = Modifier.weight(1f)
-        )
-
-        Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = "Search",
-            tint = TextTertiary
-        )
-    }
-}
 
 // ============================================
 // SUGGEST SONGS LIST (horizontal, ratio 162:207)
@@ -381,118 +337,6 @@ private fun SuggestSongsList(
 }
 
 /** Shimmer skeleton that matches the real [SuggestSongCard] layout (162dp wide, 1:1 thumb + info). */
-@Composable
-private fun SuggestSongCardPlaceholder() {
-    val dimens = AppDimens.current
-
-    Column(
-        modifier = Modifier
-            .width(162.dp)
-            .clip(RoundedCornerShape(dimens.radiusLg))
-            .background(PlaceholderBackground)
-    ) {
-        // 1:1 thumbnail shimmer
-        ShimmerBox(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .clip(RoundedCornerShape(16.dp))
-        )
-        // Title row + artist shimmer
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = dimens.spaceSm),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(dimens.spaceXxs)
-            ) {
-                ShimmerBox(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(15.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                )
-                ShimmerBox(
-                    modifier = Modifier
-                        .fillMaxWidth(0.6f)
-                        .height(13.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                )
-            }
-            Spacer(modifier = Modifier.width(dimens.spaceXs))
-            ShimmerBox(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(4.dp))
-            )
-        }
-    }
-}
-
-@Composable
-private fun SuggestSongCard(
-    song: MusicSong,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val dimens = AppDimens.current
-
-    Card(
-        onClick = onClick,
-        modifier = modifier
-            .width(162.dp),
-        shape = RoundedCornerShape(dimens.radiusLg),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-    ) {
-        Column {
-            // Cover image — 1:1, 16dp corner radius
-            AppAsyncImage(
-                imageUrl = song.coverUrl,
-                contentDescription = song.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(16.dp))
-            )
-
-            // Song info: [name + artist column] | [start-project button]
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = dimens.spaceSm),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = song.name,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 15.sp
-                        ),
-                        color = TextPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.height(dimens.spaceXxs))
-                    Text(
-                        text = song.artist,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 13.sp
-                        ),
-                        color = TextSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-        }
-    }
-}
 
 // ============================================
 // WEEKLY RANKING SECTION (pager or shimmer)
@@ -517,7 +361,7 @@ private fun WeeklyRankingSection(
                 verticalArrangement = Arrangement.spacedBy(dimens.spaceSm)
             ) {
                 repeat(RANKING_PLACEHOLDER_COUNT) {
-                    RankingSongItemPlaceholder()
+                    RankingSongCardPlaceholder()
                 }
             }
         }
@@ -546,59 +390,6 @@ private fun WeeklyRankingSection(
     }
 }
 
-/** Shimmer skeleton matching [RankingSongItem] dimensions. */
-@Composable
-private fun RankingSongItemPlaceholder() {
-    val dimens = AppDimens.current
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(dimens.spaceSm),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Thumbnail
-        ShimmerBox(
-            modifier = Modifier
-                .size(64.dp)
-                .clip(RoundedCornerShape(dimens.radiusMd))
-        )
-        Spacer(modifier = Modifier.width(dimens.spaceSm))
-        // Rank number box
-        ShimmerBox(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(RoundedCornerShape(dimens.radiusMd))
-        )
-        Spacer(modifier = Modifier.width(dimens.spaceSm))
-        // Name + usage count lines
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(dimens.spaceXxs)
-        ) {
-            ShimmerBox(
-                modifier = Modifier
-                    .fillMaxWidth(0.7f)
-                    .height(15.dp)
-                    .clip(RoundedCornerShape(4.dp))
-            )
-            ShimmerBox(
-                modifier = Modifier
-                    .fillMaxWidth(0.4f)
-                    .height(13.dp)
-                    .clip(RoundedCornerShape(4.dp))
-            )
-        }
-        Spacer(modifier = Modifier.width(dimens.spaceXs))
-        // Start project button
-        ShimmerBox(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(4.dp))
-        )
-    }
-}
-
 @Composable
 private fun WeeklyRankingPager(
     songs: List<MusicSong>,
@@ -620,96 +411,11 @@ private fun WeeklyRankingPager(
             verticalArrangement = Arrangement.spacedBy(dimens.spaceSm)
         ) {
             pages.getOrNull(pageIndex)?.forEachIndexed { index, song ->
-                RankingSongItem(
+                RankingSongCard(
                     song = song,
                     ranking = pageIndex * 3 + index + 1,
                     onClick = { onSongClick(song) }
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RankingSongItem(
-    song: MusicSong,
-    ranking: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val dimens = AppDimens.current
-
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(dimens.radiusLg),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(dimens.spaceSm),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Thumbnail
-            AppAsyncImage(
-                imageUrl = song.coverUrl,
-                contentDescription = song.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(dimens.radiusMd))
-            )
-
-            Spacer(modifier = Modifier.width(dimens.spaceSm))
-
-            // Ranking label: # (gray, large) with number overlapping to the right (lime)
-            Box(modifier = Modifier.width(36.dp)) {
-                Text(
-                    text = "#",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Medium,
-                    fontStyle = FontStyle.Italic,
-                    color = Gray400,
-                )
-                Text(
-                    text = ranking.toString(),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Primary,
-                    modifier = Modifier.offset(x = 13.dp, y = 8.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(dimens.spaceSm))
-
-            // Song name + usage count
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = song.name,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 15.sp
-                    ),
-                    color = TextPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(dimens.spaceXxs))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_repeat),
-                        contentDescription = null,
-                        tint = Color.Unspecified,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(dimens.spaceXxs))
-                    Text(
-                        text = song.formattedUsageCount,
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
-                        color = TextSecondary
-                    )
-                }
             }
         }
     }

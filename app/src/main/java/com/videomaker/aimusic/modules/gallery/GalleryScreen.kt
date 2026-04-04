@@ -36,9 +36,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -87,6 +89,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.videomaker.aimusic.ui.components.PageIndicator
 import com.videomaker.aimusic.ui.components.SectionHeader
+import com.videomaker.aimusic.ui.components.ContentTag
+import com.videomaker.aimusic.ui.components.ContentTags
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.components.StaggeredGrid
 import com.videomaker.aimusic.ui.components.TemplateCard
@@ -111,6 +115,7 @@ fun GalleryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     // Handle navigation events
     LaunchedEffect(navigationEvent) {
@@ -144,6 +149,8 @@ fun GalleryScreen(
                 vibeTags = state.vibeTags,
                 selectedVibeTagId = state.selectedVibeTagId,
                 templateListState = state.templateListState,
+                isRefreshing = isRefreshing,
+                onRefresh = viewModel::refresh,
                 onVibeTagSelected = viewModel::onVibeTagSelected,
                 onTemplateClick = viewModel::onTemplateClick,
                 onSeeAllTemplates = viewModel::onSeeAllTemplatesClick,
@@ -212,6 +219,7 @@ private fun GalleryErrorContent(message: String) {
 // GALLERY CONTENT
 // ============================================
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GalleryContent(
     topBarHeight: Dp = 0.dp,
@@ -219,6 +227,8 @@ private fun GalleryContent(
     vibeTags: List<VibeTag>,
     selectedVibeTagId: String?,
     templateListState: TemplateListState,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
     onVibeTagSelected: (String?) -> Unit,
     onTemplateClick: (VideoTemplate) -> Unit,
     onSeeAllTemplates: () -> Unit,
@@ -228,13 +238,18 @@ private fun GalleryContent(
     val dimens = AppDimens.current
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                top = topBarHeight + dimens.spaceLg,
-                bottom = dimens.space3Xl + dimens.space2Xl
-            )
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier.fillMaxSize()
         ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    top = topBarHeight + dimens.spaceLg,
+                    bottom = dimens.space3Xl + dimens.space2Xl
+                )
+            ) {
             // Section 1: Search Field
             item(key = "search", contentType = "search") {
                 GallerySearchField(
@@ -291,6 +306,7 @@ private fun GalleryContent(
                     )
                 }
             }
+        }
         }
 
         // Bottom gradient fade — dark to transparent, behind the button
@@ -545,6 +561,49 @@ private fun FeaturedTemplateCard(
                     .align(Alignment.BottomCenter)
             )
 
+            // Content tags — top-left
+            ContentTags(
+                tags = listOf(ContentTag.HOT, ContentTag.TRENDING),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(dimens.spaceMd)
+            )
+
+            // Use count badge — top-right
+            if (template.useCount > 0) {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(dimens.spaceMd)
+                        .background(
+                            color = Color.Black.copy(alpha = 0.6f),
+                            shape = RoundedCornerShape(999.dp)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color.White.copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(999.dp)
+                        )
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_heart),
+                        contentDescription = null,
+                        tint = Gray200,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        text = formatUseCount(template.useCount),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray200,
+                        maxLines = 1
+                    )
+                }
+            }
+
             // Template name — bottom-left
             Text(
                 text = template.name,
@@ -559,6 +618,21 @@ private fun FeaturedTemplateCard(
             )
         }
     }
+}
+
+/**
+ * Format use count for display (1000 -> 1K, 1500000 -> 1.5M)
+ */
+private fun formatUseCount(count: Long): String = when {
+    count >= 1_000_000 -> {
+        val v = count / 1_000_000.0
+        if (v % 1.0 == 0.0) "${v.toLong()}M" else "%.1fM".format(v)
+    }
+    count >= 1_000 -> {
+        val v = count / 1_000.0
+        if (v % 1.0 == 0.0) "${v.toLong()}K" else "%.1fK".format(v)
+    }
+    else -> count.toString()
 }
 
 // ============================================
@@ -633,6 +707,7 @@ private fun StaggeredTemplateGrid(
                 thumbnailPath = templates[index].thumbnailPath,
                 aspectRatio = aspectRatios[index],
                 isPremium = templates[index].isPremium,
+                showHotTag = true,  // Show Hot tag in Gallery tab only
                 useCount = templates[index].useCount,
                 onClick = { onTemplateClick(templates[index]) }
             )
@@ -701,6 +776,8 @@ private fun GalleryContentPreview() {
                 ),
                 selectedVibeTagId = null,
                 templateListState = TemplateListState.Success(previewTemplates),
+                isRefreshing = false,
+                onRefresh = {},
                 onVibeTagSelected = {},
                 onTemplateClick = {},
                 onSeeAllTemplates = {},

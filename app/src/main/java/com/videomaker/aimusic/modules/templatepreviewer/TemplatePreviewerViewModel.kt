@@ -11,11 +11,16 @@ import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
+import com.videomaker.aimusic.domain.usecase.LikeTemplateUseCase
+import com.videomaker.aimusic.domain.usecase.ObserveLikedTemplatesUseCase
+import com.videomaker.aimusic.domain.usecase.UnlikeTemplateUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 // ============================================
@@ -45,6 +50,10 @@ sealed class SongLoadState {
      *   player restarts from the beginning on each swipe.
      */
     data class Ready(val song: MusicSong, val nonce: Int) : SongLoadState()
+    /**
+     * Error state when song fails to load (network error, API failure, etc.)
+     */
+    data class Error(val message: String) : SongLoadState()
 }
 
 // ============================================
@@ -73,7 +82,10 @@ class TemplatePreviewerViewModel(
     private val templateRepository: TemplateRepository,
     private val songRepository: SongRepository,
     private val createProjectUseCase: CreateProjectUseCase,
-    private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase
+    private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase,
+    private val likeTemplateUseCase: LikeTemplateUseCase,
+    private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
+    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase
 ) : ViewModel() {
 
     private val imageUris: List<Uri> = imageUrisStr.mapNotNull { uriStr ->
@@ -94,6 +106,14 @@ class TemplatePreviewerViewModel(
     // Current song for the visible page
     private val _currentSong = MutableStateFlow<SongLoadState>(SongLoadState.None)
     val currentSong: StateFlow<SongLoadState> = _currentSong.asStateFlow()
+
+    // Liked template IDs — observed from Room
+    val likedTemplateIds: StateFlow<Set<String>> = observeLikedTemplatesUseCase.ids()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptySet()
+        )
 
     // Pagination tracking
     private var currentOffset = 0
@@ -147,6 +167,16 @@ class TemplatePreviewerViewModel(
         _navigationEvent.value = null
     }
 
+    fun onLikeTemplate(template: VideoTemplate) {
+        viewModelScope.launch {
+            if (template.id in likedTemplateIds.value) {
+                unlikeTemplateUseCase(template.id)
+            } else {
+                likeTemplateUseCase(template)
+            }
+        }
+    }
+
     // ============================================
     // PRIVATE METHODS
     // ============================================
@@ -157,25 +187,51 @@ class TemplatePreviewerViewModel(
             currentOffset = 0
             hasMorePages = true
 
+            // First, get the specific template by ID to ensure we show the correct one
+            val initialTemplateResult = templateRepository.getTemplateById(initialTemplateId)
+            val initialTemplate = initialTemplateResult.getOrNull()
+
             templateRepository.getTemplates(limit = PAGE_SIZE, offset = 0)
                 .onSuccess { templates ->
                     currentOffset = templates.size
                     hasMorePages = templates.size >= PAGE_SIZE
 
-                    val initialPage = templates.indexOfFirst { it.id == initialTemplateId }
-                        .takeIf { it >= 0 } ?: 0
+                    // Find the initial template in the list
+                    var initialPage = templates.indexOfFirst { it.id == initialTemplateId }
+                    var finalTemplates = templates
+
+                    // If the clicked template is not in the first page and we found it by ID,
+                    // insert it at the beginning of the list
+                    if (initialPage < 0 && initialTemplate != null) {
+                        // Remove it from templates first if it exists (shouldn't happen, but be safe)
+                        val templatesWithoutInitial = templates.filterNot { it.id == initialTemplateId }
+                        finalTemplates = listOf(initialTemplate) + templatesWithoutInitial
+                        initialPage = 0
+                    } else if (initialPage < 0) {
+                        // Template not found anywhere, default to first template
+                        initialPage = 0
+                    }
 
                     _uiState.value = TemplatePreviewerUiState.Ready(
-                        templates = templates,
+                        templates = finalTemplates,
                         initialPage = initialPage
                     )
                     // Kick off song load for the initial page
-                    loadSongForTemplate(templates[initialPage])
+                    loadSongForTemplate(finalTemplates[initialPage])
                 }
                 .onFailure { error ->
-                    _uiState.value = TemplatePreviewerUiState.Error(
-                        error.message ?: "Failed to load templates"
-                    )
+                    // Even if templates list fails, try to show the initial template
+                    if (initialTemplate != null) {
+                        _uiState.value = TemplatePreviewerUiState.Ready(
+                            templates = listOf(initialTemplate),
+                            initialPage = 0
+                        )
+                        loadSongForTemplate(initialTemplate)
+                    } else {
+                        _uiState.value = TemplatePreviewerUiState.Error(
+                            error.message ?: "Failed to load templates"
+                        )
+                    }
                 }
         }
     }
@@ -193,8 +249,12 @@ class TemplatePreviewerViewModel(
 
                         val currentState = _uiState.value as? TemplatePreviewerUiState.Ready
                         if (currentState != null && newTemplates.isNotEmpty()) {
+                            // Filter out duplicates - keep track of existing IDs
+                            val existingIds = currentState.templates.map { it.id }.toSet()
+                            val uniqueNewTemplates = newTemplates.filterNot { it.id in existingIds }
+
                             _uiState.value = currentState.copy(
-                                templates = currentState.templates + newTemplates
+                                templates = currentState.templates + uniqueNewTemplates
                             )
                         }
                     }
@@ -224,7 +284,11 @@ class TemplatePreviewerViewModel(
         songLoadJob = viewModelScope.launch {
             songRepository.getSongById(songId)
                 .onSuccess { song -> _currentSong.value = SongLoadState.Ready(song, nonce) }
-                .onFailure { _currentSong.value = SongLoadState.None }
+                .onFailure { error ->
+                    android.util.Log.e("TemplatePreviewerVM", "Failed to load song $songId", error)
+                    // Use generic error message - will be localized in UI layer
+                    _currentSong.value = SongLoadState.Error("SONG_LOAD_FAILED")
+                }
         }
     }
 

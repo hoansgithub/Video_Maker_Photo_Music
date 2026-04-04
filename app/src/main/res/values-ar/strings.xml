@@ -26,11 +26,19 @@
     <!-- Page 3 -->
     <string name="onboarding_page3_title">معاً نكون أفضل!</string>
     <string name="onboarding_page3_subtitle">معاً نكون أفضل. ادعُ أصدقاءك لمشاركة المتعة</string>
+    <string name="onboarding_swipe_next">اسحب للانتقال إلى التالي</string>
+    <string name="onboarding_exit_title">هل تريد الخروج من الإعداد؟</string>
+    <string name="onboarding_exit_message">يمكنك دائماً تغيير تفضيلاتك لاحقاً من الإعدادات.</string>
+    <string name="onboarding_exit_confirm">خروج</string>
+    <string name="onboarding_exit_dismiss">متابعة</string>
+    <string name="root_no_internet_title">لا يوجد اتصال بالإنترنت</string>
+    <string name="root_no_internet_message">جهازك غير متصل حالياً. يُرجى إعادة الاتصال للمتابعة.</string>
+    <string name="root_try_again">حاول مرة أخرى</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">معرض</string>
     <string name="home_tab_songs">أغاني</string>
-    <string name="home_tab_projects">مشاريعي</string>
+    <string name="home_tab_projects">مكتبة</string>
 
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">لك</string>
@@ -63,6 +71,13 @@
     <string name="settings_language_description">تغيير لغة التطبيق</string>
     <string name="settings_about">حول</string>
     <string name="settings_version">الإصدار</string>
+    <string name="settings_uninstall">إلغاء التثبيت</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">أعطها فرصة أخرى</string>
+    <string name="uninstall_description">هل أنت متأكد أنك تريد إلغاء التثبيت؟</string>
+    <string name="uninstall_confirm">إلغاء التثبيت على أي حال</string>
+    <string name="uninstall_cancel">لا تلغِ التثبيت. اكتشف المزيد</string>
     <string name="settings_app_widet">إضافة ويدجت</string>
     <string name="settings_rate_us">قيّمنا</string>
     <string name="settings_share_with_friends">شارك مع الأصدقاء</string>
@@ -92,13 +107,37 @@
     <string name="editor_discard_changes">تجاهل التغييرات</string>
 
     <!-- Projects -->
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">الفيديوهات المنشأة</string>
+    <string name="projects_tab_liked_template">القوالب المفضلة</string>
+    <string name="projects_tab_liked_song">الأغاني المفضلة</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">الأغاني فارغة</string>
+    <string name="like_song_search_button">البحث عن أغاني</string>
+    <string name="like_song_section_header">موسيقى لك</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">القوالب فارغة</string>
+    <string name="like_template_search_button">البحث عن قوالب</string>
+    <string name="like_template_section_header">قوالب الفيديو</string>
+
     <string name="projects_title">مشاريعي</string>
+    <string name="projects_menu">قائمة المشروع</string>
+    <string name="projects_download">تحميل</string>
+    <string name="projects_share">مشاركة</string>
+    <string name="projects_delete">حذف</string>
+    <string name="projects_delete_confirmation_title">حذف الفيديو؟</string>
+    <string name="projects_delete_confirmation_message">سيتم حذف هذا الفيديو نهائياً. لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="projects_delete_confirm">حذف</string>
+    <string name="projects_delete_cancel">إلغاء</string>
     <string name="projects_empty">لا توجد مشاريع بعد</string>
     <string name="projects_empty_description">أنشئ مشروعك الأول لتراه هنا</string>
     <string name="projects_item_info">%1$d صور • %2$s</string>
     <string name="projects_create_description">ابدأ مشروع عرض شرائح جديد</string>
     <string name="projects_delete_title">حذف المشروع؟</string>
     <string name="projects_delete_message">سيتم حذف \"%s\" نهائياً. لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="projects_removed_from_list">تمت الإزالة من القائمة</string>
 
     <!-- Export -->
     <string name="export_title">تصدير الفيديو</string>
@@ -109,8 +148,20 @@
     <string name="export_preparing">جاري التحضير للتصدير…</string>
     <string name="export_exporting">جاري تصدير الفيديو…</string>
     <string name="export_dont_close">يرجى عدم إغلاق التطبيق</string>
+    <string name="export_tip_1">نصنع تحفتك الفنية…</string>
+    <string name="export_tip_2">نضيف بعض السحر السينمائي…</string>
+    <string name="export_tip_3">نحيي ذكرياتك…</string>
+    <string name="export_tip_4">نصقل كل إطار…</string>
+    <string name="export_tip_5">نجعلها مثالية…</string>
+    <string name="export_tip_6">ننسج قصتك معاً…</string>
+    <string name="export_tip_7">نصنع شيئاً مميزاً…</string>
+    <string name="export_tip_8">أوشكنا على الانتهاء! تبدو رائعة…</string>
+    <string name="export_tip_9">نضبط التفاصيل الدقيقة…</string>
+    <string name="export_tip_10">نضع اللمسات الأخيرة…</string>
     <string name="export_video_saved">تم حفظ الفيديو الخاص بك</string>
     <string name="export_saved_to_gallery">تم الحفظ في المعرض</string>
+    <string name="export_saving_to_gallery">جارٍ الحفظ في المعرض…</string>
+    <string name="export_error_save_failed">فشل الحفظ في المعرض</string>
     <string name="export_share_video">مشاركة الفيديو</string>
     <string name="export_failed">فشل التصدير</string>
     <string name="export_try_again">حاول مرة أخرى</string>
@@ -122,6 +173,8 @@
     <string name="export_cancel_message">هل أنت متأكد من إلغاء التصدير؟ ستفقد كل التقدم.</string>
     <string name="export_continue">متابعة</string>
     <string name="export_cancel_export">إلغاء التصدير</string>
+    <string name="export_try_another_templates">جرب قوالب أخرى</string>
+    <string name="export_templates_load_failed">فشل تحميل القوالب</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">اختر الصور</string>
@@ -222,6 +275,14 @@
 
     <!-- Error states -->
     <string name="error_load_failed">فشل التحميل. اسحب للأسفل للمحاولة مجدداً.</string>
+    <string name="error_network_title">خطأ في الشبكة</string>
+    <string name="error_network_message">فشل تحميل الموسيقى. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
+    <string name="error_network_timeout">انتهت مهلة الشبكة. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
+    <string name="error_preview_title">خطأ في المعاينة</string>
+    <string name="error_preview_music_network">خطأ في الشبكة أثناء تحميل الموسيقى. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
+    <string name="error_preview_music_failed">فشل تحميل الموسيقى. يرجى المحاولة مرة أخرى.</string>
+    <string name="error_template_music_failed">فشل تحميل الأغنية. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
+    <string name="dialog_ok">حسناً</string>
 
     <!-- Songs -->
     <string name="start_project">بدء المشروع</string>
@@ -267,4 +328,8 @@
     <string name="widget_recently">مؤخراً</string>
     <string name="widget_trending_song">أغنية رائجة</string>
     <string name="widget_trending_song_hot">ساخن</string>
+    <string name="shortcut_trending_search_long">البحث عن الرائج</string>
+    <string name="shortcut_create_video_long">إنشاء فيديو</string>
+    <string name="shortcut_choose_template_long">اختر قالب فيديو</string>
+    <string name="shortcut_uninstall_long">إلغاء تثبيت التطبيق</string>
 </resources>

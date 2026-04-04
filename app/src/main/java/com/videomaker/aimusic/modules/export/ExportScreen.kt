@@ -6,6 +6,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -27,6 +30,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -52,12 +56,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
@@ -72,8 +79,12 @@ import coil.compose.AsyncImage
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.VideoQuality
+import com.videomaker.aimusic.ui.components.ProcessToast
 import com.videomaker.aimusic.ui.components.QualityPicker
+import com.videomaker.aimusic.ui.theme.BackgroundLight
+import com.videomaker.aimusic.ui.theme.Neutral_N800
 import com.videomaker.aimusic.ui.theme.SplashBackground
+import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import java.io.File
 
@@ -89,13 +100,16 @@ import java.io.File
 fun ExportScreen(
     viewModel: ExportViewModel,
     onNavigateBack: () -> Unit,
-    onNavigateToHomeMyVideos: () -> Unit
+    onNavigateToHomeMyVideos: () -> Unit,
+    onNavigateToTemplateDetail: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val thumbnailUri by viewModel.thumbnailUri.collectAsStateWithLifecycle()
     val aspectRatio by viewModel.aspectRatio.collectAsStateWithLifecycle()
     val currentQuality by viewModel.currentQuality.collectAsStateWithLifecycle()
+    val featuredTemplatesState by viewModel.featuredTemplatesState.collectAsStateWithLifecycle()
+    val saveToastState by viewModel.saveToastState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -126,6 +140,9 @@ fun ExportScreen(
             when (event) {
                 is ExportNavigationEvent.NavigateBack -> onNavigateBack()
                 is ExportNavigationEvent.NavigateToHomeMyVideos -> onNavigateToHomeMyVideos()
+                is ExportNavigationEvent.NavigateToTemplateDetail -> {
+                    onNavigateToTemplateDetail(event.templateId)
+                }
             }
             viewModel.onNavigationHandled()
         }
@@ -164,8 +181,15 @@ fun ExportScreen(
                     shareError = shareErrorMessage,
                     aspectRatio = aspectRatio,
                     currentQuality = currentQuality,
+                    featuredTemplatesState = featuredTemplatesState,
+                    saveToastState = saveToastState,
                     onSaveToGalleryClick = {
-                        viewModel.saveToGallery(context.applicationContext)
+                        viewModel.saveToGallery(
+                            applicationContext = context.applicationContext,
+                            loadingMessage = context.getString(R.string.export_saving_to_gallery),
+                            successMessage = context.getString(R.string.export_saved_to_gallery),
+                            errorMessage = context.getString(R.string.export_error_save_failed)
+                        )
                     },
                     onShareClick = {
                         shareVideo(
@@ -177,7 +201,9 @@ fun ExportScreen(
                     onQualityChange = { quality ->
                         viewModel.changeQuality(quality)
                     },
-                    onDoneClick = viewModel::navigateToHomeMyVideos
+                    onDoneClick = viewModel::navigateToHomeMyVideos,
+                    onTemplateClick = viewModel::onTemplateClick,
+                    onSaveToastDismissed = viewModel::onSaveToastDismissed
                 )
             }
 
@@ -225,6 +251,30 @@ private fun ProcessingContent(
     thumbnailUri: Uri? = null,
     aspectRatio: AspectRatio = AspectRatio.RATIO_9_16
 ) {
+    // Rotating tips - cycle through 10 messages every 4 seconds
+    val tipMessages = listOf(
+        stringResource(R.string.export_tip_1),
+        stringResource(R.string.export_tip_2),
+        stringResource(R.string.export_tip_3),
+        stringResource(R.string.export_tip_4),
+        stringResource(R.string.export_tip_5),
+        stringResource(R.string.export_tip_6),
+        stringResource(R.string.export_tip_7),
+        stringResource(R.string.export_tip_8),
+        stringResource(R.string.export_tip_9),
+        stringResource(R.string.export_tip_10)
+    )
+
+    var currentTipIndex by remember { mutableStateOf(0) }
+
+    // Rotate tips every 4 seconds
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(4000)
+            currentTipIndex = (currentTipIndex + 1) % tipMessages.size
+        }
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween,
@@ -318,9 +368,9 @@ private fun ProcessingContent(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Message below thumbnail
+            // Rotating tip message below thumbnail
             Text(
-                text = stringResource(R.string.export_please_wait),
+                text = tipMessages[currentTipIndex],
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -328,8 +378,30 @@ private fun ProcessingContent(
             )
         }
 
-        // Bottom spacer for layout balance
-        Spacer(modifier = Modifier.height(40.dp))
+        // Warning capsule at bottom
+        Row(
+            modifier = Modifier
+                .background(
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(24.dp)
+                )
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = stringResource(R.string.export_dont_close),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 
@@ -341,83 +413,120 @@ private fun SuccessContent(
     shareError: String? = null,
     aspectRatio: AspectRatio = AspectRatio.RATIO_9_16,
     currentQuality: VideoQuality = VideoQuality.DEFAULT,
+    featuredTemplatesState: FeaturedTemplatesState = FeaturedTemplatesState.Loading,
+    saveToastState: com.videomaker.aimusic.ui.components.ProcessToastState? = null,
     onSaveToGalleryClick: () -> Unit,
     onShareClick: () -> Unit,
     onQualityChange: (VideoQuality) -> Unit = {},
-    onDoneClick: () -> Unit
+    onDoneClick: () -> Unit,
+    onTemplateClick: (String) -> Unit = {},
+    onSaveToastDismissed: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val isPreview = LocalInspectionMode.current
 
     // Create ExoPlayer without preparing (to avoid blocking main thread)
-    val exoPlayer = remember(outputPath) {
-        ExoPlayer.Builder(context).build().apply {
-            val videoUri = Uri.fromFile(File(outputPath))
-            setMediaItem(MediaItem.fromUri(videoUri))
-            repeatMode = Player.REPEAT_MODE_ONE
-            // Don't call prepare() here - it can block on ConditionVariable
+    // Skip player creation in preview mode to avoid NoClassDefFoundError
+    val exoPlayer = if (!isPreview) {
+        remember(outputPath) {
+            ExoPlayer.Builder(context).build().apply {
+                val videoUri = Uri.fromFile(File(outputPath))
+                setMediaItem(MediaItem.fromUri(videoUri))
+                repeatMode = Player.REPEAT_MODE_ONE
+                // Don't call prepare() here - it can block on ConditionVariable
+            }
         }
+    } else {
+        null
     }
 
     // Prepare player asynchronously to avoid ANR
+    // Skip in preview mode
     LaunchedEffect(exoPlayer) {
-        // prepare() is non-blocking but can wait on ConditionVariable internally
-        // Running in LaunchedEffect ensures it doesn't block composition
-        exoPlayer.prepare()
+        exoPlayer?.let { player ->
+            // prepare() is non-blocking but can wait on ConditionVariable internally
+            // Running in LaunchedEffect ensures it doesn't block composition
+            player.prepare()
+        }
     }
 
     // Track playing state from ExoPlayer
     var isPlaying by remember { mutableStateOf(false) }
 
     // Update isPlaying state and handle auto-play when player is ready
+    // Skip in preview mode
     DisposableEffect(exoPlayer) {
-        val listener = object : Player.Listener {
-            override fun onIsPlayingChanged(playing: Boolean) {
-                isPlaying = playing
-            }
+        exoPlayer?.let { player ->
+            val listener = object : Player.Listener {
+                override fun onIsPlayingChanged(playing: Boolean) {
+                    isPlaying = playing
+                }
 
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                // Auto-play when player is ready
-                if (playbackState == Player.STATE_READY && !exoPlayer.isPlaying) {
-                    exoPlayer.play()
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    // Auto-play when player is ready
+                    if (playbackState == Player.STATE_READY && !player.isPlaying) {
+                        player.play()
+                    }
                 }
             }
-        }
-        exoPlayer.addListener(listener)
-        onDispose {
-            exoPlayer.removeListener(listener)
-        }
+            player.addListener(listener)
+            onDispose {
+                player.removeListener(listener)
+            }
+        } ?: onDispose { }
     }
 
     // Handle lifecycle events - pause/resume playback
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_PAUSE -> exoPlayer.pause()
-                Lifecycle.Event.ON_RESUME -> {
-                    // Always auto-play when screen becomes visible and player is ready
-                    if (exoPlayer.playbackState == Player.STATE_READY && !exoPlayer.isPlaying) {
-                        exoPlayer.play()
+    // Skip in preview mode
+    DisposableEffect(lifecycleOwner, exoPlayer) {
+        exoPlayer?.let { player ->
+            val observer = LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_PAUSE -> player.pause()
+                    Lifecycle.Event.ON_RESUME -> {
+                        // Always auto-play when screen becomes visible and player is ready
+                        if (player.playbackState == Player.STATE_READY && !player.isPlaying) {
+                            player.play()
+                        }
                     }
+                    else -> {}
                 }
-                else -> {}
             }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            exoPlayer.release()
-        }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose {
+                lifecycleOwner.lifecycle.removeObserver(observer)
+                player.release()
+            }
+        } ?: onDispose { }
     }
 
+    // Get screen dimensions for video size calculation
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val screenWidth = configuration.screenWidthDp.dp
+    val maxVideoHeight = screenHeight * 0.5f
+
+    // Calculate video dimensions respecting max height, max width, and aspect ratio
+    val maxVideoWidth = screenWidth - 64.dp // Account for horizontal padding (32dp each side)
+    val videoHeightFromWidth = maxVideoWidth / aspectRatio.ratio
+    val actualVideoHeight = minOf(videoHeightFromWidth, maxVideoHeight)
+    val calculatedWidth = actualVideoHeight * aspectRatio.ratio
+    val actualVideoWidth = minOf(calculatedWidth, maxVideoWidth) // Ensure width never exceeds screen
+
     Box(modifier = Modifier.fillMaxSize()) {
-        // Top bar with controls
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+        // Top bar with close button (left) and quality selector (center)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(16.dp)
-                .align(Alignment.TopCenter),
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -430,44 +539,28 @@ private fun SuccessContent(
                 )
             }
 
-            // Right side controls
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Quality picker (reusable component)
-                QualityPicker(
-                    selectedQuality = currentQuality,
-                    onQualityChange = onQualityChange
-                )
+            // Quality picker (center)
+            QualityPicker(
+                selectedQuality = currentQuality,
+                onQualityChange = onQualityChange
+            )
 
-                // Share button
-                IconButton(onClick = onShareClick) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = stringResource(R.string.export_share_video),
-                        tint = Color.White
-                    )
-                }
-            }
+            // Empty spacer (right) for balanced layout
+            Spacer(modifier = Modifier.width(48.dp))
         }
 
-        // Center: Video preview with play/pause button
-        Column(
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Video preview with play/pause button
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 80.dp, start = 32.dp, end = 32.dp, bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp),
+            contentAlignment = Alignment.Center
         ) {
-            // Video preview container with ExoPlayer
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                // Video player with correct aspect ratio
+            // Video player with explicit size to maintain ratio and max height
+            // Show placeholder in preview mode
+            if (exoPlayer != null) {
                 AndroidView(
                     factory = { ctx ->
                         PlayerView(ctx).apply {
@@ -477,21 +570,35 @@ private fun SuccessContent(
                         }
                     },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(aspectRatio.ratio)
+                        .width(actualVideoWidth)
+                        .height(actualVideoHeight)
                         .background(
                             color = Color.Black,
                             shape = RoundedCornerShape(16.dp)
                         )
                 )
+            } else {
+                // Preview mode - show placeholder
+                Box(
+                    modifier = Modifier
+                        .width(actualVideoWidth)
+                        .height(actualVideoHeight)
+                        .background(
+                            color = Color.Black,
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                )
+            }
 
                 // Play/Pause button overlay
                 IconButton(
                     onClick = {
-                        if (exoPlayer.isPlaying) {
-                            exoPlayer.pause()
-                        } else {
-                            exoPlayer.play()
+                        exoPlayer?.let { player ->
+                            if (player.isPlaying) {
+                                player.pause()
+                            } else {
+                                player.play()
+                            }
                         }
                     },
                     modifier = Modifier.size(80.dp)
@@ -515,65 +622,139 @@ private fun SuccessContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Save to Gallery button - disabled after saving, resets next time
-            Button(
-                onClick = onSaveToGalleryClick,
+            // Action buttons row - Share and Save to Gallery
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                // Disable after saving, re-enable on next entry (new ViewModel instance)
-                enabled = !savedToGallery,
-                // Show success color when saved, default color when not saved
-                colors = if (savedToGallery) {
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                } else {
-                    ButtonDefaults.buttonColors()
-                }
+                    .padding(horizontal = 32.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(
-                    imageVector = if (savedToGallery) Icons.Default.Check else Icons.Default.Download,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (savedToGallery) {
-                        stringResource(R.string.export_saved_to_gallery)
-                    } else {
-                        stringResource(R.string.export_save)
-                    },
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                // Share button - left side, double width with text
+                Button(
+                    onClick = onShareClick,
+                    modifier = Modifier
+                        .weight(2f)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Neutral_N800,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.export_share),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                // Save to Gallery button - right side (always enabled, no state change)
+                Button(
+                    onClick = onSaveToGalleryClick,
+                    modifier = Modifier
+                        .weight(3f)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = BackgroundLight,
+                        contentColor = SurfaceDark
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Download,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.export_save),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
 
-            // Show errors if any
-            if (saveError != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = saveError,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center
-                )
-            }
-
+            // Show share error if any (save errors are shown via ProcessToast)
             if (shareError != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = shareError,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp)
                 )
             }
+
+            // Try Another Templates section
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(
+                text = stringResource(R.string.export_try_another_templates),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Templates grid based on state
+            when (featuredTemplatesState) {
+                is FeaturedTemplatesState.Loading -> {
+                    // Show shimmer loading
+                    FeaturedTemplatesSkeleton(
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
+                }
+                is FeaturedTemplatesState.Success -> {
+                    // Show template grid
+                    FeaturedTemplatesGrid(
+                        templates = featuredTemplatesState.templates,
+                        onTemplateClick = { template -> onTemplateClick(template.id) },
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
+                }
+                is FeaturedTemplatesState.Error -> {
+                    // Show error state (optional - could just hide the section)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .padding(horizontal = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(R.string.export_templates_load_failed),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
+
+        // ProcessToast overlay for save to gallery
+        ProcessToast(
+            state = saveToastState,
+            onDismiss = onSaveToastDismissed
+        )
     }
 }
 
@@ -739,6 +920,96 @@ private fun shareVideo(
     } catch (e: Exception) {
         android.util.Log.e("ExportScreen", "Share failed", e)
         onError(e.message ?: context.getString(R.string.export_error_share_failed))
+    }
+}
+
+// ============================================
+// FEATURED TEMPLATES SECTION
+// ============================================
+
+@Composable
+private fun FeaturedTemplatesGrid(
+    templates: List<com.videomaker.aimusic.domain.model.VideoTemplate>,
+    onTemplateClick: (com.videomaker.aimusic.domain.model.VideoTemplate) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (templates.isEmpty()) return
+
+    // Display templates in a 2-column grid (max 6 items)
+    val displayTemplates = templates.take(6)
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Split into rows of 2
+        displayTemplates.chunked(2).forEach { rowTemplates ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                rowTemplates.forEach { template ->
+                    Box(modifier = Modifier.weight(1f)) {
+                        com.videomaker.aimusic.ui.components.TemplateCard(
+                            name = template.name,
+                            thumbnailPath = template.thumbnailPath,
+                            aspectRatio = parseAspectRatio(template.aspectRatio),
+                            isPremium = template.isPremium,
+                            useCount = template.useCount,
+                            onClick = { onTemplateClick(template) }
+                        )
+                    }
+                }
+                // Add empty space if odd number in last row
+                if (rowTemplates.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeaturedTemplatesSkeleton(
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Show 3 rows of 2 shimmer items (total 6)
+        repeat(3) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                repeat(2) {
+                    com.videomaker.aimusic.ui.components.ShimmerPlaceholder(
+                        modifier = Modifier
+                            .weight(1f)
+                            .aspectRatio(9f / 16f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Parse aspect ratio string (e.g., "9:16", "16:9", "1:1") to float
+ */
+private fun parseAspectRatio(aspectRatio: String): Float {
+    return try {
+        val parts = aspectRatio.split(":")
+        if (parts.size == 2) {
+            val width = parts[0].toFloatOrNull() ?: 9f
+            val height = parts[1].toFloatOrNull() ?: 16f
+            width / height
+        } else {
+            9f / 16f // Default to portrait
+        }
+    } catch (e: Exception) {
+        9f / 16f // Default to portrait
     }
 }
 

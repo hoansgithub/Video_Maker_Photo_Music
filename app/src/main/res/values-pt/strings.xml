@@ -26,11 +26,19 @@
     <!-- Page 3 -->
     <string name="onboarding_page3_title">Juntos é Melhor!</string>
     <string name="onboarding_page3_subtitle">Juntos é melhor. Convide seus amigos para compartilhar a diversão.</string>
+    <string name="onboarding_swipe_next">Deslize para continuar</string>
+    <string name="onboarding_exit_title">Sair da configuração?</string>
+    <string name="onboarding_exit_message">Você sempre pode alterar suas preferências depois em Configurações.</string>
+    <string name="onboarding_exit_confirm">Sair</string>
+    <string name="onboarding_exit_dismiss">Continuar</string>
+    <string name="root_no_internet_title">Sem conexão com a Internet</string>
+    <string name="root_no_internet_message">Seu dispositivo está offline no momento. Reconecte-se para continuar seu progresso.</string>
+    <string name="root_try_again">Tentar Novamente</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galeria</string>
     <string name="home_tab_songs">Músicas</string>
-    <string name="home_tab_projects">Meus Projetos</string>
+    <string name="home_tab_projects">Biblioteca</string>
 
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">Para você</string>
@@ -63,6 +71,13 @@
     <string name="settings_language_description">Alterar o idioma do aplicativo</string>
     <string name="settings_about">Sobre</string>
     <string name="settings_version">Versão</string>
+    <string name="settings_uninstall">Desinstalar</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Dê mais uma chance</string>
+    <string name="uninstall_description">Tem certeza que quer desinstalar?</string>
+    <string name="uninstall_confirm">Desinstalar mesmo assim</string>
+    <string name="uninstall_cancel">Não desinstalar. Descobrir mais</string>
     <string name="settings_app_widet">Adicionar Widget</string>
     <string name="settings_rate_us">Avalie-nos</string>
     <string name="settings_share_with_friends">Compartilhar com Amigos</string>
@@ -91,14 +106,38 @@
     <string name="editor_save_and_exit">Salvar e Sair</string>
     <string name="editor_discard_changes">Descartar Alterações</string>
 
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Vídeo Criado</string>
+    <string name="projects_tab_liked_template">Template Curtido</string>
+    <string name="projects_tab_liked_song">Música Curtida</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Música está vazia</string>
+    <string name="like_song_search_button">Buscar Músicas</string>
+    <string name="like_song_section_header">Música para Você</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Modelo está vazio</string>
+    <string name="like_template_search_button">Buscar Modelos</string>
+    <string name="like_template_section_header">Modelos de Vídeo</string>
+
     <!-- Projects -->
     <string name="projects_title">Meus Projetos</string>
+    <string name="projects_menu">Menu do projeto</string>
+    <string name="projects_download">Baixar</string>
+    <string name="projects_share">Compartilhar</string>
+    <string name="projects_delete">Excluir</string>
+    <string name="projects_delete_confirmation_title">Excluir Vídeo?</string>
+    <string name="projects_delete_confirmation_message">Este vídeo será excluído permanentemente. Esta ação não pode ser desfeita.</string>
+    <string name="projects_delete_confirm">Excluir</string>
+    <string name="projects_delete_cancel">Cancelar</string>
     <string name="projects_empty">Nenhum projeto ainda</string>
     <string name="projects_empty_description">Crie seu primeiro projeto para vê-lo aqui</string>
     <string name="projects_item_info">%1$d fotos • %2$s</string>
     <string name="projects_create_description">Iniciar um novo projeto de slideshow</string>
     <string name="projects_delete_title">Excluir Projeto?</string>
     <string name="projects_delete_message">\"%s\" será excluído permanentemente. Esta ação não pode ser desfeita.</string>
+    <string name="projects_removed_from_list">Removido da lista</string>
 
     <!-- Export -->
     <string name="export_title">Exportar Vídeo</string>
@@ -109,8 +148,20 @@
     <string name="export_preparing">Preparando exportação…</string>
     <string name="export_exporting">Exportando vídeo…</string>
     <string name="export_dont_close">Por favor, não feche o aplicativo</string>
+    <string name="export_tip_1">Criando sua obra-prima…</string>
+    <string name="export_tip_2">Adicionando mágica cinematográfica…</string>
+    <string name="export_tip_3">Dando vida às suas memórias…</string>
+    <string name="export_tip_4">Polindo cada quadro…</string>
+    <string name="export_tip_5">Deixando perfeito…</string>
+    <string name="export_tip_6">Tecendo sua história…</string>
+    <string name="export_tip_7">Criando algo especial…</string>
+    <string name="export_tip_8">Quase pronto! Ficando ótimo…</string>
+    <string name="export_tip_9">Ajustando os detalhes…</string>
+    <string name="export_tip_10">Dando os toques finais…</string>
     <string name="export_video_saved">Seu vídeo foi salvo</string>
     <string name="export_saved_to_gallery">Salvo na Galeria</string>
+    <string name="export_saving_to_gallery">Salvando na galeria…</string>
+    <string name="export_error_save_failed">Falha ao salvar na galeria</string>
     <string name="export_share_video">Compartilhar Vídeo</string>
     <string name="export_failed">Falha na Exportação</string>
     <string name="export_try_again">Tentar Novamente</string>
@@ -122,6 +173,8 @@
     <string name="export_cancel_message">Tem certeza que deseja cancelar a exportação? Todo o progresso será perdido.</string>
     <string name="export_continue">Continuar</string>
     <string name="export_cancel_export">Cancelar Exportação</string>
+    <string name="export_try_another_templates">Experimente Outros Modelos</string>
+    <string name="export_templates_load_failed">Falha ao carregar modelos</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Selecionar Fotos</string>
@@ -222,6 +275,14 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Falha ao carregar. Puxe para baixo para tentar novamente.</string>
+    <string name="error_network_title">Erro de Rede</string>
+    <string name="error_network_message">Falha ao carregar música. Verifique sua conexão e tente novamente.</string>
+    <string name="error_network_timeout">Tempo limite de rede. Verifique sua conexão e tente novamente.</string>
+    <string name="error_preview_title">Erro de Visualização</string>
+    <string name="error_preview_music_network">Erro de rede ao carregar música. Verifique sua conexão e tente novamente.</string>
+    <string name="error_preview_music_failed">Falha ao carregar música. Tente novamente.</string>
+    <string name="error_template_music_failed">Falha ao carregar música. Verifique sua conexão e tente novamente.</string>
+    <string name="dialog_ok">OK</string>
 
     <!-- Songs -->
     <string name="start_project">Iniciar projeto</string>
@@ -267,4 +328,8 @@
     <string name="widget_recently">Recente</string>
     <string name="widget_trending_song">Música em Alta</string>
     <string name="widget_trending_song_hot">Hot</string>
+    <string name="shortcut_trending_search_long">Pesquisa em Alta</string>
+    <string name="shortcut_create_video_long">Criar Vídeo</string>
+    <string name="shortcut_choose_template_long">Escolher Modelo de Vídeo</string>
+    <string name="shortcut_uninstall_long">Desinstalar App</string>
 </resources>

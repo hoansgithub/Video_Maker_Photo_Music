@@ -1,19 +1,22 @@
 package com.videomaker.aimusic.modules.home.components
 
+import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,18 +27,20 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.Folder
+import androidx.core.content.FileProvider
+import android.content.Intent
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -48,6 +53,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -58,39 +64,107 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import androidx.media3.common.util.UnstableApi
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.Project
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
+import com.videomaker.aimusic.modules.favourite_songs.ContentSong
+import com.videomaker.aimusic.modules.favourite_songs.LikeSongEmpty
+import com.videomaker.aimusic.modules.favourite_templates.ContentTemplate
+import com.videomaker.aimusic.modules.favourite_templates.LikeTemplateEmpty
+import com.videomaker.aimusic.modules.projects.ProjectsNavigationEvent
 import com.videomaker.aimusic.modules.projects.ProjectsUiState
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
+import com.videomaker.aimusic.modules.projects.SongTabState
+import com.videomaker.aimusic.modules.projects.TemplateTabState
+import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
+import com.videomaker.aimusic.ui.components.ProcessToast
+import com.videomaker.aimusic.ui.components.ProjectCard
+import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.StaggeredGrid
+import com.videomaker.aimusic.ui.components.TemplateCard
 import com.videomaker.aimusic.ui.theme.AppDimens
+import com.videomaker.aimusic.ui.theme.Neutral_Black
 import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import org.koin.compose.koinInject
 
+@OptIn(UnstableApi::class)
 @Composable
 fun ProjectsTabContent(
     viewModel: ProjectsViewModel,
     onCreateClick: () -> Unit,
     onProjectClick: (String) -> Unit,
+    onNavigateToTemplateDetail: (String) -> Unit = {},
+    onNavigateToSongSearch: () -> Unit = {},
+    onNavigateToAllSongs: () -> Unit = {},
+    onNavigateToTemplateSearch: () -> Unit = {},
+    onNavigateToAllTemplates: () -> Unit = {},
+    onNavigateToAssetPicker: (songId: Long) -> Unit = {},
     topBarHeight: Dp = 0.dp
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val dimens = AppDimens.current
+    val templateState by viewModel.templateState.collectAsStateWithLifecycle()
+    val templateStateLocal by viewModel.templateStateLocal.collectAsStateWithLifecycle()
+    val songState by viewModel.songState.collectAsStateWithLifecycle()
+    val songStateLocal by viewModel.songStateLocal.collectAsStateWithLifecycle()
+    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
+    val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
+    val toastState by viewModel.toastState.collectAsStateWithLifecycle()
+    val audioPreviewCache: AudioPreviewCache = koinInject()
+    var showRemovedMessage by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    LaunchedEffect(showRemovedMessage) {
+        if (showRemovedMessage) {
+            delay(2000)
+            showRemovedMessage = false
+        }
+    }
+
+    LaunchedEffect(navigationEvent) {
+        navigationEvent?.let { event ->
+            when (event) {
+                is ProjectsNavigationEvent.NavigateToSongSearch -> onNavigateToSongSearch()
+                is ProjectsNavigationEvent.NavigateToAllSongs -> onNavigateToAllSongs()
+                is ProjectsNavigationEvent.NavigateToTemplateSearch -> onNavigateToTemplateSearch()
+                is ProjectsNavigationEvent.NavigateToAllTemplates -> onNavigateToAllTemplates()
+                is ProjectsNavigationEvent.NavigateToAssetPickerForSong -> onNavigateToAssetPicker(event.songId)
+                is ProjectsNavigationEvent.NavigateToEditor -> { /* handled by caller */ }
+                is ProjectsNavigationEvent.NavigateToTemplateDetail -> { /* handled by caller */ }
+                is ProjectsNavigationEvent.NavigateBack -> { /* handled by caller */ }
+            }
+            viewModel.onNavigationHandled()
+        }
+    }
+
+    val tabs = listOf(
+        stringResource(R.string.projects_tab_created_video),
+        stringResource(R.string.projects_tab_liked_template),
+        stringResource(R.string.projects_tab_liked_song)
+    )
+
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = { tabs.size }
+    )
+    val coroutineScope = rememberCoroutineScope()
+    val lazyListState = rememberLazyListState()
 
     // Start loading projects only when this tab appears
     LaunchedEffect(Unit) {
         viewModel.startObservingProjects()
+    }
+
+    // Animate LazyRow to selected tab when pager settles, and notify VM for swipe case
+    LaunchedEffect(pagerState.settledPage) {
+        lazyListState.animateScrollToItem(pagerState.settledPage)
+        viewModel.onTabSelected(pagerState.settledPage)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -103,45 +177,239 @@ fun ProjectsTabContent(
         )
 
         // Content with top padding
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(top = topBarHeight)
+                .fillMaxSize()
         ) {
-            when (val state = uiState) {
-                is ProjectsUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+            ProjectTabRow(
+                tabs = tabs,
+                state = lazyListState,
+                currentPage = pagerState.currentPage,
+                onClick = { index ->
+                    coroutineScope.launch {
+                        pagerState.scrollToPage(index)
+                    }
+                    viewModel.onTabSelected(index)
+                }
+            )
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    when (page) {
+                        0 -> when (val state = uiState) {
+                            is ProjectsUiState.Loading -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+
+                            is ProjectsUiState.Empty -> {
+                                ProjectsEmptyState(onCreateClick = onCreateClick)
+                            }
+
+                            is ProjectsUiState.Success -> {
+                                ProjectsListContent(
+                                    projects = state.projects,
+                                    onProjectClick = { project ->
+                                        onProjectClick(project.id)
+                                    },
+                                    onDeleteProject = { project ->
+                                        viewModel.onDeleteProject(project)
+                                    },
+                                    onDownloadProject = { project ->
+                                        viewModel.onDownloadProject(project, context)
+                                    },
+                                    onShareProject = { project ->
+                                        shareProjectVideo(context, project, viewModel)
+                                    },
+                                    onCreateClick = onCreateClick
+                                )
+                            }
+
+                            is ProjectsUiState.Error -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = state.message,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                        }
+
+                        1 -> {
+                            if (templateStateLocal.isNotEmpty()){
+                                ContentTemplate(
+                                    state = templateStateLocal,
+                                    onTemplateClick = onNavigateToTemplateDetail,
+                                    onDeleteTemplateClick = {
+                                        viewModel.onUnlikeTemplate(it)
+                                        showRemovedMessage = true
+                                    }
+                                )
+                            } else {
+                                LikeTemplateEmpty(
+                                    state = templateState,
+                                    onTemplateClick = onNavigateToTemplateDetail,
+                                    onSeeAllClick = viewModel::onSeeAllTemplates,
+                                    onSearch = viewModel::onTemplateSearch
+                                )
+                            }
+                        }
+
+                        2 -> {
+                            if (songStateLocal.isNotEmpty()){
+                                ContentSong(
+                                    songs = songStateLocal,
+                                    onSongClick = viewModel::onSongClick,
+                                    onDeleteSongClick = {
+                                        viewModel.onUnlikeSong(it)
+                                        showRemovedMessage = true
+                                    }
+                                )
+                            } else {
+                                LikeSongEmpty(
+                                    state = songState,
+                                    onSeeAllClick = viewModel::onSeeAllSongs,
+                                    onSearch = viewModel::onSongSearch,
+                                    onSongClick = viewModel::onSongClick
+                                )
+                            }
+                        }
+
+                        else -> Unit
                     }
                 }
-                is ProjectsUiState.Empty -> {
-                    ProjectsEmptyState(onCreateClick = onCreateClick)
-                }
-                is ProjectsUiState.Success -> {
-                    ProjectsListContent(
-                        projects = state.projects,
-                        onProjectClick = { project ->
-                            onProjectClick(project.id)
-                        },
-                        onDeleteProject = { project ->
-                            viewModel.onDeleteProject(project)
-                        },
-                        onCreateClick = onCreateClick
+            }
+        }
+
+        // Removed-from-list feedback overlay
+        AnimatedVisibility(
+            visible = showRemovedMessage,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(bottom = 24.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Primary)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_circle_checkmark),
+                        contentDescription = null,
+                        tint = Neutral_Black,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.projects_removed_from_list),
+                        color = Neutral_Black,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
-                is ProjectsUiState.Error -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = state.message,
-                            color = MaterialTheme.colorScheme.error
+            }
+        }
+
+        // Process toast (download/share)
+        ProcessToast(
+            state = toastState,
+            onDismiss = viewModel::onToastDismissed
+        )
+    }
+
+    // Music player bottom sheet — shown when a song is tapped
+    selectedSong?.let { song ->
+        MusicPlayerBottomSheet(
+            song = song,
+            cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+            onDismiss = viewModel::onDismissPlayer,
+            onUseToCreate = { viewModel.onUseToCreateVideo(song) }
+        )
+    }
+}
+
+@Composable
+fun ProjectTabRow(
+    modifier: Modifier = Modifier,
+    tabs: List<String>,
+    state: LazyListState,
+    currentPage: Int,
+    onClick: (Int) -> Unit
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+    ) {
+        LazyRow(
+            state = state,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            contentPadding = PaddingValues(start = 10.dp, end = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            itemsIndexed(tabs) { index, tab ->
+                val isSelected = currentPage == index
+                Box(
+                    modifier = Modifier
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            onClick.invoke(index)
+                        }
+                ) {
+                    if (isSelected) {
+                        Spacer(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(
+                                    Color.White.copy(0.1f),
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .border(
+                                    1.dp,
+                                    Color.White.copy(
+                                        0.12f
+                                    ),
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .blur(4.dp)
                         )
                     }
+
+                    Text(
+                        text = tab,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.W400,
+                        fontSize = 16.sp,
+                        color = if (isSelected) Primary else Color.White,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    )
                 }
             }
         }
@@ -158,8 +426,8 @@ private fun ProjectsEmptyState(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
-        contentAlignment = Alignment.Center
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+            .padding(top = 40.dp),
     ) {
         Column(
             modifier = Modifier
@@ -230,6 +498,8 @@ private fun ProjectsListContent(
     projects: List<Project>,
     onProjectClick: (Project) -> Unit,
     onDeleteProject: (Project) -> Unit,
+    onDownloadProject: (Project) -> Unit,
+    onShareProject: (Project) -> Unit,
     onCreateClick: () -> Unit
 ) {
     val dimens = AppDimens.current
@@ -250,6 +520,8 @@ private fun ProjectsListContent(
                     projects = projects,
                     onProjectClick = onProjectClick,
                     onDeleteProject = onDeleteProject,
+                    onDownloadProject = onDownloadProject,
+                    onShareProject = onShareProject,
                     spacing = dimens.spaceSm
                 )
             }
@@ -290,13 +562,22 @@ private fun ProjectsStaggeredGrid(
     projects: List<Project>,
     onProjectClick: (Project) -> Unit,
     onDeleteProject: (Project) -> Unit,
+    onDownloadProject: (Project) -> Unit,
+    onShareProject: (Project) -> Unit,
     spacing: Dp
 ) {
     if (projects.isEmpty()) return
 
-    // Calculate aspect ratios from project settings
+    // Calculate adjusted aspect ratios to account for info section height
+    // Info section needs ~40dp for: date+menu row (20dp) + padding (20dp)
+    val infoSectionHeightDp = 40f
     val aspectRatios = projects.map { project ->
-        project.settings.aspectRatio.ratio
+        val thumbnailRatio = project.settings.aspectRatio.ratio
+        // Adjust ratio: assume card width of 180dp as baseline
+        val cardWidth = 180f
+        val thumbnailHeight = cardWidth / thumbnailRatio
+        val totalCardHeight = thumbnailHeight + infoSectionHeightDp
+        cardWidth / totalCardHeight // Adjusted ratio for full card including info section
     }
 
     StaggeredGrid(
@@ -306,10 +587,12 @@ private fun ProjectsStaggeredGrid(
         spacing = spacing,
         key = { project -> project.id }
     ) { project ->
-        ProjectGridCard(
+        ProjectCard(
             project = project,
             onClick = { onProjectClick(project) },
-            onDelete = { onDeleteProject(project) }
+            onDelete = { onDeleteProject(project) },
+            onDownload = { onDownloadProject(project) },
+            onShare = { onShareProject(project) }
         )
     }
 }
@@ -343,7 +626,7 @@ private fun CreateProjectFloatingButton(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_circle_plus_v2),
+            painter = painterResource(id = R.drawable.ic_circle_plus),
             contentDescription = "Create New Project",
             modifier = Modifier.size(32.dp),
             tint = Color.Unspecified
@@ -352,202 +635,38 @@ private fun CreateProjectFloatingButton(
 }
 
 /**
- * Project card for grid layout (staggered)
+ * Share project video using system share sheet
  */
-@Composable
-private fun ProjectGridCard(
+private fun shareProjectVideo(
+    context: android.content.Context,
     project: Project,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
+    viewModel: ProjectsViewModel
 ) {
-    val dimens = AppDimens.current
-    val coroutineScope = rememberCoroutineScope()
-    var showMenu by remember { mutableStateOf(false) }
-    var isVisible by remember { mutableStateOf(true) }
+    viewModel.onShareStarted()
 
-    AnimatedVisibility(
-        visible = isVisible,
-        exit = shrinkVertically() + fadeOut()
-    ) {
-        Box {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(dimens.radiusMd))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                    .clickable(onClick = onClick)
-            ) {
-        // Thumbnail with aspect ratio
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(project.settings.aspectRatio.ratio)
-                .clip(RoundedCornerShape(topStart = dimens.radiusMd, topEnd = dimens.radiusMd))
-                .background(Color.Black.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            if (project.thumbnailUri != null) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(project.thumbnailUri)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = project.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else if (project.assets.isNotEmpty()) {
-                // Use first asset as thumbnail
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(project.assets.first().uri)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = project.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Outlined.Folder,
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-                )
-            }
-
-            // Duration badge at bottom-right
-            if (project.assets.isNotEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(dimens.spaceXs)
-                        .background(
-                            color = Color.Black.copy(alpha = 0.7f),
-                            shape = RoundedCornerShape(dimens.radiusSm)
-                        )
-                        .padding(horizontal = dimens.spaceXs, vertical = dimens.spaceXxs)
-                ) {
-                    Text(
-                        text = project.formattedDuration,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 10.sp,
-                        color = Color.White
-                    )
-                }
-            }
-
-            // Creation time badge at bottom-left
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(dimens.spaceXs)
-                    .background(
-                        color = Color.Black.copy(alpha = 0.7f),
-                        shape = RoundedCornerShape(dimens.radiusSm)
-                    )
-                    .padding(horizontal = dimens.spaceXs, vertical = dimens.spaceXxs)
-            ) {
-                Text(
-                    text = formatProjectDate(project.createdAt),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontSize = 10.sp,
-                    color = Color.White
-                )
-            }
-
-            // Play icon at center
-            Icon(
-                imageVector = Icons.Default.PlayArrow,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(
-                        color = Color.Black.copy(alpha = 0.5f),
-                        shape = CircleShape
-                    )
-                    .padding(8.dp),
-                tint = Color.White
-            )
+    try {
+        val videoFile = viewModel.getShareVideoFile(context, project.id)
+        if (videoFile == null || !videoFile.exists()) {
+            viewModel.onShareError(context.getString(R.string.export_error_file_not_found))
+            return
         }
 
-                // Project Info
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(dimens.spaceSm)
-                ) {
-                    Text(
-                        text = project.name,
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.height(dimens.spaceXxs))
-                    Text(
-                        text = stringResource(
-                            R.string.projects_item_info,
-                            project.assets.size,
-                            project.formattedDuration
-                        ),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
-            }
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            videoFile
+        )
 
-            // Menu button (top right) - positioned absolutely with circular dark background
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(dimens.spaceXs)
-                    .size(28.dp)
-                    .background(
-                        color = Color.Black.copy(alpha = 0.6f),
-                        shape = CircleShape
-                    )
-                    .clickable { showMenu = true },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = stringResource(R.string.projects_menu),
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
-
-                // Dropdown menu
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.projects_delete)) },
-                        onClick = {
-                            showMenu = false
-                            isVisible = false
-                            // Delay actual deletion to allow animation to complete
-                            coroutineScope.launch {
-                                delay(300) // Animation duration
-                                onDelete()
-                            }
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    )
-                }
-            }
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "video/mp4"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
+
+        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.export_share_video)))
+        viewModel.onShareCompleted()
+    } catch (e: Exception) {
+        android.util.Log.e("ProjectsTab", "Share failed", e)
+        viewModel.onShareError(e.message ?: context.getString(R.string.export_error_share_failed))
     }
 }
-
-private val projectDateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-
-private fun formatProjectDate(timestamp: Long): String = projectDateFormatter.format(Date(timestamp))
