@@ -115,24 +115,9 @@ fun UnifiedSearchScreen(
                 onScrollStarted = { keyboardController?.hide() }
             )
 
-            is UnifiedSearchUiState.Empty -> UnifiedSearchEmptyContent(
-                query = state.query,
-                exploreSuggestions = state.exploreSuggestions,
-                isLoadingExplore = state.isLoadingExplore,
+            else -> UnifiedSearchEmptyContent(
                 onExploreMore = viewModel::onExploreMore,
-                onTemplateClick = viewModel::onTemplateClick
             )
-
-            is UnifiedSearchUiState.Error -> Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = state.message.ifBlank { stringResource(R.string.error_load_failed) },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary
-                )
-            }
         }
 
 

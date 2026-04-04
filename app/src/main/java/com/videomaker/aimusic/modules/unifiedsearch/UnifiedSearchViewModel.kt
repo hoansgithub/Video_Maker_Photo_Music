@@ -387,24 +387,7 @@ class UnifiedSearchViewModel(
     }
 
     fun onExploreMore() {
-        val current = _uiState.value as? UnifiedSearchUiState.Empty ?: return
-        if (current.isLoadingExplore) return
-
-        _uiState.value = current.copy(isLoadingExplore = true)
-
-        viewModelScope.launch(Dispatchers.IO) {
-            val suggestions = templateRepository
-                .getFeaturedTemplates(limit = 10)
-                .getOrElse { emptyList() }
-
-            val latest = _uiState.value as? UnifiedSearchUiState.Empty ?: return@launch
-            if (latest.query != current.query) return@launch
-
-            _uiState.value = latest.copy(
-                exploreSuggestions = suggestions,
-                isLoadingExplore = false
-            )
-        }
+        _uiState.value = UnifiedSearchUiState.Idle
     }
 
     private fun rememberQuery(query: String) {
