@@ -236,7 +236,10 @@ fun VideoPreviewPlayer(
     // e.g., if clipped from 10s-20s, audio player sees 0-10s (not 10s-20s)
     // Only call this on user actions (seek, play start), NOT continuously!
     fun syncAudioToVideo(videoPositionMs: Long) {
-        audioPlayer?.let { audio ->
+        // ✅ THREAD-SAFE: Capture player reference atomically
+        val audio = audioPlayer ?: return
+
+        try {
             val segmentDuration = musicSegmentDurationMs
 
             if (segmentDuration < videoDurationMs) {
@@ -273,6 +276,9 @@ fun VideoPreviewPlayer(
                     }
                 }
             }
+        } catch (e: IllegalStateException) {
+            // Player was released between null check and usage - safe to ignore
+            android.util.Log.w("VideoPreviewPlayer", "Audio player released during sync")
         }
     }
 

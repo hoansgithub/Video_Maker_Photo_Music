@@ -637,20 +637,18 @@ internal fun EditorMainContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Settings Tab Bar - Effect, Clip, Duration, Ratio, Music, Volume
+        // Settings Tab Bar - Effect, Music Clip, Duration, Ratio, Volume (horizontally scrollable)
         val hasMusic = project.settings.musicSongId != null || project.settings.customAudioUri != null
         SettingsTabBar(
             currentEffectSetName = effectSetName,
             currentRatio = project.settings.aspectRatio,
             currentDurationMs = project.settings.imageDurationMs,
             showMusicControls = hasMusic,
-            musicLabel = project.settings.musicSongName ?: "Music",
             currentVolume = project.settings.audioVolume,
             isMusicClipped = project.settings.isMusicTrimmed,
             onEffectClick = onEffectClick,
             onImageDurationClick = onImageDurationClick,
             onRatioClick = onRatioClick,
-            onMusicClick = { /* TODO: Open music picker */ },
             onVolumeClick = onVolumeClick,
             onClipClick = onTrimClick,
             modifier = Modifier.fillMaxWidth()

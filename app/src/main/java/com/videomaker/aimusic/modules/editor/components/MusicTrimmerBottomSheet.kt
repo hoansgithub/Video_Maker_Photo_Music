@@ -51,6 +51,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.nio.ByteBuffer
 import kotlin.math.abs
 import kotlin.math.sqrt
@@ -119,14 +120,19 @@ fun MusicSettingsBottomSheet(
 
     // Update actual duration when player is ready
     LaunchedEffect(musicPlayer) {
-        // Wait for player to be ready
-        while (musicPlayer.duration == androidx.media3.common.C.TIME_UNSET) {
-            delay(100)
+        // ✅ Wait for player to be ready with timeout (10s max)
+        val duration = withTimeoutOrNull(10_000L) {
+            while (musicPlayer.duration == androidx.media3.common.C.TIME_UNSET) {
+                delay(100)
+            }
+            musicPlayer.duration
         }
-        if (musicPlayer.duration > 0) {
-            actualDurationMs = musicPlayer.duration
-            // Notify parent that actual duration is ready
-            onDurationReady(musicPlayer.duration)
+
+        if (duration != null && duration > 0) {
+            actualDurationMs = duration
+            onDurationReady(duration)
+        } else {
+            android.util.Log.w("MusicTrimmer", "Timeout or invalid duration: $duration")
         }
     }
 
@@ -305,7 +311,7 @@ fun MusicSettingsBottomSheet(
 private fun extractWaveformData(audioPath: String, sampleCount: Int): List<Float> {
     val extractor = MediaExtractor()
 
-    return try {
+    try {
         extractor.setDataSource(audioPath)
 
         // Find audio track
@@ -364,16 +370,16 @@ private fun extractWaveformData(audioPath: String, sampleCount: Int): List<Float
 
         // Normalize to 0.0 - 1.0 range
         val maxAmplitude = downsampledAmplitudes.maxOrNull() ?: 1f
-        if (maxAmplitude > 0f) {
+        return if (maxAmplitude > 0f) {
             downsampledAmplitudes.map { (it / maxAmplitude).coerceIn(0.1f, 1.0f) }
         } else {
             generatePlaceholderWaveform(sampleCount)
         }
     } catch (e: Exception) {
         android.util.Log.e("MusicTrimmer", "Failed to extract waveform", e)
-        generatePlaceholderWaveform(sampleCount)
+        return generatePlaceholderWaveform(sampleCount)
     } finally {
-        extractor.release()
+        extractor.release()  // ✅ Always executed - no early returns in try block
     }
 }
 
