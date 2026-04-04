@@ -265,6 +265,11 @@
     <string name="settings_volume">Volume</string>
     <string name="settings_clip_music">Clip Music</string>
     <string name="settings_aspect_ratio">Aspect Ratio</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">Volume</string>
+    <string name="tab_clip">Clip</string>
+    <string name="tab_clip_active">Clip ✓</string>
     <string name="settings_transition_effect">Transition Effect</string>
     <string name="settings_transition_duration">Transition Duration</string>
     <string name="settings_transition_duration_value">%.1fs</string>

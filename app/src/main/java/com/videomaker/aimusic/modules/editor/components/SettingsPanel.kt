@@ -29,7 +29,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -610,73 +609,8 @@ private fun AudioSection(
             }
         }
 
-        // Music controls (show if audio is selected)
-        if (hasAudio) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Clip Music button
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { /* TODO: Open music trimmer bottom sheet */ }
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .padding(horizontal = 12.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ContentCut,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = stringResource(R.string.settings_clip_music),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.weight(1f)
-                )
-                // Show checkmark if music is clipped
-                // TODO: Pass isMusicClipped parameter
-                // if (isMusicClipped) {
-                //     Icon(
-                //         imageVector = Icons.Default.Check,
-                //         contentDescription = null,
-                //         modifier = Modifier.size(20.dp),
-                //         tint = MaterialTheme.colorScheme.primary
-                //     )
-                // }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Volume slider
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = stringResource(R.string.settings_volume),
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = "${(volumeValue * 100).toInt()}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Slider(
-                value = volumeValue,
-                onValueChange = { volumeValue = it },
-                onValueChangeFinished = { onVolumeChange(volumeValue) },
-                valueRange = 0f..1f
-            )
-        }
+        // Note: Volume and Clip controls moved to separate bottom sheets
+        // Accessed via tabs in SettingsTabBar
     }
 }
 

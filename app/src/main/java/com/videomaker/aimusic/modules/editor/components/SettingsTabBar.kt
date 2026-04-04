@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,19 +35,24 @@ import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 
 /**
- * Settings Tab Bar - Effect, Duration, Ratio, Music (trim + volume)
+ * Settings Tab Bar - Effect, Duration, Ratio, Music, Volume, Clip
+ * Each tab opens its own bottom sheet
  */
 @Composable
 internal fun SettingsTabBar(
     currentEffectSetName: String,
     currentRatio: AspectRatio,
     currentDurationMs: Long,
-    showMusicButton: Boolean,
+    showMusicControls: Boolean, // Show music/volume/clip tabs if music is selected
     musicLabel: String?,
+    currentVolume: Float, // 0.0 to 1.0
+    isMusicClipped: Boolean, // Show indicator on Clip tab
     onEffectClick: () -> Unit,
     onImageDurationClick: () -> Unit,
     onRatioClick: () -> Unit,
     onMusicClick: () -> Unit,
+    onVolumeClick: () -> Unit,
+    onClipClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -63,6 +70,20 @@ internal fun SettingsTabBar(
             modifier = Modifier.weight(1f)
         )
 
+        // Clip button (2nd position) - shows checkmark if music is clipped
+        if (showMusicControls) {
+            SettingsTabButton(
+                icon = Icons.Default.ContentCut,
+                label = if (isMusicClipped) {
+                    stringResource(R.string.tab_clip_active)
+                } else {
+                    stringResource(R.string.tab_clip)
+                },
+                onClick = onClipClick,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
         // Image Duration button - shows current duration
         SettingsTabButton(
             icon = Icons.Default.Schedule,
@@ -79,12 +100,21 @@ internal fun SettingsTabBar(
             modifier = Modifier.weight(1f)
         )
 
-        // Music button - trim + volume (only show if music is selected)
-        if (showMusicButton) {
+        // Music and Volume controls (only show if music is selected)
+        if (showMusicControls) {
+            // Music button - song selection
             SettingsTabButton(
                 icon = Icons.Default.MusicNote,
                 label = musicLabel ?: stringResource(R.string.editor_music),
                 onClick = onMusicClick,
+                modifier = Modifier.weight(1f)
+            )
+
+            // Volume button - shows current volume percentage
+            SettingsTabButton(
+                icon = Icons.Default.VolumeUp,
+                label = "${(currentVolume * 100).toInt()}%",
+                onClick = onVolumeClick,
                 modifier = Modifier.weight(1f)
             )
         }
