@@ -2,6 +2,7 @@ package com.videomaker.aimusic.modules.editor.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,11 +11,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.ContentCut
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,57 +38,75 @@ import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 
 /**
- * Settings Tab Bar - Effect, Duration, Ratio, Volume tabs
+ * Settings Tab Bar - Effect, Music Clip, Duration, Ratio, Volume
+ * Each tab opens its own bottom sheet
+ * Horizontally scrollable with equal-width tabs
  */
 @Composable
 internal fun SettingsTabBar(
     currentEffectSetName: String,
-    currentVolume: Float,
     currentRatio: AspectRatio,
     currentDurationMs: Long,
+    showMusicControls: Boolean, // Show volume/clip tabs if music is selected
+    currentVolume: Float, // 0.0 to 1.0
     onEffectClick: () -> Unit,
     onImageDurationClick: () -> Unit,
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit,
+    onClipClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(SplashBackground)
+            .horizontalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Effect button - displays effect set name (max 2 lines)
+        // Effect button - displays effect set name
         SettingsTabButton(
             icon = Icons.Default.AutoAwesome,
             label = currentEffectSetName,
             onClick = onEffectClick,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.width(70.dp)
         )
 
-        // Image Duration button - shows current duration
-        SettingsTabButton(
-            icon = Icons.Default.Schedule,
-            label = "${currentDurationMs / 1000f}s",
-            onClick = onImageDurationClick,
-            modifier = Modifier.weight(1f)
-        )
+        // Music Clip button (2nd position)
+        if (showMusicControls) {
+            SettingsTabButton(
+                icon = Icons.Default.ContentCut,
+                label = stringResource(R.string.tab_music_clip),
+                onClick = onClipClick,
+                modifier = Modifier.width(70.dp)
+            )
+        }
 
         // Ratio button - shows current ratio
         SettingsTabButton(
             icon = Icons.Default.AspectRatio,
             label = currentRatio.shortLabel,
             onClick = onRatioClick,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.width(70.dp)
         )
 
-        // Volume button - shows current percentage
+        // Volume control (only show if music is selected)
+        if (showMusicControls) {
+            // Volume button - shows current volume percentage
+            SettingsTabButton(
+                icon = Icons.Default.VolumeUp,
+                label = "${(currentVolume * 100).toInt()}%",
+                onClick = onVolumeClick,
+                modifier = Modifier.width(70.dp)
+            )
+        }
+
+        // Image Duration button - moved to last position
         SettingsTabButton(
-            icon = Icons.AutoMirrored.Filled.VolumeUp,
-            label = "${(currentVolume * 100).toInt()}%",
-            onClick = onVolumeClick,
-            modifier = Modifier.weight(1f)
+            icon = Icons.Default.Schedule,
+            label = "${currentDurationMs / 1000f}s",
+            onClick = onImageDurationClick,
+            modifier = Modifier.width(70.dp)
         )
     }
 }
@@ -106,18 +129,18 @@ private fun SettingsTabButton(
             imageVector = icon,
             contentDescription = label,
             tint = TextPrimary,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = label,
-            fontSize = 13.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
             color = TextPrimary,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            lineHeight = 16.sp
+            lineHeight = 14.sp
         )
     }
 }

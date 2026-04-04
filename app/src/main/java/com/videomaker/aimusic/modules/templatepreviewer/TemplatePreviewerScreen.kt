@@ -75,6 +75,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -82,6 +83,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.ui.components.ErrorOverlay
+import com.videomaker.aimusic.ui.components.ErrorType
 import com.videomaker.aimusic.ui.components.PrimaryButton
 import com.videomaker.aimusic.ui.theme.Black60
 import com.videomaker.aimusic.ui.theme.Primary
@@ -137,11 +140,20 @@ fun TemplatePreviewerScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
-    LaunchedEffect(navigationEvent) {
+    // Track song loading error
+    var songError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(navigationEvent, songError) {
         navigationEvent?.let { event ->
             when (event) {
-                is TemplatePreviewerNavigationEvent.NavigateToAssetPicker ->
-                    onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
+                is TemplatePreviewerNavigationEvent.NavigateToAssetPicker -> {
+                    // Block navigation if music failed to load
+                    if (songError == null) {
+                        onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
+                    } else {
+                        android.util.Log.w("TemplatePreviewerScreen", "Navigation blocked due to music loading error")
+                    }
+                }
                 is TemplatePreviewerNavigationEvent.NavigateBack -> onNavigateBack()
             }
             viewModel.onNavigationHandled()
@@ -179,17 +191,30 @@ fun TemplatePreviewerScreen(
     // Loading state: keep current track playing while the next song is being fetched.
     // Ready: fade out → swap track → fade in.
     // None: fade out and stop.
+    // Error: show error overlay.
     LaunchedEffect(currentSong) {
         when (val state = currentSong) {
-            is SongLoadState.Loading -> Unit // keep playing previous track
+            is SongLoadState.Loading -> {
+                songError = null // Clear any previous error
+            }
 
             is SongLoadState.None -> {
+                playerDurationMs = null
+                fadeVolume(player, to = 0f)
+                player.stop()
+                songError = null
+            }
+
+            is SongLoadState.Error -> {
+                // Show error overlay with localized message
+                songError = context.getString(R.string.error_template_music_failed)
                 playerDurationMs = null
                 fadeVolume(player, to = 0f)
                 player.stop()
             }
 
             is SongLoadState.Ready -> {
+                songError = null // Clear any previous error
                 playerDurationMs = null  // clear stale duration until new track is ready
                 // Use full track (mp3Url) for consistency with Editor, not short preview clip
                 val url = state.song.mp3Url.ifEmpty { state.song.previewUrl }
@@ -252,6 +277,18 @@ fun TemplatePreviewerScreen(
                 }
             }
         }
+    }
+
+    // Error overlay for song loading failures
+    songError?.let { errorMessage ->
+        ErrorOverlay(
+            errorType = ErrorType.MusicLoading,
+            title = context.getString(R.string.error_network_title),
+            message = errorMessage,
+            onDismiss = {
+                songError = null
+            }
+        )
     }
 }
 
@@ -774,6 +811,15 @@ private fun MusicInfoCapsule(currentSong: SongLoadState, playerDurationMs: Long?
                     color = Color.White.copy(alpha = 0.6f),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Normal
+                )
+            }
+            is SongLoadState.Error -> {
+                Text(
+                    text = stringResource(R.string.error_template_music_failed),
+                    color = com.videomaker.aimusic.ui.theme.Error,
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f)
                 )
             }
             is SongLoadState.None -> Unit

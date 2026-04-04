@@ -275,6 +275,14 @@
 
     <!-- Error states -->
     <string name="error_load_failed">فشل التحميل. اسحب للأسفل للمحاولة مجدداً.</string>
+    <string name="error_network_title">خطأ في الشبكة</string>
+    <string name="error_network_message">فشل تحميل الموسيقى. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
+    <string name="error_network_timeout">انتهت مهلة الشبكة. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
+    <string name="error_preview_title">خطأ في المعاينة</string>
+    <string name="error_preview_music_network">خطأ في الشبكة أثناء تحميل الموسيقى. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
+    <string name="error_preview_music_failed">فشل تحميل الموسيقى. يرجى المحاولة مرة أخرى.</string>
+    <string name="error_template_music_failed">فشل تحميل الأغنية. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
+    <string name="dialog_ok">حسناً</string>
 
     <!-- Songs -->
     <string name="start_project">بدء المشروع</string>

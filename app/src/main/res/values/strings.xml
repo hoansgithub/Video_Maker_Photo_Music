@@ -110,6 +110,23 @@
     <string name="editor_play">Play</string>
     <string name="editor_pause">Pause</string>
     <string name="editor_duration_format">Duration: %s</string>
+
+    <!-- Music Trim Feature (NOT video trim) -->
+    <string name="editor_music_trim">Trim Music</string>
+    <string name="editor_music_trim_from_start">Trim from Start</string>
+    <string name="editor_music_trim_from_end">Trim from End</string>
+    <string name="editor_music_trim_edit">Edit Music Trim</string>
+    <string name="editor_music_trim_title">Trim Music</string>
+    <string name="editor_music_trim_subtitle">Select which part of the song to use</string>
+    <string name="editor_music_trim_start">Music Start</string>
+    <string name="editor_music_trim_end">Music End</string>
+    <string name="editor_music_trim_duration">Music Duration</string>
+    <string name="editor_music_trim_min_duration">Music must be at least 5 seconds</string>
+    <string name="editor_music_trim_will_loop">Music will loop if needed for your video</string>
+    <string name="editor_music_trimmed_info">Music: %1$s</string>
+    <string name="editor_music_trim_play_selection">Play Selection</string>
+    <string name="editor_music_trim_skip_to_start">Jump to Start</string>
+    <string name="editor_music_trim_skip_to_end">Jump to End</string>
     <string name="editor_photos_count">%d photos</string>
     <string name="editor_save_dialog_title">Save Project?</string>
     <string name="editor_save_dialog_message">Your project will be saved and available in My Projects.</string>
@@ -254,7 +271,12 @@
     <string name="settings_add">+ Add</string>
     <string name="settings_add_audio">+ Add</string>
     <string name="settings_volume">Volume</string>
+    <string name="settings_clip_music">Clip Music</string>
     <string name="settings_aspect_ratio">Aspect Ratio</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">Volume</string>
+    <string name="tab_music_clip">Music Clip</string>
     <string name="settings_transition_effect">Transition Effect</string>
     <string name="settings_transition_duration">Transition Duration</string>
     <string name="settings_transition_duration_value">%.1fs</string>
@@ -311,6 +333,14 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Failed to load. Pull down to retry.</string>
+    <string name="error_network_title">Network Error</string>
+    <string name="error_network_message">Failed to load music. Please check your connection and try again.</string>
+    <string name="error_network_timeout">Network timeout. Please check your connection and try again.</string>
+    <string name="error_preview_title">Preview Error</string>
+    <string name="error_preview_music_network">Network error loading music. Please check your connection and try again.</string>
+    <string name="error_preview_music_failed">Failed to load music. Please try again.</string>
+    <string name="error_template_music_failed">Failed to load song. Please check your connection and try again.</string>
+    <string name="dialog_ok">OK</string>
 
     <!-- Songs -->
     <string name="start_project">Start project</string>
@@ -369,7 +399,6 @@
     <string name="widget_pin_not_supported">Widget pinning not supported on this device</string>
     <string name="widget_add_failed">Failed to add widget: %s</string>
 
-
     <!-- Unified search   -->
     <string name="unified_search_templates">Templates</string>
     <string name="unified_search_music">Music</string>
@@ -379,5 +408,11 @@
     <string name="unified_search_explore_suggestions">Explore Suggestions</string>
     <string name="unified_search_no_results_title">No results found</string>
     <string name="unified_search_keep_typing">Keep typing to refine your search</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">Hot</string>
+    <string name="tag_trending">Trending</string>
+    <string name="tag_new">New</string>
+    <string name="tag_featured">Featured</string>
 
 </resources>

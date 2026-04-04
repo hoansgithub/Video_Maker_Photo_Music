@@ -275,6 +275,14 @@
 
     <!-- Error states -->
     <string name="error_load_failed">लोड करने में विफल। पुनः प्रयास के लिए नीचे खींचें।</string>
+    <string name="error_network_title">नेटवर्क त्रुटि</string>
+    <string name="error_network_message">संगीत लोड करने में विफल। कृपया अपना कनेक्शन जांचें और पुनः प्रयास करें।</string>
+    <string name="error_network_timeout">नेटवर्क टाइमआउट। कृपया अपना कनेक्शन जांचें और पुनः प्रयास करें।</string>
+    <string name="error_preview_title">पूर्वावलोकन त्रुटि</string>
+    <string name="error_preview_music_network">संगीत लोड करते समय नेटवर्क त्रुटि। कृपया अपना कनेक्शन जांचें और पुनः प्रयास करें।</string>
+    <string name="error_preview_music_failed">संगीत लोड करने में विफल। कृपया पुनः प्रयास करें।</string>
+    <string name="error_template_music_failed">गाना लोड करने में विफल। कृपया अपना कनेक्शन जांचें और पुनः प्रयास करें.</string>
+    <string name="dialog_ok">ठीक है</string>
 
     <!-- Songs -->
     <string name="start_project">प्रोजेक्ट शुरू करें</string>

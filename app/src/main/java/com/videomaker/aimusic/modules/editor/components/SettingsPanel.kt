@@ -609,32 +609,8 @@ private fun AudioSection(
             }
         }
 
-        // Volume slider (show if audio is selected)
-        if (hasAudio) {
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = stringResource(R.string.settings_volume),
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = "${(volumeValue * 100).toInt()}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Slider(
-                value = volumeValue,
-                onValueChange = { volumeValue = it },
-                onValueChangeFinished = { onVolumeChange(volumeValue) },
-                valueRange = 0f..1f
-            )
-        }
+        // Note: Volume and Clip controls moved to separate bottom sheets
+        // Accessed via tabs in SettingsTabBar
     }
 }
 

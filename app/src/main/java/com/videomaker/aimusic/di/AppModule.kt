@@ -270,6 +270,7 @@ class AssetPickerViewModelFactory(
  * because ACCDI cannot distinguish between different lambda types at runtime.
  */
 class EditorViewModelFactory(
+    private val context: Context,
     private val getProjectUseCase: GetProjectUseCase,
     private val createProjectUseCase: CreateProjectUseCase,
     private val updateSettingsUseCase: UpdateProjectSettingsUseCase,
@@ -283,6 +284,7 @@ class EditorViewModelFactory(
         initialData: com.videomaker.aimusic.domain.model.EditorInitialData?
     ): EditorViewModel {
         return EditorViewModel(
+            context = context,
             projectId = projectId,
             initialData = initialData,
             getProjectUseCase = getProjectUseCase,
@@ -587,6 +589,7 @@ val presentationModule = module {
     // Editor ViewModel factory (singleton - stateless factory)
     single {
         EditorViewModelFactory(
+            context = androidContext(),
             getProjectUseCase = get(),
             createProjectUseCase = get(),
             updateSettingsUseCase = get(),

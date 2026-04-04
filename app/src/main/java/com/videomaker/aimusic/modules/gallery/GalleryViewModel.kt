@@ -72,8 +72,23 @@ class GalleryViewModel(
     private val _navigationEvent = MutableStateFlow<GalleryNavigationEvent?>(null)
     val navigationEvent: StateFlow<GalleryNavigationEvent?> = _navigationEvent.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
         loadGalleryData()
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            // compareAndSet is atomic — prevents double-refresh race
+            if (!_isRefreshing.compareAndSet(false, true)) return@launch
+            try {
+                loadGalleryData()
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
     }
 
     private fun loadGalleryData() {

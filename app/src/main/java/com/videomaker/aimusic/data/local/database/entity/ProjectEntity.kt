@@ -26,7 +26,11 @@ data class ProjectEntity(
     val musicSongId: Long? = null,
     val musicSongName: String? = null, // Cached song name for display
     val musicSongUrl: String? = null, // Cached song URL for playback
+    val musicSongCoverUrl: String? = null, // Cached cover URL for display
     val customAudioUri: String? = null,
+    val processedAudioUri: String? = null, // Downloaded local music file for reliable playback
     val audioVolume: Float = 1.0f,
+    val musicTrimStartMs: Long = 0L, // Music trim start position (0 = no trim at start)
+    val musicTrimEndMs: Long? = null, // Music trim end position (null = use full song)
     val aspectRatio: String = "RATIO_9_16"
 )

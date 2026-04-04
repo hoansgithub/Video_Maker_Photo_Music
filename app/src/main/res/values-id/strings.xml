@@ -275,6 +275,14 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Gagal memuat. Tarik ke bawah untuk mencoba lagi.</string>
+    <string name="error_network_title">Kesalahan Jaringan</string>
+    <string name="error_network_message">Gagal memuat musik. Periksa koneksi Anda dan coba lagi.</string>
+    <string name="error_network_timeout">Waktu jaringan habis. Periksa koneksi Anda dan coba lagi.</string>
+    <string name="error_preview_title">Kesalahan Pratinjau</string>
+    <string name="error_preview_music_network">Kesalahan jaringan saat memuat musik. Periksa koneksi Anda dan coba lagi.</string>
+    <string name="error_preview_music_failed">Gagal memuat musik. Silakan coba lagi.</string>
+    <string name="error_template_music_failed">Gagal memuat lagu. Periksa koneksi Anda dan coba lagi.</string>
+    <string name="dialog_ok">OK</string>
 
     <!-- Songs -->
     <string name="start_project">Mulai proyek</string>

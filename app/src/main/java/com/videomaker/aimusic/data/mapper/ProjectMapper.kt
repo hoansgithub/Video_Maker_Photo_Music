@@ -45,8 +45,12 @@ object ProjectMapper {
             musicSongId = entity.musicSongId,
             musicSongName = entity.musicSongName,
             musicSongUrl = entity.musicSongUrl,
+            musicSongCoverUrl = entity.musicSongCoverUrl,
             customAudioUri = entity.customAudioUri?.let { Uri.parse(it) },
+            processedAudioUri = entity.processedAudioUri?.let { Uri.parse(it) },
             audioVolume = entity.audioVolume,
+            musicTrimStartMs = entity.musicTrimStartMs,
+            musicTrimEndMs = entity.musicTrimEndMs,
             aspectRatio = AspectRatio.fromString(entity.aspectRatio)
         )
     }
@@ -80,8 +84,12 @@ object ProjectMapper {
             musicSongId = project.settings.musicSongId,
             musicSongName = project.settings.musicSongName,
             musicSongUrl = project.settings.musicSongUrl,
+            musicSongCoverUrl = project.settings.musicSongCoverUrl,
             customAudioUri = project.settings.customAudioUri?.toString(),
+            processedAudioUri = project.settings.processedAudioUri?.toString(),
             audioVolume = project.settings.audioVolume,
+            musicTrimStartMs = project.settings.musicTrimStartMs,
+            musicTrimEndMs = project.settings.musicTrimEndMs,
             aspectRatio = project.settings.aspectRatio.name
         )
     }
