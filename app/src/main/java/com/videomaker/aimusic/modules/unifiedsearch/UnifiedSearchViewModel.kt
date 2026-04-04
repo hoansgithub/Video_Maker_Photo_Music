@@ -63,7 +63,9 @@ sealed class UnifiedSearchUiState {
         val query: String,
         val templates: TemplateSectionState,
         val music: MusicSectionState,
-        val initialSection: SearchSection
+        val initialSection: SearchSection,
+        val templateEmpty: List<VideoTemplate> = emptyList(),
+        val songEmpty: List<MusicSong> = emptyList(),
     ) : UnifiedSearchUiState()
 
     data class Empty(
