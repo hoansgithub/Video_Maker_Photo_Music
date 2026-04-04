@@ -98,7 +98,7 @@ class UnifiedSearchViewModel(
         private const val PAGE_SIZE = 6
         private const val EXPLORE_SUGGESTION_LIMIT = 10
         private const val SEARCH_DEBOUNCE_MS = 400L
-        private const val MIN_TYPING_LENGTH = 2
+        private const val MIN_TYPING_LENGTH = 1
     }
 
     private val _uiState = MutableStateFlow<UnifiedSearchUiState>(UnifiedSearchUiState.Idle(initialSection))
@@ -206,12 +206,12 @@ class UnifiedSearchViewModel(
         val normalized = newQuery.trim()
         _query.value = normalized
 
-        _uiState.value = when {
-            normalized.isBlank() -> UnifiedSearchUiState.Idle(initialSection)
-            normalized.length >= MIN_TYPING_LENGTH ->
-                UnifiedSearchUiState.Typing(newQuery, suggestionsFor(normalized))
-            else -> UnifiedSearchUiState.Idle(initialSection)
+        // Only reset to Idle if query is cleared, otherwise keep current state
+        // while debounced search executes in background
+        if (normalized.isBlank()) {
+            _uiState.value = UnifiedSearchUiState.Idle(initialSection)
         }
+        // Don't set Typing state - let debounced search execute and show results
     }
 
     fun onSearch() {
@@ -426,7 +426,12 @@ class UnifiedSearchViewModel(
         val q = query.trim()
         return when {
             q.isBlank() -> UnifiedSearchUiState.Idle(initialSection)
-            else -> UnifiedSearchUiState.Typing(query, suggestionsFor(q))
+            q.length < MIN_TYPING_LENGTH -> UnifiedSearchUiState.Idle(initialSection)
+            else -> {
+                // Execute actual search after debounce
+                rememberQuery(q)
+                runParallelSearch(q)
+            }
         }
     }
 
