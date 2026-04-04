@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.unifiedsearch.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,16 +11,26 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.ShimmerBox
 import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
+import com.videomaker.aimusic.ui.theme.FoundationBlack_100
+import com.videomaker.aimusic.ui.theme.FoundationBlack_Gray_100
 
 @Composable
 fun UnifiedSearchLoadingContent() {
@@ -35,55 +46,40 @@ fun UnifiedSearchLoadingContent() {
                 Spacer(Modifier.height(100.dp))
             }
 
-            item(key = "templates_header") {
-                ShimmerBox(
-                    modifier = Modifier
-                        .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceSm)
-                        .width(120.dp)
-                        .height(16.dp),
-                    cornerRadius = 8.dp
-                )
-            }
-
-            item(key = "templates_grid") {
+            item {
                 Column(
-                    modifier = Modifier.padding(horizontal = dimens.spaceLg),
-                    verticalArrangement = Arrangement.spacedBy(dimens.spaceSm)
-                ) {
-                    repeat(2) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
-                        ) {
-                            ShimmerBox(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .aspectRatio(9f / 16f),
-                                cornerRadius = 12.dp
-                            )
-                            ShimmerBox(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .aspectRatio(9f / 16f),
-                                cornerRadius = 12.dp
-                            )
-                        }
-                    }
-                }
-            }
-
-            item(key = "music_header") {
-                ShimmerBox(
                     modifier = Modifier
-                        .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceMd)
-                        .width(100.dp)
-                        .height(16.dp),
-                    cornerRadius = 8.dp
-                )
-            }
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 50.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(40.dp),
+                        color = Color.White,
+                        strokeWidth = 4.dp,
+                        trackColor = Color(0xFF4A4A4A)
+                    )
 
-            items(4, key = { "song_loading_$it" }) {
-                SongListItemPlaceholder()
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Text(
+                        text = "Searching for results…",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.W600,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "We are scanning our database to bring\nyou the most accurate information.\nPlease wait a moment.",
+                        color = FoundationBlack_Gray_100,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Normal,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
         }
     }

@@ -52,6 +52,7 @@ val FullGradient = listOf(GradientOrangeStart, GradientOrangeEnd, GradientPurple
 val SplashBackground = Color(0xFF101010)    // Splash/loading screen background
 val FoundationBlack = Color(0xFF030303)    //foundation screen background
 val FoundationBlack_100 = Color(0xFFB2B2B2)
+val FoundationBlack_Gray_100 = Color(0xFF828284)
 val Neutral_Black = Color(0xFF333333)
 val Neutral_N500 = Color(0xFF999999)
 val Neutral_N400 = Color(0xFFB3B3B3)
