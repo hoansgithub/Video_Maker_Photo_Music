@@ -26,6 +26,14 @@
     <!-- Page 3 -->
     <string name="onboarding_page3_title">मिलकर बेहतर!</string>
     <string name="onboarding_page3_subtitle">मिलकर बेहतर। अपने दोस्तों को मज़े में शामिल करें।</string>
+    <string name="onboarding_swipe_next">अगले पर जाने के लिए स्वाइप करें</string>
+    <string name="onboarding_exit_title">सेटअप से बाहर निकलें?</string>
+    <string name="onboarding_exit_message">आप बाद में सेटिंग्स में अपनी प्राथमिकताएँ कभी भी बदल सकते हैं।</string>
+    <string name="onboarding_exit_confirm">बाहर निकलें</string>
+    <string name="onboarding_exit_dismiss">जारी रखें</string>
+    <string name="root_no_internet_title">इंटरनेट कनेक्शन नहीं है</string>
+    <string name="root_no_internet_message">आपका डिवाइस अभी ऑफलाइन है। आगे बढ़ने के लिए कृपया दोबारा कनेक्ट करें।</string>
+    <string name="root_try_again">पुनः प्रयास करें</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">गैलरी</string>

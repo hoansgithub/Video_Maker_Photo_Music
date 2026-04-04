@@ -547,6 +547,7 @@ fun AppNavigation(
                     onContinue = {
                         applyLanguage()
                         activity?.recreate()
+                        backStack.removeLastOrNull()
                     }
                 )
             }

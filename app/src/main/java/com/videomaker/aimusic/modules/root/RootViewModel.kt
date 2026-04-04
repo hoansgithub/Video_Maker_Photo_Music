@@ -1,5 +1,9 @@
 package com.videomaker.aimusic.modules.root
 
+import android.app.Application
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
@@ -36,6 +40,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * ```
  */
 class RootViewModel(
+    private val application: Application,
     private val checkOnboardingStatusUseCase: CheckOnboardingStatusUseCase,
     private val checkLanguageSelectedUseCase: CheckLanguageSelectedUseCase,
     private val remoteConfig: RemoteConfig
@@ -57,6 +62,9 @@ class RootViewModel(
 
     private val _navigationEvent = MutableStateFlow<RootNavigationEvent?>(null)
     val navigationEvent: StateFlow<RootNavigationEvent?> = _navigationEvent.asStateFlow()
+
+    private val _showNoInternetDialog = MutableStateFlow(false)
+    val showNoInternetDialog: StateFlow<Boolean> = _showNoInternetDialog.asStateFlow()
 
     // ============================================
     // INTERNAL STATE
@@ -98,10 +106,20 @@ class RootViewModel(
     }
 
     /**
-     * Navigate to home screen
+     * Retry app initialization after a no-internet failure.
+     * Resets state so the full initialization runs again.
      */
-    fun navigateToHome() {
-        _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Home())
+    fun retryInitialization() {
+        _showNoInternetDialog.value = false
+        isInitialized = false
+        initializeApp()
+    }
+
+    /**
+     * Dismiss the no-internet dialog without retrying.
+     */
+    fun dismissNoInternetDialog() {
+        _showNoInternetDialog.value = false
     }
 
     /**
@@ -120,27 +138,35 @@ class RootViewModel(
         viewModelScope.launch {
             _isLoading.value = true
 
+            // Step 1: Check internet connection
+            if (!isInternetAvailable()) {
+                _isLoading.value = false
+                isInitialized = false
+                _showNoInternetDialog.value = true
+                return@launch
+            }
+
             try {
-                // Step 1: Initialize AdMob (placeholder for future)
+                // Step 2: Initialize AdMob (placeholder for future)
                 _loadingMessage.value = "Initializing..."
                 initializeAds()
 
-                // Step 2: Load Firebase Remote Config (10s timeout)
+                // Step 3: Load Firebase Remote Config (10s timeout)
                 _loadingMessage.value = "Loading configuration..."
                 loadRemoteConfig()
 
-                // Step 3: Present App Open Ad (placeholder for future)
+                // Step 4: Present App Open Ad (placeholder for future)
                 _loadingMessage.value = "Loading..."
                 presentAppOpenAd()
 
-                // Step 4: Check language selection status
-                shouldShowLanguageSelection = checkLanguageSelectedUseCase()
-
-                // Step 5: Check onboarding status
+                // Step 5: Check onboarding status (first priority)
                 val onboardingResult = checkOnboardingStatusUseCase()
                 shouldShowOnboarding = onboardingResult.getOrNull() ?: false
 
-                // Step 6: Navigate to appropriate screen
+                // Step 6: Check language selection status (second priority)
+                shouldShowLanguageSelection = checkLanguageSelectedUseCase()
+
+                // Step 7: Navigate to appropriate screen
                 proceedToNextScreen()
 
             } catch (e: Exception) {
@@ -208,19 +234,30 @@ class RootViewModel(
         _isLoading.value = false
 
         when {
-            // First priority: Language selection (if not yet selected)
-            shouldShowLanguageSelection -> {
-                _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.LanguageSelection)
-            }
-            // Second priority: Onboarding (first-time user after language)
+            // First priority: Onboarding (first-time user)
             shouldShowOnboarding -> {
                 _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Onboarding)
+            }
+            // Second priority: Language selection (after onboarding or if onboarding already done)
+            shouldShowLanguageSelection -> {
+                _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.LanguageSelection)
             }
             // Default: Go to Home
             else -> {
                 _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Home())
             }
         }
+    }
+
+    // ============================================
+    // PRIVATE: CONNECTIVITY
+    // ============================================
+
+    private fun isInternetAvailable(): Boolean {
+        val cm = application.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val capabilities = cm.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 }
 

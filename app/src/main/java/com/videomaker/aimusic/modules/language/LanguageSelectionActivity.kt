@@ -8,11 +8,29 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import org.koin.android.ext.android.inject
-import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import com.videomaker.aimusic.MainActivity
+import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
+import com.videomaker.aimusic.modules.onboarding.OnboardingViewModel
+import com.videomaker.aimusic.modules.onboarding.pages.FeatureSurveyPage
+import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
 /**
@@ -41,28 +59,61 @@ class LanguageSelectionActivity : AppCompatActivity() {
     private val saveLanguagePreferenceUseCase: SaveLanguagePreferenceUseCase by inject()
     private val applyLanguageUseCase: ApplyLanguageUseCase by inject()
     private val completeLanguageSelectionUseCase: CompleteLanguageSelectionUseCase by inject()
+    private val languageManager: LanguageManager by inject()
+    private val onboardingViewModel: OnboardingViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         setContent {
+            // Initialise from the persisted flag so the genre step survives process death
+            var showGenreSelection: Boolean by rememberSaveable {
+                mutableStateOf(languageManager.isGenreSelectionPending())
+            }
+
             VideoMakerTheme {
-                LanguageSelectionScreen(
-                    showBackButton = false,
-                    onLanguageSelected = { languageCode ->
-                        // Save preference only — no Activity recreation while browsing
-                        saveLanguagePreferenceUseCase(languageCode)
-                    },
-                    onContinue = {
-                        // 1. Mark complete
-                        completeLanguageSelectionUseCase()
-                        // 2. Apply locale — OnboardingActivity will start with the new locale
-                        applyLanguageUseCase()
-                        // 3. Navigate
-                        navigateToMain()
+                if (!showGenreSelection) {
+                    LanguageSelectionScreen(
+                        showBackButton = false,
+                        onLanguageSelected = { languageCode ->
+                            saveLanguagePreferenceUseCase(languageCode)
+                        },
+                        onContinue = {
+                            completeLanguageSelectionUseCase()
+                            applyLanguageUseCase()
+                            languageManager.markGenreSelectionPending()
+                            showGenreSelection = true
+                        }
+                    )
+                } else {
+                    // Genre selection step — shown after language is chosen
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        FeatureSurveyPage(
+                            selectedFeatures = onboardingViewModel.selectedFeatures,
+                            onFeatureToggle = onboardingViewModel::toggleFeature
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(horizontal = 24.dp, vertical = 48.dp)
+                        ) {
+                            OnboardingCtaButton(
+                                text = stringResource(R.string.onboarding_get_started),
+                                icon = R.drawable.ic_checkmark,
+                                color = Primary,
+                                onClick = {
+                                    onboardingViewModel.saveFeatures(onSaved = {
+                                        languageManager.clearGenreSelectionPending()
+                                        navigateToMain()
+                                    })
+                                },
+                                enabled = onboardingViewModel.selectedFeatures.isNotEmpty()
+                            )
+                        }
                     }
-                )
+                }
             }
         }
     }
@@ -77,11 +128,12 @@ class LanguageSelectionActivity : AppCompatActivity() {
     }
 
     /**
-     * After language selection, launch OnboardingActivity.
-     * Language is already applied so OnboardingActivity starts with the correct locale.
+     * After language selection, launch MainActivity.
+     * Language is already applied so MainActivity starts with the correct locale.
+     * Onboarding has already been completed before reaching this screen.
      */
     private fun navigateToMain() {
-        startActivity(Intent(this, OnboardingActivity::class.java))
+        startActivity(Intent(this, MainActivity::class.java))
         applyDefaultTransition()
         finish()
     }
