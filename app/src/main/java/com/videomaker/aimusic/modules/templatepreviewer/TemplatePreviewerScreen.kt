@@ -97,6 +97,7 @@ import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
+import coil.size.Scale
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
@@ -834,8 +835,8 @@ private fun MusicInfoCapsule(currentSong: SongLoadState, playerDurationMs: Long?
 @Composable
 private fun TemplateThumbnailPage(template: VideoTemplate, isCurrentPage: Boolean) {
     val context = LocalContext.current
-    // Use high-resolution preview image for full-screen display
-    val thumbnailUrl = template.previewImagePath.ifEmpty { template.thumbnailPath.ifEmpty { null } }
+    // Use smaller thumbnail for faster loading, fallback to preview for quality
+    val thumbnailUrl = template.thumbnailPath.ifEmpty { template.previewImagePath.ifEmpty { null } }
 
     Box(
         modifier = Modifier.fillMaxSize().background(Color.Black),
@@ -846,15 +847,18 @@ private fun TemplateThumbnailPage(template: VideoTemplate, isCurrentPage: Boolea
                 .data(thumbnailUrl)
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .memoryCachePolicy(CachePolicy.ENABLED)
+                .networkCachePolicy(CachePolicy.ENABLED)  // Enable network cache
                 .memoryCacheKey("${template.id}_${if (isCurrentPage) "anim" else "static"}")
                 .precision(Precision.INEXACT)
+                .scale(Scale.FILL)  // Faster than FIT
+                .allowHardware(true)  // Use GPU decoding for speed
                 .apply {
                     if (!isCurrentPage) {
                         // Static first frame only — bypasses ImageDecoderDecoder (animated WebP)
                         decoderFactory(BitmapFactoryDecoder.Factory())
                     }
                 }
-                .crossfade(true)
+                .crossfade(false)  // Instant display, no animation delay
                 .build(),
             contentDescription = template.name,
             modifier = Modifier.fillMaxSize(),
