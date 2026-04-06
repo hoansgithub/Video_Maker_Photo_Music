@@ -53,9 +53,9 @@
     <string name="songs_all">Todas las Canciones</string>
     <string name="songs_categories">Categorías</string>
     <string name="songs_search_hint">Buscar canciones</string>
-    <string name="songs_suggest_for_you">Sugeridas para Ti</string>
+    <string name="songs_suggest_for_you">Sugerencias para ti</string>
     <string name="songs_weekly_ranking">Ranking Semanal</string>
-    <string name="songs_station">Estaciones</string>
+    <string name="songs_station">Estaciones recomendadas</string>
 
     <!-- Legacy Home -->
     <string name="home_title">Video Maker</string>

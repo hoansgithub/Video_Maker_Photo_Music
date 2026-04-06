@@ -53,9 +53,9 @@
     <string name="songs_all">सभी गाने</string>
     <string name="songs_categories">श्रेणियां</string>
     <string name="songs_search_hint">गाने खोजें</string>
-    <string name="songs_suggest_for_you">आपके लिए सुझाए गए</string>
+    <string name="songs_suggest_for_you">आपके लिए सुझाव</string>
     <string name="songs_weekly_ranking">साप्ताहिक रैंकिंग</string>
-    <string name="songs_station">स्टेशन</string>
+    <string name="songs_station">अनुशंसित स्टेशन</string>
 
     <!-- Legacy Home -->
     <string name="home_title">वीडियो मेकर</string>

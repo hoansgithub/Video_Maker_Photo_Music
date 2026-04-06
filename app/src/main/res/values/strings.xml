@@ -52,9 +52,9 @@
     <string name="songs_all">All Songs</string>
     <string name="songs_categories">Categories</string>
     <string name="songs_search_hint">Search songs</string>
-    <string name="songs_suggest_for_you">Suggested For You</string>
+    <string name="songs_suggest_for_you">Suggest for you</string>
     <string name="songs_weekly_ranking">Weekly Ranking</string>
-    <string name="songs_station">Stations</string>
+    <string name="songs_station">Recommended Stations</string>
 
     <!-- Common Actions -->
     <string name="home_create">Create</string>
