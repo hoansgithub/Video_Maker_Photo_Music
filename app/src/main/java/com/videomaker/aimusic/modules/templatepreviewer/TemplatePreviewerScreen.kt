@@ -354,7 +354,7 @@ private fun TemplatePreviewerReadyContent(
 
     // Priority-based image preloading: current page first, then adjacent pages
     // Use singleton ImageLoader to avoid memory leaks from creating new instances
-    val imageLoader = remember { context.imageLoader }
+    val imageLoader = remember { coil.Coil.imageLoader(context) }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
