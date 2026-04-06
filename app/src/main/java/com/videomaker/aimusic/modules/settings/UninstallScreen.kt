@@ -2,6 +2,7 @@ package com.videomaker.aimusic.modules.settings
 
 import android.content.Intent
 import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -314,7 +315,7 @@ fun UninstallScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = stringResource(R.string.uninstall_confirm),
                 fontSize = 16.sp,
@@ -322,15 +323,31 @@ fun UninstallScreen(
                 color = Color.White,
                 modifier = Modifier
                     .clickableSingle{
-                        val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
-                            data = Uri.parse("package:${context.packageName}")
-                            putExtra(Intent.EXTRA_RETURN_RESULT, true)
+                        val packageUri = Uri.parse("package:${context.packageName}")
+
+                        val uninstallIntent = Intent(Intent.ACTION_DELETE).apply {
+                            data = packageUri
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
-                        context.startActivity(intent)
+
+                        try {
+                            if (uninstallIntent.resolveActivity(context.packageManager) != null) {
+                                context.startActivity(uninstallIntent)
+                            } else {
+                                val settingsIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = packageUri
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                context.startActivity(settingsIntent)
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                     }
+                    .padding(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Button(
                 onClick = onNavigateBack,
