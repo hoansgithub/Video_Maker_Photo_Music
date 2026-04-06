@@ -386,7 +386,7 @@ internal fun UnifiedTemplateGrid(
 ) {
     val dimens = AppDimens.current
 
-    // Pre-calculate aspect ratios for StaggeredGrid
+    // ✅ OPTIMIZED: Pre-calculate aspect ratios once when templates list changes
     val aspectRatios = remember(templates) {
         templates.map { parseAspectRatio(it.aspectRatio) }
     }

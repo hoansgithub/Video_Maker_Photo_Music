@@ -568,16 +568,18 @@ private fun ProjectsStaggeredGrid(
 ) {
     if (projects.isEmpty()) return
 
-    // Calculate adjusted aspect ratios to account for info section height
+    // ✅ OPTIMIZED: Pre-calculate adjusted aspect ratios once when projects list changes
     // Info section needs ~40dp for: date+menu row (20dp) + padding (20dp)
     val infoSectionHeightDp = 40f
-    val aspectRatios = projects.map { project ->
-        val thumbnailRatio = project.settings.aspectRatio.ratio
-        // Adjust ratio: assume card width of 180dp as baseline
-        val cardWidth = 180f
-        val thumbnailHeight = cardWidth / thumbnailRatio
-        val totalCardHeight = thumbnailHeight + infoSectionHeightDp
-        cardWidth / totalCardHeight // Adjusted ratio for full card including info section
+    val aspectRatios = remember(projects) {
+        projects.map { project ->
+            val thumbnailRatio = project.settings.aspectRatio.ratio
+            // Adjust ratio: assume card width of 180dp as baseline
+            val cardWidth = 180f
+            val thumbnailHeight = cardWidth / thumbnailRatio
+            val totalCardHeight = thumbnailHeight + infoSectionHeightDp
+            cardWidth / totalCardHeight // Adjusted ratio for full card including info section
+        }
     }
 
     StaggeredGrid(

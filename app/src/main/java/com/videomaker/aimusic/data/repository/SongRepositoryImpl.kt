@@ -145,6 +145,7 @@ class SongRepositoryImpl(
                         eq("is_active", true)
                     }
                     order("sort_order", Order.DESCENDING)
+                    limit(100)  // ✅ FIX: Prevent fetching billions of genres
                 }
                 .decodeList<GenreDto>()
                 .map { SongGenre(id = it.id, displayName = it.displayName.ifEmpty { it.id }) }
