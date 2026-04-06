@@ -915,7 +915,7 @@ private fun TemplateThumbnailPage(
                 .diskCacheKey("template_preview_${template.id}")  // Consistent disk cache key
                 .precision(Precision.INEXACT)  // Allow downsampling
                 .scale(Scale.FILL)  // Faster than FIT - fills viewport with crop
-                .allowHardware(true)  // Use GPU decoding for speed
+                .allowHardware(!isCurrentPage)  // Hardware bitmap only for static pages (animation needs software bitmap)
                 .apply {
                     if (!isCurrentPage) {
                         // Static first frame only — bypasses ImageDecoderDecoder (animated WebP)
