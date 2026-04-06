@@ -100,9 +100,17 @@ fun MusicPlayerBottomSheet(
     val viewModel: MusicPlayerViewModel = viewModel(
         key = "player_${song.id}",
         factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                playerFactory.create(song.id) as T
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val viewModel = playerFactory.create(song.id)
+                if (modelClass.isAssignableFrom(viewModel::class.java)) {
+                    @Suppress("UNCHECKED_CAST")
+                    return viewModel as T
+                } else {
+                    throw IllegalArgumentException(
+                        "Unknown ViewModel: ${modelClass.name}, expected: ${viewModel::class.java.name}"
+                    )
+                }
+            }
         }
     )
     val isLiked by viewModel.isLiked.collectAsStateWithLifecycle()
@@ -121,10 +129,10 @@ fun MusicPlayerBottomSheet(
     val player = remember {
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                /* minBufferMs = */ 1500,      // Start playback after 1.5s (faster start)
+                /* minBufferMs = */ 2500,      // Balanced: faster than default, stable on slow networks
                 /* maxBufferMs = */ 15000,     // Max buffer 15s (reduced from default 50s)
-                /* bufferForPlaybackMs = */ 500,   // Start after 0.5s buffered
-                /* bufferForPlaybackAfterRebufferMs = */ 1000  // Resume after 1s rebuffer
+                /* bufferForPlaybackMs = */ 1500,   // Start after 1.5s buffered (safer than 500ms)
+                /* bufferForPlaybackAfterRebufferMs = */ 2500  // ExoPlayer default for stability
             )
             .setPrioritizeTimeOverSizeThresholds(true)  // Favor low latency over buffer size
             .build()

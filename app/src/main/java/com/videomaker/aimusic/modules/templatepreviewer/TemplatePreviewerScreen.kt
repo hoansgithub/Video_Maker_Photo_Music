@@ -167,10 +167,10 @@ fun TemplatePreviewerScreen(
         // Optimized LoadControl for faster music streaming
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                /* minBufferMs */ 1500,      // Start playback after 1.5s (faster start)
+                /* minBufferMs */ 2500,      // Balanced: faster than default, stable on slow networks
                 /* maxBufferMs */ 15000,     // Max buffer 15s (reduced from default 50s)
-                /* bufferForPlaybackMs */ 500,      // Start playback after 0.5s buffered
-                /* bufferForPlaybackAfterRebufferMs */ 1000  // Resume after 1s rebuffer
+                /* bufferForPlaybackMs */ 1500,      // Start playback after 1.5s buffered (safer than 500ms)
+                /* bufferForPlaybackAfterRebufferMs */ 2500  // ExoPlayer default for stability
             )
             .setPrioritizeTimeOverSizeThresholds(true)  // Favor low latency over size
             .build()
@@ -861,9 +861,9 @@ private fun TemplateThumbnailPage(template: VideoTemplate, isCurrentPage: Boolea
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .networkCachePolicy(CachePolicy.ENABLED)  // Enable network cache
-                .memoryCacheKey("${template.id}_${if (isCurrentPage) "anim" else "static"}")
+                .diskCacheKey("template_${template.id}")  // Consistent disk cache key
                 .precision(Precision.INEXACT)
-                .scale(Scale.FILL)  // Faster than FIT
+                .scale(Scale.FIT)  // Preserve full thumbnail
                 .allowHardware(true)  // Use GPU decoding for speed
                 .apply {
                     if (!isCurrentPage) {
