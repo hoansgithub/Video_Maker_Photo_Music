@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.VideoQuality
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 
 /**
  * Reusable Quality Picker Component
@@ -65,7 +66,7 @@ fun QualityPicker(
                     color = buttonColor,
                     shape = RoundedCornerShape(16.dp)
                 )
-                .clickable { showQualityMenu = true }
+                .clickableSingle { showQualityMenu = true }
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically

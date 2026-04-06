@@ -73,6 +73,7 @@ import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.media.audio.MusicPreviewManager
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.AppDimens
 import org.koin.compose.koinInject
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
@@ -245,7 +246,7 @@ internal fun MusicSearchBottomSheet(
                             .size(40.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primary)
-                            .clickable {
+                            .clickableSingle {
                                 val selectedId = MusicPreviewManager.getSelectedId()
                                 if (selectedId != null) {
                                     val song = when (val state = uiState) {
@@ -331,7 +332,7 @@ internal fun MusicSearchBottomSheet(
                             tint = TextTertiary,
                             modifier = Modifier
                                 .size(20.dp)
-                                .clickable { viewModel.onClearQuery() }
+                                .clickableSingle { viewModel.onClearQuery() }
                         )
                     }
                 }

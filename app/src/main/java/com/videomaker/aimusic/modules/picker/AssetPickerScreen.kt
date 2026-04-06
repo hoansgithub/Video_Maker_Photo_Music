@@ -97,6 +97,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.FoundationBlack_100
 import com.videomaker.aimusic.ui.theme.PlayerCardBackground
 import com.videomaker.aimusic.ui.theme.Primary
@@ -548,7 +549,7 @@ private fun AssetPickerContent(
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(24.dp)
-                                    .clickable {
+                                    .clickableSingle {
                                         onClearSelection.invoke()
                                     }
                             )
@@ -699,7 +700,7 @@ private fun LimitedAccessBanner(
             ),
             modifier = Modifier
                 .background(TextPrimaryDark.copy(0.12f), RoundedCornerShape(12.dp))
-                .clickable {
+                .clickableSingle {
                     onAddMoreClick.invoke()
                 }
                 .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -821,7 +822,7 @@ private fun ImageGridItem(
         modifier = Modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
+            .clickableSingle(onClick = onClick)
     ) {
         AssetThumbnail(asset = asset)
 
@@ -851,7 +852,7 @@ private fun ImageGridChooseItem(
         modifier = Modifier
             .size(80.dp)
             .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
+            .clickableSingle(onClick = onClick)
     ) {
         AssetThumbnail(asset = asset)
 
@@ -861,7 +862,7 @@ private fun ImageGridChooseItem(
             modifier = Modifier
                 .padding(4.dp)
                 .size(20.dp)
-                .clickable { onClick() }
+                .clickableSingle { onClick() }
                 .align(Alignment.TopEnd)
         )
     }

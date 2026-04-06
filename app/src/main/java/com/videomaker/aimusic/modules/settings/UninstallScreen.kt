@@ -71,6 +71,7 @@ import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.ui.components.AppAsyncImage
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.FoundationBlack
@@ -320,7 +321,7 @@ fun UninstallScreen(
                 fontWeight = FontWeight.W500,
                 color = Color.White,
                 modifier = Modifier
-                    .clickable{
+                    .clickableSingle{
                         val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
                             data = Uri.parse("package:${context.packageName}")
                             putExtra(Intent.EXTRA_RETURN_RESULT, true)
@@ -388,9 +389,7 @@ private fun TemplateCard(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .matchParentSize()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
+                        .clickableSingle(
                             onClick = { onClick(template) }
                         )
                 )
@@ -398,9 +397,7 @@ private fun TemplateCard(
                 ShimmerPlaceholder(
                     modifier = Modifier
                         .matchParentSize()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
+                        .clickableSingle(
                             onClick = { onClick(template) }
                         ),
                     cornerRadius = 18.dp

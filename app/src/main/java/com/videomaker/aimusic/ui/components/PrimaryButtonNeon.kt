@@ -37,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -162,9 +163,7 @@ fun PrimaryButtonNeon(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier
                 .clip(pillShape)
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
+                .clickableSingle(
                     onClick = onClick
                 )
                 .padding(vertical = 12.dp, horizontal = 50.dp)

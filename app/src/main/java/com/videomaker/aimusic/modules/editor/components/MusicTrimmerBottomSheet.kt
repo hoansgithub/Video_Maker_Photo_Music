@@ -45,6 +45,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import kotlinx.coroutines.Dispatchers
@@ -230,7 +231,7 @@ fun MusicSettingsBottomSheet(
                     modifier = Modifier
                         .size(40.dp)
                         .background(MaterialTheme.colorScheme.primary, CircleShape)
-                        .clickable {
+                        .clickableSingle {
                             musicPlayer.pause()
                             onApply()
                         },

@@ -52,6 +52,7 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.SupportedLanguage
 import com.videomaker.aimusic.core.data.local.getAllLanguages
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.ui.theme.Black12
 import com.videomaker.aimusic.ui.theme.Black20
@@ -214,7 +215,7 @@ private fun LanguageCard(
                 color = if (isSelected) accentColor else Gray700,
                 shape = cardShape
             )
-            .clickable(onClick = onClick)
+            .clickableSingle(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 18.dp)
     ) {
         Text(
@@ -300,7 +301,7 @@ internal fun OnboardingCtaButton(
                 )
             }
             .border(1.dp, White20, shape)
-            .clickable(enabled = enabled, onClick = onClick)
+            .clickableSingle(enabled = enabled, onClick = onClick)
             .padding(vertical = 12.dp, horizontal = 20.dp)
     ) {
         Text(
@@ -362,7 +363,7 @@ internal fun OnboardingCtaMaxWidthButton(
                 )
             }
             .border(1.dp, White20, shape)
-            .clickable(enabled = enabled, onClick = onClick)
+            .clickableSingle(enabled = enabled, onClick = onClick)
             .padding(vertical = 12.dp, horizontal = 20.dp)
     ) {
         Text(
