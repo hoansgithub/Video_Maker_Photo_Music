@@ -352,10 +352,36 @@ private fun TemplatePreviewerReadyContent(
             .collect { onPageChanged(it) }
     }
 
+    // Preload images for adjacent pages for smoother scrolling
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()
+            .collect { currentPage ->
+                val imageLoader = coil.ImageLoader(context)
+                // Preload 3 pages ahead and 1 behind
+                for (offset in -1..3) {
+                    val pageIndex = (currentPage + offset)
+                    if (pageIndex >= 0 && pageIndex < VIRTUAL_PAGE_COUNT) {
+                        val template = templates[pageIndex % templates.size]
+                        val imageUrl = template.previewImagePath.ifEmpty { template.thumbnailPath }
+                        if (imageUrl.isNotEmpty()) {
+                            val request = coil.request.ImageRequest.Builder(context)
+                                .data(imageUrl)
+                                .size(1080, 1920)
+                                .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                                .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                                .build()
+                            imageLoader.enqueue(request)
+                        }
+                    }
+                }
+            }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         VerticalPager(
             state = pagerState,
-            beyondViewportPageCount = 1,
+            beyondViewportPageCount = 2,  // Preload 2 pages ahead/behind for smoother scrolling
             modifier = Modifier.fillMaxSize(),
             key = { pageIndex -> templates[pageIndex % templates.size].id }
         ) { pageIndex ->
@@ -848,8 +874,8 @@ private fun MusicInfoCapsule(currentSong: SongLoadState, playerDurationMs: Long?
 @Composable
 private fun TemplateThumbnailPage(template: VideoTemplate, isCurrentPage: Boolean) {
     val context = LocalContext.current
-    // Use smaller thumbnail for faster loading, fallback to preview for quality
-    val thumbnailUrl = template.thumbnailPath.ifEmpty { template.previewImagePath.ifEmpty { null } }
+    // Use high-res preview for full-screen display, fallback to thumbnail
+    val imageUrl = template.previewImagePath.ifEmpty { template.thumbnailPath.ifEmpty { null } }
 
     Box(
         modifier = Modifier.fillMaxSize().background(Color.Black),
@@ -857,13 +883,14 @@ private fun TemplateThumbnailPage(template: VideoTemplate, isCurrentPage: Boolea
     ) {
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(context)
-                .data(thumbnailUrl)
+                .data(imageUrl)
+                .size(1080, 1920)  // Limit to typical phone screen size for faster loading
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .networkCachePolicy(CachePolicy.ENABLED)  // Enable network cache
-                .diskCacheKey("template_${template.id}")  // Consistent disk cache key
-                .precision(Precision.INEXACT)
-                .scale(Scale.FIT)  // Preserve full thumbnail
+                .diskCacheKey("template_preview_${template.id}")  // Consistent disk cache key
+                .precision(Precision.INEXACT)  // Allow downsampling
+                .scale(Scale.FILL)  // Faster than FIT - fills viewport with crop
                 .allowHardware(true)  // Use GPU decoding for speed
                 .apply {
                     if (!isCurrentPage) {
