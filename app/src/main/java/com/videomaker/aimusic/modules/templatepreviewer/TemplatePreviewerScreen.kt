@@ -97,7 +97,6 @@ import coil.compose.SubcomposeAsyncImage
 import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
-import coil.request.Priority
 import coil.size.Precision
 import coil.size.Scale
 import com.videomaker.aimusic.domain.model.VideoTemplate
@@ -360,22 +359,21 @@ private fun TemplatePreviewerReadyContent(
             .collect { currentPage ->
                 val imageLoader = coil.ImageLoader(context)
 
-                // PRIORITY 1: Load current page immediately with HIGH priority
+                // PRIORITY 1: Load current page immediately (loads first by order)
                 val currentTemplate = templates[currentPage % templates.size]
                 val currentImageUrl = currentTemplate.previewImagePath.ifEmpty { currentTemplate.thumbnailPath }
                 if (currentImageUrl.isNotEmpty()) {
                     val currentRequest = coil.request.ImageRequest.Builder(context)
                         .data(currentImageUrl)
                         .size(378, 672)  // Match original size - avoid upscaling
-                        .priority(Priority.HIGH)  // HIGH priority for visible page
                         .diskCachePolicy(coil.request.CachePolicy.ENABLED)
                         .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
                         .build()
                     imageLoader.enqueue(currentRequest)
                 }
 
-                // PRIORITY 2: Delay 100ms, then preload adjacent pages with LOW priority
-                delay(100)
+                // PRIORITY 2: Delay 150ms to ensure current page loads first
+                delay(150)
 
                 // Preload next 3 pages and previous 1 page (low priority background loading)
                 for (offset in -1..3) {
@@ -389,7 +387,6 @@ private fun TemplatePreviewerReadyContent(
                             val request = coil.request.ImageRequest.Builder(context)
                                 .data(imageUrl)
                                 .size(378, 672)  // Match original size - avoid upscaling
-                                .priority(Priority.LOW)  // LOW priority for preloading
                                 .diskCachePolicy(coil.request.CachePolicy.ENABLED)
                                 .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
                                 .build()
@@ -898,7 +895,7 @@ private fun MusicInfoCapsule(currentSong: SongLoadState, playerDurationMs: Long?
 private fun TemplateThumbnailPage(
     template: VideoTemplate,
     isCurrentPage: Boolean,
-    isPriorityPage: Boolean = false  // True for visible/settled page
+    isPriorityPage: Boolean = false  // True for visible/settled page (kept for future use)
 ) {
     val context = LocalContext.current
     // Use high-res preview for full-screen display, fallback to thumbnail
@@ -912,7 +909,6 @@ private fun TemplateThumbnailPage(
             model = ImageRequest.Builder(context)
                 .data(imageUrl)
                 .size(378, 672)  // Match original size - avoid upscaling
-                .priority(if (isPriorityPage) Priority.HIGH else Priority.NORMAL)  // Prioritize visible page
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .networkCachePolicy(CachePolicy.ENABLED)  // Enable network cache
