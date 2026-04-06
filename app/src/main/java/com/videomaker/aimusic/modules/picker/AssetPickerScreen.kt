@@ -62,11 +62,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -83,6 +85,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
 import coil.compose.SubcomposeAsyncImage
@@ -94,6 +99,8 @@ import com.videomaker.aimusic.ui.theme.FoundationBlack_100
 import com.videomaker.aimusic.ui.theme.PlayerCardBackground
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.TextPrimaryDark
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 /**
  * Thumbnail size in pixels for image grid
@@ -107,6 +114,31 @@ private const val GRID_COLUMNS = 3
  * This prevents janky animation when loading images while sheet is expanding
  */
 private const val SHEET_ANIMATION_DELAY_MS = 350L
+
+private fun readPermissionSnapshot(context: android.content.Context): PermissionSnapshot {
+    val hasFullPermission = when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.READ_MEDIA_IMAGES
+            ) == PackageManager.PERMISSION_GRANTED
+        else ->
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+    }
+    val hasLimitedPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+        ) == PackageManager.PERMISSION_GRANTED
+
+    return PermissionSnapshot(
+        fullGranted = hasFullPermission,
+        limitedGranted = hasLimitedPermission
+    )
+}
 
 /**
  * AssetPickerScreen - Bottom sheet image picker with permission handling
@@ -134,7 +166,10 @@ fun AssetPickerScreen(
     onNavigateToTemplatePreviewer: (templateId: String, imageUris: List<String>, overrideSongId: Long) -> Unit = { _, _, _ -> }
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val gridScrollState by viewModel.gridScrollState.collectAsStateWithLifecycle()
+    var hasInitializedPermissionCheck by remember { mutableStateOf(false) }
 
     // Show bottom sheet immediately for smooth transition
     var showBottomSheet by remember { mutableStateOf(true) }
@@ -162,13 +197,21 @@ fun AssetPickerScreen(
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
-        val fullGranted = result[Manifest.permission.READ_MEDIA_IMAGES] == true
-                       || result[Manifest.permission.READ_EXTERNAL_STORAGE] == true
+        val fullGranted = result[Manifest.permission.READ_MEDIA_IMAGES] == true ||
+            result[Manifest.permission.READ_EXTERNAL_STORAGE] == true
         val limitedGranted = result[Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED] == true
-        when {
-            fullGranted -> viewModel.onPermissionGranted(isLimited = false)
-            limitedGranted -> viewModel.onPermissionGranted(isLimited = true)
-            else -> viewModel.onPermissionDenied()
+        viewModel.onPermissionSnapshot(
+            snapshot = PermissionSnapshot(
+                fullGranted = fullGranted,
+                limitedGranted = limitedGranted
+            ),
+            source = PermissionUpdateSource.REQUEST_RESULT
+        )
+    }
+
+    LaunchedEffect(permissionLauncher) {
+        viewModel.permissionRequestEvent.collect {
+            permissionLauncher.launch(permissionsToRequest)
         }
     }
 
@@ -191,21 +234,24 @@ fun AssetPickerScreen(
     // Wait for sheet animation to complete, then check permission and load images
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(SHEET_ANIMATION_DELAY_MS)
+        hasInitializedPermissionCheck = true
+        viewModel.onPermissionSnapshot(
+            snapshot = readPermissionSnapshot(context),
+            source = PermissionUpdateSource.INITIAL
+        )
+    }
 
-        val hasFullPermission = when {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
-                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
-            else ->
-                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+    DisposableEffect(lifecycleOwner, hasInitializedPermissionCheck) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && hasInitializedPermissionCheck) {
+                viewModel.onPermissionSnapshot(
+                    snapshot = readPermissionSnapshot(context),
+                    source = PermissionUpdateSource.RESUME
+                )
+            }
         }
-        val hasLimitedPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED) == PackageManager.PERMISSION_GRANTED
-
-        when {
-            hasFullPermission -> viewModel.onPermissionGranted(isLimited = false)
-            hasLimitedPermission -> viewModel.onPermissionGranted(isLimited = true)
-            else -> permissionLauncher.launch(permissionsToRequest)
-        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     // Opens app's system settings page (used by DeniedPermission "Go to Settings" button)
@@ -306,8 +352,12 @@ fun AssetPickerScreen(
             AssetPickerContent(
                 uiState = uiState,
                 minSelection = viewModel.minSelection,
+                initialGridScrollState = gridScrollState,
                 onAlbumSelect = { albumId -> viewModel.selectAlbum(albumId) },
                 onAssetClick = { asset -> viewModel.toggleAssetSelection(asset) },
+                onGridScrollChanged = { index, offset ->
+                    viewModel.onGridScrollChanged(index, offset)
+                },
                 onConfirmClick = { viewModel.confirmSelection() },
                 onClearSelection = {viewModel.clearSelection()},
                 onCloseClick = {
@@ -327,8 +377,10 @@ fun AssetPickerScreen(
 private fun AssetPickerContent(
     uiState: AssetPickerUiState,
     minSelection: Int,
+    initialGridScrollState: AssetPickerGridScrollState,
     onAlbumSelect: (String) -> Unit,
     onAssetClick: (GalleryAsset) -> Unit,
+    onGridScrollChanged: (Int, Int) -> Unit,
     onConfirmClick: () -> Unit,
     onClearSelection: () -> Unit,
     onCloseClick: () -> Unit,
@@ -410,6 +462,8 @@ private fun AssetPickerContent(
                         assets = uiState.filteredAssets,
                         selectedAssets = uiState.selectedAssets,
                         onAssetClick = onAssetClick,
+                        initialScrollState = initialGridScrollState,
+                        onScrollChanged = onGridScrollChanged,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -611,9 +665,24 @@ private fun ImageGrid(
     assets: List<GalleryAsset>,
     selectedAssets: List<GalleryAsset>,
     onAssetClick: (GalleryAsset) -> Unit,
+    initialScrollState: AssetPickerGridScrollState,
+    onScrollChanged: (Int, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val gridState = rememberLazyGridState()
+    val gridState = rememberLazyGridState(
+        initialFirstVisibleItemIndex = initialScrollState.firstVisibleItemIndex,
+        initialFirstVisibleItemScrollOffset = initialScrollState.firstVisibleItemOffset
+    )
+
+    LaunchedEffect(gridState) {
+        snapshotFlow {
+            gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
+        }
+            .distinctUntilChanged()
+            .collect { (index, offset) ->
+                onScrollChanged(index, offset)
+            }
+    }
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(GRID_COLUMNS),
