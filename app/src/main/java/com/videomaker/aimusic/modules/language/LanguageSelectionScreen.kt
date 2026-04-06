@@ -88,9 +88,8 @@ fun LanguageSelectionScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
-                .padding(top = 16.dp, bottom = 120.dp),
+                .padding(top = 16.dp, bottom = if (showBackButton) 120.dp else 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (showBackButton) {
@@ -130,23 +129,32 @@ fun LanguageSelectionScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(36.dp))
-
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
             ) {
-                languages.forEach { language ->
-                    LanguageCard(
-                        language = language,
-                        isSelected = selectedLanguage == language.code,
-                        onClick = {
-                            selectedLanguage = language.code
-                            onLanguageSelected(language.code)
-                        }
-                    )
+
+                Spacer(modifier = Modifier.height(36.dp))
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    languages.forEach { language ->
+                        LanguageCard(
+                            language = language,
+                            isSelected = selectedLanguage == language.code,
+                            onClick = {
+                                selectedLanguage = language.code
+                                onLanguageSelected(language.code)
+                            }
+                        )
+                    }
+
                 }
 
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
