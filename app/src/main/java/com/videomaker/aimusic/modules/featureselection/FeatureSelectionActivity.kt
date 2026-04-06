@@ -22,8 +22,10 @@ import androidx.compose.ui.unit.dp
 import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.data.local.PreferencesManager
+import com.videomaker.aimusic.modules.language.OnboardingCtaButton
 import com.videomaker.aimusic.modules.onboarding.OnboardingViewModel
 import com.videomaker.aimusic.modules.onboarding.pages.FeatureSurveyPage
+import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -47,35 +49,39 @@ class FeatureSelectionActivity : AppCompatActivity() {
                         onFeatureToggle = onboardingViewModel::toggleFeature
                     )
 
-                    Button(
-                        onClick = {
-                            if (isSaving) return@Button
-                            isSaving = true
-                            onboardingViewModel.saveFeatures { result ->
-                                runOnUiThread {
-                                    result.onSuccess {
-                                        val selectedFeature = onboardingViewModel.selectedFeatures.firstOrNull()
-                                        val initialTab = mapFeatureToInitialTab(selectedFeature)
-                                        preferencesManager.setHomeInitialTabFromOnboarding(initialTab)
-                                        preferencesManager.setFeatureSelectionComplete(true)
-                                        navigateToMain(initialTab)
-                                    }.onFailure {
-                                        isSaving = false
-                                        Toast.makeText(
-                                            this@FeatureSelectionActivity,
-                                            getString(R.string.root_try_again),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-                            }
-                        },
-                        enabled = onboardingViewModel.selectedFeatures.isNotEmpty() && !isSaving,
+                    Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(horizontal = 24.dp, vertical = 48.dp)
                     ) {
-                        Text(text = stringResource(R.string.onboarding_get_started))
+                        OnboardingCtaButton(
+                            text = stringResource(R.string.onboarding_get_started),
+                            onClick = {
+                                if (isSaving) return@OnboardingCtaButton
+                                isSaving = true
+                                onboardingViewModel.saveFeatures { result ->
+                                    runOnUiThread {
+                                        result.onSuccess {
+                                            val selectedFeature = onboardingViewModel.selectedFeatures.firstOrNull()
+                                            val initialTab = mapFeatureToInitialTab(selectedFeature)
+                                            preferencesManager.setHomeInitialTabFromOnboarding(initialTab)
+                                            preferencesManager.setFeatureSelectionComplete(true)
+                                            navigateToMain(initialTab)
+                                        }.onFailure {
+                                            isSaving = false
+                                            Toast.makeText(
+                                                this@FeatureSelectionActivity,
+                                                getString(R.string.root_try_again),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                }
+                            },
+                            enabled = onboardingViewModel.selectedFeatures.isNotEmpty() && !isSaving,
+                            color = Primary,
+                            icon = R.drawable.ic_checkmark
+                        )
                     }
                 }
             }

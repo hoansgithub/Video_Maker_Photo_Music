@@ -296,8 +296,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Simulan ang Iyong Paglalakbay</string>
     <string name="onboarding_page4_subtitle">Nakakatulong ito sa amin para mairekomenda ang pinaka-angkop na nilalaman para sa iyo.</string>
-    <string name="feature_music_video_instant">Gumawa ng music video agad</string>
-    <string name="feature_photos_to_video">Gawing music video ang mga larawan</string>
+    <string name="feature_music_video_instant">Mag-browse ng mga template ng video</string>
+    <string name="feature_photos_to_video">Magsimula sa isang kanta</string>
     <string name="feature_trending_templates">Gamitin ang mga trending na template</string>
     <string name="feature_trending_music">Magdagdag ng trending na musika</string>
 

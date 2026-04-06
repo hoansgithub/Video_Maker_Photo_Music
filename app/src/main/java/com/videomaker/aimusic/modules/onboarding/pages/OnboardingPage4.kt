@@ -60,7 +60,7 @@ internal data class FeatureItem(val id: String, val icon: Int, val nameResId: In
 
 internal val featureItems = listOf(
     FeatureItem("music_video_instant", R.drawable.ic_lead_search,     R.string.feature_music_video_instant),
-    FeatureItem("photos_to_video",     R.drawable.ic_lead_search, R.string.feature_photos_to_video),
+    FeatureItem("photos_to_video",     R.drawable.ic_music_note, R.string.feature_photos_to_video),
 //    FeatureItem("trending_templates",  Icons.Default.AutoAwesome,  R.string.feature_trending_templates),
 //    FeatureItem("trending_music",      Icons.Default.MusicNote,    R.string.feature_trending_music),
 )

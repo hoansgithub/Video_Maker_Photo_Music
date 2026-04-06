@@ -296,8 +296,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">ابدأ رحلتك</string>
     <string name="onboarding_page4_subtitle">هذا يساعدنا على اقتراح المحتوى الأكثر ملاءمة لك.</string>
-    <string name="feature_music_video_instant">اصنع فيديو موسيقي فوراً</string>
-    <string name="feature_photos_to_video">حوّل الصور إلى فيديو موسيقي</string>
+    <string name="feature_music_video_instant">تصفح قوالب الفيديو</string>
+    <string name="feature_photos_to_video">ابدأ بأغنية</string>
     <string name="feature_trending_templates">استخدم القوالب الرائجة</string>
     <string name="feature_trending_music">أضف موسيقى رائجة</string>
 

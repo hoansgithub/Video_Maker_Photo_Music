@@ -296,8 +296,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Yolculuğunuza Başlayın</string>
     <string name="onboarding_page4_subtitle">Bu, sizin için en uygun içeriği önermemize yardımcı olur.</string>
-    <string name="feature_music_video_instant">Anında müzik videosu oluşturun</string>
-    <string name="feature_photos_to_video">Fotoğrafları müzik videosuna dönüştürün</string>
+    <string name="feature_music_video_instant">Video Şablonlarına Göz Atın</string>
+    <string name="feature_photos_to_video">Bir Şarkıyla Başlayın</string>
     <string name="feature_trending_templates">Trend şablonları kullanın</string>
     <string name="feature_trending_music">Trend müzik ekleyin</string>
 

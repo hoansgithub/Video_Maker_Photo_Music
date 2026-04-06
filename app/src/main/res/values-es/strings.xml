@@ -296,8 +296,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Comienza Tu Viaje</string>
     <string name="onboarding_page4_subtitle">Esto nos ayuda a recomendarte el contenido más relevante para ti.</string>
-    <string name="feature_music_video_instant">Crea un video musical al instante</string>
-    <string name="feature_photos_to_video">Convierte fotos en video musical</string>
+    <string name="feature_music_video_instant">Explora plantillas de video</string>
+    <string name="feature_photos_to_video">Empieza con una canción</string>
     <string name="feature_trending_templates">Usa plantillas en tendencia</string>
     <string name="feature_trending_music">Añade música en tendencia</string>
 

@@ -296,8 +296,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">अपनी यात्रा शुरू करें</string>
     <string name="onboarding_page4_subtitle">इससे हमें आपके लिए सबसे प्रासंगिक कंटेंट सुझाने में मदद मिलती है।</string>
-    <string name="feature_music_video_instant">फ़ौरन म्यूज़िक वीडियो बनाएं</string>
-    <string name="feature_photos_to_video">फ़ोटो को म्यूज़िक वीडियो में बदलें</string>
+    <string name="feature_music_video_instant">वीडियो टेम्पलेट्स ब्राउज़ करें</string>
+    <string name="feature_photos_to_video">किसी गाने से शुरू करें</string>
     <string name="feature_trending_templates">ट्रेंडिंग टेम्पलेट्स उपयोग करें</string>
     <string name="feature_trending_music">ट्रेंडिंग म्यूज़िक जोड़ें</string>
 

@@ -15,7 +15,7 @@
 
     <!-- Onboarding -->
     <string name="onboarding_next">Next</string>
-    <string name="onboarding_get_started">Done</string>
+    <string name="onboarding_get_started">Get started</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Create Magic in Seconds</string>
     <string name="onboarding_page1_subtitle">Stunning Video in a few taps. Simple and fast</string>
@@ -356,8 +356,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">How do you want to  start ?</string>
     <string name="onboarding_page4_subtitle">This helps us recommend the most relevant content for you.</string>
-    <string name="feature_music_video_instant">Make a music video instantly</string>
-    <string name="feature_photos_to_video">Turn photos into a music video</string>
+    <string name="feature_music_video_instant">Browse Video Templates</string>
+    <string name="feature_photos_to_video">Start with a Song</string>
     <string name="feature_trending_templates">Use trending templates</string>
     <string name="feature_trending_music">Add trending music</string>
 
