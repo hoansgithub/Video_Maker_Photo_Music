@@ -317,6 +317,15 @@ fun MusicSettingsBottomSheet(
                 },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Text(
+                text = "${stringResource(R.string.editor_music_trim_duration)}: " +
+                    formatMusicTrimTime((trimEndMs - trimStartMs).coerceAtLeast(0L)),
+                color = TextPrimary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
         }
     }
 }
