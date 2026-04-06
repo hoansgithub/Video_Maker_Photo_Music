@@ -133,7 +133,7 @@ val dataModule = module {
     single<ProjectRepository> { ProjectRepositoryImpl(get(), get()) }
     single<ExportRepository> { ExportRepositoryImpl(get()) }
     single<SongRepository> { SongRepositoryImpl(get(), get(), regionProvider = get()) }
-    single<TemplateRepository> { TemplateRepositoryImpl(get(), get(), regionProvider = get()) }
+    single<TemplateRepository> { TemplateRepositoryImpl(get(), get(), regionProvider = get(), languageManager = get()) }
     single<EffectSetRepository> { EffectSetRepositoryImpl(get(), get(), get()) }
     single<LikedSongRepository> { LikedSongRepositoryImpl(get()) }
     single<LikedTemplateRepository> { LikedTemplateRepositoryImpl(get()) }
@@ -182,7 +182,7 @@ val domainModule = module {
     factory { CheckLanguageSelectedUseCase(get()) }
     factory { CompleteLanguageSelectionUseCase(get()) }
     factory { GetSelectedLanguageUseCase(get()) }
-    factory { SaveLanguagePreferenceUseCase(get(), get()) }  // Inject RegionProvider to invalidate cache on language change
+    factory { SaveLanguagePreferenceUseCase(get(), get(), get()) }  // LanguageManager, RegionProvider, TemplateRepository
     factory { ApplyLanguageUseCase(get()) }
 
     // Project use cases

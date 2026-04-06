@@ -8,6 +8,8 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -77,7 +79,9 @@ class LanguageSelectionActivity : AppCompatActivity() {
                     LanguageSelectionScreen(
                         showBackButton = false,
                         onLanguageSelected = { languageCode ->
-                            saveLanguagePreferenceUseCase(languageCode)
+                            lifecycleScope.launch {
+                                saveLanguagePreferenceUseCase(languageCode)
+                            }
                         },
                         onContinue = {
                             completeLanguageSelectionUseCase()

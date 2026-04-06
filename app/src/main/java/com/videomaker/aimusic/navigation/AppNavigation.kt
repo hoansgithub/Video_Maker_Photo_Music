@@ -19,10 +19,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import com.videomaker.aimusic.widget.appwidget.WidgetActions
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
@@ -520,12 +522,15 @@ fun AppNavigation(
             entry<AppRoute.LanguageSettings> {
                 val saveLanguage: SaveLanguagePreferenceUseCase = koinInject()
                 val applyLanguage: ApplyLanguageUseCase = koinInject()
+                val coroutineScope = rememberCoroutineScope()
 
                 LanguageSelectionScreen(
                     showBackButton = true,
                     onBackClick = { backStack.removeLastOrNull() },
                     onLanguageSelected = { languageCode ->
-                        saveLanguage(languageCode)
+                        coroutineScope.launch {
+                            saveLanguage(languageCode)
+                        }
                     },
                     onContinue = {
                         applyLanguage()
