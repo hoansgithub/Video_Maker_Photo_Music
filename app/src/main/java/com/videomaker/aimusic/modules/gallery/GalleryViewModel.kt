@@ -27,7 +27,11 @@ import kotlin.random.Random
 
 sealed class TemplateListState {
     data object Loading : TemplateListState()
-    data class Success(val templates: List<VideoTemplate>) : TemplateListState()
+    data class Success(
+        val templates: List<VideoTemplate>,
+        val hasMore: Boolean = false,
+        val isLoadingMore: Boolean = false
+    ) : TemplateListState()
 }
 
 sealed class GalleryUiState {
@@ -75,6 +79,10 @@ class GalleryViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    // Pagination constants
+    private val PAGE_SIZE = 20
+    private val MAX_ITEMS = 100
+
     init {
         loadGalleryData()
     }
@@ -100,8 +108,8 @@ class GalleryViewModel(
                 }
                 val (vibeTags, templates, featuredTemplates) = coroutineScope {
                     val vibeTagsDeferred = async { templateRepository.getVibeTags().getOrElse { emptyList() } }
-                    val templatesDeferred = async { templateRepository.getTemplates(limit = 6, offset = 0).getOrElse { emptyList() } }  // Progressive loading: load 6 first
-                    val featuredDeferred = async { templateRepository.getFeaturedTemplates(limit = 6).getOrElse { emptyList() } }  // Reduced from 10 to 6 for faster loading
+                    val templatesDeferred = async { templateRepository.getTemplates(limit = PAGE_SIZE, offset = 0).getOrElse { emptyList() } }
+                    val featuredDeferred = async { templateRepository.getFeaturedTemplates(limit = 6).getOrElse { emptyList() } }
                     Triple(vibeTagsDeferred.await(), templatesDeferred.await(), featuredDeferred.await())
                 }
 
@@ -110,7 +118,10 @@ class GalleryViewModel(
                     topSongs = topSongs,
                     vibeTags = vibeTags,
                     selectedVibeTagId = null,
-                    templateListState = TemplateListState.Success(templates),
+                    templateListState = TemplateListState.Success(
+                        templates = templates,
+                        hasMore = templates.size >= PAGE_SIZE && templates.size < MAX_ITEMS
+                    ),
                     featuredTemplates = featuredTemplates
                 )
 
@@ -135,14 +146,60 @@ class GalleryViewModel(
 
         viewModelScope.launch {
             val result = if (tagId == null) {
-                templateRepository.getTemplates(limit = 6, offset = 0)  // Progressive loading: load 6 first
+                templateRepository.getTemplates(limit = PAGE_SIZE, offset = 0)
             } else {
-                templateRepository.getTemplatesByVibeTag(tag = tagId, limit = 6, offset = 0)  // Progressive loading: load 6 first
+                templateRepository.getTemplatesByVibeTag(tag = tagId, limit = PAGE_SIZE, offset = 0)
             }
             val templates = result.getOrElse { emptyList() }
             val updated = _uiState.value as? GalleryUiState.Success ?: return@launch
             _uiState.value = updated.copy(
-                templateListState = TemplateListState.Success(templates)
+                templateListState = TemplateListState.Success(
+                    templates = templates,
+                    hasMore = templates.size >= PAGE_SIZE && templates.size < MAX_ITEMS
+                )
+            )
+        }
+    }
+
+    fun loadMore() {
+        val current = _uiState.value as? GalleryUiState.Success ?: return
+        val templateState = current.templateListState as? TemplateListState.Success ?: return
+
+        // Don't load if already loading or no more items
+        if (templateState.isLoadingMore || !templateState.hasMore) return
+
+        // Don't exceed max items
+        if (templateState.templates.size >= MAX_ITEMS) return
+
+        // Set loading state
+        _uiState.value = current.copy(
+            templateListState = templateState.copy(isLoadingMore = true)
+        )
+
+        viewModelScope.launch {
+            val offset = templateState.templates.size
+            val result = if (current.selectedVibeTagId == null) {
+                templateRepository.getTemplates(limit = PAGE_SIZE, offset = offset)
+            } else {
+                templateRepository.getTemplatesByVibeTag(
+                    tag = current.selectedVibeTagId,
+                    limit = PAGE_SIZE,
+                    offset = offset
+                )
+            }
+
+            val newTemplates = result.getOrElse { emptyList() }
+            val updated = _uiState.value as? GalleryUiState.Success ?: return@launch
+            val updatedTemplateState = updated.templateListState as? TemplateListState.Success ?: return@launch
+
+            val combinedTemplates = (updatedTemplateState.templates + newTemplates).take(MAX_ITEMS)
+
+            _uiState.value = updated.copy(
+                templateListState = TemplateListState.Success(
+                    templates = combinedTemplates,
+                    hasMore = newTemplates.size >= PAGE_SIZE && combinedTemplates.size < MAX_ITEMS,
+                    isLoadingMore = false
+                )
             )
         }
     }

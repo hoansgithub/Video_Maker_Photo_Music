@@ -155,7 +155,8 @@ fun GalleryScreen(
                 onTemplateClick = viewModel::onTemplateClick,
                 onSeeAllTemplates = viewModel::onSeeAllTemplatesClick,
                 onCreateClick = viewModel::onCreateClick,
-                onSearchClick = onNavigateToSearch
+                onSearchClick = onNavigateToSearch,
+                onLoadMore = viewModel::loadMore
             )
             is GalleryUiState.Error -> GalleryErrorContent(message = state.message)
         }
@@ -233,7 +234,8 @@ private fun GalleryContent(
     onTemplateClick: (VideoTemplate) -> Unit,
     onSeeAllTemplates: () -> Unit,
     onCreateClick: () -> Unit,
-    onSearchClick: () -> Unit
+    onSearchClick: () -> Unit,
+    onLoadMore: () -> Unit = {}
 ) {
     val dimens = AppDimens.current
 
@@ -298,12 +300,38 @@ private fun GalleryContent(
                     is TemplateListState.Loading -> TemplateGridSkeleton(
                         modifier = Modifier.padding(horizontal = dimens.spaceLg)
                     )
-                    is TemplateListState.Success -> StaggeredTemplateGrid(
-                        templates = templateListState.templates,
-                        onTemplateClick = onTemplateClick,
-                        spacing = dimens.spaceSm,
-                        modifier = Modifier.padding(horizontal = dimens.spaceLg)
-                    )
+                    is TemplateListState.Success -> {
+                        StaggeredTemplateGrid(
+                            templates = templateListState.templates,
+                            onTemplateClick = onTemplateClick,
+                            spacing = dimens.spaceSm,
+                            modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                        )
+
+                        // Trigger load more when grid is visible and has more items
+                        LaunchedEffect(templateListState.templates.size) {
+                            if (templateListState.hasMore && !templateListState.isLoadingMore) {
+                                onLoadMore()
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Loading more indicator
+            if (templateListState is TemplateListState.Success && templateListState.isLoadingMore) {
+                item(key = "loading_more", contentType = "loading_more") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(dimens.spaceLg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator(
+                            modifier = Modifier.size(32.dp),
+                            color = Primary
+                        )
+                    }
                 }
             }
         }
