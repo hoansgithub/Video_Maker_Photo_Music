@@ -186,6 +186,10 @@
     <string name="picker_permission_title">Akses Foto Diperlukan</string>
     <string name="picker_permission_message">Untuk membuat video dari foto Anda, kami memerlukan izin untuk mengakses perpustakaan foto Anda.</string>
     <string name="picker_allow_access">Izinkan Akses</string>
+    <string name="picker_exit_confirm_title">Keluar dari pemilihan gambar?</string>
+    <string name="picker_exit_confirm_message">Anda telah memilih gambar. Jika keluar sekarang, gambar yang dipilih akan dibuang.</string>
+    <string name="picker_exit_confirm">Keluar</string>
+    <string name="picker_exit_stay">Tetap di sini</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Pilih Musik</string>

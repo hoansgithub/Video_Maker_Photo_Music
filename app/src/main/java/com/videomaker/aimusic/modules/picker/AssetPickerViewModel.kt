@@ -305,6 +305,33 @@ class AssetPickerViewModel(
         )
     }
 
+    /**
+     * Keep gallery cache for fast reopen, but clear selected assets when picker closes.
+     */
+    fun onPickerClosed() {
+        val currentState = _uiState.value as? AssetPickerUiState.WithAssets
+        if (currentState != null) {
+            val allAlbumId = AlbumFilterType.ALL
+            val filteredAssets = filterAssetsByAlbum(
+                assets = currentState.assets,
+                albumId = allAlbumId,
+                albums = currentState.albums
+            )
+            val updatedState = currentState.copyAssets(
+                filteredAssets = filteredAssets,
+                selectedAssets = emptyList(),
+                selectedAlbumId = allAlbumId
+            )
+            _uiState.value = updatedState
+            persistSessionSnapshot(updatedState, modeForState(updatedState))
+            return
+        }
+        AssetPickerSessionCache.snapshot = AssetPickerSessionCache.snapshot?.copy(
+            selectedUris = emptySet(),
+            selectedAlbumId = AlbumFilterType.ALL
+        )
+    }
+
     private fun applyPermissionMode(
         newMode: PermissionMode,
         source: PermissionUpdateSource,
@@ -484,7 +511,8 @@ class AssetPickerViewModel(
         AssetPickerSessionCache.snapshot = AssetPickerSessionSnapshot(
             permissionMode = mode,
             assets = state.assets,
-            selectedUris = state.selectedAssets.map { it.uri.toString() }.toSet(),
+            // Do not keep selected items between picker openings.
+            selectedUris = emptySet(),
             selectedAlbumId = state.selectedAlbumId,
             gridScrollState = _gridScrollState.value
         )

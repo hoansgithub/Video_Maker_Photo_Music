@@ -186,6 +186,10 @@
     <string name="picker_permission_title">फ़ोटो एक्सेस आवश्यक</string>
     <string name="picker_permission_message">आपकी फ़ोटो से वीडियो बनाने के लिए, हमें आपकी फ़ोटो लाइब्रेरी तक पहुंच की अनुमति चाहिए।</string>
     <string name="picker_allow_access">एक्सेस की अनुमति दें</string>
+    <string name="picker_exit_confirm_title">छवि चयन से बाहर निकलें?</string>
+    <string name="picker_exit_confirm_message">आपने तस्वीरें चुनी हैं। अभी बाहर निकलने पर चुनी हुई तस्वीरें हटा दी जाएंगी।</string>
+    <string name="picker_exit_confirm">बाहर निकलें</string>
+    <string name="picker_exit_stay">रुकें</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">संगीत चुनें</string>

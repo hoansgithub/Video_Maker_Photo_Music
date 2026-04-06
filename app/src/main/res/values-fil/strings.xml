@@ -186,6 +186,10 @@
     <string name="picker_permission_title">Kailangan ang Access sa Larawan</string>
     <string name="picker_permission_message">Para gumawa ng mga video mula sa iyong mga larawan, kailangan namin ng pahintulot na ma-access ang iyong library ng larawan.</string>
     <string name="picker_allow_access">Payagan ang Access</string>
+    <string name="picker_exit_confirm_title">Lumabas sa pagpili ng larawan?</string>
+    <string name="picker_exit_confirm_message">May napili ka nang mga larawan. Kapag lumabas ka ngayon, mawawala ang mga napiling larawan.</string>
+    <string name="picker_exit_confirm">Lumabas</string>
+    <string name="picker_exit_stay">Manatili</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Pumili ng Musika</string>

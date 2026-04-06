@@ -186,6 +186,10 @@
     <string name="picker_permission_title">Acesso às Fotos Necessário</string>
     <string name="picker_permission_message">Para criar vídeos com suas fotos, precisamos de permissão para acessar sua biblioteca de fotos.</string>
     <string name="picker_allow_access">Permitir Acesso</string>
+    <string name="picker_exit_confirm_title">Sair da seleção de imagens?</string>
+    <string name="picker_exit_confirm_message">Você selecionou imagens. Se sair agora, as imagens selecionadas serão descartadas.</string>
+    <string name="picker_exit_confirm">Sair</string>
+    <string name="picker_exit_stay">Ficar</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Selecionar Música</string>

@@ -37,3 +37,5 @@ internal fun <T> mergeDistinctByKey(
 
     return merged
 }
+
+internal fun shouldShowExitConfirm(selectedCount: Int): Boolean = selectedCount > 0

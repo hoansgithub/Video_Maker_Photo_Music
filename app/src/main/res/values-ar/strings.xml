@@ -186,6 +186,10 @@
     <string name="picker_permission_title">مطلوب الوصول للصور</string>
     <string name="picker_permission_message">لإنشاء فيديوهات من صورك، نحتاج إذن الوصول إلى مكتبة الصور.</string>
     <string name="picker_allow_access">السماح بالوصول</string>
+    <string name="picker_exit_confirm_title">الخروج من اختيار الصور؟</string>
+    <string name="picker_exit_confirm_message">لقد اخترت صورًا. إذا خرجت الآن، سيتم تجاهل الصور التي اخترتها.</string>
+    <string name="picker_exit_confirm">خروج</string>
+    <string name="picker_exit_stay">البقاء</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">اختر الموسيقى</string>

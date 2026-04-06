@@ -9,6 +9,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import java.io.File
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -48,6 +49,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Photo
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -170,6 +172,7 @@ fun AssetPickerScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridScrollState by viewModel.gridScrollState.collectAsStateWithLifecycle()
     var hasInitializedPermissionCheck by remember { mutableStateOf(false) }
+    var showExitConfirmDialog by remember { mutableStateOf(false) }
 
     // Show bottom sheet immediately for smooth transition
     var showBottomSheet by remember { mutableStateOf(true) }
@@ -337,6 +340,24 @@ fun AssetPickerScreen(
         }
     }
 
+    val closePickerAndNavigateBack = {
+        showBottomSheet = false
+        viewModel.onPickerClosed()
+        viewModel.navigateBack()
+    }
+
+    val requestExit = {
+        val selectedCount = (uiState as? AssetPickerUiState.WithAssets)
+            ?.selectedAssets
+            ?.size
+            ?: 0
+        if (shouldShowExitConfirm(selectedCount)) {
+            showExitConfirmDialog = true
+        } else {
+            closePickerAndNavigateBack()
+        }
+    }
+
     // Bottom Sheet
     if (showBottomSheet) {
         ModalBottomSheet(
@@ -361,14 +382,40 @@ fun AssetPickerScreen(
                 onConfirmClick = { viewModel.confirmSelection() },
                 onClearSelection = {viewModel.clearSelection()},
                 onCloseClick = {
-                    showBottomSheet = false
-                    viewModel.navigateBack()
+                    requestExit()
                 },
                 onGoToSettings = goToAppSettings,
                 onAddMorePhotos = onAddMorePhotos,
                 onCameraClick = onCameraClick
             )
         }
+    }
+
+    if (showExitConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirmDialog = false },
+            title = {
+                Text(text = stringResource(R.string.picker_exit_confirm_title))
+            },
+            text = {
+                Text(text = stringResource(R.string.picker_exit_confirm_message))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showExitConfirmDialog = false
+                        closePickerAndNavigateBack()
+                    }
+                ) {
+                    Text(text = stringResource(R.string.picker_exit_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitConfirmDialog = false }) {
+                    Text(text = stringResource(R.string.picker_exit_stay))
+                }
+            }
+        )
     }
 }
 

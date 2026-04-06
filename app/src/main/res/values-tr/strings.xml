@@ -186,6 +186,10 @@
     <string name="picker_permission_title">Fotoğraf Erişimi Gerekli</string>
     <string name="picker_permission_message">Fotoğraflarınızdan video oluşturmak için fotoğraf kütüphanenize erişim iznine ihtiyacımız var.</string>
     <string name="picker_allow_access">Erişime İzin Ver</string>
+    <string name="picker_exit_confirm_title">Görsel seçiminden çıkılsın mı?</string>
+    <string name="picker_exit_confirm_message">Görseller seçtiniz. Şimdi çıkarsanız seçili görseller silinecek.</string>
+    <string name="picker_exit_confirm">Çık</string>
+    <string name="picker_exit_stay">Kal</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Müzik Seç</string>

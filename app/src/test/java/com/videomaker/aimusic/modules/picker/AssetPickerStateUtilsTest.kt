@@ -51,4 +51,11 @@ class AssetPickerStateUtilsTest {
             merged
         )
     }
+
+    @Test
+    fun `show exit confirm only when there are selected assets`() {
+        assertFalse(shouldShowExitConfirm(0))
+        assertTrue(shouldShowExitConfirm(1))
+        assertTrue(shouldShowExitConfirm(3))
+    }
 }

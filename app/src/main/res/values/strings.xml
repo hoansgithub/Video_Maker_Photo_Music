@@ -235,6 +235,10 @@
     <string name="picker_go_to_settings">Go to Settings</string>
     <string name="picker_min_selection">Please select at least %d images.</string>
     <string name="picker_current_selection">%d  image Selected</string>
+    <string name="picker_exit_confirm_title">Exit image selection?</string>
+    <string name="picker_exit_confirm_message">You have selected images. If you exit now, your selected images will be discarded.</string>
+    <string name="picker_exit_confirm">Exit</string>
+    <string name="picker_exit_stay">Stay</string>
 
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Music Player</string>
