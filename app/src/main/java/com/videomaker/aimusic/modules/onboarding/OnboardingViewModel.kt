@@ -55,10 +55,15 @@ class OnboardingViewModel(
         if (!alreadySelected) selectedFeatures.add(feature)
     }
 
-    fun saveFeatures(onSaved: () -> Unit) {
+    fun saveFeatures(onResult: (Result<Unit>) -> Unit) {
         viewModelScope.launch {
-            onboardingRepository.savePreferredFeatures(selectedFeatures.toList())
-            onSaved()
+            runCatching {
+                onboardingRepository.savePreferredFeatures(selectedFeatures.toList())
+            }.onSuccess {
+                onResult(Result.success(Unit))
+            }.onFailure { throwable ->
+                onResult(Result.failure(throwable))
+            }
         }
     }
 }

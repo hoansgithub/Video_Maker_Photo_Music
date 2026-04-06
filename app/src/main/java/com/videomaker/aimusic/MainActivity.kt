@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -39,12 +40,14 @@ class MainActivity : AppCompatActivity() {
 
     // Set to true when launched via the "Uninstall App" shortcut.
     private var navigateToUninstall: Boolean by mutableStateOf(false)
+    private var startupInitialTab: Int by mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         if (savedInstanceState == null) {
+            startupInitialTab = intent.getIntExtra(EXTRA_INITIAL_TAB, 0).coerceIn(0, 2)
             when {
                 intent.action == ACTION_UNINSTALL_APP -> navigateToUninstall = true
                 isWidgetIntent(intent) -> pendingDeepLink = intent
@@ -55,6 +58,7 @@ class MainActivity : AppCompatActivity() {
             VideoMakerTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavigation(
+                        initialHomeTab = startupInitialTab,
                         pendingDeepLink = pendingDeepLink,
                         onDeepLinkConsumed = { pendingDeepLink = null },
                         navigateToUninstall = navigateToUninstall,
@@ -80,6 +84,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val ACTION_UNINSTALL_APP = "com.videomaker.aimusic.action.UNINSTALL_APP"
+        const val EXTRA_INITIAL_TAB = "extra_initial_tab"
 
         private val WIDGET_ACTIONS = setOf(
             WidgetActions.ACTION_OPEN_SEARCH,

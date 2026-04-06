@@ -59,6 +59,12 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.VideoMaker" />
 
+        <activity
+            android:name=".modules.featureselection.FeatureSelectionActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+
         <!-- LanguageSelectionActivity - First-time language picker
              configChanges: handle locale/layoutDirection ourselves so the Activity is NOT
              recreated when AppCompatDelegate.setApplicationLocales() is called on Continue.

@@ -40,6 +40,10 @@ sealed interface AppRoute : NavKey {
     @Serializable
     data object Onboarding : AppRoute
 
+    /** Routing signal: launch FeatureSelectionActivity */
+    @Serializable
+    data object FeatureSelection : AppRoute
+
     // ============================================
     // HOME LEVEL ROUTES
     // ============================================

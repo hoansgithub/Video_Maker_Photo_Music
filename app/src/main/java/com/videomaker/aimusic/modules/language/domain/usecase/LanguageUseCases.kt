@@ -5,15 +5,12 @@ import com.videomaker.aimusic.core.data.local.RegionProvider
 
 /**
  * Returns true if user still needs to go through LanguageSelectionActivity.
- * This covers two cases:
- * - Language not yet selected (first visit)
- * - Language selected but genre survey not yet completed (interrupted mid-flow)
+ * Returns true only when language was not confirmed yet.
  */
 class CheckLanguageSelectedUseCase(
     private val languageManager: LanguageManager
 ) {
-    operator fun invoke(): Boolean =
-        !languageManager.isLanguageSelectionComplete() || languageManager.isGenreSelectionPending()
+    operator fun invoke(): Boolean = !languageManager.isLanguageSelectionComplete()
 }
 
 /**
