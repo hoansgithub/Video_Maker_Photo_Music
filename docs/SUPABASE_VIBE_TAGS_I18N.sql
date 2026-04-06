@@ -1,36 +1,153 @@
 -- ============================================
--- Vibe Tags i18n - Hindi Translations
+-- Vibe Tags i18n - ALL Supported Languages
 -- ============================================
 -- Populate label_i18n column for all active theme vibe tags
+--
+-- Supported Languages:
+-- - pt: Portuguese (Português)
+-- - es: Spanish (Español)
+-- - ar: Arabic (العربية)
+-- - hi: Hindi (हिन्दी)
+-- - id: Indonesian (Bahasa Indonesia)
+-- - fil: Filipino
+-- - tr: Turkish (Türkçe)
 --
 -- Usage:
 -- 1. Open Supabase SQL Editor
 -- 2. Copy and paste this entire file
 -- 3. Execute
 --
--- Note: label_i18n contains ONLY Hindi - English fallback is from display_name column
+-- Note: English (en) is NOT included - display_name column serves as English fallback
 -- ============================================
 
-UPDATE vibe_tags SET label_i18n = '{"hi":"जन्मदिन"}'::jsonb WHERE id = 'birthday';
+-- Birthday
+UPDATE vibe_tags SET label_i18n = '{
+  "pt": "Aniversário",
+  "es": "Cumpleaños",
+  "ar": "عيد ميلاد",
+  "hi": "जन्मदिन",
+  "id": "Ulang Tahun",
+  "fil": "Kaarawan",
+  "tr": "Doğum Günü"
+}'::jsonb WHERE id = 'birthday';
 
-UPDATE vibe_tags SET label_i18n = '{"hi":"उत्सव"}'::jsonb WHERE id = 'celebration';
+-- Celebration
+UPDATE vibe_tags SET label_i18n = '{
+  "pt": "Celebração",
+  "es": "Celebración",
+  "ar": "احتفال",
+  "hi": "उत्सव",
+  "id": "Perayaan",
+  "fil": "Pagdiriwang",
+  "tr": "Kutlama"
+}'::jsonb WHERE id = 'celebration';
 
-UPDATE vibe_tags SET label_i18n = '{"hi":"शादी"}'::jsonb WHERE id = 'wedding';
+-- Wedding
+UPDATE vibe_tags SET label_i18n = '{
+  "pt": "Casamento",
+  "es": "Boda",
+  "ar": "زفاف",
+  "hi": "शादी",
+  "id": "Pernikahan",
+  "fil": "Kasal",
+  "tr": "Düğün"
+}'::jsonb WHERE id = 'wedding';
 
-UPDATE vibe_tags SET label_i18n = '{"hi":"प्यार"}'::jsonb WHERE id = 'love';
+-- Love
+UPDATE vibe_tags SET label_i18n = '{
+  "pt": "Amor",
+  "es": "Amor",
+  "ar": "حب",
+  "hi": "प्यार",
+  "id": "Cinta",
+  "fil": "Pag-ibig",
+  "tr": "Aşk"
+}'::jsonb WHERE id = 'love';
 
-UPDATE vibe_tags SET label_i18n = '{"hi":"जोड़े"}'::jsonb WHERE id = 'couple';
+-- Couple
+UPDATE vibe_tags SET label_i18n = '{
+  "pt": "Casal",
+  "es": "Pareja",
+  "ar": "زوجان",
+  "hi": "जोड़े",
+  "id": "Pasangan",
+  "fil": "Mag-asawa",
+  "tr": "Çift"
+}'::jsonb WHERE id = 'couple';
 
-UPDATE vibe_tags SET label_i18n = '{"hi":"परिवार"}'::jsonb WHERE id = 'family';
+-- Family
+UPDATE vibe_tags SET label_i18n = '{
+  "pt": "Família",
+  "es": "Familia",
+  "ar": "عائلة",
+  "hi": "परिवार",
+  "id": "Keluarga",
+  "fil": "Pamilya",
+  "tr": "Aile"
+}'::jsonb WHERE id = 'family';
 
-UPDATE vibe_tags SET label_i18n = '{"hi":"पार्टी"}'::jsonb WHERE id = 'party';
+-- Party
+UPDATE vibe_tags SET label_i18n = '{
+  "pt": "Festa",
+  "es": "Fiesta",
+  "ar": "حفلة",
+  "hi": "पार्टी",
+  "id": "Pesta",
+  "fil": "Salo-salo",
+  "tr": "Parti"
+}'::jsonb WHERE id = 'party';
 
-UPDATE vibe_tags SET label_i18n = '{"hi":"यादें"}'::jsonb WHERE id = 'memories';
+-- Memories
+UPDATE vibe_tags SET label_i18n = '{
+  "pt": "Memórias",
+  "es": "Recuerdos",
+  "ar": "ذكريات",
+  "hi": "यादें",
+  "id": "Kenangan",
+  "fil": "Alaala",
+  "tr": "Anılar"
+}'::jsonb WHERE id = 'memories';
 
-UPDATE vibe_tags SET label_i18n = '{"hi":"सेल्फी"}'::jsonb WHERE id = 'selfie';
+-- Selfie
+UPDATE vibe_tags SET label_i18n = '{
+  "pt": "Selfie",
+  "es": "Selfie",
+  "ar": "سيلفي",
+  "hi": "सेल्फी",
+  "id": "Selfie",
+  "fil": "Selfie",
+  "tr": "Özçekim"
+}'::jsonb WHERE id = 'selfie';
 
-UPDATE vibe_tags SET label_i18n = '{"hi":"फैशन"}'::jsonb WHERE id = 'fashion';
+-- Fashion
+UPDATE vibe_tags SET label_i18n = '{
+  "pt": "Moda",
+  "es": "Moda",
+  "ar": "موضة",
+  "hi": "फैशन",
+  "id": "Mode",
+  "fil": "Moda",
+  "tr": "Moda"
+}'::jsonb WHERE id = 'fashion';
 
-UPDATE vibe_tags SET label_i18n = '{"hi":"यात्रा"}'::jsonb WHERE id = 'travel';
+-- Travel
+UPDATE vibe_tags SET label_i18n = '{
+  "pt": "Viagem",
+  "es": "Viaje",
+  "ar": "سفر",
+  "hi": "यात्रा",
+  "id": "Perjalanan",
+  "fil": "Paglalakbay",
+  "tr": "Seyahat"
+}'::jsonb WHERE id = 'travel';
 
-UPDATE vibe_tags SET label_i18n = '{"hi":"दैनिक जीवन"}'::jsonb WHERE id = 'daily_life';
+-- Daily Life
+UPDATE vibe_tags SET label_i18n = '{
+  "pt": "Vida Diária",
+  "es": "Vida Diaria",
+  "ar": "الحياة اليومية",
+  "hi": "दैनिक जीवन",
+  "id": "Kehidupan Sehari-hari",
+  "fil": "Araw-araw na Buhay",
+  "tr": "Günlük Hayat"
+}'::jsonb WHERE id = 'daily_life';
