@@ -224,13 +224,19 @@ fun AssetPickerScreen(
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(20)
     ) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+
         uris.forEach { uri ->
-            context.contentResolver.takePersistableUriPermission(
-                uri,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: SecurityException) {
+                // Some providers return non-persistable grants; transient read access is still valid.
+            }
         }
-        viewModel.onPermissionGranted(isLimited = true)
+        viewModel.onPermissionGranted(isLimited = true, forceReload = true)
     }
 
     val onAddMorePhotos = {

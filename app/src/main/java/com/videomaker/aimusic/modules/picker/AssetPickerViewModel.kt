@@ -218,6 +218,9 @@ class AssetPickerViewModel(
     private val _messageEvent = MutableStateFlow<String?>(null)
     val messageEvent: StateFlow<String?> = _messageEvent.asStateFlow()
 
+    // Camera captures are app-private files, so keep them in-memory and merge on reloads.
+    private val transientCameraAssets = mutableListOf<GalleryAsset>()
+
     init {
         // NOTE: With the new flow (Template Browse → Select Template → Pick Images),
         // it's valid to have both overrideSongId and templateId:
@@ -236,7 +239,13 @@ class AssetPickerViewModel(
      * When full access is granted the saved picked_assets are no longer needed — MediaStore
      * now covers the entire gallery — so the table is cleared before loading.
      */
-    fun onPermissionGranted(isLimited: Boolean = false) {
+    fun onPermissionGranted(
+        isLimited: Boolean = false,
+        forceReload: Boolean = false
+    ) {
+        if (!forceReload && shouldSkipPermissionReload(_uiState.value, isLimited)) {
+            return
+        }
         isLimitedPermission = isLimited
         loadImages()
     }
@@ -254,6 +263,7 @@ class AssetPickerViewModel(
      */
     private fun loadImages() {
         viewModelScope.launch {
+            val previousState = _uiState.value as? AssetPickerUiState.WithAssets
             _uiState.value = AssetPickerUiState.Loading
 
             try {
@@ -267,25 +277,46 @@ class AssetPickerViewModel(
                     persistedUris.map { uri -> createAssetFromUri(uri) }
                 }
 
-                val images = mediaStoreImages + persistedAssets
+                val images = mergeDistinctByKey(
+                    transientCameraAssets,
+                    mediaStoreImages,
+                    persistedAssets,
+                    keySelector = { it.uri.toString() }
+                ).sortedByDescending { it.dateAdded }
 
                 val albums = buildAlbumFilters(images)
+                val selectedAlbumId = previousState
+                    ?.selectedAlbumId
+                    ?.takeIf { selected ->
+                        selected == AlbumFilterType.ALL || albums.any { it.id == selected }
+                    }
+                    ?: AlbumFilterType.ALL
+
+                val filteredAssets = filterAssetsByAlbum(images, selectedAlbumId, albums)
+                val previouslySelectedUriStrings = previousState
+                    ?.selectedAssets
+                    ?.map { it.uri.toString() }
+                    ?.toSet()
+                    .orEmpty()
+                val selectedAssets = images
+                    .filter { it.uri.toString() in previouslySelectedUriStrings }
+                    .take(MAX_SELECTION)
 
                 _uiState.value = if (isLimitedPermission) {
                     AssetPickerUiState.WithAssets.LimitPermission(
                         assets = images,
-                        filteredAssets = images,
-                        selectedAssets = emptyList(),
+                        filteredAssets = filteredAssets,
+                        selectedAssets = selectedAssets,
                         albums = albums,
-                        selectedAlbumId = AlbumFilterType.ALL
+                        selectedAlbumId = selectedAlbumId
                     )
                 } else {
                     AssetPickerUiState.WithAssets.AllPermission(
                         assets = images,
-                        filteredAssets = images,
-                        selectedAssets = emptyList(),
+                        filteredAssets = filteredAssets,
+                        selectedAssets = selectedAssets,
                         albums = albums,
-                        selectedAlbumId = AlbumFilterType.ALL
+                        selectedAlbumId = selectedAlbumId
                     )
                 }
             } catch (e: Exception) {
@@ -334,12 +365,29 @@ class AssetPickerViewModel(
     fun onCameraImageCaptured(uri: Uri) {
         viewModelScope.launch {
             val newAsset = withContext(Dispatchers.IO) { createAssetFromUri(uri) }
+            transientCameraAssets.removeAll { it.uri.toString() == newAsset.uri.toString() }
+            transientCameraAssets.add(0, newAsset)
 
             val currentState = _uiState.value
             if (currentState is AssetPickerUiState.WithAssets) {
-                val updatedAssets = listOf(newAsset) + currentState.assets
-                val updatedFiltered = listOf(newAsset) + currentState.filteredAssets
-                val updatedSelected = if (currentState.selectedAssets.size < MAX_SELECTION) {
+                val updatedAssets = mergeDistinctByKey(
+                    listOf(newAsset),
+                    currentState.assets,
+                    keySelector = { it.uri.toString() }
+                )
+                val updatedAlbums = buildAlbumFilters(updatedAssets)
+                val selectedAlbumId = currentState.selectedAlbumId
+                    .takeIf { selected ->
+                        selected == AlbumFilterType.ALL || updatedAlbums.any { it.id == selected }
+                    }
+                    ?: AlbumFilterType.ALL
+                val updatedFiltered = filterAssetsByAlbum(updatedAssets, selectedAlbumId, updatedAlbums)
+                val isAlreadySelected = currentState.selectedAssets.any {
+                    it.uri.toString() == newAsset.uri.toString()
+                }
+                val updatedSelected = if (isAlreadySelected) {
+                    currentState.selectedAssets
+                } else if (currentState.selectedAssets.size < MAX_SELECTION) {
                     currentState.selectedAssets + newAsset
                 } else {
                     currentState.selectedAssets
@@ -347,14 +395,30 @@ class AssetPickerViewModel(
                 _uiState.value = currentState.copyAssets(
                     assets = updatedAssets,
                     filteredAssets = updatedFiltered,
-                    selectedAssets = updatedSelected
+                    selectedAssets = updatedSelected,
+                    albums = updatedAlbums,
+                    selectedAlbumId = selectedAlbumId
                 )
             } else {
-                _uiState.value = AssetPickerUiState.WithAssets.AllPermission(
-                    assets = listOf(newAsset),
-                    filteredAssets = listOf(newAsset),
-                    selectedAssets = listOf(newAsset)
-                )
+                val initialAssets = listOf(newAsset)
+                val initialAlbums = buildAlbumFilters(initialAssets)
+                _uiState.value = if (isLimitedPermission) {
+                    AssetPickerUiState.WithAssets.LimitPermission(
+                        assets = initialAssets,
+                        filteredAssets = initialAssets,
+                        selectedAssets = initialAssets,
+                        albums = initialAlbums,
+                        selectedAlbumId = AlbumFilterType.ALL
+                    )
+                } else {
+                    AssetPickerUiState.WithAssets.AllPermission(
+                        assets = initialAssets,
+                        filteredAssets = initialAssets,
+                        selectedAssets = initialAssets,
+                        albums = initialAlbums,
+                        selectedAlbumId = AlbumFilterType.ALL
+                    )
+                }
             }
         }
     }
