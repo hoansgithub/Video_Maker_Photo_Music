@@ -5,8 +5,8 @@
     <string name="loading">Loading…</string>
 
     <!-- Language Selection -->
-    <string name="language_select_title">Select Language</string>
-    <string name="language_select_subtitle">Choose your preferred language</string>
+    <string name="language_select_title">Choose Languages</string>
+    <string name="language_select_subtitle">Please select a display language.</string>
     <string name="language_continue">Continue</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>

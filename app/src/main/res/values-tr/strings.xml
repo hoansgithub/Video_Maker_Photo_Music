@@ -6,8 +6,8 @@
     <string name="loading">Yükleniyor…</string>
 
     <!-- Language Selection -->
-    <string name="language_select_title">Dil Seçin</string>
-    <string name="language_select_subtitle">Tercih ettiğiniz dili seçin</string>
+    <string name="language_select_title">Dilleri Seçin</string>
+    <string name="language_select_subtitle">Lütfen bir görüntüleme dili seçin.</string>
     <string name="language_continue">Devam Et</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>

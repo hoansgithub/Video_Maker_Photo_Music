@@ -7,7 +7,7 @@
 
     <!-- Language Selection -->
     <string name="language_select_title">Pilih Bahasa</string>
-    <string name="language_select_subtitle">Pilih bahasa yang Anda inginkan</string>
+    <string name="language_select_subtitle">Silakan pilih bahasa tampilan.</string>
     <string name="language_continue">Lanjutkan</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>

@@ -6,8 +6,8 @@
     <string name="loading">Naglo-load…</string>
 
     <!-- Language Selection -->
-    <string name="language_select_title">Pumili ng Wika</string>
-    <string name="language_select_subtitle">Piliin ang iyong gustong wika</string>
+    <string name="language_select_title">Pumili ng mga Wika</string>
+    <string name="language_select_subtitle">Pakipili ang wikang ipapakita.</string>
     <string name="language_continue">Magpatuloy</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>

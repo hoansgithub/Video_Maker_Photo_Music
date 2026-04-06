@@ -6,8 +6,8 @@
     <string name="loading">جاري التحميل…</string>
 
     <!-- Language Selection -->
-    <string name="language_select_title">اختر اللغة</string>
-    <string name="language_select_subtitle">اختر لغتك المفضلة</string>
+    <string name="language_select_title">اختر اللغات</string>
+    <string name="language_select_subtitle">يرجى تحديد لغة العرض.</string>
     <string name="language_continue">متابعة</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>
