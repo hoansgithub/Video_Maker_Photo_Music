@@ -276,9 +276,7 @@ fun MusicPlayerBottomSheet(
                             contentDescription = null,
                             modifier = Modifier
                                 .size(24.dp)
-                                .clickableSingle (
-                                    enabled = isLiked.not()
-                                ){ viewModel.toggleLike(song) }
+                                .clickableSingle{ viewModel.toggleLike(song) }
                         )
                     }
 

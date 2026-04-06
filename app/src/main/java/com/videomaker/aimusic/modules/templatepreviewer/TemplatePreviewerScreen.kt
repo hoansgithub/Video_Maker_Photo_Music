@@ -449,6 +449,7 @@ private fun TemplatePreviewerReadyContent(
                                 tint = Primary,
                                 contentDescription = null,
                                 modifier = Modifier.size(32.dp)
+                                    .clickableSingle { currentTemplate?.let { onLikeTemplate(it) } }
                             )
                         } else {
                             Icon(
