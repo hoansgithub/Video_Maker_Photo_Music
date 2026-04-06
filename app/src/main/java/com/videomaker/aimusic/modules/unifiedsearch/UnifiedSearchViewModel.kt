@@ -248,6 +248,10 @@ class UnifiedSearchViewModel(
         _displayText.value = ""
         _query.value = ""
         _persistentRelatedSearches.value = emptyList()  // Clear related searches
+
+        if(_uiState.value is UnifiedSearchUiState.Empty || _uiState.value is UnifiedSearchUiState.Error){
+            _uiState.value = UnifiedSearchUiState.Idle(initialSection)
+        }
     }
 
     fun onRecentSearchClick(query: String) {
