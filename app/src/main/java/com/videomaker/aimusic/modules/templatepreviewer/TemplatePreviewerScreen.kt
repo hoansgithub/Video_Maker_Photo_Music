@@ -63,6 +63,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.compose.ui.Alignment
@@ -163,8 +164,20 @@ fun TemplatePreviewerScreen(
 
     // Single ExoPlayer for the entire screen — crossfaded on page change
     val player = remember {
+        // Optimized LoadControl for faster music streaming
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                /* minBufferMs */ 1500,      // Start playback after 1.5s (faster start)
+                /* maxBufferMs */ 15000,     // Max buffer 15s (reduced from default 50s)
+                /* bufferForPlaybackMs */ 500,      // Start playback after 0.5s buffered
+                /* bufferForPlaybackAfterRebufferMs */ 1000  // Resume after 1s rebuffer
+            )
+            .setPrioritizeTimeOverSizeThresholds(true)  // Favor low latency over size
+            .build()
+
         ExoPlayer.Builder(context)
             .setMediaSourceFactory(DefaultMediaSourceFactory(audioDataSourceFactory))
+            .setLoadControl(loadControl)
             .build()
     }
 
