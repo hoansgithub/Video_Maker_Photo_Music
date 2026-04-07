@@ -108,7 +108,7 @@ fun EditorScreen(
     // musicPickerViewModelFactory: MusicPickerViewModelFactory, // Commented out - using Supabase only
     onNavigateBack: () -> Unit,
     onNavigateToPreview: (String) -> Unit,
-    onNavigateToExport: (String) -> Unit,
+    onNavigateToExport: (String, com.videomaker.aimusic.domain.model.VideoQuality) -> Unit,
     onNavigateToAddAssets: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -148,7 +148,7 @@ fun EditorScreen(
             when (event) {
                 is EditorNavigationEvent.NavigateBack -> onNavigateBack()
                 is EditorNavigationEvent.NavigateToPreview -> onNavigateToPreview(event.projectId)
-                is EditorNavigationEvent.NavigateToExport -> onNavigateToExport(event.projectId)
+                is EditorNavigationEvent.NavigateToExport -> onNavigateToExport(event.projectId, event.quality)
             }
             viewModel.onNavigationHandled()
         }
@@ -644,7 +644,7 @@ internal fun EditorMainContent(
 
         // Music Section - song info and player
         MusicSection(
-            songName = project.settings.musicSongName ?: "No music selected",
+            songName = project.settings.musicSongName ?: stringResource(R.string.editor_no_music_selected),
             coverUrl = project.settings.musicSongCoverUrl ?: "",
             duration = project.formattedDuration,
             currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,

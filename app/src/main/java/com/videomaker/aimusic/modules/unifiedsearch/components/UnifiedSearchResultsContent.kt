@@ -154,7 +154,7 @@ fun UnifiedSearchResultsContent(
                         SearchSection.TEMPLATES -> {
                             if (state.templateEmpty.isNotEmpty()) {
                                 item(key = "templates_suggestions_header") {
-                                    UnifiedSectionHeader(text = "Template Suggestions")
+                                    UnifiedSectionHeader(text = stringResource(R.string.search_templates_suggestions))
                                     Spacer(modifier = Modifier.height(dimens.spaceSm))
                                 }
 
@@ -184,7 +184,7 @@ fun UnifiedSearchResultsContent(
                         SearchSection.MUSIC -> {
                             if (state.songEmpty.isNotEmpty()) {
                                 item(key = "music_suggestions_header") {
-                                    UnifiedSectionHeader(text = "Music Suggestions")
+                                    UnifiedSectionHeader(text = stringResource(R.string.search_music_suggestion))
                                     Spacer(modifier = Modifier.height(dimens.spaceSm))
                                 }
 
@@ -231,7 +231,7 @@ fun UnifiedSearchResultsContent(
                         )
                         Spacer(modifier = Modifier.height(dimens.spaceSm))
                         Text(
-                            text = "Let's try something else or explore\ntrending vibes\u2028\u2028",
+                            text = stringResource(R.string.search_empty_subtitle),
                             style = MaterialTheme.typography.bodyMedium,
                             color = FoundationBlack_Gray_100,
                             fontWeight = FontWeight.W400,
@@ -387,7 +387,7 @@ internal fun UnifiedTemplateGrid(
 ) {
     val dimens = AppDimens.current
 
-    // Pre-calculate aspect ratios for StaggeredGrid
+    // ✅ OPTIMIZED: Pre-calculate aspect ratios once when templates list changes
     val aspectRatios = remember(templates) {
         templates.map { parseAspectRatio(it.aspectRatio) }
     }
@@ -500,7 +500,7 @@ private fun ScaledTemplateCard(
                             .padding(horizontal = (6 * scaleFactor).dp, vertical = (3 * scaleFactor).dp)
                     ) {
                         Text(
-                            text = "PRO",
+                            text = stringResource(R.string.search_pro_badge),
                             fontSize = (10 * scaleFactor).sp,
                             fontWeight = FontWeight.Bold,
                             color = TextOnPrimary

@@ -10,9 +10,10 @@ import androidx.compose.runtime.Immutable
  *
  * vibeTags: from vibe_tags table (e.g. birthday, wedding, travel, party, love, ...)
  *
- * Image URLs:
+ * Media URLs:
  * - thumbnailPath: Lower-res image for gallery/list views (template-thumbnails bucket)
  * - previewImagePath: Higher-res image for full-screen previewer (template-previews bucket)
+ * - videoUrl: Full-screen video preview (template-preview-videos bucket) - optional, falls back to previewImagePath
  */
 @Immutable
 data class VideoTemplate(
@@ -20,6 +21,7 @@ data class VideoTemplate(
     val name: String,
     val thumbnailPath: String = "",
     val previewImagePath: String = "",
+    val videoUrl: String? = null,
     val songId: Long,
     val effectSetId: String,
     val aspectRatio: String = "9:16",

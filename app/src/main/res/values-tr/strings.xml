@@ -72,6 +72,8 @@
     <string name="settings_about">Hakkında</string>
     <string name="settings_version">Sürüm</string>
     <string name="settings_uninstall">Kaldır</string>
+    <string name="settings_share_subject">Bu uygulamaya göz at!</string>
+    <string name="settings_share_message">Merhaba! Bu harika uygulamayı kullanıyorum. Sen de dene:\n%s</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Bir kez daha dene</string>
@@ -99,12 +101,49 @@
     <string name="editor_frame">Çerçeve</string>
     <string name="editor_aspect_ratio">En-Boy Oranı</string>
     <string name="editor_volume">Ses</string>
+    <string name="editor_effect">Efekt</string>
+    <string name="editor_select_video_ratio">Video Oranını Seç</string>
+    <string name="editor_apply">Uygula</string>
+    <string name="editor_image_duration">Görüntü Süresi</string>
+    <string name="editor_change_music">Müziği değiştir</string>
+    <string name="editor_select_quality">Kalite seç</string>
+    <string name="editor_hd">HD</string>
+    <string name="editor_play">Oynat</string>
+    <string name="editor_pause">Duraklat</string>
     <string name="editor_duration_format">Süre: %s</string>
+
+    <!-- Music Trim Feature (NOT video trim) -->
+    <string name="editor_music_trim">Müziği Kırp</string>
+    <string name="editor_music_trim_from_start">Baştan Kırp</string>
+    <string name="editor_music_trim_from_end">Sondan Kırp</string>
+    <string name="editor_music_trim_edit">Müzik Kırpmayı Düzenle</string>
+    <string name="editor_music_trim_title">Müziği Kırp</string>
+    <string name="editor_music_trim_subtitle">Şarkının hangi bölümünü kullanacağını seç</string>
+    <string name="editor_music_trim_start">Müzik Başlangıcı</string>
+    <string name="editor_music_trim_end">Müzik Bitişi</string>
+    <string name="editor_music_trim_duration">Müzik Süresi</string>
+    <string name="editor_music_trim_min_duration">Müzik en az 5 saniye olmalıdır</string>
+    <string name="editor_music_trim_will_loop">Videonuz için gerekirse müzik tekrarlanacaktır</string>
+    <string name="editor_music_trimmed_info">Müzik: %1$s</string>
+    <string name="editor_music_trim_play_selection">Seçimi Oynat</string>
+    <string name="editor_music_trim_skip_to_start">Başa Atla</string>
+    <string name="editor_music_trim_skip_to_end">Sona Atla</string>
     <string name="editor_photos_count">%d fotoğraf</string>
     <string name="editor_save_dialog_title">Proje Kaydedilsin mi?</string>
     <string name="editor_save_dialog_message">Projeniz kaydedilecek ve Projelerim bölümünde kullanılabilir olacak.</string>
     <string name="editor_save_and_exit">Kaydet ve Çık</string>
     <string name="editor_discard_changes">Değişiklikleri At</string>
+    <string name="editor_processing">İşleniyor…</string>
+    <string name="editor_preparing_video">Video hazırlanıyor…</string>
+    <string name="editor_unsaved_project_title">Projeniz Kaydedilsin mi?</string>
+    <string name="editor_unsaved_project_message">Projeniz henüz kaydedilmedi. Şimdi kaydedilsin mi yoksa çalışmanızı atmak mı istiyorsunuz?</string>
+    <string name="editor_unsaved_changes_title">Kaydedilmemiş Değişiklikler</string>
+    <string name="editor_unsaved_changes_message">Şimdi çıkarsanız, değişiklikleriniz kaybolacak. Çıkmak istediğinizden emin misiniz?</string>
+    <string name="editor_keep_editing">Düzenlemeye Devam Et</string>
+    <string name="editor_discard">At</string>
+    <string name="editor_effect_sets">Efekt Setleri</string>
+    <string name="editor_retry">Tekrar Dene</string>
+    <string name="editor_no_music_selected">Müzik seçilmedi</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Oluşturulan Video</string>
@@ -133,6 +172,9 @@
     <string name="projects_delete_cancel">İptal</string>
     <string name="projects_empty">Henüz proje yok</string>
     <string name="projects_empty_description">İlk projenizi oluşturun ve burada görün</string>
+    <string name="projects_empty_title">Yolculuğunuza Başlayın</string>
+    <string name="projects_empty_subtitle">Burada biraz boş görünüyor. Hadi bugün ilk başyapıtınızı oluşturalım.</string>
+    <string name="projects_create_new_video">Yeni Video Oluştur</string>
     <string name="projects_item_info">%1$d fotoğraf • %2$s</string>
     <string name="projects_create_description">Yeni bir slayt gösterisi projesi başlat</string>
     <string name="projects_delete_title">Proje Silinsin mi?</string>
@@ -146,6 +188,8 @@
     <string name="export_share">Paylaş</string>
     <string name="export_save">Galeriye Kaydet</string>
     <string name="export_preparing">Dışa aktarma hazırlanıyor…</string>
+    <string name="export_generating">Oluşturuluyor</string>
+    <string name="export_please_wait">Bir dakika bekleyin, videonuz hazırlanıyor!\nLütfen uygulamayı kapatmayın</string>
     <string name="export_exporting">Video dışa aktarılıyor…</string>
     <string name="export_dont_close">Lütfen uygulamayı kapatmayın</string>
     <string name="export_tip_1">Başyapıtınız hazırlanıyor…</string>
@@ -173,6 +217,8 @@
     <string name="export_cancel_message">Dışa aktarmayı iptal etmek istediğinizden emin misiniz? Tüm ilerleme kaybolacak.</string>
     <string name="export_continue">Devam Et</string>
     <string name="export_cancel_export">Dışa Aktarmayı İptal Et</string>
+    <string name="export_error_file_not_found">Video dosyası bulunamadı</string>
+    <string name="export_error_share_failed">Video paylaşma başarısız</string>
     <string name="export_try_another_templates">Başka Şablonları Deneyin</string>
     <string name="export_templates_load_failed">Şablonlar yüklenemedi</string>
 
@@ -186,6 +232,15 @@
     <string name="picker_permission_title">Fotoğraf Erişimi Gerekli</string>
     <string name="picker_permission_message">Fotoğraflarınızdan video oluşturmak için fotoğraf kütüphanenize erişim iznine ihtiyacımız var.</string>
     <string name="picker_allow_access">Erişime İzin Ver</string>
+    <string name="picker_limited_access_message">Video Maker\'a sınırlı sayıda fotoğrafa erişim izni verdiniz.</string>
+    <string name="picker_add_more_photos">Ekle</string>
+    <string name="picker_go_to_settings">Ayarlara Git</string>
+    <string name="picker_min_selection">Lütfen en az %d görsel seçin.</string>
+    <string name="picker_current_selection">%d görsel seçildi</string>
+
+    <!-- Music Player Bottom Sheet -->
+    <string name="music_player_title">Müzik Çalar</string>
+    <string name="music_player_use_to_create">Video Oluşturmak İçin Kullan</string>
     <string name="picker_exit_confirm_title">Görsel seçiminden çıkılsın mı?</string>
     <string name="picker_exit_confirm_message">Görseller seçtiniz. Şimdi çıkarsanız seçili görseller silinecek.</string>
     <string name="picker_exit_confirm">Çık</string>
@@ -222,7 +277,12 @@
     <string name="settings_add">+ Ekle</string>
     <string name="settings_add_audio">+ Ekle</string>
     <string name="settings_volume">Ses</string>
+    <string name="settings_clip_music">Müziği Kırp</string>
     <string name="settings_aspect_ratio">En-Boy Oranı</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">Ses</string>
+    <string name="tab_music_clip">Müzik Kırpma</string>
     <string name="settings_transition_effect">Geçiş Efekti</string>
     <string name="settings_transition_duration">Geçiş Süresi</string>
     <string name="settings_transition_duration_value">%.1fs</string>
@@ -296,6 +356,8 @@
     <string name="song_search_explore_by_genre">Türe Göre Keşfet</string>
     <string name="song_search_suggested">Size Önerilen</string>
     <string name="song_search_no_results">Şarkı bulunamadı</string>
+    <string name="song_search_change_music">Müziği Değiştir</string>
+    <string name="song_search_idle_hint">Şarkı aramak için yazmaya başlayın</string>
 
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Yolculuğunuza Başlayın</string>
@@ -332,8 +394,53 @@
     <string name="widget_recently">Son Zamanlarda</string>
     <string name="widget_trending_song">Trend Şarkı</string>
     <string name="widget_trending_song_hot">Hot</string>
-    <string name="shortcut_trending_search_long">Trend Arama</string>
-    <string name="shortcut_create_video_long">Video Oluştur</string>
-    <string name="shortcut_choose_template_long">Video Şablonu Seç</string>
-    <string name="shortcut_uninstall_long">Uygulamayı Kaldır</string>
+    <string name="widget_search_hint">Şablon ara...</string>
+    <string name="widget_pin_request_sent">Widget ana ekrana eklendi</string>
+    <string name="widget_pin_not_supported">Widget ekleme bu cihazda desteklenmiyor</string>
+    <string name="widget_add_failed">Widget eklenemedi: %s</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_trending_search_long">Trend arama</string>
+    <string name="shortcut_create_video_long">Video oluştur</string>
+    <string name="shortcut_choose_template_long">Video şablonu seç</string>
+    <string name="shortcut_uninstall_long">Uygulamayı kaldır</string>
+
+    <!-- Unified search   -->
+    <string name="unified_search_templates">Şablonlar</string>
+    <string name="unified_search_music">Müzik</string>
+    <string name="unified_search_see_more">Daha fazla gör</string>
+    <string name="unified_search_loading_more">Yükleniyor…</string>
+    <string name="unified_search_explore_more">Daha Fazla Keşfet</string>
+    <string name="unified_search_explore_suggestions">Önerileri Keşfet</string>
+    <string name="unified_search_no_results_title">Sonuç bulunamadı</string>
+    <string name="unified_search_keep_typing">Aramanızı daraltmak için yazmaya devam edin</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">Hot</string>
+    <string name="tag_trending">Trend</string>
+    <string name="tag_new">Yeni</string>
+    <string name="tag_featured">Öne Çıkan</string>
+
+    <!-- Template Previewer -->
+    <string name="template_add_to_favorites">Ekle</string>
+    <string name="template_use_button">Bu Şablonu Kullan</string>
+    <string name="template_swipe_hint">Yukarı kaydır</string>
+    <string name="template_swipe_subtitle">Şablonlarınızın keyfini çıkarın</string>
+    <string name="template_select_ratio_title">Video Oranı Seç</string>
+    <string name="template_create_now">Şimdi oluştur</string>
+    <string name="template_error_load_failed">Şablonlar yüklenemedi. Lütfen tekrar deneyin.</string>
+
+    <!-- Unified Search -->
+    <string name="search_templates_suggestions">Şablon Önerileri</string>
+    <string name="search_music_suggestion">Müzik Önerisi</string>
+    <string name="search_empty_subtitle">Başka bir şey deneyelim veya\ntrend vibları keşfedelim</string>
+    <string name="search_typing_result_header">Sonuç</string>
+    <string name="search_loading_title">Sonuçlar aranıyor…</string>
+    <string name="search_loading_message">Size en doğru bilgiyi getirmek için\nveritabanımızı tarıyoruz.\nLütfen bir dakika bekleyin.</string>
+    <string name="search_placeholder">Herhangi bir şey ara</string>
+    <string name="search_pro_badge">PRO</string>
+
+    <!-- Editor Volume -->
+    <string name="volume_title">Ses Seviyesi</string>
+
 </resources>

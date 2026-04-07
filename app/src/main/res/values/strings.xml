@@ -81,6 +81,8 @@
     <string name="settings_about">About</string>
     <string name="settings_version">Version</string>
     <string name="settings_uninstall">Uninstall</string>
+    <string name="settings_share_subject">Check out this app!</string>
+    <string name="settings_share_message">Hey! I\'m using this awesome app. Try it out:\n%s</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Give it another try</string>
@@ -142,6 +144,7 @@
     <string name="editor_discard">Discard</string>
     <string name="editor_effect_sets">Effect Sets</string>
     <string name="editor_retry">Retry</string>
+    <string name="editor_no_music_selected">No music selected</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Created Video</string>
@@ -222,7 +225,7 @@
 
     <!-- Asset Picker -->
     <string name="picker_title">Select your image</string>
-    <string name="picker_done">Done</string>
+    <string name="picker_done">Done (%1$d/%2$d)</string>
     <string name="picker_close">Close</string>
     <string name="picker_selected">Selected</string>
     <string name="picker_no_photos">No photos found</string>
@@ -418,5 +421,27 @@
     <string name="tag_trending">Trending</string>
     <string name="tag_new">New</string>
     <string name="tag_featured">Featured</string>
+
+    <!-- Template Previewer -->
+    <string name="template_add_to_favorites">Add</string>
+    <string name="template_use_button">Use This Template</string>
+    <string name="template_swipe_hint">Swipe up</string>
+    <string name="template_swipe_subtitle">To enjoy your templates</string>
+    <string name="template_select_ratio_title">Select Video Ratio</string>
+    <string name="template_create_now">Create now</string>
+    <string name="template_error_load_failed">Failed to load templates. Please try again.</string>
+
+    <!-- Unified Search -->
+    <string name="search_templates_suggestions">Templates Suggestions</string>
+    <string name="search_music_suggestion">Music Suggestion</string>
+    <string name="search_empty_subtitle">Let\'s try something else or explore\ntrending vibes</string>
+    <string name="search_typing_result_header">Result</string>
+    <string name="search_loading_title">Searching for results…</string>
+    <string name="search_loading_message">We are scanning our database to bring\nyou the most accurate information.\nPlease wait a moment.</string>
+    <string name="search_placeholder">Search for anything</string>
+    <string name="search_pro_badge">PRO</string>
+
+    <!-- Editor Volume -->
+    <string name="volume_title">Volume</string>
 
 </resources>

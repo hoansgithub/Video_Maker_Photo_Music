@@ -8,6 +8,8 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
@@ -51,12 +53,16 @@ class LanguageSelectionActivity : AppCompatActivity() {
                 LanguageSelectionScreen(
                     showBackButton = false,
                     onLanguageSelected = { languageCode ->
-                        saveLanguagePreferenceUseCase(languageCode)
+                        lifecycleScope.launch {
+                            saveLanguagePreferenceUseCase(languageCode)
+                        }
                     },
                     onContinue = {
-                        completeLanguageSelectionUseCase()
-                        applyLanguageUseCase()
-                        navigateToOnboarding()
+                        lifecycleScope.launch {
+                            completeLanguageSelectionUseCase()
+                            applyLanguageUseCase()
+                            navigateToOnboarding()
+                        }
                     }
                 )
             }

@@ -574,7 +574,13 @@ private fun AssetPickerContent(
                             ),
                             shape = RoundedCornerShape(16.dp)
                         ) {
-                            Text(stringResource(R.string.picker_done))
+                            Text(
+                                stringResource(
+                                    R.string.picker_done,
+                                    uiState.selectedAssets.size,
+                                    AssetPickerViewModel.MAX_SELECTION
+                                )
+                            )
                         }
                     }
 
@@ -624,7 +630,18 @@ private fun AssetPickerContent(
             }
 
 
-            is AssetPickerUiState.Initial,
+            is AssetPickerUiState.Initial -> {
+                // Show loading while checking permissions (don't show denied state yet)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
             AssetPickerUiState.DeniedPermission -> {
                 PermissionDeniedContent(
                     onGoToSettings = onGoToSettings

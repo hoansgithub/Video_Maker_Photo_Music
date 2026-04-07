@@ -20,9 +20,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.theme.Gray500
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
@@ -61,7 +63,7 @@ fun VolumeBottomSheet(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Text(
-                text = "Volume",
+                text = stringResource(R.string.volume_title),
                 color = TextPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold

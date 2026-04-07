@@ -1,7 +1,9 @@
 package com.videomaker.aimusic.data.repository
 
 import com.videomaker.aimusic.core.data.local.ApiCacheManager
+import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.RegionProvider
+import com.videomaker.aimusic.core.util.I18nHelper
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.TemplateRepository
@@ -15,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -22,7 +25,8 @@ class TemplateRepositoryImpl(
     private val supabaseClient: SupabaseClient,
     private val apiCacheManager: ApiCacheManager,
     private val templateLibrary: VideoTemplateLibrary = VideoTemplateLibrary,
-    private val regionProvider: RegionProvider
+    private val regionProvider: RegionProvider,
+    private val languageManager: LanguageManager
 ) : TemplateRepository {
 
     companion object {
@@ -31,7 +35,7 @@ class TemplateRepositoryImpl(
         private const val FN_TEMPLATES_BY_TAG_SORTED = "get_templates_by_tag_sorted"
         private const val FN_FEATURED_TEMPLATES = "get_featured_templates"
         private val COLUMNS_TEMPLATE = Columns.raw(
-            "id,name,thumbnail_path,song_id,effect_set_id,aspect_ratio," +
+            "id,name,name_i18n,thumbnail_path,preview_path,song_id,effect_set_id,aspect_ratio," +
             "image_duration_ms,transition_pct,is_premium,is_active,sort_order,use_count," +
             "template_vibe_tags(vibe_tag_id,sort_order)"
         )
@@ -41,8 +45,10 @@ class TemplateRepositoryImpl(
         withContext(Dispatchers.IO) {
             try {
                 // First try to get from cache
+                val locale = languageManager.getSelectedLanguage()
+                val region = regionProvider.getRegionCode()
                 val cachedTemplates = apiCacheManager.get<List<VideoTemplate>>(
-                    ApiCacheManager.keyTemplates(regionProvider.getRegionCode(), 100, 0)
+                    ApiCacheManager.keyTemplates(region, locale, 100, 0)
                 )
                 cachedTemplates?.firstOrNull { it.id == id }
                     ?.let { return@withContext Result.success(it) }
@@ -57,7 +63,7 @@ class TemplateRepositoryImpl(
                         }
                     }
                     .decodeSingleOrNull<TemplateDto>()
-                    ?.toDomain()
+                    ?.toDomain(languageManager.getSelectedLanguage())
 
                 Result.success(template)
             } catch (e: Exception) {
@@ -71,7 +77,8 @@ class TemplateRepositoryImpl(
     override suspend fun getTemplates(limit: Int, offset: Int): Result<List<VideoTemplate>> =
         withContext(Dispatchers.IO) {
             val region = regionProvider.getRegionCode()
-            val cacheKey = ApiCacheManager.keyTemplates(region, limit, offset)
+            val locale = languageManager.getSelectedLanguage()
+            val cacheKey = ApiCacheManager.keyTemplates(region, locale, limit, offset)
             apiCacheManager.get<List<VideoTemplate>>(cacheKey)
                 ?.let { return@withContext Result.success(it) }
 
@@ -83,7 +90,7 @@ class TemplateRepositoryImpl(
                         put("p_offset", offset)
                     })
                     .decodeList<TemplateDto>()
-                    .map { it.toDomain() }
+                    .map { it.toDomain(locale) }
 
                 apiCacheManager.put(cacheKey, templates)
                 Result.success(templates)
@@ -104,7 +111,8 @@ class TemplateRepositoryImpl(
         offset: Int
     ): Result<List<VideoTemplate>> = withContext(Dispatchers.IO) {
         val region = regionProvider.getRegionCode()
-        val cacheKey = ApiCacheManager.keyTemplatesByTag(region, tag, limit, offset)
+        val locale = languageManager.getSelectedLanguage()
+        val cacheKey = ApiCacheManager.keyTemplatesByTag(region, locale, tag, limit, offset)
         apiCacheManager.get<List<VideoTemplate>>(cacheKey)
             ?.let { return@withContext Result.success(it) }
 
@@ -117,7 +125,7 @@ class TemplateRepositoryImpl(
                     put("p_offset", offset)
                 })
                 .decodeList<TemplateDto>()
-                .map { it.toDomain() }
+                .map { it.toDomain(locale) }
 
             apiCacheManager.put(cacheKey, templates)
             Result.success(templates)
@@ -133,15 +141,20 @@ class TemplateRepositoryImpl(
     }
 
     override suspend fun getVibeTags(): Result<List<VibeTag>> = withContext(Dispatchers.IO) {
-        apiCacheManager.get<List<VibeTag>>(ApiCacheManager.KEY_VIBE_TAGS)
-            ?.let { return@withContext Result.success(it) }
+        val locale = languageManager.getSelectedLanguage()
+        val cacheKey = ApiCacheManager.keyVibeTags(locale)
+
+        val cached = apiCacheManager.get<List<VibeTag>>(cacheKey)
+        if (cached != null) {
+            return@withContext Result.success(cached)
+        }
 
         try {
             // !inner joins through template_vibe_tags → templates, ensuring only tags that have
             // at least one *active* linked template are returned. This prevents chips that would
             // always return empty results when tapped.
             val tags = supabaseClient.from("vibe_tags")
-                .select(Columns.raw("id,display_name,emoji,template_vibe_tags!inner(vibe_tag_id,templates!inner(id,is_active))")) {
+                .select(Columns.raw("id,display_name,label_i18n,emoji,template_vibe_tags!inner(vibe_tag_id,templates!inner(id,is_active))")) {
                     filter {
                         eq("tag_type", "theme")
                         eq("is_active", true)
@@ -151,12 +164,19 @@ class TemplateRepositoryImpl(
                     limit(100)
                 }
                 .decodeList<VibeTagDto>()
-                .map { VibeTag(id = it.id, displayName = it.displayName, emoji = it.emoji) }
+                .map {
+                    val localizedName = I18nHelper.getLocalizedValue(
+                        i18nData = it.labelI18n,
+                        locale = locale,
+                        fallback = it.displayName
+                    )
+                    VibeTag(id = it.id, displayName = localizedName, emoji = it.emoji)
+                }
 
-            apiCacheManager.put(ApiCacheManager.KEY_VIBE_TAGS, tags)
+            apiCacheManager.put(cacheKey, tags)
             Result.success(tags)
         } catch (e: Exception) {
-            apiCacheManager.getStale<List<VibeTag>>(ApiCacheManager.KEY_VIBE_TAGS)
+            apiCacheManager.getStale<List<VibeTag>>(cacheKey)
                 ?.let { return@withContext Result.success(it) }
             // Fallback: derive tags from local JSON vibe tags
             val fallback = templateLibrary.getAll()
@@ -170,7 +190,8 @@ class TemplateRepositoryImpl(
     override suspend fun getFeaturedTemplates(limit: Int): Result<List<VideoTemplate>> =
         withContext(Dispatchers.IO) {
             val region = regionProvider.getRegionCode()
-            val cacheKey = ApiCacheManager.keyFeaturedTemplates(region, limit)
+            val locale = languageManager.getSelectedLanguage()
+            val cacheKey = ApiCacheManager.keyFeaturedTemplates(region, locale, limit)
             apiCacheManager.get<List<VideoTemplate>>(cacheKey)
                 ?.let { return@withContext Result.success(it) }
 
@@ -181,7 +202,7 @@ class TemplateRepositoryImpl(
                         put("p_limit", limit)
                     })
                     .decodeList<TemplateDto>()
-                    .map { it.toDomain() }
+                    .map { it.toDomain(locale) }
 
                 apiCacheManager.put(cacheKey, templates)
                 Result.success(templates)
@@ -211,7 +232,7 @@ class TemplateRepositoryImpl(
                         limit(15)
                     }
                     .decodeList<TemplateDto>()
-                    .map { it.toDomain() }
+                    .map { it.toDomain(languageManager.getSelectedLanguage()) }
 
                 Result.success(templates)
             } catch (e: Exception) {
@@ -243,11 +264,17 @@ private const val THUMBNAIL_BASE_URL =
 private const val PREVIEW_IMAGE_BASE_URL =
     "https://zdydtiwglotssklnkwjh.supabase.co/storage/v1/object/public/template-previews/"
 
+// Video previews for full-screen template previewer (optional, falls back to preview image)
+private const val VIDEO_BASE_URL =
+    "https://zdydtiwglotssklnkwjh.supabase.co/storage/v1/object/public/template-preview-videos/"
+
 @Serializable
 private data class TemplateDto(
     val id: String,
     val name: String,
+    @SerialName("name_i18n") val nameI18n: JsonObject? = null,
     @SerialName("thumbnail_path") val thumbnailPath: String? = null,
+    @SerialName("preview_path") val previewPath: String? = null,
     @SerialName("song_id") val songId: Long,
     @SerialName("effect_set_id") val effectSetId: String,
     @SerialName("aspect_ratio") val aspectRatio: String = "9:16",
@@ -260,22 +287,32 @@ private data class TemplateDto(
     @SerialName("template_vibe_tags") val vibeTags: List<VibeTagRef> = emptyList(),
     @SerialName("target_regions") val targetRegions: List<String> = emptyList()
 ) {
-    fun toDomain() = VideoTemplate(
-        id = id,
-        name = name,
-        thumbnailPath = if (!thumbnailPath.isNullOrEmpty()) THUMBNAIL_BASE_URL + thumbnailPath else "",
-        previewImagePath = if (!thumbnailPath.isNullOrEmpty()) PREVIEW_IMAGE_BASE_URL + thumbnailPath else "",
-        songId = songId,
-        effectSetId = effectSetId,
-        aspectRatio = aspectRatio,
-        imageDurationMs = imageDurationMs,
-        transitionPct = transitionPct,
-        // Sort server-returned tags by sort_order (small list per template, ~1-3 items)
-        vibeTags = vibeTags.sortedBy { it.sortOrder }.map { it.vibeTagId },
-        isPremium = isPremium,
-        isActive = isActive,
-        useCount = useCount
-    )
+    fun toDomain(locale: String): VideoTemplate {
+        // Determine if preview_path is a video (.mp4) or image
+        val isVideo = previewPath?.endsWith(".mp4", ignoreCase = true) == true
+
+        return VideoTemplate(
+            id = id,
+            name = I18nHelper.getLocalizedValue(
+                i18nData = nameI18n,
+                locale = locale,
+                fallback = name
+            ),
+            thumbnailPath = if (!thumbnailPath.isNullOrEmpty()) THUMBNAIL_BASE_URL + thumbnailPath else "",
+            previewImagePath = if (!previewPath.isNullOrEmpty() && !isVideo) PREVIEW_IMAGE_BASE_URL + previewPath else "",
+            videoUrl = if (isVideo && !previewPath.isNullOrEmpty()) VIDEO_BASE_URL + previewPath else null,
+            songId = songId,
+            effectSetId = effectSetId,
+            aspectRatio = aspectRatio,
+            imageDurationMs = imageDurationMs,
+            transitionPct = transitionPct,
+            // Sort server-returned tags by sort_order (small list per template, ~1-3 items)
+            vibeTags = vibeTags.sortedBy { it.sortOrder }.map { it.vibeTagId },
+            isPremium = isPremium,
+            isActive = isActive,
+            useCount = useCount
+        )
+    }
 }
 
 @Serializable
@@ -305,6 +342,7 @@ private data class VibeTagTemplateJoinDto(
 private data class VibeTagDto(
     val id: String,
     @SerialName("display_name") val displayName: String,
+    @SerialName("label_i18n") val labelI18n: JsonObject? = null,
     val emoji: String = "",
     // Included only to satisfy the !inner join chain — not used after mapping
     @SerialName("template_vibe_tags") val templateVibeTags: List<VibeTagJoinDto> = emptyList()

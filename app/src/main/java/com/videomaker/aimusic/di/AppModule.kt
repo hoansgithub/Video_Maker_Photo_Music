@@ -57,6 +57,10 @@ import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePrefer
 // Note: Language use cases are still registered for LanguageSelectionActivity (ACCDI.get)
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.media.composition.CompositionFactory
+import com.videomaker.aimusic.core.cache.VideoCacheManager
+import androidx.media3.datasource.cache.SimpleCache
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import com.videomaker.aimusic.modules.editor.EditorViewModel
 import com.videomaker.aimusic.modules.export.ExportViewModel
 import com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepository
@@ -132,8 +136,8 @@ val dataModule = module {
     single<OnboardingRepository> { OnboardingRepositoryImpl(get()) }
     single<ProjectRepository> { ProjectRepositoryImpl(get(), get()) }
     single<ExportRepository> { ExportRepositoryImpl(get()) }
-    single<SongRepository> { SongRepositoryImpl(get(), get(), regionProvider = get()) }
-    single<TemplateRepository> { TemplateRepositoryImpl(get(), get(), regionProvider = get()) }
+    single<SongRepository> { SongRepositoryImpl(get(), get(), regionProvider = get(), languageManager = get()) }
+    single<TemplateRepository> { TemplateRepositoryImpl(get(), get(), regionProvider = get(), languageManager = get()) }
     single<EffectSetRepository> { EffectSetRepositoryImpl(get(), get(), get()) }
     single<LikedSongRepository> { LikedSongRepositoryImpl(get()) }
     single<LikedTemplateRepository> { LikedTemplateRepositoryImpl(get()) }
@@ -152,6 +156,28 @@ val dataModule = module {
 val mediaModule = module {
     single { CompositionFactory(androidContext(), get()) }
     single { AudioPreviewCache(androidContext()) }
+
+    // ========== VIDEO CACHE ==========
+    // Video cache manager for template previews
+    single { VideoCacheManager(androidContext()) }
+
+    // SimpleCache instance (singleton - expensive to create)
+    single<SimpleCache> {
+        VideoCacheManager.getCache(androidContext())
+    }
+
+    // CacheDataSource.Factory for ExoPlayer with disk caching
+    single<CacheDataSource.Factory> {
+        CacheDataSource.Factory()
+            .setCache(get<SimpleCache>())
+            .setUpstreamDataSourceFactory(
+                DefaultHttpDataSource.Factory()
+                    .setUserAgent("VideoMaker/1.0")
+                    .setConnectTimeoutMs(10000)
+                    .setReadTimeoutMs(10000)
+            )
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+    }
 
     // Coil ImageLoader singleton
     // Gets the ImageLoader from ImageLoaderFactory (VideoMakerApplication)
@@ -182,8 +208,8 @@ val domainModule = module {
     factory { CheckLanguageSelectedUseCase(get()) }
     factory { CompleteLanguageSelectionUseCase(get()) }
     factory { GetSelectedLanguageUseCase(get()) }
-    factory { SaveLanguagePreferenceUseCase(get(), get()) }  // Inject RegionProvider to invalidate cache on language change
-    factory { ApplyLanguageUseCase(get()) }
+    factory { SaveLanguagePreferenceUseCase(get(), get(), get()) }  // LanguageManager, RegionProvider, TemplateRepository
+    factory { ApplyLanguageUseCase(get(), get()) }  // LanguageManager, ApiCacheManager
 
     // Project use cases
     factory { CreateProjectUseCase(get()) }
@@ -306,9 +332,10 @@ class ExportViewModelFactory(
     private val projectRepository: ProjectRepository,
     private val templateRepository: TemplateRepository
 ) {
-    fun create(projectId: String): ExportViewModel {
+    fun create(projectId: String, quality: com.videomaker.aimusic.domain.model.VideoQuality = com.videomaker.aimusic.domain.model.VideoQuality.DEFAULT): ExportViewModel {
         return ExportViewModel(
             projectId = projectId,
+            initialQuality = quality,
             exportRepository = exportRepository,
             projectRepository = projectRepository,
             templateRepository = templateRepository
@@ -590,7 +617,7 @@ val presentationModule = module {
     // Editor ViewModel factory (singleton - stateless factory)
     single {
         EditorViewModelFactory(
-            context = androidContext(),
+            context = androidContext().applicationContext,  // Use Application context to prevent leaks
             getProjectUseCase = get(),
             createProjectUseCase = get(),
             updateSettingsUseCase = get(),
@@ -665,7 +692,8 @@ val presentationModule = module {
             searchSongsPagedUseCase = get(),
             templateRepository = get(),
             getGenresUseCase = get(),
-            getSuggestedSongsUseCase = get()
+            getSuggestedSongsUseCase = get(),
+            getSongsByGenreUseCase = get()
         )
     }
 

@@ -37,8 +37,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,6 +81,18 @@ fun TemplateListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
+
+    // ✅ FIX: Refresh data when locale changes (template names + vibe tags)
+    // Use rememberSaveable to persist previousLocale across Activity recreation
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.toLanguageTag()
+    var previousLocale by rememberSaveable { mutableStateOf(locale) }
+    LaunchedEffect(locale) {
+        // Only refresh on locale CHANGE, not initial composition
+        if (locale != null && locale != previousLocale && previousLocale != null) {
+            viewModel.refreshCurrentPage()
+        }
+        previousLocale = locale
+    }
 
     // Handle navigation events
     LaunchedEffect(navigationEvent) {

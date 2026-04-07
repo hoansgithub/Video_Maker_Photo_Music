@@ -63,6 +63,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.di.MusicPlayerViewModelFactory
@@ -100,9 +101,17 @@ fun MusicPlayerBottomSheet(
     val viewModel: MusicPlayerViewModel = viewModel(
         key = "player_${song.id}",
         factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                playerFactory.create(song.id) as T
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val viewModel = playerFactory.create(song.id)
+                if (modelClass.isAssignableFrom(viewModel::class.java)) {
+                    @Suppress("UNCHECKED_CAST")
+                    return viewModel as T
+                } else {
+                    throw IllegalArgumentException(
+                        "Unknown ViewModel: ${modelClass.name}, expected: ${viewModel::class.java.name}"
+                    )
+                }
+            }
         }
     )
     val isLiked by viewModel.isLiked.collectAsStateWithLifecycle()
@@ -116,10 +125,22 @@ fun MusicPlayerBottomSheet(
     val context = LocalContext.current
     // Player is created once per sheet open and released on close.
     // CacheDataSource.Factory routes playback through the 50 MB disk cache
-    // so the same preview URL is only downloaded once across sessions.
+    // so the same mp3 URL is only downloaded once across sessions.
+    // LoadControl optimized for faster streaming: reduced buffer, prioritize playback start
     val player = remember {
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                /* minBufferMs = */ 2500,      // Balanced: faster than default, stable on slow networks
+                /* maxBufferMs = */ 15000,     // Max buffer 15s (reduced from default 50s)
+                /* bufferForPlaybackMs = */ 1500,   // Start after 1.5s buffered (safer than 500ms)
+                /* bufferForPlaybackAfterRebufferMs = */ 2500  // ExoPlayer default for stability
+            )
+            .setPrioritizeTimeOverSizeThresholds(true)  // Favor low latency over buffer size
+            .build()
+
         ExoPlayer.Builder(context)
             .setMediaSourceFactory(DefaultMediaSourceFactory(cacheDataSourceFactory))
+            .setLoadControl(loadControl)
             .build()
     }
 
@@ -146,7 +167,7 @@ fun MusicPlayerBottomSheet(
             }
         }
 
-        val url = song.previewUrl.ifEmpty { song.mp3Url }
+        val url = song.mp3Url.ifEmpty { song.previewUrl }
         if (url.isNotEmpty()) {
             player.addListener(listener)
             runCatching {

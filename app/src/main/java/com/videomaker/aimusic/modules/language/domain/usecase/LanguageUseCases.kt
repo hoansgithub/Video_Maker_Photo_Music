@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.language.domain.usecase
 
+import com.videomaker.aimusic.core.data.local.ApiCacheManager
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.RegionProvider
 
@@ -36,26 +37,37 @@ class GetSelectedLanguageUseCase(
 /**
  * Save language preference without applying — no Activity recreation.
  * Also invalidates RegionProvider cache so region is re-derived from new language.
+ * Clears template cache so fresh i18n data is fetched with new language.
  */
 class SaveLanguagePreferenceUseCase(
     private val languageManager: LanguageManager,
-    private val regionProvider: RegionProvider
+    private val regionProvider: RegionProvider,
+    private val templateRepository: com.videomaker.aimusic.domain.repository.TemplateRepository
 ) {
-    operator fun invoke(languageCode: String) {
+    suspend operator fun invoke(languageCode: String) {
         languageManager.saveLanguagePreference(languageCode)
         // Clear region cache - will be re-derived from new language on next access
         regionProvider.invalidate()
+        // Clear template cache - force re-fetch with new language
+        templateRepository.clearCache()
     }
 }
 
 /**
  * Apply the saved language preference via AppCompat.
+ * Clears all localized caches (vibe tags, templates, genres) so Activity recreation
+ * triggers fresh fetch with new locale instead of showing cached old-language data.
  * Call right before navigating to the next Activity so it starts with the new locale.
  */
 class ApplyLanguageUseCase(
-    private val languageManager: LanguageManager
+    private val languageManager: LanguageManager,
+    private val apiCacheManager: com.videomaker.aimusic.core.data.local.ApiCacheManager
 ) {
-    operator fun invoke() {
+    suspend operator fun invoke() {
+        // Clear all locale-dependent caches before applying language
+        apiCacheManager.clearLocalizedCache()
+
+        // Apply new locale - will trigger Activity recreation
         languageManager.applyLanguage()
     }
 }
