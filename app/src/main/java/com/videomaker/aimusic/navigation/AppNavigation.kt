@@ -76,6 +76,18 @@ import com.videomaker.aimusic.widget.WidgetScreen
 private val slideAnimSpec = tween<IntOffset>(300)
 
 /**
+ * Safe back navigation helper - prevents NavDisplay crash from empty backstack
+ * CRITICAL: NavDisplay requires at least 1 route in backstack at all times
+ */
+private fun <T> MutableList<T>.safeRemoveLast(): Boolean {
+    return if (size > 1) {
+        removeLastOrNull() != null
+    } else {
+        false // Don't remove the last route - would crash NavDisplay
+    }
+}
+
+/**
  * AppNavigation — Navigation 3 (1.0.0 stable) host for MainActivity
  *
  * Architecture matches android-short-drama-app:
@@ -166,7 +178,7 @@ fun AppNavigation(
         onBack = {
             // At root (Home) — exit the app; otherwise pop
             if (backStack.size > 1) {
-                backStack.removeLastOrNull()
+                backStack.safeRemoveLast()
             } else {
                 activity?.finish()
             }
@@ -272,7 +284,7 @@ fun AppNavigation(
                             overrideSongId = songId
                         ))
                     },
-                    onNavigateBack = { backStack.removeLastOrNull() }
+                    onNavigateBack = { backStack.safeRemoveLast() }
                 )
             }
 
@@ -284,7 +296,7 @@ fun AppNavigation(
                 )
                 com.videomaker.aimusic.modules.suggestedsongs.SuggestedSongsListScreen(
                     viewModel = suggestedSongsViewModel,
-                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToAssetPicker = { songId ->
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = "", // Top-ranked template
@@ -303,7 +315,7 @@ fun AppNavigation(
                 )
                 com.videomaker.aimusic.modules.weeklyranking.WeeklyRankingListScreen(
                     viewModel = weeklyRankingViewModel,
-                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToAssetPicker = { songId ->
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = "", // Top-ranked template
@@ -349,8 +361,8 @@ fun AppNavigation(
                             add(AppRoute.Editor(projectId = null, initialData = initialData))
                         }
                     },
-                    onNavigateBack = { backStack.removeLastOrNull() },
-                    onAssetsAdded = { backStack.removeLastOrNull() },
+                    onNavigateBack = { backStack.safeRemoveLast() },
+                    onAssetsAdded = { backStack.safeRemoveLast() },
                     onNavigateToTemplatePreviewer = { templateId, imageUris, overrideSongId ->
                         backStack.apply {
                             val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home()
@@ -378,7 +390,7 @@ fun AppNavigation(
                 EditorScreen(
                     viewModel = editorViewModel,
                     // musicPickerViewModelFactory = musicPickerFactory,
-                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToPreview = { projectId ->
                         backStack.add(AppRoute.Preview(projectId))
                     },
@@ -394,7 +406,7 @@ fun AppNavigation(
             entry<AppRoute.Preview> { route ->
                 PlaceholderScreen(
                     title = "Preview: ${route.projectId}",
-                    onBack = { backStack.removeLastOrNull() }
+                    onBack = { backStack.safeRemoveLast() }
                 )
             }
 
@@ -406,7 +418,7 @@ fun AppNavigation(
                 )
                 ExportScreen(
                     viewModel = exportViewModel,
-                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToHomeMyVideos = {
                         backStack.apply {
                             clear()
@@ -441,7 +453,7 @@ fun AppNavigation(
                 )
                 TemplateListScreen(
                     viewModel = viewModel,
-                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToTemplatePreviewer = { templateId ->
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = templateId,
@@ -477,7 +489,7 @@ fun AppNavigation(
                             aspectRatio = aspectRatio
                         ))
                     },
-                    onNavigateBack = { backStack.removeLastOrNull() }
+                    onNavigateBack = { backStack.safeRemoveLast() }
                 )
             }
 
@@ -486,7 +498,7 @@ fun AppNavigation(
             // ============================================
             entry<AppRoute.Settings> {
                 SettingsScreen(
-                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToLanguageSettings = { backStack.add(AppRoute.LanguageSettings) },
                     onNavigateToWidgetScreen = { backStack.add(AppRoute.WidgetScreen) }
                 )
@@ -500,7 +512,7 @@ fun AppNavigation(
                 )
                 UninstallScreen(
                     viewModel = uninstallViewModel,
-                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToTemplatePreviewer = { templateId ->
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = templateId,
@@ -526,7 +538,7 @@ fun AppNavigation(
 
                 LanguageSelectionScreen(
                     showBackButton = true,
-                    onBackClick = { backStack.removeLastOrNull() },
+                    onBackClick = { backStack.safeRemoveLast() },
                     onLanguageSelected = { languageCode ->
                         coroutineScope.launch {
                             saveLanguage(languageCode)
@@ -535,7 +547,7 @@ fun AppNavigation(
                     onContinue = {
                         applyLanguage()
                         activity?.recreate()
-                        backStack.removeLastOrNull()
+                        backStack.safeRemoveLast()
                     }
                 )
             }
@@ -548,7 +560,7 @@ fun AppNavigation(
                 )
                 WidgetScreen(
                     viewModel = widgetViewModel,
-                    onNavigateBack = { backStack.removeLastOrNull() },
+                    onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToTemplatePreviewer = { templateId ->
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = templateId,

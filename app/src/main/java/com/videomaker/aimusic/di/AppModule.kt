@@ -664,7 +664,8 @@ val presentationModule = module {
             searchSongsPagedUseCase = get(),
             templateRepository = get(),
             getGenresUseCase = get(),
-            getSuggestedSongsUseCase = get()
+            getSuggestedSongsUseCase = get(),
+            getSongsByGenreUseCase = get()
         )
     }
 

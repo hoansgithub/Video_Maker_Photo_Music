@@ -10,6 +10,7 @@ import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
+import com.videomaker.aimusic.domain.usecase.GetSongsByGenreUseCase
 import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.SearchSongsPagedUseCase
 import com.videomaker.aimusic.domain.usecase.SearchTemplatesPagedUseCase
@@ -28,6 +29,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.isActive
+import java.util.concurrent.atomic.AtomicInteger
 
 @Immutable
 data class TemplateSectionState(
@@ -93,7 +96,8 @@ class UnifiedSearchViewModel(
     private val searchSongsPagedUseCase: SearchSongsPagedUseCase,
     private val templateRepository: TemplateRepository,
     private val getGenresUseCase: GetGenresUseCase,
-    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase
+    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
+    private val getSongsByGenreUseCase: GetSongsByGenreUseCase
 ) : ViewModel() {
 
     companion object {
@@ -103,6 +107,8 @@ class UnifiedSearchViewModel(
         private const val MIN_TYPING_LENGTH = 1  // Show suggestions from 1 character
         private const val MAX_RECENT_SEARCHES = 3
         private const val MAX_RELATED_SEARCHES = 3  // Max related searches at top of results
+        private const val MAX_TAG_RESULTS = 100  // Max results for genre/vibe tag filtering
+        private const val MAX_SEARCH_RESULTS = 50  // Max results for text search queries
     }
 
     private val _uiState = MutableStateFlow<UnifiedSearchUiState>(UnifiedSearchUiState.Idle(initialSection))
@@ -149,8 +155,7 @@ class UnifiedSearchViewModel(
 
     private var explicitSearchJob: Job? = null
     private var debounceLockedOut = false
-    @Volatile
-    private var searchSessionId: Int = 0
+    private val searchSessionId = AtomicInteger(0)
 
     // Full server results cached for client-side "See More" (no re-fetch needed)
 
@@ -271,11 +276,83 @@ class UnifiedSearchViewModel(
     }
 
     fun onVibeTagClick(tag: VibeTag) {
-        onSuggestionClick(tag.displayName)
+        acquireExplicitSearchControl()
+        searchSessionId.incrementAndGet()
+        _uiState.value = UnifiedSearchUiState.Loading
+
+        explicitSearchJob = viewModelScope.launch(Dispatchers.IO) {
+            val result = templateRepository.getTemplatesByVibeTag(
+                tag = tag.id,
+                limit = MAX_TAG_RESULTS,
+                offset = 0
+            )
+
+            _uiState.value = result.fold(
+                onSuccess = { templates ->
+                    if (templates.isEmpty()) {
+                        UnifiedSearchUiState.Empty(query = tag.displayName)
+                    } else {
+                        UnifiedSearchUiState.Results(
+                            query = tag.displayName,
+                            templates = TemplateSectionState(
+                                items = templates,
+                                hasMore = false,
+                                totalLoaded = templates.size,
+                                totalCount = templates.size
+                            ),
+                            music = MusicSectionState(
+                                songs = emptyList(),
+                                hasMore = false,
+                                totalLoaded = 0,
+                                totalCount = 0
+                            ),
+                            initialSection = initialSection
+                        )
+                    }
+                },
+                onFailure = {
+                    UnifiedSearchUiState.Error("Failed to load templates for ${tag.displayName}")
+                }
+            )
+        }
     }
 
     fun onGenreClick(genre: SongGenre) {
-        onSuggestionClick(genre.displayName)
+        acquireExplicitSearchControl()
+        searchSessionId.incrementAndGet()
+        _uiState.value = UnifiedSearchUiState.Loading
+
+        explicitSearchJob = viewModelScope.launch(Dispatchers.IO) {
+            val result = getSongsByGenreUseCase(genre.id, limit = MAX_TAG_RESULTS)
+
+            _uiState.value = result.fold(
+                onSuccess = { songs ->
+                    if (songs.isEmpty()) {
+                        UnifiedSearchUiState.Empty(query = genre.displayName)
+                    } else {
+                        UnifiedSearchUiState.Results(
+                            query = genre.displayName,
+                            templates = TemplateSectionState(
+                                items = emptyList(),
+                                hasMore = false,
+                                totalLoaded = 0,
+                                totalCount = 0
+                            ),
+                            music = MusicSectionState(
+                                songs = songs,
+                                hasMore = false,
+                                totalLoaded = songs.size,
+                                totalCount = songs.size
+                            ),
+                            initialSection = initialSection
+                        )
+                    }
+                },
+                onFailure = {
+                    UnifiedSearchUiState.Error("Failed to load songs for ${genre.displayName}")
+                }
+            )
+        }
     }
 
     fun onTemplateClick(templateId: String) {
@@ -365,7 +442,7 @@ class UnifiedSearchViewModel(
 
     fun onExplore(section: SearchSection) {
         _uiState.value as? UnifiedSearchUiState.Results ?: return
-        val sessionAtStart = searchSessionId
+        val sessionAtStart = searchSessionId.get()
         viewModelScope.launch(Dispatchers.IO) {
             when (section) {
                 SearchSection.TEMPLATES -> {
@@ -375,7 +452,7 @@ class UnifiedSearchViewModel(
                         .take(EXPLORE_SUGGESTION_LIMIT)
 
                     val latest = _uiState.value as? UnifiedSearchUiState.Results ?: return@launch
-                    if (sessionAtStart != searchSessionId) return@launch
+                    if (sessionAtStart != searchSessionId.get()) return@launch
                     _uiState.value = latest.copy(templateEmpty = suggestions)
                 }
 
@@ -385,7 +462,7 @@ class UnifiedSearchViewModel(
                         .take(EXPLORE_SUGGESTION_LIMIT)
 
                     val latest = _uiState.value as? UnifiedSearchUiState.Results ?: return@launch
-                    if (sessionAtStart != searchSessionId) return@launch
+                    if (sessionAtStart != searchSessionId.get()) return@launch
                     _uiState.value = latest.copy(songEmpty = suggestions)
                 }
             }
@@ -404,7 +481,7 @@ class UnifiedSearchViewModel(
     }
 
     private fun launchExplicitSearch(query: String) {
-        searchSessionId += 1
+        searchSessionId.incrementAndGet()
         _uiState.value = UnifiedSearchUiState.Loading
         explicitSearchJob = viewModelScope.launch {
             _uiState.value = runParallelSearch(query)
@@ -428,16 +505,21 @@ class UnifiedSearchViewModel(
     }
 
     private suspend fun runParallelSearch(query: String): UnifiedSearchUiState = coroutineScope {
-        // Fetch all results from server in one shot and display them at once
+        // Fetch results from server with reasonable limits
         val templateDeferred = async(Dispatchers.IO) {
-            searchTemplatesPagedUseCase(query = query, limit = Int.MAX_VALUE, offset = 0)
+            searchTemplatesPagedUseCase(query = query, limit = MAX_SEARCH_RESULTS, offset = 0)
         }
         val musicDeferred = async(Dispatchers.IO) {
-            searchSongsPagedUseCase(query = query, limit = Int.MAX_VALUE, offset = 0)
+            searchSongsPagedUseCase(query = query, limit = MAX_SEARCH_RESULTS, offset = 0)
         }
 
         val templatesResult = templateDeferred.await()
         val musicResult = musicDeferred.await()
+
+        // Check if still active after async operations (user may have typed new query)
+        if (!isActive) {
+            return@coroutineScope UnifiedSearchUiState.Idle(initialSection)
+        }
 
         if (templatesResult.isFailure && musicResult.isFailure) {
             return@coroutineScope UnifiedSearchUiState.Error("Search failed. Please try again.")
@@ -507,7 +589,8 @@ class UnifiedSearchViewModelFactory(
     private val searchSongsPagedUseCase: SearchSongsPagedUseCase,
     private val templateRepository: TemplateRepository,
     private val getGenresUseCase: GetGenresUseCase,
-    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase
+    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
+    private val getSongsByGenreUseCase: GetSongsByGenreUseCase
 ) {
     fun create(initialSection: SearchSection): UnifiedSearchViewModel {
         return UnifiedSearchViewModel(
@@ -517,7 +600,8 @@ class UnifiedSearchViewModelFactory(
             searchSongsPagedUseCase = searchSongsPagedUseCase,
             templateRepository = templateRepository,
             getGenresUseCase = getGenresUseCase,
-            getSuggestedSongsUseCase = getSuggestedSongsUseCase
+            getSuggestedSongsUseCase = getSuggestedSongsUseCase,
+            getSongsByGenreUseCase = getSongsByGenreUseCase
         )
     }
 }

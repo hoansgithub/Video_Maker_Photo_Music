@@ -412,7 +412,7 @@ private fun SuccessContent(
     saveError: String?,
     shareError: String? = null,
     aspectRatio: AspectRatio = AspectRatio.RATIO_9_16,
-    currentQuality: VideoQuality = VideoQuality.DEFAULT,
+    currentQuality: VideoQuality,
     featuredTemplatesState: FeaturedTemplatesState = FeaturedTemplatesState.Loading,
     saveToastState: com.videomaker.aimusic.ui.components.ProcessToastState? = null,
     onSaveToGalleryClick: () -> Unit,
