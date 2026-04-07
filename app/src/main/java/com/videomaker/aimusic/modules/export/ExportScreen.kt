@@ -1,8 +1,15 @@
 package com.videomaker.aimusic.modules.export
 
+import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -68,6 +76,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -84,13 +93,23 @@ import coil.compose.AsyncImage
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.VideoQuality
+import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.modules.rate.RatingFeedbackPopup
+import com.videomaker.aimusic.modules.rate.RatingSatisfactionPopup
+import com.videomaker.aimusic.modules.rate.RatingStarsPopup
+import com.videomaker.aimusic.modules.rate.RatingStep
+import com.videomaker.aimusic.modules.rate.RatingStep.*
 import com.videomaker.aimusic.ui.components.ProcessToast
+import com.videomaker.aimusic.ui.components.ProcessToastState
 import com.videomaker.aimusic.ui.components.QualityPicker
+import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
+import com.videomaker.aimusic.ui.components.TemplateCard
 import com.videomaker.aimusic.ui.theme.BackgroundLight
 import com.videomaker.aimusic.ui.theme.Neutral_N800
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+import kotlinx.coroutines.delay
 import java.io.File
 
 /**
@@ -103,7 +122,7 @@ private data class Responsive(
     val horizontalPadding: Dp,
     val buttonSpacing: Dp,
     val iconSpacing: Dp,
-    val contentPadding: androidx.compose.foundation.layout.PaddingValues
+    val contentPadding: PaddingValues
 )
 
 /**
@@ -128,6 +147,7 @@ fun ExportScreen(
     val currentQuality by viewModel.currentQuality.collectAsStateWithLifecycle()
     val featuredTemplatesState by viewModel.featuredTemplatesState.collectAsStateWithLifecycle()
     val saveToastState by viewModel.saveToastState.collectAsStateWithLifecycle()
+    val ratingStep by viewModel.ratingStep.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -163,6 +183,26 @@ fun ExportScreen(
                 }
             }
             viewModel.onNavigationHandled()
+        }
+    }
+
+    // Launch Play Store for high-star rating — one-time event requiring Activity context
+    LaunchedEffect(Unit) {
+        viewModel.launchPlayStoreEvent.collect {
+            val packageName = context.packageName
+            val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            try {
+                context.startActivity(marketIntent)
+            } catch (e: ActivityNotFoundException) {
+                // Fallback: open Play Store in browser if Play Store app not installed
+                context.startActivity(
+                    Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("https://play.google.com/store/apps/details?id=$packageName")
+                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            }
         }
     }
 
@@ -239,6 +279,31 @@ fun ExportScreen(
                 )
             }
         }
+
+        // Rating popup overlay — renders on top of export content
+        AnimatedContent(
+            targetState = ratingStep,
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            label = "rating_popup_transition"
+        ) { step ->
+            when (step) {
+                Satisfaction -> RatingSatisfactionPopup(
+                    onNotReally = viewModel::onNotReally,
+                    onGood = viewModel::onGood,
+                    onDismiss = viewModel::onRatingDismiss
+                )
+                Stars -> RatingStarsPopup(
+                    onLowRating = viewModel::onLowRating,
+                    onHighRating = viewModel::onHighRating,
+                    onDismiss = viewModel::onRatingDismiss
+                )
+                Feedback -> RatingFeedbackPopup(
+                    onSubmit = viewModel::onFeedbackSubmit,
+                    onDismiss = viewModel::onRatingDismiss
+                )
+                None -> { /* No popup shown */ }
+            }
+        }
     }
 }
 
@@ -288,7 +353,7 @@ private fun ProcessingContent(
     // Rotate tips every 4 seconds
     LaunchedEffect(Unit) {
         while (true) {
-            kotlinx.coroutines.delay(4000)
+            delay(4000)
             currentTipIndex = (currentTipIndex + 1) % tipMessages.size
         }
     }
@@ -440,7 +505,7 @@ private fun SuccessContent(
     aspectRatio: AspectRatio = AspectRatio.RATIO_9_16,
     currentQuality: VideoQuality,
     featuredTemplatesState: FeaturedTemplatesState = FeaturedTemplatesState.Loading,
-    saveToastState: com.videomaker.aimusic.ui.components.ProcessToastState? = null,
+    saveToastState: ProcessToastState? = null,
     onSaveToGalleryClick: () -> Unit,
     onShareClick: () -> Unit,
     onQualityChange: (VideoQuality) -> Unit = {},
@@ -603,7 +668,7 @@ private fun SuccessContent(
                             shape = RoundedCornerShape(16.dp)
                         )
                         .clip(RoundedCornerShape(18.dp))
-                        .border(1.dp,Color.White.copy(0.5f),RoundedCornerShape(18.dp))
+                        .border(1.dp, Color.White.copy(0.5f), RoundedCornerShape(18.dp))
                 )
             } else {
                 // Preview mode - show placeholder
@@ -667,7 +732,7 @@ private fun SuccessContent(
                         horizontalPadding = 8.dp,
                         buttonSpacing = 6.dp,
                         iconSpacing = 4.dp,
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                     )
                 }
                 screenWidthDp < 380 -> {
@@ -679,7 +744,7 @@ private fun SuccessContent(
                         horizontalPadding = 12.dp,
                         buttonSpacing = 8.dp,
                         iconSpacing = 6.dp,
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 10.dp)
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
                     )
                 }
                 else -> {
@@ -691,7 +756,7 @@ private fun SuccessContent(
                         horizontalPadding = 24.dp,
                         buttonSpacing = 12.dp,
                         iconSpacing = 8.dp,
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
                     )
                 }
             }
@@ -965,14 +1030,14 @@ private fun CancelledContent(
  * @param onError Callback for error handling (shows error message to user)
  */
 private fun shareVideo(
-    context: android.content.Context,
+    context: Context,
     outputPath: String,
     onError: (String) -> Unit
 ) {
     try {
         val file = File(outputPath)
         if (!file.exists()) {
-            android.util.Log.e("ExportScreen", "Share failed: Video file not found at $outputPath")
+            Log.e("ExportScreen", "Share failed: Video file not found at $outputPath")
             onError(context.getString(R.string.export_error_file_not_found))
             return
         }
@@ -991,7 +1056,7 @@ private fun shareVideo(
 
         context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.export_share_video)))
     } catch (e: Exception) {
-        android.util.Log.e("ExportScreen", "Share failed", e)
+        Log.e("ExportScreen", "Share failed", e)
         onError(e.message ?: context.getString(R.string.export_error_share_failed))
     }
 }
@@ -1002,8 +1067,8 @@ private fun shareVideo(
 
 @Composable
 private fun FeaturedTemplatesGrid(
-    templates: List<com.videomaker.aimusic.domain.model.VideoTemplate>,
-    onTemplateClick: (com.videomaker.aimusic.domain.model.VideoTemplate) -> Unit,
+    templates: List<VideoTemplate>,
+    onTemplateClick: (VideoTemplate) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (templates.isEmpty()) return
@@ -1023,7 +1088,7 @@ private fun FeaturedTemplatesGrid(
             ) {
                 rowTemplates.forEach { template ->
                     Box(modifier = Modifier.weight(1f)) {
-                        com.videomaker.aimusic.ui.components.TemplateCard(
+                        TemplateCard(
                             name = template.name,
                             thumbnailPath = template.thumbnailPath,
                             aspectRatio = parseAspectRatio(template.aspectRatio),
@@ -1057,7 +1122,7 @@ private fun FeaturedTemplatesSkeleton(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 repeat(2) {
-                    com.videomaker.aimusic.ui.components.ShimmerPlaceholder(
+                    ShimmerPlaceholder(
                         modifier = Modifier
                             .weight(1f)
                             .aspectRatio(9f / 16f)
@@ -1090,7 +1155,7 @@ private fun parseAspectRatio(aspectRatio: String): Float {
 // PREVIEWS
 // ============================================
 
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Preview(showBackground = true)
 @Composable
 private fun PreparingContentPreview() {
     VideoMakerTheme {
@@ -1105,7 +1170,7 @@ private fun PreparingContentPreview() {
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Preview(showBackground = true)
 @Composable
 private fun ProcessingContentPreview() {
     VideoMakerTheme {
@@ -1124,7 +1189,7 @@ private fun ProcessingContentPreview() {
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Preview(showBackground = true)
 @Composable
 private fun SuccessContentPreview() {
     VideoMakerTheme {
@@ -1149,7 +1214,7 @@ private fun SuccessContentPreview() {
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Preview(showBackground = true)
 @Composable
 private fun SuccessContentSavedPreview() {
     VideoMakerTheme {
@@ -1174,7 +1239,7 @@ private fun SuccessContentSavedPreview() {
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Preview(showBackground = true)
 @Composable
 private fun ErrorContentPreview() {
     VideoMakerTheme {
@@ -1193,7 +1258,7 @@ private fun ErrorContentPreview() {
     }
 }
 
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Preview(showBackground = true)
 @Composable
 private fun CancelledContentPreview() {
     VideoMakerTheme {

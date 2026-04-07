@@ -7,16 +7,21 @@ import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.core.rating.RatingTriggerManager
 import com.videomaker.aimusic.domain.repository.ExportProgress
 import com.videomaker.aimusic.domain.repository.ExportRepository
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
+import com.videomaker.aimusic.domain.usecase.SubmitFeedbackUseCase
 import com.videomaker.aimusic.media.export.MediaStoreHelper
+import com.videomaker.aimusic.modules.rate.RatingStep
 import com.videomaker.aimusic.ui.components.ProcessToastState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -107,7 +112,9 @@ class ExportViewModel(
     private val projectId: String,
     private val exportRepository: ExportRepository,
     private val projectRepository: ProjectRepository,
-    private val templateRepository: TemplateRepository
+    private val templateRepository: TemplateRepository,
+    private val ratingTriggerManager: RatingTriggerManager,
+    private val submitFeedbackUseCase: SubmitFeedbackUseCase
 ) : ViewModel() {
 
     // ============================================
@@ -138,6 +145,21 @@ class ExportViewModel(
     val saveToastState: StateFlow<ProcessToastState?> = _saveToastState.asStateFlow()
 
     // ============================================
+    // RATING STATE
+    // ============================================
+
+    private val _ratingStep = MutableStateFlow(RatingStep.None)
+    val ratingStep: StateFlow<RatingStep> = _ratingStep.asStateFlow()
+
+    // Private tracking for feedback submission
+    private var satisfactionResponse: String? = null
+    private var lastStarRating: Int = 0
+
+    // Play Store launch event — one-time action requiring Activity context in composable
+    private val _launchPlayStoreEvent = Channel<Unit>(Channel.BUFFERED)
+    val launchPlayStoreEvent = _launchPlayStoreEvent.receiveAsFlow()
+
+    // ============================================
     // NAVIGATION EVENTS (StateFlow-based - Google recommended)
     // ============================================
 
@@ -161,6 +183,7 @@ class ExportViewModel(
         loadProjectData()
         startExport()
         loadFeaturedTemplates()
+        observeRatingTrigger()
     }
 
     private fun loadProjectData() {
@@ -182,12 +205,65 @@ class ExportViewModel(
                 _uiState.value = when (progress) {
                     is ExportProgress.Preparing -> ExportUiState.Preparing
                     is ExportProgress.Processing -> ExportUiState.Processing(progress.percent)
-                    is ExportProgress.Success -> ExportUiState.Success(progress.outputPath)
+                    is ExportProgress.Success -> {
+                        ratingTriggerManager.onVideoCreated()
+                        ExportUiState.Success(progress.outputPath)
+                    }
                     is ExportProgress.Error -> ExportUiState.Error(progress.message)
                     is ExportProgress.Cancelled -> ExportUiState.Cancelled
                 }
             }
         }
+    }
+
+    // ============================================
+    // RATING ACTIONS
+    // ============================================
+
+    /** User tapped "Not Really" on Satisfaction popup — dismiss without further action */
+    fun onNotReally() {
+        satisfactionResponse = "not_really"
+        _ratingStep.value = RatingStep.None
+    }
+
+    /** User tapped "Good" on Satisfaction popup — proceed to star rating */
+    fun onGood() {
+        satisfactionResponse = "good"
+        _ratingStep.value = RatingStep.Stars
+    }
+
+    /** User tapped "Rate Us" with 1-3 stars — proceed to feedback popup */
+    fun onLowRating(stars: Int) {
+        lastStarRating = stars
+        _ratingStep.value = RatingStep.Feedback
+    }
+
+    /** User tapped "Rate Us" with 4-5 stars — open Play Store, mark completed */
+    fun onHighRating(stars: Int) {
+        lastStarRating = stars
+        _ratingStep.value = RatingStep.None
+        ratingTriggerManager.onRatingCompleted()
+        viewModelScope.launch {
+            _launchPlayStoreEvent.send(Unit)
+        }
+    }
+
+    /** User submitted feedback text — send to Supabase, mark completed */
+    fun onFeedbackSubmit(feedback: String) {
+        _ratingStep.value = RatingStep.None
+        ratingTriggerManager.onRatingCompleted()
+        viewModelScope.launch(Dispatchers.Default) {
+            submitFeedbackUseCase(
+                feedbackText = feedback,
+                satisfactionResponse = satisfactionResponse,
+                starRating = if (lastStarRating > 0) lastStarRating else null
+            )
+        }
+    }
+
+    /** User dismissed any popup via X button */
+    fun onRatingDismiss() {
+        _ratingStep.value = RatingStep.None
     }
 
     // ============================================
@@ -254,6 +330,17 @@ class ExportViewModel(
      */
     fun onSaveToastDismissed() {
         _saveToastState.value = null
+    }
+
+    private fun observeRatingTrigger() {
+        viewModelScope.launch {
+            ratingTriggerManager.showRatingPopup.collect {
+                if (_ratingStep.value == RatingStep.None) {
+                    _ratingStep.value = RatingStep.Satisfaction
+                    ratingTriggerManager.onRatingShown()
+                }
+            }
+        }
     }
 
     /**
