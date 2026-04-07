@@ -72,7 +72,7 @@ fun UnifiedSearchEmptyContent(
                 )
                 Spacer(modifier = Modifier.height(dimens.spaceSm))
                 Text(
-                    text = "Let’s try something else or explore\ntrending vibes\u2028\u2028",
+                    text = stringResource(R.string.search_empty_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = FoundationBlack_Gray_100,
                     fontWeight = FontWeight.W400,

@@ -523,7 +523,7 @@ private fun TemplatePreviewerReadyContent(
                         }
 
                         Text(
-                            text = "Add",
+                            text = stringResource(R.string.template_add_to_favorites),
                             color = SurfaceLight,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 12.sp
@@ -539,7 +539,7 @@ private fun TemplatePreviewerReadyContent(
                 val ctaLoading = state.isCreatingProject || currentSong is SongLoadState.Loading
                 val ctaEnabled = currentSong !is SongLoadState.Loading && !state.isCreatingProject
                 PrimaryButton(
-                    text = "Use This Template",
+                    text = stringResource(R.string.template_use_button),
                     onClick = {
                         val template = templates.getOrNull(pagerState.settledPage % templates.size) ?: return@PrimaryButton
                         pendingTemplate = template
@@ -659,7 +659,7 @@ private fun CenterSwipeContent(modifier: Modifier = Modifier) {
 
         // "Swipe up" text
         Text(
-            text = "Swipe up",
+            text = stringResource(R.string.template_swipe_hint),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White,
@@ -670,7 +670,7 @@ private fun CenterSwipeContent(modifier: Modifier = Modifier) {
 
         // Subtitle
         Text(
-            text = "To enjoy you templates",
+            text = stringResource(R.string.template_swipe_subtitle),
             fontSize = 14.sp,
             color = Color.White,
             textAlign = TextAlign.Center
@@ -726,7 +726,7 @@ private fun SelectRatioBottomSheet(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             Text(
-                text = "Select Video Ratio",
+                text = stringResource(R.string.template_select_ratio_title),
                 color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold
@@ -752,7 +752,7 @@ private fun SelectRatioBottomSheet(
             }
 
             PrimaryButton(
-                text = "Create now",
+                text = stringResource(R.string.template_create_now),
                 onClick = { onConfirm(selected) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1148,13 +1148,13 @@ private fun PreviewTemplatePreviewerError() {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Failed to load templates. Please try again.",
+                    text = stringResource(R.string.template_error_load_failed),
                     color = Color.White,
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 32.dp)
                 )
-                Button(onClick = {}) { Text("Go Back") }
+                Button(onClick = {}) { Text(stringResource(R.string.back)) }
             }
         }
     }

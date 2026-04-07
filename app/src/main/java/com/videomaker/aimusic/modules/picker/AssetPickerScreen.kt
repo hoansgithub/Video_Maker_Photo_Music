@@ -466,7 +466,13 @@ private fun AssetPickerContent(
                             ),
                             shape = RoundedCornerShape(16.dp)
                         ) {
-                            Text(stringResource(R.string.picker_done))
+                            Text(
+                                stringResource(
+                                    R.string.picker_done,
+                                    uiState.selectedAssets.size,
+                                    AssetPickerViewModel.MAX_SELECTION
+                                )
+                            )
                         }
                     }
 

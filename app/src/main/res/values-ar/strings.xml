@@ -72,6 +72,8 @@
     <string name="settings_about">حول</string>
     <string name="settings_version">الإصدار</string>
     <string name="settings_uninstall">إلغاء التثبيت</string>
+    <string name="settings_share_subject">اطلع على هذا التطبيق!</string>
+    <string name="settings_share_message">مرحباً! أستخدم هذا التطبيق الرائع. جربه:\n%s</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">أعطها فرصة أخرى</string>
@@ -99,14 +101,51 @@
     <string name="editor_frame">الإطار</string>
     <string name="editor_aspect_ratio">نسبة العرض</string>
     <string name="editor_volume">مستوى الصوت</string>
+    <string name="editor_effect">التأثير</string>
+    <string name="editor_select_video_ratio">اختر نسبة الفيديو</string>
+    <string name="editor_apply">تطبيق</string>
+    <string name="editor_image_duration">مدة الصورة</string>
+    <string name="editor_change_music">تغيير الموسيقى</string>
+    <string name="editor_select_quality">اختر الجودة</string>
+    <string name="editor_hd">عالي الدقة</string>
+    <string name="editor_play">تشغيل</string>
+    <string name="editor_pause">إيقاف مؤقت</string>
     <string name="editor_duration_format">المدة: %s</string>
+
+    <!-- Music Trim Feature (NOT video trim) -->
+    <string name="editor_music_trim">قص الموسيقى</string>
+    <string name="editor_music_trim_from_start">القص من البداية</string>
+    <string name="editor_music_trim_from_end">القص من النهاية</string>
+    <string name="editor_music_trim_edit">تعديل قص الموسيقى</string>
+    <string name="editor_music_trim_title">قص الموسيقى</string>
+    <string name="editor_music_trim_subtitle">اختر أي جزء من الأغنية تريد استخدامه</string>
+    <string name="editor_music_trim_start">بداية الموسيقى</string>
+    <string name="editor_music_trim_end">نهاية الموسيقى</string>
+    <string name="editor_music_trim_duration">مدة الموسيقى</string>
+    <string name="editor_music_trim_min_duration">يجب أن تكون الموسيقى 5 ثوانٍ على الأقل</string>
+    <string name="editor_music_trim_will_loop">ستتكرر الموسيقى عند الحاجة لمطابقة مدة الفيديو</string>
+    <string name="editor_music_trimmed_info">الموسيقى: %1$s</string>
+    <string name="editor_music_trim_play_selection">تشغيل المقطع</string>
+    <string name="editor_music_trim_skip_to_start">الانتقال إلى البداية</string>
+    <string name="editor_music_trim_skip_to_end">الانتقال إلى النهاية</string>
     <string name="editor_photos_count">%d صور</string>
     <string name="editor_save_dialog_title">حفظ المشروع؟</string>
     <string name="editor_save_dialog_message">سيتم حفظ مشروعك وسيكون متاحاً في مشاريعي.</string>
     <string name="editor_save_and_exit">حفظ والخروج</string>
     <string name="editor_discard_changes">تجاهل التغييرات</string>
+    <string name="editor_processing">جارٍ المعالجة…</string>
+    <string name="editor_preparing_video">جارٍ تحضير الفيديو…</string>
+    <string name="editor_unsaved_project_title">حفظ مشروعك؟</string>
+    <string name="editor_unsaved_project_message">لم يتم حفظ مشروعك بعد. هل تريد حفظه الآن أم تجاهل عملك؟</string>
+    <string name="editor_unsaved_changes_title">تغييرات غير محفوظة</string>
+    <string name="editor_unsaved_changes_message">إذا خرجت الآن، ستفقد تغييراتك. هل أنت متأكد أنك تريد الخروج؟</string>
+    <string name="editor_keep_editing">متابعة التعديل</string>
+    <string name="editor_discard">تجاهل</string>
+    <string name="editor_effect_sets">مجموعات التأثيرات</string>
+    <string name="editor_retry">إعادة المحاولة</string>
+    <string name="editor_no_music_selected">لم يتم اختيار موسيقى</string>
 
-    <!-- Projects -->
+    <!-- Projects Tabs -->
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">الفيديوهات المنشأة</string>
     <string name="projects_tab_liked_template">القوالب المفضلة</string>
@@ -133,6 +172,9 @@
     <string name="projects_delete_cancel">إلغاء</string>
     <string name="projects_empty">لا توجد مشاريع بعد</string>
     <string name="projects_empty_description">أنشئ مشروعك الأول لتراه هنا</string>
+    <string name="projects_empty_title">ابدأ رحلتك</string>
+    <string name="projects_empty_subtitle">يبدو فارغاً هنا. دعنا ننشئ تحفتك الأولى اليوم.</string>
+    <string name="projects_create_new_video">إنشاء فيديو جديد</string>
     <string name="projects_item_info">%1$d صور • %2$s</string>
     <string name="projects_create_description">ابدأ مشروع عرض شرائح جديد</string>
     <string name="projects_delete_title">حذف المشروع؟</string>
@@ -146,6 +188,8 @@
     <string name="export_share">مشاركة</string>
     <string name="export_save">حفظ في المعرض</string>
     <string name="export_preparing">جاري التحضير للتصدير…</string>
+    <string name="export_generating">جاري الإنشاء</string>
+    <string name="export_please_wait">انتظر لحظة، جارٍ تحضير الفيديو!\nالرجاء عدم إغلاق التطبيق</string>
     <string name="export_exporting">جاري تصدير الفيديو…</string>
     <string name="export_dont_close">يرجى عدم إغلاق التطبيق</string>
     <string name="export_tip_1">نصنع تحفتك الفنية…</string>
@@ -173,6 +217,8 @@
     <string name="export_cancel_message">هل أنت متأكد من إلغاء التصدير؟ ستفقد كل التقدم.</string>
     <string name="export_continue">متابعة</string>
     <string name="export_cancel_export">إلغاء التصدير</string>
+    <string name="export_error_file_not_found">لم يتم العثور على ملف الفيديو</string>
+    <string name="export_error_share_failed">فشلت مشاركة الفيديو</string>
     <string name="export_try_another_templates">جرب قوالب أخرى</string>
     <string name="export_templates_load_failed">فشل تحميل القوالب</string>
 
@@ -186,6 +232,15 @@
     <string name="picker_permission_title">مطلوب الوصول للصور</string>
     <string name="picker_permission_message">لإنشاء فيديوهات من صورك، نحتاج إذن الوصول إلى مكتبة الصور.</string>
     <string name="picker_allow_access">السماح بالوصول</string>
+    <string name="picker_limited_access_message">لقد منحت صانع الفيديو حق الوصول إلى عدد محدود من الصور.</string>
+    <string name="picker_add_more_photos">إضافة</string>
+    <string name="picker_go_to_settings">الانتقال إلى الإعدادات</string>
+    <string name="picker_min_selection">يُرجى اختيار %d صورة على الأقل.</string>
+    <string name="picker_current_selection">%d صورة محددة</string>
+
+    <!-- Music Player Bottom Sheet -->
+    <string name="music_player_title">مشغل الموسيقى</string>
+    <string name="music_player_use_to_create">استخدام لإنشاء فيديو</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">اختر الموسيقى</string>
@@ -218,7 +273,12 @@
     <string name="settings_add">+ إضافة</string>
     <string name="settings_add_audio">+ إضافة</string>
     <string name="settings_volume">مستوى الصوت</string>
+    <string name="settings_clip_music">قص الموسيقى</string>
     <string name="settings_aspect_ratio">نسبة العرض</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">مستوى الصوت</string>
+    <string name="tab_music_clip">قص الموسيقى</string>
     <string name="settings_transition_effect">تأثير الانتقال</string>
     <string name="settings_transition_duration">مدة الانتقال</string>
     <string name="settings_transition_duration_value">%.1fث</string>
@@ -292,6 +352,8 @@
     <string name="song_search_explore_by_genre">استكشف حسب النوع</string>
     <string name="song_search_suggested">مقترحة لك</string>
     <string name="song_search_no_results">لم يتم العثور على أغاني</string>
+    <string name="song_search_change_music">تغيير الموسيقى</string>
+    <string name="song_search_idle_hint">ابدأ الكتابة للبحث عن أغاني</string>
 
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">ابدأ رحلتك</string>
@@ -328,8 +390,53 @@
     <string name="widget_recently">مؤخراً</string>
     <string name="widget_trending_song">أغنية رائجة</string>
     <string name="widget_trending_song_hot">ساخن</string>
+    <string name="widget_search_hint">البحث عن قوالب...</string>
+    <string name="widget_pin_request_sent">تمت إضافة الويدجت إلى الشاشة الرئيسية</string>
+    <string name="widget_pin_not_supported">إضافة الويدجت غير مدعومة على هذا الجهاز</string>
+    <string name="widget_add_failed">فشلت إضافة الويدجت: %s</string>
+
+    <!-- App Shortcuts -->
     <string name="shortcut_trending_search_long">البحث عن الرائج</string>
     <string name="shortcut_create_video_long">إنشاء فيديو</string>
     <string name="shortcut_choose_template_long">اختر قالب فيديو</string>
     <string name="shortcut_uninstall_long">إلغاء تثبيت التطبيق</string>
+
+    <!-- Unified search   -->
+    <string name="unified_search_templates">قوالب</string>
+    <string name="unified_search_music">موسيقى</string>
+    <string name="unified_search_see_more">عرض المزيد</string>
+    <string name="unified_search_loading_more">جاري التحميل…</string>
+    <string name="unified_search_explore_more">استكشاف المزيد</string>
+    <string name="unified_search_explore_suggestions">استكشاف الاقتراحات</string>
+    <string name="unified_search_no_results_title">لم يتم العثور على نتائج</string>
+    <string name="unified_search_keep_typing">استمر في الكتابة لتحسين البحث</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">ساخن</string>
+    <string name="tag_trending">رائج</string>
+    <string name="tag_new">جديد</string>
+    <string name="tag_featured">مميز</string>
+
+    <!-- Template Previewer -->
+    <string name="template_add_to_favorites">إضافة</string>
+    <string name="template_use_button">استخدم هذا القالب</string>
+    <string name="template_swipe_hint">اسحب لأعلى</string>
+    <string name="template_swipe_subtitle">للاستمتاع بقوالبك</string>
+    <string name="template_select_ratio_title">اختر نسبة الفيديو</string>
+    <string name="template_create_now">إنشاء الآن</string>
+    <string name="template_error_load_failed">فشل تحميل القوالب. حاول مرة أخرى.</string>
+
+    <!-- Unified Search -->
+    <string name="search_templates_suggestions">اقتراحات القوالب</string>
+    <string name="search_music_suggestion">اقتراح الموسيقى</string>
+    <string name="search_empty_subtitle">لنجرب شيئاً آخر أو نستكشف\nالأجواء الرائجة</string>
+    <string name="search_typing_result_header">النتيجة</string>
+    <string name="search_loading_title">البحث عن النتائج…</string>
+    <string name="search_loading_message">نحن نفحص قاعدة بياناتنا لنقدم لك\nأدق المعلومات.\nالرجاء الانتظار لحظة.</string>
+    <string name="search_placeholder">ابحث عن أي شيء</string>
+    <string name="search_pro_badge">مميز</string>
+
+    <!-- Editor Volume -->
+    <string name="volume_title">مستوى الصوت</string>
+
 </resources>

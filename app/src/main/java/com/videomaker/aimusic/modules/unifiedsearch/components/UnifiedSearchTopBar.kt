@@ -122,7 +122,7 @@ fun UnifiedSearchTopBar(
                     Box(modifier = Modifier.weight(1f)) {
                         if (query.isEmpty()) {
                             Text(
-                                text = "Search for anything",
+                                text = stringResource(R.string.search_placeholder),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.W500,
                                 color = TextTertiary
@@ -182,7 +182,7 @@ fun UnifiedSearchTopBar(
 
 
             Text(
-                text = "Cancel",
+                text = stringResource(R.string.cancel),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.W500,
                 color = Neutral_N600,

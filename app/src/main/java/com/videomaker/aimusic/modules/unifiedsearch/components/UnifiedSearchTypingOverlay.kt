@@ -67,7 +67,7 @@ fun UnifiedSearchTypingOverlay(
         if (suggestions.isNotEmpty()) {
             item(key = "suggestions_header") {
                 Text(
-                    text = "Result",
+                    text = stringResource(R.string.search_typing_result_header),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.W600,

@@ -72,6 +72,8 @@
     <string name="settings_about">Tungkol sa</string>
     <string name="settings_version">Bersyon</string>
     <string name="settings_uninstall">I-uninstall</string>
+    <string name="settings_share_subject">Tingnan mo itong app!</string>
+    <string name="settings_share_message">Hoy! Gumagamit ako ng magandang app na ito. Subukan mo:\n%s</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Subukan muli ito</string>
@@ -99,12 +101,49 @@
     <string name="editor_frame">Frame</string>
     <string name="editor_aspect_ratio">Aspect Ratio</string>
     <string name="editor_volume">Volume</string>
+    <string name="editor_effect">Epekto</string>
+    <string name="editor_select_video_ratio">Piliin ang Video Ratio</string>
+    <string name="editor_apply">Ilapat</string>
+    <string name="editor_image_duration">Tagal ng Larawan</string>
+    <string name="editor_change_music">Palitan ang musika</string>
+    <string name="editor_select_quality">Piliin ang kalidad</string>
+    <string name="editor_hd">HD</string>
+    <string name="editor_play">I-play</string>
+    <string name="editor_pause">I-pause</string>
     <string name="editor_duration_format">Tagal: %s</string>
+
+    <!-- Music Trim Feature (NOT video trim) -->
+    <string name="editor_music_trim">I-trim ang Musika</string>
+    <string name="editor_music_trim_from_start">I-trim mula sa Simula</string>
+    <string name="editor_music_trim_from_end">I-trim mula sa Dulo</string>
+    <string name="editor_music_trim_edit">I-edit ang Music Trim</string>
+    <string name="editor_music_trim_title">I-trim ang Musika</string>
+    <string name="editor_music_trim_subtitle">Piliin kung aling parte ng kanta ang gagamitin</string>
+    <string name="editor_music_trim_start">Simula ng Musika</string>
+    <string name="editor_music_trim_end">Dulo ng Musika</string>
+    <string name="editor_music_trim_duration">Tagal ng Musika</string>
+    <string name="editor_music_trim_min_duration">Dapat ay hindi bababa sa 5 segundo ang musika</string>
+    <string name="editor_music_trim_will_loop">Mag-uulit ang musika kung kinakailangan para sa iyong video</string>
+    <string name="editor_music_trimmed_info">Musika: %1$s</string>
+    <string name="editor_music_trim_play_selection">I-play ang Napili</string>
+    <string name="editor_music_trim_skip_to_start">Tumalon sa Simula</string>
+    <string name="editor_music_trim_skip_to_end">Tumalon sa Dulo</string>
     <string name="editor_photos_count">%d larawan</string>
     <string name="editor_save_dialog_title">I-save ang Proyekto?</string>
     <string name="editor_save_dialog_message">Mase-save ang iyong proyekto at makikita sa Aking mga Proyekto.</string>
     <string name="editor_save_and_exit">I-save at Lumabas</string>
     <string name="editor_discard_changes">Itapon ang mga Pagbabago</string>
+    <string name="editor_processing">Pinoproseso…</string>
+    <string name="editor_preparing_video">Inihahanda ang video…</string>
+    <string name="editor_unsaved_project_title">I-save ang Iyong Proyekto?</string>
+    <string name="editor_unsaved_project_message">Hindi pa na-save ang iyong proyekto. I-save na ngayon o itapon ang iyong gawa?</string>
+    <string name="editor_unsaved_changes_title">Hindi Na-save na Pagbabago</string>
+    <string name="editor_unsaved_changes_message">Kung lalabas ka ngayon, mawawala ang iyong mga pagbabago. Sigurado ka bang gusto mong lumabas?</string>
+    <string name="editor_keep_editing">Ituloy ang Pag-edit</string>
+    <string name="editor_discard">Itapon</string>
+    <string name="editor_effect_sets">Mga Set ng Epekto</string>
+    <string name="editor_retry">Subukan Muli</string>
+    <string name="editor_no_music_selected">Walang napiling musika</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Nilikha na Video</string>
@@ -133,6 +172,9 @@
     <string name="projects_delete_cancel">Kanselahin</string>
     <string name="projects_empty">Wala pang proyekto</string>
     <string name="projects_empty_description">Gumawa ng iyong unang proyekto para makita ito dito</string>
+    <string name="projects_empty_title">Simulan ang iyong paglalakbay</string>
+    <string name="projects_empty_subtitle">Mukhang walang laman dito. Gumawa tayo ng iyong unang obra ngayon.</string>
+    <string name="projects_create_new_video">Gumawa ng Bagong Video</string>
     <string name="projects_item_info">%1$d larawan • %2$s</string>
     <string name="projects_create_description">Magsimula ng bagong slideshow na proyekto</string>
     <string name="projects_delete_title">Tanggalin ang Proyekto?</string>
@@ -146,8 +188,10 @@
     <string name="export_share">Ibahagi</string>
     <string name="export_save">I-save sa Gallery</string>
     <string name="export_preparing">Inihahanda ang export…</string>
+    <string name="export_generating">Gumagawa</string>
+    <string name="export_please_wait">Sandali lang, inihahanda ang iyong video!\nHuwag muna isara ang app</string>
     <string name="export_exporting">Ine-export ang video…</string>
-    <string name="export_dont_close">Huwag isara ang app</string>
+    <string name="export_dont_close">Huwag muna isara ang app</string>
     <string name="export_tip_1">Ginagawa ang iyong obra…</string>
     <string name="export_tip_2">Nilalagyan ng mahika…</string>
     <string name="export_tip_3">Binubuhay ang iyong mga alaala…</string>
@@ -173,6 +217,8 @@
     <string name="export_cancel_message">Sigurado ka bang gusto mong kanselahin ang export? Mawawala ang lahat ng progreso.</string>
     <string name="export_continue">Magpatuloy</string>
     <string name="export_cancel_export">Kanselahin ang Export</string>
+    <string name="export_error_file_not_found">Hindi nahanap ang video file</string>
+    <string name="export_error_share_failed">Hindi maibahagi ang video</string>
     <string name="export_try_another_templates">Subukan ang Iba Pang Template</string>
     <string name="export_templates_load_failed">Nabigo ang pag-load ng mga template</string>
 
@@ -186,6 +232,15 @@
     <string name="picker_permission_title">Kailangan ang Access sa Larawan</string>
     <string name="picker_permission_message">Para gumawa ng mga video mula sa iyong mga larawan, kailangan namin ng pahintulot na ma-access ang iyong library ng larawan.</string>
     <string name="picker_allow_access">Payagan ang Access</string>
+    <string name="picker_limited_access_message">Binigyan mo ang Video Maker ng access sa ilang larawan lamang.</string>
+    <string name="picker_add_more_photos">Magdagdag</string>
+    <string name="picker_go_to_settings">Pumunta sa Settings</string>
+    <string name="picker_min_selection">Pumili ng hindi bababa sa %d na larawan.</string>
+    <string name="picker_current_selection">%d larawang napili</string>
+
+    <!-- Music Player Bottom Sheet -->
+    <string name="music_player_title">Music Player</string>
+    <string name="music_player_use_to_create">Gamitin para Gumawa ng Video</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Pumili ng Musika</string>
@@ -218,7 +273,12 @@
     <string name="settings_add">+ Idagdag</string>
     <string name="settings_add_audio">+ Idagdag</string>
     <string name="settings_volume">Volume</string>
+    <string name="settings_clip_music">I-clip ang Musika</string>
     <string name="settings_aspect_ratio">Aspect Ratio</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">Volume</string>
+    <string name="tab_music_clip">Music Clip</string>
     <string name="settings_transition_effect">Transition Effect</string>
     <string name="settings_transition_duration">Tagal ng Transition</string>
     <string name="settings_transition_duration_value">%.1fs</string>
@@ -292,6 +352,8 @@
     <string name="song_search_explore_by_genre">I-explore ayon sa Genre</string>
     <string name="song_search_suggested">Inirekomenda para sa Iyo</string>
     <string name="song_search_no_results">Walang nahanap na kanta</string>
+    <string name="song_search_change_music">Palitan ang Musika</string>
+    <string name="song_search_idle_hint">Magsimulang mag-type para maghanap ng kanta</string>
 
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Simulan ang Iyong Paglalakbay</string>
@@ -328,8 +390,53 @@
     <string name="widget_recently">Kamakailan</string>
     <string name="widget_trending_song">Trending na Kanta</string>
     <string name="widget_trending_song_hot">Hot</string>
+    <string name="widget_search_hint">Maghanap ng template...</string>
+    <string name="widget_pin_request_sent">Idinagdag ang widget sa home screen</string>
+    <string name="widget_pin_not_supported">Hindi sinusuportahan ang pagdagdag ng widget sa device na ito</string>
+    <string name="widget_add_failed">Hindi maidagdag ang widget: %s</string>
+
+    <!-- App Shortcuts -->
     <string name="shortcut_trending_search_long">Trending na Paghahanap</string>
     <string name="shortcut_create_video_long">Lumikha ng Video</string>
     <string name="shortcut_choose_template_long">Pumili ng Template ng Video</string>
     <string name="shortcut_uninstall_long">I-uninstall ang App</string>
+
+    <!-- Unified search   -->
+    <string name="unified_search_templates">Mga Template</string>
+    <string name="unified_search_music">Musika</string>
+    <string name="unified_search_see_more">Tingnan pa</string>
+    <string name="unified_search_loading_more">Naglo-load…</string>
+    <string name="unified_search_explore_more">I-explore Pa</string>
+    <string name="unified_search_explore_suggestions">I-explore ang Mga Mungkahi</string>
+    <string name="unified_search_no_results_title">Walang nahanap na resulta</string>
+    <string name="unified_search_keep_typing">Magpatuloy sa pag-type para linawin ang paghahanap</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">Hot</string>
+    <string name="tag_trending">Trending</string>
+    <string name="tag_new">Bago</string>
+    <string name="tag_featured">Tampok</string>
+
+    <!-- Template Previewer -->
+    <string name="template_add_to_favorites">Idagdag</string>
+    <string name="template_use_button">Gamitin ang Template na Ito</string>
+    <string name="template_swipe_hint">Mag-swipe pataas</string>
+    <string name="template_swipe_subtitle">Para tamasahin ang iyong mga template</string>
+    <string name="template_select_ratio_title">Pumili ng Video Ratio</string>
+    <string name="template_create_now">Lumikha ngayon</string>
+    <string name="template_error_load_failed">Nabigo ang pag-load ng mga template. Subukan ulit.</string>
+
+    <!-- Unified Search -->
+    <string name="search_templates_suggestions">Mga Mungkahing Template</string>
+    <string name="search_music_suggestion">Mungkahing Musika</string>
+    <string name="search_empty_subtitle">Subukan natin ang iba o mag-explore\nng mga trending vibes</string>
+    <string name="search_typing_result_header">Resulta</string>
+    <string name="search_loading_title">Naghahanap ng mga resulta…</string>
+    <string name="search_loading_message">Ini-scan namin ang aming database\nupang magdala ng pinaka-tumpak na impormasyon.\nMangyaring maghintay sandali.</string>
+    <string name="search_placeholder">Maghanap ng kahit ano</string>
+    <string name="search_pro_badge">PRO</string>
+
+    <!-- Editor Volume -->
+    <string name="volume_title">Volume</string>
+
 </resources>
