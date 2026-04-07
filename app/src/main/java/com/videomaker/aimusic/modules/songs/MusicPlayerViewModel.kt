@@ -33,9 +33,13 @@ class MusicPlayerViewModel(
     fun toggleLike(song: MusicSong) {
         viewModelScope.launch {
             if (isLiked.value) {
+                android.util.Log.d("MusicPlayer", "Unliking song: ${song.name} (id=$songId)")
                 unlikeSongUseCase(songId)
+                android.util.Log.d("MusicPlayer", "Song unliked successfully")
             } else {
+                android.util.Log.d("MusicPlayer", "Liking song: ${song.name} (id=$songId)")
                 likeSongUseCase(song)
+                android.util.Log.d("MusicPlayer", "Song liked successfully")
             }
         }
     }
