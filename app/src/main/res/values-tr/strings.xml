@@ -443,4 +443,22 @@
     <!-- Editor Volume -->
     <string name="volume_title">Ses Seviyesi</string>
 
+    <!-- Rating Popup -->
+    <string name="rating_satisfaction_title">Video Maker ile geçirdiğiniz zaman için teşekkürler</string>
+    <string name="rating_satisfaction_subtitle">Uygulamamızdan memnun musunuz?</string>
+    <string name="rating_not_really">Pek değil</string>
+    <string name="rating_good">İyi</string>
+    <string name="rating_experience_title">Bizimle deneyiminizi değerlendirin</string>
+    <string name="rating_submit">Gönder</string>
+    <string name="rating_feedback_title">Bunu duyduğumuza üzüldük 🥲</string>
+    <string name="rating_feedback_subtitle">Deneyiminizi geliştirmek için daha çok çalışacağız</string>
+    <string name="rating_feedback_type_hint">Geri bildiriminizi yazın</string>
+    <string name="rating_feedback_reason_music_quality">Favori şarkı yok / Müzik kalitesi kötü</string>
+    <string name="rating_feedback_reason_translation">Çeviri kalitesi çok düşük</string>
+    <string name="rating_feedback_reason_tools">Düzenleme araçları ihtiyaçlarımı karşılamıyor</string>
+    <string name="rating_feedback_reason_output_quality">Çıktı video kalitesi çok düşük</string>
+    <string name="rating_feedback_reason_performance">Uygulama yavaş veya sık sık çöküyor</string>
+    <string name="rating_feedback_reason_templates">Yeterli şablon yok / içerik güncellemeleri yetersiz</string>
+    <string name="rating_feedback_reason_other">Diğer</string>
+
 </resources>

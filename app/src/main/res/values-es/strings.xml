@@ -443,4 +443,22 @@
     <!-- Editor Volume -->
     <string name="volume_title">Volumen</string>
 
+    <!-- Rating Popup -->
+    <string name="rating_satisfaction_title">Gracias por tu tiempo con Video Maker</string>
+    <string name="rating_satisfaction_subtitle">¿Estás satisfecho con nuestra app?</string>
+    <string name="rating_not_really">No mucho</string>
+    <string name="rating_good">Bien</string>
+    <string name="rating_experience_title">Califica tu experiencia con nosotros</string>
+    <string name="rating_submit">Enviar</string>
+    <string name="rating_feedback_title">Lamentamos escuchar eso 🥲</string>
+    <string name="rating_feedback_subtitle">Trabajaremos más para mejorar tu experiencia</string>
+    <string name="rating_feedback_type_hint">Escribe tus comentarios</string>
+    <string name="rating_feedback_reason_music_quality">No hay canciones favoritas / La calidad de la música es mala</string>
+    <string name="rating_feedback_reason_translation">La calidad de la traducción es muy baja</string>
+    <string name="rating_feedback_reason_tools">Las herramientas de edición no cubren mis necesidades</string>
+    <string name="rating_feedback_reason_output_quality">La calidad del video de salida es muy baja</string>
+    <string name="rating_feedback_reason_performance">La app es lenta o falla con frecuencia</string>
+    <string name="rating_feedback_reason_templates">No hay suficientes plantillas / actualizaciones de contenido</string>
+    <string name="rating_feedback_reason_other">Otro</string>
+
 </resources>

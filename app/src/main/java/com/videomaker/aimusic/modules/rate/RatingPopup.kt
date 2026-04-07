@@ -117,7 +117,7 @@ fun RatingSatisfactionPopup(
 
                     // Title: "We're grateful for your time on <App Name>"
                     Text(
-                        text = "We're grateful your time on Video Generating",
+                        text = stringResource(R.string.rating_satisfaction_title),
                         style = MaterialTheme.typography.titleLarge,
                         color = TextPrimary,
                         textAlign = TextAlign.Center
@@ -127,7 +127,7 @@ fun RatingSatisfactionPopup(
 
                     // Subtitle: "Are you satisfied with our app?"
                     Text(
-                        text = "Are you satified with our app?",
+                        text = stringResource(R.string.rating_satisfaction_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Neutral_N500,
                         textAlign = TextAlign.Center
@@ -142,7 +142,7 @@ fun RatingSatisfactionPopup(
                     ) {
                         // "Not really" button - secondary style with background
                         Text(
-                            text = "Not Really",
+                            text = stringResource(R.string.rating_not_really),
                             style = MaterialTheme.typography.labelLarge,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.W600,
@@ -157,7 +157,7 @@ fun RatingSatisfactionPopup(
 
                         // "GOOD" button - primary style with smiling icon
                         Text(
-                            text = "Good",
+                            text = stringResource(R.string.rating_good),
                             style = MaterialTheme.typography.labelLarge,
                             fontSize = 16.sp,
                             color = FoundationBlack,
@@ -230,7 +230,7 @@ fun RatingStarsPopup(
 
                     // Title: "We're grateful for your time on <App Name>"
                     Text(
-                        text = "Rating you Experience with us",
+                        text = stringResource(R.string.rating_experience_title),
                         style = MaterialTheme.typography.titleLarge,
                         color = TextPrimary,
                         textAlign = TextAlign.Center
@@ -284,7 +284,7 @@ fun RatingStarsPopup(
                         )
                     ) {
                         Text(
-                            text = "Submit",
+                            text = stringResource(R.string.rating_submit),
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
                         )
                     }
@@ -322,6 +322,7 @@ fun RatingFeedbackPopup(
     val pagerState = rememberLazyListState()
     var selectedStars by remember { mutableIntStateOf(-1) }
     var feedBackContent by remember { mutableStateOf("") }
+    val listFeedBack = feedbackOptions()
 
     LaunchedEffect(selectedStars) {
         if (selectedStars != -1) {
@@ -358,7 +359,7 @@ fun RatingFeedbackPopup(
 
                     // Title: "We're grateful for your time on <App Name>"
                     Text(
-                        text = "Sorry to hear that \uD83E\uDD72",
+                        text = stringResource(R.string.rating_feedback_title),
                         style = MaterialTheme.typography.titleLarge,
                         color = TextPrimary,
                         modifier = Modifier.padding(horizontal = 16.dp),
@@ -369,7 +370,7 @@ fun RatingFeedbackPopup(
 
                     // Subtitle: "Are you satisfied with our app?"
                     Text(
-                        text = "We wil work harder to make you more satifield",
+                        text = stringResource(R.string.rating_feedback_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Neutral_N500,
                         modifier = Modifier.padding(horizontal = 16.dp),
@@ -426,7 +427,7 @@ fun RatingFeedbackPopup(
                         )
                     ) {
                         Text(
-                            text = "Submit",
+                            text = stringResource(R.string.rating_submit),
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
                         )
                     }
@@ -557,7 +558,7 @@ fun ItemFeedBackView(
                                 Box {
                                     if (feedbackText.isEmpty()) {
                                         Text(
-                                            text = "Type your feedback",
+                                            text = stringResource(R.string.rating_feedback_type_hint),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = Neutral_N600
                                         )
@@ -578,34 +579,35 @@ data class ItemFeedBack(
     val content: String
 )
 
-val listFeedBack = listOf(
+@Composable
+private fun feedbackOptions(): List<ItemFeedBack> = listOf(
     ItemFeedBack(
         1,
-        "No favorite songs / Music quality is poor"
+        stringResource(R.string.rating_feedback_reason_music_quality)
     ),
     ItemFeedBack(
         2,
-        "The translation is too bad"
+        stringResource(R.string.rating_feedback_reason_translation)
     ),
     ItemFeedBack(
         3,
-        "Editing tools don't meet my needs"
+        stringResource(R.string.rating_feedback_reason_tools)
     ),
     ItemFeedBack(
         4,
-        "Output video quality is too low"
+        stringResource(R.string.rating_feedback_reason_output_quality)
     ),
     ItemFeedBack(
         5,
-        "App is slow or crashes frequently"
+        stringResource(R.string.rating_feedback_reason_performance)
     ),
     ItemFeedBack(
         6,
-        "Not enough templates / content updates"
+        stringResource(R.string.rating_feedback_reason_templates)
     ),
     ItemFeedBack(
         7,
-        "Other"
+        stringResource(R.string.rating_feedback_reason_other)
     ),
 )
 

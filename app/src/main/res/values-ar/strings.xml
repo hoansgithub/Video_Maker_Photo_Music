@@ -443,4 +443,22 @@
     <!-- Editor Volume -->
     <string name="volume_title">مستوى الصوت</string>
 
+    <!-- Rating Popup -->
+    <string name="rating_satisfaction_title">شكرًا لوقتك مع Video Maker</string>
+    <string name="rating_satisfaction_subtitle">هل أنت راضٍ عن تطبيقنا؟</string>
+    <string name="rating_not_really">ليس كثيرًا</string>
+    <string name="rating_good">جيد</string>
+    <string name="rating_experience_title">قيّم تجربتك معنا</string>
+    <string name="rating_submit">إرسال</string>
+    <string name="rating_feedback_title">نأسف لسماع ذلك 🥲</string>
+    <string name="rating_feedback_subtitle">سنعمل بجد أكبر لتحسين تجربتك</string>
+    <string name="rating_feedback_type_hint">اكتب ملاحظاتك</string>
+    <string name="rating_feedback_reason_music_quality">لا توجد أغانٍ مفضلة / جودة الموسيقى ضعيفة</string>
+    <string name="rating_feedback_reason_translation">جودة الترجمة منخفضة جدًا</string>
+    <string name="rating_feedback_reason_tools">أدوات التحرير لا تلبي احتياجاتي</string>
+    <string name="rating_feedback_reason_output_quality">جودة الفيديو الناتج منخفضة جدًا</string>
+    <string name="rating_feedback_reason_performance">التطبيق بطيء أو يتعطل كثيرًا</string>
+    <string name="rating_feedback_reason_templates">لا توجد قوالب كافية / تحديثات المحتوى قليلة</string>
+    <string name="rating_feedback_reason_other">أخرى</string>
+
 </resources>
