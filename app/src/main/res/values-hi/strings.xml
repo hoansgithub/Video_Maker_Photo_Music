@@ -186,6 +186,11 @@
     <string name="picker_permission_title">फ़ोटो एक्सेस आवश्यक</string>
     <string name="picker_permission_message">आपकी फ़ोटो से वीडियो बनाने के लिए, हमें आपकी फ़ोटो लाइब्रेरी तक पहुंच की अनुमति चाहिए।</string>
     <string name="picker_allow_access">एक्सेस की अनुमति दें</string>
+    <string name="picker_limited_access_message">आपने वीडियो मेकर को सीमित संख्या में फ़ोटो तक पहुंच दी है।</string>
+    <string name="picker_add_more_photos">जोड़ें</string>
+    <string name="picker_go_to_settings">सेटिंग्स पर जाएं</string>
+    <string name="picker_min_selection">कृपया कम से कम %d छवियां चुनें।</string>
+    <string name="picker_current_selection">%d फ़ोटो चयनित</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">संगीत चुनें</string>
