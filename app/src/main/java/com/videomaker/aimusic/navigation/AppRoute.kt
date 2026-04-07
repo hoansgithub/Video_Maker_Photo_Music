@@ -108,7 +108,10 @@ sealed interface AppRoute : NavKey {
     data class Preview(val projectId: String) : AppRoute
 
     @Serializable
-    data class Export(val projectId: String) : AppRoute
+    data class Export(
+        val projectId: String,
+        val quality: com.videomaker.aimusic.domain.model.VideoQuality = com.videomaker.aimusic.domain.model.VideoQuality.DEFAULT
+    ) : AppRoute
 
     // ============================================
     // TEMPLATE FLOW ROUTES

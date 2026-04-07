@@ -48,9 +48,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -117,6 +119,18 @@ fun GalleryScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+
+    // ✅ FIX: Refresh data when locale changes (after language change in settings)
+    // Use rememberSaveable to persist previousLocale across Activity recreation
+    val locale = LocalConfiguration.current.locales[0]?.toLanguageTag()
+    var previousLocale by rememberSaveable { mutableStateOf(locale) }
+    LaunchedEffect(locale) {
+        // Only refresh on locale CHANGE, not initial composition
+        if (locale != null && locale != previousLocale && previousLocale != null) {
+            viewModel.refresh()
+        }
+        previousLocale = locale
+    }
 
     // Handle navigation events
     LaunchedEffect(navigationEvent) {

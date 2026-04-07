@@ -42,7 +42,10 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -112,6 +115,18 @@ fun SongsScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
     val audioPreviewCache: AudioPreviewCache = koinInject()
+
+    // ✅ FIX: Refresh data when locale changes (genres will be localized in future)
+    // Use rememberSaveable to persist previousLocale across Activity recreation
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]?.toLanguageTag()
+    var previousLocale by rememberSaveable { mutableStateOf(locale) }
+    LaunchedEffect(locale) {
+        // Only refresh on locale CHANGE, not initial composition
+        if (locale != null && locale != previousLocale && previousLocale != null) {
+            viewModel.refresh()
+        }
+        previousLocale = locale
+    }
 
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
