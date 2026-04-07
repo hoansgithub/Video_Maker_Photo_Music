@@ -545,6 +545,7 @@ val presentationModule = module {
             application = androidApplication(),
             checkOnboardingStatusUseCase = get(),
             checkLanguageSelectedUseCase = get(),
+            preferencesManager = get(),
             remoteConfig = get()  // Firebase Remote Config (from firebaseModule)
         )
     }

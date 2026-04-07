@@ -16,8 +16,11 @@ import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -202,8 +205,13 @@ class AssetPickerViewModel(
     private val _uiState = MutableStateFlow<AssetPickerUiState>(AssetPickerUiState.Initial)
     val uiState: StateFlow<AssetPickerUiState> = _uiState.asStateFlow()
 
-    // Tracks whether the current permission is limited (Android 14+ partial access)
-    private var isLimitedPermission = false
+    private var currentPermissionMode: PermissionMode? = null
+    private var isRefreshing = false
+    private val _gridScrollState = MutableStateFlow(AssetPickerGridScrollState())
+    internal val gridScrollState: StateFlow<AssetPickerGridScrollState> = _gridScrollState.asStateFlow()
+
+    private val _permissionRequestEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    internal val permissionRequestEvent: SharedFlow<Unit> = _permissionRequestEvent.asSharedFlow()
 
     // ============================================
     // NAVIGATION EVENTS (StateFlow-based - Google recommended)
@@ -218,7 +226,28 @@ class AssetPickerViewModel(
     private val _messageEvent = MutableStateFlow<String?>(null)
     val messageEvent: StateFlow<String?> = _messageEvent.asStateFlow()
 
+    // Camera captures are app-private files, so keep them in-memory and merge on reloads.
+    private val transientCameraAssets = mutableListOf<GalleryAsset>()
+
     init {
+        AssetPickerSessionCache.snapshot?.let { cached ->
+            currentPermissionMode = cached.permissionMode
+            _gridScrollState.value = cached.gridScrollState
+            when {
+                cached.permissionMode == PermissionMode.DENIED -> {
+                    _uiState.value = AssetPickerUiState.DeniedPermission
+                }
+                cached.assets.isNotEmpty() -> {
+                    _uiState.value = createWithAssetsState(
+                        permissionMode = cached.permissionMode,
+                        assets = cached.assets,
+                        selectedUris = cached.selectedUris,
+                        preferredAlbumId = cached.selectedAlbumId
+                    )
+                }
+            }
+        }
+
         // NOTE: With the new flow (Template Browse → Select Template → Pick Images),
         // it's valid to have both overrideSongId and templateId:
         // - User picks a song → browses templates with that song → selects a template → picks images
@@ -236,25 +265,148 @@ class AssetPickerViewModel(
      * When full access is granted the saved picked_assets are no longer needed — MediaStore
      * now covers the entire gallery — so the table is cleared before loading.
      */
-    fun onPermissionGranted(isLimited: Boolean = false) {
-        isLimitedPermission = isLimited
-        loadImages()
+    internal fun onPermissionSnapshot(
+        snapshot: PermissionSnapshot,
+        source: PermissionUpdateSource
+    ) {
+        val mode = resolvePermissionMode(snapshot)
+        applyPermissionMode(mode, source = source, forceReload = false)
+    }
+
+    fun onPermissionGranted(
+        isLimited: Boolean = false,
+        forceReload: Boolean = false
+    ) {
+        val mode = if (isLimited) PermissionMode.LIMITED else PermissionMode.FULL
+        applyPermissionMode(
+            newMode = mode,
+            source = PermissionUpdateSource.REQUEST_RESULT,
+            forceReload = forceReload
+        )
     }
 
     /**
      * Called when permission is denied
      */
     fun onPermissionDenied() {
-        _uiState.value = AssetPickerUiState.DeniedPermission
+        applyPermissionMode(
+            newMode = PermissionMode.DENIED,
+            source = PermissionUpdateSource.REQUEST_RESULT,
+            forceReload = false
+        )
+    }
+
+    internal fun onGridScrollChanged(index: Int, offset: Int) {
+        val newState = AssetPickerGridScrollState(index, offset)
+        if (_gridScrollState.value == newState) return
+        _gridScrollState.value = newState
+        AssetPickerSessionCache.snapshot = AssetPickerSessionCache.snapshot?.copy(
+            gridScrollState = newState
+        )
+    }
+
+    /**
+     * Keep gallery cache for fast reopen, but clear selected assets when picker closes.
+     */
+    fun onPickerClosed() {
+        val currentState = _uiState.value as? AssetPickerUiState.WithAssets
+        if (currentState != null) {
+            val allAlbumId = AlbumFilterType.ALL
+            val filteredAssets = filterAssetsByAlbum(
+                assets = currentState.assets,
+                albumId = allAlbumId,
+                albums = currentState.albums
+            )
+            val updatedState = currentState.copyAssets(
+                filteredAssets = filteredAssets,
+                selectedAssets = emptyList(),
+                selectedAlbumId = allAlbumId
+            )
+            _uiState.value = updatedState
+            persistSessionSnapshot(updatedState, modeForState(updatedState))
+            return
+        }
+        AssetPickerSessionCache.snapshot = AssetPickerSessionCache.snapshot?.copy(
+            selectedUris = emptySet(),
+            selectedAlbumId = AlbumFilterType.ALL
+        )
+    }
+
+    private fun applyPermissionMode(
+        newMode: PermissionMode,
+        source: PermissionUpdateSource,
+        forceReload: Boolean
+    ) {
+        val previousMode = currentPermissionMode
+        currentPermissionMode = newMode
+
+        if (newMode == PermissionMode.DENIED) {
+            _uiState.value = AssetPickerUiState.DeniedPermission
+            persistDeniedSnapshot()
+            val shouldRequest = source != PermissionUpdateSource.REQUEST_RESULT &&
+                shouldRequestPermissionDialog(previousMode, newMode)
+            if (shouldRequest) {
+                _permissionRequestEvent.tryEmit(Unit)
+            }
+            return
+        }
+
+        val currentWithAssets = _uiState.value as? AssetPickerUiState.WithAssets
+        if (!forceReload && currentWithAssets != null && modeForState(currentWithAssets) == newMode) {
+            persistSessionSnapshot(currentWithAssets, newMode)
+            return
+        }
+
+        val cached = AssetPickerSessionCache.snapshot
+        if (!forceReload &&
+            currentWithAssets == null &&
+            cached != null &&
+            cached.permissionMode == newMode &&
+            cached.assets.isNotEmpty()
+        ) {
+            _gridScrollState.value = cached.gridScrollState
+            _uiState.value = createWithAssetsState(
+                permissionMode = newMode,
+                assets = cached.assets,
+                selectedUris = cached.selectedUris,
+                preferredAlbumId = cached.selectedAlbumId
+            )
+            return
+        }
+
+        val preferredSelectedUris = currentWithAssets
+            ?.selectedAssets
+            ?.map { it.uri.toString() }
+            ?.toSet()
+            .orEmpty()
+        val preferredAlbumId = currentWithAssets?.selectedAlbumId
+        loadImages(
+            permissionMode = newMode,
+            preferredSelectedUris = preferredSelectedUris,
+            preferredAlbumId = preferredAlbumId,
+            forceShowLoading = forceReload || currentWithAssets == null
+        )
     }
 
     /**
      * Load images from device gallery.
      * Produces AllPermission state for full access, LimitPermission for partial access.
      */
-    private fun loadImages() {
+    private fun loadImages(
+        permissionMode: PermissionMode,
+        preferredSelectedUris: Set<String>,
+        preferredAlbumId: String?,
+        forceShowLoading: Boolean
+    ) {
+        if (isRefreshing) return
+        isRefreshing = true
+
         viewModelScope.launch {
-            _uiState.value = AssetPickerUiState.Loading
+            val previousState = _uiState.value as? AssetPickerUiState.WithAssets
+            val fallbackState = previousState
+            if (forceShowLoading || previousState == null) {
+                _uiState.value = AssetPickerUiState.Loading
+            }
 
             try {
                 val mediaStoreImages = queryGalleryImages()
@@ -262,36 +414,118 @@ class AssetPickerViewModel(
                 val persistedUris = appContext.contentResolver.persistedUriPermissions
                     .map { it.uri }
 
-                // Chuyển đổi Uri thành Asset model của bạn
                 val persistedAssets = withContext(Dispatchers.IO) {
                     persistedUris.map { uri -> createAssetFromUri(uri) }
                 }
 
-                val images = mediaStoreImages + persistedAssets
+                val images = mergeDistinctByKey(
+                    transientCameraAssets,
+                    mediaStoreImages,
+                    persistedAssets,
+                    keySelector = { it.uri.toString() }
+                ).sortedByDescending { it.dateAdded }
 
-                val albums = buildAlbumFilters(images)
-
-                _uiState.value = if (isLimitedPermission) {
-                    AssetPickerUiState.WithAssets.LimitPermission(
-                        assets = images,
-                        filteredAssets = images,
-                        selectedAssets = emptyList(),
-                        albums = albums,
-                        selectedAlbumId = AlbumFilterType.ALL
-                    )
+                val selectedSeed = if (preferredSelectedUris.isNotEmpty()) {
+                    preferredSelectedUris
                 } else {
-                    AssetPickerUiState.WithAssets.AllPermission(
-                        assets = images,
-                        filteredAssets = images,
-                        selectedAssets = emptyList(),
-                        albums = albums,
-                        selectedAlbumId = AlbumFilterType.ALL
-                    )
+                    previousState
+                        ?.selectedAssets
+                        ?.map { it.uri.toString() }
+                        ?.toSet()
+                        .orEmpty()
+                }
+                val availableUris = images.map { it.uri.toString() }.toSet()
+                val retainedSelectedUris = retainSelectedUrisAfterReload(
+                    selectedUris = selectedSeed,
+                    availableUris = availableUris
+                )
+
+                _uiState.value = createWithAssetsState(
+                    permissionMode = permissionMode,
+                    assets = images,
+                    selectedUris = retainedSelectedUris,
+                    preferredAlbumId = preferredAlbumId ?: previousState?.selectedAlbumId
+                )
+                val latestWithAssets = _uiState.value as? AssetPickerUiState.WithAssets
+                if (latestWithAssets != null) {
+                    persistSessionSnapshot(latestWithAssets, permissionMode)
                 }
             } catch (e: Exception) {
+                if (fallbackState != null) {
+                    _uiState.value = fallbackState
+                }
                 _messageEvent.value = e.message ?: "Failed to load images"
+            } finally {
+                isRefreshing = false
             }
         }
+    }
+
+    private fun createWithAssetsState(
+        permissionMode: PermissionMode,
+        assets: List<GalleryAsset>,
+        selectedUris: Set<String>,
+        preferredAlbumId: String?
+    ): AssetPickerUiState.WithAssets {
+        val albums = buildAlbumFilters(assets)
+        val selectedAlbumId = preferredAlbumId
+            ?.takeIf { selected ->
+                selected == AlbumFilterType.ALL || albums.any { it.id == selected }
+            }
+            ?: AlbumFilterType.ALL
+        val filteredAssets = filterAssetsByAlbum(assets, selectedAlbumId, albums)
+        val selectedAssets = assets
+            .filter { it.uri.toString() in selectedUris }
+            .take(MAX_SELECTION)
+
+        return if (permissionMode == PermissionMode.LIMITED) {
+            AssetPickerUiState.WithAssets.LimitPermission(
+                assets = assets,
+                filteredAssets = filteredAssets,
+                selectedAssets = selectedAssets,
+                albums = albums,
+                selectedAlbumId = selectedAlbumId
+            )
+        } else {
+            AssetPickerUiState.WithAssets.AllPermission(
+                assets = assets,
+                filteredAssets = filteredAssets,
+                selectedAssets = selectedAssets,
+                albums = albums,
+                selectedAlbumId = selectedAlbumId
+            )
+        }
+    }
+
+    private fun modeForState(state: AssetPickerUiState.WithAssets): PermissionMode {
+        return when (state) {
+            is AssetPickerUiState.WithAssets.AllPermission -> PermissionMode.FULL
+            is AssetPickerUiState.WithAssets.LimitPermission -> PermissionMode.LIMITED
+        }
+    }
+
+    private fun persistSessionSnapshot(
+        state: AssetPickerUiState.WithAssets,
+        mode: PermissionMode
+    ) {
+        AssetPickerSessionCache.snapshot = AssetPickerSessionSnapshot(
+            permissionMode = mode,
+            assets = state.assets,
+            // Do not keep selected items between picker openings.
+            selectedUris = emptySet(),
+            selectedAlbumId = state.selectedAlbumId,
+            gridScrollState = _gridScrollState.value
+        )
+    }
+
+    private fun persistDeniedSnapshot() {
+        AssetPickerSessionCache.snapshot = AssetPickerSessionSnapshot(
+            permissionMode = PermissionMode.DENIED,
+            assets = emptyList(),
+            selectedUris = emptySet(),
+            selectedAlbumId = AlbumFilterType.ALL,
+            gridScrollState = _gridScrollState.value
+        )
     }
 
     /**
@@ -300,10 +534,12 @@ class AssetPickerViewModel(
     fun selectAlbum(albumId: String) {
         val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
         val filteredAssets = filterAssetsByAlbum(currentState.assets, albumId, currentState.albums)
-        _uiState.value = currentState.copyAssets(
+        val updatedState = currentState.copyAssets(
             filteredAssets = filteredAssets,
             selectedAlbumId = albumId
         )
+        _uiState.value = updatedState
+        persistSessionSnapshot(updatedState, modeForState(updatedState))
     }
 
     /**
@@ -323,7 +559,9 @@ class AssetPickerViewModel(
             currentSelection.add(asset)
         }
 
-        _uiState.value = currentState.copyAssets(selectedAssets = currentSelection)
+        val updatedState = currentState.copyAssets(selectedAssets = currentSelection)
+        _uiState.value = updatedState
+        persistSessionSnapshot(updatedState, modeForState(updatedState))
     }
 
     /**
@@ -334,27 +572,64 @@ class AssetPickerViewModel(
     fun onCameraImageCaptured(uri: Uri) {
         viewModelScope.launch {
             val newAsset = withContext(Dispatchers.IO) { createAssetFromUri(uri) }
+            transientCameraAssets.removeAll { it.uri.toString() == newAsset.uri.toString() }
+            transientCameraAssets.add(0, newAsset)
 
             val currentState = _uiState.value
             if (currentState is AssetPickerUiState.WithAssets) {
-                val updatedAssets = listOf(newAsset) + currentState.assets
-                val updatedFiltered = listOf(newAsset) + currentState.filteredAssets
-                val updatedSelected = if (currentState.selectedAssets.size < MAX_SELECTION) {
+                val updatedAssets = mergeDistinctByKey(
+                    listOf(newAsset),
+                    currentState.assets,
+                    keySelector = { it.uri.toString() }
+                )
+                val updatedAlbums = buildAlbumFilters(updatedAssets)
+                val selectedAlbumId = currentState.selectedAlbumId
+                    .takeIf { selected ->
+                        selected == AlbumFilterType.ALL || updatedAlbums.any { it.id == selected }
+                    }
+                    ?: AlbumFilterType.ALL
+                val updatedFiltered = filterAssetsByAlbum(updatedAssets, selectedAlbumId, updatedAlbums)
+                val isAlreadySelected = currentState.selectedAssets.any {
+                    it.uri.toString() == newAsset.uri.toString()
+                }
+                val updatedSelected = if (isAlreadySelected) {
+                    currentState.selectedAssets
+                } else if (currentState.selectedAssets.size < MAX_SELECTION) {
                     currentState.selectedAssets + newAsset
                 } else {
                     currentState.selectedAssets
                 }
-                _uiState.value = currentState.copyAssets(
+                val updatedState = currentState.copyAssets(
                     assets = updatedAssets,
                     filteredAssets = updatedFiltered,
-                    selectedAssets = updatedSelected
+                    selectedAssets = updatedSelected,
+                    albums = updatedAlbums,
+                    selectedAlbumId = selectedAlbumId
                 )
+                _uiState.value = updatedState
+                persistSessionSnapshot(updatedState, modeForState(updatedState))
             } else {
-                _uiState.value = AssetPickerUiState.WithAssets.AllPermission(
-                    assets = listOf(newAsset),
-                    filteredAssets = listOf(newAsset),
-                    selectedAssets = listOf(newAsset)
-                )
+                val initialAssets = listOf(newAsset)
+                val initialAlbums = buildAlbumFilters(initialAssets)
+                val initialState = if (currentPermissionMode == PermissionMode.LIMITED) {
+                    AssetPickerUiState.WithAssets.LimitPermission(
+                        assets = initialAssets,
+                        filteredAssets = initialAssets,
+                        selectedAssets = initialAssets,
+                        albums = initialAlbums,
+                        selectedAlbumId = AlbumFilterType.ALL
+                    )
+                } else {
+                    AssetPickerUiState.WithAssets.AllPermission(
+                        assets = initialAssets,
+                        filteredAssets = initialAssets,
+                        selectedAssets = initialAssets,
+                        albums = initialAlbums,
+                        selectedAlbumId = AlbumFilterType.ALL
+                    )
+                }
+                _uiState.value = initialState
+                persistSessionSnapshot(initialState, modeForState(initialState))
             }
         }
     }
@@ -364,7 +639,9 @@ class AssetPickerViewModel(
      */
     fun clearSelection() {
         val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
-        _uiState.value = currentState.copyAssets(selectedAssets = emptyList())
+        val updatedState = currentState.copyAssets(selectedAssets = emptyList())
+        _uiState.value = updatedState
+        persistSessionSnapshot(updatedState, modeForState(updatedState))
     }
 
     /**

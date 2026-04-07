@@ -6,8 +6,8 @@
     <string name="loading">جاري التحميل…</string>
 
     <!-- Language Selection -->
-    <string name="language_select_title">اختر اللغة</string>
-    <string name="language_select_subtitle">اختر لغتك المفضلة</string>
+    <string name="language_select_title">اختر اللغات</string>
+    <string name="language_select_subtitle">يرجى تحديد لغة العرض.</string>
     <string name="language_continue">متابعة</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>
@@ -53,9 +53,9 @@
     <string name="songs_all">كل الأغاني</string>
     <string name="songs_categories">التصنيفات</string>
     <string name="songs_search_hint">ابحث عن أغاني</string>
-    <string name="songs_suggest_for_you">مقترحة لك</string>
+    <string name="songs_suggest_for_you">مقترحات لك</string>
     <string name="songs_weekly_ranking">الترتيب الأسبوعي</string>
-    <string name="songs_station">المحطات</string>
+    <string name="songs_station">المحطات الموصى بها</string>
 
     <!-- Legacy Home -->
     <string name="home_title">صانع الفيديو</string>
@@ -241,6 +241,10 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">مشغل الموسيقى</string>
     <string name="music_player_use_to_create">استخدام لإنشاء فيديو</string>
+    <string name="picker_exit_confirm_title">الخروج من اختيار الصور؟</string>
+    <string name="picker_exit_confirm_message">لقد اخترت صورًا. إذا خرجت الآن، سيتم تجاهل الصور التي اخترتها.</string>
+    <string name="picker_exit_confirm">خروج</string>
+    <string name="picker_exit_stay">البقاء</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">اختر الموسيقى</string>
@@ -358,8 +362,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">ابدأ رحلتك</string>
     <string name="onboarding_page4_subtitle">هذا يساعدنا على اقتراح المحتوى الأكثر ملاءمة لك.</string>
-    <string name="feature_music_video_instant">اصنع فيديو موسيقي فوراً</string>
-    <string name="feature_photos_to_video">حوّل الصور إلى فيديو موسيقي</string>
+    <string name="feature_music_video_instant">تصفح قوالب الفيديو</string>
+    <string name="feature_photos_to_video">ابدأ بأغنية</string>
     <string name="feature_trending_templates">استخدم القوالب الرائجة</string>
     <string name="feature_trending_music">أضف موسيقى رائجة</string>
 

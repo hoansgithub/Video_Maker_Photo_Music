@@ -7,7 +7,7 @@
 
     <!-- Language Selection -->
     <string name="language_select_title">Pilih Bahasa</string>
-    <string name="language_select_subtitle">Pilih bahasa yang Anda inginkan</string>
+    <string name="language_select_subtitle">Silakan pilih bahasa tampilan.</string>
     <string name="language_continue">Lanjutkan</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>
@@ -53,9 +53,9 @@
     <string name="songs_all">Semua Lagu</string>
     <string name="songs_categories">Kategori</string>
     <string name="songs_search_hint">Cari lagu</string>
-    <string name="songs_suggest_for_you">Disarankan untuk Anda</string>
+    <string name="songs_suggest_for_you">Saran untuk Anda</string>
     <string name="songs_weekly_ranking">Peringkat Mingguan</string>
-    <string name="songs_station">Stasiun</string>
+    <string name="songs_station">Stasiun yang Direkomendasikan</string>
 
     <!-- Legacy Home -->
     <string name="home_title">Video Maker</string>
@@ -241,6 +241,10 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Pemutar Musik</string>
     <string name="music_player_use_to_create">Gunakan untuk Buat Video</string>
+    <string name="picker_exit_confirm_title">Keluar dari pemilihan gambar?</string>
+    <string name="picker_exit_confirm_message">Anda telah memilih gambar. Jika keluar sekarang, gambar yang dipilih akan dibuang.</string>
+    <string name="picker_exit_confirm">Keluar</string>
+    <string name="picker_exit_stay">Tetap di sini</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Pilih Musik</string>
@@ -358,8 +362,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Mulai Perjalanan Anda</string>
     <string name="onboarding_page4_subtitle">Ini membantu kami merekomendasikan konten yang paling relevan untuk Anda.</string>
-    <string name="feature_music_video_instant">Buat video musik secara instan</string>
-    <string name="feature_photos_to_video">Ubah foto menjadi video musik</string>
+    <string name="feature_music_video_instant">Jelajahi Templat Video</string>
+    <string name="feature_photos_to_video">Mulai dengan Lagu</string>
     <string name="feature_trending_templates">Gunakan template trending</string>
     <string name="feature_trending_music">Tambahkan musik trending</string>
 

@@ -6,8 +6,8 @@
     <string name="loading">लोड हो रहा है…</string>
 
     <!-- Language Selection -->
-    <string name="language_select_title">भाषा चुनें</string>
-    <string name="language_select_subtitle">अपनी पसंदीदा भाषा चुनें</string>
+    <string name="language_select_title">भाषाएँ चुनें</string>
+    <string name="language_select_subtitle">कृपया प्रदर्शन भाषा चुनें।</string>
     <string name="language_continue">जारी रखें</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>
@@ -53,9 +53,9 @@
     <string name="songs_all">सभी गाने</string>
     <string name="songs_categories">श्रेणियां</string>
     <string name="songs_search_hint">गाने खोजें</string>
-    <string name="songs_suggest_for_you">आपके लिए सुझाए गए</string>
+    <string name="songs_suggest_for_you">आपके लिए सुझाव</string>
     <string name="songs_weekly_ranking">साप्ताहिक रैंकिंग</string>
-    <string name="songs_station">स्टेशन</string>
+    <string name="songs_station">अनुशंसित स्टेशन</string>
 
     <!-- Common Actions -->
     <string name="home_create">बनाएं</string>
@@ -243,6 +243,10 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">संगीत प्लेयर</string>
     <string name="music_player_use_to_create">वीडियो बनाने के लिए उपयोग करें</string>
+    <string name="picker_exit_confirm_title">छवि चयन से बाहर निकलें?</string>
+    <string name="picker_exit_confirm_message">आपने तस्वीरें चुनी हैं। अभी बाहर निकलने पर चुनी हुई तस्वीरें हटा दी जाएंगी।</string>
+    <string name="picker_exit_confirm">बाहर निकलें</string>
+    <string name="picker_exit_stay">रुकें</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">संगीत चुनें</string>
@@ -360,8 +364,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">अपनी यात्रा शुरू करें</string>
     <string name="onboarding_page4_subtitle">इससे हमें आपके लिए सबसे प्रासंगिक कंटेंट सुझाने में मदद मिलती है।</string>
-    <string name="feature_music_video_instant">फ़ौरन म्यूज़िक वीडियो बनाएं</string>
-    <string name="feature_photos_to_video">फ़ोटो को म्यूज़िक वीडियो में बदलें</string>
+    <string name="feature_music_video_instant">वीडियो टेम्पलेट्स ब्राउज़ करें</string>
+    <string name="feature_photos_to_video">किसी गाने से शुरू करें</string>
     <string name="feature_trending_templates">ट्रेंडिंग टेम्पलेट्स उपयोग करें</string>
     <string name="feature_trending_music">ट्रेंडिंग म्यूज़िक जोड़ें</string>
 

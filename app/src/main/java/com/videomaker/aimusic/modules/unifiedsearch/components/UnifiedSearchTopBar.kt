@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Neutral_Black
 import com.videomaker.aimusic.ui.theme.Neutral_N100
@@ -158,7 +159,7 @@ fun UnifiedSearchTopBar(
                             tint = TextTertiary,
                             modifier = Modifier
                                 .size(20.dp)
-                                .clickable { onClearQuery() }
+                                .clickableSingle { onClearQuery() }
                         )
                     }
 
@@ -169,7 +170,7 @@ fun UnifiedSearchTopBar(
                         tint = Color.Unspecified,
                         modifier = Modifier
                             .size(24.dp)
-                            .clickable(
+                            .clickableSingle(
                                 enabled = query.isNotEmpty()
                             ) {
                                 onSearch()
@@ -187,9 +188,7 @@ fun UnifiedSearchTopBar(
                 fontWeight = FontWeight.W500,
                 color = Neutral_N600,
                 modifier = Modifier
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
+                    .clickableSingle(
                         onClick = onBack
                     )
                     .padding(horizontal = 12.dp, vertical = 8.dp)

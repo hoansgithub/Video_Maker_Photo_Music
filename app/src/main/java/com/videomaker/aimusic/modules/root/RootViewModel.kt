@@ -7,6 +7,7 @@ import android.net.NetworkCapabilities
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
+import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.modules.language.domain.usecase.CheckLanguageSelectedUseCase
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
 import com.videomaker.aimusic.navigation.AppRoute
@@ -24,6 +25,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * - Loading: Initialize services, load config, check status
  * - Language Selection: First-time language picker (separate Activity)
  * - Onboarding: First-time user tutorial
+ * - Feature selection: one-time intent picker that sets first Home tab
  * - Home: Main app experience
  *
  * Firebase Integration:
@@ -43,6 +45,7 @@ class RootViewModel(
     private val application: Application,
     private val checkOnboardingStatusUseCase: CheckOnboardingStatusUseCase,
     private val checkLanguageSelectedUseCase: CheckLanguageSelectedUseCase,
+    private val preferencesManager: PreferencesManager,
     private val remoteConfig: RemoteConfig
 ) : ViewModel() {
 
@@ -71,10 +74,13 @@ class RootViewModel(
     // ============================================
 
     @Volatile
-    private var shouldShowLanguageSelection = false
+    private var needsLanguageSelection = false
 
     @Volatile
-    private var shouldShowOnboarding = false
+    private var needsOnboarding = false
+
+    @Volatile
+    private var needsFeatureSelection = false
 
     @Volatile
     private var isInitialized = false
@@ -159,12 +165,11 @@ class RootViewModel(
                 _loadingMessage.value = "Loading..."
                 presentAppOpenAd()
 
-                // Step 5: Check onboarding status (first priority)
+                // Step 5: Check startup gate status
                 val onboardingResult = checkOnboardingStatusUseCase()
-                shouldShowOnboarding = onboardingResult.getOrNull() ?: false
-
-                // Step 6: Check language selection status (second priority)
-                shouldShowLanguageSelection = checkLanguageSelectedUseCase()
+                needsOnboarding = onboardingResult.getOrNull() ?: false
+                needsLanguageSelection = checkLanguageSelectedUseCase()
+                needsFeatureSelection = !preferencesManager.isFeatureSelectionComplete()
 
                 // Step 7: Navigate to appropriate screen
                 proceedToNextScreen()
@@ -233,20 +238,14 @@ class RootViewModel(
     private fun proceedToNextScreen() {
         _isLoading.value = false
 
-        when {
-            // First priority: Onboarding (first-time user)
-            shouldShowOnboarding -> {
-                _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Onboarding)
-            }
-            // Second priority: Language selection (after onboarding or if onboarding already done)
-            shouldShowLanguageSelection -> {
-                _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.LanguageSelection)
-            }
-            // Default: Go to Home
-            else -> {
-                _navigationEvent.value = RootNavigationEvent.NavigateTo(AppRoute.Home())
-            }
-        }
+        val route = resolveStartupRoute(
+            SetupProgress(
+                needsLanguageSelection = needsLanguageSelection,
+                needsOnboarding = needsOnboarding,
+                needsFeatureSelection = needsFeatureSelection
+            )
+        )
+        _navigationEvent.value = RootNavigationEvent.NavigateTo(route)
     }
 
     // ============================================

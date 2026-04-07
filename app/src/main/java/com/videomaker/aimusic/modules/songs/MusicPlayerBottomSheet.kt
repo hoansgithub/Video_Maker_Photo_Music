@@ -69,6 +69,7 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.di.MusicPlayerViewModelFactory
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.ui.components.AppAsyncImage
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.ShimmerBox
 import com.videomaker.aimusic.ui.theme.Black60
@@ -296,9 +297,7 @@ fun MusicPlayerBottomSheet(
                             contentDescription = null,
                             modifier = Modifier
                                 .size(24.dp)
-                                .clickable (
-                                    enabled = isLiked.not()
-                                ){ viewModel.toggleLike(song) }
+                                .clickableSingle{ viewModel.toggleLike(song) }
                         )
                     }
 
@@ -433,7 +432,7 @@ fun MusicPlayerBottomSheet(
                     .height(56.dp)
                     .clip(RoundedCornerShape(50))
                     .background(Primary)
-                    .clickable(onClick = onUseToCreate)
+                    .clickableSingle(onClick = onUseToCreate)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

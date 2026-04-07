@@ -2,6 +2,7 @@ package com.videomaker.aimusic.modules.settings
 
 import android.content.Intent
 import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -71,6 +72,7 @@ import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.ui.components.AppAsyncImage
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.FoundationBlack
@@ -313,23 +315,39 @@ fun UninstallScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = stringResource(R.string.uninstall_confirm),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.W500,
                 color = Color.White,
                 modifier = Modifier
-                    .clickable{
-                        val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
-                            data = Uri.parse("package:${context.packageName}")
-                            putExtra(Intent.EXTRA_RETURN_RESULT, true)
+                    .clickableSingle{
+                        val packageUri = Uri.parse("package:${context.packageName}")
+
+                        val uninstallIntent = Intent(Intent.ACTION_DELETE).apply {
+                            data = packageUri
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
-                        context.startActivity(intent)
+
+                        try {
+                            if (uninstallIntent.resolveActivity(context.packageManager) != null) {
+                                context.startActivity(uninstallIntent)
+                            } else {
+                                val settingsIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = packageUri
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                context.startActivity(settingsIntent)
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                     }
+                    .padding(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Button(
                 onClick = onNavigateBack,
@@ -388,9 +406,7 @@ private fun TemplateCard(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .matchParentSize()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
+                        .clickableSingle(
                             onClick = { onClick(template) }
                         )
                 )
@@ -398,9 +414,7 @@ private fun TemplateCard(
                 ShimmerPlaceholder(
                     modifier = Modifier
                         .matchParentSize()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
+                        .clickableSingle(
                             onClick = { onClick(template) }
                         ),
                     cornerRadius = 18.dp

@@ -73,6 +73,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.ui.components.AppFilterChip
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.TemplateCard
 import com.videomaker.aimusic.ui.components.ShimmerBox
@@ -269,7 +270,7 @@ private fun GallerySearchTopBar(
                         tint = TextTertiary,
                         modifier = Modifier
                             .size(20.dp)
-                            .clickable { onClearQuery() }
+                            .clickableSingle { onClearQuery() }
                     )
                 }
             }
@@ -317,7 +318,7 @@ private fun GallerySearchIdleContent(
                         text = stringResource(R.string.search_clear_all),
                         style = MaterialTheme.typography.bodySmall,
                         color = Primary,
-                        modifier = Modifier.clickable { onClearAllRecents() }
+                        modifier = Modifier.clickableSingle { onClearAllRecents() }
                     )
                 }
                 Spacer(modifier = Modifier.height(dimens.spaceSm))
@@ -401,7 +402,7 @@ private fun RecentSearchItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickableSingle(onClick = onClick)
             .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceMd),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -429,7 +430,7 @@ private fun RecentSearchItem(
             tint = TextTertiary,
             modifier = Modifier
                 .size(18.dp)
-                .clickable { onRemove() }
+                .clickableSingle { onRemove() }
         )
     }
 }

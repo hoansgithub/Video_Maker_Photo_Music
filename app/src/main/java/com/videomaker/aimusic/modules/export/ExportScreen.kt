@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
@@ -55,6 +56,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -365,14 +367,22 @@ private fun ProcessingContent(
                 }
 
                 // Progress percentage in dark transparent capsule
-                Box(
+                Column(
                     modifier = Modifier
                         .background(
                             color = Color.Black.copy(alpha = 0.6f),
                             shape = RoundedCornerShape(24.dp)
                         )
-                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                        .padding(horizontal = 20.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(36.dp),
+                        color = Color.White,
+                        strokeWidth = 4.dp,
+                        trackColor = Color(0xFF4A4A4A)
+                    )
                     Text(
                         text = "$progress%",
                         style = MaterialTheme.typography.headlineMedium,
@@ -592,6 +602,8 @@ private fun SuccessContent(
                             color = Color.Black,
                             shape = RoundedCornerShape(16.dp)
                         )
+                        .clip(RoundedCornerShape(18.dp))
+                        .border(1.dp,Color.White.copy(0.5f),RoundedCornerShape(18.dp))
                 )
             } else {
                 // Preview mode - show placeholder
