@@ -61,6 +61,7 @@ import com.videomaker.aimusic.modules.unifiedsearch.MusicSectionState
 import com.videomaker.aimusic.modules.unifiedsearch.TemplateSectionState
 import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchUiState
 import com.videomaker.aimusic.navigation.SearchSection
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.StaggeredGrid
@@ -248,7 +249,7 @@ fun UnifiedSearchResultsContent(
                                     Color.White.copy(0.08f),
                                     RoundedCornerShape(160.dp)
                                 )
-                                .clickable(onClick = {
+                                .clickableSingle(onClick = {
                                     onExplore.invoke(state.initialSection)
                                 })
                                 .padding(horizontal = 16.dp, vertical = 12.dp)
@@ -355,7 +356,7 @@ internal fun UnifiedSeeMore(
         Row(
             modifier = Modifier
                 .background(Color.White.copy(0.12f), RoundedCornerShape(160.dp))
-                .clickable(enabled = !isLoading, onClick = onClick)
+                .clickableSingle(enabled = !isLoading, onClick = onClick)
                 .padding(vertical = 12.dp, horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -627,7 +628,7 @@ internal fun RelatedSearchRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickableSingle(onClick = onClick)
             .padding(vertical = 8.dp, horizontal = 20.dp)
     ) {
         Text(

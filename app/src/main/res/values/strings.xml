@@ -5,8 +5,8 @@
     <string name="loading">Loading…</string>
 
     <!-- Language Selection -->
-    <string name="language_select_title">Select Language</string>
-    <string name="language_select_subtitle">Choose your preferred language</string>
+    <string name="language_select_title">Choose Languages</string>
+    <string name="language_select_subtitle">Please select a display language.</string>
     <string name="language_continue">Continue</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>
@@ -15,7 +15,7 @@
 
     <!-- Onboarding -->
     <string name="onboarding_next">Next</string>
-    <string name="onboarding_get_started">Done</string>
+    <string name="onboarding_get_started">Get started</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Create Magic in Seconds</string>
     <string name="onboarding_page1_subtitle">Stunning Video in a few taps. Simple and fast</string>
@@ -52,9 +52,9 @@
     <string name="songs_all">All Songs</string>
     <string name="songs_categories">Categories</string>
     <string name="songs_search_hint">Search songs</string>
-    <string name="songs_suggest_for_you">Suggested For You</string>
+    <string name="songs_suggest_for_you">Suggest for you</string>
     <string name="songs_weekly_ranking">Weekly Ranking</string>
-    <string name="songs_station">Stations</string>
+    <string name="songs_station">Recommended Stations</string>
 
     <!-- Common Actions -->
     <string name="home_create">Create</string>
@@ -235,6 +235,10 @@
     <string name="picker_go_to_settings">Go to Settings</string>
     <string name="picker_min_selection">Please select at least %d images.</string>
     <string name="picker_current_selection">%d  image Selected</string>
+    <string name="picker_exit_confirm_title">Exit image selection?</string>
+    <string name="picker_exit_confirm_message">You have selected images. If you exit now, your selected images will be discarded.</string>
+    <string name="picker_exit_confirm">Exit</string>
+    <string name="picker_exit_stay">Stay</string>
 
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Music Player</string>
@@ -356,8 +360,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">How do you want to  start ?</string>
     <string name="onboarding_page4_subtitle">This helps us recommend the most relevant content for you.</string>
-    <string name="feature_music_video_instant">Make a music video instantly</string>
-    <string name="feature_photos_to_video">Turn photos into a music video</string>
+    <string name="feature_music_video_instant">Browse Video Templates</string>
+    <string name="feature_photos_to_video">Start with a Song</string>
     <string name="feature_trending_templates">Use trending templates</string>
     <string name="feature_trending_music">Add trending music</string>
 

@@ -63,6 +63,7 @@ import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.ui.components.AppFilterChip
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
@@ -258,7 +259,7 @@ private fun SongSearchTopBar(
                         tint = TextTertiary,
                         modifier = Modifier
                             .size(20.dp)
-                            .clickable { onClearQuery() }
+                            .clickableSingle { onClearQuery() }
                     )
                 }
             }
@@ -305,7 +306,7 @@ private fun SongSearchIdleContent(
                         text = stringResource(R.string.search_clear_all),
                         style = MaterialTheme.typography.bodySmall,
                         color = Primary,
-                        modifier = Modifier.clickable { onClearAllRecents() }
+                        modifier = Modifier.clickableSingle { onClearAllRecents() }
                     )
                 }
                 Spacer(modifier = Modifier.height(dimens.spaceSm))
@@ -378,7 +379,7 @@ private fun SongSearchRecentItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickableSingle(onClick = onClick)
             .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceMd),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -403,7 +404,7 @@ private fun SongSearchRecentItem(
             tint = TextTertiary,
             modifier = Modifier
                 .size(18.dp)
-                .clickable { onRemove() }
+                .clickableSingle { onRemove() }
         )
     }
 }

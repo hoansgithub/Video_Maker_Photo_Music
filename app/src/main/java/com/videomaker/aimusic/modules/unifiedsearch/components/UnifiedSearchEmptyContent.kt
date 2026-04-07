@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.FoundationBlack_Gray_100
 import com.videomaker.aimusic.ui.theme.Primary
@@ -89,7 +90,7 @@ fun UnifiedSearchEmptyContent(
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .background(Color.White.copy(0.08f), RoundedCornerShape(160.dp))
-                        .clickable(onClick = onExploreMore)
+                        .clickableSingle(onClick = onExploreMore)
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 )
             }

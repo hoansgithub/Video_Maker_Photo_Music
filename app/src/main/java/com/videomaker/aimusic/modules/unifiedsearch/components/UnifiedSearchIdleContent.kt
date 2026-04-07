@@ -32,6 +32,7 @@ import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.navigation.SearchSection
 import com.videomaker.aimusic.ui.components.AppFilterChip
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.TextSecondary
@@ -226,7 +227,7 @@ private fun UnifiedRecentSearchItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickableSingle(onClick = onClick)
             .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceMd),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -254,7 +255,7 @@ private fun UnifiedRecentSearchItem(
             tint = TextTertiary,
             modifier = Modifier
                 .size(18.dp)
-                .clickable { onRemove() }
+                .clickableSingle { onRemove() }
         )
     }
 }

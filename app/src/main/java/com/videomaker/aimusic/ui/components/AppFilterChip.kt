@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.White10
 import com.videomaker.aimusic.ui.theme.White12
@@ -40,7 +41,7 @@ fun AppFilterChip(
         modifier = modifier
             .background(White10, ChipShape)
             .border(1.dp, borderColor, ChipShape)
-            .clickable(onClick = onClick)
+            .clickableSingle(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {

@@ -111,6 +111,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import androidx.core.content.edit
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 
 // Virtual page count for infinite-scroll illusion.
 private const val VIRTUAL_PAGE_COUNT = 10_000
@@ -448,6 +449,7 @@ private fun TemplatePreviewerReadyContent(
                                 tint = Primary,
                                 contentDescription = null,
                                 modifier = Modifier.size(32.dp)
+                                    .clickableSingle { currentTemplate?.let { onLikeTemplate(it) } }
                             )
                         } else {
                             Icon(
@@ -456,7 +458,7 @@ private fun TemplatePreviewerReadyContent(
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(32.dp)
-                                    .clickable { currentTemplate?.let { onLikeTemplate(it) } }
+                                    .clickableSingle { currentTemplate?.let { onLikeTemplate(it) } }
                             )
                         }
 
@@ -533,7 +535,7 @@ private fun TemplatePreviewerReadyContent(
                             }
                         )
                     }
-                    .clickable {},
+                    .clickableSingle {},
                 contentAlignment = Alignment.Center
             ) {
                 CenterSwipeContent()
@@ -715,7 +717,7 @@ private fun RatioOptionCard(
             .clip(RoundedCornerShape(12.dp))
             .border(borderWidth, borderColor, RoundedCornerShape(12.dp))
             .background(SurfaceDarkVariant)
-            .clickable { onClick() }
+            .clickableSingle { onClick() }
             .padding(vertical = 14.dp),
         contentAlignment = Alignment.Center
     ) {

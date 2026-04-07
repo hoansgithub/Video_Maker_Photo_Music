@@ -12,15 +12,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import com.videomaker.aimusic.MainActivity
-import com.videomaker.aimusic.modules.language.LanguageSelectionActivity
-import com.videomaker.aimusic.modules.language.domain.usecase.CheckLanguageSelectedUseCase
+import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
-import com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepository
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.launch
 
@@ -34,14 +30,12 @@ import kotlinx.coroutines.launch
  *
  * Flow:
  * 1. WELCOME step: HorizontalPager with pages 1-3
- * 2. GENRE_SELECTION step: genre picker
- * 3. CompleteOnboardingUseCase marks onboarding as done
- * 4. Launch MainActivity and finish this Activity
+ * 2. CompleteOnboardingUseCase marks onboarding as done
+ * 3. Launch FeatureSelectionActivity and finish this Activity
  */
 class OnboardingActivity : AppCompatActivity() {
 
     private val completeOnboardingUseCase: CompleteOnboardingUseCase by inject()
-    private val checkLanguageSelectedUseCase: CheckLanguageSelectedUseCase by inject()
     private val onboardingViewModel: OnboardingViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,35 +68,12 @@ class OnboardingActivity : AppCompatActivity() {
         lifecycleScope.launch {
             // Failure is non-fatal: persist flag best-effort, always navigate
             completeOnboardingUseCase().getOrNull()
-            navigateToMain()
+            navigateToFeatureSelection()
         }
     }
 
-    private fun navigateToMain() {
-        val destination = if (checkLanguageSelectedUseCase()) {
-            LanguageSelectionActivity::class.java
-        } else {
-            MainActivity::class.java
-        }
-        startActivity(Intent(this, destination))
+    private fun navigateToFeatureSelection() {
+        startActivity(Intent(this, FeatureSelectionActivity::class.java))
         finish()
-    }
-}
-
-/** Type-safe ViewModel factory — no unchecked cast (required by CLAUDE.md). */
-private inline fun <reified VM : androidx.lifecycle.ViewModel> createSafeViewModelFactory(
-    crossinline creator: () -> VM
-): ViewModelProvider.Factory {
-    return object : ViewModelProvider.Factory {
-        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-            val vm = creator()
-            if (modelClass.isAssignableFrom(vm::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return vm as T
-            }
-            throw IllegalArgumentException(
-                "Expected ${modelClass.name}, got ${vm::class.java.name}"
-            )
-        }
     }
 }

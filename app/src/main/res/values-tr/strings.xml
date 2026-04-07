@@ -6,8 +6,8 @@
     <string name="loading">Yükleniyor…</string>
 
     <!-- Language Selection -->
-    <string name="language_select_title">Dil Seçin</string>
-    <string name="language_select_subtitle">Tercih ettiğiniz dili seçin</string>
+    <string name="language_select_title">Dilleri Seçin</string>
+    <string name="language_select_subtitle">Lütfen bir görüntüleme dili seçin.</string>
     <string name="language_continue">Devam Et</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>
@@ -53,9 +53,9 @@
     <string name="songs_all">Tüm Şarkılar</string>
     <string name="songs_categories">Kategoriler</string>
     <string name="songs_search_hint">Şarkı ara</string>
-    <string name="songs_suggest_for_you">Size Önerilen</string>
+    <string name="songs_suggest_for_you">Sizin İçin Öneriler</string>
     <string name="songs_weekly_ranking">Haftalık Sıralama</string>
-    <string name="songs_station">İstasyonlar</string>
+    <string name="songs_station">Önerilen İstasyonlar</string>
 
     <!-- Legacy Home -->
     <string name="home_title">Video Maker</string>
@@ -186,6 +186,10 @@
     <string name="picker_permission_title">Fotoğraf Erişimi Gerekli</string>
     <string name="picker_permission_message">Fotoğraflarınızdan video oluşturmak için fotoğraf kütüphanenize erişim iznine ihtiyacımız var.</string>
     <string name="picker_allow_access">Erişime İzin Ver</string>
+    <string name="picker_exit_confirm_title">Görsel seçiminden çıkılsın mı?</string>
+    <string name="picker_exit_confirm_message">Görseller seçtiniz. Şimdi çıkarsanız seçili görseller silinecek.</string>
+    <string name="picker_exit_confirm">Çık</string>
+    <string name="picker_exit_stay">Kal</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Müzik Seç</string>
@@ -296,8 +300,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Yolculuğunuza Başlayın</string>
     <string name="onboarding_page4_subtitle">Bu, sizin için en uygun içeriği önermemize yardımcı olur.</string>
-    <string name="feature_music_video_instant">Anında müzik videosu oluşturun</string>
-    <string name="feature_photos_to_video">Fotoğrafları müzik videosuna dönüştürün</string>
+    <string name="feature_music_video_instant">Video Şablonlarına Göz Atın</string>
+    <string name="feature_photos_to_video">Bir Şarkıyla Başlayın</string>
     <string name="feature_trending_templates">Trend şablonları kullanın</string>
     <string name="feature_trending_music">Trend müzik ekleyin</string>
 

@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.AppFilterChip
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Neutral_N400
 import com.videomaker.aimusic.ui.theme.Neutral_N500
@@ -112,7 +113,7 @@ fun UnifiedSearchTypingOverlay(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onSuggestionClick(suggestion) }
+                        .clickableSingle { onSuggestionClick(suggestion) }
                         .padding(vertical = 8.dp, horizontal = 20.dp)
                 ) {
                     Text(

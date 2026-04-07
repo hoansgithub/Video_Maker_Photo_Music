@@ -37,6 +37,7 @@ import androidx.core.os.LocaleListCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.language.LanguageSelectionActivity
 import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
 import com.videomaker.aimusic.modules.root.LoadingScreen
@@ -65,11 +66,11 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
  * 2. Show splash screen
  * 3. Initialize ads and load config (placeholders)
  * 4. Present App Open ad (placeholder)
- * 5. Check language selection status:
- *    - If NOT selected → Launch LanguageSelectionActivity
- *    - If selected → Check onboarding:
- *      - If needed → Launch OnboardingActivity (separate one-time flow)
- *      - If done → Launch MainActivity (Home)
+ * 5. Resolve startup gate in order:
+ *    - LanguageSelectionActivity
+ *    - OnboardingActivity
+ *    - FeatureSelectionActivity
+ *    - MainActivity
  *
  * This architecture prevents Activity recreation flicker when changing language,
  * as MainActivity is launched fresh with the correct locale already applied.
@@ -189,6 +190,11 @@ class RootViewActivity : AppCompatActivity() {
             is AppRoute.Onboarding -> {
                 // Navigate to OnboardingActivity (separate one-time flow)
                 startActivity(Intent(this, OnboardingActivity::class.java))
+                applyDefaultTransition()
+                finish()
+            }
+            is AppRoute.FeatureSelection -> {
+                startActivity(Intent(this, FeatureSelectionActivity::class.java))
                 applyDefaultTransition()
                 finish()
             }

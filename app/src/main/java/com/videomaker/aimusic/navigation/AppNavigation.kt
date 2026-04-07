@@ -89,13 +89,14 @@ private val slideAnimSpec = tween<IntOffset>(300)
 @Composable
 fun AppNavigation(
     modifier: Modifier = Modifier,
+    initialHomeTab: Int = 0,
     pendingDeepLink: Intent? = null,
     onDeepLinkConsumed: () -> Unit = {},
     navigateToUninstall: Boolean = false,
     onUninstallNavigationConsumed: () -> Unit = {}
 ) {
     val activity = LocalContext.current as? Activity
-    val backStack = rememberNavBackStack(AppRoute.Home())
+    val backStack = rememberNavBackStack(AppRoute.Home(initialTab = initialHomeTab.coerceIn(0, 2)))
 
     // Handle "Uninstall App" shortcut tap
     LaunchedEffect(navigateToUninstall) {
