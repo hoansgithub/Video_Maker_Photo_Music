@@ -12,15 +12,11 @@ class LikedSongRepositoryImpl(
 ) : LikedSongRepository {
 
     override suspend fun likeSong(song: MusicSong) {
-        android.util.Log.d("LikedSongRepo", "Inserting liked song: ${song.name} (id=${song.id})")
         dao.insert(song.toEntity())
-        android.util.Log.d("LikedSongRepo", "Liked song inserted to database")
     }
 
     override suspend fun unlikeSong(songId: Long) {
-        android.util.Log.d("LikedSongRepo", "Deleting liked song from database: id=$songId")
         dao.deleteById(songId)
-        android.util.Log.d("LikedSongRepo", "Liked song deleted from database")
     }
 
     override fun observeLikedSongs(): Flow<List<MusicSong>> =
