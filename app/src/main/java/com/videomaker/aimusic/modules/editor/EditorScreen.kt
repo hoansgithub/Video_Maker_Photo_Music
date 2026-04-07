@@ -644,7 +644,7 @@ internal fun EditorMainContent(
 
         // Music Section - song info and player
         MusicSection(
-            songName = project.settings.musicSongName ?: "No music selected",
+            songName = project.settings.musicSongName ?: stringResource(R.string.editor_no_music_selected),
             coverUrl = project.settings.musicSongCoverUrl ?: "",
             duration = project.formattedDuration,
             currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,

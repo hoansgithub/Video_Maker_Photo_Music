@@ -139,7 +139,7 @@ fun UnifiedSearchIdleContent(
                         }
 
                         item(key = "featured_header") {
-                            UnifiedSectionHeader(text = "Templates Suggestions")
+                            UnifiedSectionHeader(text = stringResource(R.string.search_templates_suggestions))
                         }
                         item(key = "featured_grid") {
                             Spacer(modifier = Modifier.height(dimens.spaceSm))
@@ -190,7 +190,7 @@ fun UnifiedSearchIdleContent(
                         }
 
                         item(key = "suggested_header") {
-                            UnifiedSectionHeader(text = "Music Suggestion")
+                            UnifiedSectionHeader(text = stringResource(R.string.search_music_suggestion))
                         }
                         items(suggestedSongs, key = { "suggested_${it.id}" }) { song ->
                             SongListItem(

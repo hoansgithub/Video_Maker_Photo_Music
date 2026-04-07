@@ -191,12 +191,13 @@ fun SettingsScreen(
                     subtitle = "",
                     isShowLine = true,
                     onClick = {
+                        val packageUrl = "https://play.google.com/store/apps/details?id=${context.packageName}"
                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "Check out this app!")
+                            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.settings_share_subject))
                             putExtra(
                                 Intent.EXTRA_TEXT,
-                                "Hey! I'm using this awesome app. Try it out:\nhttps://play.google.com/store/apps/details?id=${context.packageName}"
+                                context.getString(R.string.settings_share_message).format(packageUrl)
                             )
                         }
                         context.startActivity(Intent.createChooser(shareIntent, "Share via"))

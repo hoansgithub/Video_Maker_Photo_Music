@@ -72,6 +72,8 @@
     <string name="settings_about">Sobre</string>
     <string name="settings_version">Versão</string>
     <string name="settings_uninstall">Desinstalar</string>
+    <string name="settings_share_subject">Confira este app!</string>
+    <string name="settings_share_message">Oi! Estou usando este app incrível. Experimente:\n%s</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Dê mais uma chance</string>
@@ -99,12 +101,49 @@
     <string name="editor_frame">Moldura</string>
     <string name="editor_aspect_ratio">Proporção</string>
     <string name="editor_volume">Volume</string>
+    <string name="editor_effect">Efeito</string>
+    <string name="editor_select_video_ratio">Selecionar Proporção de Vídeo</string>
+    <string name="editor_apply">Aplicar</string>
+    <string name="editor_image_duration">Duração da Imagem</string>
+    <string name="editor_change_music">Alterar música</string>
+    <string name="editor_select_quality">Selecionar qualidade</string>
+    <string name="editor_hd">HD</string>
+    <string name="editor_play">Reproduzir</string>
+    <string name="editor_pause">Pausar</string>
     <string name="editor_duration_format">Duração: %s</string>
+
+    <!-- Music Trim Feature (NOT video trim) -->
+    <string name="editor_music_trim">Cortar Música</string>
+    <string name="editor_music_trim_from_start">Cortar do Início</string>
+    <string name="editor_music_trim_from_end">Cortar do Final</string>
+    <string name="editor_music_trim_edit">Editar Corte de Música</string>
+    <string name="editor_music_trim_title">Cortar Música</string>
+    <string name="editor_music_trim_subtitle">Selecione qual parte da música usar</string>
+    <string name="editor_music_trim_start">Início da Música</string>
+    <string name="editor_music_trim_end">Final da Música</string>
+    <string name="editor_music_trim_duration">Duração da Música</string>
+    <string name="editor_music_trim_min_duration">A música deve ter pelo menos 5 segundos</string>
+    <string name="editor_music_trim_will_loop">A música será repetida se necessário para o seu vídeo</string>
+    <string name="editor_music_trimmed_info">Música: %1$s</string>
+    <string name="editor_music_trim_play_selection">Reproduzir Seleção</string>
+    <string name="editor_music_trim_skip_to_start">Ir para o Início</string>
+    <string name="editor_music_trim_skip_to_end">Ir para o Final</string>
     <string name="editor_photos_count">%d fotos</string>
     <string name="editor_save_dialog_title">Salvar Projeto?</string>
     <string name="editor_save_dialog_message">Seu projeto será salvo e ficará disponível em Meus Projetos.</string>
     <string name="editor_save_and_exit">Salvar e Sair</string>
     <string name="editor_discard_changes">Descartar Alterações</string>
+    <string name="editor_processing">Processando…</string>
+    <string name="editor_preparing_video">Preparando vídeo…</string>
+    <string name="editor_unsaved_project_title">Salvar Seu Projeto?</string>
+    <string name="editor_unsaved_project_message">Seu projeto ainda não foi salvo. Salvar agora ou descartar seu trabalho?</string>
+    <string name="editor_unsaved_changes_title">Alterações Não Salvas</string>
+    <string name="editor_unsaved_changes_message">Se você sair agora, suas alterações serão perdidas. Tem certeza que deseja sair?</string>
+    <string name="editor_keep_editing">Continuar Editando</string>
+    <string name="editor_discard">Descartar</string>
+    <string name="editor_effect_sets">Conjuntos de Efeitos</string>
+    <string name="editor_retry">Tentar Novamente</string>
+    <string name="editor_no_music_selected">Nenhuma música selecionada</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Vídeo Criado</string>
@@ -133,6 +172,9 @@
     <string name="projects_delete_cancel">Cancelar</string>
     <string name="projects_empty">Nenhum projeto ainda</string>
     <string name="projects_empty_description">Crie seu primeiro projeto para vê-lo aqui</string>
+    <string name="projects_empty_title">Comece sua jornada</string>
+    <string name="projects_empty_subtitle">Está um pouco vazio aqui. Vamos criar sua primeira obra-prima hoje.</string>
+    <string name="projects_create_new_video">Criar Novo Vídeo</string>
     <string name="projects_item_info">%1$d fotos • %2$s</string>
     <string name="projects_create_description">Iniciar um novo projeto de slideshow</string>
     <string name="projects_delete_title">Excluir Projeto?</string>
@@ -146,6 +188,8 @@
     <string name="export_share">Compartilhar</string>
     <string name="export_save">Salvar na Galeria</string>
     <string name="export_preparing">Preparando exportação…</string>
+    <string name="export_generating">Gerando</string>
+    <string name="export_please_wait">Aguarde um momento, preparando seu vídeo!\nPor favor, não feche o app</string>
     <string name="export_exporting">Exportando vídeo…</string>
     <string name="export_dont_close">Por favor, não feche o aplicativo</string>
     <string name="export_tip_1">Criando sua obra-prima…</string>
@@ -173,6 +217,8 @@
     <string name="export_cancel_message">Tem certeza que deseja cancelar a exportação? Todo o progresso será perdido.</string>
     <string name="export_continue">Continuar</string>
     <string name="export_cancel_export">Cancelar Exportação</string>
+    <string name="export_error_file_not_found">Arquivo de vídeo não encontrado</string>
+    <string name="export_error_share_failed">Erro ao compartilhar vídeo</string>
     <string name="export_try_another_templates">Experimente Outros Modelos</string>
     <string name="export_templates_load_failed">Falha ao carregar modelos</string>
 
@@ -186,6 +232,15 @@
     <string name="picker_permission_title">Acesso às Fotos Necessário</string>
     <string name="picker_permission_message">Para criar vídeos com suas fotos, precisamos de permissão para acessar sua biblioteca de fotos.</string>
     <string name="picker_allow_access">Permitir Acesso</string>
+    <string name="picker_limited_access_message">Você deu acesso ao Video Maker a um número limitado de fotos.</string>
+    <string name="picker_add_more_photos">Adicionar</string>
+    <string name="picker_go_to_settings">Ir para Configurações</string>
+    <string name="picker_min_selection">Por favor, selecione pelo menos %d imagens.</string>
+    <string name="picker_current_selection">%d imagem selecionada</string>
+
+    <!-- Music Player Bottom Sheet -->
+    <string name="music_player_title">Player de Música</string>
+    <string name="music_player_use_to_create">Usar para Criar Vídeo</string>
     <string name="picker_exit_confirm_title">Sair da seleção de imagens?</string>
     <string name="picker_exit_confirm_message">Você selecionou imagens. Se sair agora, as imagens selecionadas serão descartadas.</string>
     <string name="picker_exit_confirm">Sair</string>
@@ -222,7 +277,12 @@
     <string name="settings_add">+ Adicionar</string>
     <string name="settings_add_audio">+ Adicionar</string>
     <string name="settings_volume">Volume</string>
+    <string name="settings_clip_music">Cortar Música</string>
     <string name="settings_aspect_ratio">Proporção</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">Volume</string>
+    <string name="tab_music_clip">Corte de Música</string>
     <string name="settings_transition_effect">Efeito de Transição</string>
     <string name="settings_transition_duration">Duração da Transição</string>
     <string name="settings_transition_duration_value">%.1fs</string>
@@ -296,6 +356,8 @@
     <string name="song_search_explore_by_genre">Explorar por Gênero</string>
     <string name="song_search_suggested">Sugerido para Você</string>
     <string name="song_search_no_results">Nenhuma música encontrada</string>
+    <string name="song_search_change_music">Alterar Música</string>
+    <string name="song_search_idle_hint">Comece a digitar para buscar músicas</string>
 
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Comece Sua Jornada</string>
@@ -332,8 +394,53 @@
     <string name="widget_recently">Recente</string>
     <string name="widget_trending_song">Música em Alta</string>
     <string name="widget_trending_song_hot">Hot</string>
-    <string name="shortcut_trending_search_long">Pesquisa em Alta</string>
-    <string name="shortcut_create_video_long">Criar Vídeo</string>
-    <string name="shortcut_choose_template_long">Escolher Modelo de Vídeo</string>
-    <string name="shortcut_uninstall_long">Desinstalar App</string>
+    <string name="widget_search_hint">Buscar modelos...</string>
+    <string name="widget_pin_request_sent">Widget adicionado à tela inicial</string>
+    <string name="widget_pin_not_supported">Adicionar widgets não é compatível com este dispositivo</string>
+    <string name="widget_add_failed">Erro ao adicionar widget: %s</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_trending_search_long">Pesquisa de tendências</string>
+    <string name="shortcut_create_video_long">Criar vídeo</string>
+    <string name="shortcut_choose_template_long">Escolher modelo de vídeo</string>
+    <string name="shortcut_uninstall_long">Desinstalar app</string>
+
+    <!-- Unified search   -->
+    <string name="unified_search_templates">Modelos</string>
+    <string name="unified_search_music">Música</string>
+    <string name="unified_search_see_more">Ver mais</string>
+    <string name="unified_search_loading_more">Carregando…</string>
+    <string name="unified_search_explore_more">Explorar Mais</string>
+    <string name="unified_search_explore_suggestions">Explorar Sugestões</string>
+    <string name="unified_search_no_results_title">Nenhum resultado encontrado</string>
+    <string name="unified_search_keep_typing">Continue digitando para refinar sua busca</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">Hot</string>
+    <string name="tag_trending">Tendência</string>
+    <string name="tag_new">Novo</string>
+    <string name="tag_featured">Destaque</string>
+
+    <!-- Template Previewer -->
+    <string name="template_add_to_favorites">Adicionar</string>
+    <string name="template_use_button">Usar Este Modelo</string>
+    <string name="template_swipe_hint">Deslize para cima</string>
+    <string name="template_swipe_subtitle">Para aproveitar seus modelos</string>
+    <string name="template_select_ratio_title">Selecionar Proporção de Vídeo</string>
+    <string name="template_create_now">Criar agora</string>
+    <string name="template_error_load_failed">Falha ao carregar modelos. Tente novamente.</string>
+
+    <!-- Unified Search -->
+    <string name="search_templates_suggestions">Sugestões de Modelos</string>
+    <string name="search_music_suggestion">Sugestão de Música</string>
+    <string name="search_empty_subtitle">Vamos tentar algo diferente ou explorar\nvibrações em alta</string>
+    <string name="search_typing_result_header">Resultado</string>
+    <string name="search_loading_title">Procurando resultados…</string>
+    <string name="search_loading_message">Estamos escaneando nosso banco de dados\npara trazer as informações mais precisas.\nPor favor, aguarde um momento.</string>
+    <string name="search_placeholder">Pesquisar qualquer coisa</string>
+    <string name="search_pro_badge">PRO</string>
+
+    <!-- Editor Volume -->
+    <string name="volume_title">Volume</string>
+
 </resources>

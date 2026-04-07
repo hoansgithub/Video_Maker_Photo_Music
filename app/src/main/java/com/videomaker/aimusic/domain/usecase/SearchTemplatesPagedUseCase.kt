@@ -10,6 +10,5 @@ class SearchTemplatesPagedUseCase(
         query: String,
         limit: Int,
         offset: Int
-    ): Result<List<VideoTemplate>> = repository.searchTemplates(query)
-        .map { templates -> templates.drop(offset).take(limit) }
+    ): Result<List<VideoTemplate>> = repository.searchTemplates(query, limit, offset)
 }

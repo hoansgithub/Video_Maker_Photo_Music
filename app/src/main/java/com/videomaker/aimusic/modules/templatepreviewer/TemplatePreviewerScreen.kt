@@ -63,6 +63,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.compose.ui.Alignment
@@ -97,6 +98,7 @@ import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
+import coil.size.Scale
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
@@ -163,8 +165,20 @@ fun TemplatePreviewerScreen(
 
     // Single ExoPlayer for the entire screen — crossfaded on page change
     val player = remember {
+        // Optimized LoadControl for faster music streaming
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                /* minBufferMs */ 2500,      // Balanced: faster than default, stable on slow networks
+                /* maxBufferMs */ 15000,     // Max buffer 15s (reduced from default 50s)
+                /* bufferForPlaybackMs */ 1500,      // Start playback after 1.5s buffered (safer than 500ms)
+                /* bufferForPlaybackAfterRebufferMs */ 2500  // ExoPlayer default for stability
+            )
+            .setPrioritizeTimeOverSizeThresholds(true)  // Favor low latency over size
+            .build()
+
         ExoPlayer.Builder(context)
             .setMediaSourceFactory(DefaultMediaSourceFactory(audioDataSourceFactory))
+            .setLoadControl(loadControl)
             .build()
     }
 
@@ -339,10 +353,57 @@ private fun TemplatePreviewerReadyContent(
             .collect { onPageChanged(it) }
     }
 
+    // Priority-based image preloading: current page first, then adjacent pages
+    // Use singleton ImageLoader to avoid memory leaks from creating new instances
+    val imageLoader = remember { coil.Coil.imageLoader(context) }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()
+            .collect { currentPage ->
+
+                // PRIORITY 1: Load current page immediately (loads first by order)
+                val currentTemplate = templates[currentPage % templates.size]
+                val currentImageUrl = currentTemplate.previewImagePath.ifEmpty { currentTemplate.thumbnailPath }
+                if (currentImageUrl.isNotEmpty()) {
+                    val currentRequest = coil.request.ImageRequest.Builder(context)
+                        .data(currentImageUrl)
+                        .size(378, 672)  // Match original size - avoid upscaling
+                        .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                        .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                        .build()
+                    imageLoader.enqueue(currentRequest)
+                }
+
+                // PRIORITY 2: Delay 150ms to ensure current page loads first
+                delay(150)
+
+                // Preload next 3 pages and previous 1 page (low priority background loading)
+                for (offset in -1..3) {
+                    if (offset == 0) continue  // Skip current page (already loaded)
+
+                    val pageIndex = (currentPage + offset)
+                    if (pageIndex >= 0 && pageIndex < VIRTUAL_PAGE_COUNT) {
+                        val template = templates[pageIndex % templates.size]
+                        val imageUrl = template.previewImagePath.ifEmpty { template.thumbnailPath }
+                        if (imageUrl.isNotEmpty()) {
+                            val request = coil.request.ImageRequest.Builder(context)
+                                .data(imageUrl)
+                                .size(378, 672)  // Match original size - avoid upscaling
+                                .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                                .memoryCachePolicy(coil.request.CachePolicy.ENABLED)
+                                .build()
+                            imageLoader.enqueue(request)
+                        }
+                    }
+                }
+            }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         VerticalPager(
             state = pagerState,
-            beyondViewportPageCount = 1,
+            beyondViewportPageCount = 2,  // Preload 2 pages ahead/behind for smoother scrolling
             modifier = Modifier.fillMaxSize(),
             key = { pageIndex -> templates[pageIndex % templates.size].id }
         ) { pageIndex ->
@@ -355,7 +416,8 @@ private fun TemplatePreviewerReadyContent(
                 && musicReady
             TemplateThumbnailPage(
                 template = templates[pageIndex % templates.size],
-                isCurrentPage = isCurrentPage
+                isCurrentPage = isCurrentPage,
+                isPriorityPage = pageIndex == pagerState.settledPage  // High priority for visible page
             )
         }
 
@@ -463,7 +525,7 @@ private fun TemplatePreviewerReadyContent(
                         }
 
                         Text(
-                            text = "Add",
+                            text = stringResource(R.string.template_add_to_favorites),
                             color = SurfaceLight,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 12.sp
@@ -479,7 +541,7 @@ private fun TemplatePreviewerReadyContent(
                 val ctaLoading = state.isCreatingProject || currentSong is SongLoadState.Loading
                 val ctaEnabled = currentSong !is SongLoadState.Loading && !state.isCreatingProject
                 PrimaryButton(
-                    text = "Use This Template",
+                    text = stringResource(R.string.template_use_button),
                     onClick = {
                         val template = templates.getOrNull(pagerState.settledPage % templates.size) ?: return@PrimaryButton
                         pendingTemplate = template
@@ -599,7 +661,7 @@ private fun CenterSwipeContent(modifier: Modifier = Modifier) {
 
         // "Swipe up" text
         Text(
-            text = "Swipe up",
+            text = stringResource(R.string.template_swipe_hint),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White,
@@ -610,7 +672,7 @@ private fun CenterSwipeContent(modifier: Modifier = Modifier) {
 
         // Subtitle
         Text(
-            text = "To enjoy you templates",
+            text = stringResource(R.string.template_swipe_subtitle),
             fontSize = 14.sp,
             color = Color.White,
             textAlign = TextAlign.Center
@@ -666,7 +728,7 @@ private fun SelectRatioBottomSheet(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             Text(
-                text = "Select Video Ratio",
+                text = stringResource(R.string.template_select_ratio_title),
                 color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold
@@ -692,7 +754,7 @@ private fun SelectRatioBottomSheet(
             }
 
             PrimaryButton(
-                text = "Create now",
+                text = stringResource(R.string.template_create_now),
                 onClick = { onConfirm(selected) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -834,10 +896,14 @@ private fun MusicInfoCapsule(currentSong: SongLoadState, playerDurationMs: Long?
 // ============================================
 
 @Composable
-private fun TemplateThumbnailPage(template: VideoTemplate, isCurrentPage: Boolean) {
+private fun TemplateThumbnailPage(
+    template: VideoTemplate,
+    isCurrentPage: Boolean,
+    isPriorityPage: Boolean = false  // True for visible/settled page (kept for future use)
+) {
     val context = LocalContext.current
-    // Use high-resolution preview image for full-screen display
-    val thumbnailUrl = template.previewImagePath.ifEmpty { template.thumbnailPath.ifEmpty { null } }
+    // Use high-res preview for full-screen display, fallback to thumbnail
+    val imageUrl = template.previewImagePath.ifEmpty { template.thumbnailPath.ifEmpty { null } }
 
     Box(
         modifier = Modifier.fillMaxSize().background(Color.Black),
@@ -845,18 +911,22 @@ private fun TemplateThumbnailPage(template: VideoTemplate, isCurrentPage: Boolea
     ) {
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(context)
-                .data(thumbnailUrl)
+                .data(imageUrl)
+                .size(378, 672)  // Match original size - avoid upscaling
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .memoryCachePolicy(CachePolicy.ENABLED)
-                .memoryCacheKey("${template.id}_${if (isCurrentPage) "anim" else "static"}")
-                .precision(Precision.INEXACT)
+                .networkCachePolicy(CachePolicy.ENABLED)  // Enable network cache
+                .diskCacheKey("template_preview_${template.id}")  // Consistent disk cache key
+                .precision(Precision.INEXACT)  // Allow downsampling
+                .scale(Scale.FILL)  // Faster than FIT - fills viewport with crop
+                .allowHardware(!isCurrentPage)  // Hardware bitmap only for static pages (animation needs software bitmap)
                 .apply {
                     if (!isCurrentPage) {
                         // Static first frame only — bypasses ImageDecoderDecoder (animated WebP)
                         decoderFactory(BitmapFactoryDecoder.Factory())
                     }
                 }
-                .crossfade(true)
+                .crossfade(false)  // Instant display, no animation delay
                 .build(),
             contentDescription = template.name,
             modifier = Modifier.fillMaxSize(),
@@ -1080,13 +1150,13 @@ private fun PreviewTemplatePreviewerError() {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Failed to load templates. Please try again.",
+                    text = stringResource(R.string.template_error_load_failed),
                     color = Color.White,
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 32.dp)
                 )
-                Button(onClick = {}) { Text("Go Back") }
+                Button(onClick = {}) { Text(stringResource(R.string.back)) }
             }
         }
     }

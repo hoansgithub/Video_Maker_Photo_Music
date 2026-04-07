@@ -72,6 +72,8 @@
     <string name="settings_about">Tentang</string>
     <string name="settings_version">Versi</string>
     <string name="settings_uninstall">Hapus Instalan</string>
+    <string name="settings_share_subject">Lihat aplikasi ini!</string>
+    <string name="settings_share_message">Halo! Saya menggunakan aplikasi luar biasa ini. Coba yuk:\n%s</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Coba lagi</string>
@@ -99,12 +101,49 @@
     <string name="editor_frame">Bingkai</string>
     <string name="editor_aspect_ratio">Rasio Aspek</string>
     <string name="editor_volume">Volume</string>
+    <string name="editor_effect">Efek</string>
+    <string name="editor_select_video_ratio">Pilih Rasio Video</string>
+    <string name="editor_apply">Terapkan</string>
+    <string name="editor_image_duration">Durasi Gambar</string>
+    <string name="editor_change_music">Ubah musik</string>
+    <string name="editor_select_quality">Pilih kualitas</string>
+    <string name="editor_hd">HD</string>
+    <string name="editor_play">Putar</string>
+    <string name="editor_pause">Jeda</string>
     <string name="editor_duration_format">Durasi: %s</string>
+
+    <!-- Music Trim Feature (NOT video trim) -->
+    <string name="editor_music_trim">Potong Musik</string>
+    <string name="editor_music_trim_from_start">Potong dari Awal</string>
+    <string name="editor_music_trim_from_end">Potong dari Akhir</string>
+    <string name="editor_music_trim_edit">Edit Potongan Musik</string>
+    <string name="editor_music_trim_title">Potong Musik</string>
+    <string name="editor_music_trim_subtitle">Pilih bagian lagu yang akan digunakan</string>
+    <string name="editor_music_trim_start">Awal Musik</string>
+    <string name="editor_music_trim_end">Akhir Musik</string>
+    <string name="editor_music_trim_duration">Durasi Musik</string>
+    <string name="editor_music_trim_min_duration">Musik harus minimal 5 detik</string>
+    <string name="editor_music_trim_will_loop">Musik akan diulang jika diperlukan untuk video Anda</string>
+    <string name="editor_music_trimmed_info">Musik: %1$s</string>
+    <string name="editor_music_trim_play_selection">Putar Pilihan</string>
+    <string name="editor_music_trim_skip_to_start">Lompat ke Awal</string>
+    <string name="editor_music_trim_skip_to_end">Lompat ke Akhir</string>
     <string name="editor_photos_count">%d foto</string>
     <string name="editor_save_dialog_title">Simpan Proyek?</string>
     <string name="editor_save_dialog_message">Proyek Anda akan disimpan dan tersedia di Proyek Saya.</string>
     <string name="editor_save_and_exit">Simpan &amp; Keluar</string>
     <string name="editor_discard_changes">Buang Perubahan</string>
+    <string name="editor_processing">Memproses…</string>
+    <string name="editor_preparing_video">Menyiapkan video…</string>
+    <string name="editor_unsaved_project_title">Simpan Proyek Anda?</string>
+    <string name="editor_unsaved_project_message">Proyek Anda belum disimpan. Simpan sekarang atau buang pekerjaan Anda?</string>
+    <string name="editor_unsaved_changes_title">Perubahan Belum Disimpan</string>
+    <string name="editor_unsaved_changes_message">Jika keluar sekarang, perubahan Anda akan hilang. Yakin ingin keluar?</string>
+    <string name="editor_keep_editing">Lanjutkan Mengedit</string>
+    <string name="editor_discard">Buang</string>
+    <string name="editor_effect_sets">Set Efek</string>
+    <string name="editor_retry">Coba Lagi</string>
+    <string name="editor_no_music_selected">Tidak ada musik dipilih</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Video Dibuat</string>
@@ -133,6 +172,9 @@
     <string name="projects_delete_cancel">Batal</string>
     <string name="projects_empty">Belum ada proyek</string>
     <string name="projects_empty_description">Buat proyek pertama Anda untuk melihatnya di sini</string>
+    <string name="projects_empty_title">Mulai perjalanan Anda</string>
+    <string name="projects_empty_subtitle">Terlihat agak kosong di sini. Mari buat karya pertama Anda hari ini.</string>
+    <string name="projects_create_new_video">Buat Video Baru</string>
     <string name="projects_item_info">%1$d foto • %2$s</string>
     <string name="projects_create_description">Mulai proyek slideshow baru</string>
     <string name="projects_delete_title">Hapus Proyek?</string>
@@ -146,6 +188,8 @@
     <string name="export_share">Bagikan</string>
     <string name="export_save">Simpan ke Galeri</string>
     <string name="export_preparing">Menyiapkan ekspor…</string>
+    <string name="export_generating">Menghasilkan</string>
+    <string name="export_please_wait">Tunggu sebentar, menyiapkan video Anda!\nMohon jangan tutup aplikasi</string>
     <string name="export_exporting">Mengekspor video…</string>
     <string name="export_dont_close">Mohon jangan tutup aplikasi</string>
     <string name="export_tip_1">Membuat karya agung Anda…</string>
@@ -173,6 +217,8 @@
     <string name="export_cancel_message">Apakah Anda yakin ingin membatalkan ekspor? Semua progres akan hilang.</string>
     <string name="export_continue">Lanjutkan</string>
     <string name="export_cancel_export">Batalkan Ekspor</string>
+    <string name="export_error_file_not_found">File video tidak ditemukan</string>
+    <string name="export_error_share_failed">Gagal membagikan video</string>
     <string name="export_try_another_templates">Coba Template Lain</string>
     <string name="export_templates_load_failed">Gagal memuat template</string>
 
@@ -186,6 +232,15 @@
     <string name="picker_permission_title">Akses Foto Diperlukan</string>
     <string name="picker_permission_message">Untuk membuat video dari foto Anda, kami memerlukan izin untuk mengakses perpustakaan foto Anda.</string>
     <string name="picker_allow_access">Izinkan Akses</string>
+    <string name="picker_limited_access_message">Anda telah memberikan akses Video Maker ke sejumlah foto terbatas.</string>
+    <string name="picker_add_more_photos">Tambah</string>
+    <string name="picker_go_to_settings">Ke Pengaturan</string>
+    <string name="picker_min_selection">Mohon pilih minimal %d gambar.</string>
+    <string name="picker_current_selection">%d gambar dipilih</string>
+
+    <!-- Music Player Bottom Sheet -->
+    <string name="music_player_title">Pemutar Musik</string>
+    <string name="music_player_use_to_create">Gunakan untuk Buat Video</string>
     <string name="picker_exit_confirm_title">Keluar dari pemilihan gambar?</string>
     <string name="picker_exit_confirm_message">Anda telah memilih gambar. Jika keluar sekarang, gambar yang dipilih akan dibuang.</string>
     <string name="picker_exit_confirm">Keluar</string>
@@ -193,8 +248,8 @@
 
     <!-- Music Picker -->
     <string name="music_picker_title">Pilih Musik</string>
-    <string name="music_picker_loading">Memuat…</string>
-    <string name="music_picker_no_music">Tidak ada musik</string>
+    <string name="music_picker_loading">Memuat musik…</string>
+    <string name="music_picker_no_music">Tidak ada musik ditemukan</string>
     <string name="music_picker_no_music_hint">Tambahkan file musik ke perangkat Anda untuk menggunakannya di sini</string>
     <string name="music_picker_permission_title">Akses Audio Diperlukan</string>
     <string name="music_picker_permission_message">Untuk menggunakan musik Anda sebagai audio latar, kami memerlukan izin untuk mengakses file audio Anda.</string>
@@ -222,10 +277,15 @@
     <string name="settings_add">+ Tambah</string>
     <string name="settings_add_audio">+ Tambah</string>
     <string name="settings_volume">Volume</string>
+    <string name="settings_clip_music">Potong Musik</string>
     <string name="settings_aspect_ratio">Rasio Aspek</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">Volume</string>
+    <string name="tab_music_clip">Potongan Musik</string>
     <string name="settings_transition_effect">Efek Transisi</string>
     <string name="settings_transition_duration">Durasi Transisi</string>
-    <string name="settings_transition_duration_value">%.1fd</string>
+    <string name="settings_transition_duration_value">%.1fs</string>
 
     <!-- Search -->
     <string name="search_hint">Temukan gaya sempurna kamu…</string>
@@ -296,6 +356,8 @@
     <string name="song_search_explore_by_genre">Jelajahi berdasarkan Genre</string>
     <string name="song_search_suggested">Disarankan untuk Anda</string>
     <string name="song_search_no_results">Tidak ada lagu ditemukan</string>
+    <string name="song_search_change_music">Ubah Musik</string>
+    <string name="song_search_idle_hint">Mulai mengetik untuk mencari lagu</string>
 
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Mulai Perjalanan Anda</string>
@@ -332,8 +394,53 @@
     <string name="widget_recently">Terbaru</string>
     <string name="widget_trending_song">Lagu Trending</string>
     <string name="widget_trending_song_hot">Hot</string>
-    <string name="shortcut_trending_search_long">Pencarian Trending</string>
-    <string name="shortcut_create_video_long">Buat Video</string>
-    <string name="shortcut_choose_template_long">Pilih Template Video</string>
-    <string name="shortcut_uninstall_long">Hapus Instalasi App</string>
+    <string name="widget_search_hint">Cari template...</string>
+    <string name="widget_pin_request_sent">Widget ditambahkan ke layar beranda</string>
+    <string name="widget_pin_not_supported">Menambahkan widget tidak didukung di perangkat ini</string>
+    <string name="widget_add_failed">Gagal menambahkan widget: %s</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_trending_search_long">Pencarian trending</string>
+    <string name="shortcut_create_video_long">Buat video</string>
+    <string name="shortcut_choose_template_long">Pilih template video</string>
+    <string name="shortcut_uninstall_long">Hapus instalasi app</string>
+
+    <!-- Unified search   -->
+    <string name="unified_search_templates">Template</string>
+    <string name="unified_search_music">Musik</string>
+    <string name="unified_search_see_more">Lihat lebih banyak</string>
+    <string name="unified_search_loading_more">Memuat…</string>
+    <string name="unified_search_explore_more">Jelajahi Lebih Banyak</string>
+    <string name="unified_search_explore_suggestions">Jelajahi Saran</string>
+    <string name="unified_search_no_results_title">Tidak ada hasil ditemukan</string>
+    <string name="unified_search_keep_typing">Terus mengetik untuk memperbaiki pencarian Anda</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">Hot</string>
+    <string name="tag_trending">Trending</string>
+    <string name="tag_new">Baru</string>
+    <string name="tag_featured">Unggulan</string>
+
+    <!-- Template Previewer -->
+    <string name="template_add_to_favorites">Tambah</string>
+    <string name="template_use_button">Gunakan Template Ini</string>
+    <string name="template_swipe_hint">Geser ke atas</string>
+    <string name="template_swipe_subtitle">Untuk menikmati template Anda</string>
+    <string name="template_select_ratio_title">Pilih Rasio Video</string>
+    <string name="template_create_now">Buat sekarang</string>
+    <string name="template_error_load_failed">Gagal memuat template. Silakan coba lagi.</string>
+
+    <!-- Unified Search -->
+    <string name="search_templates_suggestions">Saran Template</string>
+    <string name="search_music_suggestion">Saran Musik</string>
+    <string name="search_empty_subtitle">Mari coba sesuatu yang lain atau jelajahi\nvibes yang sedang trending</string>
+    <string name="search_typing_result_header">Hasil</string>
+    <string name="search_loading_title">Mencari hasil…</string>
+    <string name="search_loading_message">Kami memindai database kami untuk\nmembawakan Anda informasi yang paling akurat.\nMohon tunggu sebentar.</string>
+    <string name="search_placeholder">Cari apa saja</string>
+    <string name="search_pro_badge">PRO</string>
+
+    <!-- Editor Volume -->
+    <string name="volume_title">Volume</string>
+
 </resources>

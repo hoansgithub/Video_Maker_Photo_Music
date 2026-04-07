@@ -600,12 +600,16 @@ class CompositionFactory(
                 }
 
                 if (segmentDurationMs < totalVideoDurationMs) {
-                    // LOOP: Segment shorter than video - loop to fill duration
-                    val loopCount = kotlin.math.ceil(totalVideoDurationMs.toDouble() / segmentDurationMs.toDouble()).toInt()
+                    // LOOP: Segment shorter than video - loop to fill duration exactly
+                    val fullLoops = (totalVideoDurationMs / segmentDurationMs).toInt()
+                    val remainingMs = totalVideoDurationMs % segmentDurationMs
 
-                    android.util.Log.d("CompositionFactory", "Export: Looping segment ${loopCount} times (segment=${segmentDurationMs}ms < video=${totalVideoDurationMs}ms)")
+                    android.util.Log.d("CompositionFactory", "Export: Looping segment (segment=${segmentDurationMs}ms < video=${totalVideoDurationMs}ms) - fullLoops=$fullLoops, remainingMs=$remainingMs")
 
-                    val loopedItems = List(loopCount) { index ->
+                    val loopedItems = mutableListOf<EditedMediaItem>()
+
+                    // Add full loops
+                    repeat(fullLoops) { index ->
                         val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
                             .setStartPositionMs(trimStartMs)
 
@@ -619,10 +623,32 @@ class CompositionFactory(
                             .setClippingConfiguration(clippingBuilder.build())
                             .build()
 
-                        EditedMediaItem.Builder(mediaItem)
-                            .setRemoveVideo(true)
-                            .setEffects(audioEffects)
+                        loopedItems.add(
+                            EditedMediaItem.Builder(mediaItem)
+                                .setRemoveVideo(true)
+                                .setEffects(audioEffects)
+                                .build()
+                        )
+                    }
+
+                    // Add partial loop if there's remaining time
+                    if (remainingMs > 0) {
+                        val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
+                            .setStartPositionMs(trimStartMs)
+                            .setEndPositionMs(trimStartMs + remainingMs) // Clip to exact remaining duration
+
+                        val mediaItem = MediaItem.Builder()
+                            .setUri(audioUri)
+                            .setMediaId("loop_partial_${audioUri.hashCode()}")
+                            .setClippingConfiguration(clippingBuilder.build())
                             .build()
+
+                        loopedItems.add(
+                            EditedMediaItem.Builder(mediaItem)
+                                .setRemoveVideo(true)
+                                .setEffects(audioEffects)
+                                .build()
+                        )
                     }
 
                     return EditedMediaItemSequence.Builder(loopedItems).build()
@@ -683,21 +709,47 @@ class CompositionFactory(
                 if (forExport) {
                     // EXPORT: Apply smart looping/clipping based on actual duration
                     if (actualAudioDurationMs < totalVideoDurationMs) {
-                        // LOOP: Audio shorter than video - loop to fill duration
-                        val loopCount = kotlin.math.ceil(totalVideoDurationMs.toDouble() / actualAudioDurationMs.toDouble()).toInt()
+                        // LOOP: Audio shorter than video - loop to fill duration exactly
+                        val fullLoops = (totalVideoDurationMs / actualAudioDurationMs).toInt()
+                        val remainingMs = totalVideoDurationMs % actualAudioDurationMs
 
-                        android.util.Log.d("CompositionFactory", "Export (untrimmed): Looping ${loopCount} times (audio=${actualAudioDurationMs}ms < video=${totalVideoDurationMs}ms)")
+                        android.util.Log.d("CompositionFactory", "Export (untrimmed): Looping (audio=${actualAudioDurationMs}ms < video=${totalVideoDurationMs}ms) - fullLoops=$fullLoops, remainingMs=$remainingMs")
 
-                        val loopedItems = List(loopCount) { index ->
+                        val loopedItems = mutableListOf<EditedMediaItem>()
+
+                        // Add full loops
+                        repeat(fullLoops) { index ->
                             val mediaItem = MediaItem.Builder()
                                 .setUri(audioUri)
                                 .setMediaId("loop_${index}_${audioUri.hashCode()}")
                                 .build()
 
-                            EditedMediaItem.Builder(mediaItem)
-                                .setRemoveVideo(true)
-                                .setEffects(audioEffects)
+                            loopedItems.add(
+                                EditedMediaItem.Builder(mediaItem)
+                                    .setRemoveVideo(true)
+                                    .setEffects(audioEffects)
+                                    .build()
+                            )
+                        }
+
+                        // Add partial loop if there's remaining time
+                        if (remainingMs > 0) {
+                            val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
+                                .setStartPositionMs(0L)
+                                .setEndPositionMs(remainingMs) // Clip to exact remaining duration
+
+                            val mediaItem = MediaItem.Builder()
+                                .setUri(audioUri)
+                                .setMediaId("loop_partial_${audioUri.hashCode()}")
+                                .setClippingConfiguration(clippingBuilder.build())
                                 .build()
+
+                            loopedItems.add(
+                                EditedMediaItem.Builder(mediaItem)
+                                    .setRemoveVideo(true)
+                                    .setEffects(audioEffects)
+                                    .build()
+                            )
                         }
 
                         return EditedMediaItemSequence.Builder(loopedItems).build()
@@ -737,17 +789,21 @@ class CompositionFactory(
                     return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
                 }
             } else {
-                // Fallback: Could not determine duration - use duration hint
-                android.util.Log.w("CompositionFactory", "Could not determine audio duration - using hint: ${totalVideoDurationMs}ms")
+                // Fallback: Could not determine duration - clip to video duration for safety
+                android.util.Log.w("CompositionFactory", "Could not determine audio duration - clipping to video duration: ${totalVideoDurationMs}ms")
+
+                val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
+                    .setStartPositionMs(0L)
+                    .setEndPositionMs(totalVideoDurationMs) // Hard clip to exact video duration
 
                 val mediaItem = MediaItem.Builder()
                     .setUri(audioUri)
+                    .setClippingConfiguration(clippingBuilder.build())
                     .build()
 
                 val editedAudioItem = EditedMediaItem.Builder(mediaItem)
                     .setRemoveVideo(true)
                     .setEffects(audioEffects)
-                    .setDurationUs(totalVideoDurationMs * 1000L)
                     .build()
 
                 return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
@@ -776,23 +832,28 @@ class CompositionFactory(
                             override fun onPlaybackStateChanged(playbackState: Int) {
                                 if (playbackState == Player.STATE_READY) {
                                     val duration = player.duration
+
+                                    // Always remove listener and release player first
                                     player.removeListener(this)
                                     player.release()
 
+                                    // Then resume if continuation is still active
                                     if (continuation.isActive) {
                                         android.util.Log.d("CompositionFactory", "Remote audio duration: ${duration}ms")
-                                        continuation.resume(if (duration > 0) duration else null, null)
+                                        continuation.resume(if (duration > 0) duration else null)
                                     }
                                 }
                             }
 
                             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                                // Always remove listener and release player first
                                 player.removeListener(this)
                                 player.release()
 
+                                // Then resume if continuation is still active
                                 if (continuation.isActive) {
                                     android.util.Log.e("CompositionFactory", "Failed to get remote audio duration", error)
-                                    continuation.resume(null, null)
+                                    continuation.resume(null)
                                 }
                             }
                         }

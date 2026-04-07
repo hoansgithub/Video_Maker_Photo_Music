@@ -21,10 +21,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.ShimmerBox
 import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
@@ -81,7 +83,7 @@ fun UnifiedSearchLoadingContent(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Text(
-                        text = "Searching for results…",
+                        text = stringResource(R.string.search_loading_title),
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.W600,
@@ -91,7 +93,7 @@ fun UnifiedSearchLoadingContent(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "We are scanning our database to bring\nyou the most accurate information.\nPlease wait a moment.",
+                        text = stringResource(R.string.search_loading_message),
                         color = FoundationBlack_Gray_100,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Normal,

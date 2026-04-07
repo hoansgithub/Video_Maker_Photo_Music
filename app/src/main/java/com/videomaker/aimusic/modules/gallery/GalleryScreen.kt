@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -155,7 +156,8 @@ fun GalleryScreen(
                 onTemplateClick = viewModel::onTemplateClick,
                 onSeeAllTemplates = viewModel::onSeeAllTemplatesClick,
                 onCreateClick = viewModel::onCreateClick,
-                onSearchClick = onNavigateToSearch
+                onSearchClick = onNavigateToSearch,
+                onLoadMore = viewModel::loadMore
             )
             is GalleryUiState.Error -> GalleryErrorContent(message = state.message)
         }
@@ -233,9 +235,21 @@ private fun GalleryContent(
     onTemplateClick: (VideoTemplate) -> Unit,
     onSeeAllTemplates: () -> Unit,
     onCreateClick: () -> Unit,
-    onSearchClick: () -> Unit
+    onSearchClick: () -> Unit,
+    onLoadMore: () -> Unit = {}
 ) {
     val dimens = AppDimens.current
+    val listState = rememberLazyListState()
+
+    // ✅ FIX: Scroll-based pagination detection
+    LaunchedEffect(listState.canScrollForward) {
+        if (!listState.canScrollForward &&
+            templateListState is TemplateListState.Success &&
+            templateListState.hasMore &&
+            !templateListState.isLoadingMore) {
+            onLoadMore()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         PullToRefreshBox(
@@ -244,6 +258,7 @@ private fun GalleryContent(
             modifier = Modifier.fillMaxSize()
         ) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     top = topBarHeight + dimens.spaceLg,
@@ -298,12 +313,31 @@ private fun GalleryContent(
                     is TemplateListState.Loading -> TemplateGridSkeleton(
                         modifier = Modifier.padding(horizontal = dimens.spaceLg)
                     )
-                    is TemplateListState.Success -> StaggeredTemplateGrid(
-                        templates = templateListState.templates,
-                        onTemplateClick = onTemplateClick,
-                        spacing = dimens.spaceSm,
-                        modifier = Modifier.padding(horizontal = dimens.spaceLg)
-                    )
+                    is TemplateListState.Success -> {
+                        StaggeredTemplateGrid(
+                            templates = templateListState.templates,
+                            onTemplateClick = onTemplateClick,
+                            spacing = dimens.spaceSm,
+                            modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                        )
+                    }
+                }
+            }
+
+            // Loading more indicator
+            if (templateListState is TemplateListState.Success && templateListState.isLoadingMore) {
+                item(key = "loading_more", contentType = "loading_more") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(dimens.spaceLg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator(
+                            modifier = Modifier.size(32.dp),
+                            color = Primary
+                        )
+                    }
                 }
             }
         }
@@ -459,7 +493,9 @@ private fun FeaturedTemplatesCarousel(
             pageSpacing = dimens.spaceMd,
             modifier = Modifier.fillMaxWidth()
         ) { page ->
-            val template = templates[page.mod(templates.size)]
+            // ✅ FIX: Calculate index once to avoid repeated modulo operations
+            val templateIndex = page.mod(templates.size)
+            val template = templates[templateIndex]
             val isCurrentPage = page == pagerState.settledPage && !pagerState.isScrollInProgress
 
             // ✅ Only load image if within visible range (current ± 1 page)
@@ -475,9 +511,14 @@ private fun FeaturedTemplatesCarousel(
 
         Spacer(modifier = Modifier.height(dimens.spaceMd))
 
+        // ✅ FIX: Memoize current page calculation
+        val currentPageIndex = remember(pagerState.currentPage, templates.size) {
+            pagerState.currentPage.mod(templates.size)
+        }
+
         PageIndicator(
             pageCount = templates.size,
-            currentPage = pagerState.currentPage.mod(templates.size)
+            currentPage = currentPageIndex
         )
     }
 }
@@ -571,6 +612,11 @@ private fun FeaturedTemplateCard(
 
             // Use count badge — top-right
             if (template.useCount > 0) {
+                // ✅ FIX: Pre-calculate formatted use count once
+                val formattedCount = remember(template.useCount) {
+                    formatUseCount(template.useCount)
+                }
+
                 Row(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -595,7 +641,7 @@ private fun FeaturedTemplateCard(
                         modifier = Modifier.size(12.dp)
                     )
                     Text(
-                        text = formatUseCount(template.useCount),
+                        text = formattedCount,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = Gray200,
@@ -689,29 +735,33 @@ private fun StaggeredTemplateGrid(
 ) {
     if (templates.isEmpty()) return
 
-    // Pre-calculate aspect ratios once
+    // ✅ OPTIMIZED: Pre-calculate aspect ratios once when templates list changes
     val aspectRatios = remember(templates) {
         templates.map { parseAspectRatio(it.aspectRatio) }
     }
 
     StaggeredGrid(
-        itemCount = templates.size,
+        items = templates,
         aspectRatios = aspectRatios,
         columns = columns,
         spacing = spacing,
-        modifier = modifier
-    ) { index ->
-        key(templates[index].id) {
-            TemplateCard(
-                name = templates[index].name,
-                thumbnailPath = templates[index].thumbnailPath,
-                aspectRatio = aspectRatios[index],
-                isPremium = templates[index].isPremium,
-                showHotTag = true,  // Show Hot tag in Gallery tab only
-                useCount = templates[index].useCount,
-                onClick = { onTemplateClick(templates[index]) }
-            )
+        modifier = modifier,
+        key = { it.id }
+    ) { template ->
+        // ✅ OPTIMIZED: Pre-calculate aspect ratio for this specific template
+        val aspectRatio = remember(template.aspectRatio) {
+            parseAspectRatio(template.aspectRatio)
         }
+
+        TemplateCard(
+            name = template.name,
+            thumbnailPath = template.thumbnailPath,
+            aspectRatio = aspectRatio,
+            isPremium = template.isPremium,
+            showHotTag = true,  // Show Hot tag in Gallery tab only
+            useCount = template.useCount,
+            onClick = { onTemplateClick(template) }
+        )
     }
 }
 

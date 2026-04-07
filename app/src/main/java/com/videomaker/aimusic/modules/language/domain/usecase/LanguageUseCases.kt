@@ -36,15 +36,19 @@ class GetSelectedLanguageUseCase(
 /**
  * Save language preference without applying — no Activity recreation.
  * Also invalidates RegionProvider cache so region is re-derived from new language.
+ * Clears template cache so fresh i18n data is fetched with new language.
  */
 class SaveLanguagePreferenceUseCase(
     private val languageManager: LanguageManager,
-    private val regionProvider: RegionProvider
+    private val regionProvider: RegionProvider,
+    private val templateRepository: com.videomaker.aimusic.domain.repository.TemplateRepository
 ) {
-    operator fun invoke(languageCode: String) {
+    suspend operator fun invoke(languageCode: String) {
         languageManager.saveLanguagePreference(languageCode)
         // Clear region cache - will be re-derived from new language on next access
         regionProvider.invalidate()
+        // Clear template cache - force re-fetch with new language
+        templateRepository.clearCache()
     }
 }
 
