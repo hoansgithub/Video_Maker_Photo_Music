@@ -1,6 +1,7 @@
 package com.videomaker.aimusic.data.repository
 
 import com.videomaker.aimusic.core.data.local.ApiCacheManager
+import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.RegionProvider
 import com.videomaker.aimusic.data.mapper.toMusicSong
 import com.videomaker.aimusic.data.mapper.toMusicSongs
@@ -28,7 +29,8 @@ import kotlinx.serialization.json.put
 class SongRepositoryImpl(
     private val supabaseClient: SupabaseClient,
     private val apiCacheManager: ApiCacheManager,
-    private val regionProvider: RegionProvider
+    private val regionProvider: RegionProvider,
+    private val languageManager: LanguageManager
 ) : SongRepository {
 
     companion object {
@@ -129,11 +131,12 @@ class SongRepositoryImpl(
      * country codes and tags. Returns active genres as SongGenre objects (id + displayName),
      * sorted by popularity (sort_order DESC).
      *
-     * Note: display_name is used as the human-readable label.
-     * TODO: When label_i18n column is populated in DB, use label_i18n[locale] instead of display_name.
+     * Note: Currently using display_name. When label_i18n is populated, genre names
+     * will be localized and cache key already includes locale for future compatibility.
      */
     override suspend fun getGenres(): Result<List<SongGenre>> = withContext(Dispatchers.IO) {
-        val cacheKey = ApiCacheManager.KEY_SONGS_GENRES
+        val locale = languageManager.getSelectedLanguage()
+        val cacheKey = ApiCacheManager.keySongsGenres(locale)
         apiCacheManager.get<List<SongGenre>>(cacheKey)
             ?.let { return@withContext Result.success(it) }
 

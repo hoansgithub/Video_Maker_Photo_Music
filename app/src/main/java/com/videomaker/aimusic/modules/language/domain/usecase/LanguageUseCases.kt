@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.language.domain.usecase
 
+import com.videomaker.aimusic.core.data.local.ApiCacheManager
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.RegionProvider
 
@@ -54,12 +55,19 @@ class SaveLanguagePreferenceUseCase(
 
 /**
  * Apply the saved language preference via AppCompat.
+ * Clears all localized caches (vibe tags, templates, genres) so Activity recreation
+ * triggers fresh fetch with new locale instead of showing cached old-language data.
  * Call right before navigating to the next Activity so it starts with the new locale.
  */
 class ApplyLanguageUseCase(
-    private val languageManager: LanguageManager
+    private val languageManager: LanguageManager,
+    private val apiCacheManager: com.videomaker.aimusic.core.data.local.ApiCacheManager
 ) {
-    operator fun invoke() {
+    suspend operator fun invoke() {
+        // Clear all locale-dependent caches before applying language
+        apiCacheManager.clearLocalizedCache()
+
+        // Apply new locale - will trigger Activity recreation
         languageManager.applyLanguage()
     }
 }

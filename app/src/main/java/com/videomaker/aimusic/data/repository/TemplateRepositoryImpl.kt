@@ -45,8 +45,10 @@ class TemplateRepositoryImpl(
         withContext(Dispatchers.IO) {
             try {
                 // First try to get from cache
+                val locale = languageManager.getSelectedLanguage()
+                val region = regionProvider.getRegionCode()
                 val cachedTemplates = apiCacheManager.get<List<VideoTemplate>>(
-                    ApiCacheManager.keyTemplates(regionProvider.getRegionCode(), 100, 0)
+                    ApiCacheManager.keyTemplates(region, locale, 100, 0)
                 )
                 cachedTemplates?.firstOrNull { it.id == id }
                     ?.let { return@withContext Result.success(it) }
@@ -75,7 +77,8 @@ class TemplateRepositoryImpl(
     override suspend fun getTemplates(limit: Int, offset: Int): Result<List<VideoTemplate>> =
         withContext(Dispatchers.IO) {
             val region = regionProvider.getRegionCode()
-            val cacheKey = ApiCacheManager.keyTemplates(region, limit, offset)
+            val locale = languageManager.getSelectedLanguage()
+            val cacheKey = ApiCacheManager.keyTemplates(region, locale, limit, offset)
             apiCacheManager.get<List<VideoTemplate>>(cacheKey)
                 ?.let { return@withContext Result.success(it) }
 
@@ -87,7 +90,7 @@ class TemplateRepositoryImpl(
                         put("p_offset", offset)
                     })
                     .decodeList<TemplateDto>()
-                    .map { it.toDomain(languageManager.getSelectedLanguage()) }
+                    .map { it.toDomain(locale) }
 
                 apiCacheManager.put(cacheKey, templates)
                 Result.success(templates)
@@ -108,7 +111,8 @@ class TemplateRepositoryImpl(
         offset: Int
     ): Result<List<VideoTemplate>> = withContext(Dispatchers.IO) {
         val region = regionProvider.getRegionCode()
-        val cacheKey = ApiCacheManager.keyTemplatesByTag(region, tag, limit, offset)
+        val locale = languageManager.getSelectedLanguage()
+        val cacheKey = ApiCacheManager.keyTemplatesByTag(region, locale, tag, limit, offset)
         apiCacheManager.get<List<VideoTemplate>>(cacheKey)
             ?.let { return@withContext Result.success(it) }
 
@@ -121,7 +125,7 @@ class TemplateRepositoryImpl(
                     put("p_offset", offset)
                 })
                 .decodeList<TemplateDto>()
-                .map { it.toDomain(languageManager.getSelectedLanguage()) }
+                .map { it.toDomain(locale) }
 
             apiCacheManager.put(cacheKey, templates)
             Result.success(templates)
@@ -137,8 +141,13 @@ class TemplateRepositoryImpl(
     }
 
     override suspend fun getVibeTags(): Result<List<VibeTag>> = withContext(Dispatchers.IO) {
-        apiCacheManager.get<List<VibeTag>>(ApiCacheManager.KEY_VIBE_TAGS)
-            ?.let { return@withContext Result.success(it) }
+        val locale = languageManager.getSelectedLanguage()
+        val cacheKey = ApiCacheManager.keyVibeTags(locale)
+
+        val cached = apiCacheManager.get<List<VibeTag>>(cacheKey)
+        if (cached != null) {
+            return@withContext Result.success(cached)
+        }
 
         try {
             // !inner joins through template_vibe_tags → templates, ensuring only tags that have
@@ -158,16 +167,16 @@ class TemplateRepositoryImpl(
                 .map {
                     val localizedName = I18nHelper.getLocalizedValue(
                         i18nData = it.labelI18n,
-                        locale = languageManager.getSelectedLanguage(),
+                        locale = locale,
                         fallback = it.displayName
                     )
                     VibeTag(id = it.id, displayName = localizedName, emoji = it.emoji)
                 }
 
-            apiCacheManager.put(ApiCacheManager.KEY_VIBE_TAGS, tags)
+            apiCacheManager.put(cacheKey, tags)
             Result.success(tags)
         } catch (e: Exception) {
-            apiCacheManager.getStale<List<VibeTag>>(ApiCacheManager.KEY_VIBE_TAGS)
+            apiCacheManager.getStale<List<VibeTag>>(cacheKey)
                 ?.let { return@withContext Result.success(it) }
             // Fallback: derive tags from local JSON vibe tags
             val fallback = templateLibrary.getAll()
@@ -181,7 +190,8 @@ class TemplateRepositoryImpl(
     override suspend fun getFeaturedTemplates(limit: Int): Result<List<VideoTemplate>> =
         withContext(Dispatchers.IO) {
             val region = regionProvider.getRegionCode()
-            val cacheKey = ApiCacheManager.keyFeaturedTemplates(region, limit)
+            val locale = languageManager.getSelectedLanguage()
+            val cacheKey = ApiCacheManager.keyFeaturedTemplates(region, locale, limit)
             apiCacheManager.get<List<VideoTemplate>>(cacheKey)
                 ?.let { return@withContext Result.success(it) }
 
@@ -192,7 +202,7 @@ class TemplateRepositoryImpl(
                         put("p_limit", limit)
                     })
                     .decodeList<TemplateDto>()
-                    .map { it.toDomain(languageManager.getSelectedLanguage()) }
+                    .map { it.toDomain(locale) }
 
                 apiCacheManager.put(cacheKey, templates)
                 Result.success(templates)

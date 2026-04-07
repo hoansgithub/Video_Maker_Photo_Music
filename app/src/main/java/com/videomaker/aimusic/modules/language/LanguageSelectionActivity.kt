@@ -58,9 +58,11 @@ class LanguageSelectionActivity : AppCompatActivity() {
                         }
                     },
                     onContinue = {
-                        completeLanguageSelectionUseCase()
-                        applyLanguageUseCase()
-                        navigateToOnboarding()
+                        lifecycleScope.launch {
+                            completeLanguageSelectionUseCase()
+                            applyLanguageUseCase()
+                            navigateToOnboarding()
+                        }
                     }
                 )
             }

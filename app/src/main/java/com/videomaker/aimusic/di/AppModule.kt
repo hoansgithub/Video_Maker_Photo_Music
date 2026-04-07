@@ -136,7 +136,7 @@ val dataModule = module {
     single<OnboardingRepository> { OnboardingRepositoryImpl(get()) }
     single<ProjectRepository> { ProjectRepositoryImpl(get(), get()) }
     single<ExportRepository> { ExportRepositoryImpl(get()) }
-    single<SongRepository> { SongRepositoryImpl(get(), get(), regionProvider = get()) }
+    single<SongRepository> { SongRepositoryImpl(get(), get(), regionProvider = get(), languageManager = get()) }
     single<TemplateRepository> { TemplateRepositoryImpl(get(), get(), regionProvider = get(), languageManager = get()) }
     single<EffectSetRepository> { EffectSetRepositoryImpl(get(), get(), get()) }
     single<LikedSongRepository> { LikedSongRepositoryImpl(get()) }
@@ -209,7 +209,7 @@ val domainModule = module {
     factory { CompleteLanguageSelectionUseCase(get()) }
     factory { GetSelectedLanguageUseCase(get()) }
     factory { SaveLanguagePreferenceUseCase(get(), get(), get()) }  // LanguageManager, RegionProvider, TemplateRepository
-    factory { ApplyLanguageUseCase(get()) }
+    factory { ApplyLanguageUseCase(get(), get()) }  // LanguageManager, ApiCacheManager
 
     // Project use cases
     factory { CreateProjectUseCase(get()) }

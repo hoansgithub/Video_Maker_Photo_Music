@@ -546,9 +546,11 @@ fun AppNavigation(
                         }
                     },
                     onContinue = {
-                        applyLanguage()
-                        activity?.recreate()
-                        backStack.safeRemoveLast()
+                        coroutineScope.launch {
+                            applyLanguage()
+                            activity?.recreate()
+                            backStack.safeRemoveLast()
+                        }
                     }
                 )
             }
