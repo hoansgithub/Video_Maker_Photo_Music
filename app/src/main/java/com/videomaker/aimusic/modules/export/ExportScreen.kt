@@ -48,6 +48,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -624,11 +625,22 @@ private fun SuccessContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Action buttons row - Share and Save to Gallery
+            // Action buttons row - Share and Save to Gallery (responsive sizing)
+            val configuration = LocalConfiguration.current
+            val screenWidth = configuration.screenWidthDp.dp
+
+            // Scale factors based on screen width (320dp = small, 360dp = normal, 400dp+ = large)
+            val scaleFactor = (screenWidth.value / 360f).coerceIn(0.8f, 1.2f)
+            val iconSize = (20 * scaleFactor).dp
+            val fontSize = (15 * scaleFactor).sp
+            val buttonHeight = (56 * scaleFactor).dp
+            val horizontalPadding = if (screenWidth < 360.dp) 16.dp else 32.dp
+            val iconSpacing = (8 * scaleFactor).dp
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 32.dp, vertical = 16.dp),
+                    .padding(horizontal = horizontalPadding, vertical = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Share button - left side, double width with text
@@ -636,7 +648,7 @@ private fun SuccessContent(
                     onClick = onShareClick,
                     modifier = Modifier
                         .weight(2f)
-                        .height(56.dp),
+                        .height(buttonHeight),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Neutral_N800,
@@ -646,12 +658,12 @@ private fun SuccessContent(
                     Icon(
                         imageVector = Icons.Default.Share,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(iconSize)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(iconSpacing))
                     Text(
                         text = stringResource(R.string.export_share),
-                        fontSize = 15.sp,
+                        fontSize = fontSize,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -663,7 +675,7 @@ private fun SuccessContent(
                     onClick = onSaveToGalleryClick,
                     modifier = Modifier
                         .weight(3f)
-                        .height(56.dp),
+                        .height(buttonHeight),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = BackgroundLight,
@@ -673,12 +685,12 @@ private fun SuccessContent(
                     Icon(
                         imageVector = Icons.Default.Download,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(iconSize)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(iconSpacing))
                     Text(
                         text = stringResource(R.string.export_save),
-                        fontSize = 15.sp,
+                        fontSize = fontSize,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
