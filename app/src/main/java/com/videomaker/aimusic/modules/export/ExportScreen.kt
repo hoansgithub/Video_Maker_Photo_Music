@@ -66,6 +66,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
@@ -88,6 +90,19 @@ import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import java.io.File
+
+/**
+ * Responsive sizing configuration for export buttons
+ */
+private data class Responsive(
+    val iconSize: Dp,
+    val fontSize: TextUnit,
+    val buttonHeight: Dp,
+    val horizontalPadding: Dp,
+    val buttonSpacing: Dp,
+    val iconSpacing: Dp,
+    val contentPadding: androidx.compose.foundation.layout.PaddingValues
+)
 
 /**
  * ExportScreen - Full-screen blocking UI for video export
@@ -627,21 +642,53 @@ private fun SuccessContent(
 
             // Action buttons row - Share and Save to Gallery (responsive sizing)
             val configuration = LocalConfiguration.current
-            val screenWidth = configuration.screenWidthDp.dp
+            val screenWidthDp = configuration.screenWidthDp
 
-            // Scale factors based on screen width (320dp = small, 360dp = normal, 400dp+ = large)
-            val scaleFactor = (screenWidth.value / 360f).coerceIn(0.8f, 1.2f)
-            val iconSize = (20 * scaleFactor).dp
-            val fontSize = (15 * scaleFactor).sp
-            val buttonHeight = (56 * scaleFactor).dp
-            val horizontalPadding = if (screenWidth < 360.dp) 16.dp else 32.dp
-            val iconSpacing = (8 * scaleFactor).dp
+            // Responsive sizing based on screen width buckets
+            val (iconSize, fontSize, buttonHeight, horizontalPadding, buttonSpacing, iconSpacing, contentPadding) = when {
+                screenWidthDp < 340 -> {
+                    // Very small screens (e.g., 320dp) - aggressive compression
+                    Responsive(
+                        iconSize = 16.dp,
+                        fontSize = 11.sp,
+                        buttonHeight = 44.dp,
+                        horizontalPadding = 8.dp,
+                        buttonSpacing = 6.dp,
+                        iconSpacing = 4.dp,
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                    )
+                }
+                screenWidthDp < 380 -> {
+                    // Small screens (e.g., 360dp) - moderate compression
+                    Responsive(
+                        iconSize = 18.dp,
+                        fontSize = 13.sp,
+                        buttonHeight = 50.dp,
+                        horizontalPadding = 12.dp,
+                        buttonSpacing = 8.dp,
+                        iconSpacing = 6.dp,
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 10.dp)
+                    )
+                }
+                else -> {
+                    // Normal and large screens (380dp+) - standard sizing
+                    Responsive(
+                        iconSize = 20.dp,
+                        fontSize = 15.sp,
+                        buttonHeight = 56.dp,
+                        horizontalPadding = 24.dp,
+                        buttonSpacing = 12.dp,
+                        iconSpacing = 8.dp,
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                    )
+                }
+            }
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = horizontalPadding, vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(buttonSpacing)
             ) {
                 // Share button - left side, double width with text
                 Button(
@@ -653,7 +700,8 @@ private fun SuccessContent(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Neutral_N800,
                         contentColor = Color.White
-                    )
+                    ),
+                    contentPadding = contentPadding
                 ) {
                     Icon(
                         imageVector = Icons.Default.Share,
@@ -680,7 +728,8 @@ private fun SuccessContent(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = BackgroundLight,
                         contentColor = SurfaceDark
-                    )
+                    ),
+                    contentPadding = contentPadding
                 ) {
                     Icon(
                         imageVector = Icons.Default.Download,
