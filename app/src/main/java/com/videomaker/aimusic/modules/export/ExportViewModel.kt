@@ -105,6 +105,7 @@ sealed class FeaturedTemplatesState {
  */
 class ExportViewModel(
     private val projectId: String,
+    private val initialQuality: VideoQuality = VideoQuality.DEFAULT,
     private val exportRepository: ExportRepository,
     private val projectRepository: ProjectRepository,
     private val templateRepository: TemplateRepository
@@ -125,8 +126,8 @@ class ExportViewModel(
     private val _aspectRatio = MutableStateFlow(AspectRatio.RATIO_9_16)
     val aspectRatio: StateFlow<AspectRatio> = _aspectRatio.asStateFlow()
 
-    // Current export quality
-    private val _currentQuality = MutableStateFlow(VideoQuality.DEFAULT)
+    // Current export quality (initialized from editor selection)
+    private val _currentQuality = MutableStateFlow(initialQuality)
     val currentQuality: StateFlow<VideoQuality> = _currentQuality.asStateFlow()
 
     // Featured templates state

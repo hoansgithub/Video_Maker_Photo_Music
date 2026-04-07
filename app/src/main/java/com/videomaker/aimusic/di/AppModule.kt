@@ -332,9 +332,10 @@ class ExportViewModelFactory(
     private val projectRepository: ProjectRepository,
     private val templateRepository: TemplateRepository
 ) {
-    fun create(projectId: String): ExportViewModel {
+    fun create(projectId: String, quality: com.videomaker.aimusic.domain.model.VideoQuality = com.videomaker.aimusic.domain.model.VideoQuality.DEFAULT): ExportViewModel {
         return ExportViewModel(
             projectId = projectId,
+            initialQuality = quality,
             exportRepository = exportRepository,
             projectRepository = projectRepository,
             templateRepository = templateRepository
