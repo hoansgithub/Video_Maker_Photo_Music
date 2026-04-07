@@ -5,6 +5,12 @@ import androidx.navigation3.runtime.NavKey
 import com.videomaker.aimusic.domain.model.AspectRatio
 import kotlinx.serialization.Serializable
 
+@Serializable
+enum class SearchSection {
+    TEMPLATES,
+    MUSIC
+}
+
 /**
  * Navigation Routes for MainActivity
  *
@@ -34,6 +40,10 @@ sealed interface AppRoute : NavKey {
     @Serializable
     data object Onboarding : AppRoute
 
+    /** Routing signal: launch FeatureSelectionActivity */
+    @Serializable
+    data object FeatureSelection : AppRoute
+
     // ============================================
     // HOME LEVEL ROUTES
     // ============================================
@@ -46,10 +56,9 @@ sealed interface AppRoute : NavKey {
     data class Home(val initialTab: Int = 0, val initialSongId: Long = -1L) : AppRoute
 
     @Serializable
-    data object Search : AppRoute
-
-    @Serializable
-    data object SongSearch : AppRoute
+    data class UnifiedSearch(
+        val initialSection: SearchSection = SearchSection.TEMPLATES
+    ) : AppRoute
 
     /**
      * Suggested songs list: paginated browsing of all suggested songs

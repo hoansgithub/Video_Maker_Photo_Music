@@ -6,8 +6,8 @@
     <string name="loading">Carregando…</string>
 
     <!-- Language Selection -->
-    <string name="language_select_title">Selecionar Idioma</string>
-    <string name="language_select_subtitle">Escolha seu idioma preferido</string>
+    <string name="language_select_title">Escolher idiomas</string>
+    <string name="language_select_subtitle">Selecione um idioma de exibição.</string>
     <string name="language_continue">Continuar</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>
@@ -53,9 +53,9 @@
     <string name="songs_all">Todas as Músicas</string>
     <string name="songs_categories">Categorias</string>
     <string name="songs_search_hint">Pesquisar músicas</string>
-    <string name="songs_suggest_for_you">Sugeridas para Você</string>
+    <string name="songs_suggest_for_you">Sugestões para você</string>
     <string name="songs_weekly_ranking">Ranking Semanal</string>
-    <string name="songs_station">Estações</string>
+    <string name="songs_station">Estações recomendadas</string>
 
     <!-- Legacy Home -->
     <string name="home_title">Video Maker</string>
@@ -186,6 +186,10 @@
     <string name="picker_permission_title">Acesso às Fotos Necessário</string>
     <string name="picker_permission_message">Para criar vídeos com suas fotos, precisamos de permissão para acessar sua biblioteca de fotos.</string>
     <string name="picker_allow_access">Permitir Acesso</string>
+    <string name="picker_exit_confirm_title">Sair da seleção de imagens?</string>
+    <string name="picker_exit_confirm_message">Você selecionou imagens. Se sair agora, as imagens selecionadas serão descartadas.</string>
+    <string name="picker_exit_confirm">Sair</string>
+    <string name="picker_exit_stay">Ficar</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Selecionar Música</string>
@@ -296,8 +300,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Comece Sua Jornada</string>
     <string name="onboarding_page4_subtitle">Isso nos ajuda a recomendar o conteúdo mais relevante para você.</string>
-    <string name="feature_music_video_instant">Crie um vídeo musical instantaneamente</string>
-    <string name="feature_photos_to_video">Transforme fotos em vídeo musical</string>
+    <string name="feature_music_video_instant">Explore modelos de vídeo</string>
+    <string name="feature_photos_to_video">Comece com uma música</string>
     <string name="feature_trending_templates">Use modelos em alta</string>
     <string name="feature_trending_music">Adicione música em alta</string>
 

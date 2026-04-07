@@ -35,9 +35,7 @@ import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.di.AssetPickerViewModelFactory
 import com.videomaker.aimusic.di.EditorViewModelFactory
 import com.videomaker.aimusic.di.ExportViewModelFactory
-import com.videomaker.aimusic.di.GallerySearchViewModelFactory
 import com.videomaker.aimusic.di.GalleryViewModelFactory
-import com.videomaker.aimusic.di.SongSearchViewModelFactory
 // import com.videomaker.aimusic.di.MusicPickerViewModelFactory // Commented out - using Supabase only
 import com.videomaker.aimusic.di.ProjectsViewModelFactory
 import com.videomaker.aimusic.di.SongsViewModelFactory
@@ -45,6 +43,7 @@ import com.videomaker.aimusic.di.SuggestedSongsListViewModelFactory
 import com.videomaker.aimusic.di.WeeklyRankingListViewModelFactory
 import com.videomaker.aimusic.di.TemplateListViewModelFactory
 import com.videomaker.aimusic.di.TemplatePreviewerViewModelFactory
+import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchViewModelFactory
 import com.videomaker.aimusic.di.UninstallViewModelFactory
 import com.videomaker.aimusic.di.WidgetViewModelFactory
 import com.videomaker.aimusic.modules.settings.UninstallViewModel
@@ -55,10 +54,6 @@ import com.videomaker.aimusic.modules.gallery.GalleryViewModel
 import com.videomaker.aimusic.modules.songs.SongsViewModel
 import com.videomaker.aimusic.modules.export.ExportScreen
 import com.videomaker.aimusic.modules.export.ExportViewModel
-import com.videomaker.aimusic.modules.gallerysearch.GallerySearchScreen
-import com.videomaker.aimusic.modules.gallerysearch.GallerySearchViewModel
-import com.videomaker.aimusic.modules.songsearch.SongSearchScreen
-import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.modules.templatelist.TemplateListScreen
 import com.videomaker.aimusic.modules.templatelist.TemplateListViewModel
 import com.videomaker.aimusic.modules.home.HomeScreen
@@ -72,6 +67,8 @@ import com.videomaker.aimusic.modules.settings.SettingsScreen
 import com.videomaker.aimusic.modules.settings.UninstallScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
+import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchScreen
+import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchViewModel
 import com.videomaker.aimusic.widget.WidgetScreen
 
 private val slideAnimSpec = tween<IntOffset>(300)
@@ -92,13 +89,14 @@ private val slideAnimSpec = tween<IntOffset>(300)
 @Composable
 fun AppNavigation(
     modifier: Modifier = Modifier,
+    initialHomeTab: Int = 0,
     pendingDeepLink: Intent? = null,
     onDeepLinkConsumed: () -> Unit = {},
     navigateToUninstall: Boolean = false,
     onUninstallNavigationConsumed: () -> Unit = {}
 ) {
     val activity = LocalContext.current as? Activity
-    val backStack = rememberNavBackStack(AppRoute.Home())
+    val backStack = rememberNavBackStack(AppRoute.Home(initialTab = initialHomeTab.coerceIn(0, 2)))
 
     // Handle "Uninstall App" shortcut tap
     LaunchedEffect(navigateToUninstall) {
@@ -113,13 +111,13 @@ fun AppNavigation(
         val intent = pendingDeepLink ?: return@LaunchedEffect
         when (intent.action) {
             WidgetActions.ACTION_OPEN_SEARCH -> {
-                backStack.add(AppRoute.Search)
+                backStack.add(AppRoute.UnifiedSearch(SearchSection.TEMPLATES))
             }
             WidgetActions.ACTION_OPEN_TRENDING_TEMPLATE -> {
                 backStack.add(AppRoute.TemplateList())
             }
             WidgetActions.ACTION_OPEN_TRENDING_SONG -> {
-                backStack.add(AppRoute.SongSearch)
+                backStack.add(AppRoute.UnifiedSearch(SearchSection.MUSIC))
             }
             WidgetActions.ACTION_OPEN_TEMPLATE_DETAIL -> {
                 val templateId = intent.getStringExtra(WidgetActions.EXTRA_TEMPLATE_ID)
@@ -222,8 +220,8 @@ fun AppNavigation(
                     initialTab = route.initialTab,
                     onCreateClick = { backStack.add(AppRoute.AssetPicker()) },
                     onSettingsClick = { backStack.add(AppRoute.Settings) },
-                    onNavigateToSearch = { backStack.add(AppRoute.Search) },
-                    onNavigateToSongSearch = { backStack.add(AppRoute.SongSearch) },
+                    onNavigateToSearch = { backStack.add(AppRoute.UnifiedSearch(SearchSection.TEMPLATES)) },
+                    onNavigateToSongSearch = { backStack.add(AppRoute.UnifiedSearch(SearchSection.MUSIC)) },
                     onNavigateToSuggestedSongsList = { backStack.add(AppRoute.SuggestedSongsList) },
                     onNavigateToWeeklyRankingList = { backStack.add(AppRoute.WeeklyRankingList) },
                     onNavigateToTemplateDetail = { templateId ->
@@ -252,37 +250,23 @@ fun AppNavigation(
                 )
             }
 
-            entry<AppRoute.Search> {
-                val factory = koinInject<GallerySearchViewModelFactory>()
-                val searchViewModel: GallerySearchViewModel = viewModel(
-                    key = "gallery_search",
-                    factory = createSafeViewModelFactory { factory.create() }
+            entry<AppRoute.UnifiedSearch> { route ->
+                val factory = koinInject<UnifiedSearchViewModelFactory>()
+                val unifiedSearchViewModel: UnifiedSearchViewModel = viewModel(
+                    key = "unified_search_${route.initialSection}",
+                    factory = createSafeViewModelFactory { factory.create(route.initialSection) }
                 )
-                GallerySearchScreen(
-                    viewModel = searchViewModel,
+                UnifiedSearchScreen(
+                    viewModel = unifiedSearchViewModel,
                     onNavigateToTemplateDetail = { templateId ->
-                        // NEW FLOW: Browse templates first, THEN select images
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = templateId,
-                            imageUris = emptyList() // Sample images mode
+                            imageUris = emptyList()
                         ))
                     },
-                    onNavigateBack = { backStack.removeLastOrNull() }
-                )
-            }
-
-            entry<AppRoute.SongSearch> {
-                val factory = koinInject<SongSearchViewModelFactory>()
-                val songSearchViewModel: SongSearchViewModel = viewModel(
-                    key = "song_search",
-                    factory = createSafeViewModelFactory { factory.create() }
-                )
-                SongSearchScreen(
-                    viewModel = songSearchViewModel,
                     onNavigateToSongDetail = { songId ->
-                        // Song-to-video flow: browse templates with selected song
                         backStack.add(AppRoute.TemplatePreviewer(
-                            templateId = "", // Top-ranked template
+                            templateId = "",
                             imageUris = emptyList(),
                             overrideSongId = songId
                         ))
@@ -567,7 +551,7 @@ fun AppNavigation(
                             imageUris = emptyList()
                         ))
                     },
-                    onNavigateToSearch = { backStack.add(AppRoute.Search) },
+                    onNavigateToSearch = { backStack.add(AppRoute.UnifiedSearch(SearchSection.TEMPLATES)) },
                     onNavigateToTemplatePreviewerWithSong = { songId ->
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = "",

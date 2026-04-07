@@ -79,6 +79,7 @@ import com.videomaker.aimusic.modules.editor.EffectSetViewModel
 // import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen // Commented out - using Supabase only
 import com.videomaker.aimusic.ui.components.ErrorOverlay
 import com.videomaker.aimusic.ui.components.ErrorType
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.QualityPicker
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
@@ -716,9 +717,7 @@ private fun ExitConfirmationDialog(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.6f))
-            .clickable(
-                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                indication = null,
+            .clickableSingle(
                 onClick = { /* Prevent background clicks */ }
             ),
         contentAlignment = Alignment.Center

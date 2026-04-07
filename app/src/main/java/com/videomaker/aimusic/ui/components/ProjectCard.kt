@@ -58,6 +58,7 @@ import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Gray200
 import com.videomaker.aimusic.ui.theme.TemplateBadgeBackground
@@ -99,7 +100,7 @@ fun ProjectCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .clickableSingle(onClick = onClick)
         ) {
             // Thumbnail with aspect ratio (rounded corners)
             Box(
@@ -208,7 +209,7 @@ fun ProjectCard(
                             color = Color.Black.copy(alpha = 0.5f),
                             shape = CircleShape
                         )
-                        .clickable { showMenu = true },
+                        .clickableSingle { showMenu = true },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(

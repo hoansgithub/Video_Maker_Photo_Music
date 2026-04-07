@@ -6,8 +6,8 @@
     <string name="loading">Naglo-load…</string>
 
     <!-- Language Selection -->
-    <string name="language_select_title">Pumili ng Wika</string>
-    <string name="language_select_subtitle">Piliin ang iyong gustong wika</string>
+    <string name="language_select_title">Pumili ng mga Wika</string>
+    <string name="language_select_subtitle">Pakipili ang wikang ipapakita.</string>
     <string name="language_continue">Magpatuloy</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>
@@ -53,9 +53,9 @@
     <string name="songs_all">Lahat ng Kanta</string>
     <string name="songs_categories">Mga Kategorya</string>
     <string name="songs_search_hint">Maghanap ng mga kanta</string>
-    <string name="songs_suggest_for_you">Inirerekomenda Para sa Iyo</string>
+    <string name="songs_suggest_for_you">Mga mungkahi para sa iyo</string>
     <string name="songs_weekly_ranking">Lingguhang Ranggo</string>
-    <string name="songs_station">Mga Istasyon</string>
+    <string name="songs_station">Mga Inirerekomendang Istasyon</string>
 
     <!-- Legacy Home -->
     <string name="home_title">Video Maker</string>
@@ -186,6 +186,10 @@
     <string name="picker_permission_title">Kailangan ang Access sa Larawan</string>
     <string name="picker_permission_message">Para gumawa ng mga video mula sa iyong mga larawan, kailangan namin ng pahintulot na ma-access ang iyong library ng larawan.</string>
     <string name="picker_allow_access">Payagan ang Access</string>
+    <string name="picker_exit_confirm_title">Lumabas sa pagpili ng larawan?</string>
+    <string name="picker_exit_confirm_message">May napili ka nang mga larawan. Kapag lumabas ka ngayon, mawawala ang mga napiling larawan.</string>
+    <string name="picker_exit_confirm">Lumabas</string>
+    <string name="picker_exit_stay">Manatili</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Pumili ng Musika</string>
@@ -296,8 +300,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Simulan ang Iyong Paglalakbay</string>
     <string name="onboarding_page4_subtitle">Nakakatulong ito sa amin para mairekomenda ang pinaka-angkop na nilalaman para sa iyo.</string>
-    <string name="feature_music_video_instant">Gumawa ng music video agad</string>
-    <string name="feature_photos_to_video">Gawing music video ang mga larawan</string>
+    <string name="feature_music_video_instant">Mag-browse ng mga template ng video</string>
+    <string name="feature_photos_to_video">Magsimula sa isang kanta</string>
     <string name="feature_trending_templates">Gamitin ang mga trending na template</string>
     <string name="feature_trending_music">Magdagdag ng trending na musika</string>
 

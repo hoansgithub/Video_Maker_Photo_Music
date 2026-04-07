@@ -82,6 +82,7 @@ import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.projects.SongTabState
 import com.videomaker.aimusic.modules.projects.TemplateTabState
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ProcessToast
 import com.videomaker.aimusic.ui.components.ProjectCard
 import com.videomaker.aimusic.ui.components.SongListItem
@@ -374,10 +375,7 @@ fun ProjectTabRow(
                 val isSelected = currentPage == index
                 Box(
                     modifier = Modifier
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
+                        .clickableSingle {
                             onClick.invoke(index)
                         }
                 ) {
@@ -622,7 +620,7 @@ private fun CreateProjectFloatingButton(
                     )
                 )
             )
-            .clickable(onClick = onClick),
+            .clickableSingle(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Icon(

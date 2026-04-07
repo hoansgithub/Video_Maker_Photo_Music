@@ -6,8 +6,8 @@
     <string name="loading">Cargando…</string>
 
     <!-- Language Selection -->
-    <string name="language_select_title">Seleccionar Idioma</string>
-    <string name="language_select_subtitle">Elige tu idioma preferido</string>
+    <string name="language_select_title">Elegir idiomas</string>
+    <string name="language_select_subtitle">Selecciona un idioma de visualización.</string>
     <string name="language_continue">Continuar</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>
@@ -53,9 +53,9 @@
     <string name="songs_all">Todas las Canciones</string>
     <string name="songs_categories">Categorías</string>
     <string name="songs_search_hint">Buscar canciones</string>
-    <string name="songs_suggest_for_you">Sugeridas para Ti</string>
+    <string name="songs_suggest_for_you">Sugerencias para ti</string>
     <string name="songs_weekly_ranking">Ranking Semanal</string>
-    <string name="songs_station">Estaciones</string>
+    <string name="songs_station">Estaciones recomendadas</string>
 
     <!-- Legacy Home -->
     <string name="home_title">Video Maker</string>
@@ -186,6 +186,10 @@
     <string name="picker_permission_title">Acceso a Fotos Requerido</string>
     <string name="picker_permission_message">Para crear vídeos con tus fotos, necesitamos permiso para acceder a tu biblioteca de fotos.</string>
     <string name="picker_allow_access">Permitir Acceso</string>
+    <string name="picker_exit_confirm_title">¿Salir de la selección de imágenes?</string>
+    <string name="picker_exit_confirm_message">Has seleccionado imágenes. Si sales ahora, las imágenes seleccionadas se descartarán.</string>
+    <string name="picker_exit_confirm">Salir</string>
+    <string name="picker_exit_stay">Quedarme</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Seleccionar Música</string>
@@ -296,8 +300,8 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Comienza Tu Viaje</string>
     <string name="onboarding_page4_subtitle">Esto nos ayuda a recomendarte el contenido más relevante para ti.</string>
-    <string name="feature_music_video_instant">Crea un video musical al instante</string>
-    <string name="feature_photos_to_video">Convierte fotos en video musical</string>
+    <string name="feature_music_video_instant">Explora plantillas de video</string>
+    <string name="feature_photos_to_video">Empieza con una canción</string>
     <string name="feature_trending_templates">Usa plantillas en tendencia</string>
     <string name="feature_trending_music">Añade música en tendencia</string>
 

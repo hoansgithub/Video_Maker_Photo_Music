@@ -50,6 +50,7 @@ import com.videomaker.aimusic.modules.home.components.ProjectsTabContent
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.songs.SongsScreen
 import com.videomaker.aimusic.modules.songs.SongsViewModel
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.PrimaryDark
 import com.videomaker.aimusic.ui.theme.TextInactive
@@ -219,10 +220,7 @@ private fun HomeTopBar(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
+                            .clickableSingle {
                                 onTabSelected(index)
                             }
                             .padding(vertical = dimens.spaceMd)

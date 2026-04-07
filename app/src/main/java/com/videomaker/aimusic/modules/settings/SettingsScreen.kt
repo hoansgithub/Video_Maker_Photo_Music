@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -59,6 +60,7 @@ import com.videomaker.aimusic.ui.theme.TextInactive
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import androidx.core.net.toUri
 import com.google.android.play.core.review.ReviewManagerFactory
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -107,9 +109,7 @@ fun SettingsScreen(
                             .padding(end = 16.dp)
                             .size(48.dp)
                             .background(MaterialTheme.colorScheme.onSurface.copy(0.1f), CircleShape)
-                            .clickable(
-                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                indication = null,
+                            .clickableSingle(
                                 onClick = { onNavigateBack.invoke() }
                             )
                             .padding(12.dp)
@@ -300,7 +300,7 @@ private fun SettingsItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickableSingle(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = CtaText

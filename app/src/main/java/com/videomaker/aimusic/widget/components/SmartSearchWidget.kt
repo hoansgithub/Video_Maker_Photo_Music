@@ -42,6 +42,7 @@ import coil.size.Precision
 import coil.size.Size
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.Neutral_N500
 import com.videomaker.aimusic.ui.theme.TextOnSecondary
@@ -72,9 +73,7 @@ fun SmartSearchWidget(
                 .fillMaxWidth()
                 .background(Color.White.copy(0.1f), RoundedCornerShape(16.dp))
                 .border(1.dp, Color.White.copy(0.16f), RoundedCornerShape(16.dp))
-                .clickable(
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                    indication = null,
+                .clickableSingle(
                     onClick = onClickSearch
                 )
                 .padding(vertical = 12.dp, horizontal = 16.dp),
@@ -170,9 +169,7 @@ fun ItemSearch(
             modifier = modifier
                 .height(129.dp)
                 .clip(RoundedCornerShape(18.dp))
-                .clickable(
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                    indication = null,
+                .clickableSingle(
                     onClick = { onClick(template) }
                 )
         )

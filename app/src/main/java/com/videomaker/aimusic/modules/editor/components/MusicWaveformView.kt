@@ -1,5 +1,7 @@
 package com.videomaker.aimusic.modules.editor.components
 
+import android.graphics.Paint as FrameworkPaint
+import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -23,8 +25,14 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.theme.Gray500
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import kotlin.math.abs
@@ -70,6 +78,12 @@ fun MusicWaveformView(
 
     // Use provided waveform data or empty list (will show loading indicator)
     val waveform = waveformData ?: emptyList()
+    val startLabelPrefix = stringResource(R.string.editor_music_trim_start)
+    val endLabelPrefix = stringResource(R.string.editor_music_trim_end)
+    val density = LocalDensity.current
+    val labelTextSizePx = with(density) { 11.sp.toPx() }
+    val labelBaselinePx = with(density) { 16.dp.toPx() }
+    val labelHorizontalPaddingPx = with(density) { 8.dp.toPx() }
 
     Box(
         modifier = modifier
@@ -144,6 +158,8 @@ fun MusicWaveformView(
             val startX = (localTrimStart / songDurationMs) * width
             val endX = (localTrimEnd / songDurationMs) * width
             val playheadX = (currentPositionMs / songDurationMs.toFloat()) * width
+            val startLabel = "${formatMusicTrimTime(localTrimStart.toLong())}"
+            val endLabel = "${formatMusicTrimTime(localTrimEnd.toLong())}"
 
             if (waveform.isEmpty()) {
                 // Show simple loading indicator - just a horizontal line
@@ -202,6 +218,30 @@ fun MusicWaveformView(
                 isLeft = false
             )
 
+            val labelPaint = FrameworkPaint().apply {
+                isAntiAlias = true
+                color = Color.White.toArgb()
+                textSize = labelTextSizePx
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            }
+
+            drawHandleLabel(
+                text = startLabel,
+                anchorX = startX,
+                maxWidth = width,
+                baselineY = labelBaselinePx,
+                horizontalPadding = labelHorizontalPaddingPx,
+                paint = labelPaint
+            )
+            drawHandleLabel(
+                text = endLabel,
+                anchorX = endX,
+                maxWidth = width,
+                baselineY = labelBaselinePx,
+                horizontalPadding = labelHorizontalPaddingPx,
+                paint = labelPaint
+            )
+
             // Draw playhead indicator (thin vertical line)
             if (playheadX in startX..endX) {
                 drawLine(
@@ -221,6 +261,20 @@ fun MusicWaveformView(
             }
         }
     }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHandleLabel(
+    text: String,
+    anchorX: Float,
+    maxWidth: Float,
+    baselineY: Float,
+    horizontalPadding: Float,
+    paint: FrameworkPaint
+) {
+    val textWidth = paint.measureText(text)
+    val maxX = (maxWidth - textWidth - horizontalPadding).coerceAtLeast(horizontalPadding)
+    val textX = (anchorX - textWidth / 2f).coerceIn(horizontalPadding, maxX)
+    drawContext.canvas.nativeCanvas.drawText(text, textX, baselineY, paint)
 }
 
 /**
@@ -323,4 +377,3 @@ private fun generatePlaceholderWaveform(sampleCount: Int): List<Float> {
 private enum class DragHandle {
     START, END
 }
-

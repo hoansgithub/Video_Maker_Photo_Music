@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 
 @Composable
 fun CustomDropdownItemWithPainter(
@@ -32,9 +33,7 @@ fun CustomDropdownItemWithPainter(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(color = Color.White.copy(alpha = 0.1f)),
+            .clickableSingle(
                 onClick = onClick
             )
             .padding(horizontal = 20.dp, vertical = 18.dp),

@@ -45,6 +45,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import kotlinx.coroutines.Dispatchers
@@ -230,7 +231,7 @@ fun MusicSettingsBottomSheet(
                     modifier = Modifier
                         .size(40.dp)
                         .background(MaterialTheme.colorScheme.primary, CircleShape)
-                        .clickable {
+                        .clickableSingle {
                             musicPlayer.pause()
                             onApply()
                         },
@@ -243,49 +244,6 @@ fun MusicSettingsBottomSheet(
                         modifier = Modifier.size(24.dp)
                     )
                 }
-            }
-
-            // Volume control section
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-            ) {
-                // Volume label and percentage
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.editor_volume),
-                        color = TextPrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-
-                    Text(
-                        text = "${(currentVolume * 100).toInt()}%",
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Volume slider
-                Slider(
-                    value = currentVolume,
-                    onValueChange = onVolumeChange,
-                    valueRange = 0f..1f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.primary,
-                        activeTrackColor = MaterialTheme.colorScheme.primary,
-                        inactiveTrackColor = com.videomaker.aimusic.ui.theme.Gray500
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -316,6 +274,15 @@ fun MusicSettingsBottomSheet(
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
+            )
+
+            Text(
+                text = "${stringResource(R.string.editor_music_trim_duration)}: " +
+                    formatMusicTrimTime((trimEndMs - trimStartMs).coerceAtLeast(0L)),
+                color = TextPrimary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
         }
     }

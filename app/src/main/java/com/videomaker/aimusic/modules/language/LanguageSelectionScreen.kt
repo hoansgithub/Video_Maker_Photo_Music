@@ -52,6 +52,7 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.SupportedLanguage
 import com.videomaker.aimusic.core.data.local.getAllLanguages
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.ui.theme.Black12
 import com.videomaker.aimusic.ui.theme.Black20
@@ -88,9 +89,8 @@ fun LanguageSelectionScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
-                .padding(top = 16.dp, bottom = 120.dp),
+                .padding(top = 16.dp, bottom = if (showBackButton) 120.dp else 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (showBackButton) {
@@ -130,23 +130,32 @@ fun LanguageSelectionScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(36.dp))
-
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
             ) {
-                languages.forEach { language ->
-                    LanguageCard(
-                        language = language,
-                        isSelected = selectedLanguage == language.code,
-                        onClick = {
-                            selectedLanguage = language.code
-                            onLanguageSelected(language.code)
-                        }
-                    )
+
+                Spacer(modifier = Modifier.height(36.dp))
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    languages.forEach { language ->
+                        LanguageCard(
+                            language = language,
+                            isSelected = selectedLanguage == language.code,
+                            onClick = {
+                                selectedLanguage = language.code
+                                onLanguageSelected(language.code)
+                            }
+                        )
+                    }
+
                 }
 
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
@@ -206,7 +215,7 @@ private fun LanguageCard(
                 color = if (isSelected) accentColor else Gray700,
                 shape = cardShape
             )
-            .clickable(onClick = onClick)
+            .clickableSingle(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 18.dp)
     ) {
         Text(
@@ -292,7 +301,7 @@ internal fun OnboardingCtaButton(
                 )
             }
             .border(1.dp, White20, shape)
-            .clickable(enabled = enabled, onClick = onClick)
+            .clickableSingle(enabled = enabled, onClick = onClick)
             .padding(vertical = 12.dp, horizontal = 20.dp)
     ) {
         Text(
@@ -354,7 +363,7 @@ internal fun OnboardingCtaMaxWidthButton(
                 )
             }
             .border(1.dp, White20, shape)
-            .clickable(enabled = enabled, onClick = onClick)
+            .clickableSingle(enabled = enabled, onClick = onClick)
             .padding(vertical = 12.dp, horizontal = 20.dp)
     ) {
         Text(

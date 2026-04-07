@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
 import com.videomaker.aimusic.ui.theme.SearchFieldBorder
@@ -51,7 +52,7 @@ fun SongsSearchField(
                 color = SearchFieldBorder,
                 shape = RoundedCornerShape(dimens.radiusXl)
             )
-            .clickable(onClick = onClick)
+            .clickableSingle(onClick = onClick)
             .padding(horizontal = dimens.spaceMd, vertical = dimens.spaceMd),
         verticalAlignment = Alignment.CenterVertically
     ) {

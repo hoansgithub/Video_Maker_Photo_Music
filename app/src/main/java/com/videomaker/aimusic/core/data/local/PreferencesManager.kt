@@ -22,10 +22,12 @@ class PreferencesManager(context: Context) {
         private const val KEY_RECENT_SEARCHES = "recent_searches"
         private const val KEY_PREFERRED_GENRES = "preferred_genres"
         private const val KEY_PREFERRED_FEATURES = "preferred_features"
+        private const val KEY_FEATURE_SELECTION_COMPLETE = "feature_selection_complete"
+        private const val KEY_HOME_INITIAL_TAB_FROM_ONBOARDING = "home_initial_tab_from_onboarding"
         private const val KEY_USER_REGION = "user_region"
         private const val RECENT_SEARCHES_DELIMITER = "\u001F" // Unit Separator
         private const val GENRES_DELIMITER = ","
-        private const val MAX_RECENT_SEARCHES = 10
+        private const val MAX_RECENT_SEARCHES = 3 // FIFO: First In First Out
     }
 
     /** Music genre preferences selected during onboarding. Empty = no preference set. */
@@ -46,6 +48,22 @@ class PreferencesManager(context: Context) {
 
     fun setPreferredFeatures(features: List<String>) {
         prefs.edit { putString(KEY_PREFERRED_FEATURES, features.joinToString(GENRES_DELIMITER)) }
+    }
+
+    fun isFeatureSelectionComplete(): Boolean {
+        return prefs.getBoolean(KEY_FEATURE_SELECTION_COMPLETE, false)
+    }
+
+    fun setFeatureSelectionComplete(complete: Boolean) {
+        prefs.edit { putBoolean(KEY_FEATURE_SELECTION_COMPLETE, complete) }
+    }
+
+    fun getHomeInitialTabFromOnboarding(): Int {
+        return prefs.getInt(KEY_HOME_INITIAL_TAB_FROM_ONBOARDING, 0)
+    }
+
+    fun setHomeInitialTabFromOnboarding(tab: Int) {
+        prefs.edit { putInt(KEY_HOME_INITIAL_TAB_FROM_ONBOARDING, tab) }
     }
 
     /**
@@ -82,7 +100,7 @@ class PreferencesManager(context: Context) {
     }
 
     /**
-     * Add a search query to recent searches (most recent first, max 10)
+     * Add a search query to recent searches (most recent first, max 3)
      */
     @Synchronized
     fun addRecentSearch(query: String) {

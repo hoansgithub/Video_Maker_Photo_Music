@@ -45,6 +45,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.ui.theme.Black20
 import com.videomaker.aimusic.ui.theme.Gray700
@@ -60,7 +61,7 @@ internal data class FeatureItem(val id: String, val icon: Int, val nameResId: In
 
 internal val featureItems = listOf(
     FeatureItem("music_video_instant", R.drawable.ic_lead_search,     R.string.feature_music_video_instant),
-    FeatureItem("photos_to_video",     R.drawable.ic_lead_search, R.string.feature_photos_to_video),
+    FeatureItem("photos_to_video",     R.drawable.ic_music_note, R.string.feature_photos_to_video),
 //    FeatureItem("trending_templates",  Icons.Default.AutoAwesome,  R.string.feature_trending_templates),
 //    FeatureItem("trending_music",      Icons.Default.MusicNote,    R.string.feature_trending_music),
 )
@@ -157,7 +158,7 @@ private fun FeatureCard(
                 color = if (isSelected) selectedColor else Gray700,
                 shape = cardShape
             )
-            .clickable { onFeatureToggle(item.id) }
+            .clickableSingle { onFeatureToggle(item.id) }
             .padding(vertical = 24.dp, horizontal = 16.dp)
     ) {
         Column(

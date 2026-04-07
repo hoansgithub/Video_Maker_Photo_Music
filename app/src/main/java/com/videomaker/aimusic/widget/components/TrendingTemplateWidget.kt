@@ -45,6 +45,7 @@ import coil.size.Size
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.ui.components.AppAsyncImage
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.components.shadowCustom
 import com.videomaker.aimusic.ui.theme.BackgroundLight
@@ -104,9 +105,7 @@ fun TrendingWidget(
                     .weight(1f)
                     .height(164.dp)
                     .background(Neutral_Black,RoundedCornerShape(18.dp))
-                    .clickable(
-                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                        indication = null,
+                    .clickableSingle(
                         onClick = onClickAdd
                     )
                     .padding(5.dp),
@@ -162,9 +161,7 @@ fun TrendingWidget(
                             .weight(1f)
                             .height(164.dp)
                             .clip(RoundedCornerShape(18.dp))
-                            .clickable(
-                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                indication = null,
+                            .clickableSingle(
                                 onClick = { onClick(template) }
                             )
                     )
