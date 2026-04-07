@@ -57,6 +57,10 @@ import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePrefer
 // Note: Language use cases are still registered for LanguageSelectionActivity (ACCDI.get)
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.media.composition.CompositionFactory
+import com.videomaker.aimusic.core.cache.VideoCacheManager
+import androidx.media3.datasource.cache.SimpleCache
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import com.videomaker.aimusic.modules.editor.EditorViewModel
 import com.videomaker.aimusic.modules.export.ExportViewModel
 import com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepository
@@ -152,6 +156,28 @@ val dataModule = module {
 val mediaModule = module {
     single { CompositionFactory(androidContext(), get()) }
     single { AudioPreviewCache(androidContext()) }
+
+    // ========== VIDEO CACHE ==========
+    // Video cache manager for template previews
+    single { VideoCacheManager(androidContext()) }
+
+    // SimpleCache instance (singleton - expensive to create)
+    single<SimpleCache> {
+        VideoCacheManager.getCache(androidContext())
+    }
+
+    // CacheDataSource.Factory for ExoPlayer with disk caching
+    single<CacheDataSource.Factory> {
+        CacheDataSource.Factory()
+            .setCache(get<SimpleCache>())
+            .setUpstreamDataSourceFactory(
+                DefaultHttpDataSource.Factory()
+                    .setUserAgent("VideoMaker/1.0")
+                    .setConnectTimeoutMs(10000)
+                    .setReadTimeoutMs(10000)
+            )
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+    }
 
     // Coil ImageLoader singleton
     // Gets the ImageLoader from ImageLoaderFactory (VideoMakerApplication)
@@ -590,7 +616,7 @@ val presentationModule = module {
     // Editor ViewModel factory (singleton - stateless factory)
     single {
         EditorViewModelFactory(
-            context = androidContext(),
+            context = androidContext().applicationContext,  // Use Application context to prevent leaks
             getProjectUseCase = get(),
             createProjectUseCase = get(),
             updateSettingsUseCase = get(),

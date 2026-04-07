@@ -84,6 +84,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
 import com.videomaker.aimusic.ui.components.ErrorOverlay
 import com.videomaker.aimusic.ui.components.ErrorType
 import com.videomaker.aimusic.ui.components.PrimaryButton
@@ -902,47 +903,63 @@ private fun TemplateThumbnailPage(
     isPriorityPage: Boolean = false  // True for visible/settled page (kept for future use)
 ) {
     val context = LocalContext.current
-    // Use high-res preview for full-screen display, fallback to thumbnail
-    val imageUrl = template.previewImagePath.ifEmpty { template.thumbnailPath.ifEmpty { null } }
 
     Box(
         modifier = Modifier.fillMaxSize().background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
-        SubcomposeAsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(imageUrl)
-                .size(378, 672)  // Match original size - avoid upscaling
-                .diskCachePolicy(CachePolicy.ENABLED)
-                .memoryCachePolicy(CachePolicy.ENABLED)
-                .networkCachePolicy(CachePolicy.ENABLED)  // Enable network cache
-                .diskCacheKey("template_preview_${template.id}")  // Consistent disk cache key
-                .precision(Precision.INEXACT)  // Allow downsampling
-                .scale(Scale.FILL)  // Faster than FIT - fills viewport with crop
-                .allowHardware(!isCurrentPage)  // Hardware bitmap only for static pages (animation needs software bitmap)
-                .apply {
-                    if (!isCurrentPage) {
-                        // Static first frame only — bypasses ImageDecoderDecoder (animated WebP)
-                        decoderFactory(BitmapFactoryDecoder.Factory())
+        // Use video player if videoUrl is available, otherwise fall back to image
+        if (!template.videoUrl.isNullOrEmpty()) {
+            android.util.Log.d("TemplatePreviewer", "Showing VIDEO for ${template.name}: ${template.videoUrl} (isCurrentPage=$isCurrentPage)")
+            // Video preview (720p quality with lazy loading and disk caching)
+            // Only auto-play when this page is visible to save performance
+            TemplateVideoPlayer(
+                videoUrl = template.videoUrl,
+                modifier = Modifier.fillMaxSize(),
+                autoPlay = isCurrentPage,  // Only play when visible
+                loop = true,
+                showControls = false
+            )
+        } else {
+            // Fallback to image preview
+            android.util.Log.d("TemplatePreviewer", "Showing IMAGE for ${template.name}: videoUrl=${template.videoUrl}")
+            val imageUrl = template.previewImagePath.ifEmpty { template.thumbnailPath.ifEmpty { null } }
+
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(imageUrl)
+                    .size(378, 672)  // Match original size - avoid upscaling
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .networkCachePolicy(CachePolicy.ENABLED)  // Enable network cache
+                    .diskCacheKey("template_preview_${template.id}")  // Consistent disk cache key
+                    .precision(Precision.INEXACT)  // Allow downsampling
+                    .scale(Scale.FILL)  // Faster than FIT - fills viewport with crop
+                    .allowHardware(!isCurrentPage)  // Hardware bitmap only for static pages (animation needs software bitmap)
+                    .apply {
+                        if (!isCurrentPage) {
+                            // Static first frame only — bypasses ImageDecoderDecoder (animated WebP)
+                            decoderFactory(BitmapFactoryDecoder.Factory())
+                        }
                     }
+                    .crossfade(false)  // Instant display, no animation delay
+                    .build(),
+                contentDescription = template.name,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+                loading = {
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(Color.DarkGray),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(32.dp))
+                    }
+                },
+                error = {
+                    Box(modifier = Modifier.fillMaxSize().background(Color.DarkGray))
                 }
-                .crossfade(false)  // Instant display, no animation delay
-                .build(),
-            contentDescription = template.name,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-            loading = {
-                Box(
-                    modifier = Modifier.fillMaxSize().background(Color.DarkGray),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(32.dp))
-                }
-            },
-            error = {
-                Box(modifier = Modifier.fillMaxSize().background(Color.DarkGray))
-            }
-        )
+            )
+        }
     }
 }
 

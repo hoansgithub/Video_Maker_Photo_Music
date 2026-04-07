@@ -35,7 +35,7 @@ class TemplateRepositoryImpl(
         private const val FN_TEMPLATES_BY_TAG_SORTED = "get_templates_by_tag_sorted"
         private const val FN_FEATURED_TEMPLATES = "get_featured_templates"
         private val COLUMNS_TEMPLATE = Columns.raw(
-            "id,name,name_i18n,thumbnail_path,song_id,effect_set_id,aspect_ratio," +
+            "id,name,name_i18n,thumbnail_path,preview_path,song_id,effect_set_id,aspect_ratio," +
             "image_duration_ms,transition_pct,is_premium,is_active,sort_order,use_count," +
             "template_vibe_tags(vibe_tag_id,sort_order)"
         )
@@ -254,12 +254,17 @@ private const val THUMBNAIL_BASE_URL =
 private const val PREVIEW_IMAGE_BASE_URL =
     "https://zdydtiwglotssklnkwjh.supabase.co/storage/v1/object/public/template-previews/"
 
+// Video previews for full-screen template previewer (optional, falls back to preview image)
+private const val VIDEO_BASE_URL =
+    "https://zdydtiwglotssklnkwjh.supabase.co/storage/v1/object/public/template-preview-videos/"
+
 @Serializable
 private data class TemplateDto(
     val id: String,
     val name: String,
     @SerialName("name_i18n") val nameI18n: JsonObject? = null,
     @SerialName("thumbnail_path") val thumbnailPath: String? = null,
+    @SerialName("preview_path") val previewPath: String? = null,
     @SerialName("song_id") val songId: Long,
     @SerialName("effect_set_id") val effectSetId: String,
     @SerialName("aspect_ratio") val aspectRatio: String = "9:16",
@@ -272,26 +277,32 @@ private data class TemplateDto(
     @SerialName("template_vibe_tags") val vibeTags: List<VibeTagRef> = emptyList(),
     @SerialName("target_regions") val targetRegions: List<String> = emptyList()
 ) {
-    fun toDomain(locale: String) = VideoTemplate(
-        id = id,
-        name = I18nHelper.getLocalizedValue(
-            i18nData = nameI18n,
-            locale = locale,
-            fallback = name
-        ),
-        thumbnailPath = if (!thumbnailPath.isNullOrEmpty()) THUMBNAIL_BASE_URL + thumbnailPath else "",
-        previewImagePath = if (!thumbnailPath.isNullOrEmpty()) PREVIEW_IMAGE_BASE_URL + thumbnailPath else "",
-        songId = songId,
-        effectSetId = effectSetId,
-        aspectRatio = aspectRatio,
-        imageDurationMs = imageDurationMs,
-        transitionPct = transitionPct,
-        // Sort server-returned tags by sort_order (small list per template, ~1-3 items)
-        vibeTags = vibeTags.sortedBy { it.sortOrder }.map { it.vibeTagId },
-        isPremium = isPremium,
-        isActive = isActive,
-        useCount = useCount
-    )
+    fun toDomain(locale: String): VideoTemplate {
+        // Determine if preview_path is a video (.mp4) or image
+        val isVideo = previewPath?.endsWith(".mp4", ignoreCase = true) == true
+
+        return VideoTemplate(
+            id = id,
+            name = I18nHelper.getLocalizedValue(
+                i18nData = nameI18n,
+                locale = locale,
+                fallback = name
+            ),
+            thumbnailPath = if (!thumbnailPath.isNullOrEmpty()) THUMBNAIL_BASE_URL + thumbnailPath else "",
+            previewImagePath = if (!previewPath.isNullOrEmpty() && !isVideo) PREVIEW_IMAGE_BASE_URL + previewPath else "",
+            videoUrl = if (isVideo && !previewPath.isNullOrEmpty()) VIDEO_BASE_URL + previewPath else null,
+            songId = songId,
+            effectSetId = effectSetId,
+            aspectRatio = aspectRatio,
+            imageDurationMs = imageDurationMs,
+            transitionPct = transitionPct,
+            // Sort server-returned tags by sort_order (small list per template, ~1-3 items)
+            vibeTags = vibeTags.sortedBy { it.sortOrder }.map { it.vibeTagId },
+            isPremium = isPremium,
+            isActive = isActive,
+            useCount = useCount
+        )
+    }
 }
 
 @Serializable
