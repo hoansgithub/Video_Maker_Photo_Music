@@ -516,7 +516,18 @@ private fun AssetPickerContent(
             }
 
 
-            is AssetPickerUiState.Initial,
+            is AssetPickerUiState.Initial -> {
+                // Show loading while checking permissions (don't show denied state yet)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
             AssetPickerUiState.DeniedPermission -> {
                 PermissionDeniedContent(
                     onGoToSettings = onGoToSettings
