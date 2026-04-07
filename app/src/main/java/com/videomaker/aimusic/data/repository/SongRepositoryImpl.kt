@@ -3,6 +3,7 @@ package com.videomaker.aimusic.data.repository
 import com.videomaker.aimusic.core.data.local.ApiCacheManager
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.RegionProvider
+import com.videomaker.aimusic.core.util.I18nHelper
 import com.videomaker.aimusic.data.mapper.toMusicSong
 import com.videomaker.aimusic.data.mapper.toMusicSongs
 import com.videomaker.aimusic.data.remote.dto.SongDto
@@ -18,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -142,7 +144,7 @@ class SongRepositoryImpl(
 
         try {
             val genres = supabaseClient.from(TABLE_GENRES)
-                .select(Columns.raw("id, display_name")) {
+                .select(Columns.raw("id, display_name, label_i18n")) {
                     filter {
                         eq("type", "genre")
                         eq("is_active", true)
@@ -151,7 +153,14 @@ class SongRepositoryImpl(
                     limit(100)  // ✅ FIX: Prevent fetching billions of genres
                 }
                 .decodeList<GenreDto>()
-                .map { SongGenre(id = it.id, displayName = it.displayName.ifEmpty { it.id }) }
+                .map {
+                    val localizedName = I18nHelper.getLocalizedValue(
+                        i18nData = it.labelI18n,
+                        locale = locale,
+                        fallback = it.displayName.ifEmpty { it.id }
+                    )
+                    SongGenre(id = it.id, displayName = localizedName)
+                }
 
             apiCacheManager.put(cacheKey, genres)
             Result.success(genres)
@@ -209,12 +218,14 @@ class SongRepositoryImpl(
         }
     }
 
-    /** DTO for genres table row (id, display_name, type, sort_order, is_active). */
+    /** DTO for genres table row (id, display_name, label_i18n, type, sort_order, is_active). */
     @Serializable
     private data class GenreDto(
         val id: String,
         @SerialName("display_name")
         val displayName: String = "",
+        @SerialName("label_i18n")
+        val labelI18n: JsonObject? = null,
         val type: String = "",
         @SerialName("sort_order")
         val sortOrder: Int = 0,
