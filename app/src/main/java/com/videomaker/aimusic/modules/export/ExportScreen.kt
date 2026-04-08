@@ -1,11 +1,16 @@
 package com.videomaker.aimusic.modules.export
 
+import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.constants.AdPlacement
+import org.koin.compose.koinInject
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -151,6 +156,15 @@ fun ExportScreen(
     val context = LocalContext.current
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
 
+    // Get dependencies for ad showing
+    val activity = context as? Activity
+    val adsLoaderService = koinInject<AdsLoaderService>()
+
+    // Intercept system back gesture (swipe) in Success state - same ad logic as close button
+    BackHandler(enabled = uiState is ExportUiState.Success) {
+        viewModel.navigateToHomeMyVideos()
+    }
+
     // Cancel export when app goes to background
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -178,6 +192,37 @@ fun ExportScreen(
             when (event) {
                 is ExportNavigationEvent.NavigateBack -> onNavigateBack()
                 is ExportNavigationEvent.NavigateToHomeMyVideos -> onNavigateToHomeMyVideos()
+
+                is ExportNavigationEvent.RequestExitWithAd -> {
+                    // Show ad if ready, otherwise navigate immediately (non-blocking)
+                    if (event.shouldShowAd && activity != null) {
+                        android.util.Log.d("ExportScreen", "📺 Showing exit ad...")
+
+                        InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = AdPlacement.INTERSTITIAL_EXPORT_RESULT_EXIT,
+                            action = {
+                                // Ad closed - navigate
+                                android.util.Log.d("ExportScreen", "✅ Exit ad closed - navigating")
+                            },
+                            onShown = {
+                                // Navigate immediately when ad shows (parallel)
+                                android.util.Log.d("ExportScreen", "🎬 Exit ad shown - navigating")
+                                onNavigateToHomeMyVideos()
+                            },
+                            bypassFrequencyCap = true,  // Exit ads always show
+                            showLoadingOverlay = false  // Ad already preloaded
+                        )
+                    } else {
+                        // Ad not ready or no activity - navigate immediately
+                        if (!event.shouldShowAd) {
+                            android.util.Log.d("ExportScreen", "⚠️ Exit ad not ready - navigating immediately")
+                        }
+                        onNavigateToHomeMyVideos()
+                    }
+                }
+
                 is ExportNavigationEvent.NavigateToTemplateDetail -> {
                     onNavigateToTemplateDetail(event.templateId)
                 }

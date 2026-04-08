@@ -52,11 +52,25 @@ object AdPlacement {
     const val INTERSTITIAL_TEMPLATE_PREVIEWER_BACK = "ad_interstitial_template_previewer_back"
 
     /**
+     * Interstitial ad shown when user exits the export result screen.
+     * Timing: Preloaded when export completes, shown on back/exit if ready.
+     * If ad not loaded yet, navigation proceeds normally (non-blocking).
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/9709181357
+     * - Secondary: ca-app-pub-7121075950716954/8587671370
+     *
+     * Remote Config key: ad_interstitial_export_result_exit
+     */
+    const val INTERSTITIAL_EXPORT_RESULT_EXIT = "ad_interstitial_export_result_exit"
+
+    /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
      */
     val ALL_PLACEMENTS = listOf(
         INTERSTITIAL_SPLASH,
-        INTERSTITIAL_TEMPLATE_PREVIEWER_BACK
+        INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
+        INTERSTITIAL_EXPORT_RESULT_EXIT
     )
 }

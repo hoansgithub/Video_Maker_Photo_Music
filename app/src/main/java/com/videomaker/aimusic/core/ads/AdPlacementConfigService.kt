@@ -106,6 +106,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Export result exit interstitial (shown when user exits export result screen)
+        // Preloaded when export completes, non-blocking if not ready
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_EXPORT_RESULT_EXIT,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9709181357",  // Primary
+                "ca-app-pub-7121075950716954/8587671370"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }

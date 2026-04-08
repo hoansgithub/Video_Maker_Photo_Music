@@ -4,6 +4,9 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.domain.model.VideoTemplate
@@ -82,8 +85,24 @@ sealed class ExportUiState {
  * UI observes navigationEvent StateFlow and calls onNavigationHandled() after navigating
  */
 sealed class ExportNavigationEvent {
+    /**
+     * Legacy back navigation (no ad check)
+     * Use RequestExitWithAd instead for ad support
+     */
     data object NavigateBack : ExportNavigationEvent()
+
+    /**
+     * Navigate to Home My Videos tab (without ad)
+     * Use RequestExitWithAd instead for ad support
+     */
     data object NavigateToHomeMyVideos : ExportNavigationEvent()
+
+    /**
+     * Request exit with optional ad
+     * @param shouldShowAd true if ad is ready and should be shown
+     */
+    data class RequestExitWithAd(val shouldShowAd: Boolean) : ExportNavigationEvent()
+
     data class NavigateToTemplateDetail(val templateId: String) : ExportNavigationEvent()
 }
 
@@ -115,7 +134,8 @@ class ExportViewModel(
     private val projectRepository: ProjectRepository,
     private val templateRepository: TemplateRepository,
     private val ratingTriggerManager: RatingTriggerManager,
-    private val submitFeedbackUseCase: SubmitFeedbackUseCase
+    private val submitFeedbackUseCase: SubmitFeedbackUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) : ViewModel() {
 
     // ============================================
@@ -185,6 +205,7 @@ class ExportViewModel(
         startExport()
         loadFeaturedTemplates()
         observeRatingTrigger()
+        observeSuccessForAdPreload()
     }
 
     private fun loadProjectData() {
@@ -305,6 +326,7 @@ class ExportViewModel(
     /**
      * Navigate to Home screen with My Videos tab (tab index 2)
      * Resets savedToGallery state so button is enabled on next export
+     * Checks if exit ad is ready and shows it before navigation
      */
     fun navigateToHomeMyVideos() {
         // Reset saved state so button is enabled next time
@@ -316,7 +338,14 @@ class ExportViewModel(
         // Clear any active toast
         _saveToastState.value = null
 
-        _navigationEvent.value = ExportNavigationEvent.NavigateToHomeMyVideos
+        // Check if exit ad is ready (non-blocking)
+        val isAdReady = adsLoaderService.isInterstitialReady(AdPlacement.INTERSTITIAL_EXPORT_RESULT_EXIT)
+
+        android.util.Log.d("ExportViewModel", "🔙 navigateToHomeMyVideos - Ad ready: $isAdReady")
+
+        // Send navigation event with ad status
+        // Screen will show ad if ready, otherwise navigate immediately
+        _navigationEvent.value = ExportNavigationEvent.RequestExitWithAd(isAdReady)
     }
 
     /**
@@ -339,6 +368,37 @@ class ExportViewModel(
                 if (_ratingStep.value == RatingStep.None) {
                     _ratingStep.value = RatingStep.Satisfaction
                     ratingTriggerManager.onRatingShown()
+                }
+            }
+        }
+    }
+
+    /**
+     * Observe Success state to preload exit ad
+     * Preloads ad when export completes successfully (non-blocking)
+     */
+    private fun observeSuccessForAdPreload() {
+        viewModelScope.launch {
+            _uiState.collect { state ->
+                if (state is ExportUiState.Success) {
+                    // Preload exit ad when export completes (no timeout, non-blocking)
+                    android.util.Log.d("ExportViewModel", "🎬 Preloading exit ad...")
+                    runCatching {
+                        InterstitialAdHelperExt.preloadInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            placement = AdPlacement.INTERSTITIAL_EXPORT_RESULT_EXIT,
+                            loadTimeoutMillis = null,  // No timeout - loads in background
+                            showLoadingOverlay = false
+                        )
+                    }.onSuccess { success ->
+                        if (success) {
+                            android.util.Log.d("ExportViewModel", "✅ Exit ad preload SUCCESS")
+                        } else {
+                            android.util.Log.w("ExportViewModel", "⚠️ Exit ad preload FAILED")
+                        }
+                    }.onFailure { e ->
+                        android.util.Log.e("ExportViewModel", "❌ Exit ad preload exception: ${e.message}", e)
+                    }
                 }
             }
         }

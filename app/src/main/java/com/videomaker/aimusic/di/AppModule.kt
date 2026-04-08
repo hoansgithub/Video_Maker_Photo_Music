@@ -425,7 +425,8 @@ class ExportViewModelFactory(
     private val projectRepository: ProjectRepository,
     private val templateRepository: TemplateRepository,
     private val ratingTriggerManager: RatingTriggerManager,
-    private val submitFeedbackUseCase: SubmitFeedbackUseCase
+    private val submitFeedbackUseCase: SubmitFeedbackUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(projectId: String, quality: com.videomaker.aimusic.domain.model.VideoQuality = com.videomaker.aimusic.domain.model.VideoQuality.DEFAULT): ExportViewModel {
         return ExportViewModel(
@@ -435,7 +436,8 @@ class ExportViewModelFactory(
             projectRepository = projectRepository,
             templateRepository = templateRepository,
             ratingTriggerManager = ratingTriggerManager,
-            submitFeedbackUseCase = submitFeedbackUseCase
+            submitFeedbackUseCase = submitFeedbackUseCase,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -735,7 +737,8 @@ val presentationModule = module {
             projectRepository = get(),
             templateRepository = get(),
             ratingTriggerManager = get(),
-            submitFeedbackUseCase = get()
+            submitFeedbackUseCase = get(),
+            adsLoaderService = get()
         )
     }
 
