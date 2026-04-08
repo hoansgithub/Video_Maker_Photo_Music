@@ -16,10 +16,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -65,6 +69,18 @@ fun UnifiedSearchScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
     val audioPreviewCache: AudioPreviewCache = koinInject()
+
+    // ✅ FIX: Refresh data when locale changes (genres, vibe tags, templates, songs)
+    // Use rememberSaveable to persist previousLocale across Activity recreation
+    val locale = LocalConfiguration.current.locales[0]?.toLanguageTag()
+    var previousLocale by rememberSaveable { mutableStateOf(locale) }
+    LaunchedEffect(locale) {
+        // Only refresh on locale CHANGE, not initial composition
+        if (locale != null && locale != previousLocale && previousLocale != null) {
+            viewModel.refresh()
+        }
+        previousLocale = locale
+    }
 
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
