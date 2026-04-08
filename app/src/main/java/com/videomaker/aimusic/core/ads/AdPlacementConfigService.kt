@@ -119,6 +119,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Asset picker exit interstitial (shown when user closes image selector)
+        // Preloaded at screen launch, non-blocking if not ready
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_ASSET_PICKER_EXIT,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6949256261",  // Primary
+                "ca-app-pub-7121075950716954/1583783907"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }

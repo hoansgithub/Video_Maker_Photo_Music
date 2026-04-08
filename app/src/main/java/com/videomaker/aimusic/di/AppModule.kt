@@ -361,7 +361,8 @@ class AssetPickerViewModelFactory(
     private val createProjectUseCase: CreateProjectUseCase,
     private val addAssetsUseCase: AddAssetsUseCase,
     private val templateRepository: TemplateRepository,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(
         projectId: String? = null,
@@ -375,6 +376,7 @@ class AssetPickerViewModelFactory(
             addAssetsUseCase = addAssetsUseCase,
             templateRepository = templateRepository,
             songRepository = songRepository,
+            adsLoaderService = adsLoaderService,
             projectId = projectId,
             templateId = templateId,
             overrideSongId = overrideSongId,
@@ -712,7 +714,8 @@ val presentationModule = module {
             createProjectUseCase = get(),
             addAssetsUseCase = get(),
             templateRepository = get(),
-            songRepository = get()
+            songRepository = get(),
+            adsLoaderService = get()
         )
     }
 

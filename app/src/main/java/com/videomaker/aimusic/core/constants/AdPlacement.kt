@@ -65,12 +65,26 @@ object AdPlacement {
     const val INTERSTITIAL_EXPORT_RESULT_EXIT = "ad_interstitial_export_result_exit"
 
     /**
+     * Interstitial ad shown when user closes/exits the asset picker (image selector).
+     * Timing: Preloaded at screen launch, shown on back/close if ready.
+     * If ad not loaded yet, navigation proceeds normally (non-blocking).
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6949256261
+     * - Secondary: ca-app-pub-7121075950716954/1583783907
+     *
+     * Remote Config key: ad_interstitial_asset_picker_exit
+     */
+    const val INTERSTITIAL_ASSET_PICKER_EXIT = "ad_interstitial_asset_picker_exit"
+
+    /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
      */
     val ALL_PLACEMENTS = listOf(
         INTERSTITIAL_SPLASH,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
-        INTERSTITIAL_EXPORT_RESULT_EXIT
+        INTERSTITIAL_EXPORT_RESULT_EXIT,
+        INTERSTITIAL_ASSET_PICKER_EXIT
     )
 }

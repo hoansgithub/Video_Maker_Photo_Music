@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.picker
 
+import android.app.Activity
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,6 +11,10 @@ import android.provider.Settings
 import androidx.core.content.FileProvider
 import java.io.File
 import androidx.activity.compose.BackHandler
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.constants.AdPlacement
+import org.koin.compose.koinInject
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -170,6 +175,11 @@ fun AssetPickerScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Get dependencies for ad showing
+    val activity = context as? Activity
+    val adsLoaderService = koinInject<AdsLoaderService>()
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridScrollState by viewModel.gridScrollState.collectAsStateWithLifecycle()
     var hasInitializedPermissionCheck by remember { mutableStateOf(false) }
@@ -225,6 +235,37 @@ fun AssetPickerScreen(
         navigationEvent?.let { event ->
             when (event) {
                 is AssetPickerNavigationEvent.NavigateBack -> onNavigateBack()
+
+                is AssetPickerNavigationEvent.RequestExitWithAd -> {
+                    // Show ad if ready, otherwise navigate immediately (non-blocking)
+                    if (event.shouldShowAd && activity != null) {
+                        android.util.Log.d("AssetPickerScreen", "📺 Showing exit ad...")
+
+                        InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = AdPlacement.INTERSTITIAL_ASSET_PICKER_EXIT,
+                            action = {
+                                // Ad closed - navigate
+                                android.util.Log.d("AssetPickerScreen", "✅ Exit ad closed - navigating")
+                            },
+                            onShown = {
+                                // Navigate immediately when ad shows (parallel)
+                                android.util.Log.d("AssetPickerScreen", "🎬 Exit ad shown - navigating")
+                                onNavigateBack()
+                            },
+                            bypassFrequencyCap = true,  // Exit ads always show
+                            showLoadingOverlay = false  // Ad already preloaded
+                        )
+                    } else {
+                        // Ad not ready or no activity - navigate immediately
+                        if (!event.shouldShowAd) {
+                            android.util.Log.d("AssetPickerScreen", "⚠️ Exit ad not ready - navigating immediately")
+                        }
+                        onNavigateBack()
+                    }
+                }
+
                 is AssetPickerNavigationEvent.NavigateToEditor -> onNavigateToEditor(event.projectId)
                 is AssetPickerNavigationEvent.NavigateToEditorWithData -> onNavigateToEditorWithData(event.initialData)
                 is AssetPickerNavigationEvent.AssetsAdded -> onAssetsAdded()
