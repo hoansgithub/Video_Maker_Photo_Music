@@ -445,4 +445,22 @@
     <!-- Editor Volume -->
     <string name="volume_title">वॉल्यूम</string>
 
+    <!-- Rating Popup -->
+    <string name="rating_satisfaction_title">Video Maker के साथ आपका समय देने के लिए धन्यवाद</string>
+    <string name="rating_satisfaction_subtitle">क्या आप हमारे ऐप से संतुष्ट हैं?</string>
+    <string name="rating_not_really">ज्यादा नहीं</string>
+    <string name="rating_good">अच्छा</string>
+    <string name="rating_experience_title">हमारे साथ अपने अनुभव को रेट करें</string>
+    <string name="rating_submit">सबमिट करें</string>
+    <string name="rating_feedback_title">यह सुनकर दुख हुआ 🥲</string>
+    <string name="rating_feedback_subtitle">आपके अनुभव को बेहतर बनाने के लिए हम और मेहनत करेंगे</string>
+    <string name="rating_feedback_type_hint">अपना फीडबैक लिखें</string>
+    <string name="rating_feedback_reason_music_quality">पसंदीदा गाने नहीं / संगीत की गुणवत्ता खराब है</string>
+    <string name="rating_feedback_reason_translation">अनुवाद की गुणवत्ता बहुत खराब है</string>
+    <string name="rating_feedback_reason_tools">एडिटिंग टूल्स मेरी जरूरतों को पूरा नहीं करते</string>
+    <string name="rating_feedback_reason_output_quality">आउटपुट वीडियो की गुणवत्ता बहुत कम है</string>
+    <string name="rating_feedback_reason_performance">ऐप धीमा है या अक्सर क्रैश होता है</string>
+    <string name="rating_feedback_reason_templates">पर्याप्त टेम्पलेट नहीं / कंटेंट अपडेट कम हैं</string>
+    <string name="rating_feedback_reason_other">अन्य</string>
+
 </resources>
