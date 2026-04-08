@@ -2,6 +2,8 @@ package com.videomaker.aimusic.modules.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.SongRepository
@@ -97,14 +99,33 @@ class UninstallViewModel(
     }
 
     fun onTemplateClick(template: VideoTemplate) {
+        Analytics.trackUninstallContentClick(
+            section = AnalyticsEvent.Value.Section.TEMPLATE,
+            id = template.id
+        )
+        Analytics.trackTemplateClick(
+            templateId = template.id,
+            templateName = template.name,
+            location = "uninstall_retain_page"
+        )
         _navigationEvent.value = UninstallNavigationEvent.NavigateToTemplatePreviewer(template.id)
     }
 
     fun onSeeMoreTemplatesClick() {
+        Analytics.trackUninstallSeeMore(AnalyticsEvent.Value.Section.TEMPLATE)
         _navigationEvent.value = UninstallNavigationEvent.NavigateToTemplates
     }
 
     fun onSongClick(song: MusicSong) {
+        Analytics.trackUninstallContentClick(
+            section = AnalyticsEvent.Value.Section.MUSIC,
+            id = song.id.toString()
+        )
+        Analytics.trackSongClick(
+            songId = song.id.toString(),
+            songName = song.name,
+            location = "uninstall_retain_page"
+        )
         _selectedSong.value = song
     }
 
@@ -118,6 +139,7 @@ class UninstallViewModel(
     }
 
     fun onSeeMoreSongsClick() {
+        Analytics.trackUninstallSeeMore(AnalyticsEvent.Value.Section.MUSIC)
         _navigationEvent.value = UninstallNavigationEvent.NavigateToAllSongs
     }
 

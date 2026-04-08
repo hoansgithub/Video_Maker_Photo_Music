@@ -50,6 +50,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.SupportedLanguage
 import com.videomaker.aimusic.core.data.local.getAllLanguages
@@ -82,6 +83,10 @@ fun LanguageSelectionScreen(
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {}
 ) {
+    Analytics.trackScreenView(
+        screenName = "language_show",
+        screenClass = "LanguageSelectionScreen"
+    )
     var selectedLanguage by remember { mutableStateOf<String?>(null) }
     val languages = remember { LanguageManager.getAllLanguages() }
 
@@ -205,6 +210,12 @@ fun LanguageSelectionScreen(
                             onClick = {
                                 selectedLanguage = language.code
                                 onLanguageSelected(language.code)
+                                Analytics.track(
+                                    name = "language_select",
+                                    params = mapOf(
+                                        "language" to language.code
+                                    )
+                                )
                             }
                         )
                     }
@@ -267,8 +278,18 @@ fun LanguageSelectionScreen(
             ) {
                 OnboardingCtaMaxWidthButton(
                     text = stringResource(R.string.language_continue),
-                    onClick = onContinue,
-                    enabled = isButtonEnabled
+                    onClick = {
+                        onContinue.invoke()
+                        selectedLanguage?.let {
+                            Analytics.track(
+                                name = "language_next",
+                                params = mapOf(
+                                    "language" to it
+                                )
+                            )
+                        }
+                    },
+                    enabled = isButtonEnabled  // IAB compliance: includes viewability delay
                 )
             }
         } else {
@@ -281,8 +302,18 @@ fun LanguageSelectionScreen(
                     text = stringResource(R.string.onboarding_next),
                     icon = R.drawable.ic_right_arrow,
                     color = Primary,
-                    onClick = onContinue,
-                    enabled = isButtonEnabled
+                    onClick = {
+                        onContinue.invoke()
+                        selectedLanguage?.let {
+                            Analytics.track(
+                                name = "language_next",
+                                params = mapOf(
+                                    "language" to it
+                                )
+                            )
+                        }
+                    },
+                    enabled = isButtonEnabled  // IAB compliance: includes viewability delay
                 )
             }
         }

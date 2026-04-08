@@ -35,6 +35,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import org.koin.core.component.KoinComponent
@@ -49,6 +50,10 @@ class SmartSearchAppWidget : GlanceAppWidget(), KoinComponent {
     private val templateRepository: TemplateRepository by inject()
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        Analytics.trackWidgetImpression(
+            widgetType = "smart_search",
+            widgetSize = "4x3"
+        )
         val templates = templateRepository.getTemplates(limit = 3, offset = 0)
             .getOrElse { emptyList() }
 

@@ -70,6 +70,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.favourite_songs.ContentSong
@@ -154,6 +157,14 @@ fun ProjectsTabContent(
         initialPage = 0,
         pageCount = { tabs.size }
     )
+    val libraryTabByIndex: (Int) -> String = { index ->
+        when (index) {
+            0 -> AnalyticsEvent.Value.LibraryTab.VIDEO
+            1 -> AnalyticsEvent.Value.LibraryTab.TEMPLATE_FAVORITE
+            else -> AnalyticsEvent.Value.LibraryTab.SONG_FAVORITE
+        }
+    }
+    var lastSettledPage by remember { mutableStateOf(pagerState.settledPage) }
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
 
@@ -164,6 +175,14 @@ fun ProjectsTabContent(
 
     // Animate LazyRow to selected tab when pager settles, and notify VM for swipe case
     LaunchedEffect(pagerState.settledPage) {
+        val currentPage = pagerState.settledPage
+        if (currentPage != lastSettledPage) {
+            Analytics.trackLibraryClick(
+                from = libraryTabByIndex(lastSettledPage),
+                to = libraryTabByIndex(currentPage)
+            )
+            lastSettledPage = currentPage
+        }
         lazyListState.animateScrollToItem(pagerState.settledPage)
         viewModel.onTabSelected(pagerState.settledPage)
     }
@@ -221,15 +240,53 @@ fun ProjectsTabContent(
                                 ProjectsListContent(
                                     projects = state.projects,
                                     onProjectClick = { project ->
+                                        Analytics.trackVideoClick(
+                                            videoId = project.id,
+                                            templateId = project.settings.effectSetId,
+                                            songId = project.settings.musicSongId?.toString(),
+                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                        )
                                         onProjectClick(project.id)
                                     },
+                                    onProjectOption = { project ->
+                                        Analytics.trackVideoOption(project.id)
+                                    },
                                     onDeleteProject = { project ->
+                                        Analytics.trackVideoDelete(
+                                            videoId = project.id,
+                                            templateId = project.settings.effectSetId,
+                                            songId = project.settings.musicSongId?.toString(),
+                                            duration = project.totalDurationMs,
+                                            ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
+                                            volume = (project.settings.audioVolume * 100f).toInt(),
+                                            mediaQuality = null
+                                        )
                                         viewModel.onDeleteProject(project)
                                     },
                                     onDownloadProject = { project ->
+                                        Analytics.trackVideoDownload(
+                                            videoId = project.id,
+                                            templateId = project.settings.effectSetId,
+                                            songId = project.settings.musicSongId?.toString(),
+                                            duration = project.totalDurationMs,
+                                            ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
+                                            volume = (project.settings.audioVolume * 100f).toInt(),
+                                            mediaQuantity = project.assets.size,
+                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                        )
                                         viewModel.onDownloadProject(project, context)
                                     },
                                     onShareProject = { project ->
+                                        Analytics.trackVideoShare(
+                                            videoId = project.id,
+                                            templateId = project.settings.effectSetId,
+                                            songId = project.settings.musicSongId?.toString(),
+                                            duration = project.totalDurationMs,
+                                            ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
+                                            volume = (project.settings.audioVolume * 100f).toInt(),
+                                            mediaQuantity = project.assets.size,
+                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                        )
                                         shareProjectVideo(context, project, viewModel)
                                     },
                                     onCreateClick = onCreateClick
@@ -253,8 +310,33 @@ fun ProjectsTabContent(
                             if (templateStateLocal.isNotEmpty()){
                                 ContentTemplate(
                                     state = templateStateLocal,
-                                    onTemplateClick = onNavigateToTemplateDetail,
+                                    onTemplateClick = { templateId ->
+                                        val templateName = templateStateLocal
+                                            .firstOrNull { it.id == templateId }
+                                            ?.name
+                                            ?: "unknown"
+                                        Analytics.trackTemplateClick(
+                                            templateId = templateId,
+                                            templateName = templateName,
+                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                        )
+                                        onNavigateToTemplateDetail(templateId)
+                                    },
                                     onDeleteTemplateClick = {
+                                        val templateName = templateStateLocal
+                                            .firstOrNull { template -> template.id == it }
+                                            ?.name
+                                            ?: "unknown"
+                                        Analytics.trackTemplateOption(
+                                            templateId = it,
+                                            templateName = templateName,
+                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                        )
+                                        Analytics.trackTemplateUnfavorite(
+                                            templateId = it,
+                                            templateName = templateName,
+                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                        )
                                         viewModel.onUnlikeTemplate(it)
                                         showRemovedMessage = true
                                     }
@@ -273,8 +355,25 @@ fun ProjectsTabContent(
                             if (songStateLocal.isNotEmpty()){
                                 ContentSong(
                                     songs = songStateLocal,
-                                    onSongClick = viewModel::onSongClick,
+                                    onSongClick = { song ->
+                                        Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                        )
+                                        viewModel.onSongClick(song)
+                                    },
                                     onDeleteSongClick = {
+                                        Analytics.trackSongOption(
+                                            songId = it.id.toString(),
+                                            songName = it.name,
+                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                        )
+                                        Analytics.trackSongUnfavorite(
+                                            songId = it.id.toString(),
+                                            songName = it.name,
+                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                        )
                                         viewModel.onUnlikeSong(it)
                                         showRemovedMessage = true
                                     }
@@ -284,7 +383,14 @@ fun ProjectsTabContent(
                                     state = songState,
                                     onSeeAllClick = viewModel::onSeeAllSongs,
                                     onSearch = viewModel::onSongSearch,
-                                    onSongClick = viewModel::onSongClick
+                                    onSongClick = { song ->
+                                        Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                        )
+                                        viewModel.onSongClick(song)
+                                    }
                                 )
                             }
                         }
@@ -495,6 +601,7 @@ private fun ProjectsEmptyState(
 private fun ProjectsListContent(
     projects: List<Project>,
     onProjectClick: (Project) -> Unit,
+    onProjectOption: (Project) -> Unit,
     onDeleteProject: (Project) -> Unit,
     onDownloadProject: (Project) -> Unit,
     onShareProject: (Project) -> Unit,
@@ -517,6 +624,7 @@ private fun ProjectsListContent(
                 ProjectsStaggeredGrid(
                     projects = projects,
                     onProjectClick = onProjectClick,
+                    onProjectOption = onProjectOption,
                     onDeleteProject = onDeleteProject,
                     onDownloadProject = onDownloadProject,
                     onShareProject = onShareProject,
@@ -559,6 +667,7 @@ private fun ProjectsListContent(
 private fun ProjectsStaggeredGrid(
     projects: List<Project>,
     onProjectClick: (Project) -> Unit,
+    onProjectOption: (Project) -> Unit,
     onDeleteProject: (Project) -> Unit,
     onDownloadProject: (Project) -> Unit,
     onShareProject: (Project) -> Unit,
@@ -590,6 +699,7 @@ private fun ProjectsStaggeredGrid(
         ProjectCard(
             project = project,
             onClick = { onProjectClick(project) },
+            onOptionClick = { onProjectOption(project) },
             onDelete = { onDeleteProject(project) },
             onDownload = { onDownloadProject(project) },
             onShare = { onShareProject(project) }
@@ -669,4 +779,11 @@ private fun shareProjectVideo(
         android.util.Log.e("ProjectsTab", "Share failed", e)
         viewModel.onShareError(e.message ?: context.getString(R.string.export_error_share_failed))
     }
+}
+
+private fun AspectRatio.toAnalyticsRatioSize(): String = when (this) {
+    AspectRatio.RATIO_16_9 -> "16:9"
+    AspectRatio.RATIO_9_16 -> "9:16"
+    AspectRatio.RATIO_4_5 -> "4:5"
+    AspectRatio.RATIO_1_1 -> "1:1"
 }

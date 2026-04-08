@@ -32,9 +32,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -46,6 +48,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.modules.gallery.GalleryScreen
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
 import com.videomaker.aimusic.modules.home.components.ProjectsTabContent
@@ -60,6 +64,8 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.launch
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import com.videomaker.aimusic.core.constants.AdPlacement
+import kotlinx.coroutines.flow.distinctUntilChanged
+import androidx.compose.runtime.snapshotFlow
 
 /**
  * HomeScreen - Main screen with tabbed navigation
@@ -106,6 +112,34 @@ fun HomeScreen(
     val density = LocalDensity.current
     var topBarHeightPx by remember { mutableIntStateOf(0) }
     val topBarHeight = with(density) { topBarHeightPx.toDp() }
+    val tabNameByIndex: (Int) -> String = { index ->
+        when (index) {
+            0 -> AnalyticsEvent.Value.TabName.GALLERY
+            1 -> AnalyticsEvent.Value.TabName.SONG
+            else -> AnalyticsEvent.Value.TabName.LIBRARY
+        }
+    }
+    var lastSettledPage by remember { mutableIntStateOf(pagerState.currentPage) }
+    var hasSentInitialTabView by remember { mutableStateOf(false) }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()
+            .collect { settledPage ->
+                val currentTab = tabNameByIndex(settledPage)
+                Analytics.trackTabView(currentTab)
+
+                if (hasSentInitialTabView && lastSettledPage != settledPage) {
+                    Analytics.trackTabSwitch(
+                        from = tabNameByIndex(lastSettledPage),
+                        to = currentTab
+                    )
+                } else {
+                    hasSentInitialTabView = true
+                }
+                lastSettledPage = settledPage
+            }
+    }
 
     Column(
         modifier = Modifier
@@ -143,7 +177,10 @@ fun HomeScreen(
                     )
                     2 -> ProjectsTabContent(
                         viewModel = projectsViewModel,
-                        onCreateClick = { onNavigateToTemplateDetail("") }, // Open template previewer with first template
+                        onCreateClick = {
+                            Analytics.trackCreationStart(AnalyticsEvent.Value.Location.LIBRARY)
+                            onNavigateToTemplateDetail("")
+                        }, // Open template previewer with first template + analytics
                         onProjectClick = onProjectClick,
                         onNavigateToTemplateDetail = onNavigateToTemplateDetail,
                         onNavigateToSongSearch = onNavigateToSongSearch,
@@ -215,6 +252,11 @@ private fun HomeTopBar(
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
+    val currentLocation = when (selectedTabIndex) {
+        0 -> AnalyticsEvent.Value.Location.GALLERY
+        1 -> AnalyticsEvent.Value.Location.SONG
+        else -> AnalyticsEvent.Value.Location.LIBRARY
+    }
 
     Column(
         modifier = modifier
@@ -277,7 +319,10 @@ private fun HomeTopBar(
             }
 
             // Settings Button on the right
-            IconButton(onClick = onSettingsClick) {
+            IconButton(onClick = {
+                Analytics.trackSettingOpen(currentLocation)
+                onSettingsClick()
+            }) {
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = stringResource(R.string.settings),

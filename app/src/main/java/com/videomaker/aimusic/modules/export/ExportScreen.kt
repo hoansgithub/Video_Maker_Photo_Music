@@ -295,6 +295,7 @@ fun ExportScreen(
                         )
                     },
                     onShareClick = {
+                        viewModel.trackShareAction()
                         shareVideo(
                             context = context,
                             outputPath = state.outputPath,
@@ -1319,4 +1320,3 @@ private fun CancelledContentPreview() {
         }
     }
 }
-

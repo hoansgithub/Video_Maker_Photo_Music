@@ -9,8 +9,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
 import com.videomaker.aimusic.modules.onboarding.OnboardingViewModel
@@ -38,6 +37,10 @@ class FeatureSelectionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        Analytics.trackScreenView(
+            screenName = EVENT_GENRE_SHOW,
+            screenClass = FeatureSelectionActivity::class.java.simpleName
+        )
 
         setContent {
             var isSaving by remember { mutableStateOf(false) }
@@ -46,7 +49,15 @@ class FeatureSelectionActivity : AppCompatActivity() {
                 Box(modifier = Modifier.fillMaxSize()) {
                     FeatureSurveyPage(
                         selectedFeatures = onboardingViewModel.selectedFeatures,
-                        onFeatureToggle = onboardingViewModel::toggleFeature
+                        onFeatureToggle = { selectedFeature ->
+                            onboardingViewModel.toggleFeature(selectedFeature)
+                            onboardingViewModel.selectedFeatures.firstOrNull()?.let { genre ->
+                                Analytics.track(
+                                    name = EVENT_GENRE_SELECT,
+                                    params = mapOf(PARAM_GENRE_SELECT to genre)
+                                )
+                            }
+                        }
                     )
 
                     Box(
@@ -59,6 +70,14 @@ class FeatureSelectionActivity : AppCompatActivity() {
                             onClick = {
                                 if (isSaving) return@OnboardingCtaButton
                                 isSaving = true
+                                Analytics.track(
+                                    name = EVENT_GENRE_NEXT,
+                                    params = mapOf(
+                                        PARAM_GENRE_SELECT to toGenreAnalyticsValue(
+                                            onboardingViewModel.selectedFeatures
+                                        )
+                                    )
+                                )
                                 onboardingViewModel.saveFeatures { result ->
                                     runOnUiThread {
                                         result.onSuccess {

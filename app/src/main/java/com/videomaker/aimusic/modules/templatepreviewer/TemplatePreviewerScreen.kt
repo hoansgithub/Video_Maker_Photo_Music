@@ -87,6 +87,8 @@ import androidx.compose.ui.unit.sp
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
@@ -372,6 +374,7 @@ private fun TemplatePreviewerReadyContent(
     onNavigateBack: () -> Unit
 ) {
     val templates = state.templates
+    val screenSessionId = remember { Analytics.newScreenSessionId() }
     val pagerState = rememberPagerState(
         initialPage = initialVirtualPage(state.initialPage, templates.size),
         pageCount = { VIRTUAL_PAGE_COUNT }
@@ -399,6 +402,25 @@ private fun TemplatePreviewerReadyContent(
             .distinctUntilChanged()
             .drop(1)
             .collect { onPageChanged(it) }
+    }
+
+    LaunchedEffect(pagerState, templates, screenSessionId) {
+        snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()
+            .collect { settledPage ->
+                val template = templates[settledPage % templates.size]
+                Analytics.trackTemplatePreview(
+                    templateId = template.id,
+                    templateName = template.name,
+                    location = AnalyticsEvent.Value.Location.TEMPLATE_PREVIEW
+                )
+                Analytics.trackTemplateImpression(
+                    templateId = template.id,
+                    templateName = template.name,
+                    location = AnalyticsEvent.Value.Location.TEMPLATE_PREVIEW,
+                    screenSessionId = screenSessionId
+                )
+            }
     }
 
     // Priority-based image preloading: current page first, then adjacent pages
@@ -559,7 +581,16 @@ private fun TemplatePreviewerReadyContent(
                                 tint = Primary,
                                 contentDescription = null,
                                 modifier = Modifier.size(32.dp)
-                                    .clickableSingle { currentTemplate?.let { onLikeTemplate(it) } }
+                                    .clickableSingle {
+                                        currentTemplate?.let { template ->
+                                            Analytics.trackTemplateUnfavorite(
+                                                templateId = template.id,
+                                                templateName = template.name,
+                                                location = AnalyticsEvent.Value.Location.TEMPLATE_PREVIEW
+                                            )
+                                            onLikeTemplate(template)
+                                        }
+                                    }
                             )
                         } else {
                             Icon(
@@ -568,7 +599,16 @@ private fun TemplatePreviewerReadyContent(
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(32.dp)
-                                    .clickableSingle { currentTemplate?.let { onLikeTemplate(it) } }
+                                    .clickableSingle {
+                                        currentTemplate?.let { template ->
+                                            Analytics.trackTemplateFavorite(
+                                                templateId = template.id,
+                                                templateName = template.name,
+                                                location = AnalyticsEvent.Value.Location.TEMPLATE_PREVIEW
+                                            )
+                                            onLikeTemplate(template)
+                                        }
+                                    }
                             )
                         }
 
@@ -592,6 +632,11 @@ private fun TemplatePreviewerReadyContent(
                     text = stringResource(R.string.template_use_button),
                     onClick = {
                         val template = templates.getOrNull(pagerState.settledPage % templates.size) ?: return@PrimaryButton
+                        Analytics.trackTemplateClick(
+                            templateId = template.id,
+                            templateName = template.name,
+                            location = AnalyticsEvent.Value.Location.TEMPLATE_PREVIEW
+                        )
                         pendingTemplate = template
                     },
                     enabled = ctaEnabled,
@@ -618,6 +663,12 @@ private fun TemplatePreviewerReadyContent(
                 defaultRatio = aspectRatioFromString(template.aspectRatio),
                 onDismiss = { pendingTemplate = null },
                 onConfirm = { selectedRatio ->
+                    Analytics.trackRatioSelect(selectedRatio.shortLabel)
+                    Analytics.trackTemplateSelect(
+                        templateId = template.id,
+                        templateName = template.name,
+                        location = AnalyticsEvent.Value.Location.TEMPLATE_PREVIEW
+                    )
                     pendingTemplate = null
                     onUseThisTemplate(template, selectedRatio)
                 }
@@ -795,7 +846,10 @@ private fun SelectRatioBottomSheet(
                     RatioOptionCard(
                         ratio = ratio,
                         isSelected = ratio == selected,
-                        onClick = { selected = ratio },
+                        onClick = {
+                            Analytics.trackRatioClick(ratio.shortLabel)
+                            selected = ratio
+                        },
                         modifier = Modifier.weight(1f)
                     )
                 }

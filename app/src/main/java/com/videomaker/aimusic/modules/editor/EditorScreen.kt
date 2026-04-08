@@ -62,7 +62,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 // import com.videomaker.aimusic.di.MusicPickerViewModelFactory // Commented out - using Supabase only
+import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.modules.editor.components.DurationBottomSheet
@@ -85,6 +88,7 @@ import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -122,6 +126,12 @@ fun EditorScreen(
     var showMusicTrimSheet by remember { mutableStateOf(false) }
     var wasPlayingBeforeMusicSheet by remember { mutableStateOf(false) }
     var musicLoadError by remember { mutableStateOf<String?>(null) }
+    var hasTrackedVideoPreview by remember { mutableStateOf(false) }
+    var hasTrackedVideoPreviewComplete by remember { mutableStateOf(false) }
+    var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
+    var hasVolumeChangedInSheet by remember { mutableStateOf(false) }
+    var initialVolumeOnSheetOpen by remember { mutableStateOf<Float?>(null) }
+    var ratioConfirmed by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     // Music Picker ViewModel - created once and reused
@@ -136,9 +146,67 @@ fun EditorScreen(
     // Song Search ViewModel - created once and reused
     val songSearchViewModel: com.videomaker.aimusic.modules.songsearch.SongSearchViewModel = koinViewModel()
 
+    fun currentState(): EditorUiState.Success? = uiState as? EditorUiState.Success
+
+    fun currentVideoId(): String? = currentState()?.project?.id
+
+    fun currentTemplateId(): String? = currentState()?.displaySettings?.effectSetId
+
+    fun currentSongId(): String =
+        currentState()?.displaySettings?.musicSongId?.toString() ?: "unknown"
+
+    fun currentSongName(): String =
+        currentState()?.displaySettings?.musicSongName ?: "unknown"
+
+    fun currentDurationMs(): Long = currentState()?.displayProject?.totalDurationMs ?: 0L
+
+    fun currentRatioLabel(): String =
+        currentState()?.displaySettings?.aspectRatio?.toAnalyticsRatioSize()
+            ?: AspectRatio.RATIO_9_16.toAnalyticsRatioSize()
+
+    fun currentVolumePercent(): Int =
+        ((currentState()?.displaySettings?.audioVolume ?: 1f) * 100f).roundToInt()
+
+    fun requestExitFromEditor() {
+        Analytics.trackExitClick(AnalyticsEvent.Value.Location.VIDEO_PREVIEW)
+        hasTrackedExitPopupShow = false
+        showExitConfirmation = true
+    }
+
     // Handle back button press - show confirmation dialog
     BackHandler {
-        showExitConfirmation = true
+        requestExitFromEditor()
+    }
+
+    val successStateForTracking = currentState()
+    LaunchedEffect(successStateForTracking?.project?.id) {
+        if (successStateForTracking != null) {
+            hasTrackedVideoPreview = false
+            hasTrackedVideoPreviewComplete = false
+        }
+    }
+
+    LaunchedEffect(successStateForTracking?.project?.id, successStateForTracking?.currentPositionMs) {
+        val state = successStateForTracking ?: return@LaunchedEffect
+        val videoId = state.project.id
+        if (!hasTrackedVideoPreview) {
+            Analytics.trackVideoPreview(
+                videoId = videoId,
+                location = if (state.isUnsavedProject) {
+                    AnalyticsEvent.Value.Location.NEW
+                } else {
+                    AnalyticsEvent.Value.Location.LIBRARY
+                }
+            )
+            hasTrackedVideoPreview = true
+        }
+        if (!hasTrackedVideoPreviewComplete && state.currentPositionMs >= 3000L) {
+            Analytics.trackVideoPreviewComplete(
+                videoId = videoId,
+                templateId = state.displaySettings.effectSetId
+            )
+            hasTrackedVideoPreviewComplete = true
+        }
     }
 
     // Navigation events live in their own StateFlow — decoupled from high-frequency UI state
@@ -169,9 +237,34 @@ fun EditorScreen(
                     canExport = !isPreviewBuilding &&
                                 (successState?.isMusicCached ?: true) &&
                                 !(successState?.isCachingMusic ?: false),
-                    onBackClick = { showExitConfirmation = true },
-                    onQualityChange = viewModel::updateQuality,
-                    onDoneClick = viewModel::navigateToExport
+                    onBackClick = { requestExitFromEditor() },
+                    onQualityChange = { quality ->
+                        val state = currentState()
+                        if (state != null && state.selectedQuality != quality) {
+                            val videoId = state.project.id
+                            val qualityLabel = quality.displayName
+                            Analytics.trackQualityEdit(videoId, qualityLabel)
+                            Analytics.trackQualityClick(videoId, qualityLabel)
+                            Analytics.trackQualitySelect(videoId, qualityLabel)
+                        }
+                        viewModel.updateQuality(quality)
+                    },
+                    onDoneClick = {
+                        val state = currentState()
+                        if (state != null) {
+                            Analytics.trackVideoExport(
+                                videoId = state.project.id,
+                                templateId = state.displaySettings.effectSetId,
+                                songId = state.displaySettings.musicSongId?.toString(),
+                                quality = state.selectedQuality.displayName,
+                                duration = state.displayProject.totalDurationMs,
+                                ratioSize = state.displaySettings.aspectRatio.toAnalyticsRatioSize(),
+                                volume = (state.displaySettings.audioVolume * 100f).roundToInt(),
+                                mediaQuantity = state.project.assets.size
+                            )
+                        }
+                        viewModel.navigateToExport()
+                    }
                 )
             },
             containerColor = SplashBackground, // #101010 (closest to #101313)
@@ -197,7 +290,14 @@ fun EditorScreen(
                         seekToPosition = state.seekToPosition,
                         scrubToPosition = state.scrubToPosition,
                         effectSetName = state.effectSetName,
-                        onPlayPauseClick = viewModel::togglePlayback,
+                        onPlayPauseClick = {
+                            if (state.isPlaying) {
+                                Analytics.trackVideoPause(state.project.id)
+                            } else {
+                                Analytics.trackVideoPlay(state.project.id)
+                            }
+                            viewModel.togglePlayback()
+                        },
                         onPlaybackStateChange = viewModel::setPlaybackState,
                         onPositionUpdate = viewModel::updatePlaybackPosition,
                         onSeek = viewModel::seekTo,
@@ -207,11 +307,45 @@ fun EditorScreen(
                         onSeekComplete = viewModel::clearSeekRequest,
                         onScrubComplete = viewModel::clearScrubRequest,
                         onPreviewStateChange = { previewState = it },
-                        onEffectClick = { showEffectSetSheet = true },
-                        onImageDurationClick = { showDurationSheet = true },
-                        onRatioClick = { showRatioSheet = true },
-                        onMusicClick = { showMusicSearchSheet = true },
-                        onVolumeClick = { showVolumeSheet = true },
+                        onEffectClick = {
+                            Analytics.trackEffectEdit(
+                                videoId = state.project.id,
+                                templateId = state.displaySettings.effectSetId
+                            )
+                            showEffectSetSheet = true
+                        },
+                        onImageDurationClick = {
+                            Analytics.trackDurationEdit(
+                                videoId = state.project.id,
+                                durationNumber = state.displaySettings.imageDurationMs
+                            )
+                            showDurationSheet = true
+                        },
+                        onRatioClick = {
+                            Analytics.trackRatioEdit(
+                                videoId = state.project.id,
+                                ratioSize = state.displaySettings.aspectRatio.toAnalyticsRatioSize()
+                            )
+                            ratioConfirmed = false
+                            showRatioSheet = true
+                        },
+                        onMusicClick = {
+                            Analytics.trackSongEdit(
+                                videoId = state.project.id,
+                                songId = state.displaySettings.musicSongId?.toString() ?: "unknown",
+                                songName = state.displaySettings.musicSongName ?: "unknown"
+                            )
+                            showMusicSearchSheet = true
+                        },
+                        onVolumeClick = {
+                            initialVolumeOnSheetOpen = state.displaySettings.audioVolume
+                            hasVolumeChangedInSheet = false
+                            Analytics.trackVolumeEdit(
+                                videoId = state.project.id,
+                                volumeNumber = (state.displaySettings.audioVolume * 100f).roundToInt()
+                            )
+                            showVolumeSheet = true
+                        },
                         onTrimClick = { showMusicTrimSheet = true },
                         modifier = Modifier.padding(paddingValues)
                     )
@@ -249,15 +383,26 @@ fun EditorScreen(
 
         // Exit confirmation dialog - rendered last to overlay everything
         if (showExitConfirmation) {
-            val hasPendingChanges = (uiState as? EditorUiState.Success)?.hasPendingChanges == true
-            val isUnsavedProject = (uiState as? EditorUiState.Success)?.isUnsavedProject == true
+            val successState = uiState as? EditorUiState.Success
+            val hasPendingChanges = successState?.hasPendingChanges == true
+            val isUnsavedProject = successState?.isUnsavedProject == true
+            val videoId = successState?.project?.id
 
             // Only show dialog if there are pending changes
             if (hasPendingChanges) {
+                if (!hasTrackedExitPopupShow) {
+                    Analytics.trackExitPopupShow(AnalyticsEvent.Value.Location.VIDEO_PREVIEW)
+                    hasTrackedExitPopupShow = true
+                }
                 ExitConfirmationDialog(
                     isUnsavedProject = isUnsavedProject,
                     onSaveAndExit = {
+                        Analytics.trackExitSave(
+                            videoId = videoId,
+                            location = AnalyticsEvent.Value.Location.VIDEO_PREVIEW
+                        )
                         showExitConfirmation = false
+                        hasTrackedExitPopupShow = false
                         scope.launch {
                             // Save project (applies pending settings + saves new project)
                             if (viewModel.saveProject()) {
@@ -267,17 +412,25 @@ fun EditorScreen(
                         }
                     },
                     onDiscardAndExit = {
+                        Analytics.trackExitDiscard(
+                            videoId = videoId,
+                            location = AnalyticsEvent.Value.Location.VIDEO_PREVIEW
+                        )
                         showExitConfirmation = false
+                        hasTrackedExitPopupShow = false
                         // Discard pending changes and navigate back
                         viewModel.navigateBack()
                     },
                     onCancel = {
+                        Analytics.trackExitContinue(AnalyticsEvent.Value.Location.VIDEO_PREVIEW)
                         showExitConfirmation = false
+                        hasTrackedExitPopupShow = false
                     }
                 )
             } else {
                 // No pending changes, just navigate back
                 showExitConfirmation = false
+                hasTrackedExitPopupShow = false
                 viewModel.navigateBack()
             }
         }
@@ -302,8 +455,26 @@ fun EditorScreen(
             if (successState != null) {
                 SelectRatioBottomSheet(
                     currentRatio = successState.displaySettings.aspectRatio,
-                    onDismiss = { showRatioSheet = false },
+                    onDismiss = {
+                        if (!ratioConfirmed) {
+                            Analytics.trackRatioClose(
+                                videoId = successState.project.id,
+                                ratioSize = successState.displaySettings.aspectRatio.toAnalyticsRatioSize()
+                            )
+                        }
+                        showRatioSheet = false
+                    },
                     onConfirm = { selectedRatio ->
+                        val ratioSize = selectedRatio.toAnalyticsRatioSize()
+                        Analytics.trackRatioClick(
+                            videoId = successState.project.id,
+                            ratioSize = ratioSize
+                        )
+                        Analytics.trackRatioSelect(
+                            videoId = successState.project.id,
+                            ratioSize = ratioSize
+                        )
+                        ratioConfirmed = true
                         viewModel.updateAspectRatio(selectedRatio)
                         showRatioSheet = false
                     }
@@ -317,8 +488,22 @@ fun EditorScreen(
             if (successState != null) {
                 DurationBottomSheet(
                     currentDurationMs = successState.displaySettings.imageDurationMs,
-                    onDismiss = { showDurationSheet = false },
+                    onDismiss = {
+                        Analytics.trackDurationClose(
+                            videoId = successState.project.id,
+                            durationNumber = successState.displaySettings.imageDurationMs
+                        )
+                        showDurationSheet = false
+                    },
                     onConfirm = { selectedDurationMs ->
+                        Analytics.trackDurationClick(
+                            videoId = successState.project.id,
+                            durationNumber = selectedDurationMs
+                        )
+                        Analytics.trackDurationSelect(
+                            videoId = successState.project.id,
+                            durationNumber = selectedDurationMs
+                        )
                         viewModel.updateImageDuration(selectedDurationMs)
                         showDurationSheet = false
                     }
@@ -329,14 +514,39 @@ fun EditorScreen(
         // Effect Set Bottom Sheet
         if (showEffectSetSheet) {
             val selectedEffectSetId = (uiState as? EditorUiState.Success)?.displaySettings?.effectSetId
+            val currentVideoId = (uiState as? EditorUiState.Success)?.project?.id
+            val currentEffectName = (uiState as? EditorUiState.Success)?.effectSetName
             EffectSetBottomSheet(
                 viewModel = effectSetViewModel,
                 selectedEffectSetId = selectedEffectSetId,
                 onEffectSetSelected = { effectSet ->
+                    val videoId = currentVideoId
+                    if (videoId != null) {
+                        Analytics.trackEffectClick(
+                            videoId = videoId,
+                            effectId = effectSet.id,
+                            effectName = effectSet.name
+                        )
+                        Analytics.trackEffectSelect(
+                            videoId = videoId,
+                            effectId = effectSet.id,
+                            effectName = effectSet.name
+                        )
+                    }
                     viewModel.updateEffectSet(effectSet.id)
                     showEffectSetSheet = false
                 },
-                onDismiss = { showEffectSetSheet = false }
+                onDismiss = {
+                    val videoId = currentVideoId
+                    if (videoId != null) {
+                        Analytics.trackEffectClose(
+                            videoId = videoId,
+                            effectId = selectedEffectSetId,
+                            effectName = currentEffectName
+                        )
+                    }
+                    showEffectSetSheet = false
+                }
             )
         }
 
@@ -354,6 +564,19 @@ fun EditorScreen(
             MusicSearchBottomSheet(
                 viewModel = songSearchViewModel,
                 onSongSelected = { song ->
+                    val videoId = currentVideoId()
+                    if (videoId != null) {
+                        Analytics.trackEditorSongClick(
+                            videoId = videoId,
+                            songId = song.id.toString(),
+                            songName = song.name
+                        )
+                        Analytics.trackEditorSongSelect(
+                            videoId = videoId,
+                            songId = song.id.toString(),
+                            songName = song.name
+                        )
+                    }
                     viewModel.updateMusicTrack(
                         songId = song.id,
                         songName = song.name,
@@ -367,6 +590,14 @@ fun EditorScreen(
                     }
                 },
                 onDismiss = {
+                    val videoId = currentVideoId()
+                    if (videoId != null) {
+                        Analytics.trackSongClose(
+                            videoId = videoId,
+                            songId = currentSongId(),
+                            songName = currentSongName()
+                        )
+                    }
                     showMusicSearchSheet = false
                     // Resume playback if it was playing before
                     if (wasPlayingBeforeMusicSheet) {
@@ -382,9 +613,32 @@ fun EditorScreen(
             VolumeBottomSheet(
                 currentVolume = successState?.displaySettings?.audioVolume ?: 1f,
                 onVolumeChange = { volume ->
+                    val initialVolume = initialVolumeOnSheetOpen ?: 1f
+                    val changed = kotlin.math.abs(initialVolume - volume) > 0.001f
+                    if (changed && !hasVolumeChangedInSheet) {
+                        val videoId = currentVideoId()
+                        if (videoId != null) {
+                            Analytics.trackVolumeClick(
+                                videoId = videoId,
+                                volumeNumber = (volume * 100f).roundToInt()
+                            )
+                        }
+                        hasVolumeChangedInSheet = true
+                    }
                     viewModel.updateAudioVolume(volume)
                 },
-                onDismiss = { showVolumeSheet = false }
+                onDismiss = {
+                    val videoId = currentVideoId()
+                    if (videoId != null) {
+                        val volumeNumber = currentVolumePercent()
+                        if (hasVolumeChangedInSheet) {
+                            Analytics.trackVolumeSelect(videoId, volumeNumber)
+                        } else {
+                            Analytics.trackVolumeClose(videoId, volumeNumber)
+                        }
+                    }
+                    showVolumeSheet = false
+                }
             )
         }
 
@@ -582,6 +836,13 @@ internal fun ErrorContent(
             textAlign = TextAlign.Center
         )
     }
+}
+
+private fun AspectRatio.toAnalyticsRatioSize(): String = when (this) {
+    AspectRatio.RATIO_16_9 -> "16:9"
+    AspectRatio.RATIO_9_16 -> "9:16"
+    AspectRatio.RATIO_4_5 -> "4:5"
+    AspectRatio.RATIO_1_1 -> "1:1"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

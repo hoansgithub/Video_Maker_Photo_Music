@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.navigation.AppNavigation
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.widget.appwidget.WidgetActions
@@ -48,10 +49,7 @@ class MainActivity : AppCompatActivity() {
 
         if (savedInstanceState == null) {
             startupInitialTab = intent.getIntExtra(EXTRA_INITIAL_TAB, 0).coerceIn(0, 2)
-            when {
-                intent.action == ACTION_UNINSTALL_APP -> navigateToUninstall = true
-                isWidgetIntent(intent) -> pendingDeepLink = intent
-            }
+            handleEntryIntent(intent)
         }
 
         setContent {
@@ -72,14 +70,31 @@ class MainActivity : AppCompatActivity() {
     // Called when the app is already running and a shortcut or widget is tapped
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        handleEntryIntent(intent)
+    }
+
+    private fun isWidgetIntent(intent: Intent): Boolean {
+        return intent.action in WIDGET_ACTIONS
+    }
+
+    private fun handleEntryIntent(intent: Intent) {
+        trackShortcutIfNeeded(intent)
         when {
             intent.action == ACTION_UNINSTALL_APP -> navigateToUninstall = true
             isWidgetIntent(intent) -> pendingDeepLink = intent
         }
     }
 
-    private fun isWidgetIntent(intent: Intent): Boolean {
-        return intent.action in WIDGET_ACTIONS
+    private fun trackShortcutIfNeeded(intent: Intent) {
+        val shortcutId = intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID) ?: return
+        val shortcutType = when (shortcutId) {
+            "trending_search" -> "trending_search"
+            "create_video" -> "create_new_video"
+            "choose_video_template" -> "choose_template"
+            "uninstall_app" -> "uninstall"
+            else -> return
+        }
+        Analytics.trackShortcutClick(shortcutType)
     }
 
     companion object {

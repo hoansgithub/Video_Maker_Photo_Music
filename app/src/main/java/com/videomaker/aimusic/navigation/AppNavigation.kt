@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.widget.appwidget.WidgetActions
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
@@ -123,6 +124,42 @@ fun AppNavigation(
     // Handle deep-link intents from home screen widgets
     LaunchedEffect(pendingDeepLink) {
         val intent = pendingDeepLink ?: return@LaunchedEffect
+        val isShortcutIntent = !intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID).isNullOrBlank()
+        if (!isShortcutIntent) {
+            when (intent.action) {
+                WidgetActions.ACTION_OPEN_SEARCH -> {
+                    Analytics.trackWidgetOpen(
+                        widgetType = "smart_search",
+                        widgetSize = "4x3",
+                        deepLinkTarget = "search"
+                    )
+                }
+                WidgetActions.ACTION_OPEN_TRENDING_TEMPLATE,
+                WidgetActions.ACTION_OPEN_TEMPLATE_DETAIL -> {
+                    Analytics.trackWidgetOpen(
+                        widgetType = "recently",
+                        widgetSize = "4x3",
+                        deepLinkTarget = "gallery"
+                    )
+                }
+                WidgetActions.ACTION_OPEN_TRENDING_SONG,
+                WidgetActions.ACTION_OPEN_TEMPLATE_WITH_SONG,
+                WidgetActions.ACTION_OPEN_SONG_PLAYER -> {
+                    Analytics.trackWidgetOpen(
+                        widgetType = "trending_song",
+                        widgetSize = "4x3",
+                        deepLinkTarget = "songs"
+                    )
+                }
+                WidgetActions.ACTION_CREATE_VIDEO -> {
+                    Analytics.trackWidgetOpen(
+                        widgetType = "recently",
+                        widgetSize = "4x3",
+                        deepLinkTarget = "gallery"
+                    )
+                }
+            }
+        }
         when (intent.action) {
             WidgetActions.ACTION_OPEN_SEARCH -> {
                 backStack.add(AppRoute.UnifiedSearch(SearchSection.TEMPLATES))
