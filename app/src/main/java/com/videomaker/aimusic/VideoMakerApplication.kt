@@ -1,5 +1,6 @@
 package com.videomaker.aimusic
 
+import android.app.Activity
 import android.app.Application
 import co.alcheclub.lib.acccore.ads.adMobModule
 import co.alcheclub.lib.acccore.analytics.AnalyticsCoordinator
@@ -14,6 +15,8 @@ import org.koin.core.context.stopKoin
 import org.koin.java.KoinJavaComponent.getKoin
 import org.koin.core.parameter.parametersOf
 import co.alcheclub.lib.acccore.di.koin.getAllSingletons
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.TimeoutCancellationException
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.ImageDecoderDecoder
@@ -55,6 +58,13 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     companion object {
+        // Track if ads have been initialized (global, survives Activity destruction)
+        private val adsInitialized = AtomicBoolean(false)
+
+        // Application-level coroutine scope for ads initialization
+        @Volatile
+        private var appScope: CoroutineScope? = null
+
         /**
          * Test device IDs for UMP (User Messaging Platform) debug mode
          *
@@ -69,6 +79,118 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
             // Add your test device IDs here
             // Example: "038F441054F01155CAC59935A542BCA0"
         )
+
+        /**
+         * Check if ads have been initialized
+         */
+        fun isAdsInitialized(): Boolean = adsInitialized.get()
+
+        /**
+         * Initialize UMP consent and AdMob SDK
+         *
+         * ⚠️ CRITICAL: This MUST be called BEFORE any ad loading operations!
+         * UMP consent must be obtained before requesting ads (GDPR compliance).
+         *
+         * This should be called from the first Activity (RootActivity).
+         * Uses Application-scoped coroutine to survive Activity destruction.
+         *
+         * @param activity Activity context required for UMP consent form
+         * @param onComplete Callback when initialization is complete
+         */
+        fun initializeAdsIfNeeded(
+            activity: Activity,
+            onComplete: () -> Unit
+        ) {
+            android.util.Log.d("VideoMakerApp", "🔄 initializeAdsIfNeeded() called")
+
+            // Skip if already initialized
+            if (adsInitialized.get()) {
+                android.util.Log.d("VideoMakerApp", "✅ Ads already initialized - skipping")
+                onComplete()
+                return
+            }
+
+            // Check if appScope is available
+            val scope = appScope
+            if (scope == null) {
+                android.util.Log.e("VideoMakerApp", "❌ appScope is null - cannot initialize ads")
+                // Mark as initialized to prevent blocking app
+                adsInitialized.set(true)
+                // CRITICAL: Call completion callback to unblock the app
+                android.util.Log.d("VideoMakerApp", "📤 Calling onComplete() callback (appScope was null)")
+                onComplete()
+                return
+            }
+
+            android.util.Log.d("VideoMakerApp", "🔄 appScope available, getting AdMobMediator...")
+            val adMobMediator = try {
+                org.koin.core.context.GlobalContext.get().get<co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator>()
+            } catch (e: Exception) {
+                android.util.Log.e("VideoMakerApp", "❌ Failed to get AdMobMediator: ${e.message}", e)
+                // Mark as initialized to prevent blocking app
+                adsInitialized.set(true)
+                // Call completion callback to unblock the app
+                android.util.Log.d("VideoMakerApp", "📤 Calling onComplete() callback (AdMobMediator failed)")
+                onComplete()
+                return
+            }
+
+            android.util.Log.d("VideoMakerApp", "✅ AdMobMediator obtained, launching coroutine...")
+
+            scope.launch(Dispatchers.Main) {
+                try {
+                    android.util.Log.d("VideoMakerApp", "🔄 Initializing UMP consent...")
+
+                    // Step 1: Initialize UMP (GDPR consent) with timeout
+                    // This checks if user is in a region requiring consent
+                    // Timeout prevents infinite hanging on emulators or poor network
+                    try {
+                        kotlinx.coroutines.withTimeout(30000L) {  // 30 second timeout
+                            adMobMediator.initializeUMP(activity)
+                        }
+                    } catch (e: TimeoutCancellationException) {
+                        android.util.Log.w("VideoMakerApp", "⏱️ UMP initialization timeout - continuing without consent")
+                    }
+
+                    android.util.Log.d("VideoMakerApp", "🔄 Presenting consent form if required...")
+
+                    // Step 2: Present consent form if needed (waits for user response)
+                    // Only shows form if user is in EEA/UK and hasn't consented yet
+                    // Timeout prevents infinite waiting
+                    try {
+                        kotlinx.coroutines.withTimeout(30000L) {  // 30 second timeout
+                            adMobMediator.presentConsentFormIfRequired(activity)
+                        }
+                    } catch (e: TimeoutCancellationException) {
+                        android.util.Log.w("VideoMakerApp", "⏱️ Consent form timeout - continuing without consent")
+                    }
+
+                    android.util.Log.d("VideoMakerApp", "🔄 Initializing AdMob SDK...")
+
+                    // Step 3: Initialize AdMob SDK with test device config
+                    val config: Map<String, Any> = if (BuildConfig.DEBUG) {
+                        mapOf("testDeviceIds" to UMP_TEST_DEVICE_IDS)
+                    } else {
+                        emptyMap()
+                    }
+                    adMobMediator.initialize(activity.applicationContext, config)
+
+                    adsInitialized.set(true)
+                    android.util.Log.d("VideoMakerApp", "✅ Ads initialization complete!")
+
+                } catch (e: Exception) {
+                    android.util.Log.e("VideoMakerApp", "❌ Ads initialization error: ${e.message}", e)
+                    e.printStackTrace()
+                    // Mark as initialized anyway to prevent blocking the app
+                    adsInitialized.set(true)
+                }
+
+                // Call completion callback
+                android.util.Log.d("VideoMakerApp", "📤 Calling onComplete() callback")
+                onComplete()
+                android.util.Log.d("VideoMakerApp", "✅ onComplete() callback executed")
+            }
+        }
     }
 
     /**
@@ -105,6 +227,9 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Set application scope for static methods (used by initializeAdsIfNeeded)
+        appScope = applicationScope
 
         // Initialize Koin with separated modules
         // ⚠️ CRITICAL: Module ordering matters!

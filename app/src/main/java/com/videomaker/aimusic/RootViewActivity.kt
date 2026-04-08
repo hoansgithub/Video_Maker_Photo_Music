@@ -91,8 +91,9 @@ class RootViewActivity : AppCompatActivity() {
 
         enableEdgeToEdge()
 
-        // 3. Initialize app (ads, remote config, status checks)
-        rootViewModel.initializeApp()
+        // 3. Initialize app (UMP consent, ads, remote config, status checks)
+        // CRITICAL: Pass Activity for UMP consent form
+        rootViewModel.initializeApp(this)
 
         setContent {
             val isLoading by rootViewModel.isLoading.collectAsStateWithLifecycle()

@@ -95,14 +95,15 @@ class RootViewModel(
      * Initialize app - MUST be called from RootViewActivity onCreate
      *
      * This handles:
-     * 1. AdMob initialization (placeholder for future)
+     * 1. UMP consent and AdMob SDK initialization (CRITICAL: MUST happen first!)
      * 2. Firebase Remote Config fetch and activate
-     * 3. App Open ad presentation (placeholder for future)
-     * 4. Language selection status check
-     * 5. Onboarding status check
-     * 6. Navigation to appropriate screen
+     * 3. Language selection status check
+     * 4. Onboarding status check
+     * 5. Navigation to appropriate screen
+     *
+     * @param activity Activity context required for UMP consent form
      */
-    fun initializeApp() {
+    fun initializeApp(activity: android.app.Activity) {
         if (isInitialized) {
             // Already initialized, just navigate
             proceedToNextScreen()
@@ -110,17 +111,35 @@ class RootViewModel(
         }
 
         isInitialized = true
-        loadInitialData()
+
+        // Check if ads already initialized (global state)
+        if (com.videomaker.aimusic.VideoMakerApplication.isAdsInitialized()) {
+            loadInitialData()
+            return
+        }
+
+        _loadingStep.value = LoadingStep.INITIALIZING
+
+        // ⚠️ CRITICAL: Initialize UMP consent + AdMob SDK BEFORE any ad loading!
+        // This uses Application-scoped coroutine (survives Activity destruction)
+        com.videomaker.aimusic.VideoMakerApplication.initializeAdsIfNeeded(activity) {
+            // This callback is called when UMP consent + AdMob initialization is complete
+            // NOW it's safe to load Remote Config and ads
+            loadInitialData()
+        }
     }
 
     /**
      * Retry app initialization after a no-internet failure.
      * Resets state so the full initialization runs again.
+     *
+     * NOTE: Cannot call initializeApp() without Activity reference
+     * RootViewActivity should handle retry by recreating itself
      */
     fun retryInitialization() {
         _showNoInternetDialog.value = false
         isInitialized = false
-        initializeApp()
+        // Activity needs to call initializeApp(activity) again
     }
 
     /**
@@ -156,26 +175,24 @@ class RootViewModel(
             }
 
             try {
-                // Step 2: Initialize AdMob (placeholder for future)
-                _loadingStep.value = LoadingStep.INITIALIZING
-                initializeAds()
-
-                // Step 3: Load Firebase Remote Config (10s timeout)
+                // Step 2: Load Firebase Remote Config (10s timeout)
+                // UMP consent is already complete, safe to fetch config
                 _loadingStep.value = LoadingStep.FETCHING_CONFIG
                 loadRemoteConfig()
 
-                // Step 4: Present App Open Ad (placeholder for future)
+                // Step 3: Present App Open Ad (placeholder for future)
+                // UMP consent is already complete, safe to load/show ads
                 _loadingStep.value = LoadingStep.LOADING_AD
                 presentAppOpenAd()
 
-                // Step 5: Check startup gate status
+                // Step 4: Check startup gate status
                 _loadingStep.value = LoadingStep.CHECKING_STATUS
                 val onboardingResult = checkOnboardingStatusUseCase()
                 needsOnboarding = onboardingResult.getOrNull() ?: false
                 needsLanguageSelection = checkLanguageSelectedUseCase()
                 needsFeatureSelection = !preferencesManager.isFeatureSelectionComplete()
 
-                // Step 6: Track initialization time
+                // Step 5: Track initialization time
                 val durationMs = System.currentTimeMillis() - startTimeMillis
                 Analytics.track(
                     name = AnalyticsEvent.APP_INIT_TIME,
@@ -184,7 +201,7 @@ class RootViewModel(
                     )
                 )
 
-                // Step 7: Navigate to appropriate screen
+                // Step 6: Navigate to appropriate screen
                 proceedToNextScreen()
 
             } catch (e: Exception) {
