@@ -24,10 +24,17 @@ dependencyResolutionManagement {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/hoansgithub/ACCCoreAndroid")
             credentials {
+                // Load credentials from local.properties or environment variables
+                val localProperties = java.util.Properties()
+                val localPropertiesFile = File(rootDir, "local.properties")
+                if (localPropertiesFile.exists()) {
+                    localPropertiesFile.inputStream().use { localProperties.load(it) }
+                }
+
                 username = System.getenv("GITHUB_ACTOR")
-                    ?: providers.gradleProperty("gpr.user").orNull
+                    ?: localProperties.getProperty("gpr.user")
                 password = System.getenv("GITHUB_TOKEN")
-                    ?: providers.gradleProperty("gpr.key").orNull
+                    ?: localProperties.getProperty("gpr.key")
             }
         }
     }
@@ -38,13 +45,13 @@ include(":app")
 
 // ============================================
 // LOCAL COMPOSITE BUILD - ACCCoreAndroid
-// COMMENTED OUT - Using GitHub Packages instead
-// Uncomment for local testing of ACCCore updates
+// DISABLED - Using GitHub Packages (v0.0.26)
 // ============================================
 // includeBuild("../ACCCoreAndroid") {
 //     dependencySubstitution {
 //         substitute(module("co.alcheclub.lib:acccore")).using(project(":ACCCore"))
 //         substitute(module("co.alcheclub.lib:acccore-firebase")).using(project(":ACCCore-Firebase"))
+//         substitute(module("co.alcheclub.lib:acccore-facebook")).using(project(":ACCCore-Facebook"))
 //         substitute(module("co.alcheclub.lib:acccore-revenuecat")).using(project(":ACCCore-RevenueCat"))
 //         substitute(module("co.alcheclub.lib:acccore-ads")).using(project(":ACCCore-Ads"))
 //         substitute(module("co.alcheclub.lib:acccore-appsflyer")).using(project(":ACCCore-AppsFlyer"))
