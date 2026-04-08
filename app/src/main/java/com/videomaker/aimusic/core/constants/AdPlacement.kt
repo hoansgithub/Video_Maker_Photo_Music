@@ -115,6 +115,40 @@ object AdPlacement {
     const val BANNER_HOME = "ad_banner_home"
 
     /**
+     * Native ad shown at bottom of onboarding language selector screen.
+     * Timing: Loaded when language selector is displayed.
+     * High-engagement placement for first-time users.
+     *
+     * Layout: native_big_bait (412:304 ratio, 1.355:1)
+     * - Large vertical layout with clickbait CTA button
+     * - Attention-grabbing design for maximum engagement
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/4622910597
+     * - Secondary: ca-app-pub-7121075950716954/5002184541
+     *
+     * Remote Config key: ad_native_onboarding_language
+     */
+    const val NATIVE_ONBOARDING_LANGUAGE = "ad_native_onboarding_language"
+
+    /**
+     * Alternative native ad for onboarding language selector (A/B test variant).
+     * Timing: Loaded in parallel with NATIVE_ONBOARDING_LANGUAGE.
+     * First one to load wins and is displayed.
+     *
+     * Layout: native_big_bait (412:304 ratio, 1.355:1)
+     * - Same layout as primary placement
+     * - Different ad units for A/B testing
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/7245204502
+     * - Secondary: ca-app-pub-7121075950716954/9871367841
+     *
+     * Remote Config key: ad_native_onboarding_language_alt
+     */
+    const val NATIVE_ONBOARDING_LANGUAGE_ALT = "ad_native_onboarding_language_alt"
+
+    /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
      */
@@ -124,6 +158,8 @@ object AdPlacement {
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
         INTERSTITIAL_EXPORT_RESULT_EXIT,
         INTERSTITIAL_ASSET_PICKER_EXIT,
-        BANNER_HOME
+        BANNER_HOME,
+        NATIVE_ONBOARDING_LANGUAGE,
+        NATIVE_ONBOARDING_LANGUAGE_ALT
     )
 }

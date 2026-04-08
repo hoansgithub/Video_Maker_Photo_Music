@@ -3,6 +3,7 @@ package com.videomaker.aimusic
 import android.app.Activity
 import android.app.Application
 import co.alcheclub.lib.acccore.ads.adMobModule
+import co.alcheclub.lib.acccore.ads.layout.NativeAdLayoutRegistry
 import co.alcheclub.lib.acccore.analytics.AnalyticsCoordinator
 import co.alcheclub.lib.acccore.appsflyer.appsFlyerModule
 import co.alcheclub.lib.acccore.coreModuleFromDI
@@ -30,9 +31,8 @@ import com.videomaker.aimusic.di.domainModule
 import com.videomaker.aimusic.di.mediaModule
 import com.videomaker.aimusic.di.presentationModule
 import com.videomaker.aimusic.di.adsModule
-// TODO: Uncomment after fixing ACCCore-Ads API
-// import com.videomaker.aimusic.core.ads.AdInitializer
-// import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
+import com.videomaker.aimusic.core.ads.AdInitializer
+import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
 import com.videomaker.aimusic.media.library.MusicSongLibrary
 import com.videomaker.aimusic.media.library.TransitionSetLibrary
 import com.videomaker.aimusic.media.library.TransitionShaderLibrary
@@ -40,6 +40,8 @@ import com.videomaker.aimusic.media.library.VideoTemplateLibrary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -94,6 +96,45 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
          * Check if ads have been initialized
          */
         fun isAdsInitialized(): Boolean = adsInitialized.get()
+
+        /**
+         * Preload native ad (non-suspend version)
+         * Launches coroutine in application scope for background loading
+         *
+         * @param placement Placement ID to preload
+         */
+        fun preloadNativeAd(placement: String) {
+            appScope?.launch(Dispatchers.IO) {
+                try {
+                    val adsLoaderService = org.koin.core.context.GlobalContext.get()
+                        .get<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
+                    adsLoaderService.loadNative(placement)
+                    android.util.Log.d("VideoMakerApp", "✅ Native ad preloaded: $placement")
+                } catch (e: Exception) {
+                    android.util.Log.w("VideoMakerApp", "⚠️ Failed to preload native ad: $placement", e)
+                }
+            }
+        }
+
+        /**
+         * Preload native ad (suspend version)
+         * Waits for ad to load or fail before returning
+         *
+         * @param placement Placement ID to preload
+         * @return true if ad loaded successfully, false if failed
+         */
+        suspend fun preloadNativeAdSuspend(placement: String): Boolean {
+            return try {
+                val adsLoaderService = org.koin.core.context.GlobalContext.get()
+                    .get<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
+                adsLoaderService.loadNative(placement)
+                android.util.Log.d("VideoMakerApp", "✅ Native ad preloaded: $placement")
+                true
+            } catch (e: Exception) {
+                android.util.Log.w("VideoMakerApp", "⚠️ Failed to preload native ad: $placement", e)
+                false
+            }
+        }
 
         /**
          * Initialize UMP consent and AdMob SDK
@@ -230,6 +271,11 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
         // Set application scope for static methods (used by initializeAdsIfNeeded)
         appScope = applicationScope
+
+        // Register native ad layout provider BEFORE Koin initialization
+        // This ensures native ad layouts are available when ads are initialized
+        NativeAdLayoutRegistry.register(VideoMakerNativeAdLayoutProvider())
+        android.util.Log.d("VideoMakerApp", "✅ Native ad layout provider registered")
 
         // Initialize Koin with separated modules
         // ⚠️ CRITICAL: Module ordering matters!

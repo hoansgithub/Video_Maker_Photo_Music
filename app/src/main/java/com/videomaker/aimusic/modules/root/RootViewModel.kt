@@ -234,36 +234,59 @@ class RootViewModel(
                         needsLanguageSelection = checkLanguageSelectedUseCase()
                         needsFeatureSelection = !preferencesManager.isFeatureSelectionComplete()
 
-                        // Step 5: Preload splash interstitial ad (parallel with other operations)
-                        // Ad loads in background while we check status
+                        // Step 5: Preload ads in parallel (native ads + splash interstitial)
+                        // Native ads load on IO thread, interstitial on Main (AdMob requirement)
                         // Uses same timeout as overall initialization (from Remote Config)
                         _loadingStep.value = LoadingStep.LOADING_AD
-                        android.util.Log.d("RootViewModel", "🎬 Step 5: Preloading splash interstitial ad...")
-                        android.util.Log.d("RootViewModel", "   - Placement: ${AdPlacement.INTERSTITIAL_SPLASH}")
+                        android.util.Log.d("RootViewModel", "🎬 Step 5: Preloading ads...")
+                        android.util.Log.d("RootViewModel", "   - Native ads: ${AdPlacement.NATIVE_ONBOARDING_LANGUAGE}, ${AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT}")
+                        android.util.Log.d("RootViewModel", "   - Interstitial: ${AdPlacement.INTERSTITIAL_SPLASH}")
                         android.util.Log.d("RootViewModel", "   - Timeout: ${initTimeoutMs}ms")
 
-                        withContext(Dispatchers.Main) {
-                            coroutineScope {
-                                val adJob = async {
-                                    runCatching {
-                                        val success = InterstitialAdHelperExt.preloadInterstitial(
-                                            adsLoaderService = adsLoaderService,
-                                            placement = AdPlacement.INTERSTITIAL_SPLASH,
-                                            loadTimeoutMillis = initTimeoutMs,  // Use Remote Config timeout
-                                            showLoadingOverlay = false  // We have our own loading screen
+                        coroutineScope {
+                            // Parallel loading strategy:
+                            // 1. Native ads on IO thread (current step preloading)
+                            // 2. Splash interstitial on Main thread (AdMob requirement)
+
+                            val nativeAdsJob = async(Dispatchers.IO) {
+                                runCatching {
+                                    // Preload language selector ads if language hasn't been selected yet
+                                    // Language selector is the FIRST screen user will see, so preload during splash
+                                    if (needsLanguageSelection) {
+                                        // Load both primary and _alt variants in parallel for A/B testing
+                                        // First one to load wins and gets displayed
+                                        awaitAll(
+                                            async { com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdSuspend(AdPlacement.NATIVE_ONBOARDING_LANGUAGE) },
+                                            async { com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdSuspend(AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT) }
                                         )
-                                        if (success) {
-                                            android.util.Log.d("RootViewModel", "✅ Splash ad preload SUCCESS")
-                                        } else {
-                                            android.util.Log.w("RootViewModel", "⚠️ Splash ad preload FAILED (returned false)")
-                                        }
-                                        success
-                                    }.onFailure {
-                                        android.util.Log.e("RootViewModel", "❌ Splash ad preload exception: ${it.message}", it)
+                                        android.util.Log.d("RootViewModel", "✅ Language selector native ads preloaded (both variants)")
                                     }
+                                }.onFailure {
+                                    android.util.Log.w("RootViewModel", "⚠️ Native ad preload failed (non-blocking): ${it.message}")
                                 }
-                                adJob.await()
                             }
+
+                            val splashAdJob = async(Dispatchers.Main) {
+                                runCatching {
+                                    val success = InterstitialAdHelperExt.preloadInterstitial(
+                                        adsLoaderService = adsLoaderService,
+                                        placement = AdPlacement.INTERSTITIAL_SPLASH,
+                                        loadTimeoutMillis = initTimeoutMs,
+                                        showLoadingOverlay = false
+                                    )
+                                    if (success) {
+                                        android.util.Log.d("RootViewModel", "✅ Splash interstitial preloaded")
+                                    } else {
+                                        android.util.Log.w("RootViewModel", "⚠️ Splash interstitial preload failed")
+                                    }
+                                    success
+                                }.onFailure {
+                                    android.util.Log.e("RootViewModel", "❌ Splash interstitial exception: ${it.message}", it)
+                                }
+                            }
+
+                            // Wait for both jobs to complete
+                            awaitAll(nativeAdsJob, splashAdJob)
                         }
 
                     } catch (e: Exception) {

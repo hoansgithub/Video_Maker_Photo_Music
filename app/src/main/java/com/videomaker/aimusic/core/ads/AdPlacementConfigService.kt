@@ -7,6 +7,7 @@ import co.alcheclub.lib.acccore.ads.loader.AdUnitConfig as CoreAdUnitConfig
 import co.alcheclub.lib.acccore.remoteconfig.ConfigContainer
 import co.alcheclub.lib.acccore.remoteconfig.ConfigurableObject
 import com.videomaker.aimusic.core.constants.AdPlacement
+import kotlinx.serialization.json.JsonPrimitive
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -165,6 +166,38 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // ============================================
+        // NATIVE ADS
+        // ============================================
+
+        // Onboarding language selector native ad (shown at bottom of language screen)
+        // High-engagement placement for first-time users
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4622910597",  // Primary
+                "ca-app-pub-7121075950716954/5002184541"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Onboarding language selector alternative native ad (A/B test variant)
+        // Loaded in parallel with primary placement, first to load wins
+        // Layout: native_big_bait (same layout, different ad units)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7245204502",  // Primary
+                "ca-app-pub-7121075950716954/9871367841"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }
@@ -209,6 +242,56 @@ class AdPlacementConfigService(
 
             Log.d(TAG, "  ✓ Registered: $placementId")
             Log.d(TAG, "    - Type: $type")
+            Log.d(TAG, "    - Units: ${units.size}")
+            Log.d(TAG, "    - Enabled: $enabled")
+            Log.d(TAG, "    - Ad Unit IDs: ${adUnitIds.joinToString(", ")}")
+        } catch (e: Exception) {
+            Log.e(TAG, "  ✗ Failed to register: $placementId", e)
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * Register a native ad placement with layout configuration
+     *
+     * @param placementId Placement identifier (must match Remote Config key)
+     * @param layoutName Native ad layout name (e.g., "native_big_bait", "native_small_clean")
+     * @param adUnitIds List of AdMob ad unit IDs (tried in order, first to last)
+     * @param enabled Whether this placement is enabled by default
+     */
+    private fun registerNativePlacement(
+        placementId: String,
+        layoutName: String,
+        adUnitIds: List<String>,
+        enabled: Boolean = true
+    ) {
+        try {
+            // Register placement with PlacementConfigService
+            placementConfigService.registerPlacement(placementId)
+
+            // Create ad unit configs (tried in priority order)
+            val units = adUnitIds.map { unitId ->
+                CoreAdUnitConfig(
+                    id = unitId,
+                    enabled = enabled
+                )
+            }
+
+            // Set local fallback config with layout in extras
+            val config = CorePlacementConfig(
+                enabled = enabled,
+                type = "native",
+                units = units,
+                extras = mapOf("layout" to JsonPrimitive(layoutName))
+            )
+            placementConfigService.setLocalConfig(placementId, config)
+
+            // Track successful registration
+            registrationCount.incrementAndGet()
+
+            Log.d(TAG, "  ✓ Registered: $placementId")
+            Log.d(TAG, "    - Type: native")
+            Log.d(TAG, "    - Layout: $layoutName")
             Log.d(TAG, "    - Units: ${units.size}")
             Log.d(TAG, "    - Enabled: $enabled")
             Log.d(TAG, "    - Ad Unit IDs: ${adUnitIds.joinToString(", ")}")
