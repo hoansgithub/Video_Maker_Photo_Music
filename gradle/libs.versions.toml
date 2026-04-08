@@ -102,6 +102,7 @@ espressoCore = "3.7.0"
 # GitHub Packages - co.alcheclub.lib group
 acccore = { module = "co.alcheclub.lib:acccore", version.ref = "acccore" }
 acccore-firebase = { module = "co.alcheclub.lib:acccore-firebase", version.ref = "acccore" }
+acccore-facebook = { module = "co.alcheclub.lib:acccore-facebook", version.ref = "acccore" }
 acccore-revenuecat = { module = "co.alcheclub.lib:acccore-revenuecat", version.ref = "acccore" }
 acccore-ads = { module = "co.alcheclub.lib:acccore-ads", version.ref = "acccore" }
 acccore-appsflyer = { module = "co.alcheclub.lib:acccore-appsflyer", version.ref = "acccore" }

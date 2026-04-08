@@ -4,7 +4,9 @@ import android.app.Activity
 import android.app.Application
 import co.alcheclub.lib.acccore.ads.adMobModule
 import co.alcheclub.lib.acccore.analytics.AnalyticsCoordinator
+import co.alcheclub.lib.acccore.appsflyer.appsFlyerModule
 import co.alcheclub.lib.acccore.coreModuleFromDI
+import co.alcheclub.lib.acccore.facebook.facebookModule
 import co.alcheclub.lib.acccore.firebase.firebaseModule
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfigCoordinator
 import com.google.android.ump.ConsentDebugSettings
@@ -47,8 +49,12 @@ import kotlinx.coroutines.launch
  * Initializes Koin (Dependency Injection) on startup.
  * Registered in AndroidManifest.xml with android:name=".VideoMakerApplication"
  *
- * Firebase modules initialized:
+ * Analytics platforms initialized:
  * - Firebase Analytics (via firebaseModule)
+ * - Facebook Analytics (via facebookModule)
+ * - AppsFlyer (via appsFlyerModule)
+ *
+ * Other Firebase modules:
  * - Firebase Crashlytics (via firebaseModule)
  * - Firebase Remote Config (via firebaseModule)
  * - Firebase Performance (via firebaseModule)
@@ -237,17 +243,18 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         // Initialize Koin with separated modules
         // ⚠️ CRITICAL: Module ordering matters!
         // 1. firebaseModule - Provides Firebase AnalyticsPlatform & ConfigCenter
-        // 2. coreModuleFromDI - Creates coordinators that auto-discover all platforms
+        // 2. facebookModule/appsFlyerModule - Provide additional AnalyticsPlatforms
         // 3. adMobModule - Provides AdMob SDK with UMP consent
-        // 4. Other modules - Can use coordinators
+        // 4. coreModuleFromDI - Creates coordinators that auto-discover all platforms
+        // 5. Other modules - Can use coordinators
         startKoin {
             androidContext(this@VideoMakerApplication)
             modules(
-                firebaseModule(manualAdImpressionTracking = true),  // Firebase Analytics, Crashlytics, RemoteConfig, Performance
-                coreModuleFromDI(
-                    applicationScope = applicationScope,
-                    enableAnalyticsTracking = !BuildConfig.DEBUG, // Disable tracking in debug
-                    enableAnalyticsLogging = BuildConfig.DEBUG    // Enable verbose logs in debug
+                firebaseModule(manualAdImpressionTracking = true),  // ← 1. FIRST: Firebase Analytics, Crashlytics, RemoteConfig, Performance
+                facebookModule(isDebug = BuildConfig.DEBUG),        // ← 2. Facebook Analytics only (no login)
+                appsFlyerModule(                                    // ← 2. AppsFlyer: Another AnalyticsPlatform
+                    devKey = BuildConfig.APPSFLYER_DEV_KEY,
+                    isDebug = BuildConfig.DEBUG
                 ),
                 // AdMob: UMP consent setup
                 // DEBUG_GEOGRAPHY_EEA forces consent form to show (simulates user in Europe)
@@ -260,7 +267,12 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                         ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_DISABLED
                     }
                 ),
-                dataModule,         // Data sources & repositories
+                coreModuleFromDI(                                   // ← 4. Creates coordinators (with app scope)
+                    applicationScope = applicationScope,
+                    enableAnalyticsTracking = !BuildConfig.DEBUG,   // Disable tracking in debug
+                    enableAnalyticsLogging = BuildConfig.DEBUG      // Enable verbose logs in debug
+                ),
+                dataModule,         // ← 5. Data sources & repositories
                 mediaModule,        // Media processing utilities
                 adsModule,          // Ad placement config & helpers
                 domainModule,       // Use cases & business logic
