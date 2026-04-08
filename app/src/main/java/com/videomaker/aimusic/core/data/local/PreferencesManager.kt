@@ -25,6 +25,9 @@ class PreferencesManager(context: Context) {
         private const val KEY_FEATURE_SELECTION_COMPLETE = "feature_selection_complete"
         private const val KEY_HOME_INITIAL_TAB_FROM_ONBOARDING = "home_initial_tab_from_onboarding"
         private const val KEY_USER_REGION = "user_region"
+        private const val KEY_RATING_VIDEO_CREATE_COUNT = "rating_video_create_count"
+        private const val KEY_RATING_SHOWN_COUNT = "rating_shown_count"
+        private const val KEY_RATING_COMPLETED = "rating_completed"
         private const val RECENT_SEARCHES_DELIMITER = "\u001F" // Unit Separator
         private const val GENRES_DELIMITER = ","
         private const val MAX_RECENT_SEARCHES = 3 // FIFO: First In First Out
@@ -142,6 +145,22 @@ class PreferencesManager(context: Context) {
 
     fun setUserRegion(region: String) =
         prefs.edit().putString(KEY_USER_REGION, region).apply()
+
+    // ============================================
+    // Rating preferences
+    // ============================================
+
+    var ratingVideoCreateCount: Int
+        get() = prefs.getInt(KEY_RATING_VIDEO_CREATE_COUNT, 0)
+        set(value) = prefs.edit { putInt(KEY_RATING_VIDEO_CREATE_COUNT, value) }
+
+    var ratingShownCount: Int
+        get() = prefs.getInt(KEY_RATING_SHOWN_COUNT, 0)
+        set(value) = prefs.edit { putInt(KEY_RATING_SHOWN_COUNT, value) }
+
+    var ratingCompleted: Boolean
+        get() = prefs.getBoolean(KEY_RATING_COMPLETED, false)
+        set(value) = prefs.edit { putBoolean(KEY_RATING_COMPLETED, value) }
 
     /**
      * Clear all preferences (for testing/logout)

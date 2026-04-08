@@ -439,6 +439,43 @@ class UnifiedSearchViewModel(
         _navigationEvent.value = null
     }
 
+    /**
+     * Refresh localized content (genres, vibe tags, featured templates, suggested songs).
+     * Called when locale changes in settings.
+     */
+    fun refresh() {
+        viewModelScope.launch(Dispatchers.IO) {
+            templateRepository.getVibeTags()
+                .onSuccess { _suggestionVibeTags.value = it }
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            templateRepository.getFeaturedTemplates(limit = PAGE_SIZE)
+                .onSuccess {
+                    _featuredTemplates.value = it
+                    _hasMoreFeaturedTemplates.value = it.size == PAGE_SIZE
+                }
+                .onFailure {
+                    _hasMoreFeaturedTemplates.value = false
+                }
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            getGenresUseCase()
+                .onSuccess { _genres.value = it }
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            getSuggestedSongsUseCase(limit = PAGE_SIZE)
+                .onSuccess {
+                    _suggestedSongs.value = it
+                    _hasMoreSuggestedSongs.value = it.size == PAGE_SIZE
+                }
+                .onFailure {
+                    _hasMoreSuggestedSongs.value = false
+                }
+        }
+    }
 
     fun onExploreMore() {
         _uiState.value = UnifiedSearchUiState.Idle(initialSection)

@@ -78,6 +78,11 @@ import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.root.RootViewModel
 import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
+import com.videomaker.aimusic.core.device.DeviceInfoProvider
+import com.videomaker.aimusic.core.rating.RatingTriggerManager
+import com.videomaker.aimusic.data.repository.FeedbackRepositoryImpl
+import com.videomaker.aimusic.domain.repository.FeedbackRepository
+import com.videomaker.aimusic.domain.usecase.SubmitFeedbackUseCase
 import com.videomaker.aimusic.modules.settings.UninstallViewModel
 import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchViewModelFactory
 import com.videomaker.aimusic.widget.WidgetViewModel
@@ -141,6 +146,15 @@ val dataModule = module {
     single<EffectSetRepository> { EffectSetRepositoryImpl(get(), get(), get()) }
     single<LikedSongRepository> { LikedSongRepositoryImpl(get()) }
     single<LikedTemplateRepository> { LikedTemplateRepositoryImpl(get()) }
+
+    // Device info
+    single { DeviceInfoProvider(androidContext()) }
+
+    // Rating trigger
+    single { RatingTriggerManager(get()) }
+
+    // Feedback repository
+    single<FeedbackRepository> { FeedbackRepositoryImpl(get(), get()) }
 }
 
 // ========== MEDIA LAYER MODULE ==========
@@ -210,6 +224,9 @@ val domainModule = module {
     factory { GetSelectedLanguageUseCase(get()) }
     factory { SaveLanguagePreferenceUseCase(get(), get(), get()) }  // LanguageManager, RegionProvider, TemplateRepository
     factory { ApplyLanguageUseCase(get(), get()) }  // LanguageManager, ApiCacheManager
+
+    // Feedback use case
+    factory { SubmitFeedbackUseCase(get()) }
 
     // Project use cases
     factory { CreateProjectUseCase(get()) }
@@ -330,7 +347,9 @@ class EditorViewModelFactory(
 class ExportViewModelFactory(
     private val exportRepository: ExportRepository,
     private val projectRepository: ProjectRepository,
-    private val templateRepository: TemplateRepository
+    private val templateRepository: TemplateRepository,
+    private val ratingTriggerManager: RatingTriggerManager,
+    private val submitFeedbackUseCase: SubmitFeedbackUseCase
 ) {
     fun create(projectId: String, quality: com.videomaker.aimusic.domain.model.VideoQuality = com.videomaker.aimusic.domain.model.VideoQuality.DEFAULT): ExportViewModel {
         return ExportViewModel(
@@ -338,7 +357,9 @@ class ExportViewModelFactory(
             initialQuality = quality,
             exportRepository = exportRepository,
             projectRepository = projectRepository,
-            templateRepository = templateRepository
+            templateRepository = templateRepository,
+            ratingTriggerManager = ratingTriggerManager,
+            submitFeedbackUseCase = submitFeedbackUseCase
         )
     }
 }
@@ -633,7 +654,9 @@ val presentationModule = module {
         ExportViewModelFactory(
             exportRepository = get(),
             projectRepository = get(),
-            templateRepository = get()
+            templateRepository = get(),
+            ratingTriggerManager = get(),
+            submitFeedbackUseCase = get()
         )
     }
 
