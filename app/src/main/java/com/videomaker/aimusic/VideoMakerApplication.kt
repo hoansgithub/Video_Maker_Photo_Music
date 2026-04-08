@@ -1,10 +1,12 @@
 package com.videomaker.aimusic
 
 import android.app.Application
+import co.alcheclub.lib.acccore.ads.adMobModule
 import co.alcheclub.lib.acccore.analytics.AnalyticsCoordinator
 import co.alcheclub.lib.acccore.coreModuleFromDI
 import co.alcheclub.lib.acccore.firebase.firebaseModule
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfigCoordinator
+import com.google.android.ump.ConsentDebugSettings
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
@@ -43,11 +45,31 @@ import kotlinx.coroutines.launch
  * - Firebase Crashlytics (via firebaseModule)
  * - Firebase Remote Config (via firebaseModule)
  * - Firebase Performance (via firebaseModule)
+ *
+ * AdMob modules initialized:
+ * - AdMob SDK with UMP consent (via adMobModule)
  */
 class VideoMakerApplication : Application(), ImageLoaderFactory {
 
     // Application-scoped coroutine scope for long-running operations
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    companion object {
+        /**
+         * Test device IDs for UMP (User Messaging Platform) debug mode
+         *
+         * To get your device ID:
+         * 1. Run the app once
+         * 2. Check logcat for: "Use new ConsentDebugSettings.Builder().addTestDeviceHashedId("YOUR_ID")"
+         * 3. Add your device ID to this list
+         *
+         * IMPORTANT: Only used in debug builds (see BuildConfig.DEBUG check below)
+         */
+        private val UMP_TEST_DEVICE_IDS = listOf<String>(
+            // Add your test device IDs here
+            // Example: "038F441054F01155CAC59935A542BCA0"
+        )
+    }
 
     /**
      * Create optimized ImageLoader for Coil
@@ -88,7 +110,8 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         // ⚠️ CRITICAL: Module ordering matters!
         // 1. firebaseModule - Provides Firebase AnalyticsPlatform & ConfigCenter
         // 2. coreModuleFromDI - Creates coordinators that auto-discover all platforms
-        // 3. Other modules - Can use coordinators
+        // 3. adMobModule - Provides AdMob SDK with UMP consent
+        // 4. Other modules - Can use coordinators
         startKoin {
             androidContext(this@VideoMakerApplication)
             modules(
@@ -97,6 +120,17 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                     applicationScope = applicationScope,
                     enableAnalyticsTracking = !BuildConfig.DEBUG, // Disable tracking in debug
                     enableAnalyticsLogging = BuildConfig.DEBUG    // Enable verbose logs in debug
+                ),
+                // AdMob: UMP consent setup
+                // DEBUG_GEOGRAPHY_EEA forces consent form to show (simulates user in Europe)
+                // Requires GDPR message to be published in AdMob Console → Privacy & Messaging
+                adMobModule(
+                    testDeviceIds = if (BuildConfig.DEBUG) UMP_TEST_DEVICE_IDS else emptyList(),
+                    debugGeography = if (BuildConfig.DEBUG) {
+                        ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA
+                    } else {
+                        ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_DISABLED
+                    }
                 ),
                 dataModule,         // Data sources & repositories
                 mediaModule,        // Media processing utilities

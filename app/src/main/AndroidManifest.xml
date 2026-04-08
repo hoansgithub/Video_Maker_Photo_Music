@@ -167,6 +167,14 @@
                 android:value="true" />
         </service>
 
+        <!-- ============================================ -->
+        <!-- ADMOB CONFIGURATION -->
+        <!-- ============================================ -->
+        <!-- AdMob App ID (required for AdMob SDK) -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-7121075950716954~9970460257"/>
+
     </application>
 
 </manifest>
