@@ -4,7 +4,10 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.core.rating.RatingTriggerManager
@@ -26,6 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
+import kotlin.math.roundToInt
 
 // ============================================
 // UI STATE
@@ -172,6 +176,7 @@ class ExportViewModel(
     // ============================================
 
     private var workId: UUID? = null
+    private var currentProjectSnapshot: Project? = null
     // Single job for export + progress observation — cancelled on retry to prevent
     // parallel observers watching different work items simultaneously.
     private var exportJob: kotlinx.coroutines.Job? = null
@@ -190,6 +195,7 @@ class ExportViewModel(
     private fun loadProjectData() {
         viewModelScope.launch {
             val project = projectRepository.getProject(projectId)
+            currentProjectSnapshot = project
             _thumbnailUri.value = project?.thumbnailUri ?: project?.assets?.firstOrNull()?.uri
             _aspectRatio.value = project?.settings?.aspectRatio ?: AspectRatio.RATIO_9_16
         }
@@ -198,6 +204,18 @@ class ExportViewModel(
     private fun startExport() {
         exportJob?.cancel()
         exportJob = viewModelScope.launch {
+            val project = currentProjectSnapshot ?: projectRepository.getProject(projectId)
+            currentProjectSnapshot = project
+            Analytics.trackVideoGenerate(
+                videoId = projectId,
+                templateId = project?.settings?.effectSetId,
+                songId = project?.settings?.musicSongId?.toString(),
+                quality = _currentQuality.value.displayName,
+                duration = project?.totalDurationMs,
+                ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
+                volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
+                mediaQuantity = project?.assets?.size
+            )
             // startExport and observeProgress run sequentially in one coroutine —
             // workId is guaranteed to be set before observeProgress reads it.
             val id = exportRepository.startExport(projectId)
@@ -207,6 +225,26 @@ class ExportViewModel(
                     is ExportProgress.Preparing -> ExportUiState.Preparing
                     is ExportProgress.Processing -> ExportUiState.Processing(progress.percent)
                     is ExportProgress.Success -> {
+                        Analytics.trackVideoGenerateComplete(
+                            videoId = projectId,
+                            templateId = project?.settings?.effectSetId,
+                            songId = project?.settings?.musicSongId?.toString(),
+                            quality = _currentQuality.value.displayName,
+                            duration = project?.totalDurationMs,
+                            ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
+                            volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
+                            mediaQuantity = project?.assets?.size
+                        )
+                        Analytics.trackVideoExportComplete(
+                            videoId = projectId,
+                            templateId = project?.settings?.effectSetId,
+                            songId = project?.settings?.musicSongId?.toString(),
+                            quality = _currentQuality.value.displayName,
+                            duration = project?.totalDurationMs,
+                            ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
+                            volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
+                            mediaQuantity = project?.assets?.size
+                        )
                         ratingTriggerManager.onVideoCreated()
                         ExportUiState.Success(progress.outputPath)
                     }
@@ -224,24 +262,34 @@ class ExportViewModel(
     /** User tapped "Not Really" on Satisfaction popup — dismiss without further action */
     fun onNotReally() {
         satisfactionResponse = "not_really"
+        Analytics.trackRateClick(option = AnalyticsEvent.Value.Option.BAD)
         _ratingStep.value = RatingStep.None
     }
 
     /** User tapped "Good" on Satisfaction popup — proceed to star rating */
     fun onGood() {
         satisfactionResponse = "good"
+        Analytics.trackRateClick(option = AnalyticsEvent.Value.Option.GOOD)
         _ratingStep.value = RatingStep.Stars
     }
 
     /** User tapped "Rate Us" with 1-3 stars — proceed to feedback popup */
     fun onLowRating(stars: Int) {
         lastStarRating = stars
+        Analytics.trackRateStar(stars, option = AnalyticsEvent.Value.Option.BAD)
+        Analytics.trackRateRateUsButtonClick(option = AnalyticsEvent.Value.Option.GOOD)
+        Analytics.trackRateFlowContinue(option = AnalyticsEvent.Value.Option.BAD, star = stars)
+        Analytics.trackRateReason(option = AnalyticsEvent.Value.Option.BAD, star = stars)
         _ratingStep.value = RatingStep.Feedback
     }
 
     /** User tapped "Rate Us" with 4-5 stars — open Play Store, mark completed */
     fun onHighRating(stars: Int) {
         lastStarRating = stars
+        Analytics.trackRateStar(stars, option = AnalyticsEvent.Value.Option.GOOD)
+        Analytics.trackRateRateUsButtonClick(option = AnalyticsEvent.Value.Option.GOOD)
+        Analytics.trackRateFlowContinue(option = AnalyticsEvent.Value.Option.GOOD, star = stars)
+        Analytics.trackRateDone(option = AnalyticsEvent.Value.Option.GOOD, star = stars)
         _ratingStep.value = RatingStep.None
         ratingTriggerManager.onRatingCompleted()
         viewModelScope.launch {
@@ -251,6 +299,16 @@ class ExportViewModel(
 
     /** User submitted feedback text — send to Supabase, mark completed */
     fun onFeedbackSubmit(feedback: String) {
+        val star = if (lastStarRating > 0) lastStarRating else 0
+        Analytics.trackReasonClick(des = feedback, option = AnalyticsEvent.Value.Option.BAD)
+        Analytics.trackRateSubmit(
+            des = feedback,
+            option = AnalyticsEvent.Value.Option.BAD,
+            star = star
+        )
+        if (star > 0) {
+            Analytics.trackRateDone(option = AnalyticsEvent.Value.Option.BAD, star = star)
+        }
         _ratingStep.value = RatingStep.None
         ratingTriggerManager.onRatingCompleted()
         viewModelScope.launch(Dispatchers.Default) {
@@ -337,6 +395,10 @@ class ExportViewModel(
         viewModelScope.launch {
             ratingTriggerManager.showRatingPopup.collect {
                 if (_ratingStep.value == RatingStep.None) {
+                    Analytics.trackRateView(
+                        logicRender = "system",
+                        location = AnalyticsEvent.Value.Location.RESULT
+                    )
                     _ratingStep.value = RatingStep.Satisfaction
                     ratingTriggerManager.onRatingShown()
                 }
@@ -367,7 +429,32 @@ class ExportViewModel(
      * Handle template click - navigate to template detail
      */
     fun onTemplateClick(templateId: String) {
+        val templateName = (_featuredTemplatesState.value as? FeaturedTemplatesState.Success)
+            ?.templates
+            ?.firstOrNull { it.id == templateId }
+            ?.name
+            ?: "unknown"
+        Analytics.trackTemplateClick(
+            templateId = templateId,
+            templateName = templateName,
+            location = "result_recommendation"
+        )
         _navigationEvent.value = ExportNavigationEvent.NavigateToTemplateDetail(templateId)
+    }
+
+    fun trackShareAction() {
+        val project = currentProjectSnapshot
+        Analytics.trackVideoShare(
+            videoId = projectId,
+            templateId = project?.settings?.effectSetId,
+            songId = project?.settings?.musicSongId?.toString(),
+            quality = _currentQuality.value.displayName,
+            duration = project?.totalDurationMs,
+            ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
+            volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
+            mediaQuantity = project?.assets?.size,
+            location = AnalyticsEvent.Value.Location.RESULT
+        )
     }
 
     /**
@@ -390,6 +477,18 @@ class ExportViewModel(
         // Allow re-downloading - user may want multiple copies or re-download if deleted
 
         viewModelScope.launch {
+            val project = currentProjectSnapshot
+            Analytics.trackVideoDownload(
+                videoId = projectId,
+                templateId = project?.settings?.effectSetId,
+                songId = project?.settings?.musicSongId?.toString(),
+                quality = _currentQuality.value.displayName,
+                duration = project?.totalDurationMs,
+                ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
+                volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
+                mediaQuantity = project?.assets?.size,
+                location = AnalyticsEvent.Value.Location.RESULT
+            )
             // Show loading toast
             _saveToastState.value = ProcessToastState.Loading(loadingMessage)
 
@@ -413,4 +512,11 @@ class ExportViewModel(
             }
         }
     }
+}
+
+private fun AspectRatio.toAnalyticsRatioSize(): String = when (this) {
+    AspectRatio.RATIO_16_9 -> "16:9"
+    AspectRatio.RATIO_9_16 -> "9:16"
+    AspectRatio.RATIO_4_5 -> "4:5"
+    AspectRatio.RATIO_1_1 -> "1:1"
 }

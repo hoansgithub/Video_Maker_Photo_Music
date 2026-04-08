@@ -67,6 +67,7 @@ import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
@@ -101,6 +102,10 @@ fun UninstallScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
     val audioPreviewCache: AudioPreviewCache = koinInject()
+
+    LaunchedEffect(Unit) {
+        Analytics.trackUninstallView()
+    }
 
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
@@ -141,7 +146,10 @@ fun UninstallScreen(
             TopAppBar(
                 title = {},
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        Analytics.trackUninstallCtaClick(type = "dont_uninstall")
+                        onNavigateBack()
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,
@@ -323,6 +331,7 @@ fun UninstallScreen(
                 color = Color.White,
                 modifier = Modifier
                     .clickableSingle{
+                        Analytics.trackUninstallCtaClick(type = "uninstall")
                         val packageUri = Uri.parse("package:${context.packageName}")
 
                         val uninstallIntent = Intent(Intent.ACTION_DELETE).apply {
@@ -350,7 +359,10 @@ fun UninstallScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                onClick = onNavigateBack,
+                onClick = {
+                    Analytics.trackUninstallCtaClick(type = "dont_uninstall")
+                    onNavigateBack()
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(

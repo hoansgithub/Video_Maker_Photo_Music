@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.EditorInitialData
 import com.videomaker.aimusic.domain.repository.SongRepository
@@ -548,15 +549,18 @@ class AssetPickerViewModel(
     fun toggleAssetSelection(asset: GalleryAsset) {
         val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
         val currentSelection = currentState.selectedAssets.toMutableList()
+        val wasSelected = currentSelection.contains(asset)
 
-        if (currentSelection.contains(asset)) {
+        if (wasSelected) {
             currentSelection.remove(asset)
+            Analytics.trackMediaUnselect()
         } else {
             if (currentSelection.size >= MAX_SELECTION) {
                 _messageEvent.value = "Maximum $MAX_SELECTION images can be selected"
                 return
             }
             currentSelection.add(asset)
+            Analytics.trackMediaSelect()
         }
 
         val updatedState = currentState.copyAssets(selectedAssets = currentSelection)
@@ -652,6 +656,7 @@ class AssetPickerViewModel(
     fun confirmSelection() {
         val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
         if (currentState.selectedAssets.size < minSelection) return
+        Analytics.trackMediaComplete(currentState.selectedAssets.size)
 
         viewModelScope.launch {
             val uris = currentState.selectedAssets.map { it.uri }

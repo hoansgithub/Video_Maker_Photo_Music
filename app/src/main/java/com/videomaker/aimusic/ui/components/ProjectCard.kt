@@ -82,6 +82,7 @@ import java.time.format.DateTimeFormatter
 fun ProjectCard(
     project: Project,
     onClick: () -> Unit,
+    onOptionClick: () -> Unit = {},
     onDelete: () -> Unit,
     onDownload: () -> Unit,
     onShare: () -> Unit,
@@ -209,7 +210,10 @@ fun ProjectCard(
                             color = Color.Black.copy(alpha = 0.5f),
                             shape = CircleShape
                         )
-                        .clickableSingle { showMenu = true },
+                        .clickableSingle {
+                            onOptionClick()
+                            showMenu = true
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -356,6 +360,7 @@ private fun ProjectCardPreview() {
                     )
                 ),
                 onClick = {},
+                onOptionClick = {},
                 onDelete = {},
                 onDownload = {},
                 onShare = {}

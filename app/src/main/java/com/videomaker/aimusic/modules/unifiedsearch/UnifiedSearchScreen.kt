@@ -95,6 +95,20 @@ fun UnifiedSearchScreen(
         }
     }
 
+    LaunchedEffect(uiState, recentSearches) {
+        uiState as? UnifiedSearchUiState.Idle ?: return@LaunchedEffect
+        if (recentSearches.isNotEmpty()) {
+            viewModel.onRecentSearchesRendered(recentSearches)
+        }
+    }
+
+    LaunchedEffect(uiState) {
+        val typingState = uiState as? UnifiedSearchUiState.Typing ?: return@LaunchedEffect
+        if (typingState.suggestions.isNotEmpty()) {
+            viewModel.onSuggestionsRendered(typingState.suggestions)
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -119,12 +133,12 @@ fun UnifiedSearchScreen(
                 onVibeTagClick = viewModel::onVibeTagClick,
                 onGenreClick = viewModel::onGenreClick,
                 onTemplateClick = viewModel::onTemplateClick,
-                onSeeMoreTemplates = viewModel::onSeeMoreFeaturedTemplates,
+                onSeeMoreTemplates = viewModel::onSeeMoreFeaturedTemplatesClick,
                 onSongClick = { song ->
                     keyboardController?.hide()
                     viewModel.onSongClick(song)
                 },
-                onSeeMoreSongs = viewModel::onSeeMoreSuggestedSongs
+                onSeeMoreSongs = viewModel::onSeeMoreSuggestedSongsClick
             )
 
             is UnifiedSearchUiState.Typing -> UnifiedSearchTypingOverlay(
@@ -178,4 +192,3 @@ fun UnifiedSearchScreen(
         )
     }
 }
-

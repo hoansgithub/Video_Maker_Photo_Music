@@ -33,6 +33,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -48,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.ui.components.PageIndicatorCircle
 import com.videomaker.aimusic.ui.components.PrimaryButtonNeon
 import com.videomaker.aimusic.ui.theme.CtaText
@@ -124,6 +128,27 @@ fun WidgetScreen(
     // Pager state
     val widgetTypes = WidgetType.entries
     val pagerState = rememberPagerState(pageCount = { widgetTypes.size })
+    var lastSettledPage by remember { mutableIntStateOf(pagerState.settledPage) }
+
+    LaunchedEffect(Unit) {
+        val initialType = widgetTypes[pagerState.currentPage]
+        Analytics.trackWidgetView(
+            widgetType = initialType.analyticsType(),
+            widgetSize = WIDGET_ANALYTICS_SIZE
+        )
+    }
+
+    LaunchedEffect(pagerState.settledPage) {
+        val currentPage = pagerState.settledPage
+        if (currentPage != lastSettledPage) {
+            val currentType = widgetTypes[currentPage]
+            Analytics.trackWidgetSelect(
+                widgetType = currentType.analyticsType(),
+                widgetSize = WIDGET_ANALYTICS_SIZE
+            )
+            lastSettledPage = currentPage
+        }
+    }
 
 
     Column(
@@ -252,12 +277,24 @@ fun WidgetScreen(
                 text = stringResource(R.string.widget_bts)
             ) {
                 val widgetType = widgetTypes[pagerState.currentPage]
+                Analytics.trackWidgetAdd(
+                    widgetType = widgetType.analyticsType(),
+                    widgetSize = WIDGET_ANALYTICS_SIZE
+                )
                 viewModel.onAddWidgetClick(widgetType)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
+}
+
+private const val WIDGET_ANALYTICS_SIZE = "4x3"
+
+private fun WidgetType.analyticsType(): String = when (this) {
+    WidgetType.SEARCH -> "smart_search"
+    WidgetType.TEMPLATE -> "recently"
+    WidgetType.SONG -> "trending_song"
 }
 
 /**
