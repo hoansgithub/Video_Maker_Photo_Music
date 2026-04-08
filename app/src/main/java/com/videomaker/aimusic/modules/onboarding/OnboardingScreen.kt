@@ -40,6 +40,8 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.modules.onboarding.pages.WelcomePage
 import kotlinx.coroutines.delay
 
@@ -78,6 +80,14 @@ fun OnboardingScreen(
     // ── ViewModel step → pager (CTA button drives navigation) ────────────
     LaunchedEffect(currentStep) {
         val targetPage = currentStep.ordinal
+
+        Analytics.track(
+            name = "onboarding_${targetPage}",
+            params = mapOf(
+                "onboarding_screen" to "ob${targetPage}"
+            )
+        )
+
         if (pagerState.currentPage != targetPage) {
             pagerState.animateScrollToPage(targetPage)
         }

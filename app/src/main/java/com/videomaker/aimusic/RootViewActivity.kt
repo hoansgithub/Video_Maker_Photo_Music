@@ -36,6 +36,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.os.LocaleListCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.language.LanguageSelectionActivity
@@ -95,6 +97,10 @@ class RootViewActivity : AppCompatActivity() {
         rootViewModel.initializeApp()
 
         setContent {
+            Analytics.trackScreenView(
+                screenName = "splash_show",
+                screenClass = "LoadingScreen"
+            )
             val isLoading by rootViewModel.isLoading.collectAsStateWithLifecycle()
             val loadingStep by rootViewModel.loadingStep.collectAsStateWithLifecycle()
             val navigationEvent by rootViewModel.navigationEvent.collectAsStateWithLifecycle()
@@ -217,7 +223,7 @@ class RootViewActivity : AppCompatActivity() {
     private fun applyDefaultTransition() {
         if (Build.VERSION.SDK_INT >= 34) {  // Android 14+
             overrideActivityTransition(
-                Activity.OVERRIDE_TRANSITION_OPEN,
+                OVERRIDE_TRANSITION_OPEN,
                 android.R.anim.fade_in,
                 android.R.anim.fade_out
             )
