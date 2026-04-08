@@ -76,7 +76,7 @@ sealed class EditorUiState {
 sealed class EditorNavigationEvent {
     data object NavigateBack : EditorNavigationEvent()
     data class NavigateToPreview(val projectId: String) : EditorNavigationEvent()
-    data class NavigateToExport(val projectId: String) : EditorNavigationEvent()
+    data class NavigateToExport(val projectId: String, val quality: VideoQuality) : EditorNavigationEvent()
 }
 
 // ============================================
@@ -971,7 +971,8 @@ class EditorViewModel(
         viewModelScope.launch {
             if (saveProject()) {
                 currentProjectId?.let { id ->
-                    _navigationEvent.value = EditorNavigationEvent.NavigateToExport(id)
+                    // Pass selected quality to export screen (not saved to DB)
+                    _navigationEvent.value = EditorNavigationEvent.NavigateToExport(id, currentState.selectedQuality)
                 }
             }
             // If save failed, user sees error message and stays in editor

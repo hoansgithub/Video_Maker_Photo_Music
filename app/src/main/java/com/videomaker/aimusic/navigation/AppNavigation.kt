@@ -395,8 +395,8 @@ fun AppNavigation(
                     onNavigateToPreview = { projectId ->
                         backStack.add(AppRoute.Preview(projectId))
                     },
-                    onNavigateToExport = { projectId ->
-                        backStack.add(AppRoute.Export(projectId))
+                    onNavigateToExport = { projectId, quality ->
+                        backStack.add(AppRoute.Export(projectId, quality))
                     },
                     onNavigateToAddAssets = { projectId ->
                         backStack.add(AppRoute.AssetPicker(projectId))
@@ -414,8 +414,8 @@ fun AppNavigation(
             entry<AppRoute.Export> { route ->
                 val factory: ExportViewModelFactory = koinInject()
                 val exportViewModel: ExportViewModel = viewModel(
-                    key = "export_${route.projectId}",
-                    factory = createSafeViewModelFactory { factory.create(route.projectId) }
+                    key = "export_${route.projectId}_${route.quality}",
+                    factory = createSafeViewModelFactory { factory.create(route.projectId, route.quality) }
                 )
                 ExportScreen(
                     viewModel = exportViewModel,
@@ -546,9 +546,11 @@ fun AppNavigation(
                         }
                     },
                     onContinue = {
-                        applyLanguage()
-                        activity?.recreate()
-                        backStack.safeRemoveLast()
+                        coroutineScope.launch {
+                            applyLanguage()
+                            activity?.recreate()
+                            backStack.safeRemoveLast()
+                        }
                     }
                 )
             }

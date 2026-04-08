@@ -99,6 +99,21 @@ class ApiCacheManager(context: Context) {
         }
     }
 
+    /**
+     * Deletes all locale-dependent cache files (vibe tags, templates, genres).
+     * Called when language changes to force re-fetch with new locale.
+     */
+    suspend fun clearLocalizedCache() {
+        withContext(Dispatchers.IO) {
+            cacheDir.listFiles { file ->
+                file.name.startsWith("vibe_tags_") ||
+                file.name.startsWith("templates_") ||
+                file.name.startsWith("featured_templates_") ||
+                file.name.startsWith("songs_genres_")
+            }?.forEach { it.delete() }
+        }
+    }
+
     /** Deletes every file in the cache directory. */
     suspend fun clearAll() {
         withContext(Dispatchers.IO) {
@@ -111,7 +126,8 @@ class ApiCacheManager(context: Context) {
         const val DEFAULT_TTL = 24L * 60 * 60 * 1000
 
         // ── Song cache keys ──────────────────────────────────────────────────
-        const val KEY_SONGS_GENRES         = "songs_genres"
+        /** Dynamic key per locale — genre names will use label_i18n in future */
+        fun keySongsGenres(locale: String): String = "songs_genres_${locale}"
         const val KEY_SONGS_SUGGESTED      = "songs_suggested"
         fun keySongsWeeklyRanking(region: String): String = "songs_weekly_ranking_${region}"
 
@@ -120,10 +136,17 @@ class ApiCacheManager(context: Context) {
             "songs_genre_${genre.lowercase().replace(' ', '_')}"
 
         // ── Template cache keys ──────────────────────────────────────────────
-        const val KEY_VIBE_TAGS = "vibe_tags_theme"
-        fun keyTemplates(region: String, limit: Int, offset: Int): String = "templates_${region}_${limit}_${offset}"
-        fun keyTemplatesByTag(region: String, tag: String, limit: Int, offset: Int): String =
-            "templates_tag_${region}_${tag}_${limit}_${offset}"
-        fun keyFeaturedTemplates(region: String, limit: Int): String = "featured_templates_${region}_${limit}"
+        /** Dynamic key per locale — vibe tag names are localized from Supabase */
+        fun keyVibeTags(locale: String): String = "vibe_tags_theme_${locale}"
+
+        /** Dynamic key per region + locale — template names use name_i18n */
+        fun keyTemplates(region: String, locale: String, limit: Int, offset: Int): String =
+            "templates_${region}_${locale}_${limit}_${offset}"
+
+        fun keyTemplatesByTag(region: String, locale: String, tag: String, limit: Int, offset: Int): String =
+            "templates_tag_${region}_${locale}_${tag}_${limit}_${offset}"
+
+        fun keyFeaturedTemplates(region: String, locale: String, limit: Int): String =
+            "featured_templates_${region}_${locale}_${limit}"
     }
 }

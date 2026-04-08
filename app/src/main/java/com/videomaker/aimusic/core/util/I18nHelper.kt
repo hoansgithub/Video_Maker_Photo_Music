@@ -34,39 +34,42 @@ object I18nHelper {
     /**
      * Extracts localized value from JSONB i18n column with fallback chain:
      * 1. Try requested locale (e.g. "pt")
-     * 2. Try English ("en")
-     * 3. Try first available key
-     * 4. Return fallback value
+     * 2. Try English ("en") from i18n data
+     * 3. Return fallback value (ALWAYS English from display_name column)
+     *
+     * Note: We do NOT use "first available key" because it could be any language.
+     * The fallback parameter is guaranteed to be English.
      *
      * @param i18nData JSONB object from Supabase (nullable)
      * @param locale Requested locale code (en, pt, es, ar, hi, id, fil, tr)
-     * @param fallback Fallback value if no i18n data available (typically the non-i18n 'name' or 'display_name' column)
-     * @return Localized string or fallback
+     * @param fallback Fallback value in English (from display_name column in Supabase)
+     * @return Localized string or English fallback
      */
     fun getLocalizedValue(
         i18nData: JsonObject?,
         locale: String,
         fallback: String
     ): String {
-        if (i18nData == null) return fallback
+        if (i18nData == null) {
+            return fallback
+        }
 
         // Try requested locale
         i18nData[locale]?.jsonPrimitive?.content
             ?.takeIf { it.isNotBlank() }
-            ?.let { return it }
+            ?.let {
+                return it
+            }
 
-        // Try English fallback
+        // Try English fallback from i18n data
         i18nData["en"]?.jsonPrimitive?.content
             ?.takeIf { it.isNotBlank() }
-            ?.let { return it }
+            ?.let {
+                return it
+            }
 
-        // Try first available key
-        i18nData.entries.firstOrNull()
-            ?.value?.jsonPrimitive?.content
-            ?.takeIf { it.isNotBlank() }
-            ?.let { return it }
-
-        // Return original fallback
+        // ✅ FIX: Use fallback parameter (English) instead of first available key (random language)
+        // The fallback parameter is ALWAYS English (from display_name column)
         return fallback
     }
 
