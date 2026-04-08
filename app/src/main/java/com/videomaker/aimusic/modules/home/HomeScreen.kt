@@ -192,9 +192,12 @@ fun HomeScreen(
         }
 
         // Banner ad below tab content (at bottom of screen)
+        // Fixed height prevents measurement issues after multiple navigations
         BannerAdView(
             placement = AdPlacement.BANNER_HOME,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
         )
     }
 }
