@@ -97,6 +97,24 @@ object AdPlacement {
     const val APP_OPEN_AOA = "ad_appopen_aoa"
 
     /**
+     * Banner ad shown at bottom of home screen (below tab bar).
+     * Timing: Loaded when home screen is displayed, cached for reuse.
+     * Displayed on main screen below the navigation tab bar.
+     *
+     * Features:
+     * - Adaptive banner sizing (320dp width default)
+     * - Automatic caching (no reload on navigation back)
+     * - Retry failed loads on activity resume
+     * - Lifecycle-aware cleanup
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1313786204
+     *
+     * Remote Config key: ad_banner_home
+     */
+    const val BANNER_HOME = "ad_banner_home"
+
+    /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
      */
@@ -105,6 +123,7 @@ object AdPlacement {
         INTERSTITIAL_SPLASH,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
         INTERSTITIAL_EXPORT_RESULT_EXIT,
-        INTERSTITIAL_ASSET_PICKER_EXIT
+        INTERSTITIAL_ASSET_PICKER_EXIT,
+        BANNER_HOME
     )
 }

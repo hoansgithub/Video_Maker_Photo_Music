@@ -149,6 +149,22 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // ============================================
+        // BANNER ADS
+        // ============================================
+
+        // Home screen banner (shown at bottom of main screen, below tab bar)
+        // Adaptive sizing, cached for reuse across navigation
+        // Waterfall: Primary unit only
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.BANNER_HOME,
+            type = "banner",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1313786204"  // Primary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }

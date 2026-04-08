@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -56,6 +57,8 @@ import com.videomaker.aimusic.ui.theme.PrimaryDark
 import com.videomaker.aimusic.ui.theme.TextInactive
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.launch
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import com.videomaker.aimusic.core.constants.AdPlacement
 
 /**
  * HomeScreen - Main screen with tabbed navigation
@@ -103,82 +106,96 @@ fun HomeScreen(
     var topBarHeightPx by remember { mutableIntStateOf(0) }
     val topBarHeight = with(density) { topBarHeightPx.toDp() }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
+            .windowInsetsPadding(WindowInsets.navigationBars)
     ) {
-        // Pager Content — full-bleed so each page can draw its own background
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize()
-        ) { page ->
-            when (page) {
-                0 -> GalleryTabContent(
-                    viewModel = galleryViewModel,
-                    onCreateClick = onCreateClick,
-                    onNavigateToSearch = onNavigateToSearch,
-                    onNavigateToTemplateDetail = onNavigateToTemplateDetail,
-                    onNavigateToAllTemplates = onNavigateToAllTemplates,
-                    topBarHeight = topBarHeight
-                )
-                1 -> SongsTabContent(
-                    viewModel = songsViewModel,
-                    topBarHeight = topBarHeight,
-                    onNavigateToSearch = onNavigateToSongSearch,
-                    onNavigateToSuggestedSongsList = onNavigateToSuggestedSongsList,
-                    onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
-                    onNavigateToAssetPicker = onNavigateToAssetPicker
-                )
-                2 -> ProjectsTabContent(
-                    viewModel = projectsViewModel,
-                    onCreateClick = { onNavigateToTemplateDetail("") }, // Open template previewer with first template
-                    onProjectClick = onProjectClick,
-                    onNavigateToTemplateDetail = onNavigateToTemplateDetail,
-                    onNavigateToSongSearch = onNavigateToSongSearch,
-                    onNavigateToAllSongs = onNavigateToAllSongs,
-                    onNavigateToTemplateSearch = onNavigateToSearch,
-                    onNavigateToAllTemplates = { onNavigateToAllTemplates(null) },
-                    onNavigateToAssetPicker = onNavigateToAssetPicker,
-                    topBarHeight = topBarHeight
+        // Main content area with tabs
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            // Pager Content — full-bleed so each page can draw its own background
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                when (page) {
+                    0 -> GalleryTabContent(
+                        viewModel = galleryViewModel,
+                        onCreateClick = onCreateClick,
+                        onNavigateToSearch = onNavigateToSearch,
+                        onNavigateToTemplateDetail = onNavigateToTemplateDetail,
+                        onNavigateToAllTemplates = onNavigateToAllTemplates,
+                        topBarHeight = topBarHeight
+                    )
+                    1 -> SongsTabContent(
+                        viewModel = songsViewModel,
+                        topBarHeight = topBarHeight,
+                        onNavigateToSearch = onNavigateToSongSearch,
+                        onNavigateToSuggestedSongsList = onNavigateToSuggestedSongsList,
+                        onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
+                        onNavigateToAssetPicker = onNavigateToAssetPicker
+                    )
+                    2 -> ProjectsTabContent(
+                        viewModel = projectsViewModel,
+                        onCreateClick = { onNavigateToTemplateDetail("") }, // Open template previewer with first template
+                        onProjectClick = onProjectClick,
+                        onNavigateToTemplateDetail = onNavigateToTemplateDetail,
+                        onNavigateToSongSearch = onNavigateToSongSearch,
+                        onNavigateToAllSongs = onNavigateToAllSongs,
+                        onNavigateToTemplateSearch = onNavigateToSearch,
+                        onNavigateToAllTemplates = { onNavigateToAllTemplates(null) },
+                        onNavigateToAssetPicker = onNavigateToAssetPicker,
+                        topBarHeight = topBarHeight
+                    )
+                }
+            }
+
+            // Top Bar with Tabs and Settings — on top, respecting system bars
+            // onGloballyPositioned BEFORE windowInsetsPadding to measure full height including status bar
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { coordinates ->
+                        topBarHeightPx = coordinates.size.height
+                    }
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.background,
+                                MaterialTheme.colorScheme.background,
+                                Color.Transparent
+                            ),
+                            startY = 0f,
+                            endY = Float.POSITIVE_INFINITY
+                        )
+                    )
+            ) {
+                HomeTopBar(
+                    tabs = tabs,
+                    selectedTabIndex = pagerState.currentPage,
+                    onTabSelected = { index ->
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    },
+                    onSettingsClick = onSettingsClick,
+                    modifier = Modifier.windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
+                    )
                 )
             }
         }
 
-        // Top Bar with Tabs and Settings — on top, respecting system bars
-        // onGloballyPositioned BEFORE windowInsetsPadding to measure full height including status bar
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .onGloballyPositioned { coordinates ->
-                    topBarHeightPx = coordinates.size.height
-                }
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.background,
-                            Color.Transparent
-                        ),
-                        startY = 0f,
-                        endY = Float.POSITIVE_INFINITY
-                    )
-                )
-        ) {
-            HomeTopBar(
-                tabs = tabs,
-                selectedTabIndex = pagerState.currentPage,
-                onTabSelected = { index ->
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(index)
-                    }
-                },
-                onSettingsClick = onSettingsClick,
-                modifier = Modifier.windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
-                )
-            )
-        }
+        // Banner ad below tab content (at bottom of screen)
+        BannerAdView(
+            placement = AdPlacement.BANNER_HOME,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
