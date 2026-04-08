@@ -8,8 +8,8 @@ import co.alcheclub.lib.acccore.analytics.AnalyticsCoordinator
  * Simple wrapper around ACCCore's AnalyticsCoordinator.
  * Automatically broadcasts to all registered analytics platforms:
  * - Firebase Analytics (active)
- * - Meta/Facebook Analytics (ready to enable)
- * - AppsFlyer (ready to enable)
+ * - Facebook Analytics (active)
+ * - AppsFlyer (active)
  *
  * Usage:
  * ```kotlin
@@ -63,8 +63,7 @@ object Analytics {
      * Track an analytics event.
      *
      * Broadcasts to all registered analytics platforms via ACCCore's AnalyticsCoordinator.
-     * Currently active: Firebase Analytics
-     * Ready to enable: Meta/Facebook Analytics, AppsFlyer
+     * Active platforms: Firebase Analytics, Facebook Analytics, AppsFlyer
      *
      * @param name Event name (use AnalyticsEvent constants)
      * @param params Event parameters (use AnalyticsEvent.Param constants for keys)
@@ -81,8 +80,8 @@ object Analytics {
      * registered analytics platforms. Each platform adapter translates to
      * its native format:
      * - Firebase: FirebaseAnalytics.logEvent(SCREEN_VIEW) with SCREEN_NAME/SCREEN_CLASS
-     * - Meta: AppEventsLogger with screen event (when enabled)
-     * - AppsFlyer: Custom event (when enabled)
+     * - Facebook: AppEventsLogger with screen event
+     * - AppsFlyer: Custom event with screen parameters
      *
      * @param screenName The screen name (use AnalyticsEvent.Screen constants)
      * @param screenClass The screen class name (e.g., "GalleryScreen", "EditorScreen")

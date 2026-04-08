@@ -50,6 +50,11 @@ android {
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${getPropertyOrEmpty("SUPABASE_ANON_KEY")}\"")
 
         // ============================================
+        // APPSFLYER CONFIGURATION (from local.properties)
+        // ============================================
+        buildConfigField("String", "APPSFLYER_DEV_KEY", "\"${getPropertyOrEmpty("APPSFLYER_DEV_KEY")}\"")
+
+        // ============================================
         // APP THINNING OPTIMIZATION
         // ============================================
 
@@ -239,8 +244,8 @@ dependencies {
     // ============================================
     implementation(libs.acccore)
     implementation(libs.acccore.firebase)    // Firebase Analytics, Crashlytics, RemoteConfig, Performance
-    // implementation(libs.acccore.facebook)    // TODO: Uncomment when Meta/Facebook keys ready
-    // implementation(libs.acccore.appsflyer)   // TODO: Uncomment when AppsFlyer keys ready
+    implementation(libs.acccore.facebook)    // Facebook Analytics only (no login)
+    implementation(libs.acccore.appsflyer)   // AppsFlyer analytics integration
     // implementation(libs.acccore.revenuecat)  // Uncomment when RevenueCat needed
     // implementation(libs.acccore.ads)         // Uncomment when Ads needed
 

@@ -36,7 +36,8 @@
         android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.VideoMaker">
+        android:theme="@style/Theme.VideoMaker"
+        tools:replace="android:dataExtractionRules,android:fullBackupContent">
 
         <!-- RootViewActivity - Entry Point (Launcher)
              Applies locale, shows splash, routes to Language or Main -->
@@ -166,6 +167,18 @@
                 android:name="autoStoreLocales"
                 android:value="true" />
         </service>
+
+        <!-- ============================================ -->
+        <!-- ANALYTICS SDKs -->
+        <!-- ============================================ -->
+
+        <!-- Facebook SDK Configuration (for Analytics only) -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="@string/facebook_client_token" />
 
     </application>
 
