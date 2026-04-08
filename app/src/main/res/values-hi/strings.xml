@@ -34,6 +34,11 @@
     <string name="root_no_internet_title">इंटरनेट कनेक्शन नहीं है</string>
     <string name="root_no_internet_message">आपका डिवाइस अभी ऑफलाइन है। आगे बढ़ने के लिए कृपया दोबारा कनेक्ट करें।</string>
     <string name="root_try_again">पुनः प्रयास करें</string>
+    <string name="root_loading_initializing">आरंभ हो रहा है...</string>
+    <string name="root_loading_fetching_config">कॉन्फ़िगरेशन लोड हो रहा है...</string>
+    <string name="root_loading_ad">लोड हो रहा है...</string>
+    <string name="root_loading_checking_status">स्थिति जांची जा रही है...</string>
+    <string name="root_loading_preparing">तैयार हो रहा है...</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">गैलरी</string>

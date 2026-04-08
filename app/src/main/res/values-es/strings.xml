@@ -34,6 +34,11 @@
     <string name="root_no_internet_title">Sin conexión a Internet</string>
     <string name="root_no_internet_message">Tu dispositivo está desconectado. Vuelve a conectarte para continuar.</string>
     <string name="root_try_again">Intentar de Nuevo</string>
+    <string name="root_loading_initializing">Inicializando...</string>
+    <string name="root_loading_fetching_config">Cargando configuración...</string>
+    <string name="root_loading_ad">Cargando...</string>
+    <string name="root_loading_checking_status">Verificando estado...</string>
+    <string name="root_loading_preparing">Preparando...</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galería</string>

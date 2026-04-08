@@ -34,6 +34,11 @@
     <string name="root_no_internet_title">Walang koneksyon sa internet</string>
     <string name="root_no_internet_message">Kasalukuyang offline ang iyong device. Kumonekta muli para magpatuloy.</string>
     <string name="root_try_again">Subukan Muli</string>
+    <string name="root_loading_initializing">Nagsisimula...</string>
+    <string name="root_loading_fetching_config">Nilo-load ang configuration...</string>
+    <string name="root_loading_ad">Naglo-load...</string>
+    <string name="root_loading_checking_status">Sinusuri ang status...</string>
+    <string name="root_loading_preparing">Naghahanda...</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Gallery</string>
