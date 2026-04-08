@@ -78,10 +78,30 @@ object AdPlacement {
     const val INTERSTITIAL_ASSET_PICKER_EXIT = "ad_interstitial_asset_picker_exit"
 
     /**
+     * App Open Ad shown when app comes to foreground.
+     * Timing: Preloaded when app goes to background, shown when app returns to foreground.
+     * Automatically managed by AppOpenAdManager (lifecycle-aware).
+     *
+     * Behavior:
+     * - Preloads when app enters background (ProcessLifecycleOwner.onStop)
+     * - Shows when app enters foreground (ProcessLifecycleOwner.onStart)
+     * - Skipped during splash screen
+     * - Skipped when another fullscreen ad is showing
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/3672286423
+     * - Secondary: ca-app-pub-7121075950716954/7364624003
+     *
+     * Remote Config key: ad_appopen_aoa
+     */
+    const val APP_OPEN_AOA = "ad_appopen_aoa"
+
+    /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
      */
     val ALL_PLACEMENTS = listOf(
+        APP_OPEN_AOA,
         INTERSTITIAL_SPLASH,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
         INTERSTITIAL_EXPORT_RESULT_EXIT,

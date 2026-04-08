@@ -279,6 +279,11 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         val adInitializer = org.koin.core.context.GlobalContext.get().get<com.videomaker.aimusic.core.ads.AdInitializer>()
         android.util.Log.d("VideoMakerApp", "Ad system initialized: ${adInitializer.getDiagnostics()}")
 
+        // Initialize app open ad manager (lifecycle-based)
+        val appOpenAdManager = org.koin.core.context.GlobalContext.get().get<co.alcheclub.lib.acccore.ads.helpers.AppOpenAdManager>()
+        appOpenAdManager.setDefaultPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_AOA)
+        android.util.Log.d("VideoMakerApp", "✅ App open ad manager initialized")
+
         // Auto-register services with coordinators
         applicationScope.launch {
             try {

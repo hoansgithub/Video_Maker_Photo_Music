@@ -269,6 +269,16 @@ val adsModule = module {
         )
     }
 
+    // App Open Ad Manager (lifecycle-based app open ad management)
+    single {
+        co.alcheclub.lib.acccore.ads.helpers.AppOpenAdManager(
+            application = androidContext() as? android.app.Application
+                ?: error("androidContext() must be Application"),
+            adsLoaderService = get(),
+            adMobMediator = get()
+        )
+    }
+
     // Interstitial Ad Helper Extension (singleton - app-level wrapper)
     // single {
     //     InterstitialAdHelperExt(

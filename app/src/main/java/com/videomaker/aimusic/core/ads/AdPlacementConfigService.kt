@@ -78,6 +78,23 @@ class AdPlacementConfigService(
         Log.d(TAG, "🔨 Starting placement registration...")
 
         // ============================================
+        // APP OPEN ADS
+        // ============================================
+
+        // App Open Ad (shown when app comes to foreground)
+        // Managed by AppOpenAdManager lifecycle observer
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.APP_OPEN_AOA,
+            type = "appOpen",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/3672286423",  // Primary
+                "ca-app-pub-7121075950716954/7364624003"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // ============================================
         // INTERSTITIAL ADS
         // ============================================
 
