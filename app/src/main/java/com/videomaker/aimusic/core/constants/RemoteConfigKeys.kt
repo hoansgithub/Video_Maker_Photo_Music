@@ -58,7 +58,25 @@ object RemoteConfigKeys {
     // ============================================
     // APP BEHAVIOR
     // ============================================
-    // Placeholder for future Remote Config flags
-    // Example: const val NEW_FEATURE_ENABLED = "new_feature_enabled"
+
+    /**
+     * App initialization timeout in milliseconds.
+     *
+     * Maximum time to wait for initialization operations (Remote Config fetch,
+     * ad preloading, status checks) before proceeding to navigation.
+     *
+     * If initialization takes longer than this timeout, the app proceeds anyway
+     * to prevent users from getting stuck on loading screen.
+     *
+     * Default: 45000 (45 seconds)
+     * Recommended range: 30000-60000 (30-60 seconds)
+     *
+     * Usage:
+     * ```kotlin
+     * val timeout = remoteConfig.getLong(RemoteConfigKeys.APP_INIT_TIMEOUT_MS, 45000L)
+     * withTimeout(timeout) { /* initialization */ }
+     * ```
+     */
+    const val APP_INIT_TIMEOUT_MS = "app_init_timeout_ms"
 
 }

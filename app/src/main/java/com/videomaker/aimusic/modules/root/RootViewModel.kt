@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.RemoteConfigKeys
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.modules.language.domain.usecase.CheckLanguageSelectedUseCase
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
@@ -18,7 +19,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.TimeoutCancellationException
 
 /**
  * RootViewModel - Root state machine for app initialization
@@ -131,15 +134,12 @@ class RootViewModel(
 
     /**
      * Retry app initialization after a no-internet failure.
-     * Resets state so the full initialization runs again.
-     *
-     * NOTE: Cannot call initializeApp() without Activity reference
-     * RootViewActivity should handle retry by recreating itself
+     * Directly restarts the loadInitialData() flow without requiring Activity reference.
      */
     fun retryInitialization() {
         _showNoInternetDialog.value = false
         isInitialized = false
-        // Activity needs to call initializeApp(activity) again
+        loadInitialData()
     }
 
     /**
@@ -165,8 +165,13 @@ class RootViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             val startTimeMillis = System.currentTimeMillis()
+            var initTimedOut = false
 
-            // Step 1: Check internet connection
+            // Step 1: Brief delay to allow network subsystem to fully initialize on cold start
+            // This prevents race conditions where network is transitioning during app launch
+            delay(300)
+
+            // Step 2: Check internet connection
             if (!isInternetAvailable()) {
                 _isLoading.value = false
                 isInitialized = false
@@ -174,40 +179,75 @@ class RootViewModel(
                 return@launch
             }
 
-            try {
-                // Step 2: Load Firebase Remote Config (10s timeout)
-                // UMP consent is already complete, safe to fetch config
-                _loadingStep.value = LoadingStep.FETCHING_CONFIG
-                loadRemoteConfig()
-
-                // Step 3: Present App Open Ad (placeholder for future)
-                // UMP consent is already complete, safe to load/show ads
-                _loadingStep.value = LoadingStep.LOADING_AD
-                presentAppOpenAd()
-
-                // Step 4: Check startup gate status
-                _loadingStep.value = LoadingStep.CHECKING_STATUS
-                val onboardingResult = checkOnboardingStatusUseCase()
-                needsOnboarding = onboardingResult.getOrNull() ?: false
-                needsLanguageSelection = checkLanguageSelectedUseCase()
-                needsFeatureSelection = !preferencesManager.isFeatureSelectionComplete()
-
-                // Step 5: Track initialization time
-                val durationMs = System.currentTimeMillis() - startTimeMillis
-                Analytics.track(
-                    name = AnalyticsEvent.APP_INIT_TIME,
-                    params = mapOf(
-                        AnalyticsEvent.Param.VALUE to durationMs
-                    )
-                )
-
-                // Step 6: Navigate to appropriate screen
-                proceedToNextScreen()
-
+            // Step 3: Get initialization timeout from Remote Config
+            // Default: 45 seconds (can be adjusted remotely without app update)
+            // Longer timeout allows for slower networks while still preventing infinite loading
+            val initTimeoutMs = try {
+                remoteConfig.getLong(RemoteConfigKeys.APP_INIT_TIMEOUT_MS, 45_000L)
             } catch (e: Exception) {
-                android.util.Log.e("RootViewModel", "Initialization error: ${e.message}")
-                proceedToNextScreen()
+                45_000L  // Fallback to 45 seconds if Remote Config fails
             }
+
+            // ============================================
+            // CRITICAL: Timeout wrapper prevents infinite loading
+            // ============================================
+            // Wraps entire initialization in configurable timeout (default 45s)
+            // If any operation hangs, app proceeds to navigation anyway
+            // This prevents users from getting stuck on loading screen forever
+            try {
+                withTimeout(initTimeoutMs) {  // Remote Config controlled timeout
+                    try {
+                        // Step 3: Load Firebase Remote Config (10s timeout)
+                        // UMP consent is already complete, safe to fetch config
+                        _loadingStep.value = LoadingStep.FETCHING_CONFIG
+                        loadRemoteConfig()
+
+                        // Step 4: Present App Open Ad (placeholder for future)
+                        // UMP consent is already complete, safe to load/show ads
+                        _loadingStep.value = LoadingStep.LOADING_AD
+                        presentAppOpenAd()
+
+                        // Step 5: Check startup gate status
+                        _loadingStep.value = LoadingStep.CHECKING_STATUS
+                        val onboardingResult = checkOnboardingStatusUseCase()
+                        needsOnboarding = onboardingResult.getOrNull() ?: false
+                        needsLanguageSelection = checkLanguageSelectedUseCase()
+                        needsFeatureSelection = !preferencesManager.isFeatureSelectionComplete()
+
+                    } catch (e: Exception) {
+                        android.util.Log.e("RootViewModel", "Initialization error: ${e.message}")
+                        // Continue to navigation even if initialization fails
+                    }
+                }
+            } catch (e: TimeoutCancellationException) {
+                initTimedOut = true
+                android.util.Log.w("RootViewModel", "⏱️ Initialization timed out after ${initTimeoutMs}ms — proceeding to navigation")
+            }
+
+            // Step 7: Track initialization time with time buckets
+            val durationMillis = System.currentTimeMillis() - startTimeMillis
+            val durationSeconds = durationMillis / 1000.0
+            val timeBucket = when {
+                initTimedOut -> "timeout"
+                durationSeconds < 3.0 -> "under_3s"
+                durationSeconds < 5.0 -> "3_to_5s"
+                durationSeconds < 8.0 -> "5_to_8s"
+                durationSeconds < 10.0 -> "8_to_10s"
+                durationSeconds < 15.0 -> "10_to_15s"
+                else -> "over_15s"
+            }
+
+            // Track initialization performance
+            Analytics.track(
+                name = AnalyticsEvent.APP_INIT_TIME,
+                params = mapOf(
+                    AnalyticsEvent.Param.VALUE to timeBucket
+                )
+            )
+
+            // Step 8: Navigate to appropriate screen (ALWAYS happens, even if timeout/error)
+            // This ensures users never get stuck on loading screen
+            proceedToNextScreen()
         }
     }
 
@@ -282,11 +322,26 @@ class RootViewModel(
     // PRIVATE: CONNECTIVITY
     // ============================================
 
+    /**
+     * Check if internet is actually available and validated.
+     *
+     * Uses NET_CAPABILITY_VALIDATED which means Android has verified the network
+     * can reach the internet (by pinging Google's captive portal servers).
+     *
+     * This is more reliable than NET_CAPABILITY_INTERNET which only checks if
+     * the network declares it can provide internet (not if it actually works).
+     *
+     * Also checks NOT_SUSPENDED to ensure the network isn't temporarily paused.
+     */
     private fun isInternetAvailable(): Boolean {
         val cm = application.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = cm.activeNetwork ?: return false
         val capabilities = cm.getNetworkCapabilities(network) ?: return false
-        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+
+        // Check if network is validated (Android verified it can reach the internet)
+        // AND not suspended (network isn't temporarily paused)
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) &&
+               capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)
     }
 }
 
