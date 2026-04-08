@@ -41,6 +41,7 @@ import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.language.LanguageSelectionActivity
 import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
 import com.videomaker.aimusic.modules.root.LoadingScreen
+import com.videomaker.aimusic.modules.root.LoadingStep
 import com.videomaker.aimusic.modules.root.RootNavigationEvent
 import com.videomaker.aimusic.modules.root.RootViewModel
 import com.videomaker.aimusic.navigation.AppRoute
@@ -95,7 +96,7 @@ class RootViewActivity : AppCompatActivity() {
 
         setContent {
             val isLoading by rootViewModel.isLoading.collectAsStateWithLifecycle()
-            val loadingMessage by rootViewModel.loadingMessage.collectAsStateWithLifecycle()
+            val loadingStep by rootViewModel.loadingStep.collectAsStateWithLifecycle()
             val navigationEvent by rootViewModel.navigationEvent.collectAsStateWithLifecycle()
             val showNoInternetDialog by rootViewModel.showNoInternetDialog.collectAsStateWithLifecycle()
 
@@ -118,7 +119,7 @@ class RootViewActivity : AppCompatActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     LoadingScreen(
                         isLoading = isLoading,
-                        message = loadingMessage
+                        loadingStep = loadingStep
                     )
 
                     if (showNoInternetDialog) {

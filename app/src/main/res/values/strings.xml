@@ -33,6 +33,11 @@
     <string name="root_no_internet_title">No Internet Connection</string>
     <string name="root_no_internet_message">Your device is currently offline. Please reconnect to continue your progress</string>
     <string name="root_try_again">Try Again</string>
+    <string name="root_loading_initializing">Initializing...</string>
+    <string name="root_loading_fetching_config">Loading configuration...</string>
+    <string name="root_loading_ad">Loading...</string>
+    <string name="root_loading_checking_status">Checking status...</string>
+    <string name="root_loading_preparing">Preparing...</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Gallery</string>

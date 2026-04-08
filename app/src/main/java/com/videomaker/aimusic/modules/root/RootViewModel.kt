@@ -7,6 +7,8 @@ import android.net.NetworkCapabilities
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.modules.language.domain.usecase.CheckLanguageSelectedUseCase
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
@@ -56,8 +58,8 @@ class RootViewModel(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _loadingMessage = MutableStateFlow("Initializing...")
-    val loadingMessage: StateFlow<String> = _loadingMessage.asStateFlow()
+    private val _loadingStep = MutableStateFlow(LoadingStep.INITIALIZING)
+    val loadingStep: StateFlow<LoadingStep> = _loadingStep.asStateFlow()
 
     // ============================================
     // NAVIGATION EVENTS (StateFlow-based - Google recommended)
@@ -143,6 +145,7 @@ class RootViewModel(
     private fun loadInitialData() {
         viewModelScope.launch {
             _isLoading.value = true
+            val startTimeMillis = System.currentTimeMillis()
 
             // Step 1: Check internet connection
             if (!isInternetAvailable()) {
@@ -154,22 +157,32 @@ class RootViewModel(
 
             try {
                 // Step 2: Initialize AdMob (placeholder for future)
-                _loadingMessage.value = "Initializing..."
+                _loadingStep.value = LoadingStep.INITIALIZING
                 initializeAds()
 
                 // Step 3: Load Firebase Remote Config (10s timeout)
-                _loadingMessage.value = "Loading configuration..."
+                _loadingStep.value = LoadingStep.FETCHING_CONFIG
                 loadRemoteConfig()
 
                 // Step 4: Present App Open Ad (placeholder for future)
-                _loadingMessage.value = "Loading..."
+                _loadingStep.value = LoadingStep.LOADING_AD
                 presentAppOpenAd()
 
                 // Step 5: Check startup gate status
+                _loadingStep.value = LoadingStep.CHECKING_STATUS
                 val onboardingResult = checkOnboardingStatusUseCase()
                 needsOnboarding = onboardingResult.getOrNull() ?: false
                 needsLanguageSelection = checkLanguageSelectedUseCase()
                 needsFeatureSelection = !preferencesManager.isFeatureSelectionComplete()
+
+                // Step 6: Track initialization time
+                val durationMs = System.currentTimeMillis() - startTimeMillis
+                Analytics.track(
+                    name = AnalyticsEvent.APP_INIT_TIME,
+                    params = mapOf(
+                        AnalyticsEvent.Param.VALUE to durationMs
+                    )
+                )
 
                 // Step 7: Navigate to appropriate screen
                 proceedToNextScreen()
@@ -277,4 +290,29 @@ sealed class RootNavigationEvent {
      * Navigate back (pop back stack)
      */
     data object NavigateBack : RootNavigationEvent()
+}
+
+// ============================================
+// LOADING STEP ENUM
+// ============================================
+
+/**
+ * Loading steps during app initialization
+ * Used for UI feedback on splash/loading screen
+ */
+enum class LoadingStep {
+    /** Initializing app services (AdMob, etc.) */
+    INITIALIZING,
+
+    /** Fetching Remote Config from Firebase */
+    FETCHING_CONFIG,
+
+    /** Loading and presenting App Open ad */
+    LOADING_AD,
+
+    /** Checking onboarding/language/feature selection status */
+    CHECKING_STATUS,
+
+    /** Preparing to navigate to first screen */
+    PREPARING
 }

@@ -38,7 +38,7 @@ android {
         applicationId = "com.videomaker.aimusic"
         minSdk = 28
         targetSdk = 36
-        versionCode = 5
+        versionCode = 7
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -239,9 +239,10 @@ dependencies {
     // ============================================
     implementation(libs.acccore)
     implementation(libs.acccore.firebase)    // Firebase Analytics, Crashlytics, RemoteConfig, Performance
+    // implementation(libs.acccore.facebook)    // TODO: Uncomment when Meta/Facebook keys ready
+    // implementation(libs.acccore.appsflyer)   // TODO: Uncomment when AppsFlyer keys ready
     // implementation(libs.acccore.revenuecat)  // Uncomment when RevenueCat needed
     // implementation(libs.acccore.ads)         // Uncomment when Ads needed
-    // implementation(libs.acccore.appsflyer)   // Uncomment when AppsFlyer needed
 
     // ============================================
     // WIDGETS (Glance)
