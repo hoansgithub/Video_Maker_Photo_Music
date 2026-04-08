@@ -2,7 +2,9 @@ package com.videomaker.aimusic
 
 import android.app.Application
 import co.alcheclub.lib.acccore.analytics.AnalyticsCoordinator
+import co.alcheclub.lib.acccore.appsflyer.appsFlyerModule
 import co.alcheclub.lib.acccore.coreModuleFromDI
+import co.alcheclub.lib.acccore.facebook.facebookModule
 import co.alcheclub.lib.acccore.firebase.firebaseModule
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfigCoordinator
 import org.koin.android.ext.android.get
@@ -38,8 +40,12 @@ import kotlinx.coroutines.launch
  * Initializes Koin (Dependency Injection) on startup.
  * Registered in AndroidManifest.xml with android:name=".VideoMakerApplication"
  *
- * Firebase modules initialized:
+ * Analytics platforms initialized:
  * - Firebase Analytics (via firebaseModule)
+ * - Facebook Analytics (via facebookModule)
+ * - AppsFlyer (via appsFlyerModule)
+ *
+ * Other Firebase modules:
  * - Firebase Crashlytics (via firebaseModule)
  * - Firebase Remote Config (via firebaseModule)
  * - Firebase Performance (via firebaseModule)
@@ -87,18 +93,24 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         // Initialize Koin with separated modules
         // ⚠️ CRITICAL: Module ordering matters!
         // 1. firebaseModule - Provides Firebase AnalyticsPlatform & ConfigCenter
-        // 2. coreModuleFromDI - Creates coordinators that auto-discover all platforms
-        // 3. Other modules - Can use coordinators
+        // 2. facebookModule/appsFlyerModule - Provide additional AnalyticsPlatforms
+        // 3. coreModuleFromDI - Creates coordinators that auto-discover all platforms
+        // 4. Other modules - Can use coordinators
         startKoin {
             androidContext(this@VideoMakerApplication)
             modules(
-                firebaseModule(manualAdImpressionTracking = true),  // Firebase Analytics, Crashlytics, RemoteConfig, Performance
-                coreModuleFromDI(
-                    applicationScope = applicationScope,
-                    enableAnalyticsTracking = !BuildConfig.DEBUG, // Disable tracking in debug
-                    enableAnalyticsLogging = BuildConfig.DEBUG    // Enable verbose logs in debug
+                firebaseModule(manualAdImpressionTracking = true),  // ← 1. FIRST: Firebase Analytics, Crashlytics, RemoteConfig, Performance
+                facebookModule(isDebug = BuildConfig.DEBUG),        // ← 2. Facebook Analytics only (no login)
+                appsFlyerModule(                                    // ← 2. AppsFlyer: Another AnalyticsPlatform
+                    devKey = BuildConfig.APPSFLYER_DEV_KEY,
+                    isDebug = BuildConfig.DEBUG
                 ),
-                dataModule,         // Data sources & repositories
+                coreModuleFromDI(                                   // ← 3. THIRD: Creates coordinators (with app scope)
+                    applicationScope = applicationScope,
+                    enableAnalyticsTracking = !BuildConfig.DEBUG,   // Disable tracking in debug
+                    enableAnalyticsLogging = BuildConfig.DEBUG      // Enable verbose logs in debug
+                ),
+                dataModule,         // ← 4. Data sources & repositories
                 mediaModule,        // Media processing utilities
                 domainModule,       // Use cases & business logic
                 presentationModule  // ViewModels
