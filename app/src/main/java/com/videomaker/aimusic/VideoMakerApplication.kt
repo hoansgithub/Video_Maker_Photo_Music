@@ -76,8 +76,7 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
          * IMPORTANT: Only used in debug builds (see BuildConfig.DEBUG check below)
          */
         private val UMP_TEST_DEVICE_IDS = listOf<String>(
-            // Add your test device IDs here
-            // Example: "038F441054F01155CAC59935A542BCA0"
+            "562AA2413BCC3872B79F7F30261CF7CD"  // Test device for UMP consent
         )
 
         /**
