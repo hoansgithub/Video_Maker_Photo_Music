@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.templatepreviewer
 
+import android.app.Activity
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.EaseInOutCubic
@@ -53,6 +54,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.activity.compose.BackHandler
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -82,9 +84,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.ui.components.ErrorOverlay
 import com.videomaker.aimusic.ui.components.ErrorType
 import com.videomaker.aimusic.ui.components.PrimaryButton
@@ -147,7 +153,17 @@ fun TemplatePreviewerScreen(
     // Track song loading error
     var songError by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(navigationEvent, songError) {
+    // Get dependencies for ad showing
+    val activity = context as? Activity
+    val adsLoaderService = koinInject<AdsLoaderService>()
+
+    // Intercept system back gesture (swipe) - same ad logic as back button
+    BackHandler {
+        viewModel.onNavigateBack()
+    }
+
+    // Handle navigation events (StateFlow-based - Gold standard per CLAUDE.md)
+    LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
                 is TemplatePreviewerNavigationEvent.NavigateToAssetPicker -> {
@@ -158,6 +174,37 @@ fun TemplatePreviewerScreen(
                         android.util.Log.w("TemplatePreviewerScreen", "Navigation blocked due to music loading error")
                     }
                 }
+
+                is TemplatePreviewerNavigationEvent.RequestBackWithAd -> {
+                    // Show ad if ready, otherwise navigate immediately (non-blocking)
+                    if (event.shouldShowAd && activity != null) {
+                        android.util.Log.d("TemplatePreviewerScreen", "📺 Showing back button ad...")
+
+                        InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
+                            action = {
+                                // Ad closed - navigate back
+                                android.util.Log.d("TemplatePreviewerScreen", "✅ Back ad closed - navigating")
+                            },
+                            onShown = {
+                                // Navigate immediately when ad shows (parallel)
+                                android.util.Log.d("TemplatePreviewerScreen", "🎬 Back ad shown - navigating")
+                                onNavigateBack()
+                            },
+                            bypassFrequencyCap = true,  // Back button ads always show
+                            showLoadingOverlay = false  // Ad already preloaded
+                        )
+                    } else {
+                        // Ad not ready or no activity - navigate immediately
+                        if (!event.shouldShowAd) {
+                            android.util.Log.d("TemplatePreviewerScreen", "⚠️ Back ad not ready - navigating immediately")
+                        }
+                        onNavigateBack()
+                    }
+                }
+
                 is TemplatePreviewerNavigationEvent.NavigateBack -> onNavigateBack()
             }
             viewModel.onNavigationHandled()

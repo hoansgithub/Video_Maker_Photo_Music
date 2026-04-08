@@ -69,6 +69,9 @@ import com.videomaker.aimusic.modules.onboarding.domain.usecase.CheckOnboardingS
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import android.content.Context
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import co.alcheclub.lib.acccore.ads.loader.PlacementConfigService
+import co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
 // import com.videomaker.aimusic.modules.musicpicker.MusicPickerViewModel
 import com.videomaker.aimusic.modules.songs.MusicPlayerViewModel
@@ -234,23 +237,37 @@ val adsModule = module {
     // Native Ad Layout Provider (singleton - provides layout mappings)
     single { VideoMakerNativeAdLayoutProvider() }
 
-    // TODO: Uncomment after fixing ACCCore-Ads API
-    // Ad Placement Config Service (singleton - registers all placements)
-    // single {
-    //     AdPlacementConfigService(
-    //         registrar = get<AdPlacementRegistrar>(),
-    //         remoteConfig = get<RemoteConfig>(),
-    //         adMobMediator = get<AdMobMediator>()
-    //     )
-    // }
+    // Placement Config Service (ACCCore service for per-placement configs)
+    // CRITICAL: Must track for RemoteConfigCoordinator auto-discovery
+    single {
+        co.alcheclub.lib.acccore.ads.loader.PlacementConfigService().also {
+            co.alcheclub.lib.acccore.di.koin.SingletonTracker.track(it)
+        }
+    }
 
-    // Ad Initializer (singleton - validates initialization on app start)
-    // single {
-    //     AdInitializer(
-    //         placementConfigService = get(),
-    //         registrar = get<AdPlacementRegistrar>()
-    //     )
-    // }
+    // Ad Placement Config Service (singleton - registers all placements with PlacementConfigService)
+    single {
+        com.videomaker.aimusic.core.ads.AdPlacementConfigService(
+            placementConfigService = get()  // From adMobModule in VideoMakerApplication
+        )
+    }
+
+    // Ads Loader Service (singleton - uses PlacementConfigService)
+    single {
+        val placementConfigService = get<co.alcheclub.lib.acccore.ads.loader.PlacementConfigService>()
+        co.alcheclub.lib.acccore.ads.loader.AdsLoaderService(configService = placementConfigService).apply {
+            setAdMediator(get<co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator>())
+        }
+    }
+
+    // Ad Initializer (singleton - validates ad system initialization)
+    single {
+        com.videomaker.aimusic.core.ads.AdInitializer(
+            adPlacementConfigService = get(),
+            placementConfigService = get(),
+            adsLoaderService = get()
+        )
+    }
 
     // Interstitial Ad Helper Extension (singleton - app-level wrapper)
     // single {
@@ -520,7 +537,8 @@ class TemplatePreviewerViewModelFactory(
     private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase,
     private val likeTemplateUseCase: LikeTemplateUseCase,
     private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
-    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase
+    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(
         templateId: String,
@@ -537,7 +555,8 @@ class TemplatePreviewerViewModelFactory(
             updateProjectSettingsUseCase = updateProjectSettingsUseCase,
             likeTemplateUseCase = likeTemplateUseCase,
             unlikeTemplateUseCase = unlikeTemplateUseCase,
-            observeLikedTemplatesUseCase = observeLikedTemplatesUseCase
+            observeLikedTemplatesUseCase = observeLikedTemplatesUseCase,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -653,7 +672,8 @@ val presentationModule = module {
             checkOnboardingStatusUseCase = get(),
             checkLanguageSelectedUseCase = get(),
             preferencesManager = get(),
-            remoteConfig = get()  // Firebase Remote Config (from firebaseModule)
+            remoteConfig = get(),  // Firebase Remote Config (from firebaseModule)
+            adsLoaderService = get()  // Ad loading service (from ACCCore-Ads)
         )
     }
 
@@ -788,7 +808,8 @@ val presentationModule = module {
             updateProjectSettingsUseCase = get(),
             likeTemplateUseCase = get(),
             unlikeTemplateUseCase = get(),
-            observeLikedTemplatesUseCase = get()
+            observeLikedTemplatesUseCase = get(),
+            adsLoaderService = get()
         )
     }
 

@@ -42,6 +42,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 /**
  * Application class for Video Maker App
@@ -148,30 +149,20 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
             scope.launch(Dispatchers.Main) {
                 try {
-                    android.util.Log.d("VideoMakerApp", "🔄 Initializing UMP consent...")
+                    android.util.Log.d("VideoMakerApp", "🔄 Starting UMP consent flow...")
 
-                    // Step 1: Initialize UMP (GDPR consent) with timeout
-                    // This checks if user is in a region requiring consent
-                    // Timeout prevents infinite hanging on emulators or poor network
+                    // Step 1 & 2: Initialize UMP + Present consent form (1 minute timeout for BOTH)
+                    // Wraps entire consent flow to prevent infinite loading if network hangs
                     try {
-                        kotlinx.coroutines.withTimeout(30000L) {  // 30 second timeout
+                        withTimeout(60_000L) {  // 1 minute for entire consent flow
+                            android.util.Log.d("VideoMakerApp", "🔄 Initializing UMP consent...")
                             adMobMediator.initializeUMP(activity)
-                        }
-                    } catch (e: TimeoutCancellationException) {
-                        android.util.Log.w("VideoMakerApp", "⏱️ UMP initialization timeout - continuing without consent")
-                    }
 
-                    android.util.Log.d("VideoMakerApp", "🔄 Presenting consent form if required...")
-
-                    // Step 2: Present consent form if needed (waits for user response)
-                    // Only shows form if user is in EEA/UK and hasn't consented yet
-                    // Timeout prevents infinite waiting
-                    try {
-                        kotlinx.coroutines.withTimeout(30000L) {  // 30 second timeout
+                            android.util.Log.d("VideoMakerApp", "🔄 Presenting consent form if required...")
                             adMobMediator.presentConsentFormIfRequired(activity)
                         }
                     } catch (e: TimeoutCancellationException) {
-                        android.util.Log.w("VideoMakerApp", "⏱️ Consent form timeout - continuing without consent")
+                        android.util.Log.w("VideoMakerApp", "⏱️ UMP consent flow timed out after 1 minute")
                     }
 
                     android.util.Log.d("VideoMakerApp", "🔄 Initializing AdMob SDK...")
@@ -283,15 +274,10 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         // ============================================
         // INITIALIZE AD SYSTEM (after Koin)
         // ============================================
-        // TODO: Uncomment after fixing ACCCore-Ads API usage
-        // Register native ad layout provider with AdMobMediator
-        // val adMobMediator = get<co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator>()
-        // val nativeAdLayoutProvider = get<VideoMakerNativeAdLayoutProvider>()
-        // adMobMediator.setNativeAdLayoutProvider(nativeAdLayoutProvider)
-
         // Initialize ad placements SYNCHRONOUSLY (force registration before any ad loads)
-        // val adInitializer = get<AdInitializer>()
-        // adInitializer.initialize()
+        // This triggers AdInitializer.init{} which validates the setup
+        val adInitializer = org.koin.core.context.GlobalContext.get().get<com.videomaker.aimusic.core.ads.AdInitializer>()
+        android.util.Log.d("VideoMakerApp", "Ad system initialized: ${adInitializer.getDiagnostics()}")
 
         // Auto-register services with coordinators
         applicationScope.launch {

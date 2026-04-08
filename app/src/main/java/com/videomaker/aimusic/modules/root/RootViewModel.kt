@@ -1,27 +1,39 @@
 package com.videomaker.aimusic.modules.root
 
+import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.constants.RemoteConfigKeys
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.modules.language.domain.usecase.CheckLanguageSelectedUseCase
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
 import com.videomaker.aimusic.navigation.AppRoute
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.suspendCancellableCoroutine
+import java.lang.ref.WeakReference
+import kotlin.coroutines.resume
 
 /**
  * RootViewModel - Root state machine for app initialization
@@ -51,7 +63,8 @@ class RootViewModel(
     private val checkOnboardingStatusUseCase: CheckOnboardingStatusUseCase,
     private val checkLanguageSelectedUseCase: CheckLanguageSelectedUseCase,
     private val preferencesManager: PreferencesManager,
-    private val remoteConfig: RemoteConfig
+    private val remoteConfig: RemoteConfig,
+    private val adsLoaderService: AdsLoaderService
 ) : ViewModel() {
 
     // ============================================
@@ -90,6 +103,14 @@ class RootViewModel(
     @Volatile
     private var isInitialized = false
 
+    // Use WeakReference to avoid leaking Activity during configuration changes
+    @Volatile
+    private var activityRef: WeakReference<Activity>? = null
+
+    // Initialization timeout from Remote Config (default 45s)
+    @Volatile
+    private var initTimeoutMs: Long = 45_000L
+
     // ============================================
     // PUBLIC API
     // ============================================
@@ -102,11 +123,15 @@ class RootViewModel(
      * 2. Firebase Remote Config fetch and activate
      * 3. Language selection status check
      * 4. Onboarding status check
-     * 5. Navigation to appropriate screen
+     * 5. Splash interstitial ad loading and showing
+     * 6. Navigation to appropriate screen
      *
-     * @param activity Activity context required for UMP consent form
+     * @param activity Activity context required for UMP consent form and ads
      */
-    fun initializeApp(activity: android.app.Activity) {
+    fun initializeApp(activity: Activity) {
+        // Store Activity reference (WeakReference to avoid leaks)
+        activityRef = WeakReference(activity)
+
         if (isInitialized) {
             // Already initialized, just navigate
             proceedToNextScreen()
@@ -173,7 +198,7 @@ class RootViewModel(
 
             // Step 2: Check internet connection
             if (!isInternetAvailable()) {
-                _isLoading.value = false
+                // Keep loading indicator visible while showing no-internet dialog
                 isInitialized = false
                 _showNoInternetDialog.value = true
                 return@launch
@@ -182,7 +207,7 @@ class RootViewModel(
             // Step 3: Get initialization timeout from Remote Config
             // Default: 45 seconds (can be adjusted remotely without app update)
             // Longer timeout allows for slower networks while still preventing infinite loading
-            val initTimeoutMs = try {
+            initTimeoutMs = try {
                 remoteConfig.getLong(RemoteConfigKeys.APP_INIT_TIMEOUT_MS, 45_000L)
             } catch (e: Exception) {
                 45_000L  // Fallback to 45 seconds if Remote Config fails
@@ -202,17 +227,44 @@ class RootViewModel(
                         _loadingStep.value = LoadingStep.FETCHING_CONFIG
                         loadRemoteConfig()
 
-                        // Step 4: Present App Open Ad (placeholder for future)
-                        // UMP consent is already complete, safe to load/show ads
-                        _loadingStep.value = LoadingStep.LOADING_AD
-                        presentAppOpenAd()
-
-                        // Step 5: Check startup gate status
+                        // Step 4: Check startup gate status
                         _loadingStep.value = LoadingStep.CHECKING_STATUS
                         val onboardingResult = checkOnboardingStatusUseCase()
                         needsOnboarding = onboardingResult.getOrNull() ?: false
                         needsLanguageSelection = checkLanguageSelectedUseCase()
                         needsFeatureSelection = !preferencesManager.isFeatureSelectionComplete()
+
+                        // Step 5: Preload splash interstitial ad (parallel with other operations)
+                        // Ad loads in background while we check status
+                        // Uses same timeout as overall initialization (from Remote Config)
+                        _loadingStep.value = LoadingStep.LOADING_AD
+                        android.util.Log.d("RootViewModel", "🎬 Step 5: Preloading splash interstitial ad...")
+                        android.util.Log.d("RootViewModel", "   - Placement: ${AdPlacement.INTERSTITIAL_SPLASH}")
+                        android.util.Log.d("RootViewModel", "   - Timeout: ${initTimeoutMs}ms")
+
+                        withContext(Dispatchers.Main) {
+                            coroutineScope {
+                                val adJob = async {
+                                    runCatching {
+                                        val success = InterstitialAdHelperExt.preloadInterstitial(
+                                            adsLoaderService = adsLoaderService,
+                                            placement = AdPlacement.INTERSTITIAL_SPLASH,
+                                            loadTimeoutMillis = initTimeoutMs,  // Use Remote Config timeout
+                                            showLoadingOverlay = false  // We have our own loading screen
+                                        )
+                                        if (success) {
+                                            android.util.Log.d("RootViewModel", "✅ Splash ad preload SUCCESS")
+                                        } else {
+                                            android.util.Log.w("RootViewModel", "⚠️ Splash ad preload FAILED (returned false)")
+                                        }
+                                        success
+                                    }.onFailure {
+                                        android.util.Log.e("RootViewModel", "❌ Splash ad preload exception: ${it.message}", it)
+                                    }
+                                }
+                                adJob.await()
+                            }
+                        }
 
                     } catch (e: Exception) {
                         android.util.Log.e("RootViewModel", "Initialization error: ${e.message}")
@@ -283,31 +335,12 @@ class RootViewModel(
     // PRIVATE: PLACEHOLDERS (for future implementation)
     // ============================================
 
-    /**
-     * Initialize AdMob SDK
-     * TODO: Implement UMP consent + AdMob initialization
-     */
-    private suspend fun initializeAds() {
-        // Placeholder: Add AdMob initialization here
-        delay(100) // Simulate initialization
-    }
-
-    /**
-     * Present App Open Ad
-     * TODO: Implement App Open ad loading and presentation
-     */
-    private suspend fun presentAppOpenAd() {
-        // Placeholder: Add App Open ad presentation here
-        delay(100) // Simulate ad presentation
-    }
-
     // ============================================
     // PRIVATE: NAVIGATION
     // ============================================
 
     private fun proceedToNextScreen() {
-        _isLoading.value = false
-
+        // Determine destination route
         val route = resolveStartupRoute(
             SetupProgress(
                 needsLanguageSelection = needsLanguageSelection,
@@ -315,7 +348,38 @@ class RootViewModel(
                 needsFeatureSelection = needsFeatureSelection
             )
         )
-        _navigationEvent.value = RootNavigationEvent.NavigateTo(route)
+
+        android.util.Log.d("RootViewModel", "📍 proceedToNextScreen() - Destination: $route")
+
+        // Show splash interstitial ad (if loaded) before navigating
+        // Ad shows on top of loading screen, then navigates when closed
+        activityRef?.get()?.let { activity ->
+            android.util.Log.d("RootViewModel", "📺 Attempting to show splash interstitial ad...")
+            android.util.Log.d("RootViewModel", "   - Placement: ${AdPlacement.INTERSTITIAL_SPLASH}")
+            android.util.Log.d("RootViewModel", "   - Bypass frequency cap: true")
+            android.util.Log.d("RootViewModel", "   - Load timeout: ${initTimeoutMs}ms")
+
+            InterstitialAdHelperExt.showInterstitial(
+                adsLoaderService = adsLoaderService,
+                activity = activity,
+                placement = AdPlacement.INTERSTITIAL_SPLASH,
+                action = {
+                    // Navigate when ad closes (or if ad fails to show)
+                    android.util.Log.d("RootViewModel", "✅ Ad action callback called - navigating to $route")
+                    _navigationEvent.value = RootNavigationEvent.NavigateTo(route)
+                },
+                onShown = {
+                    android.util.Log.d("RootViewModel", "🎬 Splash ad is now showing on screen")
+                },
+                bypassFrequencyCap = true,  // Splash ad always shows (once per session)
+                loadTimeoutMillis = initTimeoutMs,  // Use Remote Config timeout (default 45s)
+                showLoadingOverlay = false  // Loading screen already visible
+            )
+        } ?: run {
+            // No activity reference - navigate without ad
+            android.util.Log.w("RootViewModel", "⚠️ No activity reference, skipping splash ad")
+            _navigationEvent.value = RootNavigationEvent.NavigateTo(route)
+        }
     }
 
     // ============================================

@@ -15,6 +15,9 @@ import com.videomaker.aimusic.domain.usecase.LikeTemplateUseCase
 import com.videomaker.aimusic.domain.usecase.ObserveLikedTemplatesUseCase
 import com.videomaker.aimusic.domain.usecase.UnlikeTemplateUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.constants.AdPlacement
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -61,7 +64,18 @@ sealed class SongLoadState {
 // ============================================
 
 sealed class TemplatePreviewerNavigationEvent {
+    /**
+     * Legacy back navigation (no ad check)
+     * Use RequestBackWithAd instead for ad support
+     */
     data object NavigateBack : TemplatePreviewerNavigationEvent()
+
+    /**
+     * Request back navigation with optional ad
+     * @param shouldShowAd true if ad is ready and should be shown
+     */
+    data class RequestBackWithAd(val shouldShowAd: Boolean) : TemplatePreviewerNavigationEvent()
+
     data class NavigateToAssetPicker(
         val template: VideoTemplate,
         val overrideSongId: Long,
@@ -85,7 +99,8 @@ class TemplatePreviewerViewModel(
     private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase,
     private val likeTemplateUseCase: LikeTemplateUseCase,
     private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
-    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase
+    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) : ViewModel() {
 
     private val imageUris: List<Uri> = imageUrisStr.mapNotNull { uriStr ->
@@ -129,6 +144,29 @@ class TemplatePreviewerViewModel(
 
     init {
         loadInitialTemplates()
+
+        // Preload back button interstitial ad
+        // Ad loads in background with no timeout - may be used later if back is pressed
+        // Non-blocking: back button works normally if ad not ready yet
+        viewModelScope.launch {
+            android.util.Log.d("TemplatePreviewerVM", "🎬 Preloading back button ad...")
+            runCatching {
+                InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
+                    loadTimeoutMillis = null,  // No timeout - load as long as needed
+                    showLoadingOverlay = false  // Background preload, no overlay
+                )
+            }.onSuccess { success ->
+                if (success) {
+                    android.util.Log.d("TemplatePreviewerVM", "✅ Back button ad preload SUCCESS")
+                } else {
+                    android.util.Log.w("TemplatePreviewerVM", "⚠️ Back button ad preload FAILED")
+                }
+            }.onFailure { e ->
+                android.util.Log.e("TemplatePreviewerVM", "❌ Back button ad preload exception: ${e.message}", e)
+            }
+        }
     }
 
     // ============================================
@@ -159,7 +197,14 @@ class TemplatePreviewerViewModel(
     }
 
     fun onNavigateBack() {
-        _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateBack
+        // Check if back button ad is ready (non-blocking)
+        val isAdReady = adsLoaderService.isInterstitialReady(AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_BACK)
+
+        android.util.Log.d("TemplatePreviewerVM", "🔙 onNavigateBack - Ad ready: $isAdReady")
+
+        // Send navigation event with ad status
+        // Screen will show ad if ready, otherwise navigate immediately
+        _navigationEvent.value = TemplatePreviewerNavigationEvent.RequestBackWithAd(isAdReady)
     }
 
     /** Called by UI after navigation is handled — clears the event */
