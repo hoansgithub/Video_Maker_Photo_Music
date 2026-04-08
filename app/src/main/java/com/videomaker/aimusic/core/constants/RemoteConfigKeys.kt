@@ -14,6 +14,48 @@ package com.videomaker.aimusic.core.constants
 object RemoteConfigKeys {
 
     // ============================================
+    // AD CONFIGURATION
+    // ============================================
+
+    /**
+     * Ad placements configuration (JSON object).
+     *
+     * Structure:
+     * ```json
+     * {
+     *   "interstitial_editor_enter": {
+     *     "enabled": true,
+     *     "type": "interstitial",
+     *     "units": [
+     *       {"network": "admob", "unitId": "ca-app-pub-xxx/yyy"}
+     *     ]
+     *   },
+     *   "native_home_1": {
+     *     "enabled": true,
+     *     "type": "native",
+     *     "units": [...],
+     *     "extras": {"layout": "native_small_clean"}
+     *   }
+     * }
+     * ```
+     */
+    const val AD_PLACEMENTS = "ad_placements"
+
+    /**
+     * Global ad settings (JSON object).
+     *
+     * Structure:
+     * ```json
+     * {
+     *   "interstitial_min_interval": "60",
+     *   "ad_load_timeout": "10",
+     *   "enable_test_ads": "false"
+     * }
+     * ```
+     */
+    const val AD_GLOBAL_SETTINGS = "ad_global_settings"
+
+    // ============================================
     // APP BEHAVIOR
     // ============================================
     // Placeholder for future Remote Config flags

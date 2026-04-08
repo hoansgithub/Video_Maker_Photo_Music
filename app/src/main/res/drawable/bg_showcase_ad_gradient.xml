@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Bottom-to-transparent gradient overlay for the native showcase ad item.
+Background color: #09090B (BackgroundDark - Video Maker theme)
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:type="linear"
+        android:angle="270"
+        android:startColor="#0009090B"
+        android:centerColor="#0009090B"
+        android:endColor="#E609090B" />
+</shape>

@@ -87,6 +87,14 @@ import com.videomaker.aimusic.modules.settings.UninstallViewModel
 import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchViewModelFactory
 import com.videomaker.aimusic.widget.WidgetViewModel
 import org.koin.android.ext.koin.androidApplication
+// TODO: Uncomment after fixing ACCCore-Ads API
+// import co.alcheclub.lib.acccore.ads.AdPlacementRegistrar
+// import co.alcheclub.lib.acccore.ads.helpers.InterstitialAdHelper
+// import co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator
+// import com.videomaker.aimusic.core.ads.AdInitializer
+// import com.videomaker.aimusic.core.ads.AdPlacementConfigService
+// import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
 
 /**
  * ACCDI Dependency Injection Modules
@@ -201,6 +209,57 @@ val mediaModule = module {
                 .crossfade(true)
                 .build()
     }
+}
+
+// ========== ADS MODULE ==========
+/**
+ * Ads Module
+ *
+ * Contains:
+ * - Ad placement configuration service (registers all placements with Remote Config)
+ * - Ad helper extensions (app-level wrappers for ACCCore helpers)
+ * - Ad initializer (validates placement registration)
+ * - Native ad layout provider (maps layout names to resources)
+ *
+ * Scope: Singleton - Ad services are expensive to create and should live for entire app lifetime
+ *
+ * Dependencies from ACCCore-Ads (provided by adMobModule in VideoMakerApplication):
+ * - AdPlacementRegistrar (from ACCCore-Ads)
+ * - AdMobMediator (from ACCCore-Ads)
+ * - InterstitialAdHelper (from ACCCore-Ads)
+ *
+ * TODO: Fix ACCCore-Ads API usage before enabling these services
+ */
+val adsModule = module {
+    // Native Ad Layout Provider (singleton - provides layout mappings)
+    single { VideoMakerNativeAdLayoutProvider() }
+
+    // TODO: Uncomment after fixing ACCCore-Ads API
+    // Ad Placement Config Service (singleton - registers all placements)
+    // single {
+    //     AdPlacementConfigService(
+    //         registrar = get<AdPlacementRegistrar>(),
+    //         remoteConfig = get<RemoteConfig>(),
+    //         adMobMediator = get<AdMobMediator>()
+    //     )
+    // }
+
+    // Ad Initializer (singleton - validates initialization on app start)
+    // single {
+    //     AdInitializer(
+    //         placementConfigService = get(),
+    //         registrar = get<AdPlacementRegistrar>()
+    //     )
+    // }
+
+    // Interstitial Ad Helper Extension (singleton - app-level wrapper)
+    // single {
+    //     InterstitialAdHelperExt(
+    //         helper = get<InterstitialAdHelper>(),
+    //         adMobMediator = get<AdMobMediator>(),
+    //         placementConfigService = get()
+    //     )
+    // }
 }
 
 // ========== DOMAIN LAYER MODULE ==========
@@ -799,6 +858,7 @@ val presentationModule = module {
 val allModules = arrayOf(
     dataModule,
     mediaModule,
+    adsModule,
     domainModule,
     presentationModule
 )

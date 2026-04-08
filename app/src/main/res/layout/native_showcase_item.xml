@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Native Ad Layout: Showcase Item
+- Visually matches ShowcaseItem (414:557 portrait aspect ratio)
+- Follows Google AdMob Native Ad Guidelines
+- PORTRAIT aspect ratio is automatically requested via NativeAdOptions (MediaAspectRatio.PORTRAIT)
+
+Layout layers (bottom to top):
+  1. MediaView (fullscreen background, like the template thumbnail)
+  2. Bottom gradient overlay (transparent → dark background, matches showcase gradient)
+  3. AdChoices overlay (top-right, required by Google)
+  4. "Ad" badge (top-left, non-intrusive)
+  5. Headline text + CTA pill button (bottom area, on the gradient zone)
+
+CTA button matches showcase play button: 43dp height, capsule shape, primary color.
+-->
+<com.google.android.gms.ads.nativead.NativeAdView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Layer 1: Media View (fills container as background, like template thumbnail) -->
+        <com.google.android.gms.ads.nativead.MediaView
+            android:id="@+id/ad_media"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop" />
+
+        <!-- Layer 2: Bottom gradient overlay (matches showcase gradient fade) -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_showcase_ad_gradient" />
+
+        <!-- Layer 3: AdChoices overlay (top-right corner, required by Google guidelines) -->
+        <FrameLayout
+            android:id="@+id/ad_choices_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_margin="8dp"
+            android:minWidth="15dp"
+            android:minHeight="15dp" />
+
+        <!-- Layer 4: "Ad" badge (top-left, matches other native ad layouts) -->
+        <TextView
+            android:id="@+id/ad_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:layout_margin="12dp"
+            android:text="@string/ad_badge"
+            android:textSize="10sp"
+            android:textColor="@color/foundation_black"
+            android:textStyle="bold"
+            android:background="@drawable/bg_ad_badge"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp" />
+
+        <!-- Layer 5: Headline + CTA pill button (bottom, on gradient zone) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingHorizontal="20dp"
+            android:paddingBottom="16dp">
+
+            <!-- Headline text (above CTA, white on gradient) -->
+            <TextView
+                android:id="@+id/ad_headline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:layout_marginBottom="8dp" />
+
+            <!-- CTA pill button — matches showcase play button dimensions (134×43dp) -->
+            <TextView
+                android:id="@+id/ad_call_to_action"
+                android:layout_width="wrap_content"
+                android:layout_height="43dp"
+                android:minWidth="134dp"
+                android:gravity="center"
+                android:textSize="14sp"
+                android:textColor="@color/foundation_black"
+                android:textStyle="bold"
+                android:paddingHorizontal="24dp"
+                android:background="@drawable/bg_cta_clean" />
+
+            <!-- Optional: Body text (hidden if not provided) -->
+            <TextView
+                android:id="@+id/ad_body"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#E6FFFFFF"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:visibility="gone" />
+
+            <!-- Optional: Ad icon (hidden if not provided) -->
+            <ImageView
+                android:id="@+id/ad_icon"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="@string/ad_icon"
+                android:visibility="gone" />
+
+            <!-- Optional: Advertiser name (hidden if not provided) -->
+            <TextView
+                android:id="@+id/ad_advertiser"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="9sp"
+                android:textColor="@color/foundation_white_40"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:visibility="gone" />
+
+            <!-- Optional: Store name (hidden if not provided) -->
+            <TextView
+                android:id="@+id/ad_store"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="9sp"
+                android:textColor="@color/foundation_white_40"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:visibility="gone" />
+        </LinearLayout>
+
+    </FrameLayout>
+</com.google.android.gms.ads.nativead.NativeAdView>

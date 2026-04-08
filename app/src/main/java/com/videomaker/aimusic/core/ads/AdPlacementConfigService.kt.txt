@@ -1,0 +1,356 @@
+package com.videomaker.aimusic.core.ads
+
+import co.alcheclub.lib.acccore.ads.AdPlacementRegistrar
+import co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator
+import co.alcheclub.lib.acccore.remoteconfig.ConfigurableObject
+import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
+import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.constants.RemoteConfigKeys
+import com.videomaker.aimusic.domain.model.AdPlacementConfig
+import kotlinx.serialization.json.Json
+
+/**
+ * Ad Placement Configuration Service for Video Maker app.
+ *
+ * Responsibilities:
+ * 1. Register all ad placements with ACCCore-Ads on initialization
+ * 2. Listen for Remote Config updates and update ad placements accordingly
+ * 3. Provide global ad settings (interstitial interval, timeouts, etc.)
+ *
+ * Architecture:
+ * - Implements ConfigurableObject to receive Remote Config updates
+ * - Auto-registered with RemoteConfigCoordinator via ACCDI.getAllSingletons()
+ * - Updates propagate to ACCCore-Ads framework automatically
+ *
+ * Remote Config Structure:
+ * ```json
+ * {
+ *   "ad_placements": {
+ *     "interstitial_editor_enter": {
+ *       "enabled": true,
+ *       "type": "interstitial",
+ *       "units": [
+ *         {"network": "admob", "unitId": "ca-app-pub-xxx/yyy"}
+ *       ]
+ *     },
+ *     // ... more placements
+ *   },
+ *   "ad_global_settings": {
+ *     "interstitial_min_interval": "60",
+ *     "ad_load_timeout": "10",
+ *     "enable_test_ads": "false"
+ *   }
+ * }
+ * ```
+ */
+class AdPlacementConfigService(
+    private val registrar: AdPlacementRegistrar,
+    private val remoteConfig: RemoteConfig,
+    private val adMobMediator: AdMobMediator
+) : ConfigurableObject {
+
+    // JSON parser for deserializing Remote Config
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+    }
+
+    // ============================================
+    // GLOBAL SETTINGS (from Remote Config)
+    // ============================================
+
+    /**
+     * Minimum interval between interstitial ad shows (seconds).
+     * Default: 60 seconds.
+     */
+    var interstitialMinInterval: Long = 60L
+        private set
+
+    /**
+     * Ad load timeout (seconds).
+     * Default: 10 seconds.
+     */
+    var adLoadTimeout: Long = 10L
+        private set
+
+    /**
+     * Whether to enable test ads in production builds.
+     * Default: false (only debug builds show test ads).
+     */
+    var enableTestAds: Boolean = false
+        private set
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+
+    /**
+     * Initialize ad placements with default configuration.
+     * Called once during app startup by AdInitializer.
+     *
+     * Registers all placements defined in AdPlacement.kt.
+     * Initial config is loaded from Remote Config cache or defaults.
+     */
+    fun initialize() {
+        // Load global settings from Remote Config
+        loadGlobalSettings()
+
+        // Load ad placements from Remote Config
+        val placementsJson = remoteConfig.getString(RemoteConfigKeys.AD_PLACEMENTS)
+        val placements = parseAdPlacements(placementsJson)
+
+        // Register all placements with ACCCore-Ads
+        registerAllPlacements(placements)
+
+        android.util.Log.d("AdPlacementConfig", "✅ Registered ${placements.size} ad placements")
+    }
+
+    // ============================================
+    // REMOTE CONFIG UPDATES
+    // ============================================
+
+    /**
+     * Called by RemoteConfigCoordinator when Remote Config is fetched and activated.
+     * Updates all ad placements with new configuration.
+     */
+    override fun onRemoteConfigUpdated(config: RemoteConfig) {
+        android.util.Log.d("AdPlacementConfig", "🔄 Remote Config updated - refreshing ad placements")
+
+        // Reload global settings
+        loadGlobalSettings()
+
+        // Reload ad placements
+        val placementsJson = config.getString(RemoteConfigKeys.AD_PLACEMENTS)
+        val placements = parseAdPlacements(placementsJson)
+
+        // Update registered placements
+        registerAllPlacements(placements)
+
+        android.util.Log.d("AdPlacementConfig", "✅ Updated ${placements.size} ad placements")
+    }
+
+    // ============================================
+    // PRIVATE: REGISTRATION
+    // ============================================
+
+    private fun registerAllPlacements(placements: Map<String, AdPlacementConfig>) {
+        // App Open Ads
+        registerAppOpenAd(AdPlacement.APP_OPEN_SPLASH, placements)
+
+        // Interstitial Ads
+        registerInterstitialAd(AdPlacement.INTERSTITIAL_EDITOR_ENTER, placements)
+        registerInterstitialAd(AdPlacement.INTERSTITIAL_EXPORT_COMPLETE, placements)
+        registerInterstitialAd(AdPlacement.INTERSTITIAL_EDITOR_EXIT, placements)
+        registerInterstitialAd(AdPlacement.INTERSTITIAL_PROJECT_OPEN, placements)
+
+        // Native Ads
+        registerNativeAd(AdPlacement.NATIVE_HOME_1, placements)
+        registerNativeAd(AdPlacement.NATIVE_HOME_2, placements)
+        registerNativeAd(AdPlacement.NATIVE_GALLERY_1, placements)
+        registerNativeAd(AdPlacement.NATIVE_SONGS_1, placements)
+        registerNativeAd(AdPlacement.NATIVE_PROJECTS_1, placements)
+        registerNativeAd(AdPlacement.NATIVE_SETTINGS_1, placements)
+
+        // Banner Ads
+        registerBannerAd(AdPlacement.BANNER_EDITOR, placements)
+        registerBannerAd(AdPlacement.BANNER_EXPORT, placements)
+
+        // Rewarded Ads (Future)
+        registerRewardedAd(AdPlacement.REWARDED_UNLOCK_TRANSITIONS, placements)
+        registerRewardedAd(AdPlacement.REWARDED_REMOVE_WATERMARK, placements)
+    }
+
+    private fun registerAppOpenAd(placementId: String, placements: Map<String, AdPlacementConfig>) {
+        val config = placements[placementId] ?: createDefaultAppOpenConfig(placementId)
+
+        if (!config.enabled) {
+            android.util.Log.d("AdPlacementConfig", "⏭️ Skipping disabled placement: $placementId")
+            return
+        }
+
+        // Register with ACCCore-Ads (AdMobMediator handles App Open ads)
+        config.units.forEach { unit ->
+            when (unit.network) {
+                "admob" -> {
+                    adMobMediator.registerAppOpenAd(placementId, unit.unitId)
+                }
+                // Future: Add other networks here
+                else -> android.util.Log.w("AdPlacementConfig", "⚠️ Unknown network for $placementId: ${unit.network}")
+            }
+        }
+    }
+
+    private fun registerInterstitialAd(placementId: String, placements: Map<String, AdPlacementConfig>) {
+        val config = placements[placementId] ?: createDefaultInterstitialConfig(placementId)
+
+        if (!config.enabled) {
+            android.util.Log.d("AdPlacementConfig", "⏭️ Skipping disabled placement: $placementId")
+            return
+        }
+
+        // Register waterfall with ACCCore-Ads
+        val waterfall = config.units.map { unit ->
+            co.alcheclub.lib.acccore.ads.AdUnit(
+                network = unit.network,
+                unitId = unit.unitId
+            )
+        }
+
+        registrar.registerInterstitial(
+            placementId = placementId,
+            waterfall = waterfall
+        )
+    }
+
+    private fun registerNativeAd(placementId: String, placements: Map<String, AdPlacementConfig>) {
+        val config = placements[placementId] ?: createDefaultNativeConfig(placementId)
+
+        if (!config.enabled) {
+            android.util.Log.d("AdPlacementConfig", "⏭️ Skipping disabled placement: $placementId")
+            return
+        }
+
+        // Extract layout name from extras (default: "native_small_clean")
+        val layoutName = config.extras["layout"] ?: "native_small_clean"
+
+        // Register waterfall with ACCCore-Ads
+        val waterfall = config.units.map { unit ->
+            co.alcheclub.lib.acccore.ads.AdUnit(
+                network = unit.network,
+                unitId = unit.unitId
+            )
+        }
+
+        registrar.registerNative(
+            placementId = placementId,
+            waterfall = waterfall,
+            layoutName = layoutName
+        )
+    }
+
+    private fun registerBannerAd(placementId: String, placements: Map<String, AdPlacementConfig>) {
+        val config = placements[placementId] ?: createDefaultBannerConfig(placementId)
+
+        if (!config.enabled) {
+            android.util.Log.d("AdPlacementConfig", "⏭️ Skipping disabled placement: $placementId")
+            return
+        }
+
+        // Register waterfall with ACCCore-Ads
+        val waterfall = config.units.map { unit ->
+            co.alcheclub.lib.acccore.ads.AdUnit(
+                network = unit.network,
+                unitId = unit.unitId
+            )
+        }
+
+        registrar.registerBanner(
+            placementId = placementId,
+            waterfall = waterfall
+        )
+    }
+
+    private fun registerRewardedAd(placementId: String, placements: Map<String, AdPlacementConfig>) {
+        val config = placements[placementId] ?: createDefaultRewardedConfig(placementId)
+
+        if (!config.enabled) {
+            android.util.Log.d("AdPlacementConfig", "⏭️ Skipping disabled placement: $placementId")
+            return
+        }
+
+        // Register waterfall with ACCCore-Ads
+        val waterfall = config.units.map { unit ->
+            co.alcheclub.lib.acccore.ads.AdUnit(
+                network = unit.network,
+                unitId = unit.unitId
+            )
+        }
+
+        registrar.registerRewarded(
+            placementId = placementId,
+            waterfall = waterfall
+        )
+    }
+
+    // ============================================
+    // PRIVATE: PARSING
+    // ============================================
+
+    private fun parseAdPlacements(jsonString: String): Map<String, AdPlacementConfig> {
+        if (jsonString.isEmpty() || jsonString == "{}") {
+            android.util.Log.w("AdPlacementConfig", "⚠️ No ad placements in Remote Config - using defaults")
+            return emptyMap()
+        }
+
+        return try {
+            json.decodeFromString<Map<String, AdPlacementConfig>>(jsonString)
+        } catch (e: Exception) {
+            android.util.Log.e("AdPlacementConfig", "❌ Failed to parse ad placements JSON: ${e.message}", e)
+            emptyMap()
+        }
+    }
+
+    private fun loadGlobalSettings() {
+        val settingsJson = remoteConfig.getString(RemoteConfigKeys.AD_GLOBAL_SETTINGS)
+        if (settingsJson.isEmpty() || settingsJson == "{}") {
+            return
+        }
+
+        try {
+            val settings = json.decodeFromString<Map<String, String>>(settingsJson)
+
+            interstitialMinInterval = settings["interstitial_min_interval"]?.toLongOrNull() ?: 60L
+            adLoadTimeout = settings["ad_load_timeout"]?.toLongOrNull() ?: 10L
+            enableTestAds = settings["enable_test_ads"]?.toBooleanStrictOrNull() ?: false
+
+            android.util.Log.d("AdPlacementConfig", "✅ Loaded global settings: interval=$interstitialMinInterval, timeout=$adLoadTimeout, testAds=$enableTestAds")
+        } catch (e: Exception) {
+            android.util.Log.e("AdPlacementConfig", "❌ Failed to parse global settings JSON: ${e.message}", e)
+        }
+    }
+
+    // ============================================
+    // PRIVATE: DEFAULT CONFIGS (fallback)
+    // ============================================
+
+    private fun createDefaultAppOpenConfig(placementId: String): AdPlacementConfig {
+        return AdPlacementConfig(
+            enabled = false, // Disabled by default until Remote Config enables it
+            type = "app_open",
+            units = emptyList()
+        )
+    }
+
+    private fun createDefaultInterstitialConfig(placementId: String): AdPlacementConfig {
+        return AdPlacementConfig(
+            enabled = false, // Disabled by default until Remote Config enables it
+            type = "interstitial",
+            units = emptyList()
+        )
+    }
+
+    private fun createDefaultNativeConfig(placementId: String): AdPlacementConfig {
+        return AdPlacementConfig(
+            enabled = false, // Disabled by default until Remote Config enables it
+            type = "native",
+            units = emptyList(),
+            extras = mapOf("layout" to "native_small_clean")
+        )
+    }
+
+    private fun createDefaultBannerConfig(placementId: String): AdPlacementConfig {
+        return AdPlacementConfig(
+            enabled = false, // Disabled by default until Remote Config enables it
+            type = "banner",
+            units = emptyList()
+        )
+    }
+
+    private fun createDefaultRewardedConfig(placementId: String): AdPlacementConfig {
+        return AdPlacementConfig(
+            enabled = false, // Disabled by default until Remote Config enables it
+            type = "rewarded",
+            units = emptyList()
+        )
+    }
+}

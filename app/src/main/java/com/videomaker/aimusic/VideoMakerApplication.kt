@@ -27,6 +27,10 @@ import com.videomaker.aimusic.di.dataModule
 import com.videomaker.aimusic.di.domainModule
 import com.videomaker.aimusic.di.mediaModule
 import com.videomaker.aimusic.di.presentationModule
+import com.videomaker.aimusic.di.adsModule
+// TODO: Uncomment after fixing ACCCore-Ads API
+// import com.videomaker.aimusic.core.ads.AdInitializer
+// import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
 import com.videomaker.aimusic.media.library.MusicSongLibrary
 import com.videomaker.aimusic.media.library.TransitionSetLibrary
 import com.videomaker.aimusic.media.library.TransitionShaderLibrary
@@ -258,11 +262,24 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                 ),
                 dataModule,         // Data sources & repositories
                 mediaModule,        // Media processing utilities
+                adsModule,          // Ad placement config & helpers
                 domainModule,       // Use cases & business logic
                 presentationModule  // ViewModels
             )
         }
 
+        // ============================================
+        // INITIALIZE AD SYSTEM (after Koin)
+        // ============================================
+        // TODO: Uncomment after fixing ACCCore-Ads API usage
+        // Register native ad layout provider with AdMobMediator
+        // val adMobMediator = get<co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator>()
+        // val nativeAdLayoutProvider = get<VideoMakerNativeAdLayoutProvider>()
+        // adMobMediator.setNativeAdLayoutProvider(nativeAdLayoutProvider)
+
+        // Initialize ad placements SYNCHRONOUSLY (force registration before any ad loads)
+        // val adInitializer = get<AdInitializer>()
+        // adInitializer.initialize()
 
         // Auto-register services with coordinators
         applicationScope.launch {

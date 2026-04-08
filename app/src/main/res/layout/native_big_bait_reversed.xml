@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Native Ad Layout: Big Bait Reversed
+- Large vertical layout (304dp height, 412x304 ratio)
+- Top: CTA button (56dp), Middle: Media, Bottom: Title box
+- CLICKBAIT CTA button with primary theme color
+- Attention-grabbing design for maximum clicks
+- Use case: High-monetization placements with CTA first
+-->
+<com.google.android.gms.ads.nativead.NativeAdView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="304dp"
+    android:background="@color/foundation_black">
+
+    <!-- Vertical layout: CTA at top, Media middle, Title bottom -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- BIG Full-width CTA Button at top (344x44 ratio, Clickbait style) -->
+        <TextView
+            android:id="@+id/ad_call_to_action"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:textColor="@color/foundation_black"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:background="@drawable/bg_cta_clean"
+            android:layout_marginHorizontal="23dp"
+            android:layout_marginVertical="12dp" />
+
+        <!-- Media View (middle) -->
+        <com.google.android.gms.ads.nativead.MediaView
+            android:id="@+id/ad_media"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:scaleType="centerCrop" />
+
+        <!-- Title box (icon + text) at bottom -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@color/foundation_black"
+            android:padding="12dp"
+            android:gravity="center_vertical">
+
+            <!-- App Icon -->
+            <ImageView
+                android:id="@+id/ad_icon"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:scaleType="fitCenter"
+                android:layout_marginEnd="12dp"
+                android:contentDescription="@string/ad_icon" />
+
+            <!-- Text container -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <!-- Headline row with ad badge -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/ad_headline"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textSize="14sp"
+                        android:textColor="@color/foundation_white"
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <TextView
+                        android:id="@+id/ad_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ad_badge"
+                        android:textSize="9sp"
+                        android:textColor="@color/foundation_black"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_ad_badge"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
+
+                <!-- Body text (1 line to prioritize CTA) -->
+                <TextView
+                    android:id="@+id/ad_body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/foundation_white_60"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:layout_marginTop="2dp" />
+
+                <!-- Optional: Advertiser name (hidden if not provided) -->
+                <TextView
+                    android:id="@+id/ad_advertiser"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="9sp"
+                    android:textColor="@color/foundation_white_40"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:visibility="gone" />
+
+                <!-- Optional: Store name (hidden if not provided) -->
+                <TextView
+                    android:id="@+id/ad_store"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="9sp"
+                    android:textColor="@color/foundation_white_40"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Optional: Ad choices container (hidden if not provided) -->
+    <FrameLayout
+        android:id="@+id/ad_choices_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+</com.google.android.gms.ads.nativead.NativeAdView>

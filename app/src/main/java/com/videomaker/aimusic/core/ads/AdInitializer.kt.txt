@@ -1,0 +1,152 @@
+package com.videomaker.aimusic.core.ads
+
+import co.alcheclub.lib.acccore.ads.AdPlacementRegistrar
+import com.videomaker.aimusic.core.constants.AdPlacement
+
+/**
+ * Ad Initialization Validator for Video Maker app.
+ *
+ * Purpose:
+ * - Forces creation of ad-related services at app startup
+ * - Validates that all ad placements are registered correctly
+ * - Provides diagnostic information for debugging ad issues
+ *
+ * Why this is needed:
+ * - ACCDI (dependency injection) is lazy by default - singletons aren't created until first use
+ * - Ad services MUST be initialized BEFORE any ad loading attempts
+ * - Without this, AdPlacementConfigService might not register placements in time
+ *
+ * Architecture:
+ * - Instantiated in Application.onCreate() via ACCDI
+ * - Eagerly creates AdPlacementConfigService (forcing registration)
+ * - Validates all placements from AdPlacement.kt are registered
+ *
+ * Usage in Application:
+ * ```kotlin
+ * override fun onCreate() {
+ *     super.onCreate()
+ *     startKoin { ... }
+ *
+ *     // Force ad services to initialize SYNCHRONOUSLY
+ *     val adInitializer = ACCDI.get<AdInitializer>()
+ *     adInitializer.initialize()
+ * }
+ * ```
+ */
+class AdInitializer(
+    private val placementConfigService: AdPlacementConfigService,
+    private val registrar: AdPlacementRegistrar
+) {
+
+    /**
+     * Initialize ad system and validate all placements.
+     *
+     * This method:
+     * 1. Forces AdPlacementConfigService to register all placements
+     * 2. Validates that ALL placements from AdPlacement.kt are registered
+     * 3. Logs diagnostic information
+     *
+     * CRITICAL: This MUST be called SYNCHRONOUSLY in Application.onCreate()
+     * BEFORE any ad loading operations.
+     */
+    fun initialize() {
+        android.util.Log.d("AdInitializer", "🚀 Initializing ad system...")
+
+        try {
+            // Step 1: Force AdPlacementConfigService to register placements
+            placementConfigService.initialize()
+
+            // Step 2: Validate all placements are registered
+            val validationResult = validateAllPlacements()
+
+            // Step 3: Log results
+            if (validationResult.isValid) {
+                android.util.Log.d("AdInitializer", "✅ Ad system initialized successfully!")
+                android.util.Log.d("AdInitializer", "   - Registered: ${validationResult.registeredCount} placements")
+                android.util.Log.d("AdInitializer", "   - Missing: ${validationResult.missingCount} placements")
+            } else {
+                android.util.Log.w("AdInitializer", "⚠️ Ad system initialized with warnings:")
+                android.util.Log.w("AdInitializer", "   - Registered: ${validationResult.registeredCount} placements")
+                android.util.Log.w("AdInitializer", "   - Missing: ${validationResult.missingCount} placements")
+                validationResult.missingPlacements.forEach { placementId ->
+                    android.util.Log.w("AdInitializer", "   - Missing: $placementId")
+                }
+            }
+
+        } catch (e: Exception) {
+            android.util.Log.e("AdInitializer", "❌ Failed to initialize ad system: ${e.message}", e)
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * Validate that all expected placements are registered.
+     *
+     * Checks that every placement in AdPlacement.ALL_PLACEMENTS
+     * has been registered with the AdPlacementRegistrar.
+     *
+     * Returns a validation result with diagnostic information.
+     */
+    private fun validateAllPlacements(): ValidationResult {
+        val expectedPlacements = AdPlacement.ALL_PLACEMENTS
+        val registeredPlacements = registrar.getAllRegisteredPlacements()
+
+        val missingPlacements = expectedPlacements.filter { placementId ->
+            !registeredPlacements.contains(placementId)
+        }
+
+        return ValidationResult(
+            isValid = missingPlacements.isEmpty(),
+            registeredCount = registeredPlacements.size,
+            missingCount = missingPlacements.size,
+            missingPlacements = missingPlacements
+        )
+    }
+
+    /**
+     * Get diagnostic information about the ad system.
+     *
+     * Returns a human-readable summary of:
+     * - Total placements defined
+     * - Total placements registered
+     * - Missing placements
+     * - Global ad settings
+     */
+    fun getDiagnosticInfo(): String {
+        val expectedPlacements = AdPlacement.ALL_PLACEMENTS
+        val registeredPlacements = registrar.getAllRegisteredPlacements()
+        val missingPlacements = expectedPlacements.filter { !registeredPlacements.contains(it) }
+
+        return buildString {
+            appendLine("Ad System Diagnostic")
+            appendLine("===================")
+            appendLine()
+            appendLine("Placements:")
+            appendLine("  - Expected: ${expectedPlacements.size}")
+            appendLine("  - Registered: ${registeredPlacements.size}")
+            appendLine("  - Missing: ${missingPlacements.size}")
+            if (missingPlacements.isNotEmpty()) {
+                appendLine()
+                appendLine("Missing Placements:")
+                missingPlacements.forEach { placementId ->
+                    appendLine("  - $placementId")
+                }
+            }
+            appendLine()
+            appendLine("Global Settings:")
+            appendLine("  - Interstitial interval: ${placementConfigService.interstitialMinInterval}s")
+            appendLine("  - Ad load timeout: ${placementConfigService.adLoadTimeout}s")
+            appendLine("  - Test ads: ${placementConfigService.enableTestAds}")
+        }
+    }
+
+    /**
+     * Validation result for ad placement registration.
+     */
+    private data class ValidationResult(
+        val isValid: Boolean,
+        val registeredCount: Int,
+        val missingCount: Int,
+        val missingPlacements: List<String>
+    )
+}
