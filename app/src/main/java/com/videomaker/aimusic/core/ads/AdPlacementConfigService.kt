@@ -367,17 +367,50 @@ class AdPlacementConfigService(
             enabled = true
         )
 
-        // Editor preview building native ad (shown during video preview generation)
-        // Displayed at bottom with "Preparing Video" message
+        // Gallery templates grid native ad (shown as item in staggered templates grid)
+        // In-feed placement that blends with template cards
+        // Position: 4th position (index 3), or last if < 3 items
+        // Persists through vibe chip tag filtering
+        // Layout: native_project_card (9:16 portrait, matches template cards)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_GALLERY_GRID,
+            layoutName = "native_project_card",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/8919348440",  // Primary
+                "ca-app-pub-7121075950716954/2545511783"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Export generating native ad (shown during video export)
+        // Displayed at bottom with "Generating" text and progress
         // 10s timeout + 2s display if ad loads
         // Layout: native_big_bait (large vertical layout with clickbait CTA)
         // Waterfall: Primary unit → Secondary unit
         registerNativePlacement(
-            placementId = AdPlacement.NATIVE_EDITOR_PREVIEW_BUILDING,
+            placementId = AdPlacement.NATIVE_EXPORT_GENERATING,
             layoutName = "native_big_bait",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/4484774830",  // Primary
                 "ca-app-pub-7121075950716954/7797838469"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // ============================================
+        // REWARDED ADS
+        // ============================================
+
+        // Rewarded ad for video download (shown when user clicks download button)
+        // User must watch full ad to earn reward (download permission)
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+            type = "reward",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4051154821",  // Primary
+                "ca-app-pub-7121075950716954/6681333380"   // Secondary
             ),
             enabled = true
         )

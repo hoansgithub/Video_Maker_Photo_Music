@@ -105,6 +105,31 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.Immutable
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.core.constants.AdPlacement
+
+// ============================================
+// GALLERY GRID ITEM (Template + Ad)
+// ============================================
+
+@Immutable
+private sealed class GalleryGridItem {
+    data class TemplateItem(val template: VideoTemplate) : GalleryGridItem()
+    data object AdItem : GalleryGridItem()
+}
+
+/**
+ * Stable key function for gallery grid items
+ */
+private fun galleryItemKey(item: GalleryGridItem): String = when (item) {
+    is GalleryGridItem.TemplateItem -> "template_${item.template.id}"
+    is GalleryGridItem.AdItem -> "ad_native_gallery"
+}
+
+// Ad insertion position - 4th position (after 3rd template at index 2)
+private const val AD_INSERTION_INDEX = 3
 
 // ============================================
 // GALLERY SCREEN
@@ -809,49 +834,88 @@ private fun StaggeredTemplateGrid(
 ) {
     if (templates.isEmpty()) return
 
-    // ✅ OPTIMIZED: Pre-calculate aspect ratios once when templates list changes
-    val aspectRatios = remember(templates) {
-        templates.map { parseAspectRatio(it.aspectRatio) }
+    // ✅ FIX: Build grid items list (templates + ad)
+    // Position: AD_INSERTION_INDEX (4th position), or last if < 3 items
+    val gridItems = remember(templates) {
+        buildList {
+            if (templates.size < AD_INSERTION_INDEX) {
+                // Show ad at last position if < 3 templates
+                templates.forEach { add(GalleryGridItem.TemplateItem(it)) }
+                add(GalleryGridItem.AdItem)
+            } else {
+                // Insert ad at AD_INSERTION_INDEX (after 3rd template at index 2)
+                templates.forEachIndexed { index, template ->
+                    add(GalleryGridItem.TemplateItem(template))
+                    if (index == AD_INSERTION_INDEX - 1) {  // After (AD_INSERTION_INDEX - 1)th template
+                        add(GalleryGridItem.AdItem)
+                    }
+                }
+            }
+        }
+    }
+
+    // ✅ OPTIMIZED: Pre-calculate aspect ratios once when grid items change
+    val aspectRatios = remember(gridItems.size, gridItems.firstOrNull()) {
+        gridItems.map { item ->
+            when (item) {
+                is GalleryGridItem.TemplateItem -> parseAspectRatio(item.template.aspectRatio)
+                is GalleryGridItem.AdItem -> 9f / 16f  // 9:16 portrait (matches native_project_card)
+            }
+        }
     }
 
     StaggeredGrid(
-        items = templates,
+        items = gridItems,
         aspectRatios = aspectRatios,
         columns = columns,
         spacing = spacing,
         modifier = modifier,
-        key = { it.id }
-    ) { template ->
-        // ✅ OPTIMIZED: Pre-calculate aspect ratio for this specific template
-        val aspectRatio = remember(template.aspectRatio) {
-            parseAspectRatio(template.aspectRatio)
-        }
+        key = ::galleryItemKey
+    ) { item ->
+        when (item) {
+            is GalleryGridItem.TemplateItem -> {
+                val template = item.template
 
-        LaunchedEffect(template.id, screenSessionId) {
-            Analytics.trackTemplateImpression(
-                templateId = template.id,
-                templateName = template.name,
-                location = AnalyticsEvent.Value.Location.GALLERY_TEMPLATE,
-                screenSessionId = screenSessionId
-            )
-        }
+                // ✅ OPTIMIZED: Pre-calculate aspect ratio for this specific template
+                val aspectRatio = remember(template.aspectRatio) {
+                    parseAspectRatio(template.aspectRatio)
+                }
 
-        TemplateCard(
-            name = template.name,
-            thumbnailPath = template.thumbnailPath,
-            aspectRatio = aspectRatio,
-            isPremium = template.isPremium,
-            showHotTag = true,  // Show Hot tag in Gallery tab only
-            useCount = template.useCount,
-            onClick = {
-                Analytics.trackTemplateClick(
-                    templateId = template.id,
-                    templateName = template.name,
-                    location = AnalyticsEvent.Value.Location.GALLERY_TEMPLATE
+                // ✅ Track impression only once when template enters composition
+                LaunchedEffect(Unit) {
+                    Analytics.trackTemplateImpression(
+                        templateId = template.id,
+                        templateName = template.name,
+                        location = AnalyticsEvent.Value.Location.GALLERY_TEMPLATE,
+                        screenSessionId = screenSessionId
+                    )
+                }
+
+                TemplateCard(
+                    name = template.name,
+                    thumbnailPath = template.thumbnailPath,
+                    aspectRatio = aspectRatio,
+                    isPremium = template.isPremium,
+                    showHotTag = true,  // Show Hot tag in Gallery tab only
+                    useCount = template.useCount,
+                    onClick = {
+                        Analytics.trackTemplateClick(
+                            templateId = template.id,
+                            templateName = template.name,
+                            location = AnalyticsEvent.Value.Location.GALLERY_TEMPLATE
+                        )
+                        onTemplateClick(template)
+                    }
                 )
-                onTemplateClick(template)
             }
-        )
+            is GalleryGridItem.AdItem -> {
+                // Native ad card (9:16 portrait, matches template cards)
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_GALLERY_GRID,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }
 

@@ -358,21 +358,61 @@ object AdPlacement {
     const val NATIVE_PROJECTS_GRID = "ad_native_projects_grid"
 
     /**
-     * Native ad shown during video editor preview building state.
-     * Timing: Displayed at bottom of overlay while preview is being generated.
+     * Native ad shown in gallery templates staggered grid (in-feed placement).
+     * Displayed as an item within the gallery templates staggered grid.
+     * Position: 4th position (index 3), or last position if total items < 3.
+     * Persists through vibe chip tag filtering.
+     *
+     * Layout: native_project_card (9:16 portrait, matches template cards)
+     * - Media view at top (ad creative)
+     * - Icon + headline + CTA at bottom
+     * - Ad badge at top-right corner
+     * - Blends with template cards in staggered grid
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/8919348440
+     * - Secondary: ca-app-pub-7121075950716954/2545511783
+     *
+     * Remote Config key: ad_native_gallery_grid
+     */
+    const val NATIVE_GALLERY_GRID = "ad_native_gallery_grid"
+
+    /**
+     * Native ad shown during export video generating state.
+     * Timing: Displayed at bottom of "Generating" overlay while video is being exported.
      * Waits 10 seconds for ad to load, then displays for 2 more seconds if loaded.
      *
      * Layout: native_big_bait (412:304 ratio, 1.355:1)
      * - Large vertical layout with clickbait CTA button
-     * - Shown with "Preparing Video" loading indicator above
+     * - Shown with "Generating" text and progress indicator above
      *
      * Ad units (priority order):
      * - Primary: ca-app-pub-7121075950716954/4484774830
      * - Secondary: ca-app-pub-7121075950716954/7797838469
      *
-     * Remote Config key: ad_native_editor_preview_building
+     * Remote Config key: ad_native_export_generating
      */
-    const val NATIVE_EDITOR_PREVIEW_BUILDING = "ad_native_editor_preview_building"
+    const val NATIVE_EXPORT_GENERATING = "ad_native_export_generating"
+
+    /**
+     * Rewarded ad shown when user wants to download video to gallery.
+     * Timing: User clicks download button → dialog appears → user watches ad → download proceeds.
+     * User MUST watch the full ad to earn the reward (download permission).
+     *
+     * Flow:
+     * 1. User clicks download button (ad icon instead of download icon)
+     * 2. Dialog shows: "Watch an ad to download your video?"
+     * 3. User taps "Watch Ad" → Ad loads and plays
+     * 4. User watches full ad → onUserEarnedReward callback
+     * 5. Download proceeds automatically
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/4051154821
+     * - Secondary: ca-app-pub-7121075950716954/6681333380
+     *
+     * Remote Config key: ad_reward_download_video
+     */
+    const val REWARD_DOWNLOAD_VIDEO = "ad_reward_download_video"
 
     /**
      * List of all ad placement IDs.
@@ -398,7 +438,9 @@ object AdPlacement {
         NATIVE_UNINSTALL_BOTTOM,
         NATIVE_WIDGET_BOTTOM,
         NATIVE_PROJECTS_GRID,
+        NATIVE_GALLERY_GRID,
         NATIVE_TEMPLATE_PREVIEWER_LOADING,
-        NATIVE_EDITOR_PREVIEW_BUILDING
+        NATIVE_EXPORT_GENERATING,
+        REWARD_DOWNLOAD_VIDEO
     )
 }
