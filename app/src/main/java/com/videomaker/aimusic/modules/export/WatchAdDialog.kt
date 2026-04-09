@@ -135,7 +135,7 @@ fun WatchAdDialog(
                 ) {
                     Text(
                         text = stringResource(R.string.export_watch_ad_close),
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,  // Reduced from 14sp to prevent truncation
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis

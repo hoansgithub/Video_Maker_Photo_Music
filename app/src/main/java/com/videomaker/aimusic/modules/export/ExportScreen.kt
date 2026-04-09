@@ -76,7 +76,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
@@ -966,7 +965,7 @@ private fun SuccessContent(
                     )
                 }
 
-                // Save to Gallery button - right side (shows ad icon, triggers rewarded ad)
+                // Save to Gallery button - right side (shows [AD] badge, triggers rewarded ad)
                 Button(
                     onClick = onSaveToGalleryClick,
                     modifier = Modifier
@@ -979,10 +978,18 @@ private fun SuccessContent(
                     ),
                     contentPadding = contentPadding
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.VideoLibrary,  // Ad icon instead of download
-                        contentDescription = null,
-                        modifier = Modifier.size(iconSize)
+                    // [AD] badge
+                    Text(
+                        text = "AD",
+                        fontSize = (fontSize.value * 0.9f).sp,  // Slightly smaller than button text
+                        fontWeight = FontWeight.ExtraBold,
+                        color = SurfaceDark,
+                        modifier = Modifier
+                            .background(
+                                color = SurfaceDark.copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                     Spacer(modifier = Modifier.width(iconSpacing))
                     Text(
