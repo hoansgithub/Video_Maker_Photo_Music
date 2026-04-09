@@ -437,7 +437,7 @@ class ExportViewModel(
         Analytics.trackTemplateClick(
             templateId = templateId,
             templateName = templateName,
-            location = "result_recommendation"
+            location = AnalyticsEvent.Value.Location.RESULT_RCM
         )
         _navigationEvent.value = ExportNavigationEvent.NavigateToTemplateDetail(templateId)
     }

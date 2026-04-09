@@ -96,6 +96,7 @@ import kotlinx.coroutines.delay
 fun MusicPlayerBottomSheet(
     song: MusicSong,
     cacheDataSourceFactory: CacheDataSource.Factory,
+    location: String = AnalyticsEvent.Value.Location.SONG_PREVIEW,
     onDismiss: () -> Unit,
     onUseToCreate: () -> Unit,
 ) {
@@ -161,7 +162,7 @@ fun MusicPlayerBottomSheet(
                             Analytics.trackSongPreview(
                                 songId = song.id.toString(),
                                 songName = song.name,
-                                location = AnalyticsEvent.Value.Location.SONG_PREVIEW
+                                location = location
                             )
                             hasTrackedAutoPreview = true
                         }
@@ -313,13 +314,13 @@ fun MusicPlayerBottomSheet(
                                         Analytics.trackSongUnfavorite(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.SONG_PREVIEW
+                                            location = location
                                         )
                                     } else {
                                         Analytics.trackSongFavorite(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.SONG_PREVIEW
+                                            location = location
                                         )
                                     }
                                     viewModel.toggleLike(song)
@@ -365,7 +366,7 @@ fun MusicPlayerBottomSheet(
                                             Analytics.trackSongPause(
                                                 songId = song.id.toString(),
                                                 songName = song.name,
-                                                location = AnalyticsEvent.Value.Location.SONG_PREVIEW
+                                                location = location
                                             )
                                         }
                                         player.playbackState == Player.STATE_ENDED -> {
@@ -375,7 +376,7 @@ fun MusicPlayerBottomSheet(
                                             Analytics.trackSongPlay(
                                                 songId = song.id.toString(),
                                                 songName = song.name,
-                                                location = AnalyticsEvent.Value.Location.SONG_PREVIEW
+                                                location = location
                                             )
                                         }
                                         else -> {
@@ -383,7 +384,7 @@ fun MusicPlayerBottomSheet(
                                             Analytics.trackSongPlay(
                                                 songId = song.id.toString(),
                                                 songName = song.name,
-                                                location = AnalyticsEvent.Value.Location.SONG_PREVIEW
+                                                location = location
                                             )
                                         }
                                     }
@@ -481,7 +482,7 @@ fun MusicPlayerBottomSheet(
                         Analytics.trackSongSelect(
                             songId = song.id.toString(),
                             songName = song.name,
-                            location = AnalyticsEvent.Value.Location.SONG_PREVIEW
+                            location = location
                         )
                         Analytics.trackCreationStart(AnalyticsEvent.Value.Location.SONG)
                         onUseToCreate()

@@ -41,9 +41,9 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
-import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.modules.onboarding.pages.WelcomePage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 /**
  * OnboardingScreen — swipe-driven welcome flow backed by HorizontalPager.
@@ -81,13 +81,6 @@ fun OnboardingScreen(
     LaunchedEffect(currentStep) {
         val targetPage = currentStep.ordinal
 
-        Analytics.track(
-            name = "onboarding_${targetPage}",
-            params = mapOf(
-                "onboarding_screen" to "ob${targetPage}"
-            )
-        )
-
         if (pagerState.currentPage != targetPage) {
             pagerState.animateScrollToPage(targetPage)
         }
@@ -95,10 +88,17 @@ fun OnboardingScreen(
 
     // ── Pager swipe → ViewModel (user swiped manually) ───────────────────
     LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage }.collect { page ->
-            viewModel.goToStep(OnboardingStep.entries[page])
-            if (page > 0) showSwipeHint = false
-        }
+        snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()
+            .collect { page ->
+                viewModel.goToStep(OnboardingStep.entries[page])
+                if (page > 0) showSwipeHint = false
+                val onboardingStep = page + 1
+                Analytics.track(
+                    name = "onboarding_$onboardingStep",
+                    params = mapOf("onboarding_screen" to "ob$onboardingStep")
+                )
+            }
     }
 
     LaunchedEffect(pagerState) {

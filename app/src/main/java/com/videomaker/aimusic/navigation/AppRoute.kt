@@ -88,7 +88,8 @@ sealed interface AppRoute : NavKey {
         val projectId: String? = null,
         val templateId: String? = null,
         val overrideSongId: Long = -1L,
-        val aspectRatio: AspectRatio? = null
+        val aspectRatio: AspectRatio? = null,
+        val sourceLocation: String? = null
     ) : AppRoute
 
     /**
@@ -137,7 +138,8 @@ sealed interface AppRoute : NavKey {
     data class TemplatePreviewer(
         val templateId: String,
         val imageUris: List<String> = emptyList(), // Empty = browse mode with sample images
-        val overrideSongId: Long = -1L
+        val overrideSongId: Long = -1L,
+        val sourceLocation: String? = null
     ) : AppRoute
 
     // ============================================

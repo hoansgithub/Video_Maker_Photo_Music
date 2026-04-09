@@ -135,6 +135,7 @@ private fun initialVirtualPage(initialPage: Int, templateCount: Int): Int {
 @Composable
 fun TemplatePreviewerScreen(
     viewModel: TemplatePreviewerViewModel,
+    sourceLocation: String? = null,
     audioDataSourceFactory: CacheDataSource.Factory,
     onNavigateToAssetPicker: (template: com.videomaker.aimusic.domain.model.VideoTemplate, overrideSongId: Long, aspectRatio: AspectRatio) -> Unit,
     onNavigateBack: () -> Unit
@@ -145,6 +146,9 @@ fun TemplatePreviewerScreen(
     val likedTemplateIds by viewModel.likedTemplateIds.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val eventLocation = remember(sourceLocation) {
+        sourceLocation?.takeIf { it.isNotBlank() } ?: AnalyticsEvent.Value.Location.PREVIEW_SWIPE
+    }
 
     // Track song loading error
     var songError by remember { mutableStateOf<String?>(null) }
@@ -272,6 +276,7 @@ fun TemplatePreviewerScreen(
                 onPageChanged = viewModel::onPageChanged,
                 onUseThisTemplate = viewModel::onUseThisTemplate,
                 onLikeTemplate = viewModel::onLikeTemplate,
+                eventLocation = eventLocation,
                 onNavigateBack = viewModel::onNavigateBack
             )
         }
@@ -324,6 +329,7 @@ private fun TemplatePreviewerReadyContent(
     onPageChanged: (Int) -> Unit,
     onUseThisTemplate: (VideoTemplate, AspectRatio) -> Unit,
     onLikeTemplate: (VideoTemplate) -> Unit,
+    eventLocation: String = AnalyticsEvent.Value.Location.PREVIEW_SWIPE,
     onNavigateBack: () -> Unit
 ) {
     val templates = state.templates
@@ -365,12 +371,12 @@ private fun TemplatePreviewerReadyContent(
                 Analytics.trackTemplatePreview(
                     templateId = template.id,
                     templateName = template.name,
-                    location = AnalyticsEvent.Value.Location.TEMPLATE_PREVIEW
+                    location = eventLocation
                 )
                 Analytics.trackTemplateImpression(
                     templateId = template.id,
                     templateName = template.name,
-                    location = AnalyticsEvent.Value.Location.TEMPLATE_PREVIEW,
+                    location = eventLocation,
                     screenSessionId = screenSessionId
                 )
             }
@@ -539,7 +545,7 @@ private fun TemplatePreviewerReadyContent(
                                             Analytics.trackTemplateUnfavorite(
                                                 templateId = template.id,
                                                 templateName = template.name,
-                                                location = AnalyticsEvent.Value.Location.TEMPLATE_PREVIEW
+                                                location = eventLocation
                                             )
                                             onLikeTemplate(template)
                                         }
@@ -557,7 +563,7 @@ private fun TemplatePreviewerReadyContent(
                                             Analytics.trackTemplateFavorite(
                                                 templateId = template.id,
                                                 templateName = template.name,
-                                                location = AnalyticsEvent.Value.Location.TEMPLATE_PREVIEW
+                                                location = eventLocation
                                             )
                                             onLikeTemplate(template)
                                         }
@@ -588,7 +594,7 @@ private fun TemplatePreviewerReadyContent(
                         Analytics.trackTemplateClick(
                             templateId = template.id,
                             templateName = template.name,
-                            location = AnalyticsEvent.Value.Location.TEMPLATE_PREVIEW
+                            location = eventLocation
                         )
                         pendingTemplate = template
                     },
@@ -620,7 +626,7 @@ private fun TemplatePreviewerReadyContent(
                     Analytics.trackTemplateSelect(
                         templateId = template.id,
                         templateName = template.name,
-                        location = AnalyticsEvent.Value.Location.TEMPLATE_PREVIEW
+                        location = eventLocation
                     )
                     pendingTemplate = null
                     onUseThisTemplate(template, selectedRatio)

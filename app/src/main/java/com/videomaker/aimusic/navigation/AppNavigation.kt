@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.widget.appwidget.WidgetActions
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
@@ -275,11 +276,12 @@ fun AppNavigation(
                     onNavigateToSongSearch = { backStack.add(AppRoute.UnifiedSearch(SearchSection.MUSIC)) },
                     onNavigateToSuggestedSongsList = { backStack.add(AppRoute.SuggestedSongsList) },
                     onNavigateToWeeklyRankingList = { backStack.add(AppRoute.WeeklyRankingList) },
-                    onNavigateToTemplateDetail = { templateId ->
+                    onNavigateToTemplateDetail = { templateId, sourceLocation ->
                         // NEW FLOW: Browse templates first, THEN select images
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = templateId,
-                            imageUris = emptyList() // Sample images mode
+                            imageUris = emptyList(), // Sample images mode
+                            sourceLocation = sourceLocation
                         ))
                     },
                     onNavigateToAllTemplates = { selectedVibeTagId ->
@@ -312,14 +314,16 @@ fun AppNavigation(
                     onNavigateToTemplateDetail = { templateId ->
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = templateId,
-                            imageUris = emptyList()
+                            imageUris = emptyList(),
+                            sourceLocation = AnalyticsEvent.Value.Location.SEARCH_RESULT
                         ))
                     },
                     onNavigateToSongDetail = { songId ->
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = "",
                             imageUris = emptyList(),
-                            overrideSongId = songId
+                            overrideSongId = songId,
+                            sourceLocation = AnalyticsEvent.Value.Location.SEARCH_RESULT
                         ))
                     },
                     onNavigateBack = { backStack.safeRemoveLast() }
@@ -370,7 +374,7 @@ fun AppNavigation(
             entry<AppRoute.AssetPicker> { route ->
                 val factory: AssetPickerViewModelFactory = koinInject()
                 val pickerViewModel: AssetPickerViewModel = viewModel(
-                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}_${route.aspectRatio}",
+                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}_${route.aspectRatio}_${route.sourceLocation}",
                     factory = createSafeViewModelFactory {
                         factory.create(
                             projectId = route.projectId,
@@ -409,7 +413,8 @@ fun AppNavigation(
                             add(AppRoute.TemplatePreviewer(
                                 templateId = templateId,
                                 imageUris = imageUris,
-                                overrideSongId = overrideSongId
+                                overrideSongId = overrideSongId,
+                                sourceLocation = route.sourceLocation
                             ))
                         }
                     }
@@ -471,7 +476,8 @@ fun AppNavigation(
                             add(AppRoute.TemplatePreviewer(
                                 templateId = templateId,
                                 imageUris = emptyList(),
-                                overrideSongId = -1L
+                                overrideSongId = -1L,
+                                sourceLocation = AnalyticsEvent.Value.Location.RESULT_RCM
                             ))
                         }
                     }
@@ -505,7 +511,7 @@ fun AppNavigation(
                 val factory: TemplatePreviewerViewModelFactory = koinInject()
                 val audioCache: AudioPreviewCache = koinInject()
                 val viewModel: TemplatePreviewerViewModel = viewModel(
-                    key = "template_previewer_${route.templateId}_${route.overrideSongId}",
+                    key = "template_previewer_${route.templateId}_${route.overrideSongId}_${route.sourceLocation}",
                     factory = createSafeViewModelFactory {
                         factory.create(
                             templateId = route.templateId,
@@ -516,6 +522,7 @@ fun AppNavigation(
                 )
                 TemplatePreviewerScreen(
                     viewModel = viewModel,
+                    sourceLocation = route.sourceLocation,
                     audioDataSourceFactory = audioCache.cacheDataSourceFactory,
                     onNavigateToAssetPicker = { template, overrideSongId, aspectRatio ->
                         // User selected a template with aspect ratio, now pick images
@@ -524,7 +531,8 @@ fun AppNavigation(
                         backStack.add(AppRoute.AssetPicker(
                             templateId = template.id,
                             overrideSongId = overrideSongId,
-                            aspectRatio = aspectRatio
+                            aspectRatio = aspectRatio,
+                            sourceLocation = route.sourceLocation
                         ))
                     },
                     onNavigateBack = { backStack.safeRemoveLast() }
@@ -554,7 +562,8 @@ fun AppNavigation(
                     onNavigateToTemplatePreviewer = { templateId ->
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = templateId,
-                            imageUris = emptyList()
+                            imageUris = emptyList(),
+                            sourceLocation = AnalyticsEvent.Value.Location.UNINSTALL
                         ))
                     },
                     onNavigateToTemplates = { backStack.add(AppRoute.TemplateList()) },
@@ -563,7 +572,8 @@ fun AppNavigation(
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = "",
                             imageUris = emptyList(),
-                            overrideSongId = songId
+                            overrideSongId = songId,
+                            sourceLocation = AnalyticsEvent.Value.Location.UNINSTALL
                         ))
                     }
                 )

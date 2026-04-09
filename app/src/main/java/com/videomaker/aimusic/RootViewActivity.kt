@@ -92,15 +92,12 @@ class RootViewActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
+        Analytics.track(name = "splash_show")
 
         // 3. Initialize app (ads, remote config, status checks)
         rootViewModel.initializeApp()
 
         setContent {
-            Analytics.trackScreenView(
-                screenName = "splash_show",
-                screenClass = "LoadingScreen"
-            )
             val isLoading by rootViewModel.isLoading.collectAsStateWithLifecycle()
             val loadingStep by rootViewModel.loadingStep.collectAsStateWithLifecycle()
             val navigationEvent by rootViewModel.navigationEvent.collectAsStateWithLifecycle()

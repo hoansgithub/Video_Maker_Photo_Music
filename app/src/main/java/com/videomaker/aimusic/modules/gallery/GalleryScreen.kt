@@ -57,7 +57,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -105,6 +108,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import androidx.compose.runtime.snapshotFlow
+import kotlin.math.max
+import kotlin.math.min
 
 // ============================================
 // GALLERY SCREEN
@@ -114,8 +119,9 @@ import androidx.compose.runtime.snapshotFlow
 fun GalleryScreen(
     viewModel: GalleryViewModel,
     topBarHeight: Dp = 0.dp,
+    isVisible: Boolean = true,
     onNavigateToSongDetail: (Long) -> Unit = {},
-    onNavigateToTemplateDetail: (String) -> Unit = {},
+    onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTopSongs: () -> Unit = {},
     onNavigateToAllTemplates: (String?) -> Unit = {},
     onNavigateToCreate: () -> Unit = {},
@@ -143,7 +149,8 @@ fun GalleryScreen(
         navigationEvent?.let { event ->
             when (event) {
                 is GalleryNavigationEvent.NavigateToSongDetail -> onNavigateToSongDetail(event.songId)
-                is GalleryNavigationEvent.NavigateToTemplateDetail -> onNavigateToTemplateDetail(event.templateId)
+                is GalleryNavigationEvent.NavigateToTemplateDetail ->
+                    onNavigateToTemplateDetail(event.templateId, event.sourceLocation)
                 is GalleryNavigationEvent.NavigateToAllTopSongs -> onNavigateToAllTopSongs()
                 is GalleryNavigationEvent.NavigateToAllTemplates -> onNavigateToAllTemplates(event.selectedVibeTagId)
                 is GalleryNavigationEvent.NavigateToCreate -> onNavigateToCreate()
@@ -172,13 +179,14 @@ fun GalleryScreen(
                 selectedVibeTagId = state.selectedVibeTagId,
                 templateListState = state.templateListState,
                 isRefreshing = isRefreshing,
+                isVisible = isVisible,
                 onRefresh = viewModel::refresh,
                 onVibeTagSelected = { selectedTagId ->
                     val selectedTag = state.vibeTags.firstOrNull { it.id == selectedTagId }
                     Analytics.trackTemplateGenreClick(
                         genreId = selectedTagId ?: AnalyticsEvent.Value.ALL,
                         genreName = selectedTag?.displayName ?: AnalyticsEvent.Value.ALL,
-                        location = AnalyticsEvent.Value.Location.GALLERY
+                        location = AnalyticsEvent.Value.Location.HOME_TEMPLATE
                     )
                     viewModel.onVibeTagSelected(selectedTagId)
                 },
@@ -263,9 +271,10 @@ private fun GalleryContent(
     selectedVibeTagId: String?,
     templateListState: TemplateListState,
     isRefreshing: Boolean,
+    isVisible: Boolean,
     onRefresh: () -> Unit,
     onVibeTagSelected: (String?) -> Unit,
-    onTemplateClick: (VideoTemplate) -> Unit,
+    onTemplateClick: (VideoTemplate, String) -> Unit,
     onSeeAllTemplates: () -> Unit,
     onCreateClick: () -> Unit,
     onSearchClick: () -> Unit,
@@ -285,10 +294,17 @@ private fun GalleryContent(
         }
     }
 
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+    LaunchedEffect(listState, isVisible) {
+        snapshotFlow {
+            Triple(
+                listState.firstVisibleItemIndex,
+                listState.firstVisibleItemScrollOffset,
+                listState.isScrollInProgress
+            )
+        }
             .drop(1)
-            .collect { (index, offset) ->
+            .collect { (index, offset, isScrolling) ->
+                if (!isVisible || !isScrolling) return@collect
                 val hasTemplateScroll = index >= 3 || (index == 2 && offset > 0)
                 if (hasTemplateScroll && !lastTrackedTemplateScroll) {
                     Analytics.trackGallerySwipe(AnalyticsEvent.Value.Location.GALLERY_TEMPLATE)
@@ -330,6 +346,7 @@ private fun GalleryContent(
                     FeaturedTemplatesCarousel(
                         templates = featuredTemplates,
                         screenSessionId = screenSessionId,
+                        isVisible = isVisible,
                         onTemplateClick = onTemplateClick
                     )
                 }
@@ -366,6 +383,7 @@ private fun GalleryContent(
                         StaggeredTemplateGrid(
                             templates = templateListState.templates,
                             screenSessionId = screenSessionId,
+                            isVisible = isVisible,
                             onTemplateClick = onTemplateClick,
                             spacing = dimens.spaceSm,
                             modifier = Modifier.padding(horizontal = dimens.spaceLg)
@@ -509,7 +527,8 @@ private fun GallerySearchField(
 private fun FeaturedTemplatesCarousel(
     templates: List<VideoTemplate>,
     screenSessionId: String,
-    onTemplateClick: (VideoTemplate) -> Unit,
+    isVisible: Boolean,
+    onTemplateClick: (VideoTemplate, String) -> Unit,
     autoSlideIntervalMs: Long = 4000L,
     modifier: Modifier = Modifier
 ) {
@@ -523,28 +542,42 @@ private fun FeaturedTemplatesCarousel(
 
     val isDragged by pagerState.interactionSource.collectIsDraggedAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
+    var hasPendingUserSwipe by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(isDragged, isVisible) {
+        if (isVisible && isDragged) {
+            hasPendingUserSwipe = true
+        }
+    }
+
+    LaunchedEffect(isVisible) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             while (true) {
                 delay(autoSlideIntervalMs)
-                if (!isDragged && !pagerState.isScrollInProgress) {
+                if (isVisible && !isDragged && !pagerState.isScrollInProgress) {
                     pagerState.animateScrollToPage(pagerState.currentPage + 1)
                 }
             }
         }
     }
 
-    LaunchedEffect(pagerState) {
+    LaunchedEffect(pagerState, isVisible) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { settledPage ->
-                Analytics.trackGallerySwipe(AnalyticsEvent.Value.Location.GALLERY_BANNER)
+                if (!isVisible) {
+                    hasPendingUserSwipe = false
+                    return@collect
+                }
+                if (hasPendingUserSwipe) {
+                    Analytics.trackGallerySwipe(AnalyticsEvent.Value.Location.GALLERY_BANNER)
+                    hasPendingUserSwipe = false
+                }
                 val template = templates[settledPage.mod(templates.size)]
                 Analytics.trackTemplateImpression(
                     templateId = template.id,
                     templateName = template.name,
-                    location = AnalyticsEvent.Value.Location.GALLERY_BANNER,
+                    location = AnalyticsEvent.Value.Location.HOME_BANNER,
                     screenSessionId = screenSessionId
                 )
             }
@@ -577,7 +610,7 @@ private fun FeaturedTemplatesCarousel(
                         templateName = template.name,
                         location = AnalyticsEvent.Value.Location.GALLERY_BANNER
                     )
-                    onTemplateClick(template)
+                    onTemplateClick(template, AnalyticsEvent.Value.Location.GALLERY_BANNER)
                 }
             )
         }
@@ -802,7 +835,8 @@ private fun TemplateGridSkeleton(modifier: Modifier = Modifier) {
 private fun StaggeredTemplateGrid(
     templates: List<VideoTemplate>,
     screenSessionId: String,
-    onTemplateClick: (VideoTemplate) -> Unit,
+    isVisible: Boolean,
+    onTemplateClick: (VideoTemplate, String) -> Unit,
     spacing: Dp,
     modifier: Modifier = Modifier,
     columns: Int = 2
@@ -813,6 +847,7 @@ private fun StaggeredTemplateGrid(
     val aspectRatios = remember(templates) {
         templates.map { parseAspectRatio(it.aspectRatio) }
     }
+    val localView = LocalView.current
 
     StaggeredGrid(
         items = templates,
@@ -826,15 +861,7 @@ private fun StaggeredTemplateGrid(
         val aspectRatio = remember(template.aspectRatio) {
             parseAspectRatio(template.aspectRatio)
         }
-
-        LaunchedEffect(template.id, screenSessionId) {
-            Analytics.trackTemplateImpression(
-                templateId = template.id,
-                templateName = template.name,
-                location = AnalyticsEvent.Value.Location.GALLERY_TEMPLATE,
-                screenSessionId = screenSessionId
-            )
-        }
+        var hasTrackedImpression by remember(template.id, screenSessionId) { mutableStateOf(false) }
 
         TemplateCard(
             name = template.name,
@@ -843,13 +870,37 @@ private fun StaggeredTemplateGrid(
             isPremium = template.isPremium,
             showHotTag = true,  // Show Hot tag in Gallery tab only
             useCount = template.useCount,
+            modifier = Modifier.onGloballyPositioned { coordinates ->
+                if (hasTrackedImpression || !isVisible) return@onGloballyPositioned
+
+                val windowWidth = localView.width.toFloat()
+                val windowHeight = localView.height.toFloat()
+                if (windowWidth <= 0f || windowHeight <= 0f) return@onGloballyPositioned
+
+                val bounds = coordinates.boundsInWindow()
+                val visibleWidth = (min(bounds.right, windowWidth) - max(bounds.left, 0f)).coerceAtLeast(0f)
+                val visibleHeight = (min(bounds.bottom, windowHeight) - max(bounds.top, 0f)).coerceAtLeast(0f)
+                val totalArea = bounds.width * bounds.height
+                if (totalArea <= 0f) return@onGloballyPositioned
+
+                val visibleFraction = (visibleWidth * visibleHeight) / totalArea
+                if (visibleFraction >= 0.5f) {
+                    hasTrackedImpression = true
+                    Analytics.trackTemplateImpression(
+                        templateId = template.id,
+                        templateName = template.name,
+                        location = AnalyticsEvent.Value.Location.HOME_TEMPLATE,
+                        screenSessionId = screenSessionId
+                    )
+                }
+            },
             onClick = {
                 Analytics.trackTemplateClick(
                     templateId = template.id,
                     templateName = template.name,
                     location = AnalyticsEvent.Value.Location.GALLERY_TEMPLATE
                 )
-                onTemplateClick(template)
+                onTemplateClick(template, AnalyticsEvent.Value.Location.GALLERY_TEMPLATE)
             }
         )
     }
@@ -918,9 +969,10 @@ private fun GalleryContentPreview() {
                 selectedVibeTagId = null,
                 templateListState = TemplateListState.Success(previewTemplates),
                 isRefreshing = false,
+                isVisible = true,
                 onRefresh = {},
                 onVibeTagSelected = {},
-                onTemplateClick = {},
+                onTemplateClick = { _, _ -> },
                 onSeeAllTemplates = {},
                 onCreateClick = {},
                 onSearchClick = {}

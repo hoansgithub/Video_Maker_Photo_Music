@@ -104,7 +104,7 @@ fun ProjectsTabContent(
     viewModel: ProjectsViewModel,
     onCreateClick: () -> Unit,
     onProjectClick: (String) -> Unit,
-    onNavigateToTemplateDetail: (String) -> Unit = {},
+    onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToSongSearch: () -> Unit = {},
     onNavigateToAllSongs: () -> Unit = {},
     onNavigateToTemplateSearch: () -> Unit = {},
@@ -318,9 +318,12 @@ fun ProjectsTabContent(
                                         Analytics.trackTemplateClick(
                                             templateId = templateId,
                                             templateName = templateName,
-                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                            location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE
                                         )
-                                        onNavigateToTemplateDetail(templateId)
+                                        onNavigateToTemplateDetail(
+                                            templateId,
+                                            AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE
+                                        )
                                     },
                                     onDeleteTemplateClick = {
                                         val templateName = templateStateLocal
@@ -330,12 +333,12 @@ fun ProjectsTabContent(
                                         Analytics.trackTemplateOption(
                                             templateId = it,
                                             templateName = templateName,
-                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                            location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE
                                         )
                                         Analytics.trackTemplateUnfavorite(
                                             templateId = it,
                                             templateName = templateName,
-                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                            location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE
                                         )
                                         viewModel.onUnlikeTemplate(it)
                                         showRemovedMessage = true
@@ -344,7 +347,12 @@ fun ProjectsTabContent(
                             } else {
                                 LikeTemplateEmpty(
                                     state = templateState,
-                                    onTemplateClick = onNavigateToTemplateDetail,
+                                    onTemplateClick = { templateId ->
+                                        onNavigateToTemplateDetail(
+                                            templateId,
+                                            AnalyticsEvent.Value.Location.LIBRARY_RCM
+                                        )
+                                    },
                                     onSeeAllClick = viewModel::onSeeAllTemplates,
                                     onSearch = viewModel::onTemplateSearch
                                 )
@@ -450,6 +458,7 @@ fun ProjectsTabContent(
         MusicPlayerBottomSheet(
             song = song,
             cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+            location = AnalyticsEvent.Value.Location.LIBRARY_RCM,
             onDismiss = viewModel::onDismissPlayer,
             onUseToCreate = { viewModel.onUseToCreateVideo(song) }
         )

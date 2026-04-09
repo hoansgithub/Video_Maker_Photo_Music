@@ -37,10 +37,7 @@ class FeatureSelectionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        Analytics.trackScreenView(
-            screenName = EVENT_GENRE_SHOW,
-            screenClass = FeatureSelectionActivity::class.java.simpleName
-        )
+        Analytics.track(name = EVENT_GENRE_SHOW)
 
         setContent {
             var isSaving by remember { mutableStateOf(false) }

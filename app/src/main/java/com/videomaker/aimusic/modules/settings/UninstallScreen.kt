@@ -68,6 +68,7 @@ import coil.size.Precision
 import coil.size.Size
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
@@ -124,6 +125,7 @@ fun UninstallScreen(
         MusicPlayerBottomSheet(
             song = song,
             cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+            location = AnalyticsEvent.Value.Location.UNINSTALL,
             onDismiss = viewModel::onDismissPlayer,
             onUseToCreate = { viewModel.onUseToCreateVideo(song) }
         )

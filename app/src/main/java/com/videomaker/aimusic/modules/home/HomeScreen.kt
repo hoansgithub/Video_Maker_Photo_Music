@@ -89,7 +89,7 @@ fun HomeScreen(
     onNavigateToSongSearch: () -> Unit = {},
     onNavigateToSuggestedSongsList: () -> Unit = {},
     onNavigateToWeeklyRankingList: () -> Unit = {},
-    onNavigateToTemplateDetail: (String) -> Unit = {},
+    onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTemplates: (String?) -> Unit = {},
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
     onNavigateToAllSongs: () -> Unit = {}
@@ -150,6 +150,7 @@ fun HomeScreen(
             when (page) {
                 0 -> GalleryTabContent(
                     viewModel = galleryViewModel,
+                    isVisible = pagerState.settledPage == 0,
                     onCreateClick = onCreateClick,
                     onNavigateToSearch = onNavigateToSearch,
                     onNavigateToTemplateDetail = onNavigateToTemplateDetail,
@@ -168,7 +169,7 @@ fun HomeScreen(
                     viewModel = projectsViewModel,
                     onCreateClick = {
                         Analytics.trackCreationStart(AnalyticsEvent.Value.Location.LIBRARY)
-                        onNavigateToTemplateDetail("")
+                        onNavigateToTemplateDetail("", AnalyticsEvent.Value.Location.LIBRARY_RCM)
                     }, // Open template previewer with first template
                     onProjectClick = onProjectClick,
                     onNavigateToTemplateDetail = onNavigateToTemplateDetail,
@@ -322,15 +323,17 @@ private fun HomeTopBar(
 @Composable
 private fun GalleryTabContent(
     viewModel: GalleryViewModel,
+    isVisible: Boolean,
     onCreateClick: () -> Unit,
     onNavigateToSearch: () -> Unit = {},
-    onNavigateToTemplateDetail: (String) -> Unit = {},
+    onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTemplates: (String?) -> Unit = {},
     topBarHeight: Dp = 0.dp
 ) {
     GalleryScreen(
         viewModel = viewModel,
         topBarHeight = topBarHeight,
+        isVisible = isVisible,
         onNavigateToCreate = onCreateClick,
         onNavigateToSongDetail = {
             // TODO: Navigate to song detail
