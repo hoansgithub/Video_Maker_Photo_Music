@@ -91,14 +91,9 @@ class RootViewModel(
     // INTERNAL STATE
     // ============================================
 
+    // Simplified onboarding tracking - only care if complete or not
     @Volatile
-    private var needsLanguageSelection = false
-
-    @Volatile
-    private var needsOnboarding = false
-
-    @Volatile
-    private var needsFeatureSelection = false
+    private var onboardingComplete = false
 
     @Volatile
     private var isInitialized = false
@@ -228,18 +223,27 @@ class RootViewModel(
                         loadRemoteConfig()
 
                         // Step 4: Check startup gate status
+                        // Simplified: Only check if onboarding is complete
+                        // If not complete, always start from Language Selection (beginning of flow)
                         _loadingStep.value = LoadingStep.CHECKING_STATUS
                         val onboardingResult = checkOnboardingStatusUseCase()
-                        needsOnboarding = onboardingResult.getOrNull() ?: false
-                        needsLanguageSelection = checkLanguageSelectedUseCase()
-                        needsFeatureSelection = !preferencesManager.isFeatureSelectionComplete()
+                        val shouldShowOnboarding = onboardingResult.getOrNull() ?: false
+                        this@RootViewModel.onboardingComplete = !shouldShowOnboarding
+
+                        // Also check PreferencesManager directly to verify
+                        val directCheck = preferencesManager.isOnboardingComplete()
+
+                        android.util.Log.d("RootViewModel", "📊 Onboarding Status:")
+                        android.util.Log.d("RootViewModel", "   - PreferencesManager.isOnboardingComplete(): $directCheck")
+                        android.util.Log.d("RootViewModel", "   - shouldShowOnboarding (from UseCase): $shouldShowOnboarding")
+                        android.util.Log.d("RootViewModel", "   - onboardingComplete (saved to class property): ${this@RootViewModel.onboardingComplete}")
 
                         // Step 5: Preload ads in parallel (native ads + splash interstitial)
                         // Native ads load on IO thread, interstitial on Main (AdMob requirement)
                         // Uses same timeout as overall initialization (from Remote Config)
                         _loadingStep.value = LoadingStep.LOADING_AD
-                        android.util.Log.d("RootViewModel", "🎬 Step 5: Preloading ads...")
-                        android.util.Log.d("RootViewModel", "   - Native ads: ${AdPlacement.NATIVE_ONBOARDING_LANGUAGE}, ${AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT}")
+                        android.util.Log.d("RootViewModel", "🎬 Step 5: Preloading ads (1-step-ahead strategy)...")
+                        android.util.Log.d("RootViewModel", "   - onboardingComplete: ${this@RootViewModel.onboardingComplete}")
                         android.util.Log.d("RootViewModel", "   - Interstitial: ${AdPlacement.INTERSTITIAL_SPLASH}")
                         android.util.Log.d("RootViewModel", "   - Timeout: ${initTimeoutMs}ms")
 
@@ -250,16 +254,36 @@ class RootViewModel(
 
                             val nativeAdsJob = async(Dispatchers.IO) {
                                 runCatching {
-                                    // Preload language selector ads if language hasn't been selected yet
-                                    // Language selector is the FIRST screen user will see, so preload during splash
-                                    if (needsLanguageSelection) {
-                                        // Load both primary and _alt variants in parallel for A/B testing
-                                        // First one to load wins and gets displayed
+                                    /*
+                                     * SIMPLIFIED 1-STEP-AHEAD PRELOADING
+                                     *
+                                     * Full onboarding flow (always the same):
+                                     * Step 0: Language Selection
+                                     * Step 1: OnboardingActivity (welcome pages, NO ads)
+                                     * Step 2: Feature Selection
+                                     * Then: Home
+                                     *
+                                     * Preloading rules:
+                                     * - If onboarding NOT complete: Preload Language ads (Step 0)
+                                     * - If onboarding complete: No preload needed (go to Home)
+                                     *
+                                     * Why this works:
+                                     * - User always starts at Language Selection if onboarding incomplete
+                                     * - OnboardingActivity preloads Feature Selection ads (Step 2) when it starts
+                                     * - No need to check individual completion flags
+                                     */
+                                    if (!this@RootViewModel.onboardingComplete) {
+                                        // Onboarding not complete → Start from Language Selection
+                                        // Preload Language ads (Step 0)
+                                        android.util.Log.d("RootViewModel", "🔄 Preloading Language Selection ads (Step 0)")
                                         awaitAll(
                                             async { com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdSuspend(AdPlacement.NATIVE_ONBOARDING_LANGUAGE) },
                                             async { com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdSuspend(AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT) }
                                         )
-                                        android.util.Log.d("RootViewModel", "✅ Language selector native ads preloaded (both variants)")
+                                        android.util.Log.d("RootViewModel", "✅ Language Selection ads preloaded (both variants)")
+                                    } else {
+                                        // Onboarding complete → Go to Home (no ads to preload)
+                                        android.util.Log.d("RootViewModel", "⏭️ Onboarding complete, no native ads to preload")
                                     }
                                 }.onFailure {
                                     android.util.Log.w("RootViewModel", "⚠️ Native ad preload failed (non-blocking): ${it.message}")
@@ -363,12 +387,10 @@ class RootViewModel(
     // ============================================
 
     private fun proceedToNextScreen() {
-        // Determine destination route
+        // Determine destination route (simplified)
         val route = resolveStartupRoute(
             SetupProgress(
-                needsLanguageSelection = needsLanguageSelection,
-                needsOnboarding = needsOnboarding,
-                needsFeatureSelection = needsFeatureSelection
+                onboardingComplete = this@RootViewModel.onboardingComplete
             )
         )
 

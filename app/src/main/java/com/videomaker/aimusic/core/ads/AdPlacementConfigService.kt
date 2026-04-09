@@ -198,6 +198,34 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Onboarding feature selector native ad (shown at bottom of feature selection screen)
+        // High-engagement placement for users selecting video maker features
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9315495347",  // Primary
+                "ca-app-pub-7121075950716954/1976061375"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Onboarding feature selector alternative native ad (A/B test variant)
+        // Loaded in parallel with primary placement, first to load wins
+        // Layout: native_big_bait (same layout, different ad units)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1801306131",  // Primary
+                "ca-app-pub-7121075950716954/8645411507"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }

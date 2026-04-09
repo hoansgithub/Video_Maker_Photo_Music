@@ -8,24 +8,30 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
 import com.videomaker.aimusic.modules.onboarding.OnboardingViewModel
 import com.videomaker.aimusic.modules.onboarding.pages.FeatureSurveyPage
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+import kotlinx.coroutines.delay
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -45,6 +51,45 @@ class FeatureSelectionActivity : AppCompatActivity() {
         setContent {
             var isSaving by remember { mutableStateOf(false) }
 
+            // Delayed states for ad viewability compliance (0.5-second per ad)
+            // Sequential delays ensuring EACH ad gets at least 0.5 second of display time
+            // Pipeline: FIRST user interaction → PRIMARY shows 0.5s → ALT shows 0.5s → Button enables
+            // Total 1s delay for faster UX while maintaining ad viewability
+            var delayedHasSelection by remember { mutableStateOf(false) }
+            var delayedButtonEnabled by remember { mutableStateOf(false) }
+            var hasStartedDelay by remember { mutableStateOf(false) }
+
+            // Sequential delays ensuring EACH ad gets at least 0.5 second of display time
+            // Timer starts on FIRST selection and does NOT reset on subsequent selections
+            LaunchedEffect(hasStartedDelay) {
+                if (hasStartedDelay) {
+                    // Step 1: Wait 0.5s from FIRST interaction before switching to ALT ad
+                    // NATIVE_ONBOARDING_FEATURE_SELECTION (PRIMARY) gets guaranteed 0.5s visibility
+                    delay(500)
+                    delayedHasSelection = true
+
+                    // Step 2: Wait another 0.5s before enabling button
+                    // NATIVE_ONBOARDING_FEATURE_SELECTION_ALT gets guaranteed 0.5s visibility
+                    delay(500)
+                    delayedButtonEnabled = true
+                }
+            }
+
+            // Watch for first interaction and reset when all deselected
+            LaunchedEffect(onboardingViewModel.selectedFeatures.size) {
+                if (onboardingViewModel.selectedFeatures.isNotEmpty() && !hasStartedDelay) {
+                    // First interaction - start the timer (only happens once)
+                    hasStartedDelay = true
+                    android.util.Log.d("FeatureSelection", "🎬 Started IAB viewability timer")
+                } else if (onboardingViewModel.selectedFeatures.isEmpty() && hasStartedDelay) {
+                    // User deselected all - reset everything
+                    hasStartedDelay = false
+                    delayedHasSelection = false
+                    delayedButtonEnabled = false
+                    android.util.Log.d("FeatureSelection", "🔄 Reset IAB viewability timer")
+                }
+            }
+
             VideoMakerTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
                     FeatureSurveyPage(
@@ -59,6 +104,36 @@ class FeatureSelectionActivity : AppCompatActivity() {
                             }
                         }
                     )
+
+                    // Fixed native ad at bottom (above CTA button)
+                    // DUAL AD OVERLAY with z-order: ALT (bottom, always visible) → PRIMARY (top, fades out)
+                    // Both ads ALWAYS rendered for ad viewability and NativeAdView polling
+                    // Ad switching delayed by 0.5s to ensure each ad gets minimum view time
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 160.dp)  // Above CTA button
+                    ) {
+                        // ALT ad - bottom layer, always at full opacity (alpha = 1f)
+                        // ALWAYS rendered so NativeAdView's internal polling can detect late arrivals
+                        NativeAdView(
+                            placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
+                            autoLoad = false,  // Ad must be preloaded before this screen
+                            modifier = Modifier.fillMaxWidth()
+                            // No .alpha() modifier - always 1f (full opacity)
+                        )
+
+                        // PRIMARY ad - top layer (always above ALT in z-order)
+                        // Visible when no selection (alpha=1f), fades out when user selects (alpha=0f) to reveal ALT
+                        NativeAdView(
+                            placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION,
+                            autoLoad = false,  // Ad must be preloaded before this screen
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .alpha(if (delayedHasSelection) 0f else 1f)
+                        )
+                    }
 
                     Box(
                         modifier = Modifier
@@ -84,7 +159,16 @@ class FeatureSelectionActivity : AppCompatActivity() {
                                             val selectedFeature = onboardingViewModel.selectedFeatures.firstOrNull()
                                             val initialTab = mapFeatureToInitialTab(selectedFeature)
                                             preferencesManager.setHomeInitialTabFromOnboarding(initialTab)
-                                            preferencesManager.setFeatureSelectionComplete(true)
+
+                                            // Mark onboarding as COMPLETE (simplified flow)
+                                            // This is the END of the full flow: Language → Onboarding → Feature Selection
+                                            android.util.Log.d("FeatureSelection", "🎯 Marking onboarding as COMPLETE")
+                                            preferencesManager.setOnboardingComplete(true)
+
+                                            // Verify it was saved
+                                            val isComplete = preferencesManager.isOnboardingComplete()
+                                            android.util.Log.d("FeatureSelection", "🎯 Verified onboarding complete: $isComplete")
+
                                             navigateToMain(initialTab)
                                         }.onFailure {
                                             isSaving = false
@@ -97,7 +181,7 @@ class FeatureSelectionActivity : AppCompatActivity() {
                                     }
                                 }
                             },
-                            enabled = onboardingViewModel.selectedFeatures.isNotEmpty() && !isSaving,
+                            enabled = onboardingViewModel.selectedFeatures.isNotEmpty() && delayedButtonEnabled && !isSaving,
                             color = Primary,
                             icon = R.drawable.ic_checkmark
                         )

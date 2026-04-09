@@ -78,9 +78,11 @@ class PreferencesManager(context: Context) {
 
     /**
      * Mark onboarding as complete
+     * Uses .commit() for immediate synchronous write to prevent onboarding loop
+     * if app is killed before async .apply() completes
      */
     fun setOnboardingComplete(complete: Boolean) {
-        prefs.edit { putBoolean(KEY_ONBOARDING_COMPLETE, complete) }
+        prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETE, complete).commit()
     }
 
     /**
