@@ -495,11 +495,13 @@ fun EditorScreen(
                         )
                         showDurationSheet = false
                     },
-                    onConfirm = { selectedDurationMs ->
+                    onDurationClick = { selectedDurationMs ->
                         Analytics.trackDurationClick(
                             videoId = successState.project.id,
                             durationNumber = selectedDurationMs
                         )
+                    },
+                    onConfirm = { selectedDurationMs ->
                         Analytics.trackDurationSelect(
                             videoId = successState.project.id,
                             durationNumber = selectedDurationMs
