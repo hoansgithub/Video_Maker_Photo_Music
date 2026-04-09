@@ -345,6 +345,7 @@
     <!-- Error states -->
     <string name="error_load_failed">Error al cargar. Desliza hacia abajo para reintentar.</string>
     <string name="error_network_title">Error de Red</string>
+    <string name="loading_building_feed">Construyendo tu Feed</string>
     <string name="error_network_message">No se pudo cargar la música. Verifica tu conexión e inténtalo de nuevo.</string>
     <string name="error_network_timeout">Tiempo de espera de red agotado. Verifica tu conexión e inténtalo de nuevo.</string>
     <string name="error_preview_title">Error de Vista Previa</string>

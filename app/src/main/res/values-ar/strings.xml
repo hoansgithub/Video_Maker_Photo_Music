@@ -345,6 +345,7 @@
     <!-- Error states -->
     <string name="error_load_failed">فشل التحميل. اسحب للأسفل للمحاولة مجدداً.</string>
     <string name="error_network_title">خطأ في الشبكة</string>
+    <string name="loading_building_feed">جارٍ بناء موجزك</string>
     <string name="error_network_message">فشل تحميل الموسيقى. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
     <string name="error_network_timeout">انتهت مهلة الشبكة. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
     <string name="error_preview_title">خطأ في المعاينة</string>

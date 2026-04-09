@@ -321,6 +321,24 @@ object AdPlacement {
     const val NATIVE_WIDGET_BOTTOM = "ad_native_widget_bottom"
 
     /**
+     * Native ad shown during template previewer loading state.
+     * Timing: Displayed at bottom while content is loading.
+     * Waits 10 seconds for ad to load, then displays for 2 more seconds.
+     * Total loading time: 12 seconds minimum before showing content.
+     *
+     * Layout: native_big_bait (412:304 ratio, 1.355:1)
+     * - Large vertical layout with clickbait CTA button
+     * - Shown with "Building Your Feed" loading indicator
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/8424019843
+     * - Secondary: ca-app-pub-7121075950716954/1431594877
+     *
+     * Remote Config key: ad_native_template_previewer_loading
+     */
+    const val NATIVE_TEMPLATE_PREVIEWER_LOADING = "ad_native_template_previewer_loading"
+
+    /**
      * Native ad shown in created projects grid (in-feed placement).
      * Displayed as an item within the staggered projects grid.
      * Only loaded when at least 1 project exists (never shown on empty state).
@@ -362,6 +380,7 @@ object AdPlacement {
         NATIVE_SEARCH_INFEED,
         NATIVE_UNINSTALL_BOTTOM,
         NATIVE_WIDGET_BOTTOM,
-        NATIVE_PROJECTS_GRID
+        NATIVE_PROJECTS_GRID,
+        NATIVE_TEMPLATE_PREVIEWER_LOADING
     )
 }

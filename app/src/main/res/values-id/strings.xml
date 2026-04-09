@@ -345,6 +345,7 @@
     <!-- Error states -->
     <string name="error_load_failed">Gagal memuat. Tarik ke bawah untuk mencoba lagi.</string>
     <string name="error_network_title">Kesalahan Jaringan</string>
+    <string name="loading_building_feed">Membangun Feed Anda</string>
     <string name="error_network_message">Gagal memuat musik. Periksa koneksi Anda dan coba lagi.</string>
     <string name="error_network_timeout">Waktu jaringan habis. Periksa koneksi Anda dan coba lagi.</string>
     <string name="error_preview_title">Kesalahan Pratinjau</string>

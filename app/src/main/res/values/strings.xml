@@ -350,6 +350,7 @@
     <!-- Error states -->
     <string name="error_load_failed">Failed to load. Pull down to retry.</string>
     <string name="error_network_title">Network Error</string>
+    <string name="loading_building_feed">Building Your Feed</string>
     <string name="error_network_message">Failed to load music. Please check your connection and try again.</string>
     <string name="error_network_timeout">Network timeout. Please check your connection and try again.</string>
     <string name="error_preview_title">Preview Error</string>

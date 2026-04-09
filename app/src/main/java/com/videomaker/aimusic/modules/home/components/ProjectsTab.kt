@@ -686,13 +686,13 @@ private fun ProjectsStaggeredGrid(
 ) {
     if (projects.isEmpty()) return
 
-    // ✅ Create mixed list with ad inserted at position 2 (after first 2 projects)
+    // ✅ Create mixed list with ad inserted at position 2 (after first project)
     val gridItems = remember(projects) {
         buildList {
             projects.forEachIndexed { index, project ->
                 add(ProjectGridItem.ProjectItem(project))
-                // Insert ad after 2nd project (index 1)
-                if (index == 1) {
+                // Insert ad after 1st project (index 0) - shows when at least 1 project exists
+                if (index == 0) {
                     add(ProjectGridItem.AdItem)
                 }
             }

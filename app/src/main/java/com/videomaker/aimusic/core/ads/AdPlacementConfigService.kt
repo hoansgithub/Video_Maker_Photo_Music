@@ -337,6 +337,21 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Template previewer loading state native ad (shown during loading)
+        // Displayed at bottom with "Building Your Feed" message
+        // 10s timeout + 2s display = 12s minimum loading time
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/8424019843",  // Primary
+                "ca-app-pub-7121075950716954/1431594877"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Projects grid native ad (shown as item in staggered projects list)
         // In-feed placement that blends with project cards
         // Only loads when at least 1 project exists

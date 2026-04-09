@@ -85,8 +85,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.R
+import kotlinx.coroutines.delay
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
@@ -302,26 +304,39 @@ fun TemplatePreviewerScreen(
         }
     }
 
+    // Track if loading ad timing is complete
+    var loadingAdComplete by remember { mutableStateOf(false) }
+
+    // Ad loading timing: 10 seconds maximum
+    // - If ad loads quickly (e.g., 3s), it shows for remaining time
+    // - If ad doesn't load, timeout at 10s
+    // - Total maximum: 10 seconds
+    LaunchedEffect(Unit) {
+        delay(10_000) // Maximum 10 seconds for ad load + display
+        loadingAdComplete = true
+    }
+
     when (val state = uiState) {
         is TemplatePreviewerUiState.Loading -> {
-            Box(
-                modifier = Modifier.fillMaxSize().background(Color.Black),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Color.White)
-            }
+            LoadingStateWithAd()
         }
         is TemplatePreviewerUiState.Ready -> {
-            TemplatePreviewerReadyContent(
-                state = state,
-                currentSong = currentSong,
-                playerDurationMs = playerDurationMs,
-                likedTemplateIds = likedTemplateIds,
-                onPageChanged = viewModel::onPageChanged,
-                onUseThisTemplate = viewModel::onUseThisTemplate,
-                onLikeTemplate = viewModel::onLikeTemplate,
-                onNavigateBack = viewModel::onNavigateBack
-            )
+            // Only show Ready content after ad timing is complete
+            if (loadingAdComplete) {
+                TemplatePreviewerReadyContent(
+                    state = state,
+                    currentSong = currentSong,
+                    playerDurationMs = playerDurationMs,
+                    likedTemplateIds = likedTemplateIds,
+                    onPageChanged = viewModel::onPageChanged,
+                    onUseThisTemplate = viewModel::onUseThisTemplate,
+                    onLikeTemplate = viewModel::onLikeTemplate,
+                    onNavigateBack = viewModel::onNavigateBack
+                )
+            } else {
+                // Keep showing loading state with ad until timing is complete
+                LoadingStateWithAd()
+            }
         }
         is TemplatePreviewerUiState.Error -> {
             Box(
@@ -355,6 +370,64 @@ fun TemplatePreviewerScreen(
                 songError = null
             }
         )
+    }
+}
+
+// ============================================
+// LOADING STATE WITH AD — 10s timeout + 2s display
+// ============================================
+
+/**
+ * Loading state with native ad at bottom
+ *
+ * Behavior:
+ * - Shows CircularProgressIndicator at center
+ * - Shows native ad at bottom
+ * - Waits 10 seconds for ad to load
+ * - After 10s, shows ad for 2 more seconds
+ * - Total: 12 seconds before transitioning to Ready state
+ *
+ * Note: The actual transition to Ready state is controlled by ViewModel's
+ * data loading. This just ensures the ad gets adequate display time.
+ */
+@Composable
+private fun LoadingStateWithAd() {
+    val context = LocalContext.current
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        // Loading indicator with label at center
+        Column(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            CircularProgressIndicator(color = Color.White)
+
+            Text(
+                text = stringResource(R.string.loading_building_feed),
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.W500,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        // Native ad at bottom
+        // Loads during 10s + displays for 2s more = 12s total
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+        ) {
+            NativeAdView(
+                placement = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 
