@@ -266,14 +266,12 @@ fun LanguageSelectionScreen(
                 // ALT ad - bottom layer, always at full opacity
                 NativeAdView(
                     placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
-                    autoLoad = false,
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 // PRIMARY ad - top layer, fades out when user selects
                 NativeAdView(
                     placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
-                    autoLoad = false,
                     modifier = Modifier
                         .fillMaxWidth()
                         .alpha(if (delayedHasSelection) 0f else 1f)

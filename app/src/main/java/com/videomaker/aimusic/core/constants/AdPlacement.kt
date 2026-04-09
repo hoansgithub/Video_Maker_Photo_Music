@@ -183,6 +183,57 @@ object AdPlacement {
     const val NATIVE_ONBOARDING_FEATURE_SELECTION_ALT = "ad_native_onboarding_feature_selection_alt"
 
     /**
+     * Native ad shown at bottom of onboarding page 1.
+     * Timing: Loaded when onboarding page 1 is displayed.
+     * First welcome page of the onboarding flow.
+     *
+     * Layout: native_big_bait (412:304 ratio, 1.355:1)
+     * - Large vertical layout with clickbait CTA button
+     * - Attention-grabbing design for maximum engagement
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/8425919653
+     * - Secondary: ca-app-pub-7121075950716954/8562155601
+     *
+     * Remote Config key: ad_native_onboarding_page1
+     */
+    const val NATIVE_ONBOARDING_PAGE1 = "ad_native_onboarding_page1"
+
+    /**
+     * Native ad shown at bottom of onboarding page 2.
+     * Timing: Loaded when onboarding page 2 is displayed.
+     * Second welcome page of the onboarding flow.
+     *
+     * Layout: native_big_bait (412:304 ratio, 1.355:1)
+     * - Large vertical layout with clickbait CTA button
+     * - Attention-grabbing design for maximum engagement
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/2815004904
+     * - Secondary: ca-app-pub-7121075950716954/3373262316
+     *
+     * Remote Config key: ad_native_onboarding_page2
+     */
+    const val NATIVE_ONBOARDING_PAGE2 = "ad_native_onboarding_page2"
+
+    /**
+     * Native ad shown at bottom of onboarding page 3.
+     * Timing: Loaded when onboarding page 3 is displayed.
+     * Third (final) welcome page of the onboarding flow.
+     *
+     * Layout: native_big_bait (412:304 ratio, 1.355:1)
+     * - Large vertical layout with clickbait CTA button
+     * - Attention-grabbing design for maximum engagement
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/3417640133
+     * - Secondary: ca-app-pub-7121075950716954/6506837908
+     *
+     * Remote Config key: ad_native_onboarding_page3
+     */
+    const val NATIVE_ONBOARDING_PAGE3 = "ad_native_onboarding_page3"
+
+    /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
      */
@@ -195,6 +246,9 @@ object AdPlacement {
         BANNER_HOME,
         NATIVE_ONBOARDING_LANGUAGE,
         NATIVE_ONBOARDING_LANGUAGE_ALT,
+        NATIVE_ONBOARDING_PAGE1,
+        NATIVE_ONBOARDING_PAGE2,
+        NATIVE_ONBOARDING_PAGE3,
         NATIVE_ONBOARDING_FEATURE_SELECTION,
         NATIVE_ONBOARDING_FEATURE_SELECTION_ALT
     )

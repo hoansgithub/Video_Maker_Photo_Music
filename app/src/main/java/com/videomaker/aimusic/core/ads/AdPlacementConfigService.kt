@@ -226,6 +226,48 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Onboarding page 1 native ad (shown at bottom of first welcome page)
+        // First page of the onboarding flow
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_PAGE1,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/8425919653",  // Primary
+                "ca-app-pub-7121075950716954/8562155601"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Onboarding page 2 native ad (shown at bottom of second welcome page)
+        // Second page of the onboarding flow
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_PAGE2,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2815004904",  // Primary
+                "ca-app-pub-7121075950716954/3373262316"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Onboarding page 3 native ad (shown at bottom of third welcome page)
+        // Third (final) page of the onboarding flow
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_PAGE3,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/3417640133",  // Primary
+                "ca-app-pub-7121075950716954/6506837908"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }

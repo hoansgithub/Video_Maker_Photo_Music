@@ -159,7 +159,8 @@ fun OnboardingScreen(
                 onCta = {
                     showSwipeHint = false
                     if (isLastPage) onComplete() else viewModel.onNext()
-                }
+                },
+                pageIndex = page  // Pass page index for ad placement
             )
 
             if (showSwipeHint && pagerState.settledPage == 0) {

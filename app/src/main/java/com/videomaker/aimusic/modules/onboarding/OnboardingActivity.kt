@@ -44,14 +44,17 @@ class OnboardingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Preload Feature Selection native ads (1-step-ahead strategy)
-        // OnboardingActivity has no ads itself, so we preload the NEXT step's ads
-        // This ensures Feature Selection ads are ready when user completes welcome pages
+        // Preload PAGE3 ad + next step (Feature Selection)
+        // PAGE1 and PAGE2 were already preloaded in LanguageSelectionActivity (1-step-ahead)
         //
         // CRITICAL: Use Application-scoped preload (NOT lifecycleScope)
         // VideoMakerApplication.preloadNativeAd() uses appScope internally,
         // which survives Activity destruction. This prevents cancellation if user
-        // quickly completes welcome pages and navigates away.
+        // quickly swipes through pages.
+        android.util.Log.d("OnboardingActivity", "🔄 Preloading PAGE3 ad")
+        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE3)
+
+        // Also preload Feature Selection ads (next step)
         android.util.Log.d("OnboardingActivity", "🔄 Preloading Feature Selection ads (1-step-ahead)")
         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION)
         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT)
