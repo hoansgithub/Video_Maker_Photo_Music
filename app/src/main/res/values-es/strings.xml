@@ -230,6 +230,10 @@
     <string name="export_watch_ad_subtitle">Ayúdanos a mantener esta aplicación gratis viendo un breve anuncio. ¡Tu video se descargará justo después!</string>
     <string name="export_watch_ad_button">Ver Anuncio</string>
     <string name="export_watch_ad_close">Cerrar</string>
+    <string name="export_watermark_remove_title">¿Eliminar marca de agua?</string>
+    <string name="export_watermark_remove_subtitle">Mira un breve anuncio para eliminar la marca de agua de tu vista previa de video.</string>
+    <string name="export_watermark_remove_button">Ver Anuncio</string>
+    <string name="export_watermark_remove_close">Cerrar</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Seleccionar Fotos</string>
@@ -470,5 +474,16 @@
     <string name="rating_feedback_reason_performance">La app es lenta o falla con frecuencia</string>
     <string name="rating_feedback_reason_templates">No hay suficientes plantillas / actualizaciones de contenido</string>
     <string name="rating_feedback_reason_other">Otro</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">Anuncio</string>
+    <string name="ad_icon">Icono de anuncio</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">¿Ver un anuncio para desbloquear este efecto?</string>
+    <string name="effect_set_watch_ad_subtitle">Desbloquea este conjunto de efectos permanentemente viendo un anuncio corto</string>
+    <string name="effect_set_ad_not_available">Anuncio no disponible ahora. Inténtalo de nuevo más tarde.</string>
+    <string name="effect_set_locked">Conjunto de efectos bloqueado</string>
+    <string name="ad_not_available">Anuncio no disponible ahora. Inténtalo de nuevo más tarde.</string>
 
 </resources>

@@ -431,6 +431,32 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Rewarded ad for watermark removal (shown when user taps watermark overlay)
+        // User must watch full ad to earn reward (watermark removal)
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.REWARD_REMOVE_WATERMARK,
+            type = "reward",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6485746472",  // Primary
+                "ca-app-pub-7121075950716954/8206497619"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Rewarded ad for effect set unlock (shown when user clicks locked effect set)
+        // User must watch full ad to earn reward (effect set unlock - stored locally)
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.REWARD_UNLOCK_EFFECT_SET,
+            type = "reward",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1281667047",  // Primary
+                "ca-app-pub-7121075950716954/4323092928"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }

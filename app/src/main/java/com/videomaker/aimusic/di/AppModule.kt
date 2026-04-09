@@ -126,6 +126,7 @@ val dataModule = module {
     single { ApiCacheManager(androidContext()) }
     single { PreferencesManager(androidContext()) }
     single { LanguageManager(androidContext()) }
+    single { com.videomaker.aimusic.core.storage.UnlockedEffectSetsManager(androidContext()) }
 
     // Language config service (singleton - ConfigurableObject for Remote Config)
     single {
@@ -626,11 +627,15 @@ class WeeklyRankingListViewModelFactory(
  * Factory wrapper for EffectSetViewModel.
  */
 class EffectSetViewModelFactory(
-    private val getEffectSetsPagedUseCase: GetEffectSetsPagedUseCase
+    private val getEffectSetsPagedUseCase: GetEffectSetsPagedUseCase,
+    private val unlockedEffectSetsManager: com.videomaker.aimusic.core.storage.UnlockedEffectSetsManager,
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 ) {
     fun create(): com.videomaker.aimusic.modules.editor.EffectSetViewModel {
         return com.videomaker.aimusic.modules.editor.EffectSetViewModel(
-            getEffectSetsPagedUseCase = getEffectSetsPagedUseCase
+            getEffectSetsPagedUseCase = getEffectSetsPagedUseCase,
+            unlockedEffectSetsManager = unlockedEffectSetsManager,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -719,7 +724,9 @@ val presentationModule = module {
     // Effect Set ViewModel
     viewModel {
         com.videomaker.aimusic.modules.editor.EffectSetViewModel(
-            getEffectSetsPagedUseCase = get()
+            getEffectSetsPagedUseCase = get(),
+            unlockedEffectSetsManager = get(),
+            adsLoaderService = get()
         )
     }
 
@@ -860,7 +867,9 @@ val presentationModule = module {
     // Effect Set ViewModel factory (singleton - stateless factory)
     single {
         EffectSetViewModelFactory(
-            getEffectSetsPagedUseCase = get()
+            getEffectSetsPagedUseCase = get(),
+            unlockedEffectSetsManager = get(),
+            adsLoaderService = get()
         )
     }
 

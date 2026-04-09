@@ -435,6 +435,48 @@ object AdPlacement {
     const val REWARD_DOWNLOAD_VIDEO = "ad_reward_download_video"
 
     /**
+     * Rewarded ad shown when user taps watermark to remove it.
+     * Timing: User taps watermark on video preview → dialog appears → user watches ad → watermark removed.
+     * User MUST watch the full ad to earn the reward (watermark removal).
+     *
+     * Flow:
+     * 1. Watermark overlay shown on video preview by default
+     * 2. User taps watermark → dialog: "Watch an ad to remove watermark?"
+     * 3. User taps "Watch Ad" → Ad loads and plays
+     * 4. User watches full ad → onUserEarnedReward callback
+     * 5. Watermark removed for current session
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6485746472
+     * - Secondary: ca-app-pub-7121075950716954/8206497619
+     *
+     * Remote Config key: ad_reward_remove_watermark
+     */
+    const val REWARD_REMOVE_WATERMARK = "ad_reward_remove_watermark"
+
+    /**
+     * Rewarded ad shown when user wants to unlock a locked effect set.
+     * Timing: User clicks locked effect set → dialog appears → user watches ad → effect set unlocked.
+     * User MUST watch the full ad to earn the reward (effect set unlock).
+     *
+     * Flow:
+     * 1. User clicks locked effect set in editor bottom sheet (shows lock icon)
+     * 2. Dialog shows: "Watch an ad to unlock this effect set?"
+     * 3. User taps "Watch Ad" → Ad loads and plays
+     * 4. User watches full ad → onUserEarnedReward callback
+     * 5. Effect set is unlocked and stored locally in SharedPreferences
+     * 6. Lock icon disappears, user can now use the effect set
+     * 7. Unlock persists across app restarts
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1281667047
+     * - Secondary: ca-app-pub-7121075950716954/4323092928
+     *
+     * Remote Config key: ad_reward_unlock_effect_set
+     */
+    const val REWARD_UNLOCK_EFFECT_SET = "ad_reward_unlock_effect_set"
+
+    /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
      */
@@ -462,6 +504,8 @@ object AdPlacement {
         NATIVE_SONGS_STATION,
         NATIVE_TEMPLATE_PREVIEWER_LOADING,
         NATIVE_EXPORT_GENERATING,
-        REWARD_DOWNLOAD_VIDEO
+        REWARD_DOWNLOAD_VIDEO,
+        REWARD_REMOVE_WATERMARK,
+        REWARD_UNLOCK_EFFECT_SET
     )
 }

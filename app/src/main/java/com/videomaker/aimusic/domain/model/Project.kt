@@ -12,7 +12,8 @@ data class Project(
     val updatedAt: Long,
     val thumbnailUri: Uri?,
     val settings: ProjectSettings,
-    val assets: List<Asset>
+    val assets: List<Asset>,
+    val isWatermarkFree: Boolean = false  // True if user watched ad to remove watermark
 ) {
     /**
      * Calculate total video duration based on assets and transitions

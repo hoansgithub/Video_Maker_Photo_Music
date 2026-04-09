@@ -38,23 +38,19 @@ import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
 /**
- * WatchAdDialog - Dialog asking user to watch an ad for a reward
+ * WatermarkAdDialog - Dialog asking user to watch an ad before removing watermark
  *
  * Follows patterns from android-short-drama-app RewardedInterstitialIntroDialog:
  * - [AD] label badge for visual engagement
- * - Clear title and subtitle (customizable)
+ * - Clear title and subtitle
  * - Two buttons: "Close" (secondary) and "Watch Ad" with icon (primary, wider)
  * - Prevents tap-to-dismiss - forces explicit user choice
  *
- * @param title Dialog title text (e.g., "Watch an ad to download your video?")
- * @param subtitle Dialog subtitle text (e.g., "Support us by watching a short ad")
  * @param onDismiss Callback when user taps "Close" button
  * @param onWatchAd Callback when user taps "Watch Ad" button
  */
 @Composable
-fun WatchAdDialog(
-    title: String = stringResource(R.string.export_watch_ad_title),
-    subtitle: String = stringResource(R.string.export_watch_ad_subtitle),
+fun WatermarkAdDialog(
     onDismiss: () -> Unit,
     onWatchAd: () -> Unit
 ) {
@@ -99,7 +95,7 @@ fun WatchAdDialog(
 
             // Title
             Text(
-                text = title,
+                text = stringResource(R.string.export_watermark_remove_title),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -111,7 +107,7 @@ fun WatchAdDialog(
 
             // Subtitle
             Text(
-                text = subtitle,
+                text = stringResource(R.string.export_watermark_remove_subtitle),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
                 color = Color.White.copy(alpha = 0.8f),
@@ -138,7 +134,7 @@ fun WatchAdDialog(
                     )
                 ) {
                     Text(
-                        text = stringResource(R.string.export_watch_ad_close),
+                        text = stringResource(R.string.export_watermark_remove_close),
                         fontSize = 13.sp,  // Reduced from 14sp to prevent truncation
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
@@ -165,7 +161,7 @@ fun WatchAdDialog(
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
-                        text = stringResource(R.string.export_watch_ad_button),
+                        text = stringResource(R.string.export_watermark_remove_button),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
@@ -183,9 +179,9 @@ fun WatchAdDialog(
 
 @Preview
 @Composable
-private fun WatchAdDialogPreview() {
+private fun WatermarkAdDialogPreview() {
     VideoMakerTheme {
-        WatchAdDialog(
+        WatermarkAdDialog(
             onDismiss = {},
             onWatchAd = {}
         )

@@ -181,6 +181,14 @@ class ExportViewModel(
     // Pending download request - stored when user initiates download
     private var pendingDownloadRequest: (() -> Unit)? = null
 
+    // Watermark state - shown by default, removed after watching ad
+    private val _showWatermark = MutableStateFlow(true)
+    val showWatermark: StateFlow<Boolean> = _showWatermark.asStateFlow()
+
+    // Watermark ad dialog state
+    private val _showWatermarkAdDialog = MutableStateFlow(false)
+    val showWatermarkAdDialog: StateFlow<Boolean> = _showWatermarkAdDialog.asStateFlow()
+
     // ============================================
     // RATING STATE
     // ============================================
@@ -231,6 +239,17 @@ class ExportViewModel(
             currentProjectSnapshot = project
             _thumbnailUri.value = project?.thumbnailUri ?: project?.assets?.firstOrNull()?.uri
             _aspectRatio.value = project?.settings?.aspectRatio ?: AspectRatio.RATIO_9_16
+
+            // Load watermark status from database
+            // Show watermark only if project is NOT watermark-free
+            try {
+                _showWatermark.value = !(project?.isWatermarkFree ?: false)
+                android.util.Log.d("ExportViewModel", "Loaded watermark status: isWatermarkFree=${project?.isWatermarkFree}, showWatermark=${_showWatermark.value}")
+            } catch (e: Exception) {
+                android.util.Log.e("ExportViewModel", "Failed to load project watermark status", e)
+                // Default to showing watermark on error
+                _showWatermark.value = true
+            }
         }
     }
 
@@ -639,6 +658,8 @@ class ExportViewModel(
                 android.util.Log.w("ExportViewModel", "No ad available - allowing direct download")
                 // If no ad available, allow download anyway (per user requirement)
                 AdsLoadingState.hide()
+                // Show toast: ad not available
+                _saveToastState.value = ProcessToastState.Error("Ad not available right now")
                 pendingDownloadRequest?.invoke()
                 pendingDownloadRequest = null
 
@@ -646,12 +667,144 @@ class ExportViewModel(
                 android.util.Log.e("ExportViewModel", "Failed to show rewarded ad: ${e.message}")
                 // On error, allow download anyway (per user requirement)
                 AdsLoadingState.hide()
+                // Show toast: ad not available
+                _saveToastState.value = ProcessToastState.Error("Ad not available right now")
                 pendingDownloadRequest?.invoke()
                 pendingDownloadRequest = null
 
             } finally {
                 // Ensure loading indicator is always hidden
                 AdsLoadingState.hide()
+            }
+        }
+    }
+
+    /**
+     * Called when user clicks watermark overlay
+     * Shows watermark ad dialog immediately
+     */
+    fun onWatermarkClick() {
+        android.util.Log.d("ExportViewModel", "🎁 Showing watermark ad dialog")
+        _showWatermarkAdDialog.value = true
+    }
+
+    /**
+     * Called when user dismisses watermark via X button
+     * Keeps watermark visible but closes it (no dialog shown)
+     */
+    fun onWatermarkDismiss() {
+        android.util.Log.d("ExportViewModel", "❌ User dismissed watermark without watching ad")
+        // Watermark stays visible, just closes the overlay
+        // User can click it again later to watch ad
+    }
+
+    /**
+     * Called when user dismisses watermark ad dialog (clicks "Close")
+     */
+    fun onWatermarkAdDialogDismiss() {
+        _showWatermarkAdDialog.value = false
+    }
+
+    /**
+     * Called when user confirms watching watermark ad (clicks "Watch Ad")
+     * Dismisses dialog and initiates rewarded ad loading/showing
+     */
+    fun onWatermarkAdConfirmed() {
+        _showWatermarkAdDialog.value = false
+    }
+
+    /**
+     * Show rewarded ad for watermark removal (inline loading pattern from drama app)
+     * Called from UI after user confirms watching ad
+     *
+     * IMPORTANT: Unlike download ad, watermark is NOT removed on timeout/error
+     * User MUST watch the full ad to remove watermark
+     *
+     * @param activity Activity context for showing the ad
+     */
+    fun showWatermarkRewardedAd(activity: Activity) {
+        viewModelScope.launch {
+            try {
+                // Load watermark removal ad if not already cached (show loading indicator while loading)
+                if (!adsLoaderService.isRewardedAdReady(AdPlacement.REWARD_REMOVE_WATERMARK)) {
+                    android.util.Log.d("ExportViewModel", "⏳ Loading watermark removal ad...")
+
+                    // Show loading indicator (like drama app)
+                    AdsLoadingState.show("Loading ad...")
+
+                    // Load with 60 second timeout
+                    withTimeout(60_000) {
+                        adsLoaderService.loadRewarded(AdPlacement.REWARD_REMOVE_WATERMARK)
+                    }
+
+                    // Hide loading indicator before presenting ad
+                    AdsLoadingState.hide()
+                }
+
+                // Present reward ad and wait for result (blocking call)
+                val result = adsLoaderService.presentRewarded(
+                    placement = AdPlacement.REWARD_REMOVE_WATERMARK,
+                    activity = activity
+                )
+
+                // Check if user earned the reward (watched full ad)
+                if (result.earnedReward) {
+                    android.util.Log.d("ExportViewModel", "✅ User earned reward - removing watermark")
+                    // Remove watermark
+                    _showWatermark.value = false
+                    // Save watermark-free status to database
+                    saveWatermarkFreeStatus()
+                } else {
+                    android.util.Log.d("ExportViewModel", "❌ User did not earn reward (closed ad early)")
+                    // User closed ad without watching - watermark stays visible
+                    // User can click watermark again to retry
+                }
+
+            } catch (e: TimeoutCancellationException) {
+                android.util.Log.w("ExportViewModel", "Ad load timeout - watermark NOT removed")
+                // Timeout loading ad - watermark stays visible (unlike download)
+                AdsLoadingState.hide()
+                // Show toast: ad not available
+                _saveToastState.value = ProcessToastState.Error("Ad not available right now")
+
+            } catch (e: AdsLoaderException.NoAdToShow) {
+                android.util.Log.w("ExportViewModel", "No ad available - watermark NOT removed")
+                // If no ad available, watermark stays visible (unlike download)
+                AdsLoadingState.hide()
+                // Show toast: ad not available
+                _saveToastState.value = ProcessToastState.Error("Ad not available right now")
+
+            } catch (e: Exception) {
+                android.util.Log.e("ExportViewModel", "Failed to show watermark removal ad: ${e.message}")
+                // On error, watermark stays visible (unlike download)
+                AdsLoadingState.hide()
+                // Show toast: ad not available
+                _saveToastState.value = ProcessToastState.Error("Ad not available right now")
+
+            } finally {
+                // Ensure loading indicator is always hidden
+                AdsLoadingState.hide()
+            }
+        }
+    }
+
+    /**
+     * Mark project as watermark-free in database
+     * Called when user successfully watches ad to remove watermark
+     */
+    private fun saveWatermarkFreeStatus() {
+        viewModelScope.launch {
+            try {
+                val project = projectRepository.getProject(projectId)
+                if (project != null) {
+                    val updatedProject = project.copy(isWatermarkFree = true)
+                    projectRepository.updateProject(updatedProject)
+                    android.util.Log.d("ExportViewModel", "✅ Project marked as watermark-free in database")
+                } else {
+                    android.util.Log.e("ExportViewModel", "Failed to save watermark-free status: project not found")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ExportViewModel", "Failed to save watermark-free status", e)
             }
         }
     }

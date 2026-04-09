@@ -235,6 +235,10 @@
     <string name="export_watch_ad_subtitle">Help us keep this app free by watching a short ad. Your video will download right after!</string>
     <string name="export_watch_ad_button">Watch Ad</string>
     <string name="export_watch_ad_close">Close</string>
+    <string name="export_watermark_remove_title">Remove watermark?</string>
+    <string name="export_watermark_remove_subtitle">Watch a short ad to remove the watermark from your video preview.</string>
+    <string name="export_watermark_remove_button">Watch Ad</string>
+    <string name="export_watermark_remove_close">Close</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Select your image</string>
@@ -479,5 +483,12 @@
     <!-- Ads -->
     <string name="ad_badge">Ad</string>
     <string name="ad_icon">Advertisement icon</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">Watch an ad to unlock this effect?</string>
+    <string name="effect_set_watch_ad_subtitle">Unlock this effect set permanently by watching a short ad</string>
+    <string name="effect_set_ad_not_available">Ad not available right now. Please try again later.</string>
+    <string name="effect_set_locked">Locked effect set</string>
+    <string name="ad_not_available">Ad not available right now. Please try again later.</string>
 
 </resources>

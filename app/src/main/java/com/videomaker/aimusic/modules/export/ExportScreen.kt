@@ -78,7 +78,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.text.font.FontWeight
@@ -157,6 +159,8 @@ fun ExportScreen(
     val saveToastState by viewModel.saveToastState.collectAsStateWithLifecycle()
     val ratingStep by viewModel.ratingStep.collectAsStateWithLifecycle()
     val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
+    val showWatermark by viewModel.showWatermark.collectAsStateWithLifecycle()
+    val showWatermarkAdDialog by viewModel.showWatermarkAdDialog.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -355,6 +359,9 @@ fun ExportScreen(
                     currentQuality = currentQuality,
                     featuredTemplatesState = featuredTemplatesState,
                     saveToastState = saveToastState,
+                    showWatermark = showWatermark,
+                    onWatermarkClick = viewModel::onWatermarkClick,
+                    onWatermarkDismiss = viewModel::onWatermarkDismiss,
                     onSaveToGalleryClick = {
                         viewModel.onDownloadClick(
                             applicationContext = context.applicationContext,
@@ -434,6 +441,21 @@ fun ExportScreen(
                         // Activity context unavailable - allow direct download
                         android.util.Log.w("ExportScreen", "Activity unavailable for rewarded ad - allowing direct download")
                         viewModel.executePendingDownload()
+                    }
+                }
+            )
+        }
+
+        // Watermark ad dialog
+        if (showWatermarkAdDialog) {
+            WatermarkAdDialog(
+                onDismiss = viewModel::onWatermarkAdDialogDismiss,
+                onWatchAd = {
+                    viewModel.onWatermarkAdConfirmed()
+                    if (activity != null) {
+                        viewModel.showWatermarkRewardedAd(activity)
+                    } else {
+                        android.util.Log.w("ExportScreen", "Activity unavailable for watermark ad - keeping watermark")
                     }
                 }
             )
@@ -676,6 +698,9 @@ private fun SuccessContent(
     currentQuality: VideoQuality,
     featuredTemplatesState: FeaturedTemplatesState = FeaturedTemplatesState.Loading,
     saveToastState: ProcessToastState? = null,
+    showWatermark: Boolean = true,
+    onWatermarkClick: () -> Unit = {},
+    onWatermarkDismiss: () -> Unit = {},
     onSaveToGalleryClick: () -> Unit,
     onShareClick: () -> Unit,
     onQualityChange: (VideoQuality) -> Unit = {},
@@ -881,6 +906,52 @@ private fun SuccessContent(
                             tint = Color.White,
                             modifier = Modifier.size(48.dp)
                         )
+                    }
+                }
+
+                // Watermark overlay - bottom right
+                if (showWatermark) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .background(
+                                    color = Color.Black.copy(alpha = 0.7f),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .clickable { onWatermarkClick() }
+                                .padding(start = 8.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_launcher_foreground),
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp),
+                                tint = Color.White
+                            )
+                            Text(
+                                text = stringResource(R.string.app_name),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White,
+                                maxLines = 1
+                            )
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Remove watermark",
+                                tint = Color.White.copy(alpha = 0.8f),
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) { onWatermarkDismiss() }
+                            )
+                        }
                     }
                 }
             }
