@@ -28,6 +28,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
@@ -151,7 +153,14 @@ fun UnifiedSearchIdleContent(
                                     items(suggestionVibeTags, key = { it.id }) { tag ->
                                         AppFilterChip(
                                             text = if (tag.emoji.isNotEmpty()) "${tag.emoji} ${tag.displayName}" else tag.displayName,
-                                            onClick = { onVibeTagClick(tag) }
+                                            onClick = {
+                                                Analytics.trackTemplateGenreClick(
+                                                    genreId = tag.id,
+                                                    genreName = tag.displayName,
+                                                    location = AnalyticsEvent.Value.Location.SEARCH
+                                                )
+                                                onVibeTagClick(tag)
+                                            }
                                         )
                                     }
                                 }

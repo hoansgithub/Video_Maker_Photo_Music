@@ -320,6 +320,17 @@ object AnalyticsEvent {
 
             const val MEDIA_SELECT = "media_select"
             const val VIDEO_GENERATE = "video_generate"
+
+            // Source locations for template/song context events
+            const val HOME_BANNER = "home_banner"
+            const val HOME_TEMPLATE = "home_template"
+            const val PREVIEW_SWIPE = "preview_swipe"
+            const val LIBRARY_RCM = "library_rcm"
+            const val RESULT_RCM = "result_rcm"
+            const val SEARCH_RESULT = "search_result"
+            const val SEARCH_RCM = "search_rcm"
+            const val TEMPLATE_FAVORITE = "template_favorite"
+            const val UNINSTALL = "uninstall"
         }
 
         object Section {

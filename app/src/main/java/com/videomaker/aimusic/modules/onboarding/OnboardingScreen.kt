@@ -50,6 +50,7 @@ import com.videomaker.aimusic.modules.onboarding.pages.FullscreenAdStep
 import com.videomaker.aimusic.modules.onboarding.pages.WelcomePage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.compose.koinInject
 
 /**
@@ -91,15 +92,17 @@ fun OnboardingScreen(
 
     // Track analytics when page changes
     LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage }.collect { page ->
-            Analytics.track(
-                name = "onboarding_${page}",
-                params = mapOf(
-                    "onboarding_screen" to "ob${page}"
+        snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()
+            .collect { page ->
+                if (page > 0) showSwipeHint = false
+                // Track page view (1-indexed for analytics)
+                val onboardingStep = page + 1
+                Analytics.track(
+                    name = "onboarding_$onboardingStep",
+                    params = mapOf("onboarding_screen" to "ob$onboardingStep")
                 )
-            )
-            if (page > 0) showSwipeHint = false
-        }
+            }
     }
 
     LaunchedEffect(pagerState) {

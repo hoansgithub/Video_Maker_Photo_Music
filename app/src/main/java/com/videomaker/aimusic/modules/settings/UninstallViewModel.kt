@@ -106,7 +106,7 @@ class UninstallViewModel(
         Analytics.trackTemplateClick(
             templateId = template.id,
             templateName = template.name,
-            location = "uninstall_retain_page"
+            location = AnalyticsEvent.Value.Location.UNINSTALL
         )
         _navigationEvent.value = UninstallNavigationEvent.NavigateToTemplatePreviewer(template.id)
     }
@@ -124,7 +124,7 @@ class UninstallViewModel(
         Analytics.trackSongClick(
             songId = song.id.toString(),
             songName = song.name,
-            location = "uninstall_retain_page"
+            location = AnalyticsEvent.Value.Location.UNINSTALL
         )
         _selectedSong.value = song
     }

@@ -58,6 +58,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.modules.unifiedsearch.MusicSectionState
@@ -191,7 +193,15 @@ fun UnifiedSearchResultsContent(
                                                 aspectRatio = (9f / 16f),
                                                 isPremium = template.isPremium,
                                                 useCount = template.useCount,
-                                                onClick = { onTemplateClick(template.id) },
+                                                onClick = {
+
+                                                    Analytics.trackTemplateClick(
+                                                        templateId = template.id,
+                                                        templateName = template.name,
+                                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                                    )
+                                                    onTemplateClick(template.id)
+                                                          },
                                                 modifier = Modifier.width(190.dp)
                                             )
                                         }
@@ -421,7 +431,14 @@ internal fun UnifiedTemplateGrid(
     ) { template ->
         ScaledTemplateCard(
             template = template,
-            onClick = { onTemplateClick(template.id) }
+            onClick = {
+                Analytics.trackTemplateClick(
+                    templateId = template.id,
+                    templateName = template.name,
+                    location = AnalyticsEvent.Value.Location.SEARCH_RESULT
+                )
+                onTemplateClick(template.id)
+            }
         )
     }
 }

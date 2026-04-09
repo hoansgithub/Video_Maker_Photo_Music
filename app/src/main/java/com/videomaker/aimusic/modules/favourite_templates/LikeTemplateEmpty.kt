@@ -40,6 +40,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.modules.projects.TemplateTabState
 import com.videomaker.aimusic.ui.components.StaggeredGrid
 import com.videomaker.aimusic.ui.components.TemplateCard
@@ -214,7 +216,14 @@ fun LikeTemplateEmpty(
                                 aspectRatio = aspectRatios[index],
                                 isPremium = state.templates[index].isPremium,
                                 useCount = state.templates[index].useCount,
-                                onClick = { onTemplateClick(state.templates[index].id) }
+                                onClick = {
+                                    Analytics.trackTemplateClick(
+                                        templateId = state.templates[index].id,
+                                        templateName = state.templates[index].name,
+                                        location = AnalyticsEvent.Value.Location.LIBRARY_RCM
+                                    )
+                                    onTemplateClick(state.templates[index].id)
+                                }
                             )
                         }
                     }

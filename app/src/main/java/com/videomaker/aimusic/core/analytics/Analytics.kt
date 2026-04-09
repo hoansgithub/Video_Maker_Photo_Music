@@ -34,6 +34,27 @@ object Analytics {
     private val stateLock = Any()
     private val impressionDedupeKeys = LinkedHashSet<String>()
     private val pendingEvents = mutableListOf<PendingEvent>()
+    private val locationAwareTemplateSongEvents = setOf(
+        AnalyticsEvent.TEMPLATE_IMPRESSION,
+        AnalyticsEvent.TEMPLATE_CLICK,
+        AnalyticsEvent.TEMPLATE_PREVIEW,
+        AnalyticsEvent.TEMPLATE_OPTION,
+        AnalyticsEvent.TEMPLATE_FAVORITE,
+        AnalyticsEvent.TEMPLATE_UNFAVORITE,
+        AnalyticsEvent.TEMPLATE_SHARE,
+        AnalyticsEvent.TEMPLATE_REPORT,
+        AnalyticsEvent.TEMPLATE_SELECT,
+        AnalyticsEvent.SONG_IMPRESSION,
+        AnalyticsEvent.SONG_OPTION,
+        AnalyticsEvent.SONG_CLICK,
+        AnalyticsEvent.SONG_PLAY,
+        AnalyticsEvent.SONG_PAUSE,
+        AnalyticsEvent.SONG_PREVIEW,
+        AnalyticsEvent.SONG_FAVORITE,
+        AnalyticsEvent.SONG_UNFAVORITE,
+        AnalyticsEvent.SONG_SHARE,
+        AnalyticsEvent.SONG_SELECT
+    )
 
     /**
      * Sanitize a string for analytics parameters.
@@ -251,8 +272,7 @@ object Analytics {
                 AnalyticsEvent.Param.TEMPLATE_NAME,
                 AnalyticsEvent.Param.LOCATION
             ),
-            policy = TrackingPolicy.IMPRESSION,
-            dedupeKey = buildDefaultDedupeKey(AnalyticsEvent.TEMPLATE_IMPRESSION, params)
+            policy = TrackingPolicy.IMPRESSION
         )
     }
 
@@ -276,8 +296,7 @@ object Analytics {
                 AnalyticsEvent.Param.SONG_NAME,
                 AnalyticsEvent.Param.LOCATION
             ),
-            policy = TrackingPolicy.IMPRESSION,
-            dedupeKey = buildDefaultDedupeKey(AnalyticsEvent.SONG_IMPRESSION, params)
+            policy = TrackingPolicy.IMPRESSION
         )
     }
 
@@ -1861,6 +1880,7 @@ object Analytics {
         dedupeKey: String? = null
     ) {
         val normalizedParams = normalizeParams(params).toMutableMap()
+        normalizeLocationForTracking(eventName, normalizedParams)
         val missingParams = missingRequired(requiredParams, normalizedParams)
 
         when (policy) {
@@ -1978,6 +1998,28 @@ object Analytics {
             if (volume != null) put(AnalyticsEvent.Param.VOLUME, volume)
             if (!mediaQuality.isNullOrBlank()) put(AnalyticsEvent.Param.MEDIA_QUALITY, mediaQuality)
             if (mediaQuantity != null) put(AnalyticsEvent.Param.MEDIA_QUANTITY, mediaQuantity)
+        }
+    }
+
+    private fun normalizeLocationForTracking(eventName: String, params: MutableMap<String, Any>) {
+        val hasLocation = params.containsKey(AnalyticsEvent.Param.LOCATION)
+        if (!hasLocation) return
+
+        val shouldNormalize =
+            eventName in locationAwareTemplateSongEvents || eventName == AnalyticsEvent.GALLERY_SWIPE
+        if (!shouldNormalize) return
+
+        val rawLocation = params[AnalyticsEvent.Param.LOCATION]?.toString()?.trim().orEmpty()
+        if (rawLocation.isEmpty()) return
+
+        params[AnalyticsEvent.Param.LOCATION] = when (rawLocation) {
+            AnalyticsEvent.Value.Location.TEMPLATE_PREVIEW -> AnalyticsEvent.Value.Location.PREVIEW_SWIPE
+            AnalyticsEvent.Value.Location.LIBRARY -> AnalyticsEvent.Value.Location.LIBRARY_RCM
+            AnalyticsEvent.Value.Location.RESULT -> AnalyticsEvent.Value.Location.RESULT_RCM
+            AnalyticsEvent.Value.Location.SEARCH -> AnalyticsEvent.Value.Location.SEARCH_RESULT
+            "result_recommendation" -> AnalyticsEvent.Value.Location.RESULT_RCM
+            "uninstall_retain_page" -> AnalyticsEvent.Value.Location.UNINSTALL
+            else -> rawLocation
         }
     }
 }

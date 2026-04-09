@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.modules.unifiedsearch.components.UnifiedSearchEmptyContent
@@ -186,9 +187,15 @@ fun UnifiedSearchScreen(
     }
 
     selectedSong?.let { song ->
+        val songEventLocation = if (uiState is UnifiedSearchUiState.Results) {
+            AnalyticsEvent.Value.Location.SEARCH_RESULT
+        } else {
+            AnalyticsEvent.Value.Location.SEARCH_RCM
+        }
         MusicPlayerBottomSheet(
             song = song,
             cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+            location = songEventLocation,
             onDismiss = viewModel::onDismissPlayer,
             onUseToCreate = viewModel::onUseToCreateVideo
         )

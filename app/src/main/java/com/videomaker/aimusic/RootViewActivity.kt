@@ -92,16 +92,13 @@ class RootViewActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
+        Analytics.track(name = "splash_show")
 
         // 3. Initialize app (UMP consent, ads, remote config, status checks)
         // CRITICAL: Pass Activity for UMP consent form
         rootViewModel.initializeApp(this)
 
         setContent {
-            Analytics.trackScreenView(
-                screenName = "splash_show",
-                screenClass = "LoadingScreen"
-            )
             val isLoading by rootViewModel.isLoading.collectAsStateWithLifecycle()
             val loadingStep by rootViewModel.loadingStep.collectAsStateWithLifecycle()
             val navigationEvent by rootViewModel.navigationEvent.collectAsStateWithLifecycle()

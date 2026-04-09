@@ -8,6 +8,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Size
 import androidx.compose.runtime.Immutable
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.TemplateRepository
@@ -54,7 +55,10 @@ sealed class GalleryUiState {
 
 sealed class GalleryNavigationEvent {
     data class NavigateToSongDetail(val songId: Long) : GalleryNavigationEvent()
-    data class NavigateToTemplateDetail(val templateId: String) : GalleryNavigationEvent()
+    data class NavigateToTemplateDetail(
+        val templateId: String,
+        val sourceLocation: String
+    ) : GalleryNavigationEvent()
     data object NavigateToAllTopSongs : GalleryNavigationEvent()
     data class NavigateToAllTemplates(val selectedVibeTagId: String?) : GalleryNavigationEvent()
     data object NavigateToCreate : GalleryNavigationEvent()
@@ -245,8 +249,11 @@ class GalleryViewModel(
         _navigationEvent.value = GalleryNavigationEvent.NavigateToSongDetail(song.id)
     }
 
-    fun onTemplateClick(template: VideoTemplate) {
-        _navigationEvent.value = GalleryNavigationEvent.NavigateToTemplateDetail(template.id)
+    fun onTemplateClick(template: VideoTemplate, sourceLocation: String) {
+        _navigationEvent.value = GalleryNavigationEvent.NavigateToTemplateDetail(
+            templateId = template.id,
+            sourceLocation = sourceLocation
+        )
     }
 
     fun onSeeAllTopSongsClick() {
@@ -261,7 +268,10 @@ class GalleryViewModel(
     fun onCreateClick() {
         val firstFeatured = (_uiState.value as? GalleryUiState.Success)?.featuredTemplates?.firstOrNull()
         _navigationEvent.value = if (firstFeatured != null) {
-            GalleryNavigationEvent.NavigateToTemplateDetail(firstFeatured.id)
+            GalleryNavigationEvent.NavigateToTemplateDetail(
+                templateId = firstFeatured.id,
+                sourceLocation = AnalyticsEvent.Value.Location.HOME_BANNER
+            )
         } else {
             GalleryNavigationEvent.NavigateToCreate
         }
