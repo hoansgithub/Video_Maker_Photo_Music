@@ -37,6 +37,16 @@ dependencyResolutionManagement {
                     ?: localProperties.getProperty("gpr.key")
             }
         }
+
+        // ============================================
+        // PANGLE - ByteDance Ad Network
+        // ============================================
+        maven { url = uri("https://artifact.bytedance.com/repository/pangle/") }
+
+        // ============================================
+        // MINTEGRAL - Mintegral SDK Repository
+        // ============================================
+        maven { url = uri("https://dl-maven-android.mintegral.com/repository/mbridge_android_sdk_oversea") }
     }
 }
 

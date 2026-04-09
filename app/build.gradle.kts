@@ -265,6 +265,26 @@ dependencies {
     implementation(libs.lottie.compose)
 
     // ============================================
+    // ADMOB MEDIATION ADAPTERS
+    // ============================================
+    // Pangle (TikTok Audience Network) - All formats, bidding + waterfall
+    implementation("com.google.ads.mediation:pangle:7.9.1.2.0")
+
+    // AppLovin MAX - Requires BOTH SDK and adapter
+    implementation("com.applovin:applovin-sdk:13.6.2")
+    implementation("com.google.ads.mediation:applovin:13.6.2.0")
+
+    // Meta Audience Network (Facebook) - Bidding only
+    // Adapter includes Facebook SDK as transitive dependency
+    implementation("com.google.ads.mediation:facebook:6.21.0.0")
+
+    // Liftoff Monetize (Vungle) - All formats, bidding + waterfall
+    implementation("com.google.ads.mediation:vungle:7.7.1.0")
+
+    // Mintegral - All formats, bidding + waterfall
+    implementation("com.google.ads.mediation:mintegral:17.1.31.0")
+
+    // ============================================
     // PLAY SERVICES (Optional)
     // ============================================
     // implementation(libs.play.review)

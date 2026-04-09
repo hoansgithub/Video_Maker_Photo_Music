@@ -931,7 +931,7 @@ private fun SuccessContent(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Icon(
-                                painter = painterResource(R.mipmap.ic_launcher),
+                                painter = painterResource(R.drawable.app_icon_loading),
                                 contentDescription = null,
                                 modifier = Modifier.size(48.dp),
                                 tint = Color.Unspecified

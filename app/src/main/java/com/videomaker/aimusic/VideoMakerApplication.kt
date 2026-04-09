@@ -2,6 +2,7 @@ package com.videomaker.aimusic
 
 import android.app.Activity
 import android.app.Application
+import com.facebook.ads.AdSettings
 import co.alcheclub.lib.acccore.ads.adMobModule
 import co.alcheclub.lib.acccore.ads.layout.NativeAdLayoutRegistry
 import co.alcheclub.lib.acccore.analytics.AnalyticsCoordinator
@@ -90,6 +91,20 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
          */
         private val UMP_TEST_DEVICE_IDS = listOf<String>(
             "562AA2413BCC3872B79F7F30261CF7CD"  // Test device for UMP consent
+        )
+
+        /**
+         * Test device IDs for Meta Audience Network (Facebook Ads)
+         *
+         * To get your device ID:
+         * 1. Run the app once
+         * 2. Check logcat for: "When testing your app with Facebook's ad units you must specify..."
+         * 3. Add your device ID to this list
+         *
+         * IMPORTANT: Only used in debug builds
+         */
+        private val FACEBOOK_TEST_DEVICE_IDS = listOf<String>(
+            "0e397841-83ea-4481-a1db-9b8a116cc539"  // Facebook test device ID
         )
 
         /**
@@ -315,6 +330,17 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                 domainModule,       // Use cases & business logic
                 presentationModule  // ViewModels
             )
+        }
+
+        // ============================================
+        // META AUDIENCE NETWORK TEST DEVICES (Debug Only)
+        // ============================================
+        // Configure Facebook Audience Network test devices (debug only)
+        if (BuildConfig.DEBUG) {
+            FACEBOOK_TEST_DEVICE_IDS.forEach { deviceId ->
+                AdSettings.addTestDevice(deviceId)
+                android.util.Log.d("VideoMakerApp", "📱 Meta Audience Network test device added: $deviceId")
+            }
         }
 
         // ============================================

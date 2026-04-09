@@ -30,7 +30,7 @@ Native Ad Layout: Big Bait Reversed
             android:textStyle="bold"
             android:textAllCaps="true"
             android:background="@drawable/bg_cta_clean"
-            android:layout_marginHorizontal="23dp"
+            android:layout_marginHorizontal="8dp"
             android:layout_marginVertical="12dp" />
 
         <!-- Media View (middle) -->
