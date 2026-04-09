@@ -52,6 +52,7 @@ import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 fun QualityPicker(
     selectedQuality: VideoQuality,
     onQualityChange: (VideoQuality) -> Unit,
+    onMenuOpen: () -> Unit = {},
     modifier: Modifier = Modifier,
     buttonColor: Color = Color(0x1FFFFFFF),
     textColor: Color = Color.White
@@ -66,7 +67,10 @@ fun QualityPicker(
                     color = buttonColor,
                     shape = RoundedCornerShape(16.dp)
                 )
-                .clickableSingle { showQualityMenu = true }
+                .clickableSingle {
+                    onMenuOpen()
+                    showQualityMenu = true
+                }
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically

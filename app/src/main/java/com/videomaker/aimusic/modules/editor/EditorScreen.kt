@@ -236,12 +236,18 @@ fun EditorScreen(
                                 (successState?.isMusicCached ?: true) &&
                                 !(successState?.isCachingMusic ?: false),
                     onBackClick = { requestExitFromEditor() },
+                    onQualityMenuOpen = {
+                        val state = currentState() ?: return@EditorTopBar
+                        Analytics.trackQualityEdit(
+                            videoId = state.project.id,
+                            qualityNumber = state.selectedQuality.displayName
+                        )
+                    },
                     onQualityChange = { quality ->
                         val state = currentState()
                         if (state != null && state.selectedQuality != quality) {
                             val videoId = state.project.id
                             val qualityLabel = quality.displayName
-                            Analytics.trackQualityEdit(videoId, qualityLabel)
                             Analytics.trackQualityClick(videoId, qualityLabel)
                             Analytics.trackQualitySelect(videoId, qualityLabel)
                         }
@@ -750,6 +756,7 @@ internal fun EditorTopBar(
     selectedQuality: VideoQuality,
     canExport: Boolean,
     onBackClick: () -> Unit,
+    onQualityMenuOpen: () -> Unit,
     onQualityChange: (VideoQuality) -> Unit,
     onDoneClick: () -> Unit
 ) {
@@ -770,6 +777,7 @@ internal fun EditorTopBar(
             QualityPicker(
                 selectedQuality = selectedQuality,
                 onQualityChange = onQualityChange,
+                onMenuOpen = onQualityMenuOpen,
                 modifier = Modifier.height(40.dp)
             )
 
