@@ -658,12 +658,13 @@ private fun TemplatePreviewerReadyContent(
             }
         }
 
-        // Banner ad - positioned at absolute bottom, ignoring safe area
+        // Banner ad - positioned at bottom, above safe area (like HomeScreen)
         BannerAdView(
             placement = AdPlacement.BANNER_TEMPLATE_PREVIEWER,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+                .navigationBarsPadding()  // Respect safe area
                 .height(50.dp)
         )
 
