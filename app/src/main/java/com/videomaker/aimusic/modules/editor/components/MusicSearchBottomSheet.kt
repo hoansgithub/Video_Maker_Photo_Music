@@ -64,6 +64,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
@@ -111,6 +113,7 @@ internal fun MusicSearchBottomSheet(
     val dimens = AppDimens.current
     val context = LocalContext.current
     val audioCache: AudioPreviewCache = koinInject()
+    val screenSessionId = remember { Analytics.newScreenSessionId() }
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -375,6 +378,14 @@ internal fun MusicSearchBottomSheet(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(state.songs, key = { "song_${it.id}" }) { song ->
+                            LaunchedEffect(song.id, screenSessionId) {
+                                Analytics.trackSongImpression(
+                                    songId = song.id.toString(),
+                                    songName = song.name,
+                                    location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH,
+                                    screenSessionId = screenSessionId
+                                )
+                            }
                             SongListItem(
                                 name = song.name,
                                 artist = song.artist,
@@ -383,6 +394,11 @@ internal fun MusicSearchBottomSheet(
                                 isSelected = song.id == selectedForConfirmId,
                                 isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                 onSongClick = {
+                                    Analytics.trackSongClick(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
+                                    )
                                     focusManager.clearFocus()
                                     keyboardController?.hide()
                                     MusicPreviewManager.togglePreview(song.id)
@@ -484,6 +500,14 @@ internal fun MusicSearchBottomSheet(
                                 Spacer(modifier = Modifier.height(dimens.spaceSm))
                             }
                             items(suggestedSongs, key = { "empty_song_${it.id}" }) { song ->
+                                LaunchedEffect(song.id, screenSessionId) {
+                                    Analytics.trackSongImpression(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                        screenSessionId = screenSessionId
+                                    )
+                                }
                                 SongListItem(
                                     name = song.name,
                                     artist = song.artist,
@@ -492,6 +516,11 @@ internal fun MusicSearchBottomSheet(
                                     isSelected = song.id == selectedForConfirmId,
                                     isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                     onSongClick = {
+                                        Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                        )
                                         focusManager.clearFocus()
                                         keyboardController?.hide()
                                         MusicPreviewManager.togglePreview(song.id)
@@ -578,6 +607,14 @@ internal fun MusicSearchBottomSheet(
                                 Spacer(modifier = Modifier.height(dimens.spaceSm))
                             }
                             items(suggestedSongs, key = { "suggested_${it.id}" }) { song ->
+                                LaunchedEffect(song.id, screenSessionId) {
+                                    Analytics.trackSongImpression(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                        screenSessionId = screenSessionId
+                                    )
+                                }
                                 SongListItem(
                                     name = song.name,
                                     artist = song.artist,
@@ -586,6 +623,11 @@ internal fun MusicSearchBottomSheet(
                                     isSelected = song.id == selectedForConfirmId,
                                     isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                     onSongClick = {
+                                        Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                        )
                                         focusManager.clearFocus()
                                         keyboardController?.hide()
                                         MusicPreviewManager.togglePreview(song.id)

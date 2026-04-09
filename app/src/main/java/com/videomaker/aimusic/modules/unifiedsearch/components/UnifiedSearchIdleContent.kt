@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -45,6 +46,7 @@ import com.videomaker.aimusic.ui.theme.TextTertiary
 
 @Composable
 fun UnifiedSearchIdleContent(
+    screenSessionId: String,
     initialSection: SearchSection,
     recentSearches: List<String>,
     suggestionVibeTags: List<VibeTag>,
@@ -61,7 +63,7 @@ fun UnifiedSearchIdleContent(
     onVibeTagClick: (VibeTag) -> Unit,
     onGenreClick: (SongGenre) -> Unit,
     onTemplateClick: (String) -> Unit,
-    onSongClick: (MusicSong) -> Unit,
+    onSongClick: (MusicSong, String) -> Unit,
     onSeeMoreTemplates: () -> Unit,
     onSeeMoreSongs: () -> Unit
 ) {
@@ -211,7 +213,14 @@ fun UnifiedSearchIdleContent(
                                     items(genres, key = { it.id }) { genre ->
                                         AppFilterChip(
                                             text = genre.displayName,
-                                            onClick = { onGenreClick(genre) }
+                                            onClick = {
+                                                Analytics.trackSongGenreClick(
+                                                    genreId = genre.id,
+                                                    genreName = genre.displayName,
+                                                    location = AnalyticsEvent.Value.Location.SEARCH
+                                                )
+                                                onGenreClick(genre)
+                                            }
                                         )
                                     }
                                 }
@@ -223,11 +232,26 @@ fun UnifiedSearchIdleContent(
                             UnifiedSectionHeader(text = stringResource(R.string.search_music_suggestion))
                         }
                         items(suggestedSongs, key = { "suggested_${it.id}" }) { song ->
+                            LaunchedEffect(song.id, screenSessionId) {
+                                Analytics.trackSongImpression(
+                                    songId = song.id.toString(),
+                                    songName = song.name,
+                                    location = AnalyticsEvent.Value.Location.SEARCH_RCM,
+                                    screenSessionId = screenSessionId
+                                )
+                            }
                             SongListItem(
                                 name = song.name,
                                 artist = song.artist,
                                 coverUrl = song.coverUrl,
-                                onSongClick = { onSongClick(song) }
+                                onSongClick = {
+                                    Analytics.trackSongClick(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                    )
+                                    onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RCM)
+                                }
                             )
                         }
 

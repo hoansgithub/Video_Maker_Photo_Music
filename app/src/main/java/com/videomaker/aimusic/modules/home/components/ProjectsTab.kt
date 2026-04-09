@@ -448,7 +448,7 @@ fun ProjectsTabContent(
                                         Analytics.trackSongClick(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE
                                         )
                                         viewModel.onSongClick(song)
                                     },
@@ -456,12 +456,12 @@ fun ProjectsTabContent(
                                         Analytics.trackSongOption(
                                             songId = it.id.toString(),
                                             songName = it.name,
-                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE
                                         )
                                         Analytics.trackSongUnfavorite(
                                             songId = it.id.toString(),
                                             songName = it.name,
-                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE
                                         )
                                         viewModel.onUnlikeSong(it)
                                         showRemovedMessage = true
@@ -476,7 +476,7 @@ fun ProjectsTabContent(
                                         Analytics.trackSongClick(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE
                                         )
                                         viewModel.onSongClick(song)
                                     }
@@ -552,7 +552,7 @@ fun ProjectsTabContent(
         MusicPlayerBottomSheet(
             song = song,
             cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-            location = AnalyticsEvent.Value.Location.LIBRARY_RCM,
+            location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
             onDismiss = viewModel::onDismissPlayer,
             onUseToCreate = { viewModel.onUseToCreateVideo(song) }
         )

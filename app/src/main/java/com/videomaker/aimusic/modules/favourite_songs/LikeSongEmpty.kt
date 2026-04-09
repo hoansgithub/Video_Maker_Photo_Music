@@ -29,6 +29,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -38,6 +40,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.modules.projects.SongTabState
 import com.videomaker.aimusic.ui.components.SongListItem
@@ -52,6 +56,7 @@ fun LikeSongEmpty(
     onSongClick: (MusicSong) -> Unit,
 ) {
     val dimens = AppDimens.current
+    val screenSessionId = remember { Analytics.newScreenSessionId() }
 
     LazyColumn(
         modifier = Modifier
@@ -176,6 +181,14 @@ fun LikeSongEmpty(
 
             is SongTabState.Success -> {
                 items(state.songs, key = { song -> song.id }) { song ->
+                    LaunchedEffect(song.id, screenSessionId) {
+                        Analytics.trackSongImpression(
+                            songId = song.id.toString(),
+                            songName = song.name,
+                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
+                            screenSessionId = screenSessionId
+                        )
+                    }
                     SongListItem(
                         name = song.name,
                         artist = song.artist,

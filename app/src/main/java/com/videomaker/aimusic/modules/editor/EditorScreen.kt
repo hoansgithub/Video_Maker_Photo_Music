@@ -142,8 +142,6 @@ fun EditorScreen(
     var hasTrackedVideoPreview by remember { mutableStateOf(false) }
     var hasTrackedVideoPreviewComplete by remember { mutableStateOf(false) }
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
-    var hasVolumeChangedInSheet by remember { mutableStateOf(false) }
-    var initialVolumeOnSheetOpen by remember { mutableStateOf<Float?>(null) }
     var ratioConfirmed by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -332,12 +330,18 @@ fun EditorScreen(
                                 !(successState?.isCachingMusic ?: false),
                     isQualityLocked = viewModel.isQualityLocked(selectedQuality),
                     onBackClick = { requestExitFromEditor() },
+                    onQualityMenuOpen = {
+                        val state = currentState() ?: return@EditorTopBar
+                        Analytics.trackQualityEdit(
+                            videoId = state.project.id,
+                            qualityNumber = state.selectedQuality.displayName
+                        )
+                    },
                     onQualityChange = { quality ->
                         val state = currentState()
                         if (state != null && state.selectedQuality != quality) {
                             val videoId = state.project.id
                             val qualityLabel = quality.displayName
-                            Analytics.trackQualityEdit(videoId, qualityLabel)
                             Analytics.trackQualityClick(videoId, qualityLabel)
                             Analytics.trackQualitySelect(videoId, qualityLabel)
                         }
@@ -432,8 +436,6 @@ fun EditorScreen(
                             showMusicSearchSheet = true
                         },
                         onVolumeClick = {
-                            initialVolumeOnSheetOpen = state.displaySettings.audioVolume
-                            hasVolumeChangedInSheet = false
                             Analytics.trackVolumeEdit(
                                 videoId = state.project.id,
                                 volumeNumber = (state.displaySettings.audioVolume * 100f).roundToInt()
@@ -558,12 +560,14 @@ fun EditorScreen(
                         }
                         showRatioSheet = false
                     },
-                    onConfirm = { selectedRatio ->
-                        val ratioSize = selectedRatio.toAnalyticsRatioSize()
+                    onRatioClick = { selectedRatio ->
                         Analytics.trackRatioClick(
                             videoId = successState.project.id,
-                            ratioSize = ratioSize
+                            ratioSize = selectedRatio.toAnalyticsRatioSize()
                         )
+                    },
+                    onConfirm = { selectedRatio ->
+                        val ratioSize = selectedRatio.toAnalyticsRatioSize()
                         Analytics.trackRatioSelect(
                             videoId = successState.project.id,
                             ratioSize = ratioSize
@@ -589,11 +593,13 @@ fun EditorScreen(
                         )
                         showDurationSheet = false
                     },
-                    onConfirm = { selectedDurationMs ->
+                    onDurationClick = { selectedDurationMs ->
                         Analytics.trackDurationClick(
                             videoId = successState.project.id,
                             durationNumber = selectedDurationMs
                         )
+                    },
+                    onConfirm = { selectedDurationMs ->
                         Analytics.trackDurationSelect(
                             videoId = successState.project.id,
                             durationNumber = selectedDurationMs
@@ -707,29 +713,22 @@ fun EditorScreen(
             VolumeBottomSheet(
                 currentVolume = successState?.displaySettings?.audioVolume ?: 1f,
                 onVolumeChange = { volume ->
-                    val initialVolume = initialVolumeOnSheetOpen ?: 1f
-                    val changed = kotlin.math.abs(initialVolume - volume) > 0.001f
-                    if (changed && !hasVolumeChangedInSheet) {
-                        val videoId = currentVideoId()
-                        if (videoId != null) {
-                            Analytics.trackVolumeClick(
-                                videoId = videoId,
-                                volumeNumber = (volume * 100f).roundToInt()
-                            )
-                        }
-                        hasVolumeChangedInSheet = true
-                    }
                     viewModel.updateAudioVolume(volume)
+                },
+                onVolumeClick = { volume ->
+                    val videoId = currentVideoId()
+                    if (videoId != null) {
+                        Analytics.trackVolumeClick(
+                            videoId = videoId,
+                            volumeNumber = (volume * 100f).roundToInt()
+                        )
+                    }
                 },
                 onDismiss = {
                     val videoId = currentVideoId()
                     if (videoId != null) {
                         val volumeNumber = currentVolumePercent()
-                        if (hasVolumeChangedInSheet) {
-                            Analytics.trackVolumeSelect(videoId, volumeNumber)
-                        } else {
-                            Analytics.trackVolumeClose(videoId, volumeNumber)
-                        }
+                        Analytics.trackVolumeSelect(videoId, volumeNumber)
                     }
                     showVolumeSheet = false
                 }
@@ -874,6 +873,7 @@ internal fun EditorTopBar(
     canExport: Boolean,
     isQualityLocked: Boolean,
     onBackClick: () -> Unit,
+    onQualityMenuOpen: () -> Unit,
     onQualityChange: (VideoQuality) -> Unit,
     onDoneClick: () -> Unit
 ) {
@@ -895,6 +895,7 @@ internal fun EditorTopBar(
                 selectedQuality = selectedQuality,
                 onQualityChange = onQualityChange,
                 isQualityUnlocked = !isQualityLocked,
+                onMenuOpen = onQualityMenuOpen,
                 modifier = Modifier.height(40.dp)
             )
 

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -86,11 +87,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun UnifiedSearchResultsContent(
+    screenSessionId: String,
     state: UnifiedSearchUiState.Results,
     query: String,
     relatedSearches: List<String>,
     onTemplateClick: (String) -> Unit,
-    onSongClick: (MusicSong) -> Unit,
+    onSongClick: (MusicSong, String) -> Unit,
     onExplore: (SearchSection) -> Unit,
     onScrollStarted: () -> Unit,
     onRelatedSearchClick: (String) -> Unit
@@ -218,16 +220,29 @@ fun UnifiedSearchResultsContent(
                                 }
 
                                 item {
-                                    Row(
-                                        modifier = Modifier
-                                            .horizontalScroll(rememberScrollState())
-                                            .padding(horizontal = dimens.spaceLg),
+                                    LazyRow(
+                                        contentPadding = PaddingValues(horizontal = dimens.spaceLg),
                                         horizontalArrangement = Arrangement.spacedBy(dimens.spaceMd)
                                     ) {
-                                        state.songEmpty.forEach { song ->
+                                        items(state.songEmpty, key = { "empty_song_${it.id}" }) { song ->
+                                            LaunchedEffect(song.id, screenSessionId) {
+                                                Analytics.trackSongImpression(
+                                                    songId = song.id.toString(),
+                                                    songName = song.name,
+                                                    location = AnalyticsEvent.Value.Location.SEARCH_RCM,
+                                                    screenSessionId = screenSessionId
+                                                )
+                                            }
                                             SuggestSongCard(
                                                 song = song,
-                                                onClick = { onSongClick(song) }
+                                                onClick = {
+                                                    Analytics.trackSongClick(
+                                                        songId = song.id.toString(),
+                                                        songName = song.name,
+                                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                                    )
+                                                    onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RCM)
+                                                }
                                             )
                                         }
                                     }
@@ -332,11 +347,26 @@ fun UnifiedSearchResultsContent(
                                 items = state.music.songs,
                                 key = { "song_${it.id}" }
                             ) { song ->
+                                LaunchedEffect(song.id, screenSessionId) {
+                                    Analytics.trackSongImpression(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.SEARCH_RESULT,
+                                        screenSessionId = screenSessionId
+                                    )
+                                }
                                 SongListItem(
                                     name = song.name,
                                     artist = song.artist,
                                     coverUrl = song.coverUrl,
-                                    onSongClick = { onSongClick(song) }
+                                    onSongClick = {
+                                        Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.SEARCH_RESULT
+                                        )
+                                        onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RESULT)
+                                    }
                                 )
                             }
                         }
