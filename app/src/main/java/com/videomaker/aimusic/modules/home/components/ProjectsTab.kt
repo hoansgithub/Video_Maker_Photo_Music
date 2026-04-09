@@ -51,6 +51,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -665,9 +666,30 @@ private fun ProjectsListContent(
 /**
  * Item type for projects grid - can be either a Project or an Ad
  */
+@Stable
 private sealed class ProjectGridItem {
     data class ProjectItem(val project: Project) : ProjectGridItem()
     data object AdItem : ProjectGridItem()
+}
+
+/**
+ * Calculate aspect ratio for grid item without capturing project instances
+ */
+private fun calculateAspectRatio(
+    item: ProjectGridItem,
+    infoSectionHeightDp: Float,
+    adAspectRatio: Float
+): Float {
+    return when (item) {
+        is ProjectGridItem.ProjectItem -> {
+            val thumbnailRatio = item.project.settings.aspectRatio.ratio
+            val cardWidth = 180f
+            val thumbnailHeight = cardWidth / thumbnailRatio
+            val totalCardHeight = thumbnailHeight + infoSectionHeightDp
+            cardWidth / totalCardHeight
+        }
+        is ProjectGridItem.AdItem -> adAspectRatio
+    }
 }
 
 /**
@@ -699,27 +721,13 @@ private fun ProjectsStaggeredGrid(
         }
     }
 
-    // ✅ OPTIMIZED: Pre-calculate adjusted aspect ratios once when projects list changes
-    // Info section needs ~40dp for: date+menu row (20dp) + padding (20dp)
-    // Ad has 16:9 aspect ratio (101dp media + ~68dp info = ~169dp total)
-    // For 180dp card width → ~101dp height (16:9 ratio = 1.777)
+    // Aspect ratios adjusted for 40dp info section (date + menu)
     val infoSectionHeightDp = 40f
-    val adAspectRatio = 16f / 9f // 16:9 landscape ratio = 1.777
+    val adAspectRatio = 9f / 16f  // Ad media uses 9:16 portrait
 
-    val aspectRatios = remember(gridItems) {
+    val aspectRatios = remember(gridItems.size, gridItems.firstOrNull()) {
         gridItems.map { item ->
-            when (item) {
-                is ProjectGridItem.ProjectItem -> {
-                    val project = item.project
-                    val thumbnailRatio = project.settings.aspectRatio.ratio
-                    // Adjust ratio: assume card width of 180dp as baseline
-                    val cardWidth = 180f
-                    val thumbnailHeight = cardWidth / thumbnailRatio
-                    val totalCardHeight = thumbnailHeight + infoSectionHeightDp
-                    cardWidth / totalCardHeight // Adjusted ratio for full card including info section
-                }
-                is ProjectGridItem.AdItem -> adAspectRatio
-            }
+            calculateAspectRatio(item, infoSectionHeightDp, adAspectRatio)
         }
     }
 
@@ -747,8 +755,6 @@ private fun ProjectsStaggeredGrid(
                 )
             }
             is ProjectGridItem.AdItem -> {
-                // Native ad matching project card layout
-                android.util.Log.d("ProjectsTab", "🔵 Composing NativeAdView (Projects Grid)")
                 NativeAdView(
                     placement = AdPlacement.NATIVE_PROJECTS_GRID,
                     modifier = Modifier.fillMaxWidth()

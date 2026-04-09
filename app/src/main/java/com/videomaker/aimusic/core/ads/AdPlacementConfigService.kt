@@ -367,6 +367,21 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Editor preview building native ad (shown during video preview generation)
+        // Displayed at bottom with "Preparing Video" message
+        // 10s timeout + 2s display if ad loads
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_EDITOR_PREVIEW_BUILDING,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4484774830",  // Primary
+                "ca-app-pub-7121075950716954/7797838469"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }

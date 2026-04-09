@@ -358,6 +358,23 @@ object AdPlacement {
     const val NATIVE_PROJECTS_GRID = "ad_native_projects_grid"
 
     /**
+     * Native ad shown during video editor preview building state.
+     * Timing: Displayed at bottom of overlay while preview is being generated.
+     * Waits 10 seconds for ad to load, then displays for 2 more seconds if loaded.
+     *
+     * Layout: native_big_bait (412:304 ratio, 1.355:1)
+     * - Large vertical layout with clickbait CTA button
+     * - Shown with "Preparing Video" loading indicator above
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/4484774830
+     * - Secondary: ca-app-pub-7121075950716954/7797838469
+     *
+     * Remote Config key: ad_native_editor_preview_building
+     */
+    const val NATIVE_EDITOR_PREVIEW_BUILDING = "ad_native_editor_preview_building"
+
+    /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
      */
@@ -381,6 +398,7 @@ object AdPlacement {
         NATIVE_UNINSTALL_BOTTOM,
         NATIVE_WIDGET_BOTTOM,
         NATIVE_PROJECTS_GRID,
-        NATIVE_TEMPLATE_PREVIEWER_LOADING
+        NATIVE_TEMPLATE_PREVIEWER_LOADING,
+        NATIVE_EDITOR_PREVIEW_BUILDING
     )
 }

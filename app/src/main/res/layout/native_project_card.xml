@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Native Ad Layout: Project Card (16:9 Landscape)
-- Wide landscape layout matching 16:9 project cards
-- Large media view at top in 16:9 format
-- Horizontal info bar below (icon + headline + CTA)
-- Ad badge at top-right corner
+Native Ad Layout: Project Card (9:16 Portrait)
+- Compact layout with minimal padding
+- Very small CTA button to prevent overflow
 - Use case: In-feed placement within created projects grid
 -->
 <com.google.android.gms.ads.nativead.NativeAdView
@@ -19,16 +17,16 @@ Native Ad Layout: Project Card (16:9 Landscape)
         android:layout_height="wrap_content"
         android:background="@color/foundation_black">
 
-        <!-- Media View (top section - 16:9 landscape) -->
+        <!-- Media View (top section - compact) -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <!-- Ad Media (wide landscape view - 16:9 ratio) -->
+            <!-- Ad Media (compact portrait view) -->
             <com.google.android.gms.ads.nativead.MediaView
                 android:id="@+id/ad_media"
                 android:layout_width="match_parent"
-                android:layout_height="101dp"
+                android:layout_height="180dp"
                 android:scaleType="centerCrop"
                 android:background="@color/foundation_black" />
 
@@ -45,77 +43,79 @@ Native Ad Layout: Project Card (16:9 Landscape)
                 android:textStyle="bold"
                 android:background="@drawable/bg_template_badge"
                 android:paddingHorizontal="6dp"
-                android:paddingVertical="4dp"
-                android:minWidth="28dp"
+                android:paddingVertical="3dp"
+                android:minWidth="24dp"
                 android:gravity="center" />
         </FrameLayout>
 
-        <!-- Info Section (bottom - horizontal bar like native_big_row) -->
+        <!-- Info Section (bottom - very compact) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
-            android:orientation="horizontal"
-            android:layout_marginTop="101dp"
-            android:padding="10dp"
-            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:layout_marginTop="180dp"
+            android:padding="8dp"
             android:background="@color/foundation_black">
 
-            <!-- App Icon (compact) -->
-            <ImageView
-                android:id="@+id/ad_icon"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:scaleType="fitCenter"
-                android:contentDescription="@string/ad_icon"
-                android:layout_marginEnd="10dp" />
-
-            <!-- Headline + Body (vertical stack, takes remaining space) -->
+            <!-- Icon + Headline Row -->
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginEnd="10dp">
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="4dp">
 
-                <!-- Headline (2 lines max) -->
+                <!-- App Icon (small) -->
+                <ImageView
+                    android:id="@+id/ad_icon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="@string/ad_icon"
+                    android:layout_marginEnd="6dp" />
+
+                <!-- Headline (small font, 2 lines) -->
                 <TextView
                     android:id="@+id/ad_headline"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:textSize="14sp"
+                    android:layout_weight="1"
+                    android:textSize="12sp"
                     android:textColor="@color/foundation_white"
                     android:fontFamily="sans-serif-medium"
                     android:maxLines="2"
                     android:ellipsize="end"
-                    android:lineHeight="18dp" />
-
-                <!-- Body text (1 line, subtle) -->
-                <TextView
-                    android:id="@+id/ad_body"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="11sp"
-                    android:textColor="@color/foundation_white_60"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:layout_marginTop="2dp" />
+                    android:lineHeight="16dp" />
             </LinearLayout>
 
-            <!-- CTA Button (compact, vertical) -->
+            <!-- Body text (very compact, 1 line) -->
+            <TextView
+                android:id="@+id/ad_body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="10sp"
+                android:textColor="@color/foundation_white_60"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:layout_marginBottom="6dp" />
+
+            <!-- CTA Button (very small, minimal padding) -->
             <TextView
                 android:id="@+id/ad_call_to_action"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
                 android:gravity="center"
-                android:textSize="13sp"
+                android:textSize="11sp"
                 android:textColor="@color/foundation_black"
                 android:textStyle="bold"
                 android:fontFamily="sans-serif-medium"
                 android:background="@drawable/bg_cta_clean"
-                android:paddingHorizontal="16dp"
-                android:minWidth="75dp"
-                android:textAllCaps="false" />
+                android:paddingHorizontal="8dp"
+                android:textAllCaps="false"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:includeFontPadding="false" />
 
             <!-- Hidden fields (required by NativeAdView but not displayed) -->
             <TextView
