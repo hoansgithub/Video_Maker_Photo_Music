@@ -304,15 +304,45 @@ fun TemplatePreviewerScreen(
         }
     }
 
-    // Track if loading ad timing is complete
+    // Track ad loading state
+    var adReady by remember { mutableStateOf(false) }
     var loadingAdComplete by remember { mutableStateOf(false) }
 
-    // Ad loading timing: 10 seconds maximum
-    // - If ad loads quickly (e.g., 3s), it shows for remaining time
-    // - If ad doesn't load, timeout at 10s
-    // - Total maximum: 10 seconds
+    // Ad loading with timeout:
+    // - Wait up to 10s for ad to load
+    // - When ad loads: wait 2s for impression, then proceed
+    // - If timeout (10s): proceed immediately
     LaunchedEffect(Unit) {
-        delay(10_000) // Maximum 10 seconds for ad load + display
+        val startTime = System.currentTimeMillis()
+
+        // Check if ad is already loaded
+        adReady = adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)
+
+        if (adReady) {
+            android.util.Log.d("TemplatePreviewerLoading", "✅ Ad already loaded (preload successful)")
+        } else {
+            android.util.Log.d("TemplatePreviewerLoading", "⏳ Ad not ready, polling...")
+
+            // Poll for ad ready state (or timeout after 10s)
+            while (!adReady && (System.currentTimeMillis() - startTime) < 10_000) {
+                delay(500) // Check every 500ms
+
+                // Check if native ad has loaded
+                if (adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)) {
+                    val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000.0
+                    android.util.Log.d("TemplatePreviewerLoading", "✅ Ad loaded after ${elapsedSeconds}s")
+                    adReady = true
+                }
+            }
+        }
+
+        if (adReady) {
+            android.util.Log.d("TemplatePreviewerLoading", "📊 Ad ready - showing for 2 more seconds")
+            delay(2_000) // Show ad for 2 seconds after ready
+        } else {
+            android.util.Log.d("TemplatePreviewerLoading", "⏱️ Ad timeout (10s) - proceeding immediately")
+        }
+
         loadingAdComplete = true
     }
 
