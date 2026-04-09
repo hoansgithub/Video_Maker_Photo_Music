@@ -43,25 +43,57 @@ class MainActivity : AppCompatActivity() {
     private var navigateToUninstall: Boolean by mutableStateOf(false)
     private var startupInitialTab: Int by mutableIntStateOf(0)
 
+    // Track if we're ready to show UI (ads must be initialized first on cold start)
+    private var isReadyToShowUI: Boolean by mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        android.util.Log.d(TAG, "onCreate() called - savedInstanceState=${if (savedInstanceState == null) "null" else "exists"}, intent=$intent")
 
         if (savedInstanceState == null) {
             startupInitialTab = intent.getIntExtra(EXTRA_INITIAL_TAB, 0).coerceIn(0, 2)
             handleEntryIntent(intent)
         }
 
+        // Initialize ads if not already done (e.g., cold start via widget/shortcut bypasses RootViewActivity)
+        // CRITICAL: Block UI rendering until ads are initialized to prevent race condition
+        if (!VideoMakerApplication.isAdsInitialized()) {
+            android.util.Log.d(TAG, "❌ Ads not initialized (widget/shortcut cold start) — initializing now")
+            VideoMakerApplication.initializeAdsIfNeeded(this) {
+                android.util.Log.d(TAG, "✅ Ads initialized via MainActivity (widget/shortcut cold start)")
+                // Now it's safe to show UI
+                isReadyToShowUI = true
+            }
+        } else {
+            android.util.Log.d(TAG, "✅ Ads already initialized - showing UI immediately")
+            // Ads already initialized, safe to show UI immediately
+            isReadyToShowUI = true
+        }
+
         setContent {
-            VideoMakerTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    AppNavigation(
-                        initialHomeTab = startupInitialTab,
-                        pendingDeepLink = pendingDeepLink,
-                        onDeepLinkConsumed = { pendingDeepLink = null },
-                        navigateToUninstall = navigateToUninstall,
-                        onUninstallNavigationConsumed = { navigateToUninstall = false }
-                    )
+            // CRITICAL: Only render UI when ads are initialized
+            // This prevents NativeAdView from trying to load ads before AdMob SDK is ready
+            if (isReadyToShowUI) {
+                VideoMakerTheme {
+                    Surface(modifier = Modifier.fillMaxSize()) {
+                        AppNavigation(
+                            initialHomeTab = startupInitialTab,
+                            pendingDeepLink = pendingDeepLink,
+                            onDeepLinkConsumed = { pendingDeepLink = null },
+                            navigateToUninstall = navigateToUninstall,
+                            onUninstallNavigationConsumed = { navigateToUninstall = false }
+                        )
+                    }
+                }
+            } else {
+                // Show blank screen while waiting for ads to initialize
+                // This only happens on cold start via widget/shortcut (takes ~3-5 seconds)
+                VideoMakerTheme {
+                    Surface(modifier = Modifier.fillMaxSize()) {
+                        // Blank screen - user will see splash screen from system
+                    }
                 }
             }
         }
@@ -98,6 +130,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val TAG = "MainActivity"
         const val ACTION_UNINSTALL_APP = "com.videomaker.aimusic.action.UNINSTALL_APP"
         const val EXTRA_INITIAL_TAB = "extra_initial_tab"
 
