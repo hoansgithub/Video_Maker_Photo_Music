@@ -268,6 +268,21 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Fullscreen native ad shown between onboarding pages
+        // Displayed as full-screen overlay with close button
+        // Layout: native_full_screen_bait (fullscreen with prominent CTA button)
+        // Remote Config extras: close_delay, inject_after
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_FULLSCREEN,
+            layoutName = "native_full_screen_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7249073934",  // Primary
+                "ca-app-pub-7121075950716954/5724093483"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }

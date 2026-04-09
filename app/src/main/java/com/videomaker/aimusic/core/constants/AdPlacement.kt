@@ -234,6 +234,23 @@ object AdPlacement {
     const val NATIVE_ONBOARDING_PAGE3 = "ad_native_onboarding_page3"
 
     /**
+     * Fullscreen native ad shown between onboarding pages.
+     * Displayed as a full-screen overlay with close button.
+     * Injected after page 1, 2, or 3 (configurable).
+     * Layout: native_big_bait (large vertical layout)
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/7249073934
+     * - Secondary: ca-app-pub-7121075950716954/5724093483
+     *
+     * Remote Config key: ad_native_onboarding_fullscreen
+     * Remote Config extras:
+     * - close_delay: Delay in seconds before showing close button (default: 2, Meta ads: 0)
+     * - inject_after: Which page to show after (1, 2, or 3, default: 2)
+     */
+    const val NATIVE_ONBOARDING_FULLSCREEN = "ad_native_onboarding_fullscreen"
+
+    /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
      */
@@ -249,6 +266,7 @@ object AdPlacement {
         NATIVE_ONBOARDING_PAGE1,
         NATIVE_ONBOARDING_PAGE2,
         NATIVE_ONBOARDING_PAGE3,
+        NATIVE_ONBOARDING_FULLSCREEN,
         NATIVE_ONBOARDING_FEATURE_SELECTION,
         NATIVE_ONBOARDING_FEATURE_SELECTION_ALT
     )

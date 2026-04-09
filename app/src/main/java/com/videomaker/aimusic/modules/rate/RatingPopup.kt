@@ -52,7 +52,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.modules.onboarding.listOnboardingStep
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.BackgroundDark
 import com.videomaker.aimusic.ui.theme.Black40
