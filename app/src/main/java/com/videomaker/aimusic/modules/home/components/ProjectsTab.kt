@@ -160,19 +160,19 @@ fun ProjectsTabContent(
         }
 
         try {
-            // 1. Check if ad is ready
-            if (!adsLoaderService.isRewardedAdReady(AdPlacement.REWARD_DOWNLOAD_VIDEO)) {
-                // 2. Show loading overlay
-                AdsLoadingState.show("Loading ad...")
+            // 1. Show loading overlay immediately when user clicks "Watch Ad"
+            AdsLoadingState.show("Loading ad...")
 
+            // 2. Check if ad is ready, load if needed
+            if (!adsLoaderService.isRewardedAdReady(AdPlacement.REWARD_DOWNLOAD_VIDEO)) {
                 // 3. Load ad with 60s timeout
                 withTimeout(60_000) {
                     adsLoaderService.loadRewarded(AdPlacement.REWARD_DOWNLOAD_VIDEO)
                 }
-
-                // 4. Hide loading overlay
-                AdsLoadingState.hide()
             }
+
+            // 4. Hide loading overlay before presenting ad
+            AdsLoadingState.hide()
 
             // 5. Present ad and wait for result (blocking)
             val result = adsLoaderService.presentRewarded(
@@ -532,6 +532,9 @@ fun ProjectsTabContent(
             state = toastState,
             onDismiss = viewModel::onToastDismissed
         )
+
+        // Ads loading overlay
+        com.videomaker.aimusic.ui.components.AdsLoadingOverlay()
     }
 
     // Watch ad dialog for download
