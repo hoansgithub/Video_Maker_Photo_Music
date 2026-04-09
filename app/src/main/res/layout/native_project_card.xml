@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Native Ad Layout: Project Card
-- Matches ProjectCard layout for staggered grid integration
-- Square-ish aspect ratio to blend with 9:16 and 1:1 project cards
-- Media view at top (image/video ad creative)
-- Icon + headline + CTA below (matching project info section)
-- Ad badge at top-right corner (like duration badge)
+Native Ad Layout: Project Card (9:16 Portrait)
+- Tall portrait layout matching 9:16 project cards
+- Large media view at top (280dp)
+- Prominent title with more space
+- Large, eye-catching CTA button
+- Ad badge at top-right corner
 - Use case: In-feed placement within created projects grid
 -->
 <com.google.android.gms.ads.nativead.NativeAdView
@@ -20,16 +20,16 @@ Native Ad Layout: Project Card
         android:layout_height="wrap_content"
         android:background="@color/foundation_black">
 
-        <!-- Media View (top section - ad creative image/video) -->
+        <!-- Media View (top section - larger for 9:16 ratio) -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <!-- Ad Media (replaces project thumbnail) -->
+            <!-- Ad Media (larger portrait view) -->
             <com.google.android.gms.ads.nativead.MediaView
                 android:id="@+id/ad_media"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
+                android:layout_height="280dp"
                 android:scaleType="centerCrop"
                 android:background="@color/foundation_black" />
 
@@ -51,70 +51,72 @@ Native Ad Layout: Project Card
                 android:gravity="center" />
         </FrameLayout>
 
-        <!-- Info Section (bottom - matching ProjectCard date+menu row) -->
+        <!-- Info Section (bottom - more spacious layout) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             android:orientation="vertical"
-            android:layout_marginTop="200dp"
-            android:paddingVertical="8dp"
+            android:layout_marginTop="280dp"
+            android:padding="12dp"
             android:background="@color/foundation_black">
 
-            <!-- Row: Icon + Headline + CTA -->
+            <!-- App Icon + Headline (more vertical space) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
 
-                <!-- App Icon (small, like project thumbnail icon) -->
+                <!-- App Icon (slightly larger) -->
                 <ImageView
                     android:id="@+id/ad_icon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:scaleType="fitCenter"
                     android:contentDescription="@string/ad_icon"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_marginEnd="10dp" />
 
-                <!-- Headline (takes remaining space) -->
+                <!-- Headline (larger, more prominent, 2 lines) -->
                 <TextView
                     android:id="@+id/ad_headline"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textSize="13sp"
-                    android:textColor="#FFC6C5C8"
+                    android:textSize="15sp"
+                    android:textColor="@color/foundation_white"
                     android:fontFamily="sans-serif-medium"
-                    android:maxLines="1"
-                    android:ellipsize="end" />
-
-                <!-- CTA Button (compact, like menu button) -->
-                <TextView
-                    android:id="@+id/ad_call_to_action"
-                    android:layout_width="wrap_content"
-                    android:layout_height="28dp"
-                    android:gravity="center"
-                    android:textSize="11sp"
-                    android:textColor="@color/foundation_black"
-                    android:textStyle="bold"
-                    android:background="@drawable/bg_cta_clean"
-                    android:paddingHorizontal="12dp"
-                    android:minWidth="60dp"
-                    android:layout_marginStart="8dp" />
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:lineHeight="20dp" />
             </LinearLayout>
 
-            <!-- Body text (optional, subtle) -->
+            <!-- Body text (optional, more visible) -->
             <TextView
                 android:id="@+id/ad_body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="10sp"
-                android:textColor="@color/foundation_white_40"
-                android:maxLines="1"
+                android:textSize="12sp"
+                android:textColor="@color/foundation_white_60"
+                android:maxLines="2"
                 android:ellipsize="end"
-                android:layout_marginTop="4dp"
-                android:visibility="gone" />
+                android:lineHeight="16dp"
+                android:layout_marginBottom="12dp" />
+
+            <!-- CTA Button (larger, full-width, prominent) -->
+            <TextView
+                android:id="@+id/ad_call_to_action"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:gravity="center"
+                android:textSize="14sp"
+                android:textColor="@color/foundation_black"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                android:background="@drawable/bg_cta_clean"
+                android:paddingHorizontal="20dp"
+                android:textAllCaps="false" />
 
             <!-- Hidden fields (required by NativeAdView but not displayed) -->
             <TextView
