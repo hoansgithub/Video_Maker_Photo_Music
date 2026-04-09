@@ -268,6 +268,42 @@ object AdPlacement {
     const val NATIVE_ONBOARDING_FULLSCREEN = "ad_native_onboarding_fullscreen"
 
     /**
+     * Native ad shown in search screens (in-feed at top).
+     * Displayed as first item in search results list.
+     * Shown on all search states: idle, loading, results, empty.
+     *
+     * Screens:
+     * - Template search screen
+     * - Song search screen
+     *
+     * Layout: Uses custom native ad layout (full width in-feed)
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6109352277
+     * - Secondary: ca-app-pub-7121075950716954/1665574760
+     *
+     * Remote Config key: ad_native_search_infeed
+     */
+    const val NATIVE_SEARCH_INFEED = "ad_native_search_infeed"
+
+    /**
+     * Native ad shown at bottom of uninstall screen.
+     * Timing: Loaded when uninstall screen is displayed.
+     * Final engagement point before user uninstalls the app.
+     *
+     * Layout: native_big_bait (412:304 ratio, 1.355:1)
+     * - Large vertical layout with clickbait CTA button
+     * - Attention-grabbing design for maximum engagement
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/5203464719
+     * - Secondary: ca-app-pub-7121075950716954/1283896429
+     *
+     * Remote Config key: ad_native_uninstall_bottom
+     */
+    const val NATIVE_UNINSTALL_BOTTOM = "ad_native_uninstall_bottom"
+
+    /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
      */
@@ -286,6 +322,8 @@ object AdPlacement {
         NATIVE_ONBOARDING_PAGE3,
         NATIVE_ONBOARDING_FULLSCREEN,
         NATIVE_ONBOARDING_FEATURE_SELECTION,
-        NATIVE_ONBOARDING_FEATURE_SELECTION_ALT
+        NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
+        NATIVE_SEARCH_INFEED,
+        NATIVE_UNINSTALL_BOTTOM
     )
 }

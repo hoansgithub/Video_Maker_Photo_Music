@@ -41,10 +41,13 @@ import coil.size.Precision
 import coil.size.Size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -113,9 +116,25 @@ fun UnifiedSearchResultsContent(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = dimens.spaceMd)
     ) {
-
+        // Space for overlaying search bar
         item {
             Spacer(Modifier.height(100.dp))
+        }
+
+        // Native ad - right after search bar space
+        item {
+            key(AdPlacement.NATIVE_SEARCH_INFEED) {
+                android.util.Log.d("UnifiedSearch", "🔵 Composing NativeAdView (Results)")
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_SEARCH_INFEED,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        // Spacing after ad
+        item {
+            Spacer(Modifier.height(dimens.spaceMd))
         }
 
         // Related searches - inside scrollable content

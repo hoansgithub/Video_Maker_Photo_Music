@@ -19,13 +19,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.domain.model.VibeTag
@@ -67,9 +70,27 @@ fun UnifiedSearchIdleContent(
             .fillMaxWidth(),
         contentPadding = PaddingValues(vertical = dimens.spaceMd)
     ) {
+        // Space for overlaying search bar
         item {
             Spacer(Modifier.height(100.dp))
         }
+
+        // Native ad - right after search bar space
+        item {
+            key(AdPlacement.NATIVE_SEARCH_INFEED) {
+                android.util.Log.d("UnifiedSearch", "🔵 Composing NativeAdView (Idle)")
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_SEARCH_INFEED,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        // Spacing after ad
+        item {
+            Spacer(Modifier.height(dimens.spaceMd))
+        }
+
         if (recentSearches.isNotEmpty()) {
             item(key = "recent_header") {
                 Row(

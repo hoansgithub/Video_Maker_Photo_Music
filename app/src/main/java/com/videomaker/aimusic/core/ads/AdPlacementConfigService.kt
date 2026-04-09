@@ -295,6 +295,34 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Search in-feed native ad (template search + song search)
+        // Displayed at top of search results on all search states
+        // Layout: native_small_row (horizontal row matching search list items)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_SEARCH_INFEED,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6109352277",  // Primary
+                "ca-app-pub-7121075950716954/1665574760"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Uninstall screen native ad (shown at bottom before uninstalling)
+        // Final engagement point before user uninstalls the app
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_UNINSTALL_BOTTOM,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/5203464719",  // Primary
+                "ca-app-pub-7121075950716954/1283896429"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }
