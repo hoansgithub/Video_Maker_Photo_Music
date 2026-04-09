@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Native Ad Layout: Project Card
+- Matches ProjectCard layout for staggered grid integration
+- Square-ish aspect ratio to blend with 9:16 and 1:1 project cards
+- Media view at top (image/video ad creative)
+- Icon + headline + CTA below (matching project info section)
+- Ad badge at top-right corner (like duration badge)
+- Use case: In-feed placement within created projects grid
+-->
+<com.google.android.gms.ads.nativead.NativeAdView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/transparent">
+
+    <!-- Container with rounded corners matching ProjectCard -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/foundation_black">
+
+        <!-- Media View (top section - ad creative image/video) -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Ad Media (replaces project thumbnail) -->
+            <com.google.android.gms.ads.nativead.MediaView
+                android:id="@+id/ad_media"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:background="@color/foundation_black" />
+
+            <!-- Ad Badge at top-right (styled like duration badge) -->
+            <TextView
+                android:id="@+id/ad_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|end"
+                android:layout_margin="8dp"
+                android:text="@string/ad_badge"
+                android:textSize="10sp"
+                android:textColor="#FFE5E5E5"
+                android:textStyle="bold"
+                android:background="@drawable/bg_template_badge"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="5dp"
+                android:minWidth="32dp"
+                android:gravity="center" />
+        </FrameLayout>
+
+        <!-- Info Section (bottom - matching ProjectCard date+menu row) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:layout_marginTop="200dp"
+            android:paddingVertical="8dp"
+            android:background="@color/foundation_black">
+
+            <!-- Row: Icon + Headline + CTA -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- App Icon (small, like project thumbnail icon) -->
+                <ImageView
+                    android:id="@+id/ad_icon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="@string/ad_icon"
+                    android:layout_marginEnd="8dp" />
+
+                <!-- Headline (takes remaining space) -->
+                <TextView
+                    android:id="@+id/ad_headline"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="13sp"
+                    android:textColor="#FFC6C5C8"
+                    android:fontFamily="sans-serif-medium"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <!-- CTA Button (compact, like menu button) -->
+                <TextView
+                    android:id="@+id/ad_call_to_action"
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:gravity="center"
+                    android:textSize="11sp"
+                    android:textColor="@color/foundation_black"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_cta_clean"
+                    android:paddingHorizontal="12dp"
+                    android:minWidth="60dp"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+
+            <!-- Body text (optional, subtle) -->
+            <TextView
+                android:id="@+id/ad_body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="10sp"
+                android:textColor="@color/foundation_white_40"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:layout_marginTop="4dp"
+                android:visibility="gone" />
+
+            <!-- Hidden fields (required by NativeAdView but not displayed) -->
+            <TextView
+                android:id="@+id/ad_advertiser"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/ad_store"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- AdChoices overlay at top-right -->
+        <FrameLayout
+            android:id="@+id/ad_choices_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:padding="4dp" />
+    </FrameLayout>
+</com.google.android.gms.ads.nativead.NativeAdView>

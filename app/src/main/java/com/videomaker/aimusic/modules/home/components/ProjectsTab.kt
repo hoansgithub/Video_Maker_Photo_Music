@@ -69,8 +69,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
@@ -661,7 +663,16 @@ private fun ProjectsListContent(
 }
 
 /**
+ * Item type for projects grid - can be either a Project or an Ad
+ */
+private sealed class ProjectGridItem {
+    data class ProjectItem(val project: Project) : ProjectGridItem()
+    data object AdItem : ProjectGridItem()
+}
+
+/**
  * Staggered grid for projects based on aspect ratio
+ * Inserts native ad at position 2 when projects list is not empty
  */
 @Composable
 private fun ProjectsStaggeredGrid(
@@ -675,35 +686,75 @@ private fun ProjectsStaggeredGrid(
 ) {
     if (projects.isEmpty()) return
 
+    // ✅ Create mixed list with ad inserted at position 2 (after first 2 projects)
+    val gridItems = remember(projects) {
+        buildList {
+            projects.forEachIndexed { index, project ->
+                add(ProjectGridItem.ProjectItem(project))
+                // Insert ad after 2nd project (index 1)
+                if (index == 1) {
+                    add(ProjectGridItem.AdItem)
+                }
+            }
+        }
+    }
+
     // ✅ OPTIMIZED: Pre-calculate adjusted aspect ratios once when projects list changes
     // Info section needs ~40dp for: date+menu row (20dp) + padding (20dp)
+    // Ad has fixed height of ~240dp (200dp media + 40dp info) → aspect ratio ~0.75 (portrait-ish)
     val infoSectionHeightDp = 40f
-    val aspectRatios = remember(projects) {
-        projects.map { project ->
-            val thumbnailRatio = project.settings.aspectRatio.ratio
-            // Adjust ratio: assume card width of 180dp as baseline
-            val cardWidth = 180f
-            val thumbnailHeight = cardWidth / thumbnailRatio
-            val totalCardHeight = thumbnailHeight + infoSectionHeightDp
-            cardWidth / totalCardHeight // Adjusted ratio for full card including info section
+    val adMediaHeightDp = 200f
+    val adAspectRatio = 180f / (adMediaHeightDp + infoSectionHeightDp) // ~0.75
+
+    val aspectRatios = remember(gridItems) {
+        gridItems.map { item ->
+            when (item) {
+                is ProjectGridItem.ProjectItem -> {
+                    val project = item.project
+                    val thumbnailRatio = project.settings.aspectRatio.ratio
+                    // Adjust ratio: assume card width of 180dp as baseline
+                    val cardWidth = 180f
+                    val thumbnailHeight = cardWidth / thumbnailRatio
+                    val totalCardHeight = thumbnailHeight + infoSectionHeightDp
+                    cardWidth / totalCardHeight // Adjusted ratio for full card including info section
+                }
+                is ProjectGridItem.AdItem -> adAspectRatio
+            }
         }
     }
 
     StaggeredGrid(
-        items = projects,
+        items = gridItems,
         aspectRatios = aspectRatios,
         columns = 2,
         spacing = spacing,
-        key = { project -> project.id }
-    ) { project ->
-        ProjectCard(
-            project = project,
-            onClick = { onProjectClick(project) },
-            onOptionClick = { onProjectOption(project) },
-            onDelete = { onDeleteProject(project) },
-            onDownload = { onDownloadProject(project) },
-            onShare = { onShareProject(project) }
-        )
+        key = { item ->
+            when (item) {
+                is ProjectGridItem.ProjectItem -> "project_${item.project.id}"
+                is ProjectGridItem.AdItem -> "ad_projects_grid"
+            }
+        }
+    ) { item ->
+        when (item) {
+            is ProjectGridItem.ProjectItem -> {
+                ProjectCard(
+                    project = item.project,
+                    onClick = { onProjectClick(item.project) },
+                    onOptionClick = { onProjectOption(item.project) },
+                    onDelete = { onDeleteProject(item.project) },
+                    onDownload = { onDownloadProject(item.project) },
+                    onShare = { onShareProject(item.project) }
+                )
+            }
+            is ProjectGridItem.AdItem -> {
+                // Native ad matching project card layout
+                android.util.Log.d("ProjectsTab", "🔵 Composing NativeAdView (Projects Grid)")
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_PROJECTS_GRID,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }
 

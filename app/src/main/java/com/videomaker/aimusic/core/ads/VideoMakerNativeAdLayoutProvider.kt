@@ -56,6 +56,7 @@ class VideoMakerNativeAdLayoutProvider : NativeAdLayoutProvider {
             "native_full_screen_clean" -> R.layout.native_full_screen_clean
             "native_full_screen_bait" -> R.layout.native_full_screen_bait
             "native_showcase_item" -> R.layout.native_showcase_item
+            "native_project_card" -> R.layout.native_project_card
             else -> {
                 android.util.Log.w("NativeAdLayoutProvider", "⚠️ Unknown layout: $layoutName")
                 null
