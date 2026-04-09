@@ -36,7 +36,7 @@
     <string name="root_try_again">Tekrar Dene</string>
     <string name="root_loading_initializing">Başlatılıyor...</string>
     <string name="root_loading_fetching_config">Yapılandırma yükleniyor...</string>
-    <string name="root_loading_ad">Yükleniyor...</string>
+    <string name="root_loading_ad">Bu reklamlar içerebilir</string>
     <string name="root_loading_checking_status">Durum kontrol ediliyor...</string>
     <string name="root_loading_preparing">Hazırlanıyor...</string>
 

@@ -36,7 +36,7 @@
     <string name="root_try_again">حاول مرة أخرى</string>
     <string name="root_loading_initializing">جاري التهيئة...</string>
     <string name="root_loading_fetching_config">جاري تحميل الإعدادات...</string>
-    <string name="root_loading_ad">جاري التحميل...</string>
+    <string name="root_loading_ad">قد يحتوي هذا على إعلانات</string>
     <string name="root_loading_checking_status">جاري التحقق من الحالة...</string>
     <string name="root_loading_preparing">جاري التحضير...</string>
 

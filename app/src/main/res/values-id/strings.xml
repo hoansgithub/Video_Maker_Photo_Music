@@ -36,7 +36,7 @@
     <string name="root_try_again">Coba Lagi</string>
     <string name="root_loading_initializing">Menginisialisasi...</string>
     <string name="root_loading_fetching_config">Memuat konfigurasi...</string>
-    <string name="root_loading_ad">Memuat...</string>
+    <string name="root_loading_ad">Ini mungkin berisi iklan</string>
     <string name="root_loading_checking_status">Memeriksa status...</string>
     <string name="root_loading_preparing">Mempersiapkan...</string>
 

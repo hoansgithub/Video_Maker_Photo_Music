@@ -36,7 +36,7 @@
     <string name="root_try_again">पुनः प्रयास करें</string>
     <string name="root_loading_initializing">आरंभ हो रहा है...</string>
     <string name="root_loading_fetching_config">कॉन्फ़िगरेशन लोड हो रहा है...</string>
-    <string name="root_loading_ad">लोड हो रहा है...</string>
+    <string name="root_loading_ad">इसमें विज्ञापन हो सकते हैं</string>
     <string name="root_loading_checking_status">स्थिति जांची जा रही है...</string>
     <string name="root_loading_preparing">तैयार हो रहा है...</string>
 

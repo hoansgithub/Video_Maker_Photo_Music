@@ -127,6 +127,13 @@ val dataModule = module {
     single { PreferencesManager(androidContext()) }
     single { LanguageManager(androidContext()) }
 
+    // Language config service (singleton - ConfigurableObject for Remote Config)
+    single {
+        com.videomaker.aimusic.core.language.LanguageConfigService(androidContext()).also {
+            co.alcheclub.lib.acccore.di.koin.SingletonTracker.track(it)  // Track for RemoteConfigCoordinator
+        }
+    }
+
     // WorkManager
     single { WorkManager.getInstance(androidContext()) }
 

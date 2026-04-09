@@ -37,6 +37,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -73,7 +75,9 @@ internal val featureItems = listOf(
 @Composable
 fun FeatureSurveyPage(
     selectedFeatures: List<String>,
-    onFeatureToggle: (String) -> Unit
+    onFeatureToggle: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    bottomPaddingDp: androidx.compose.ui.unit.Dp = 0.dp  // Dynamic bottom padding from parent
 ) {
     val cardAnimations = remember {
         featureItems.map { Pair(Animatable(0f), Animatable(32f)) }
@@ -90,16 +94,14 @@ fun FeatureSurveyPage(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
             .padding(
                 top = 140.dp,
-                // Reserve space for: native ad (~320dp) + ad padding from bottom (160dp) + extra spacing (16dp)
-                // Total: 496dp to prevent ad from overlapping feature cards
-                bottom = 496.dp
+                bottom = bottomPaddingDp + 24.dp  // Dynamic padding based on measured bottom section height
             ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

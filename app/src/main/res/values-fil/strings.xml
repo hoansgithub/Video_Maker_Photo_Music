@@ -36,7 +36,7 @@
     <string name="root_try_again">Subukan Muli</string>
     <string name="root_loading_initializing">Nagsisimula...</string>
     <string name="root_loading_fetching_config">Nilo-load ang configuration...</string>
-    <string name="root_loading_ad">Naglo-load...</string>
+    <string name="root_loading_ad">Maaaring may mga ad ito</string>
     <string name="root_loading_checking_status">Sinusuri ang status...</string>
     <string name="root_loading_preparing">Naghahanda...</string>
 

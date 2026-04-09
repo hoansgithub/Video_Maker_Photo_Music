@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,6 +19,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
@@ -49,7 +52,12 @@ class FeatureSelectionActivity : AppCompatActivity() {
         )
 
         setContent {
+            val density = LocalDensity.current
             var isSaving by remember { mutableStateOf(false) }
+
+            // Track bottom section height dynamically (button + ad)
+            var bottomSectionHeight by remember { mutableStateOf(0) }
+            val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
 
             // Delayed states for ad viewability compliance (0.5-second per ad)
             // Sequential delays ensuring EACH ad gets at least 0.5 second of display time
@@ -92,6 +100,7 @@ class FeatureSelectionActivity : AppCompatActivity() {
 
             VideoMakerTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
+                    // Scrollable content with dynamic bottom padding
                     FeatureSurveyPage(
                         selectedFeatures = onboardingViewModel.selectedFeatures,
                         onFeatureToggle = { selectedFeature ->
@@ -102,39 +111,38 @@ class FeatureSelectionActivity : AppCompatActivity() {
                                     params = mapOf(PARAM_GENRE_SELECT to genre)
                                 )
                             }
-                        }
+                        },
+                        bottomPaddingDp = bottomPaddingDp  // Pass dynamic padding
                     )
 
-                    // Fixed native ad at bottom (above CTA button)
-                    // DUAL AD OVERLAY with z-order: ALT (bottom, always visible) → PRIMARY (top, fades out)
-                    // Both ads ALWAYS rendered for ad viewability and NativeAdView polling
-                    // Ad switching delayed by 0.5s to ensure each ad gets minimum view time
+                    // Bottom section: Native ad only (measures its own height)
                     Box(
                         modifier = Modifier
-                            .align(Alignment.BottomCenter)
                             .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 160.dp)  // Above CTA button
+                            .align(Alignment.BottomCenter)
+                            .padding(horizontal = 24.dp, vertical = 16.dp)
+                            .onSizeChanged { size ->
+                                bottomSectionHeight = size.height  // Measure actual height dynamically!
+                            }
                     ) {
-                        // ALT ad - bottom layer, always at full opacity (alpha = 1f)
-                        // ALWAYS rendered so NativeAdView's internal polling can detect late arrivals
+                        // ALT ad - bottom layer, always at full opacity
                         NativeAdView(
                             placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
-                            autoLoad = false,  // Ad must be preloaded before this screen
+                            autoLoad = false,
                             modifier = Modifier.fillMaxWidth()
-                            // No .alpha() modifier - always 1f (full opacity)
                         )
 
-                        // PRIMARY ad - top layer (always above ALT in z-order)
-                        // Visible when no selection (alpha=1f), fades out when user selects (alpha=0f) to reveal ALT
+                        // PRIMARY ad - top layer, fades out when user selects
                         NativeAdView(
                             placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION,
-                            autoLoad = false,  // Ad must be preloaded before this screen
+                            autoLoad = false,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .alpha(if (delayedHasSelection) 0f else 1f)
                         )
                     }
 
+                    // Button at top right (outside measured section)
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)

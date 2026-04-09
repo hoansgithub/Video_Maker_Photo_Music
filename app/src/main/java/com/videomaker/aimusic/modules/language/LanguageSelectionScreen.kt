@@ -47,6 +47,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
@@ -54,7 +56,9 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.SupportedLanguage
 import com.videomaker.aimusic.core.data.local.getAllLanguages
+import com.videomaker.aimusic.core.language.LanguageConfigService
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.ui.theme.Black12
 import com.videomaker.aimusic.ui.theme.Black20
@@ -81,14 +85,22 @@ fun LanguageSelectionScreen(
     onLanguageSelected: (String) -> Unit,
     onContinue: () -> Unit,
     showBackButton: Boolean = false,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    languageConfigService: LanguageConfigService = koinInject()
 ) {
     Analytics.trackScreenView(
         screenName = "language_show",
         screenClass = "LanguageSelectionScreen"
     )
+    val density = LocalDensity.current
     var selectedLanguage by remember { mutableStateOf<String?>(null) }
-    val languages = remember { LanguageManager.getAllLanguages() }
+
+    // Get sorted languages (country-based priority)
+    val languages = remember { languageConfigService.getSortedLanguages() }
+
+    // Track bottom section height dynamically (button + ad)
+    var bottomSectionHeight by remember { mutableStateOf(0) }
+    val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
 
     // Delayed states for ad viewability compliance (0.5-second per ad)
     // Sequential delays ensuring EACH ad gets at least 0.5 second of display time
@@ -135,22 +147,15 @@ fun LanguageSelectionScreen(
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
-        // Scrollable content - language cards only
+        // Scrollable content with dynamic bottom padding
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
                 .padding(
                     top = 16.dp,
-                    bottom = if (showBackButton) {
-                        // Reserve space for: native ad (320dp) + button (56dp) + spacing (48dp + 16dp + 16dp)
-                        // Ads are ALWAYS rendered for IAB compliance
-                        456.dp
-                    } else {
-                        // Reserve space for: native ad (320dp) + top padding (24dp) + spacing (16dp)
-                        // Ads are ALWAYS rendered for IAB compliance
-                        360.dp
-                    }
+                    bottom = bottomPaddingDp + 24.dp  // Dynamic padding based on measured bottom section height
                 ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -191,108 +196,93 @@ fun LanguageSelectionScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            Spacer(modifier = Modifier.height(36.dp))
+
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-            ) {
-
-                Spacer(modifier = Modifier.height(36.dp))
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    languages.forEach { language ->
-                        LanguageCard(
-                            language = language,
-                            isSelected = selectedLanguage == language.code,
-                            onClick = {
-                                selectedLanguage = language.code
-                                onLanguageSelected(language.code)
-                                Analytics.track(
-                                    name = "language_select",
-                                    params = mapOf(
-                                        "language" to language.code
-                                    )
-                                )
-                            }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-        }
-
-        // Fixed native ad at bottom (above CTA button)
-        // DUAL AD OVERLAY with z-order: ALT (bottom, always visible) → PRIMARY (top, fades out)
-        // Both ads ALWAYS rendered for ad viewability and NativeAdView polling
-        // Ad switching delayed by 0.5s to ensure each ad gets minimum view time
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(
-                    bottom = if (showBackButton) {
-                        // Position above CTA button: button (56dp) + button padding (48dp) + spacing (16dp)
-                        120.dp
-                    } else {
-                        // Position at bottom with spacing
-                        16.dp
-                    }
-                )
-        ) {
-            // ALT ad - bottom layer, always at full opacity (alpha = 1f)
-            // ALWAYS rendered so NativeAdView's internal polling can detect late arrivals
-            NativeAdView(
-                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
-                autoLoad = false,  // Ad must be preloaded before this screen
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
-                // No .alpha() modifier - always 1f (full opacity)
-            )
-
-            // PRIMARY ad - top layer (always above ALT in z-order)
-            // Visible when no selection (alpha=1f), fades out when user selects (alpha=0f) to reveal ALT
-            NativeAdView(
-                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
-                autoLoad = false,  // Ad must be preloaded before this screen
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .alpha(if (delayedHasSelection) 0f else 1f)
-            )
-        }
-
-        // Fixed CTA at bottom
-        // Button enabled when: user selected language AND 1-second viewability delay complete
-        // (0.5s for PRIMARY ad view + 0.5s for ALT ad view)
-        val isButtonEnabled = selectedLanguage != null && delayedButtonEnabled
-
-        if (showBackButton){
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 48.dp)
             ) {
-                OnboardingCtaMaxWidthButton(
-                    text = stringResource(R.string.language_continue),
-                    onClick = {
-                        onContinue.invoke()
-                        selectedLanguage?.let {
+                languages.forEach { language ->
+                    LanguageCard(
+                        language = language,
+                        isSelected = selectedLanguage == language.code,
+                        onClick = {
+                            selectedLanguage = language.code
+                            onLanguageSelected(language.code)
                             Analytics.track(
-                                name = "language_next",
+                                name = "language_select",
                                 params = mapOf(
-                                    "language" to it
+                                    "language" to language.code
                                 )
                             )
                         }
-                    },
-                    enabled = isButtonEnabled  // IAB compliance: includes viewability delay
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // Bottom section: Button + Native ad (measures its own height)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .onSizeChanged { size ->
+                    bottomSectionHeight = size.height  // Measure actual height dynamically!
+                }
+        ) {
+            if (showBackButton) {
+                // Button at bottom for onboarding flow
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                ) {
+                    OnboardingCtaMaxWidthButton(
+                        text = stringResource(R.string.language_continue),
+                        onClick = {
+                            onContinue.invoke()
+                            selectedLanguage?.let {
+                                Analytics.track(
+                                    name = "language_next",
+                                    params = mapOf(
+                                        "language" to it
+                                    )
+                                )
+                            }
+                        },
+                        enabled = selectedLanguage != null && delayedButtonEnabled
+                    )
+                }
+            }
+
+            // Native ad (intrinsic height - measures itself!)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+            ) {
+                // ALT ad - bottom layer, always at full opacity
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
+                    autoLoad = false,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // PRIMARY ad - top layer, fades out when user selects
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
+                    autoLoad = false,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .alpha(if (delayedHasSelection) 0f else 1f)
                 )
             }
-        } else {
+        }
+
+        // Top-right button for settings flow (outside bottom section)
+        if (!showBackButton) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -313,7 +303,7 @@ fun LanguageSelectionScreen(
                             )
                         }
                     },
-                    enabled = isButtonEnabled  // IAB compliance: includes viewability delay
+                    enabled = selectedLanguage != null && delayedButtonEnabled
                 )
             }
         }
