@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
@@ -70,6 +71,10 @@ fun UnifiedSearchScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
     val audioPreviewCache: AudioPreviewCache = koinInject()
+    val screenSessionId = remember { Analytics.newScreenSessionId() }
+    var selectedSongLocation by rememberSaveable {
+        mutableStateOf(AnalyticsEvent.Value.Location.SEARCH_RCM)
+    }
 
     // ✅ FIX: Refresh data when locale changes (genres, vibe tags, templates, songs)
     // Use rememberSaveable to persist previousLocale across Activity recreation
@@ -118,6 +123,7 @@ fun UnifiedSearchScreen(
     ) {
         when (val state = uiState) {
             is UnifiedSearchUiState.Idle -> UnifiedSearchIdleContent(
+                screenSessionId = screenSessionId,
                 initialSection = state.initialSection,
                 recentSearches = recentSearches,
                 suggestionVibeTags = suggestionVibeTags,
@@ -135,8 +141,9 @@ fun UnifiedSearchScreen(
                 onGenreClick = viewModel::onGenreClick,
                 onTemplateClick = viewModel::onTemplateClick,
                 onSeeMoreTemplates = viewModel::onSeeMoreFeaturedTemplatesClick,
-                onSongClick = { song ->
+                onSongClick = { song, location ->
                     keyboardController?.hide()
+                    selectedSongLocation = location
                     viewModel.onSongClick(song)
                 },
                 onSeeMoreSongs = viewModel::onSeeMoreSuggestedSongsClick
@@ -156,12 +163,14 @@ fun UnifiedSearchScreen(
             )
 
             is UnifiedSearchUiState.Results -> UnifiedSearchResultsContent(
+                screenSessionId = screenSessionId,
                 state = state,
                 query = displayText,
                 relatedSearches = persistentRelatedSearches,
                 onTemplateClick = viewModel::onTemplateClick,
-                onSongClick = { song ->
+                onSongClick = { song, location ->
                     keyboardController?.hide()
+                    selectedSongLocation = location
                     viewModel.onSongClick(song)
                 },
                 onExplore = viewModel::onExplore,
@@ -185,15 +194,10 @@ fun UnifiedSearchScreen(
     }
 
     selectedSong?.let { song ->
-        val songEventLocation = if (uiState is UnifiedSearchUiState.Results) {
-            AnalyticsEvent.Value.Location.SEARCH_RESULT
-        } else {
-            AnalyticsEvent.Value.Location.SEARCH_RCM
-        }
         MusicPlayerBottomSheet(
             song = song,
             cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-            location = songEventLocation,
+            location = selectedSongLocation,
             onDismiss = viewModel::onDismissPlayer,
             onUseToCreate = viewModel::onUseToCreateVideo
         )

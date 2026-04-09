@@ -330,6 +330,9 @@ object AnalyticsEvent {
             const val SEARCH_RESULT = "search_result"
             const val SEARCH_RCM = "search_rcm"
             const val TEMPLATE_FAVORITE = "template_favorite"
+            const val SONG_FAVORITE = "song_favorite"
+            const val VIDEO_EDITOR_SEARCH = "video_editor_search"
+            const val VIDEO_EDITOR_RCM = "video_editor_rcm"
             const val UNINSTALL = "uninstall"
         }
 
