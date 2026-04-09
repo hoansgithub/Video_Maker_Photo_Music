@@ -84,6 +84,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
@@ -652,6 +653,14 @@ private fun TemplatePreviewerReadyContent(
                     modifier = Modifier
                         .wrapContentWidth()
                         .height(52.dp)
+                )
+
+                // Banner ad at bottom of screen
+                BannerAdView(
+                    placement = AdPlacement.BANNER_TEMPLATE_PREVIEWER,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
                 )
             }
         }

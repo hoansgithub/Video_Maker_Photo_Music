@@ -166,6 +166,18 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Template previewer banner (shown at bottom of template preview screen)
+        // Same configuration as home banner, different placement for tracking
+        // Waterfall: Primary unit only
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.BANNER_TEMPLATE_PREVIEWER,
+            type = "banner",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1313786204"  // Primary (same as home)
+            ),
+            enabled = true
+        )
+
         // ============================================
         // NATIVE ADS
         // ============================================

@@ -115,6 +115,23 @@ object AdPlacement {
     const val BANNER_HOME = "ad_banner_home"
 
     /**
+     * Banner ad shown at bottom of template previewer screen.
+     * Timing: Loaded when template previewer is displayed.
+     * Displayed below the template preview content.
+     *
+     * Features:
+     * - Adaptive banner sizing (320dp width default)
+     * - Lifecycle-aware cleanup
+     * - Same configuration as home banner
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1313786204
+     *
+     * Remote Config key: ad_banner_template_previewer
+     */
+    const val BANNER_TEMPLATE_PREVIEWER = "ad_banner_template_previewer"
+
+    /**
      * Native ad shown at bottom of onboarding language selector screen.
      * Timing: Loaded when language selector is displayed.
      * High-engagement placement for first-time users.
@@ -261,6 +278,7 @@ object AdPlacement {
         INTERSTITIAL_EXPORT_RESULT_EXIT,
         INTERSTITIAL_ASSET_PICKER_EXIT,
         BANNER_HOME,
+        BANNER_TEMPLATE_PREVIEWER,
         NATIVE_ONBOARDING_LANGUAGE,
         NATIVE_ONBOARDING_LANGUAGE_ALT,
         NATIVE_ONBOARDING_PAGE1,
