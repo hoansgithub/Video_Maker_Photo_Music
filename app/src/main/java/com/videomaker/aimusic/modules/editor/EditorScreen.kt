@@ -464,12 +464,14 @@ fun EditorScreen(
                         }
                         showRatioSheet = false
                     },
-                    onConfirm = { selectedRatio ->
-                        val ratioSize = selectedRatio.toAnalyticsRatioSize()
+                    onRatioClick = { selectedRatio ->
                         Analytics.trackRatioClick(
                             videoId = successState.project.id,
-                            ratioSize = ratioSize
+                            ratioSize = selectedRatio.toAnalyticsRatioSize()
                         )
+                    },
+                    onConfirm = { selectedRatio ->
+                        val ratioSize = selectedRatio.toAnalyticsRatioSize()
                         Analytics.trackRatioSelect(
                             videoId = successState.project.id,
                             ratioSize = ratioSize
