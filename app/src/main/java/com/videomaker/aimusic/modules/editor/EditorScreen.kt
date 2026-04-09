@@ -129,8 +129,6 @@ fun EditorScreen(
     var hasTrackedVideoPreview by remember { mutableStateOf(false) }
     var hasTrackedVideoPreviewComplete by remember { mutableStateOf(false) }
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
-    var hasVolumeChangedInSheet by remember { mutableStateOf(false) }
-    var initialVolumeOnSheetOpen by remember { mutableStateOf<Float?>(null) }
     var ratioConfirmed by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -338,8 +336,6 @@ fun EditorScreen(
                             showMusicSearchSheet = true
                         },
                         onVolumeClick = {
-                            initialVolumeOnSheetOpen = state.displaySettings.audioVolume
-                            hasVolumeChangedInSheet = false
                             Analytics.trackVolumeEdit(
                                 videoId = state.project.id,
                                 volumeNumber = (state.displaySettings.audioVolume * 100f).roundToInt()
@@ -617,9 +613,6 @@ fun EditorScreen(
             VolumeBottomSheet(
                 currentVolume = successState?.displaySettings?.audioVolume ?: 1f,
                 onVolumeChange = { volume ->
-                    val initialVolume = initialVolumeOnSheetOpen ?: 1f
-                    val changed = kotlin.math.abs(initialVolume - volume) > 0.001f
-                    if (changed) hasVolumeChangedInSheet = true
                     viewModel.updateAudioVolume(volume)
                 },
                 onVolumeClick = { volume ->
@@ -635,11 +628,7 @@ fun EditorScreen(
                     val videoId = currentVideoId()
                     if (videoId != null) {
                         val volumeNumber = currentVolumePercent()
-                        if (hasVolumeChangedInSheet) {
-                            Analytics.trackVolumeSelect(videoId, volumeNumber)
-                        } else {
-                            Analytics.trackVolumeClose(videoId, volumeNumber)
-                        }
+                        Analytics.trackVolumeSelect(videoId, volumeNumber)
                     }
                     showVolumeSheet = false
                 }
