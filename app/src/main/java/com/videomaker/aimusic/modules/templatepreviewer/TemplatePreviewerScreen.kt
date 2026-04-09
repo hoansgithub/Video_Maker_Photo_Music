@@ -561,7 +561,8 @@ private fun TemplatePreviewerReadyContent(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .navigationBarsPadding()
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .padding(bottom = 60.dp),  // Space for banner ad (50dp + 10dp spacing)
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -654,16 +655,17 @@ private fun TemplatePreviewerReadyContent(
                         .wrapContentWidth()
                         .height(52.dp)
                 )
-
-                // Banner ad at bottom of screen
-                BannerAdView(
-                    placement = AdPlacement.BANNER_TEMPLATE_PREVIEWER,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                )
             }
         }
+
+        // Banner ad - positioned at absolute bottom, ignoring safe area
+        BannerAdView(
+            placement = AdPlacement.BANNER_TEMPLATE_PREVIEWER,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(50.dp)
+        )
 
         // Ratio selection bottom sheet
         val template = pendingTemplate
