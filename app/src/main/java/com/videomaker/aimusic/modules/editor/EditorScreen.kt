@@ -88,8 +88,16 @@ import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlin.math.roundToInt
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
+import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
+import com.videomaker.aimusic.core.constants.AdPlacement
+import androidx.compose.material3.SnackbarHostState
 
 /**
  * EditorScreen - Main video editor screen
@@ -116,6 +124,11 @@ fun EditorScreen(
     onNavigateToAddAssets: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val showQualityAdDialog by viewModel.showQualityAdDialog.collectAsStateWithLifecycle()
+    val pendingQualityUnlock by viewModel.pendingQualityUnlock.collectAsStateWithLifecycle()
+    val qualityAdError by viewModel.qualityAdError.collectAsStateWithLifecycle()
+    val isQualityUnlocked by viewModel.isQualityUnlocked.collectAsStateWithLifecycle()
+
     var showExitConfirmation by remember { mutableStateOf(false) }
     // var showMusicPicker by remember { mutableStateOf(false) } // Commented out - using Supabase only
     var showRatioSheet by remember { mutableStateOf(false) }
@@ -133,6 +146,10 @@ fun EditorScreen(
     var initialVolumeOnSheetOpen by remember { mutableStateOf<Float?>(null) }
     var ratioConfirmed by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val activity = context as? android.app.Activity
+    val adsLoaderService = koinInject<AdsLoaderService>()
+    val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
 
     // Music Picker ViewModel - created once and reused
     // Commented out - using Supabase only
@@ -209,6 +226,81 @@ fun EditorScreen(
         }
     }
 
+    // Handle quality ad presentation when user confirms watching ad
+    LaunchedEffect(pendingQualityUnlock) {
+        if (!pendingQualityUnlock) return@LaunchedEffect
+
+        val state = currentState() ?: return@LaunchedEffect
+
+        // Check if Activity is available
+        if (activity == null) {
+            android.util.Log.w("EditorScreen", "Activity unavailable for quality ad presentation")
+            snackbarHostState.showSnackbar(context.getString(com.videomaker.aimusic.R.string.quality_ad_not_available))
+            viewModel.onQualityAdFailed()
+            return@LaunchedEffect
+        }
+
+        try {
+            // 1. Check if ad is ready
+            if (!adsLoaderService.isRewardedAdReady(com.videomaker.aimusic.core.constants.AdPlacement.REWARD_UNLOCK_QUALITY)) {
+                // 2. Show loading overlay
+                co.alcheclub.lib.acccore.ads.state.AdsLoadingState.show("Loading ad...")
+
+                // 3. Load ad with 60s timeout
+                kotlinx.coroutines.withTimeout(60_000) {
+                    adsLoaderService.loadRewarded(com.videomaker.aimusic.core.constants.AdPlacement.REWARD_UNLOCK_QUALITY)
+                }
+
+                // 4. Hide loading overlay
+                co.alcheclub.lib.acccore.ads.state.AdsLoadingState.hide()
+            }
+
+            // 5. Present ad and wait for result (blocking)
+            val result = adsLoaderService.presentRewarded(
+                placement = com.videomaker.aimusic.core.constants.AdPlacement.REWARD_UNLOCK_QUALITY,
+                activity = activity
+            )
+
+            // 6. Check if user earned reward
+            if (result.earnedReward) {
+                viewModel.onQualityRewardEarned()
+            } else {
+                android.util.Log.d("EditorScreen", "User did not earn reward (closed ad early)")
+                viewModel.onQualityAdFailed()
+            }
+
+        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+            android.util.Log.w("EditorScreen", "Quality ad load timeout")
+            co.alcheclub.lib.acccore.ads.state.AdsLoadingState.hide()
+            viewModel.showQualityAdError(context.getString(com.videomaker.aimusic.R.string.quality_ad_not_available))
+            viewModel.onQualityAdFailed()
+
+        } catch (e: co.alcheclub.lib.acccore.ads.loader.AdsLoaderException.NoAdToShow) {
+            android.util.Log.w("EditorScreen", "No quality ad available")
+            co.alcheclub.lib.acccore.ads.state.AdsLoadingState.hide()
+            viewModel.showQualityAdError(context.getString(com.videomaker.aimusic.R.string.quality_ad_not_available))
+            viewModel.onQualityAdFailed()
+
+        } catch (e: Exception) {
+            android.util.Log.e("EditorScreen", "Failed to show quality rewarded ad: ${e.message}")
+            co.alcheclub.lib.acccore.ads.state.AdsLoadingState.hide()
+            viewModel.showQualityAdError(context.getString(com.videomaker.aimusic.R.string.quality_ad_not_available))
+            viewModel.onQualityAdFailed()
+
+        } finally {
+            // Always hide loading overlay
+            co.alcheclub.lib.acccore.ads.state.AdsLoadingState.hide()
+        }
+    }
+
+    // Show error message for quality ad failures
+    LaunchedEffect(qualityAdError) {
+        qualityAdError?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.onQualityAdErrorShown()
+        }
+    }
+
     // Navigation events live in their own StateFlow — decoupled from high-frequency UI state
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     LaunchedEffect(navigationEvent) {
@@ -232,11 +324,13 @@ fun EditorScreen(
         Scaffold(
             topBar = {
                 val successState = uiState as? EditorUiState.Success
+                val selectedQuality = successState?.selectedQuality ?: VideoQuality.DEFAULT
                 EditorTopBar(
-                    selectedQuality = successState?.selectedQuality ?: VideoQuality.DEFAULT,
+                    selectedQuality = selectedQuality,
                     canExport = !isPreviewBuilding &&
                                 (successState?.isMusicCached ?: true) &&
                                 !(successState?.isCachingMusic ?: false),
+                    isQualityLocked = viewModel.isQualityLocked(selectedQuality),
                     onBackClick = { requestExitFromEditor() },
                     onQualityChange = { quality ->
                         val state = currentState()
@@ -263,7 +357,7 @@ fun EditorScreen(
                                 mediaQuantity = state.project.assets.size
                             )
                         }
-                        viewModel.navigateToExport()
+                        viewModel.onDoneClick()
                     }
                 )
             },
@@ -748,6 +842,28 @@ fun EditorScreen(
             )
         }
 
+        // Quality unlock watch ad dialog
+        if (showQualityAdDialog) {
+            com.videomaker.aimusic.modules.export.WatchAdDialog(
+                title = stringResource(com.videomaker.aimusic.R.string.quality_watch_ad_title),
+                subtitle = stringResource(com.videomaker.aimusic.R.string.quality_watch_ad_subtitle),
+                onDismiss = viewModel::onQualityAdDialogDismiss,
+                onWatchAd = {
+                    // Set pending flag - LaunchedEffect will handle ad presentation
+                    viewModel.onQualityAdConfirmed()
+                }
+            )
+        }
+
+        // Ads loading overlay
+        com.videomaker.aimusic.ui.components.AdsLoadingOverlay()
+
+        // Snackbar for error messages
+        androidx.compose.material3.SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = androidx.compose.ui.Modifier.padding(16.dp)
+        )
+
     }
 }
 
@@ -756,6 +872,7 @@ fun EditorScreen(
 internal fun EditorTopBar(
     selectedQuality: VideoQuality,
     canExport: Boolean,
+    isQualityLocked: Boolean,
     onBackClick: () -> Unit,
     onQualityChange: (VideoQuality) -> Unit,
     onDoneClick: () -> Unit
@@ -773,10 +890,11 @@ internal fun EditorTopBar(
             }
         },
         actions = {
-            // Quality picker (reusable component)
+            // Quality picker (reusable component) - shows [AD] badge for locked qualities
             QualityPicker(
                 selectedQuality = selectedQuality,
                 onQualityChange = onQualityChange,
+                isQualityUnlocked = !isQualityLocked,
                 modifier = Modifier.height(40.dp)
             )
 

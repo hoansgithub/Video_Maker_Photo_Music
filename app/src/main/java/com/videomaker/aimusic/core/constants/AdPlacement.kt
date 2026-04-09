@@ -455,6 +455,34 @@ object AdPlacement {
     const val REWARD_REMOVE_WATERMARK = "ad_reward_remove_watermark"
 
     /**
+     * Rewarded ad shown when user taps "Done" in editor with locked quality (720p/1080p).
+     * Timing: User selects 720p/1080p quality → taps Done button → dialog appears → watches ad → unlocked for session.
+     * User MUST watch the full ad to earn the reward (quality unlock for current session).
+     *
+     * Flow:
+     * 1. User selects 720p or 1080p quality in editor
+     * 2. Done button shows [AD] badge
+     * 3. User taps Done → dialog: "Watch an ad to export in high quality?"
+     * 4. User taps "Watch Ad" → Ad loads and plays
+     * 5. User watches full ad → onUserEarnedReward callback
+     * 6. Quality unlocked for current editor session only
+     * 7. Done button proceeds to export screen
+     * 8. When user leaves editor and comes back, needs to watch ad again
+     *
+     * Session-based unlock (NOT persistent):
+     * - Unlock only valid for current EditorViewModel instance
+     * - Reset when user navigates away from editor
+     * - User must watch ad again each time they edit a project
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/9080595582
+     * - Secondary: ca-app-pub-7121075950716954/2706758926
+     *
+     * Remote Config key: ad_reward_unlock_quality
+     */
+    const val REWARD_UNLOCK_QUALITY = "ad_reward_unlock_quality"
+
+    /**
      * Rewarded ad shown when user wants to unlock a locked effect set.
      * Timing: User clicks locked effect set → dialog appears → user watches ad → effect set unlocked.
      * User MUST watch the full ad to earn the reward (effect set unlock).
@@ -506,6 +534,7 @@ object AdPlacement {
         NATIVE_EXPORT_GENERATING,
         REWARD_DOWNLOAD_VIDEO,
         REWARD_REMOVE_WATERMARK,
+        REWARD_UNLOCK_QUALITY,
         REWARD_UNLOCK_EFFECT_SET
     )
 }

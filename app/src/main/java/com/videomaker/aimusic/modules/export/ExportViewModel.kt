@@ -563,6 +563,19 @@ class ExportViewModel(
         successMessage: String,
         errorMessage: String
     ) {
+        // Check if ad is enabled for this placement
+        if (!adsLoaderService.canLoadAd(AdPlacement.REWARD_DOWNLOAD_VIDEO)) {
+            // Ad disabled - proceed directly with download
+            android.util.Log.d("ExportViewModel", "⏭️ Ad disabled for download - proceeding without ad")
+            saveToGallery(
+                applicationContext = applicationContext,
+                loadingMessage = loadingMessage,
+                successMessage = successMessage,
+                errorMessage = errorMessage
+            )
+            return
+        }
+
         // Store pending download request
         pendingDownloadRequest = {
             saveToGallery(
@@ -573,7 +586,7 @@ class ExportViewModel(
             )
         }
 
-        // Always show watch ad dialog (ad will load when user confirms)
+        // Show watch ad dialog (ad will load when user confirms)
         android.util.Log.d("ExportViewModel", "🎁 Showing watch ad dialog")
         _showWatchAdDialog.value = true
     }
@@ -684,6 +697,15 @@ class ExportViewModel(
      * Shows watermark ad dialog immediately
      */
     fun onWatermarkClick() {
+        // Check if ad is enabled for this placement
+        if (!adsLoaderService.canLoadAd(AdPlacement.REWARD_REMOVE_WATERMARK)) {
+            // Ad disabled - remove watermark immediately
+            android.util.Log.d("ExportViewModel", "⏭️ Ad disabled for watermark removal - removing watermark")
+            _showWatermark.value = false
+            saveWatermarkFreeStatus()
+            return
+        }
+
         android.util.Log.d("ExportViewModel", "🎁 Showing watermark ad dialog")
         _showWatermarkAdDialog.value = true
     }
@@ -795,14 +817,8 @@ class ExportViewModel(
     private fun saveWatermarkFreeStatus() {
         viewModelScope.launch {
             try {
-                val project = projectRepository.getProject(projectId)
-                if (project != null) {
-                    val updatedProject = project.copy(isWatermarkFree = true)
-                    projectRepository.updateProject(updatedProject)
-                    android.util.Log.d("ExportViewModel", "✅ Project marked as watermark-free in database")
-                } else {
-                    android.util.Log.e("ExportViewModel", "Failed to save watermark-free status: project not found")
-                }
+                projectRepository.updateWatermarkFreeStatus(projectId, isWatermarkFree = true)
+                android.util.Log.d("ExportViewModel", "✅ Project marked as watermark-free in database")
             } catch (e: Exception) {
                 android.util.Log.e("ExportViewModel", "Failed to save watermark-free status", e)
             }

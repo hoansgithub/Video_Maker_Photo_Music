@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.home.components
 
+import android.app.Activity
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -71,10 +72,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
@@ -99,6 +104,8 @@ import com.videomaker.aimusic.ui.theme.Neutral_Black
 import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import org.koin.compose.koinInject
 
 @OptIn(UnstableApi::class)
@@ -126,11 +133,82 @@ fun ProjectsTabContent(
     val audioPreviewCache: AudioPreviewCache = koinInject()
     var showRemovedMessage by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val activity = context as? Activity
+    val adsLoaderService = koinInject<AdsLoaderService>()
+
+    // Ad states
+    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
+    val pendingDownloadProject by viewModel.pendingDownloadProject.collectAsStateWithLifecycle()
 
     LaunchedEffect(showRemovedMessage) {
         if (showRemovedMessage) {
             delay(2000)
             showRemovedMessage = false
+        }
+    }
+
+    // Handle ad presentation when user confirms watching ad
+    LaunchedEffect(pendingDownloadProject) {
+        val project = pendingDownloadProject ?: return@LaunchedEffect
+
+        // Check if Activity is available
+        if (activity == null) {
+            android.util.Log.w("ProjectsTab", "Activity unavailable for ad presentation")
+            viewModel.onToastDismissed()
+            viewModel.onAdFailed()
+            return@LaunchedEffect
+        }
+
+        try {
+            // 1. Check if ad is ready
+            if (!adsLoaderService.isRewardedAdReady(AdPlacement.REWARD_DOWNLOAD_VIDEO)) {
+                // 2. Show loading overlay
+                AdsLoadingState.show("Loading ad...")
+
+                // 3. Load ad with 60s timeout
+                withTimeout(60_000) {
+                    adsLoaderService.loadRewarded(AdPlacement.REWARD_DOWNLOAD_VIDEO)
+                }
+
+                // 4. Hide loading overlay
+                AdsLoadingState.hide()
+            }
+
+            // 5. Present ad and wait for result (blocking)
+            val result = adsLoaderService.presentRewarded(
+                placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+                activity = activity
+            )
+
+            // 6. Check if user earned reward
+            if (result.earnedReward) {
+                viewModel.performDownload(project, context)
+            } else {
+                android.util.Log.d("ProjectsTab", "User did not earn reward (closed ad early)")
+                viewModel.onAdFailed()
+            }
+
+        } catch (e: TimeoutCancellationException) {
+            android.util.Log.w("ProjectsTab", "Ad load timeout")
+            AdsLoadingState.hide()
+            viewModel.onToastDismissed()
+            viewModel.onAdFailed()
+
+        } catch (e: AdsLoaderException.NoAdToShow) {
+            android.util.Log.w("ProjectsTab", "No ad available")
+            AdsLoadingState.hide()
+            viewModel.onToastDismissed()
+            viewModel.onAdFailed()
+
+        } catch (e: Exception) {
+            android.util.Log.e("ProjectsTab", "Failed to show rewarded ad: ${e.message}")
+            AdsLoadingState.hide()
+            viewModel.onToastDismissed()
+            viewModel.onAdFailed()
+
+        } finally {
+            // Always hide loading overlay
+            AdsLoadingState.hide()
         }
     }
 
@@ -445,6 +523,19 @@ fun ProjectsTabContent(
         ProcessToast(
             state = toastState,
             onDismiss = viewModel::onToastDismissed
+        )
+    }
+
+    // Watch ad dialog for download
+    if (showWatchAdDialog) {
+        WatchAdDialog(
+            title = stringResource(R.string.export_watch_ad_title),
+            subtitle = stringResource(R.string.export_watch_ad_subtitle),
+            onDismiss = viewModel::onWatchAdDialogDismiss,
+            onWatchAd = {
+                // Set pending download project - LaunchedEffect will handle ad presentation
+                viewModel.onWatchAdConfirmed()
+            }
         )
     }
 

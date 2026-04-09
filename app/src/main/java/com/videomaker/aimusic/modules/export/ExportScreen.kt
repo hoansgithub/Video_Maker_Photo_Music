@@ -35,11 +35,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.shadow
 import androidx.compose.material.icons.Icons
@@ -914,42 +916,57 @@ private fun SuccessContent(
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(12.dp)
+                            .padding(16.dp)
                     ) {
+                        // Main watermark content
                         Row(
                             modifier = Modifier
                                 .background(
-                                    color = Color.Black.copy(alpha = 0.7f),
-                                    shape = RoundedCornerShape(8.dp)
+                                    color = Color.Black.copy(alpha = 0.75f),
+                                    shape = RoundedCornerShape(12.dp)
                                 )
                                 .clickable { onWatermarkClick() }
-                                .padding(start = 8.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_launcher_foreground),
+                                painter = painterResource(R.mipmap.ic_launcher),
                                 contentDescription = null,
-                                modifier = Modifier.size(32.dp),
-                                tint = Color.White
+                                modifier = Modifier.size(48.dp),
+                                tint = Color.Unspecified
                             )
                             Text(
                                 text = stringResource(R.string.app_name),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
                                 color = Color.White,
                                 maxLines = 1
                             )
+                        }
+
+                        // Close button - circular at top right corner
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = 6.dp, y = (-6).dp)
+                                .size(28.dp)
+                                .background(
+                                    color = Color.White,
+                                    shape = CircleShape
+                                )
+                                .border(
+                                    width = 2.dp,
+                                    color = Color.Black.copy(alpha = 0.2f),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Remove watermark",
-                                tint = Color.White.copy(alpha = 0.8f),
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null
-                                    ) { onWatermarkDismiss() }
+                                tint = Color.Black,
+                                modifier = Modifier.size(16.dp)
                             )
                         }
                     }
@@ -1050,17 +1067,11 @@ private fun SuccessContent(
                     contentPadding = contentPadding
                 ) {
                     // [AD] badge
-                    Text(
-                        text = "AD",
-                        fontSize = (fontSize.value * 0.9f).sp,  // Slightly smaller than button text
-                        fontWeight = FontWeight.ExtraBold,
-                        color = SurfaceDark,
-                        modifier = Modifier
-                            .background(
-                                color = SurfaceDark.copy(alpha = 0.15f),
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    com.videomaker.aimusic.ui.components.AdBadge(
+                        style = com.videomaker.aimusic.ui.components.AdBadgeStyle.Small(
+                            textColor = SurfaceDark,
+                            backgroundColor = SurfaceDark.copy(alpha = 0.15f)
+                        )
                     )
                     Spacer(modifier = Modifier.width(iconSpacing))
                     Text(

@@ -92,4 +92,11 @@ interface ProjectRepository {
      * @param name New name
      */
     suspend fun updateProjectName(projectId: String, name: String)
+
+    /**
+     * Update watermark-free status (after user watches ad to remove watermark)
+     * @param projectId Project ID
+     * @param isWatermarkFree True if watermark should be removed
+     */
+    suspend fun updateWatermarkFreeStatus(projectId: String, isWatermarkFree: Boolean)
 }

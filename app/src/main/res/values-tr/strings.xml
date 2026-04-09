@@ -475,4 +475,15 @@
     <string name="rating_feedback_reason_templates">Yeterli şablon yok / içerik güncellemeleri yetersiz</string>
     <string name="rating_feedback_reason_other">Diğer</string>
 
+    <!-- Ads -->
+    <string name="ad_badge">Reklam</string>
+    <string name="ad_icon">Reklam simgesi</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">Bu efektin kilidini açmak için reklam izle?</string>
+    <string name="effect_set_watch_ad_subtitle">Kısa bir reklam izleyerek bu efekt setinin kilidini kalıcı olarak açın</string>
+    <string name="effect_set_ad_not_available">Reklam şu anda mevcut değil. Daha sonra tekrar deneyin.</string>
+    <string name="effect_set_locked">Kilitli efekt seti</string>
+    <string name="ad_not_available">Reklam şu anda mevcut değil. Daha sonra tekrar deneyin.</string>
+
 </resources>

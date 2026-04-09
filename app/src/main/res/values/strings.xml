@@ -491,4 +491,9 @@
     <string name="effect_set_locked">Locked effect set</string>
     <string name="ad_not_available">Ad not available right now. Please try again later.</string>
 
+    <!-- Quality Unlock Rewarded Ad -->
+    <string name="quality_watch_ad_title">Watch an ad to export in high quality?</string>
+    <string name="quality_watch_ad_subtitle">Unlock 720p/1080p export for this session by watching a short ad</string>
+    <string name="quality_ad_not_available">Ad not available right now. Please try again later or select a lower quality.</string>
+
 </resources>

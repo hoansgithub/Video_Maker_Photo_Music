@@ -61,8 +61,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
-import co.alcheclub.lib.accdi.ACCDI
 import com.videomaker.aimusic.R
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.EffectSet
 import com.videomaker.aimusic.modules.editor.EffectSetUiState
@@ -102,7 +102,7 @@ fun EffectSetBottomSheet(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val activity = context as? Activity
-    val adsLoaderService = remember { ACCDI.get<AdsLoaderService>() }
+    val adsLoaderService = koinInject<AdsLoaderService>()
     val coroutineScope = rememberCoroutineScope()
 
     // Handle ad presentation when user confirms watching ad

@@ -416,7 +416,8 @@ class EditorViewModelFactory(
     private val addAssetsUseCase: AddAssetsUseCase,
     private val removeAssetUseCase: RemoveAssetUseCase,
     private val songRepository: SongRepository,
-    private val effectSetRepository: EffectSetRepository
+    private val effectSetRepository: EffectSetRepository,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(
         projectId: String?,
@@ -432,7 +433,8 @@ class EditorViewModelFactory(
             addAssetsUseCase = addAssetsUseCase,
             removeAssetUseCase = removeAssetUseCase,
             songRepository = songRepository,
-            effectSetRepository = effectSetRepository
+            effectSetRepository = effectSetRepository,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -474,7 +476,8 @@ class ProjectsViewModelFactory(
     private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
     private val likeSongUseCase: LikeSongUseCase,
     private val unlikeSongUseCase: UnlikeSongUseCase,
-    private val unlikeTemplateUseCase: UnlikeTemplateUseCase
+    private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(): ProjectsViewModel {
         return ProjectsViewModel(
@@ -486,7 +489,8 @@ class ProjectsViewModelFactory(
             observeLikedTemplatesUseCase = observeLikedTemplatesUseCase,
             likeSongUseCase = likeSongUseCase,
             unlikeSongUseCase = unlikeSongUseCase,
-            unlikeTemplateUseCase = unlikeTemplateUseCase
+            unlikeTemplateUseCase = unlikeTemplateUseCase,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -753,7 +757,8 @@ val presentationModule = module {
             addAssetsUseCase = get(),
             removeAssetUseCase = get(),
             songRepository = get(),
-            effectSetRepository = get()
+            effectSetRepository = get(),
+            adsLoaderService = get()
         )
     }
 
@@ -780,7 +785,8 @@ val presentationModule = module {
             observeLikedTemplatesUseCase = get(),
             likeSongUseCase = get(),
             unlikeSongUseCase = get(),
-            unlikeTemplateUseCase = get()
+            unlikeTemplateUseCase = get(),
+            adsLoaderService = get()
         )
     }
 

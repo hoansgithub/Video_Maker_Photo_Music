@@ -60,7 +60,11 @@ class EffectSetViewModel(
     private val _showWatchAdDialog = MutableStateFlow(false)
     val showWatchAdDialog: StateFlow<Boolean> = _showWatchAdDialog.asStateFlow()
 
-    // Effect set waiting to be unlocked (UI will handle ad presentation)
+    // Effect set selected for dialog (NOT for ad trigger)
+    private val _selectedEffectSetForDialog = MutableStateFlow<EffectSet?>(null)
+    val selectedEffectSetForDialog: StateFlow<EffectSet?> = _selectedEffectSetForDialog.asStateFlow()
+
+    // Effect set waiting to be unlocked (triggers ad presentation in UI - only set after user confirms)
     private val _pendingUnlockEffectSet = MutableStateFlow<EffectSet?>(null)
     val pendingUnlockEffectSet: StateFlow<EffectSet?> = _pendingUnlockEffectSet.asStateFlow()
 
@@ -108,8 +112,19 @@ class EffectSetViewModel(
             // Unlocked - proceed with selection
             onUnlockedEffectSetSelected(effectSet)
         } else {
-            // Locked - show watch ad dialog
-            _pendingUnlockEffectSet.value = effectSet
+            // Locked - check if ad is enabled
+            if (!adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_EFFECT_SET)) {
+                // Ad disabled - unlock for free and proceed
+                android.util.Log.d("EffectSetViewModel", "⏭️ Ad disabled for effect set unlock - unlocking for free")
+                viewModelScope.launch {
+                    unlockedEffectSetsManager.unlockEffectSet(effectSet.id)
+                    onUnlockedEffectSetSelected(effectSet)
+                }
+                return
+            }
+
+            // Ad enabled - show watch ad dialog (but don't trigger ad yet)
+            _selectedEffectSetForDialog.value = effectSet
             _showWatchAdDialog.value = true
         }
     }
@@ -119,16 +134,19 @@ class EffectSetViewModel(
      */
     fun onWatchAdDialogDismiss() {
         _showWatchAdDialog.value = false
-        _pendingUnlockEffectSet.value = null
+        _selectedEffectSetForDialog.value = null
+        // Don't set pendingUnlockEffectSet - user cancelled
     }
 
     /**
      * User confirmed watching ad (clicked "Watch Ad")
-     * UI layer will handle ad presentation after this
+     * Move selected effect set to pending to trigger ad presentation
      */
     fun onWatchAdConfirmed() {
         _showWatchAdDialog.value = false
-        // pendingUnlockEffectSet remains set - UI will use it to show ad
+        // Transfer from dialog state to pending state - this triggers LaunchedEffect
+        _pendingUnlockEffectSet.value = _selectedEffectSetForDialog.value
+        _selectedEffectSetForDialog.value = null
     }
 
     /**

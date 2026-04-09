@@ -93,7 +93,8 @@ class EditorViewModel(
     private val addAssetsUseCase: AddAssetsUseCase,
     private val removeAssetUseCase: RemoveAssetUseCase,
     private val songRepository: SongRepository,
-    private val effectSetRepository: EffectSetRepository
+    private val effectSetRepository: EffectSetRepository,
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<EditorUiState>(EditorUiState.Loading)
@@ -106,6 +107,23 @@ class EditorViewModel(
     // Music Trimmer State — modal bottom sheet with isolated music player
     private val _musicTrimmerState = MutableStateFlow<MusicTrimmerState>(MusicTrimmerState.Closed)
     val musicTrimmerState: StateFlow<MusicTrimmerState> = _musicTrimmerState.asStateFlow()
+
+    // Quality unlock state — session-based (reset when ViewModel cleared)
+    // 720p and 1080p require watching rewarded ad to unlock
+    private val _isQualityUnlocked = MutableStateFlow(false)
+    val isQualityUnlocked: StateFlow<Boolean> = _isQualityUnlocked.asStateFlow()
+
+    // Watch ad dialog for quality unlock
+    private val _showQualityAdDialog = MutableStateFlow(false)
+    val showQualityAdDialog: StateFlow<Boolean> = _showQualityAdDialog.asStateFlow()
+
+    // Pending quality unlock (triggers ad presentation in UI)
+    private val _pendingQualityUnlock = MutableStateFlow(false)
+    val pendingQualityUnlock: StateFlow<Boolean> = _pendingQualityUnlock.asStateFlow()
+
+    // Error message for ad failures
+    private val _qualityAdError = MutableStateFlow<String?>(null)
+    val qualityAdError: StateFlow<String?> = _qualityAdError.asStateFlow()
 
     // Mutex for thread-safe trimmer operations (prevents race conditions)
     private val trimStateMutex = Mutex()
@@ -961,6 +979,93 @@ class EditorViewModel(
 
     fun navigateBack() {
         _navigationEvent.value = EditorNavigationEvent.NavigateBack
+    }
+
+    /**
+     * Check if selected quality requires ad unlock.
+     * 720p and 1080p are locked until user watches rewarded ad.
+     */
+    fun isQualityLocked(quality: VideoQuality): Boolean {
+        return (quality == VideoQuality.HD_720 || quality == VideoQuality.FHD_1080) && !_isQualityUnlocked.value
+    }
+
+    /**
+     * Handle Done button click.
+     * If quality is locked, show watch ad dialog.
+     * If unlocked, proceed to export.
+     */
+    fun onDoneClick() {
+        val currentState = _uiState.value
+        if (currentState !is EditorUiState.Success) return
+
+        if (isQualityLocked(currentState.selectedQuality)) {
+            // Quality locked - check if ad is enabled
+            if (!adsLoaderService.canLoadAd(com.videomaker.aimusic.core.constants.AdPlacement.REWARD_UNLOCK_QUALITY)) {
+                // Ad disabled - unlock quality for free and proceed
+                android.util.Log.d("EditorViewModel", "⏭️ Ad disabled for quality unlock - unlocking for free")
+                _isQualityUnlocked.value = true
+                navigateToExport()
+                return
+            }
+
+            // Ad enabled - show watch ad dialog
+            _showQualityAdDialog.value = true
+        } else {
+            // Quality unlocked or free - proceed to export
+            navigateToExport()
+        }
+    }
+
+    /**
+     * User dismissed quality ad dialog (clicked "Close")
+     */
+    fun onQualityAdDialogDismiss() {
+        _showQualityAdDialog.value = false
+        _pendingQualityUnlock.value = false
+    }
+
+    /**
+     * User confirmed watching ad (clicked "Watch Ad")
+     * Sets pending flag - UI layer will handle ad presentation
+     */
+    fun onQualityAdConfirmed() {
+        _showQualityAdDialog.value = false
+        _pendingQualityUnlock.value = true
+        // UI will detect pendingQualityUnlock and present ad
+    }
+
+    /**
+     * Called by UI after user earns reward from watching quality unlock ad.
+     * Unlocks quality for this session and proceeds to export.
+     */
+    fun onQualityRewardEarned() {
+        android.util.Log.d("EditorViewModel", "✅ User earned reward - unlocking quality for session")
+        _isQualityUnlocked.value = true
+        _pendingQualityUnlock.value = false
+        navigateToExport()
+    }
+
+    /**
+     * Called by UI when quality ad fails to load or user closes ad without watching.
+     */
+    fun onQualityAdFailed() {
+        android.util.Log.d("EditorViewModel", "❌ Quality ad failed or user cancelled")
+        _pendingQualityUnlock.value = false
+        // User stays in editor, can try again or select free quality
+    }
+
+    /**
+     * Show error message for quality ad (e.g., ad not available).
+     */
+    fun showQualityAdError(message: String) {
+        _qualityAdError.value = message
+    }
+
+    /**
+     * Clear quality ad error message after shown.
+     */
+    fun onQualityAdErrorShown() {
+        _qualityAdError.value = null
     }
 
     fun navigateToExport() {

@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.AdBadge
+import com.videomaker.aimusic.ui.components.AdBadgeStyle
 import com.videomaker.aimusic.ui.theme.BackgroundLight
 import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
@@ -68,28 +70,7 @@ fun WatermarkAdDialog(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // [AD] label badge
-            Box(
-                modifier = Modifier
-                    .background(
-                        color = BackgroundLight,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .border(
-                        width = 2.dp,
-                        color = BackgroundLight.copy(alpha = 0.5f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .padding(horizontal = 24.dp, vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "AD",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = SurfaceDark,
-                    letterSpacing = 4.sp
-                )
-            }
+            AdBadge(style = AdBadgeStyle.Large())
 
             Spacer(modifier = Modifier.height(24.dp))
 

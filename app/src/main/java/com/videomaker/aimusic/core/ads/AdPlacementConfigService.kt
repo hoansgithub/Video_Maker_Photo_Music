@@ -444,6 +444,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Rewarded ad for quality unlock (shown when user taps Done with 720p/1080p selected)
+        // User must watch full ad to unlock quality for current editor session only
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.REWARD_UNLOCK_QUALITY,
+            type = "reward",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9080595582",  // Primary
+                "ca-app-pub-7121075950716954/2706758926"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Rewarded ad for effect set unlock (shown when user clicks locked effect set)
         // User must watch full ad to earn reward (effect set unlock - stored locally)
         // Waterfall: Primary unit → Secondary unit
@@ -584,6 +597,19 @@ class AdPlacementConfigService(
      * @return Number of successfully registered placements
      */
     fun getExpectedPlacementCount(): Int = registrationCount.get()
+
+    /**
+     * Check if a placement is enabled
+     *
+     * Checks both Remote Config and local fallback config.
+     * Returns false if placement is not registered or explicitly disabled.
+     *
+     * @param placementId The placement ID to check
+     * @return true if placement is enabled, false otherwise
+     */
+    fun isPlacementEnabled(placementId: String): Boolean {
+        return placementConfigService.getConfig(placementId)?.enabled == true
+    }
 
     companion object {
         private const val TAG = "AdPlacementConfig"
