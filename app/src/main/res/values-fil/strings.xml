@@ -226,6 +226,10 @@
     <string name="export_error_share_failed">Hindi maibahagi ang video</string>
     <string name="export_try_another_templates">Subukan ang Iba Pang Template</string>
     <string name="export_templates_load_failed">Nabigo ang pag-load ng mga template</string>
+    <string name="export_watch_ad_title">Manood ng ad para mag-download?</string>
+    <string name="export_watch_ad_subtitle">Tulungan mo kaming panatilihing libre ang app na ito sa pamamagitan ng panonood ng maikling ad. Mag-download ang iyong video pagkatapos!</string>
+    <string name="export_watch_ad_button">Manood ng Ad</string>
+    <string name="export_watch_ad_close">Isara</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Pumili ng Larawan</string>

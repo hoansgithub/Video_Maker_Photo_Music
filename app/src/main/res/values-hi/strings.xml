@@ -228,6 +228,10 @@
     <string name="export_error_share_failed">वीडियो शेयर करने में विफल</string>
     <string name="export_try_another_templates">अन्य टेम्पलेट आज़माएं</string>
     <string name="export_templates_load_failed">टेम्पलेट लोड करने में विफल</string>
+    <string name="export_watch_ad_title">डाउनलोड करने के लिए एक विज्ञापन देखें?</string>
+    <string name="export_watch_ad_subtitle">एक छोटा विज्ञापन देखकर इस ऐप को मुफ़्त रखने में हमारी मदद करें। आपका वीडियो तुरंत बाद डाउनलोड हो जाएगा!</string>
+    <string name="export_watch_ad_button">विज्ञापन देखें</string>
+    <string name="export_watch_ad_close">बंद करें</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">अपनी छवि चुनें</string>

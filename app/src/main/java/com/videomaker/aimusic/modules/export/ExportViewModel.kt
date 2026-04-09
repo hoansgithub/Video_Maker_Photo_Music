@@ -1,10 +1,13 @@
 package com.videomaker.aimusic.modules.export
 
+import android.app.Activity
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
@@ -23,6 +26,7 @@ import com.videomaker.aimusic.media.export.MediaStoreHelper
 import com.videomaker.aimusic.modules.rate.RatingStep
 import com.videomaker.aimusic.ui.components.ProcessToastState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +34,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.io.File
 import java.util.UUID
 import kotlin.math.roundToInt
@@ -168,6 +173,13 @@ class ExportViewModel(
     // Save to gallery toast state
     private val _saveToastState = MutableStateFlow<ProcessToastState?>(null)
     val saveToastState: StateFlow<ProcessToastState?> = _saveToastState.asStateFlow()
+
+    // Watch ad dialog state for download
+    private val _showWatchAdDialog = MutableStateFlow(false)
+    val showWatchAdDialog: StateFlow<Boolean> = _showWatchAdDialog.asStateFlow()
+
+    // Pending download request - stored when user initiates download
+    private var pendingDownloadRequest: (() -> Unit)? = null
 
     // ============================================
     // RATING STATE
@@ -518,6 +530,133 @@ class ExportViewModel(
     }
 
     /**
+     * Called when user initiates download (clicks download button)
+     * Shows watch ad dialog immediately (exact flow as android-short-drama-app)
+     *
+     * @param applicationContext Application context for download
+     * @param loadingMessage Localized message for loading state
+     * @param successMessage Localized message for success state
+     * @param errorMessage Localized message for error state
+     */
+    fun onDownloadClick(
+        applicationContext: Context,
+        loadingMessage: String,
+        successMessage: String,
+        errorMessage: String
+    ) {
+        // Store pending download request
+        pendingDownloadRequest = {
+            saveToGallery(
+                applicationContext = applicationContext,
+                loadingMessage = loadingMessage,
+                successMessage = successMessage,
+                errorMessage = errorMessage
+            )
+        }
+
+        // Always show watch ad dialog (ad will load when user confirms)
+        android.util.Log.d("ExportViewModel", "🎁 Showing watch ad dialog")
+        _showWatchAdDialog.value = true
+    }
+
+    /**
+     * Called when user dismisses watch ad dialog (clicks "Close")
+     */
+    fun onWatchAdDialogDismiss() {
+        _showWatchAdDialog.value = false
+        pendingDownloadRequest = null
+    }
+
+    /**
+     * Called when user confirms watch ad (clicks "Watch Ad")
+     * Dismisses dialog and initiates rewarded ad loading/showing
+     */
+    fun onWatchAdConfirmed() {
+        _showWatchAdDialog.value = false
+    }
+
+    /**
+     * Execute pending download without ad (fallback for activity unavailable)
+     * Called from UI when activity context is not available
+     */
+    fun executePendingDownload() {
+        pendingDownloadRequest?.invoke()
+        pendingDownloadRequest = null
+    }
+
+    /**
+     * Show rewarded ad inline (drama app pattern)
+     * Called from UI after user confirms watching ad
+     *
+     * @param activity Activity context for showing the ad
+     */
+    fun showRewardedAd(activity: Activity) {
+        viewModelScope.launch {
+            try {
+                // Load reward ad if not already cached (show loading indicator while loading)
+                if (!adsLoaderService.isRewardedAdReady(AdPlacement.REWARD_DOWNLOAD_VIDEO)) {
+                    android.util.Log.d("ExportViewModel", "⏳ Loading rewarded ad...")
+
+                    // Show loading indicator (like drama app)
+                    AdsLoadingState.show("Loading ad...")
+
+                    // Load with 60 second timeout
+                    withTimeout(60_000) {
+                        adsLoaderService.loadRewarded(AdPlacement.REWARD_DOWNLOAD_VIDEO)
+                    }
+
+                    // Hide loading indicator before presenting ad
+                    AdsLoadingState.hide()
+                }
+
+                // Present reward ad and wait for result (blocking call)
+                val result = adsLoaderService.presentRewarded(
+                    placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+                    activity = activity
+                )
+
+                // Check if user earned the reward (watched full ad)
+                if (result.earnedReward) {
+                    android.util.Log.d("ExportViewModel", "✅ User earned reward - proceeding with download")
+                    // Execute pending download request
+                    pendingDownloadRequest?.invoke()
+                    pendingDownloadRequest = null
+                } else {
+                    android.util.Log.d("ExportViewModel", "❌ User did not earn reward (closed ad early)")
+                    // User closed ad without watching - clear pending request
+                    // User can click download button again to retry
+                    pendingDownloadRequest = null
+                }
+
+            } catch (e: TimeoutCancellationException) {
+                android.util.Log.w("ExportViewModel", "Ad load timeout - allowing direct download")
+                // Timeout loading ad - allow download anyway (per user requirement)
+                AdsLoadingState.hide()
+                pendingDownloadRequest?.invoke()
+                pendingDownloadRequest = null
+
+            } catch (e: AdsLoaderException.NoAdToShow) {
+                android.util.Log.w("ExportViewModel", "No ad available - allowing direct download")
+                // If no ad available, allow download anyway (per user requirement)
+                AdsLoadingState.hide()
+                pendingDownloadRequest?.invoke()
+                pendingDownloadRequest = null
+
+            } catch (e: Exception) {
+                android.util.Log.e("ExportViewModel", "Failed to show rewarded ad: ${e.message}")
+                // On error, allow download anyway (per user requirement)
+                AdsLoadingState.hide()
+                pendingDownloadRequest?.invoke()
+                pendingDownloadRequest = null
+
+            } finally {
+                // Ensure loading indicator is always hidden
+                AdsLoadingState.hide()
+            }
+        }
+    }
+
+    /**
      * Save the exported video to device gallery
      *
      * @param applicationContext Application context (NOT Activity context) - passed explicitly
@@ -526,7 +665,7 @@ class ExportViewModel(
      * @param successMessage Localized message for success state
      * @param errorMessage Localized message for error state
      */
-    fun saveToGallery(
+    private fun saveToGallery(
         applicationContext: Context,
         loadingMessage: String,
         successMessage: String,
@@ -572,6 +711,7 @@ class ExportViewModel(
             }
         }
     }
+
 }
 
 private fun AspectRatio.toAnalyticsRatioSize(): String = when (this) {

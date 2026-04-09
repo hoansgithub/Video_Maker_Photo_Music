@@ -96,6 +96,30 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.distinctUntilChanged
+import androidx.compose.runtime.Immutable
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.core.constants.AdPlacement
+
+// ============================================
+// STATION GRID ITEM (Song + Ad)
+// ============================================
+
+@Immutable
+private sealed class StationGridItem {
+    data class SongItem(val song: MusicSong) : StationGridItem()
+    data object AdItem : StationGridItem()
+}
+
+/**
+ * Stable key function for station grid items
+ */
+private fun stationItemKey(item: StationGridItem): String = when (item) {
+    is StationGridItem.SongItem -> "song_${item.song.id}"
+    is StationGridItem.AdItem -> "ad_native_station"
+}
+
+// Ad insertion position - 4th position (after 3rd song at index 2)
+private const val STATION_AD_INSERTION_INDEX = 3
 
 // ============================================
 // SONGS SCREEN
@@ -569,24 +593,58 @@ private fun StationSongsSection(
             }
         }
         is SectionState.Success -> {
+            // ✅ Build grid items list (songs + ad)
+            // Position: STATION_AD_INSERTION_INDEX (4th position), or last if < 3 songs
+            val gridItems = remember(state.data) {
+                buildList {
+                    if (state.data.size < STATION_AD_INSERTION_INDEX) {
+                        // Show ad at last position if < 3 songs
+                        state.data.forEach { add(StationGridItem.SongItem(it)) }
+                        add(StationGridItem.AdItem)
+                    } else {
+                        // Insert ad at STATION_AD_INSERTION_INDEX (after 3rd song at index 2)
+                        state.data.forEachIndexed { index, song ->
+                            add(StationGridItem.SongItem(song))
+                            if (index == STATION_AD_INSERTION_INDEX - 1) {
+                                add(StationGridItem.AdItem)
+                            }
+                        }
+                    }
+                }
+            }
+
             Column(modifier = modifier) {
-                state.data.forEach { song ->
-                    StationSongItem(
-                        song = song,
-                        screenSessionId = screenSessionId,
-                        onSongClick = {
-                            Analytics.trackSongClick(
-                                songId = song.id.toString(),
-                                songName = song.name,
-                                location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                gridItems.forEach { item ->
+                    when (item) {
+                        is StationGridItem.SongItem -> {
+                            StationSongItem(
+                                song = item.song,
+                                screenSessionId = screenSessionId,
+                                onSongClick = {
+                                    Analytics.trackSongClick(
+                                        songId = item.song.id.toString(),
+                                        songName = item.song.name,
+                                        location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                                    )
+                                    onSongClick(item.song)
+                                },
+                                modifier = Modifier.padding(
+                                    horizontal = dimens.spaceLg,
+                                    vertical = dimens.spaceXs
+                                )
                             )
-                            onSongClick(song)
-                        },
-                        modifier = Modifier.padding(
-                            horizontal = dimens.spaceLg,
-                            vertical = dimens.spaceXs
-                        )
-                    )
+                        }
+                        is StationGridItem.AdItem -> {
+                            // Native ad item (horizontal row, matches song items)
+                            NativeAdView(
+                                placement = AdPlacement.NATIVE_SONGS_STATION,
+                                modifier = Modifier.padding(
+                                    horizontal = dimens.spaceLg,
+                                    vertical = dimens.spaceXs
+                                )
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -621,7 +679,8 @@ private fun StationSongItem(
     onSongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LaunchedEffect(song.id, screenSessionId) {
+    // ✅ Track impression only once when song enters composition
+    LaunchedEffect(Unit) {
         Analytics.trackSongImpression(
             songId = song.id.toString(),
             songName = song.name,

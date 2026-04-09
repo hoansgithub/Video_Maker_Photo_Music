@@ -226,6 +226,10 @@
     <string name="export_error_share_failed">Erro ao compartilhar vídeo</string>
     <string name="export_try_another_templates">Experimente Outros Modelos</string>
     <string name="export_templates_load_failed">Falha ao carregar modelos</string>
+    <string name="export_watch_ad_title">Assistir a um anúncio para baixar?</string>
+    <string name="export_watch_ad_subtitle">Ajude-nos a manter este aplicativo gratuito assistindo a um breve anúncio. Seu vídeo será baixado logo em seguida!</string>
+    <string name="export_watch_ad_button">Assistir Anúncio</string>
+    <string name="export_watch_ad_close">Fechar</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Selecionar Fotos</string>

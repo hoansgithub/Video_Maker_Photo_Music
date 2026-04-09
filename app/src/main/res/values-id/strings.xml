@@ -226,6 +226,10 @@
     <string name="export_error_share_failed">Gagal membagikan video</string>
     <string name="export_try_another_templates">Coba Template Lain</string>
     <string name="export_templates_load_failed">Gagal memuat template</string>
+    <string name="export_watch_ad_title">Tonton iklan untuk mengunduh?</string>
+    <string name="export_watch_ad_subtitle">Bantu kami menjaga aplikasi ini gratis dengan menonton iklan singkat. Video Anda akan diunduh segera setelahnya!</string>
+    <string name="export_watch_ad_button">Tonton Iklan</string>
+    <string name="export_watch_ad_close">Tutup</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Pilih Foto</string>

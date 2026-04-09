@@ -383,6 +383,22 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Songs station native ad (shown as item in station songs list)
+        // In-feed placement that blends with song list items
+        // Position: 4th position (index 3), or last if < 3 items
+        // Persists through genre chip tag filtering
+        // Layout: native_small_row (horizontal row, matches song items)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_SONGS_STATION,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2788549787",  // Primary
+                "ca-app-pub-7121075950716954/1667039805"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Export generating native ad (shown during video export)
         // Displayed at bottom with "Generating" text and progress
         // 10s timeout + 2s display if ad loads

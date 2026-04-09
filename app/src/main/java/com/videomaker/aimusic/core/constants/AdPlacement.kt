@@ -378,6 +378,26 @@ object AdPlacement {
     const val NATIVE_GALLERY_GRID = "ad_native_gallery_grid"
 
     /**
+     * Native ad shown in songs tab station section (in-feed placement).
+     * Displayed as an item within the station songs vertical list.
+     * Position: 4th position (index 3), or last position if total items < 3.
+     * Persists through genre chip tag filtering.
+     *
+     * Layout: native_small_row (horizontal row, matches song list items)
+     * - Media view on left (ad creative)
+     * - Headline + body text in center
+     * - CTA button on right
+     * - Blends with song list items
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/2788549787
+     * - Secondary: ca-app-pub-7121075950716954/1667039805
+     *
+     * Remote Config key: ad_native_songs_station
+     */
+    const val NATIVE_SONGS_STATION = "ad_native_songs_station"
+
+    /**
      * Native ad shown during export video generating state.
      * Timing: Displayed at bottom of "Generating" overlay while video is being exported.
      * Waits 10 seconds for ad to load, then displays for 2 more seconds if loaded.
@@ -439,6 +459,7 @@ object AdPlacement {
         NATIVE_WIDGET_BOTTOM,
         NATIVE_PROJECTS_GRID,
         NATIVE_GALLERY_GRID,
+        NATIVE_SONGS_STATION,
         NATIVE_TEMPLATE_PREVIEWER_LOADING,
         NATIVE_EXPORT_GENERATING,
         REWARD_DOWNLOAD_VIDEO

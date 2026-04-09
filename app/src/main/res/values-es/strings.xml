@@ -226,6 +226,10 @@
     <string name="export_error_share_failed">Error al compartir video</string>
     <string name="export_try_another_templates">Prueba Otras Plantillas</string>
     <string name="export_templates_load_failed">Error al cargar plantillas</string>
+    <string name="export_watch_ad_title">¿Ver un anuncio para descargar?</string>
+    <string name="export_watch_ad_subtitle">Ayúdanos a mantener esta aplicación gratis viendo un breve anuncio. ¡Tu video se descargará justo después!</string>
+    <string name="export_watch_ad_button">Ver Anuncio</string>
+    <string name="export_watch_ad_close">Cerrar</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Seleccionar Fotos</string>

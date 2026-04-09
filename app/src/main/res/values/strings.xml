@@ -231,6 +231,10 @@
     <string name="export_error_share_failed">Failed to share video</string>
     <string name="export_try_another_templates">Try Another Templates</string>
     <string name="export_templates_load_failed">Failed to load templates</string>
+    <string name="export_watch_ad_title">Watch an ad to download?</string>
+    <string name="export_watch_ad_subtitle">Help us keep this app free by watching a short ad. Your video will download right after!</string>
+    <string name="export_watch_ad_button">Watch Ad</string>
+    <string name="export_watch_ad_close">Close</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Select your image</string>

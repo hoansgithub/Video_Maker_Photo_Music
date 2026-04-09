@@ -1,0 +1,18 @@
+{
+  "ad_reward_download_video": {
+    "enabled": true,
+    "type": "reward",
+    "units": [
+      {
+        "network": "admob",
+        "id": "ca-app-pub-7121075950716954/4051154821",
+        "enabled": true
+      },
+      {
+        "network": "admob",
+        "id": "ca-app-pub-7121075950716954/6681333380",
+        "enabled": true
+      }
+    ]
+  }
+}
