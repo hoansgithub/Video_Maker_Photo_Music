@@ -304,6 +304,42 @@ object AdPlacement {
     const val NATIVE_UNINSTALL_BOTTOM = "ad_native_uninstall_bottom"
 
     /**
+     * Native ad shown below the widget screen.
+     * Timing: Loaded when widget screen is displayed.
+     * Placement below widget content to maximize visibility.
+     *
+     * Layout: native_big_bait (412:304 ratio, 1.355:1)
+     * - Large vertical layout with clickbait CTA button
+     * - Attention-grabbing design for maximum engagement
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/7829628054
+     * - Secondary: ca-app-pub-7121075950716954/6101613417
+     *
+     * Remote Config key: ad_native_widget_bottom
+     */
+    const val NATIVE_WIDGET_BOTTOM = "ad_native_widget_bottom"
+
+    /**
+     * Native ad shown in created projects grid (in-feed placement).
+     * Displayed as an item within the staggered projects grid.
+     * Only loaded when at least 1 project exists (never shown on empty state).
+     *
+     * Layout: native_project_card (matches ProjectCard layout)
+     * - Media view at top (ad creative)
+     * - Icon + headline + CTA at bottom
+     * - Ad badge at top-right corner
+     * - Blends with project cards in staggered grid
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6293185105
+     * - Secondary: ca-app-pub-7121075950716954/6536223106
+     *
+     * Remote Config key: ad_native_projects_grid
+     */
+    const val NATIVE_PROJECTS_GRID = "ad_native_projects_grid"
+
+    /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
      */
@@ -324,6 +360,8 @@ object AdPlacement {
         NATIVE_ONBOARDING_FEATURE_SELECTION,
         NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
         NATIVE_SEARCH_INFEED,
-        NATIVE_UNINSTALL_BOTTOM
+        NATIVE_UNINSTALL_BOTTOM,
+        NATIVE_WIDGET_BOTTOM,
+        NATIVE_PROJECTS_GRID
     )
 }

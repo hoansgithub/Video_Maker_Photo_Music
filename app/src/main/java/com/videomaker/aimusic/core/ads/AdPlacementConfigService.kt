@@ -323,6 +323,35 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Widget screen native ad (shown below widget content)
+        // High-engagement placement for users exploring widgets
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_WIDGET_BOTTOM,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7829628054",  // Primary
+                "ca-app-pub-7121075950716954/6101613417"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Projects grid native ad (shown as item in staggered projects list)
+        // In-feed placement that blends with project cards
+        // Only loads when at least 1 project exists
+        // Layout: native_project_card (matches ProjectCard layout with media + info)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_PROJECTS_GRID,
+            layoutName = "native_project_card",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6293185105",  // Primary
+                "ca-app-pub-7121075950716954/6536223106"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }

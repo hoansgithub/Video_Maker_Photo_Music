@@ -166,10 +166,7 @@ internal fun WelcomePage(
             ) {
                 NativeAdView(
                     placement = adPlacement,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(vertical = 16.dp)
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
