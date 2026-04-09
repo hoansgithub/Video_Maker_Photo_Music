@@ -192,7 +192,14 @@ fun UnifiedSearchIdleContent(
                                     items(genres, key = { it.id }) { genre ->
                                         AppFilterChip(
                                             text = genre.displayName,
-                                            onClick = { onGenreClick(genre) }
+                                            onClick = {
+                                                Analytics.trackSongGenreClick(
+                                                    genreId = genre.id,
+                                                    genreName = genre.displayName,
+                                                    location = AnalyticsEvent.Value.Location.SEARCH
+                                                )
+                                                onGenreClick(genre)
+                                            }
                                         )
                                     }
                                 }
