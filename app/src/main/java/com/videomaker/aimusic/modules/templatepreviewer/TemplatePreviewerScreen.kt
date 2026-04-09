@@ -238,73 +238,7 @@ fun TemplatePreviewerScreen(
     // Real duration read from ExoPlayer after playback is ready — not from DB
     var playerDurationMs by remember { mutableStateOf<Long?>(null) }
 
-    DisposableEffect(Unit) {
-        onDispose { player.release() }
-    }
-
-    // Pause/resume on app background
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_STOP -> player.pause()
-                Lifecycle.Event.ON_START -> if (player.playbackState == Player.STATE_READY) player.play()
-                else -> Unit
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-
-    // Crossfade audio on song change.
-    // Loading state: keep current track playing while the next song is being fetched.
-    // Ready: fade out → swap track → fade in.
-    // None: fade out and stop.
-    // Error: show error overlay.
-    LaunchedEffect(currentSong) {
-        when (val state = currentSong) {
-            is SongLoadState.Loading -> {
-                songError = null // Clear any previous error
-            }
-
-            is SongLoadState.None -> {
-                playerDurationMs = null
-                fadeVolume(player, to = 0f)
-                player.stop()
-                songError = null
-            }
-
-            is SongLoadState.Error -> {
-                // Show error overlay with localized message
-                songError = context.getString(R.string.error_template_music_failed)
-                playerDurationMs = null
-                fadeVolume(player, to = 0f)
-                player.stop()
-            }
-
-            is SongLoadState.Ready -> {
-                songError = null // Clear any previous error
-                playerDurationMs = null  // clear stale duration until new track is ready
-                // Use full track (mp3Url) for consistency with Editor, not short preview clip
-                val url = state.song.mp3Url.ifEmpty { state.song.previewUrl }
-                if (url.isEmpty()) { player.stop(); return@LaunchedEffect }
-
-                fadeVolume(player, to = 0f)
-                player.setMediaItem(MediaItem.fromUri(url))
-                player.repeatMode = Player.REPEAT_MODE_ONE
-                player.prepare()
-                player.play()
-                if (awaitPlayerReady(player)) {
-                    val dur = player.duration
-                    playerDurationMs = if (dur != C.TIME_UNSET && dur > 0) dur else null
-                    fadeVolume(player, to = 1f)
-                } else {
-                    player.volume = 1f
-                }
-            }
-        }
-    }
-
-    // Track ad loading state
+    // Track ad loading state (declared early so it can be used in lifecycle observers)
     var adReady by remember { mutableStateOf(false) }
     var loadingAdComplete by remember { mutableStateOf(false) }
 
@@ -344,6 +278,84 @@ fun TemplatePreviewerScreen(
         }
 
         loadingAdComplete = true
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { player.release() }
+    }
+
+    // Pause/resume on app background
+    DisposableEffect(lifecycleOwner, loadingAdComplete) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_STOP -> player.pause()
+                Lifecycle.Event.ON_START -> {
+                    // Only resume playback after loading ad timing is complete
+                    if (loadingAdComplete && player.playbackState == Player.STATE_READY) {
+                        player.play()
+                    }
+                }
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Crossfade audio on song change.
+    // Loading state: keep current track playing while the next song is being fetched.
+    // Ready: fade out → swap track → fade in (ONLY after loading ad timing completes).
+    // None: fade out and stop.
+    // Error: show error overlay.
+    LaunchedEffect(currentSong, loadingAdComplete) {
+        when (val state = currentSong) {
+            is SongLoadState.Loading -> {
+                songError = null // Clear any previous error
+            }
+
+            is SongLoadState.None -> {
+                playerDurationMs = null
+                fadeVolume(player, to = 0f)
+                player.stop()
+                songError = null
+            }
+
+            is SongLoadState.Error -> {
+                // Show error overlay with localized message
+                songError = context.getString(R.string.error_template_music_failed)
+                playerDurationMs = null
+                fadeVolume(player, to = 0f)
+                player.stop()
+            }
+
+            is SongLoadState.Ready -> {
+                // Only start playing music after loading ad timing is complete
+                if (!loadingAdComplete) {
+                    android.util.Log.d("TemplatePreviewerMusic", "🎵 Song ready but waiting for ad timing to complete")
+                    return@LaunchedEffect
+                }
+
+                android.util.Log.d("TemplatePreviewerMusic", "🎵 Starting music playback (ad timing complete)")
+                songError = null // Clear any previous error
+                playerDurationMs = null  // clear stale duration until new track is ready
+                // Use full track (mp3Url) for consistency with Editor, not short preview clip
+                val url = state.song.mp3Url.ifEmpty { state.song.previewUrl }
+                if (url.isEmpty()) { player.stop(); return@LaunchedEffect }
+
+                fadeVolume(player, to = 0f)
+                player.setMediaItem(MediaItem.fromUri(url))
+                player.repeatMode = Player.REPEAT_MODE_ONE
+                player.prepare()
+                player.play()
+                if (awaitPlayerReady(player)) {
+                    val dur = player.duration
+                    playerDurationMs = if (dur != C.TIME_UNSET && dur > 0) dur else null
+                    fadeVolume(player, to = 1f)
+                } else {
+                    player.volume = 1f
+                }
+            }
+        }
     }
 
     when (val state = uiState) {

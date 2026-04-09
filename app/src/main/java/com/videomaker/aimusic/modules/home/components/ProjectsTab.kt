@@ -701,10 +701,10 @@ private fun ProjectsStaggeredGrid(
 
     // ✅ OPTIMIZED: Pre-calculate adjusted aspect ratios once when projects list changes
     // Info section needs ~40dp for: date+menu row (20dp) + padding (20dp)
-    // Ad has 9:16 aspect ratio (280dp media + ~148dp info = ~428dp total)
-    // For 180dp card width → 320dp height (9:16 ratio = 0.5625)
+    // Ad has 16:9 aspect ratio (101dp media + ~68dp info = ~169dp total)
+    // For 180dp card width → ~101dp height (16:9 ratio = 1.777)
     val infoSectionHeightDp = 40f
-    val adAspectRatio = 9f / 16f // 9:16 portrait ratio = 0.5625
+    val adAspectRatio = 16f / 9f // 16:9 landscape ratio = 1.777
 
     val aspectRatios = remember(gridItems) {
         gridItems.map { item ->
