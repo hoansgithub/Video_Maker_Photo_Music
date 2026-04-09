@@ -619,17 +619,17 @@ fun EditorScreen(
                 onVolumeChange = { volume ->
                     val initialVolume = initialVolumeOnSheetOpen ?: 1f
                     val changed = kotlin.math.abs(initialVolume - volume) > 0.001f
-                    if (changed && !hasVolumeChangedInSheet) {
-                        val videoId = currentVideoId()
-                        if (videoId != null) {
-                            Analytics.trackVolumeClick(
-                                videoId = videoId,
-                                volumeNumber = (volume * 100f).roundToInt()
-                            )
-                        }
-                        hasVolumeChangedInSheet = true
-                    }
+                    if (changed) hasVolumeChangedInSheet = true
                     viewModel.updateAudioVolume(volume)
+                },
+                onVolumeClick = { volume ->
+                    val videoId = currentVideoId()
+                    if (videoId != null) {
+                        Analytics.trackVolumeClick(
+                            videoId = videoId,
+                            volumeNumber = (volume * 100f).roundToInt()
+                        )
+                    }
                 },
                 onDismiss = {
                     val videoId = currentVideoId()
