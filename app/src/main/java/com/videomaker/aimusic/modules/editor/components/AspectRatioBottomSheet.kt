@@ -43,6 +43,7 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
 internal fun SelectRatioBottomSheet(
     currentRatio: AspectRatio,
     onDismiss: () -> Unit,
+    onRatioClick: (AspectRatio) -> Unit,
     onConfirm: (AspectRatio) -> Unit
 ) {
     var selected by remember { mutableStateOf(currentRatio) }
@@ -110,7 +111,10 @@ internal fun SelectRatioBottomSheet(
                     RatioOptionCard(
                         ratio = ratio,
                         isSelected = ratio == selected,
-                        onClick = { selected = ratio },
+                        onClick = {
+                            onRatioClick(ratio)
+                            selected = ratio
+                        },
                         modifier = Modifier.weight(1f)
                     )
                 }

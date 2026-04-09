@@ -39,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -53,6 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.ui.theme.CtaText
 import com.videomaker.aimusic.ui.theme.FoundationBlack
 import com.videomaker.aimusic.ui.theme.FoundationBlack_100
@@ -90,6 +93,11 @@ fun SettingsScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val reviewManager = remember(context) { ReviewManagerFactory.create(context) }
+    val settingLocation = AnalyticsEvent.Value.Location.UNKNOWN
+
+    LaunchedEffect(Unit) {
+        Analytics.trackSettingView(settingLocation)
+    }
 
     Scaffold(
         topBar = {
@@ -148,14 +156,24 @@ fun SettingsScreen(
                     title = stringResource(R.string.settings_language),
                     subtitle = "",
                     isShowLine = true,
-                    onClick = { onNavigateToLanguageSettings() }
+                    onClick = {
+                        Analytics.trackSettingOptionClick("language", settingLocation)
+                        onNavigateToLanguageSettings()
+                    }
                 )
                 SettingsItem(
                     icon = R.drawable.ic_menu_square,
                     title = stringResource(R.string.settings_app_widet),
                     subtitle = "",
                     isShowLine = true,
-                    onClick = { onNavigateToWidgetScreen.invoke() }
+                    onClick = {
+                        Analytics.trackSettingOptionClick("add_widget", settingLocation)
+                        Analytics.trackWidgetClick(
+                            entryPoint = "setting",
+                            location = settingLocation
+                        )
+                        onNavigateToWidgetScreen.invoke()
+                    }
                 )
                 SettingsItem(
                     icon = R.drawable.ic_rate,
@@ -163,6 +181,7 @@ fun SettingsScreen(
                     subtitle = "",
                     isShowLine = true,
                     onClick = {
+                        Analytics.trackSettingOptionClick("rate_us", settingLocation)
                         coroutineScope.launch {
                             try {
                                 val reviewInfo = reviewManager.requestReviewFlow().await()
@@ -191,6 +210,7 @@ fun SettingsScreen(
                     subtitle = "",
                     isShowLine = true,
                     onClick = {
+                        Analytics.trackSettingOptionClick("share_with_friends", settingLocation)
                         val packageUrl = "https://play.google.com/store/apps/details?id=${context.packageName}"
                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
@@ -208,6 +228,7 @@ fun SettingsScreen(
                     title = stringResource(R.string.settings_report),
                     subtitle = "",
                     onClick = {
+                        Analytics.trackSettingOptionClick("report", settingLocation)
                         try {
                             val intent = Intent(Intent.ACTION_SENDTO).apply {
                                 data = "mailto:$CONTACT_EMAIL".toUri()
@@ -239,6 +260,7 @@ fun SettingsScreen(
                     subtitle = "",
                     isShowLine = true,
                     onClick = {
+                        Analytics.trackSettingOptionClick("term_of_service", settingLocation)
                         try {
                             val intent = Intent(Intent.ACTION_VIEW, TERMS_OF_SERVICE_URL.toUri())
                             context.startActivity(intent)
@@ -252,6 +274,7 @@ fun SettingsScreen(
                     title = stringResource(R.string.settings_privacy_policy),
                     subtitle = "",
                     onClick = {
+                        Analytics.trackSettingOptionClick("privacy_policy", settingLocation)
                         try {
                             val intent = Intent(Intent.ACTION_VIEW, PRIVACY_POLICY_URL.toUri())
                             context.startActivity(intent)

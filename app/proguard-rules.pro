@@ -87,6 +87,32 @@
 # Keep custom GlEffect/GlShaderProgram subclasses — Media3 may load them by class name.
 -keep class com.videomaker.aimusic.media.effects.** { *; }
 
+# ========== ADMOB MEDIATION ADAPTERS ==========
+# Pangle (ByteDance/TikTok Audience Network)
+-keep class com.bytedance.sdk.** { *; }
+-keep class com.pgl.sys.ces.* { *; }
+-dontwarn com.bytedance.sdk.**
+
+# AppLovin MAX
+-keep class com.applovin.** { *; }
+-dontwarn com.applovin.**
+
+# Meta Audience Network (Facebook)
+# https://developers.facebook.com/docs/audience-network/setting-up/platform-setup/android/proguard
+-keep class com.facebook.ads.** { *; }
+-keep class com.google.ads.mediation.facebook.** { *; }
+-dontwarn com.facebook.ads.**
+
+# Liftoff Monetize (Vungle)
+-keep class com.vungle.** { *; }
+-keep class com.google.ads.mediation.vungle.** { *; }
+-dontwarn com.vungle.**
+
+# Mintegral
+-keep class com.mbridge.** { *; }
+-keep class com.google.ads.mediation.mintegral.** { *; }
+-dontwarn com.mbridge.**
+
 # ========== ACCDI (AlcheClub Custom DI) ==========
 # ACCDI resolves dependencies via reified inline functions (inlined at compile time).
 # Keep the public API and any annotation-driven injection points.

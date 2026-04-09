@@ -9,6 +9,10 @@ import android.os.Bundle
 import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.EditorInitialData
 import com.videomaker.aimusic.domain.repository.SongRepository
@@ -138,7 +142,18 @@ sealed class AssetPickerUiState {
  * Navigation events for Asset Picker
  */
 sealed class AssetPickerNavigationEvent {
+    /**
+     * Legacy back navigation (no ad check)
+     * Use RequestExitWithAd instead for ad support
+     */
     data object NavigateBack : AssetPickerNavigationEvent()
+
+    /**
+     * Request exit with optional ad
+     * @param shouldShowAd true if ad is ready and should be shown
+     */
+    data class RequestExitWithAd(val shouldShowAd: Boolean) : AssetPickerNavigationEvent()
+
     data class NavigateToEditor(val projectId: String) : AssetPickerNavigationEvent()
     /** NEW: Navigate to Editor with initial data (from template flow) */
     data class NavigateToEditorWithData(val initialData: EditorInitialData) : AssetPickerNavigationEvent()
@@ -168,6 +183,7 @@ class AssetPickerViewModel(
     private val addAssetsUseCase: AddAssetsUseCase,
     private val templateRepository: TemplateRepository,
     private val songRepository: SongRepository,
+    private val adsLoaderService: AdsLoaderService,
     private val projectId: String? = null, // null = create new project, non-null = add to existing
     private val templateId: String? = null,  // non-null = template mode, bypasses project creation
     private val overrideSongId: Long = -1L,   // >= 0 = song-to-video mode, overrides template song
@@ -252,6 +268,27 @@ class AssetPickerViewModel(
         // it's valid to have both overrideSongId and templateId:
         // - User picks a song → browses templates with that song → selects a template → picks images
         // The confirmSelection() method handles priority: overrideSongId takes priority over template's song
+
+        // Preload exit ad when screen launches (no timeout, non-blocking)
+        viewModelScope.launch {
+            android.util.Log.d("AssetPickerVM", "🎬 Preloading exit ad...")
+            runCatching {
+                InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = AdPlacement.INTERSTITIAL_ASSET_PICKER_EXIT,
+                    loadTimeoutMillis = null,  // No timeout - loads in background
+                    showLoadingOverlay = false
+                )
+            }.onSuccess { success ->
+                if (success) {
+                    android.util.Log.d("AssetPickerVM", "✅ Exit ad preload SUCCESS")
+                } else {
+                    android.util.Log.w("AssetPickerVM", "⚠️ Exit ad preload FAILED")
+                }
+            }.onFailure { e ->
+                android.util.Log.e("AssetPickerVM", "❌ Exit ad preload exception: ${e.message}", e)
+            }
+        }
     }
 
     // ============================================
@@ -548,15 +585,18 @@ class AssetPickerViewModel(
     fun toggleAssetSelection(asset: GalleryAsset) {
         val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
         val currentSelection = currentState.selectedAssets.toMutableList()
+        val wasSelected = currentSelection.contains(asset)
 
-        if (currentSelection.contains(asset)) {
+        if (wasSelected) {
             currentSelection.remove(asset)
+            Analytics.trackMediaUnselect()
         } else {
             if (currentSelection.size >= MAX_SELECTION) {
                 _messageEvent.value = "Maximum $MAX_SELECTION images can be selected"
                 return
             }
             currentSelection.add(asset)
+            Analytics.trackMediaSelect()
         }
 
         val updatedState = currentState.copyAssets(selectedAssets = currentSelection)
@@ -652,6 +692,7 @@ class AssetPickerViewModel(
     fun confirmSelection() {
         val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
         if (currentState.selectedAssets.size < minSelection) return
+        Analytics.trackMediaComplete(currentState.selectedAssets.size)
 
         viewModelScope.launch {
             val uris = currentState.selectedAssets.map { it.uri }
@@ -732,7 +773,14 @@ class AssetPickerViewModel(
      * Navigate back
      */
     fun navigateBack() {
-        _navigationEvent.value = AssetPickerNavigationEvent.NavigateBack
+        // Check if exit ad is ready (non-blocking)
+        val isAdReady = adsLoaderService.isInterstitialReady(AdPlacement.INTERSTITIAL_ASSET_PICKER_EXIT)
+
+        android.util.Log.d("AssetPickerVM", "🔙 navigateBack - Ad ready: $isAdReady")
+
+        // Send navigation event with ad status
+        // Screen will show ad if ready, otherwise navigate immediately
+        _navigationEvent.value = AssetPickerNavigationEvent.RequestExitWithAd(isAdReady)
     }
 
     /**

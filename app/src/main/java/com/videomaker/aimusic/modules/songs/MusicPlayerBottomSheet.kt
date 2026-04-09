@@ -66,6 +66,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.di.MusicPlayerViewModelFactory
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.ui.components.AppAsyncImage
@@ -94,6 +96,7 @@ import kotlinx.coroutines.delay
 fun MusicPlayerBottomSheet(
     song: MusicSong,
     cacheDataSourceFactory: CacheDataSource.Factory,
+    location: String = AnalyticsEvent.Value.Location.SONG_PREVIEW,
     onDismiss: () -> Unit,
     onUseToCreate: () -> Unit,
 ) {
@@ -121,6 +124,7 @@ fun MusicPlayerBottomSheet(
     var durationMs by remember { mutableIntStateOf((song.durationMs ?: 0).coerceAtLeast(1)) }
     var isSeeking  by remember { mutableStateOf(false) }
     var seekValue  by remember { mutableFloatStateOf(0f) }
+    var hasTrackedAutoPreview by remember(song.id) { mutableStateOf(false) }
 
     val context = LocalContext.current
     // Player is created once per sheet open and released on close.
@@ -154,6 +158,14 @@ fun MusicPlayerBottomSheet(
                         player.play()
                         isPlaying = true
                         isPrepared = true
+                        if (!hasTrackedAutoPreview) {
+                            Analytics.trackSongPreview(
+                                songId = song.id.toString(),
+                                songName = song.name,
+                                location = location
+                            )
+                            hasTrackedAutoPreview = true
+                        }
                     }
                     Player.STATE_ENDED -> {
                         isPlaying = false
@@ -297,7 +309,22 @@ fun MusicPlayerBottomSheet(
                             contentDescription = null,
                             modifier = Modifier
                                 .size(24.dp)
-                                .clickableSingle{ viewModel.toggleLike(song) }
+                                .clickableSingle{
+                                    if (isLiked) {
+                                        Analytics.trackSongUnfavorite(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = location
+                                        )
+                                    } else {
+                                        Analytics.trackSongFavorite(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = location
+                                        )
+                                    }
+                                    viewModel.toggleLike(song)
+                                }
                         )
                     }
 
@@ -334,13 +361,32 @@ fun MusicPlayerBottomSheet(
                             IconButton(
                                 onClick = {
                                     when {
-                                        player.isPlaying -> player.pause()
+                                        player.isPlaying -> {
+                                            player.pause()
+                                            Analytics.trackSongPause(
+                                                songId = song.id.toString(),
+                                                songName = song.name,
+                                                location = location
+                                            )
+                                        }
                                         player.playbackState == Player.STATE_ENDED -> {
                                             player.seekTo(0)
                                             currentMs = 0
                                             player.play()
+                                            Analytics.trackSongPlay(
+                                                songId = song.id.toString(),
+                                                songName = song.name,
+                                                location = location
+                                            )
                                         }
-                                        else -> player.play()
+                                        else -> {
+                                            player.play()
+                                            Analytics.trackSongPlay(
+                                                songId = song.id.toString(),
+                                                songName = song.name,
+                                                location = location
+                                            )
+                                        }
                                     }
                                 },
                                 modifier = Modifier
@@ -432,7 +478,15 @@ fun MusicPlayerBottomSheet(
                     .height(56.dp)
                     .clip(RoundedCornerShape(50))
                     .background(Primary)
-                    .clickableSingle(onClick = onUseToCreate)
+                    .clickableSingle(onClick = {
+                        Analytics.trackSongSelect(
+                            songId = song.id.toString(),
+                            songName = song.name,
+                            location = location
+                        )
+                        Analytics.trackCreationStart(AnalyticsEvent.Value.Location.SONG)
+                        onUseToCreate()
+                    })
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

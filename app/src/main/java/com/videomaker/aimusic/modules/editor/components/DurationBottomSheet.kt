@@ -44,6 +44,7 @@ import com.videomaker.aimusic.ui.theme.TextSecondary
 internal fun DurationBottomSheet(
     currentDurationMs: Long,
     onDismiss: () -> Unit,
+    onDurationClick: (Long) -> Unit,
     onConfirm: (Long) -> Unit
 ) {
     // Duration range: 1.0s to 10.0s with 0.1s steps
@@ -132,6 +133,10 @@ internal fun DurationBottomSheet(
                         // Round to nearest 0.1s step for clean values
                         selectedSeconds = (kotlin.math.round(value / step) * step)
                             .coerceIn(minSeconds, maxSeconds)
+                    },
+                    onValueChangeFinished = {
+                        val selectedDuration = (selectedSeconds * 1000).toLong()
+                        onDurationClick(selectedDuration)
                     },
                     valueRange = minSeconds..maxSeconds,
                     colors = SliderDefaults.colors(

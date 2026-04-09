@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Native Ad Layout: Big Row (1.5x taller than Small Row)
+- Horizontal list layout
+- Logo icon on left (120dp width, 150dp height)
+- Content on right (title, body, CTA)
+- Dark background for ad distinction
+- Amber ad badge for disclosure
+- Use case: Featured in-feed placement with more prominence
+- 1.5x scale: More space for content, larger icon, bigger CTA button
+-->
+<com.google.android.gms.ads.nativead.NativeAdView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/foundation_black"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
+
+    <!-- Horizontal layout: Logo on left, Content on right -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:minHeight="150dp">
+
+        <!-- Logo container with Ad Badge overlay (left side - fixed 120dp width) -->
+        <FrameLayout
+            android:layout_width="120dp"
+            android:layout_height="150dp"
+            android:layout_marginEnd="18dp"
+            android:background="@color/foundation_black">
+
+            <!-- App Icon/Logo centered (1.5x larger) -->
+            <ImageView
+                android:id="@+id/ad_icon"
+                android:layout_width="84dp"
+                android:layout_height="84dp"
+                android:layout_gravity="center"
+                android:scaleType="fitCenter"
+                android:contentDescription="@string/ad_icon" />
+
+            <!-- Ad Badge overlay at top-left -->
+            <TextView
+                android:id="@+id/ad_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|start"
+                android:text="@string/ad_badge"
+                android:textSize="9sp"
+                android:textColor="@color/foundation_black"
+                android:textStyle="bold"
+                android:background="@drawable/bg_ad_badge"
+                android:paddingHorizontal="5dp"
+                android:paddingVertical="2dp"
+                android:layout_margin="4dp" />
+        </FrameLayout>
+
+        <!-- Content area (right side - remaining space) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center_vertical"
+            android:orientation="vertical"
+            android:paddingVertical="6dp">
+
+            <!-- Top row: Title and CTA button -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="9dp">
+
+                <!-- Title/Headline (takes remaining space on left, larger text, more lines) -->
+                <TextView
+                    android:id="@+id/ad_headline"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="16sp"
+                    android:textColor="@color/foundation_white"
+                    android:textStyle="normal"
+                    android:fontFamily="sans-serif-medium"
+                    android:maxLines="3"
+                    android:ellipsize="end"
+                    android:lineSpacingMultiplier="1.2"
+                    android:layout_marginEnd="8dp" />
+
+                <!-- CTA Button (bigger, on the right) -->
+                <TextView
+                    android:id="@+id/ad_call_to_action"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:gravity="center"
+                    android:textSize="15sp"
+                    android:textColor="@color/foundation_black"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_cta_clean"
+                    android:paddingHorizontal="20dp"
+                    android:minWidth="90dp" />
+            </LinearLayout>
+
+            <!-- Body text (subtle, can show 2 lines) -->
+            <TextView
+                android:id="@+id/ad_body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="@color/foundation_white_60"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <!-- Optional: Advertiser name (hidden if not provided) -->
+            <TextView
+                android:id="@+id/ad_advertiser"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="9sp"
+                android:textColor="@color/foundation_white_40"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:visibility="gone" />
+
+            <!-- Optional: Store name (hidden if not provided) -->
+            <TextView
+                android:id="@+id/ad_store"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="9sp"
+                android:textColor="@color/foundation_white_40"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- AdChoices overlay at top-right of entire ad -->
+    <FrameLayout
+        android:id="@+id/ad_choices_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:padding="4dp" />
+</com.google.android.gms.ads.nativead.NativeAdView>

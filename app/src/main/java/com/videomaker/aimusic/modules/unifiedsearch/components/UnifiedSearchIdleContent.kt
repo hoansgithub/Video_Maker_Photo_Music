@@ -19,13 +19,19 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.domain.model.VibeTag
@@ -40,6 +46,7 @@ import com.videomaker.aimusic.ui.theme.TextTertiary
 
 @Composable
 fun UnifiedSearchIdleContent(
+    screenSessionId: String,
     initialSection: SearchSection,
     recentSearches: List<String>,
     suggestionVibeTags: List<VibeTag>,
@@ -56,7 +63,7 @@ fun UnifiedSearchIdleContent(
     onVibeTagClick: (VibeTag) -> Unit,
     onGenreClick: (SongGenre) -> Unit,
     onTemplateClick: (String) -> Unit,
-    onSongClick: (MusicSong) -> Unit,
+    onSongClick: (MusicSong, String) -> Unit,
     onSeeMoreTemplates: () -> Unit,
     onSeeMoreSongs: () -> Unit
 ) {
@@ -67,9 +74,27 @@ fun UnifiedSearchIdleContent(
             .fillMaxWidth(),
         contentPadding = PaddingValues(vertical = dimens.spaceMd)
     ) {
+        // Space for overlaying search bar
         item {
             Spacer(Modifier.height(100.dp))
         }
+
+        // Native ad - right after search bar space
+        item {
+            key(AdPlacement.NATIVE_SEARCH_INFEED) {
+                android.util.Log.d("UnifiedSearch", "🔵 Composing NativeAdView (Idle)")
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_SEARCH_INFEED,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        // Spacing after ad
+        item {
+            Spacer(Modifier.height(dimens.spaceMd))
+        }
+
         if (recentSearches.isNotEmpty()) {
             item(key = "recent_header") {
                 Row(
@@ -130,7 +155,14 @@ fun UnifiedSearchIdleContent(
                                     items(suggestionVibeTags, key = { it.id }) { tag ->
                                         AppFilterChip(
                                             text = if (tag.emoji.isNotEmpty()) "${tag.emoji} ${tag.displayName}" else tag.displayName,
-                                            onClick = { onVibeTagClick(tag) }
+                                            onClick = {
+                                                Analytics.trackTemplateGenreClick(
+                                                    genreId = tag.id,
+                                                    genreName = tag.displayName,
+                                                    location = AnalyticsEvent.Value.Location.SEARCH
+                                                )
+                                                onVibeTagClick(tag)
+                                            }
                                         )
                                     }
                                 }
@@ -181,7 +213,14 @@ fun UnifiedSearchIdleContent(
                                     items(genres, key = { it.id }) { genre ->
                                         AppFilterChip(
                                             text = genre.displayName,
-                                            onClick = { onGenreClick(genre) }
+                                            onClick = {
+                                                Analytics.trackSongGenreClick(
+                                                    genreId = genre.id,
+                                                    genreName = genre.displayName,
+                                                    location = AnalyticsEvent.Value.Location.SEARCH
+                                                )
+                                                onGenreClick(genre)
+                                            }
                                         )
                                     }
                                 }
@@ -193,11 +232,26 @@ fun UnifiedSearchIdleContent(
                             UnifiedSectionHeader(text = stringResource(R.string.search_music_suggestion))
                         }
                         items(suggestedSongs, key = { "suggested_${it.id}" }) { song ->
+                            LaunchedEffect(song.id, screenSessionId) {
+                                Analytics.trackSongImpression(
+                                    songId = song.id.toString(),
+                                    songName = song.name,
+                                    location = AnalyticsEvent.Value.Location.SEARCH_RCM,
+                                    screenSessionId = screenSessionId
+                                )
+                            }
                             SongListItem(
                                 name = song.name,
                                 artist = song.artist,
                                 coverUrl = song.coverUrl,
-                                onSongClick = { onSongClick(song) }
+                                onSongClick = {
+                                    Analytics.trackSongClick(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                    )
+                                    onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RCM)
+                                }
                             )
                         }
 

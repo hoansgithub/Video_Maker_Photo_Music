@@ -34,6 +34,11 @@
     <string name="root_no_internet_title">Sem conexão com a Internet</string>
     <string name="root_no_internet_message">Seu dispositivo está offline no momento. Reconecte-se para continuar seu progresso.</string>
     <string name="root_try_again">Tentar Novamente</string>
+    <string name="root_loading_initializing">Inicializando...</string>
+    <string name="root_loading_fetching_config">Carregando configuração...</string>
+    <string name="root_loading_ad">Isto pode conter anúncios</string>
+    <string name="root_loading_checking_status">Verificando status...</string>
+    <string name="root_loading_preparing">Preparando...</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galeria</string>
@@ -221,6 +226,14 @@
     <string name="export_error_share_failed">Erro ao compartilhar vídeo</string>
     <string name="export_try_another_templates">Experimente Outros Modelos</string>
     <string name="export_templates_load_failed">Falha ao carregar modelos</string>
+    <string name="export_watch_ad_title">Assistir a um anúncio para baixar?</string>
+    <string name="export_watch_ad_subtitle">Ajude-nos a manter este aplicativo gratuito assistindo a um breve anúncio. Seu vídeo será baixado logo em seguida!</string>
+    <string name="export_watch_ad_button">Assistir Anúncio</string>
+    <string name="export_watch_ad_close">Fechar</string>
+    <string name="export_watermark_remove_title">Remover marca d\'água?</string>
+    <string name="export_watermark_remove_subtitle">Assista a um breve anúncio para remover a marca d\'água da sua prévia de vídeo.</string>
+    <string name="export_watermark_remove_button">Assistir Anúncio</string>
+    <string name="export_watermark_remove_close">Fechar</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Selecionar Fotos</string>
@@ -340,6 +353,7 @@
     <!-- Error states -->
     <string name="error_load_failed">Falha ao carregar. Puxe para baixo para tentar novamente.</string>
     <string name="error_network_title">Erro de Rede</string>
+    <string name="loading_building_feed">Construindo seu Feed</string>
     <string name="error_network_message">Falha ao carregar música. Verifique sua conexão e tente novamente.</string>
     <string name="error_network_timeout">Tempo limite de rede. Verifique sua conexão e tente novamente.</string>
     <string name="error_preview_title">Erro de Visualização</string>
@@ -460,5 +474,16 @@
     <string name="rating_feedback_reason_performance">O app está lento ou trava com frequência</string>
     <string name="rating_feedback_reason_templates">Não há modelos suficientes / atualizações de conteúdo</string>
     <string name="rating_feedback_reason_other">Outro</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">Anúncio</string>
+    <string name="ad_icon">Ícone de anúncio</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">Assistir a um anúncio para desbloquear este efeito?</string>
+    <string name="effect_set_watch_ad_subtitle">Desbloqueie este conjunto de efeitos permanentemente assistindo a um anúncio curto</string>
+    <string name="effect_set_ad_not_available">Anúncio não disponível agora. Tente novamente mais tarde.</string>
+    <string name="effect_set_locked">Conjunto de efeitos bloqueado</string>
+    <string name="ad_not_available">Anúncio não disponível agora. Tente novamente mais tarde.</string>
 
 </resources>

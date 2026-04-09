@@ -25,6 +25,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +35,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -45,12 +50,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.ui.components.PageIndicatorCircle
-import com.videomaker.aimusic.ui.components.PrimaryButtonNeon
 import com.videomaker.aimusic.ui.theme.CtaText
+import com.videomaker.aimusic.ui.theme.Neutral_N100
+import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.widget.appwidget.SmartSearchAppWidget
 import com.videomaker.aimusic.widget.appwidget.SmartSearchWidgetReceiver
 import com.videomaker.aimusic.widget.appwidget.TrendingSongAppWidget
@@ -124,6 +134,27 @@ fun WidgetScreen(
     // Pager state
     val widgetTypes = WidgetType.entries
     val pagerState = rememberPagerState(pageCount = { widgetTypes.size })
+    var lastSettledPage by remember { mutableIntStateOf(pagerState.settledPage) }
+
+    LaunchedEffect(Unit) {
+        val initialType = widgetTypes[pagerState.currentPage]
+        Analytics.trackWidgetView(
+            widgetType = initialType.analyticsType(),
+            widgetSize = WIDGET_ANALYTICS_SIZE
+        )
+    }
+
+    LaunchedEffect(pagerState.settledPage) {
+        val currentPage = pagerState.settledPage
+        if (currentPage != lastSettledPage) {
+            val currentType = widgetTypes[currentPage]
+            Analytics.trackWidgetSelect(
+                widgetType = currentType.analyticsType(),
+                widgetSize = WIDGET_ANALYTICS_SIZE
+            )
+            lastSettledPage = currentPage
+        }
+    }
 
 
     Column(
@@ -248,16 +279,47 @@ fun WidgetScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Add Widget Button - pins the current widget to home screen
-            PrimaryButtonNeon(
-                text = stringResource(R.string.widget_bts)
+            Button(
+                onClick = {
+                    val widgetType = widgetTypes[pagerState.currentPage]
+                    Analytics.trackWidgetAdd(
+                        widgetType = widgetType.analyticsType(),
+                        widgetSize = WIDGET_ANALYTICS_SIZE
+                    )
+                    viewModel.onAddWidgetClick(widgetType)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Primary
+                )
             ) {
-                val widgetType = widgetTypes[pagerState.currentPage]
-                viewModel.onAddWidgetClick(widgetType)
+                Text(
+                    text = stringResource(R.string.widget_bts),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.W500,
+                    color = Neutral_N100,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Native Ad at bottom (auto height - TOP PRIORITY)
+            NativeAdView(
+                placement = AdPlacement.NATIVE_WIDGET_BOTTOM,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
+}
+
+private const val WIDGET_ANALYTICS_SIZE = "4x3"
+
+private fun WidgetType.analyticsType(): String = when (this) {
+    WidgetType.SEARCH -> "smart_search"
+    WidgetType.TEMPLATE -> "recently"
+    WidgetType.SONG -> "trending_song"
 }
 
 /**

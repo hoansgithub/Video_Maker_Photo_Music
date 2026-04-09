@@ -19,11 +19,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,9 +49,25 @@ fun UnifiedSearchEmptyContent(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = dimens.spaceMd)
     ) {
-
+        // Space for overlaying search bar
         item {
             Spacer(Modifier.height(100.dp))
+        }
+
+        // Native ad - right after search bar space
+        item {
+            key(AdPlacement.NATIVE_SEARCH_INFEED) {
+                android.util.Log.d("UnifiedSearch", "🔵 Composing NativeAdView (Empty)")
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_SEARCH_INFEED,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        // Spacing after ad
+        item {
+            Spacer(Modifier.height(dimens.spaceMd))
         }
 
         item(key = "empty_message") {

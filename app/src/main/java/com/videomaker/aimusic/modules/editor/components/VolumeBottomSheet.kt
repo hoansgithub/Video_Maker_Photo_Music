@@ -42,6 +42,7 @@ import com.videomaker.aimusic.ui.theme.TextSecondary
 fun VolumeBottomSheet(
     currentVolume: Float,
     onVolumeChange: (Float) -> Unit,
+    onVolumeClick: (Float) -> Unit,
     onDismiss: () -> Unit
 ) {
     var volumeValue by remember { mutableFloatStateOf(currentVolume) }
@@ -88,6 +89,9 @@ fun VolumeBottomSheet(
                     onValueChange = { newValue ->
                         volumeValue = newValue
                         onVolumeChange(newValue) // Live update
+                    },
+                    onValueChangeFinished = {
+                        onVolumeClick(volumeValue)
                     },
                     valueRange = 0f..1f,
                     colors = SliderDefaults.colors(

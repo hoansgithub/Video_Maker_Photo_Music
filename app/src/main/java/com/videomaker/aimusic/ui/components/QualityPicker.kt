@@ -39,11 +39,14 @@ import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 /**
  * Reusable Quality Picker Component
  *
- * Displays a dropdown button showing the current video quality with an HD badge for 1080p.
+ * Displays a dropdown button showing the current video quality with badges:
+ * - HD badge for 1080p
+ * - [AD] badge for locked qualities (720p/1080p when not unlocked)
  * Used in both Editor and Export screens for consistent UI.
  *
  * @param selectedQuality Currently selected video quality
  * @param onQualityChange Callback when user selects a different quality
+ * @param isQualityUnlocked Whether high quality (720p/1080p) is unlocked for this session
  * @param modifier Optional modifier for the component
  * @param buttonColor Background color for the quality button
  * @param textColor Text color for the quality button
@@ -52,6 +55,8 @@ import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 fun QualityPicker(
     selectedQuality: VideoQuality,
     onQualityChange: (VideoQuality) -> Unit,
+    isQualityUnlocked: Boolean = true,
+    onMenuOpen: () -> Unit = {},
     modifier: Modifier = Modifier,
     buttonColor: Color = Color(0x1FFFFFFF),
     textColor: Color = Color.White
@@ -66,7 +71,10 @@ fun QualityPicker(
                     color = buttonColor,
                     shape = RoundedCornerShape(16.dp)
                 )
-                .clickableSingle { showQualityMenu = true }
+                .clickableSingle {
+                    onMenuOpen()
+                    showQualityMenu = true
+                }
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
@@ -82,6 +90,17 @@ fun QualityPicker(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold
             )
+            // [AD] badge for locked qualities (720p/1080p)
+            val isLocked = (selectedQuality == VideoQuality.HD_720 || selectedQuality == VideoQuality.FHD_1080) && !isQualityUnlocked
+            if (isLocked) {
+                Spacer(modifier = Modifier.width(6.dp))
+                AdBadge(
+                    style = AdBadgeStyle.Small(
+                        textColor = textColor,
+                        backgroundColor = textColor.copy(alpha = 0.2f)
+                    )
+                )
+            }
             Spacer(modifier = Modifier.width(4.dp))
             Icon(
                 imageVector = Icons.Default.ArrowDropDown,
@@ -97,6 +116,7 @@ fun QualityPicker(
             onDismissRequest = { showQualityMenu = false }
         ) {
             VideoQuality.entries.forEach { quality ->
+                val isQualityLocked = (quality == VideoQuality.HD_720 || quality == VideoQuality.FHD_1080) && !isQualityUnlocked
                 DropdownMenuItem(
                     text = {
                         Row(
@@ -118,6 +138,15 @@ fun QualityPicker(
                                 },
                                 textAlign = TextAlign.End
                             )
+                            // [AD] badge for locked qualities
+                            if (isQualityLocked) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                AdBadge(
+                                    style = AdBadgeStyle.Small(
+                                        textColor = MaterialTheme.colorScheme.onSurface
+                                    )
+                                )
+                            }
                         }
                     },
                     onClick = {

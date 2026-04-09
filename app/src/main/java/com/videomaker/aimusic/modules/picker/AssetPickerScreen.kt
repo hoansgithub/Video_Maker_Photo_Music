@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.picker
 
+import android.app.Activity
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,6 +11,10 @@ import android.provider.Settings
 import androidx.core.content.FileProvider
 import java.io.File
 import androidx.activity.compose.BackHandler
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.constants.AdPlacement
+import org.koin.compose.koinInject
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -92,6 +97,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -170,10 +177,17 @@ fun AssetPickerScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Get dependencies for ad showing
+    val activity = context as? Activity
+    val adsLoaderService = koinInject<AdsLoaderService>()
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridScrollState by viewModel.gridScrollState.collectAsStateWithLifecycle()
     var hasInitializedPermissionCheck by remember { mutableStateOf(false) }
     var showExitConfirmDialog by remember { mutableStateOf(false) }
+    var hasTrackedMediaRender by remember { mutableStateOf(false) }
+    var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
 
     // Show bottom sheet immediately for smooth transition
     var showBottomSheet by remember { mutableStateOf(true) }
@@ -204,6 +218,14 @@ fun AssetPickerScreen(
         val fullGranted = result[Manifest.permission.READ_MEDIA_IMAGES] == true ||
             result[Manifest.permission.READ_EXTERNAL_STORAGE] == true
         val limitedGranted = result[Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED] == true
+        val allow = fullGranted || limitedGranted
+        Analytics.trackPermissionClick(
+            button = if (allow) {
+                AnalyticsEvent.Value.Option.ALLOW
+            } else {
+                AnalyticsEvent.Value.Option.NO_ALLOW
+            }
+        )
         viewModel.onPermissionSnapshot(
             snapshot = PermissionSnapshot(
                 fullGranted = fullGranted,
@@ -215,6 +237,7 @@ fun AssetPickerScreen(
 
     LaunchedEffect(permissionLauncher) {
         viewModel.permissionRequestEvent.collect {
+            Analytics.trackPermissionRender()
             permissionLauncher.launch(permissionsToRequest)
         }
     }
@@ -225,6 +248,37 @@ fun AssetPickerScreen(
         navigationEvent?.let { event ->
             when (event) {
                 is AssetPickerNavigationEvent.NavigateBack -> onNavigateBack()
+
+                is AssetPickerNavigationEvent.RequestExitWithAd -> {
+                    // Show ad if ready, otherwise navigate immediately (non-blocking)
+                    if (event.shouldShowAd && activity != null) {
+                        android.util.Log.d("AssetPickerScreen", "📺 Showing exit ad...")
+
+                        InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = AdPlacement.INTERSTITIAL_ASSET_PICKER_EXIT,
+                            action = {
+                                // Ad closed - navigate
+                                android.util.Log.d("AssetPickerScreen", "✅ Exit ad closed - navigating")
+                            },
+                            onShown = {
+                                // Navigate immediately when ad shows (parallel)
+                                android.util.Log.d("AssetPickerScreen", "🎬 Exit ad shown - navigating")
+                                onNavigateBack()
+                            },
+                            bypassFrequencyCap = true,  // Exit ads always show
+                            showLoadingOverlay = false  // Ad already preloaded
+                        )
+                    } else {
+                        // Ad not ready or no activity - navigate immediately
+                        if (!event.shouldShowAd) {
+                            android.util.Log.d("AssetPickerScreen", "⚠️ Exit ad not ready - navigating immediately")
+                        }
+                        onNavigateBack()
+                    }
+                }
+
                 is AssetPickerNavigationEvent.NavigateToEditor -> onNavigateToEditor(event.projectId)
                 is AssetPickerNavigationEvent.NavigateToEditorWithData -> onNavigateToEditorWithData(event.initialData)
                 is AssetPickerNavigationEvent.AssetsAdded -> onAssetsAdded()
@@ -232,6 +286,13 @@ fun AssetPickerScreen(
                     onNavigateToTemplatePreviewer(event.templateId, event.imageUris, event.overrideSongId)
             }
             viewModel.onNavigationHandled()
+        }
+    }
+
+    LaunchedEffect(uiState) {
+        if (!hasTrackedMediaRender && uiState is AssetPickerUiState.WithAssets) {
+            Analytics.trackMediaRender()
+            hasTrackedMediaRender = true
         }
     }
 
@@ -248,8 +309,15 @@ fun AssetPickerScreen(
     DisposableEffect(lifecycleOwner, hasInitializedPermissionCheck) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME && hasInitializedPermissionCheck) {
+                val snapshot = readPermissionSnapshot(context)
+                if (pendingPermissionCheckAfterSettings) {
+                    Analytics.trackPermissionCheck(
+                        allow = snapshot.fullGranted || snapshot.limitedGranted
+                    )
+                    pendingPermissionCheckAfterSettings = false
+                }
                 viewModel.onPermissionSnapshot(
-                    snapshot = readPermissionSnapshot(context),
+                    snapshot = snapshot,
                     source = PermissionUpdateSource.RESUME
                 )
             }
@@ -260,6 +328,8 @@ fun AssetPickerScreen(
 
     // Opens app's system settings page (used by DeniedPermission "Go to Settings" button)
     val goToAppSettings = {
+        Analytics.trackPermissionGotoSetting()
+        pendingPermissionCheckAfterSettings = true
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
             data = Uri.fromParts("package", context.packageName, null)
         }
@@ -348,11 +418,13 @@ fun AssetPickerScreen(
     }
 
     val requestExit = {
+        Analytics.trackExitClick(AnalyticsEvent.Value.Location.MEDIA_SELECT)
         val selectedCount = (uiState as? AssetPickerUiState.WithAssets)
             ?.selectedAssets
             ?.size
             ?: 0
         if (shouldShowExitConfirm(selectedCount)) {
+            Analytics.trackExitPopupShow(AnalyticsEvent.Value.Location.MEDIA_SELECT)
             showExitConfirmDialog = true
         } else {
             closePickerAndNavigateBack()
@@ -363,8 +435,7 @@ fun AssetPickerScreen(
     if (showBottomSheet) {
         ModalBottomSheet(
             onDismissRequest = {
-                showBottomSheet = false
-                viewModel.navigateBack()
+                requestExit()
             },
             sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.surface,
@@ -394,7 +465,10 @@ fun AssetPickerScreen(
 
     if (showExitConfirmDialog) {
         AlertDialog(
-            onDismissRequest = { showExitConfirmDialog = false },
+            onDismissRequest = {
+                showExitConfirmDialog = false
+                Analytics.trackExitContinue(AnalyticsEvent.Value.Location.MEDIA_SELECT)
+            },
             title = {
                 Text(text = stringResource(R.string.picker_exit_confirm_title))
             },
@@ -405,6 +479,10 @@ fun AssetPickerScreen(
                 TextButton(
                     onClick = {
                         showExitConfirmDialog = false
+                        Analytics.trackExitDiscard(
+                            videoId = null,
+                            location = AnalyticsEvent.Value.Location.MEDIA_SELECT
+                        )
                         closePickerAndNavigateBack()
                     }
                 ) {
@@ -412,7 +490,12 @@ fun AssetPickerScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showExitConfirmDialog = false }) {
+                TextButton(
+                    onClick = {
+                        showExitConfirmDialog = false
+                        Analytics.trackExitContinue(AnalyticsEvent.Value.Location.MEDIA_SELECT)
+                    }
+                ) {
                     Text(text = stringResource(R.string.picker_exit_stay))
                 }
             }

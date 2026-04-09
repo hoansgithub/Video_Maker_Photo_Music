@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Native Ad Layout: Small Bait
+- Compact layout (200dp height, 390x200 ratio)
+- FULLSCREEN WIDTH CTA button (48dp, prominent, urgent styling)
+- Primary theme color CTA to maximize click-through
+- Use case: Monetization-focused placements
+-->
+<com.google.android.gms.ads.nativead.NativeAdView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="200dp"
+    android:background="@color/foundation_black">
+
+    <!-- Vertical layout: Content on top, CTA button at bottom -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Horizontal layout: Media on left, Title/Body on right -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <!-- Media View with Ad Badge overlay (left side - 55% of parent width, full height) -->
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="55">
+
+                <com.google.android.gms.ads.nativead.MediaView
+                    android:id="@+id/ad_media"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop" />
+
+                <!-- Ad Badge overlay at top-right -->
+                <TextView
+                    android:id="@+id/ad_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|end"
+                    android:text="@string/ad_badge"
+                    android:textSize="9sp"
+                    android:textColor="@color/foundation_black"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_ad_badge"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:layout_margin="8dp" />
+            </FrameLayout>
+
+            <!-- Content area (right side - 45% of parent width) -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="45"
+                android:orientation="vertical"
+                android:background="@color/foundation_black"
+                android:padding="12dp"
+                android:gravity="center_vertical">
+
+                <!-- Title area: Icon + Title in same row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="4dp">
+
+                    <ImageView
+                        android:id="@+id/ad_icon"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:scaleType="fitCenter"
+                        android:layout_marginEnd="8dp"
+                        android:contentDescription="@string/ad_icon" />
+
+                    <TextView
+                        android:id="@+id/ad_headline"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textSize="13sp"
+                        android:textColor="@color/foundation_white"
+                        android:textStyle="bold"
+                        android:maxLines="2"
+                        android:ellipsize="end" />
+                </LinearLayout>
+
+                <!-- Body text (below title) -->
+                <TextView
+                    android:id="@+id/ad_body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="@color/foundation_white_60"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:layout_marginStart="40dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- FULLSCREEN WIDTH CTA Button at absolute bottom (344x44 ratio) -->
+        <TextView
+            android:id="@+id/ad_call_to_action"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textColor="@color/foundation_black"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:background="@drawable/bg_cta_clean"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginVertical="8dp" />
+    </LinearLayout>
+</com.google.android.gms.ads.nativead.NativeAdView>

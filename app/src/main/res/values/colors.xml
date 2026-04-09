@@ -19,4 +19,11 @@
     <color name="widget_text_secondary">#99FFFFFF</color>
     <color name="widget_search_field_bg">#33FFFFFF</color>
     <color name="widget_hint_text">#80FFFFFF</color>
+
+    <!-- Foundation colors (for native ad layouts) -->
+    <color name="foundation_black">#FF030303</color>
+    <color name="foundation_black_100">#FFB2B2B2</color>
+    <color name="foundation_white">#FFF8FAFC</color>
+    <color name="foundation_white_60">#99FFFFFF</color>
+    <color name="foundation_white_40">#66FFFFFF</color>
 </resources>

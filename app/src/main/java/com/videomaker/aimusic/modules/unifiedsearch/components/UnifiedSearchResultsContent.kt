@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -41,10 +42,13 @@ import coil.size.Precision
 import coil.size.Size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -55,6 +59,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.modules.unifiedsearch.MusicSectionState
@@ -81,11 +87,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun UnifiedSearchResultsContent(
+    screenSessionId: String,
     state: UnifiedSearchUiState.Results,
     query: String,
     relatedSearches: List<String>,
     onTemplateClick: (String) -> Unit,
-    onSongClick: (MusicSong) -> Unit,
+    onSongClick: (MusicSong, String) -> Unit,
     onExplore: (SearchSection) -> Unit,
     onScrollStarted: () -> Unit,
     onRelatedSearchClick: (String) -> Unit
@@ -113,9 +120,25 @@ fun UnifiedSearchResultsContent(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = dimens.spaceMd)
     ) {
-
+        // Space for overlaying search bar
         item {
             Spacer(Modifier.height(100.dp))
+        }
+
+        // Native ad - right after search bar space
+        item {
+            key(AdPlacement.NATIVE_SEARCH_INFEED) {
+                android.util.Log.d("UnifiedSearch", "🔵 Composing NativeAdView (Results)")
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_SEARCH_INFEED,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        // Spacing after ad
+        item {
+            Spacer(Modifier.height(dimens.spaceMd))
         }
 
         // Related searches - inside scrollable content
@@ -172,7 +195,15 @@ fun UnifiedSearchResultsContent(
                                                 aspectRatio = (9f / 16f),
                                                 isPremium = template.isPremium,
                                                 useCount = template.useCount,
-                                                onClick = { onTemplateClick(template.id) },
+                                                onClick = {
+
+                                                    Analytics.trackTemplateClick(
+                                                        templateId = template.id,
+                                                        templateName = template.name,
+                                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                                    )
+                                                    onTemplateClick(template.id)
+                                                          },
                                                 modifier = Modifier.width(190.dp)
                                             )
                                         }
@@ -189,16 +220,29 @@ fun UnifiedSearchResultsContent(
                                 }
 
                                 item {
-                                    Row(
-                                        modifier = Modifier
-                                            .horizontalScroll(rememberScrollState())
-                                            .padding(horizontal = dimens.spaceLg),
+                                    LazyRow(
+                                        contentPadding = PaddingValues(horizontal = dimens.spaceLg),
                                         horizontalArrangement = Arrangement.spacedBy(dimens.spaceMd)
                                     ) {
-                                        state.songEmpty.forEach { song ->
+                                        items(state.songEmpty, key = { "empty_song_${it.id}" }) { song ->
+                                            LaunchedEffect(song.id, screenSessionId) {
+                                                Analytics.trackSongImpression(
+                                                    songId = song.id.toString(),
+                                                    songName = song.name,
+                                                    location = AnalyticsEvent.Value.Location.SEARCH_RCM,
+                                                    screenSessionId = screenSessionId
+                                                )
+                                            }
                                             SuggestSongCard(
                                                 song = song,
-                                                onClick = { onSongClick(song) }
+                                                onClick = {
+                                                    Analytics.trackSongClick(
+                                                        songId = song.id.toString(),
+                                                        songName = song.name,
+                                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                                    )
+                                                    onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RCM)
+                                                }
                                             )
                                         }
                                     }
@@ -303,11 +347,26 @@ fun UnifiedSearchResultsContent(
                                 items = state.music.songs,
                                 key = { "song_${it.id}" }
                             ) { song ->
+                                LaunchedEffect(song.id, screenSessionId) {
+                                    Analytics.trackSongImpression(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.SEARCH_RESULT,
+                                        screenSessionId = screenSessionId
+                                    )
+                                }
                                 SongListItem(
                                     name = song.name,
                                     artist = song.artist,
                                     coverUrl = song.coverUrl,
-                                    onSongClick = { onSongClick(song) }
+                                    onSongClick = {
+                                        Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.SEARCH_RESULT
+                                        )
+                                        onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RESULT)
+                                    }
                                 )
                             }
                         }
@@ -402,7 +461,14 @@ internal fun UnifiedTemplateGrid(
     ) { template ->
         ScaledTemplateCard(
             template = template,
-            onClick = { onTemplateClick(template.id) }
+            onClick = {
+                Analytics.trackTemplateClick(
+                    templateId = template.id,
+                    templateName = template.name,
+                    location = AnalyticsEvent.Value.Location.SEARCH_RESULT
+                )
+                onTemplateClick(template.id)
+            }
         )
     }
 }

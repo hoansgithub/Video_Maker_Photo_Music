@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.templatepreviewer
 
+import android.app.Activity
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.EaseInOutCubic
@@ -53,6 +54,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.activity.compose.BackHandler
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -82,9 +84,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.R
+import kotlinx.coroutines.delay
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.ui.components.ErrorOverlay
 import com.videomaker.aimusic.ui.components.ErrorType
 import com.videomaker.aimusic.ui.components.PrimaryButton
@@ -133,6 +144,7 @@ private fun initialVirtualPage(initialPage: Int, templateCount: Int): Int {
 @Composable
 fun TemplatePreviewerScreen(
     viewModel: TemplatePreviewerViewModel,
+    sourceLocation: String? = null,
     audioDataSourceFactory: CacheDataSource.Factory,
     onNavigateToAssetPicker: (template: com.videomaker.aimusic.domain.model.VideoTemplate, overrideSongId: Long, aspectRatio: AspectRatio) -> Unit,
     onNavigateBack: () -> Unit
@@ -143,11 +155,24 @@ fun TemplatePreviewerScreen(
     val likedTemplateIds by viewModel.likedTemplateIds.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val eventLocation = remember(sourceLocation) {
+        sourceLocation?.takeIf { it.isNotBlank() } ?: AnalyticsEvent.Value.Location.PREVIEW_SWIPE
+    }
 
     // Track song loading error
     var songError by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(navigationEvent, songError) {
+    // Get dependencies for ad showing
+    val activity = context as? Activity
+    val adsLoaderService = koinInject<AdsLoaderService>()
+
+    // Intercept system back gesture (swipe) - same ad logic as back button
+    BackHandler {
+        viewModel.onNavigateBack()
+    }
+
+    // Handle navigation events (StateFlow-based - Gold standard per CLAUDE.md)
+    LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
                 is TemplatePreviewerNavigationEvent.NavigateToAssetPicker -> {
@@ -158,6 +183,37 @@ fun TemplatePreviewerScreen(
                         android.util.Log.w("TemplatePreviewerScreen", "Navigation blocked due to music loading error")
                     }
                 }
+
+                is TemplatePreviewerNavigationEvent.RequestBackWithAd -> {
+                    // Show ad if ready, otherwise navigate immediately (non-blocking)
+                    if (event.shouldShowAd && activity != null) {
+                        android.util.Log.d("TemplatePreviewerScreen", "📺 Showing back button ad...")
+
+                        InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
+                            action = {
+                                // Ad closed - navigate back
+                                android.util.Log.d("TemplatePreviewerScreen", "✅ Back ad closed - navigating")
+                            },
+                            onShown = {
+                                // Navigate immediately when ad shows (parallel)
+                                android.util.Log.d("TemplatePreviewerScreen", "🎬 Back ad shown - navigating")
+                                onNavigateBack()
+                            },
+                            bypassFrequencyCap = true,  // Back button ads always show
+                            showLoadingOverlay = false  // Ad already preloaded
+                        )
+                    } else {
+                        // Ad not ready or no activity - navigate immediately
+                        if (!event.shouldShowAd) {
+                            android.util.Log.d("TemplatePreviewerScreen", "⚠️ Back ad not ready - navigating immediately")
+                        }
+                        onNavigateBack()
+                    }
+                }
+
                 is TemplatePreviewerNavigationEvent.NavigateBack -> onNavigateBack()
             }
             viewModel.onNavigationHandled()
@@ -186,16 +242,63 @@ fun TemplatePreviewerScreen(
     // Real duration read from ExoPlayer after playback is ready — not from DB
     var playerDurationMs by remember { mutableStateOf<Long?>(null) }
 
+    // Track ad loading state (declared early so it can be used in lifecycle observers)
+    var adReady by remember { mutableStateOf(false) }
+    var loadingAdComplete by remember { mutableStateOf(false) }
+
+    // Ad loading with timeout:
+    // - Wait up to 10s for ad to load
+    // - When ad loads: wait 2s for impression, then proceed
+    // - If timeout (10s): proceed immediately
+    LaunchedEffect(Unit) {
+        val startTime = System.currentTimeMillis()
+
+        // Check if ad is already loaded
+        adReady = adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)
+
+        if (adReady) {
+            android.util.Log.d("TemplatePreviewerLoading", "✅ Ad already loaded (preload successful)")
+        } else {
+            android.util.Log.d("TemplatePreviewerLoading", "⏳ Ad not ready, polling...")
+
+            // Poll for ad ready state (or timeout after 10s)
+            while (!adReady && (System.currentTimeMillis() - startTime) < 10_000) {
+                delay(500) // Check every 500ms
+
+                // Check if native ad has loaded
+                if (adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)) {
+                    val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000.0
+                    android.util.Log.d("TemplatePreviewerLoading", "✅ Ad loaded after ${elapsedSeconds}s")
+                    adReady = true
+                }
+            }
+        }
+
+        if (adReady) {
+            android.util.Log.d("TemplatePreviewerLoading", "📊 Ad ready - showing for 2 more seconds")
+            delay(2_000) // Show ad for 2 seconds after ready
+        } else {
+            android.util.Log.d("TemplatePreviewerLoading", "⏱️ Ad timeout (10s) - proceeding immediately")
+        }
+
+        loadingAdComplete = true
+    }
+
     DisposableEffect(Unit) {
         onDispose { player.release() }
     }
 
     // Pause/resume on app background
-    DisposableEffect(lifecycleOwner) {
+    DisposableEffect(lifecycleOwner, loadingAdComplete) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_STOP -> player.pause()
-                Lifecycle.Event.ON_START -> if (player.playbackState == Player.STATE_READY) player.play()
+                Lifecycle.Event.ON_START -> {
+                    // Only resume playback after loading ad timing is complete
+                    if (loadingAdComplete && player.playbackState == Player.STATE_READY) {
+                        player.play()
+                    }
+                }
                 else -> Unit
             }
         }
@@ -205,10 +308,10 @@ fun TemplatePreviewerScreen(
 
     // Crossfade audio on song change.
     // Loading state: keep current track playing while the next song is being fetched.
-    // Ready: fade out → swap track → fade in.
+    // Ready: fade out → swap track → fade in (ONLY after loading ad timing completes).
     // None: fade out and stop.
     // Error: show error overlay.
-    LaunchedEffect(currentSong) {
+    LaunchedEffect(currentSong, loadingAdComplete) {
         when (val state = currentSong) {
             is SongLoadState.Loading -> {
                 songError = null // Clear any previous error
@@ -230,6 +333,13 @@ fun TemplatePreviewerScreen(
             }
 
             is SongLoadState.Ready -> {
+                // Only start playing music after loading ad timing is complete
+                if (!loadingAdComplete) {
+                    android.util.Log.d("TemplatePreviewerMusic", "🎵 Song ready but waiting for ad timing to complete")
+                    return@LaunchedEffect
+                }
+
+                android.util.Log.d("TemplatePreviewerMusic", "🎵 Starting music playback (ad timing complete)")
                 songError = null // Clear any previous error
                 playerDurationMs = null  // clear stale duration until new track is ready
                 // Use full track (mp3Url) for consistency with Editor, not short preview clip
@@ -254,24 +364,26 @@ fun TemplatePreviewerScreen(
 
     when (val state = uiState) {
         is TemplatePreviewerUiState.Loading -> {
-            Box(
-                modifier = Modifier.fillMaxSize().background(Color.Black),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Color.White)
-            }
+            LoadingStateWithAd()
         }
         is TemplatePreviewerUiState.Ready -> {
-            TemplatePreviewerReadyContent(
-                state = state,
-                currentSong = currentSong,
-                playerDurationMs = playerDurationMs,
-                likedTemplateIds = likedTemplateIds,
-                onPageChanged = viewModel::onPageChanged,
-                onUseThisTemplate = viewModel::onUseThisTemplate,
-                onLikeTemplate = viewModel::onLikeTemplate,
-                onNavigateBack = viewModel::onNavigateBack
-            )
+            // Only show Ready content after ad timing is complete
+            if (loadingAdComplete) {
+                TemplatePreviewerReadyContent(
+                    state = state,
+                    currentSong = currentSong,
+                    playerDurationMs = playerDurationMs,
+                    likedTemplateIds = likedTemplateIds,
+                    onPageChanged = viewModel::onPageChanged,
+                    onUseThisTemplate = viewModel::onUseThisTemplate,
+                    onLikeTemplate = viewModel::onLikeTemplate,
+                    eventLocation = eventLocation,
+                    onNavigateBack = viewModel::onNavigateBack
+                )
+            } else {
+                // Keep showing loading state with ad until timing is complete
+                LoadingStateWithAd()
+            }
         }
         is TemplatePreviewerUiState.Error -> {
             Box(
@@ -309,6 +421,64 @@ fun TemplatePreviewerScreen(
 }
 
 // ============================================
+// LOADING STATE WITH AD — 10s timeout + 2s display
+// ============================================
+
+/**
+ * Loading state with native ad at bottom
+ *
+ * Behavior:
+ * - Shows CircularProgressIndicator at center
+ * - Shows native ad at bottom
+ * - Waits 10 seconds for ad to load
+ * - After 10s, shows ad for 2 more seconds
+ * - Total: 12 seconds before transitioning to Ready state
+ *
+ * Note: The actual transition to Ready state is controlled by ViewModel's
+ * data loading. This just ensures the ad gets adequate display time.
+ */
+@Composable
+private fun LoadingStateWithAd() {
+    val context = LocalContext.current
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        // Loading indicator with label at center
+        Column(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            CircularProgressIndicator(color = Color.White)
+
+            Text(
+                text = stringResource(R.string.loading_building_feed),
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.W500,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        // Native ad at bottom
+        // Loads during 10s + displays for 2s more = 12s total
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+        ) {
+            NativeAdView(
+                placement = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+// ============================================
 // READY CONTENT — virtual infinite vertical pager
 // ============================================
 
@@ -322,9 +492,11 @@ private fun TemplatePreviewerReadyContent(
     onPageChanged: (Int) -> Unit,
     onUseThisTemplate: (VideoTemplate, AspectRatio) -> Unit,
     onLikeTemplate: (VideoTemplate) -> Unit,
+    eventLocation: String = AnalyticsEvent.Value.Location.PREVIEW_SWIPE,
     onNavigateBack: () -> Unit
 ) {
     val templates = state.templates
+    val screenSessionId = remember { Analytics.newScreenSessionId() }
     val pagerState = rememberPagerState(
         initialPage = initialVirtualPage(state.initialPage, templates.size),
         pageCount = { VIRTUAL_PAGE_COUNT }
@@ -352,6 +524,25 @@ private fun TemplatePreviewerReadyContent(
             .distinctUntilChanged()
             .drop(1)
             .collect { onPageChanged(it) }
+    }
+
+    LaunchedEffect(pagerState, templates, screenSessionId) {
+        snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()
+            .collect { settledPage ->
+                val template = templates[settledPage % templates.size]
+                Analytics.trackTemplatePreview(
+                    templateId = template.id,
+                    templateName = template.name,
+                    location = eventLocation
+                )
+                Analytics.trackTemplateImpression(
+                    templateId = template.id,
+                    templateName = template.name,
+                    location = eventLocation,
+                    screenSessionId = screenSessionId
+                )
+            }
     }
 
     // Priority-based image preloading: current page first, then adjacent pages
@@ -491,7 +682,8 @@ private fun TemplatePreviewerReadyContent(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .navigationBarsPadding()
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .padding(bottom = 60.dp),  // Space for banner ad (50dp + 10dp spacing)
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -512,7 +704,16 @@ private fun TemplatePreviewerReadyContent(
                                 tint = Primary,
                                 contentDescription = null,
                                 modifier = Modifier.size(32.dp)
-                                    .clickableSingle { currentTemplate?.let { onLikeTemplate(it) } }
+                                    .clickableSingle {
+                                        currentTemplate?.let { template ->
+                                            Analytics.trackTemplateUnfavorite(
+                                                templateId = template.id,
+                                                templateName = template.name,
+                                                location = eventLocation
+                                            )
+                                            onLikeTemplate(template)
+                                        }
+                                    }
                             )
                         } else {
                             Icon(
@@ -521,7 +722,16 @@ private fun TemplatePreviewerReadyContent(
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(32.dp)
-                                    .clickableSingle { currentTemplate?.let { onLikeTemplate(it) } }
+                                    .clickableSingle {
+                                        currentTemplate?.let { template ->
+                                            Analytics.trackTemplateFavorite(
+                                                templateId = template.id,
+                                                templateName = template.name,
+                                                location = eventLocation
+                                            )
+                                            onLikeTemplate(template)
+                                        }
+                                    }
                             )
                         }
 
@@ -545,6 +755,11 @@ private fun TemplatePreviewerReadyContent(
                     text = stringResource(R.string.template_use_button),
                     onClick = {
                         val template = templates.getOrNull(pagerState.settledPage % templates.size) ?: return@PrimaryButton
+                        Analytics.trackTemplateClick(
+                            templateId = template.id,
+                            templateName = template.name,
+                            location = eventLocation
+                        )
                         pendingTemplate = template
                     },
                     enabled = ctaEnabled,
@@ -564,6 +779,16 @@ private fun TemplatePreviewerReadyContent(
             }
         }
 
+        // Banner ad - positioned at bottom, above safe area (like HomeScreen)
+        BannerAdView(
+            placement = AdPlacement.BANNER_TEMPLATE_PREVIEWER,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .navigationBarsPadding()  // Respect safe area
+                .height(50.dp)
+        )
+
         // Ratio selection bottom sheet
         val template = pendingTemplate
         if (template != null) {
@@ -571,6 +796,12 @@ private fun TemplatePreviewerReadyContent(
                 defaultRatio = aspectRatioFromString(template.aspectRatio),
                 onDismiss = { pendingTemplate = null },
                 onConfirm = { selectedRatio ->
+                    Analytics.trackRatioSelect(selectedRatio.shortLabel)
+                    Analytics.trackTemplateSelect(
+                        templateId = template.id,
+                        templateName = template.name,
+                        location = eventLocation
+                    )
                     pendingTemplate = null
                     onUseThisTemplate(template, selectedRatio)
                 }
@@ -748,7 +979,10 @@ private fun SelectRatioBottomSheet(
                     RatioOptionCard(
                         ratio = ratio,
                         isSelected = ratio == selected,
-                        onClick = { selected = ratio },
+                        onClick = {
+                            Analytics.trackRatioClick(ratio.shortLabel)
+                            selected = ratio
+                        },
                         modifier = Modifier.weight(1f)
                     )
                 }

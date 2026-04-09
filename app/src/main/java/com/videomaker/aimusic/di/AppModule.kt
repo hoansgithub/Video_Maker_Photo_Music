@@ -69,6 +69,9 @@ import com.videomaker.aimusic.modules.onboarding.domain.usecase.CheckOnboardingS
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import android.content.Context
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import co.alcheclub.lib.acccore.ads.loader.PlacementConfigService
+import co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
 // import com.videomaker.aimusic.modules.musicpicker.MusicPickerViewModel
 import com.videomaker.aimusic.modules.songs.MusicPlayerViewModel
@@ -87,6 +90,14 @@ import com.videomaker.aimusic.modules.settings.UninstallViewModel
 import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchViewModelFactory
 import com.videomaker.aimusic.widget.WidgetViewModel
 import org.koin.android.ext.koin.androidApplication
+// TODO: Uncomment after fixing ACCCore-Ads API
+// import co.alcheclub.lib.acccore.ads.AdPlacementRegistrar
+// import co.alcheclub.lib.acccore.ads.helpers.InterstitialAdHelper
+// import co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator
+// import com.videomaker.aimusic.core.ads.AdInitializer
+// import com.videomaker.aimusic.core.ads.AdPlacementConfigService
+// import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
 
 /**
  * ACCDI Dependency Injection Modules
@@ -115,6 +126,14 @@ val dataModule = module {
     single { ApiCacheManager(androidContext()) }
     single { PreferencesManager(androidContext()) }
     single { LanguageManager(androidContext()) }
+    single { com.videomaker.aimusic.core.storage.UnlockedEffectSetsManager(androidContext()) }
+
+    // Language config service (singleton - ConfigurableObject for Remote Config)
+    single {
+        com.videomaker.aimusic.core.language.LanguageConfigService(androidContext()).also {
+            co.alcheclub.lib.acccore.di.koin.SingletonTracker.track(it)  // Track for RemoteConfigCoordinator
+        }
+    }
 
     // WorkManager
     single { WorkManager.getInstance(androidContext()) }
@@ -203,6 +222,81 @@ val mediaModule = module {
     }
 }
 
+// ========== ADS MODULE ==========
+/**
+ * Ads Module
+ *
+ * Contains:
+ * - Ad placement configuration service (registers all placements with Remote Config)
+ * - Ad helper extensions (app-level wrappers for ACCCore helpers)
+ * - Ad initializer (validates placement registration)
+ * - Native ad layout provider (maps layout names to resources)
+ *
+ * Scope: Singleton - Ad services are expensive to create and should live for entire app lifetime
+ *
+ * Dependencies from ACCCore-Ads (provided by adMobModule in VideoMakerApplication):
+ * - AdPlacementRegistrar (from ACCCore-Ads)
+ * - AdMobMediator (from ACCCore-Ads)
+ * - InterstitialAdHelper (from ACCCore-Ads)
+ *
+ * TODO: Fix ACCCore-Ads API usage before enabling these services
+ */
+val adsModule = module {
+    // Native Ad Layout Provider (singleton - provides layout mappings)
+    single { VideoMakerNativeAdLayoutProvider() }
+
+    // Placement Config Service (ACCCore service for per-placement configs)
+    // CRITICAL: Must track for RemoteConfigCoordinator auto-discovery
+    single {
+        co.alcheclub.lib.acccore.ads.loader.PlacementConfigService().also {
+            co.alcheclub.lib.acccore.di.koin.SingletonTracker.track(it)
+        }
+    }
+
+    // Ad Placement Config Service (singleton - registers all placements with PlacementConfigService)
+    single {
+        com.videomaker.aimusic.core.ads.AdPlacementConfigService(
+            placementConfigService = get()  // From adMobModule in VideoMakerApplication
+        )
+    }
+
+    // Ads Loader Service (singleton - uses PlacementConfigService)
+    single {
+        val placementConfigService = get<co.alcheclub.lib.acccore.ads.loader.PlacementConfigService>()
+        co.alcheclub.lib.acccore.ads.loader.AdsLoaderService(configService = placementConfigService).apply {
+            setAdMediator(get<co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator>())
+        }
+    }
+
+    // Ad Initializer (singleton - validates ad system initialization)
+    single {
+        com.videomaker.aimusic.core.ads.AdInitializer(
+            adPlacementConfigService = get(),
+            placementConfigService = get(),
+            adsLoaderService = get()
+        )
+    }
+
+    // App Open Ad Manager (lifecycle-based app open ad management)
+    single {
+        co.alcheclub.lib.acccore.ads.helpers.AppOpenAdManager(
+            application = androidContext() as? android.app.Application
+                ?: error("androidContext() must be Application"),
+            adsLoaderService = get(),
+            adMobMediator = get()
+        )
+    }
+
+    // Interstitial Ad Helper Extension (singleton - app-level wrapper)
+    // single {
+    //     InterstitialAdHelperExt(
+    //         helper = get<InterstitialAdHelper>(),
+    //         adMobMediator = get<AdMobMediator>(),
+    //         placementConfigService = get()
+    //     )
+    // }
+}
+
 // ========== DOMAIN LAYER MODULE ==========
 /**
  * Domain Module
@@ -285,7 +379,8 @@ class AssetPickerViewModelFactory(
     private val createProjectUseCase: CreateProjectUseCase,
     private val addAssetsUseCase: AddAssetsUseCase,
     private val templateRepository: TemplateRepository,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(
         projectId: String? = null,
@@ -299,6 +394,7 @@ class AssetPickerViewModelFactory(
             addAssetsUseCase = addAssetsUseCase,
             templateRepository = templateRepository,
             songRepository = songRepository,
+            adsLoaderService = adsLoaderService,
             projectId = projectId,
             templateId = templateId,
             overrideSongId = overrideSongId,
@@ -320,7 +416,8 @@ class EditorViewModelFactory(
     private val addAssetsUseCase: AddAssetsUseCase,
     private val removeAssetUseCase: RemoveAssetUseCase,
     private val songRepository: SongRepository,
-    private val effectSetRepository: EffectSetRepository
+    private val effectSetRepository: EffectSetRepository,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(
         projectId: String?,
@@ -336,7 +433,8 @@ class EditorViewModelFactory(
             addAssetsUseCase = addAssetsUseCase,
             removeAssetUseCase = removeAssetUseCase,
             songRepository = songRepository,
-            effectSetRepository = effectSetRepository
+            effectSetRepository = effectSetRepository,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -349,7 +447,8 @@ class ExportViewModelFactory(
     private val projectRepository: ProjectRepository,
     private val templateRepository: TemplateRepository,
     private val ratingTriggerManager: RatingTriggerManager,
-    private val submitFeedbackUseCase: SubmitFeedbackUseCase
+    private val submitFeedbackUseCase: SubmitFeedbackUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(projectId: String, quality: com.videomaker.aimusic.domain.model.VideoQuality = com.videomaker.aimusic.domain.model.VideoQuality.DEFAULT): ExportViewModel {
         return ExportViewModel(
@@ -359,7 +458,8 @@ class ExportViewModelFactory(
             projectRepository = projectRepository,
             templateRepository = templateRepository,
             ratingTriggerManager = ratingTriggerManager,
-            submitFeedbackUseCase = submitFeedbackUseCase
+            submitFeedbackUseCase = submitFeedbackUseCase,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -376,7 +476,8 @@ class ProjectsViewModelFactory(
     private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
     private val likeSongUseCase: LikeSongUseCase,
     private val unlikeSongUseCase: UnlikeSongUseCase,
-    private val unlikeTemplateUseCase: UnlikeTemplateUseCase
+    private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(): ProjectsViewModel {
         return ProjectsViewModel(
@@ -388,7 +489,8 @@ class ProjectsViewModelFactory(
             observeLikedTemplatesUseCase = observeLikedTemplatesUseCase,
             likeSongUseCase = likeSongUseCase,
             unlikeSongUseCase = unlikeSongUseCase,
-            unlikeTemplateUseCase = unlikeTemplateUseCase
+            unlikeTemplateUseCase = unlikeTemplateUseCase,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -461,7 +563,8 @@ class TemplatePreviewerViewModelFactory(
     private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase,
     private val likeTemplateUseCase: LikeTemplateUseCase,
     private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
-    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase
+    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(
         templateId: String,
@@ -478,7 +581,8 @@ class TemplatePreviewerViewModelFactory(
             updateProjectSettingsUseCase = updateProjectSettingsUseCase,
             likeTemplateUseCase = likeTemplateUseCase,
             unlikeTemplateUseCase = unlikeTemplateUseCase,
-            observeLikedTemplatesUseCase = observeLikedTemplatesUseCase
+            observeLikedTemplatesUseCase = observeLikedTemplatesUseCase,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -527,11 +631,15 @@ class WeeklyRankingListViewModelFactory(
  * Factory wrapper for EffectSetViewModel.
  */
 class EffectSetViewModelFactory(
-    private val getEffectSetsPagedUseCase: GetEffectSetsPagedUseCase
+    private val getEffectSetsPagedUseCase: GetEffectSetsPagedUseCase,
+    private val unlockedEffectSetsManager: com.videomaker.aimusic.core.storage.UnlockedEffectSetsManager,
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 ) {
     fun create(): com.videomaker.aimusic.modules.editor.EffectSetViewModel {
         return com.videomaker.aimusic.modules.editor.EffectSetViewModel(
-            getEffectSetsPagedUseCase = getEffectSetsPagedUseCase
+            getEffectSetsPagedUseCase = getEffectSetsPagedUseCase,
+            unlockedEffectSetsManager = unlockedEffectSetsManager,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -594,7 +702,8 @@ val presentationModule = module {
             checkOnboardingStatusUseCase = get(),
             checkLanguageSelectedUseCase = get(),
             preferencesManager = get(),
-            remoteConfig = get()  // Firebase Remote Config (from firebaseModule)
+            remoteConfig = get(),  // Firebase Remote Config (from firebaseModule)
+            adsLoaderService = get()  // Ad loading service (from ACCCore-Ads)
         )
     }
 
@@ -619,7 +728,9 @@ val presentationModule = module {
     // Effect Set ViewModel
     viewModel {
         com.videomaker.aimusic.modules.editor.EffectSetViewModel(
-            getEffectSetsPagedUseCase = get()
+            getEffectSetsPagedUseCase = get(),
+            unlockedEffectSetsManager = get(),
+            adsLoaderService = get()
         )
     }
 
@@ -631,7 +742,8 @@ val presentationModule = module {
             createProjectUseCase = get(),
             addAssetsUseCase = get(),
             templateRepository = get(),
-            songRepository = get()
+            songRepository = get(),
+            adsLoaderService = get()
         )
     }
 
@@ -645,7 +757,8 @@ val presentationModule = module {
             addAssetsUseCase = get(),
             removeAssetUseCase = get(),
             songRepository = get(),
-            effectSetRepository = get()
+            effectSetRepository = get(),
+            adsLoaderService = get()
         )
     }
 
@@ -656,7 +769,8 @@ val presentationModule = module {
             projectRepository = get(),
             templateRepository = get(),
             ratingTriggerManager = get(),
-            submitFeedbackUseCase = get()
+            submitFeedbackUseCase = get(),
+            adsLoaderService = get()
         )
     }
 
@@ -671,7 +785,8 @@ val presentationModule = module {
             observeLikedTemplatesUseCase = get(),
             likeSongUseCase = get(),
             unlikeSongUseCase = get(),
-            unlikeTemplateUseCase = get()
+            unlikeTemplateUseCase = get(),
+            adsLoaderService = get()
         )
     }
 
@@ -729,7 +844,8 @@ val presentationModule = module {
             updateProjectSettingsUseCase = get(),
             likeTemplateUseCase = get(),
             unlikeTemplateUseCase = get(),
-            observeLikedTemplatesUseCase = get()
+            observeLikedTemplatesUseCase = get(),
+            adsLoaderService = get()
         )
     }
 
@@ -757,7 +873,9 @@ val presentationModule = module {
     // Effect Set ViewModel factory (singleton - stateless factory)
     single {
         EffectSetViewModelFactory(
-            getEffectSetsPagedUseCase = get()
+            getEffectSetsPagedUseCase = get(),
+            unlockedEffectSetsManager = get(),
+            adsLoaderService = get()
         )
     }
 
@@ -799,6 +917,7 @@ val presentationModule = module {
 val allModules = arrayOf(
     dataModule,
     mediaModule,
+    adsModule,
     domainModule,
     presentationModule
 )

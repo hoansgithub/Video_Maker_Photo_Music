@@ -32,5 +32,8 @@ data class ProjectEntity(
     val audioVolume: Float = 1.0f,
     val musicTrimStartMs: Long = 0L, // Music trim start position (0 = no trim at start)
     val musicTrimEndMs: Long? = null, // Music trim end position (null = use full song)
-    val aspectRatio: String = "RATIO_9_16"
+    val aspectRatio: String = "RATIO_9_16",
+
+    // Watermark removal (rewarded ad unlock)
+    val isWatermarkFree: Boolean = false // True if user watched ad to remove watermark for this project
 )

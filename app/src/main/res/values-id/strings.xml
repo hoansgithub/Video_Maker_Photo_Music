@@ -34,6 +34,11 @@
     <string name="root_no_internet_title">Tidak Ada Koneksi Internet</string>
     <string name="root_no_internet_message">Perangkat Anda sedang offline. Silakan sambungkan kembali untuk melanjutkan.</string>
     <string name="root_try_again">Coba Lagi</string>
+    <string name="root_loading_initializing">Menginisialisasi...</string>
+    <string name="root_loading_fetching_config">Memuat konfigurasi...</string>
+    <string name="root_loading_ad">Ini mungkin berisi iklan</string>
+    <string name="root_loading_checking_status">Memeriksa status...</string>
+    <string name="root_loading_preparing">Mempersiapkan...</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galeri</string>
@@ -221,6 +226,14 @@
     <string name="export_error_share_failed">Gagal membagikan video</string>
     <string name="export_try_another_templates">Coba Template Lain</string>
     <string name="export_templates_load_failed">Gagal memuat template</string>
+    <string name="export_watch_ad_title">Tonton iklan untuk mengunduh?</string>
+    <string name="export_watch_ad_subtitle">Bantu kami menjaga aplikasi ini gratis dengan menonton iklan singkat. Video Anda akan diunduh segera setelahnya!</string>
+    <string name="export_watch_ad_button">Tonton Iklan</string>
+    <string name="export_watch_ad_close">Tutup</string>
+    <string name="export_watermark_remove_title">Hapus watermark?</string>
+    <string name="export_watermark_remove_subtitle">Tonton iklan singkat untuk menghapus watermark dari pratinjau video Anda.</string>
+    <string name="export_watermark_remove_button">Tonton Iklan</string>
+    <string name="export_watermark_remove_close">Tutup</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Pilih Foto</string>
@@ -340,6 +353,7 @@
     <!-- Error states -->
     <string name="error_load_failed">Gagal memuat. Tarik ke bawah untuk mencoba lagi.</string>
     <string name="error_network_title">Kesalahan Jaringan</string>
+    <string name="loading_building_feed">Membangun Feed Anda</string>
     <string name="error_network_message">Gagal memuat musik. Periksa koneksi Anda dan coba lagi.</string>
     <string name="error_network_timeout">Waktu jaringan habis. Periksa koneksi Anda dan coba lagi.</string>
     <string name="error_preview_title">Kesalahan Pratinjau</string>
@@ -460,5 +474,16 @@
     <string name="rating_feedback_reason_performance">Aplikasi lambat atau sering crash</string>
     <string name="rating_feedback_reason_templates">Template tidak cukup / pembaruan konten kurang</string>
     <string name="rating_feedback_reason_other">Lainnya</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">Iklan</string>
+    <string name="ad_icon">Ikon iklan</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">Tonton iklan untuk membuka efek ini?</string>
+    <string name="effect_set_watch_ad_subtitle">Buka kunci set efek ini secara permanen dengan menonton iklan singkat</string>
+    <string name="effect_set_ad_not_available">Iklan tidak tersedia saat ini. Coba lagi nanti.</string>
+    <string name="effect_set_locked">Set efek terkunci</string>
+    <string name="ad_not_available">Iklan tidak tersedia saat ini. Coba lagi nanti.</string>
 
 </resources>

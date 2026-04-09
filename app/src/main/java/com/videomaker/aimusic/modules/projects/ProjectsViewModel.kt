@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.media.export.MediaStoreHelper
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.Project
@@ -83,7 +85,8 @@ class ProjectsViewModel(
     private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
     private val likeSongUseCase: LikeSongUseCase,
     private val unlikeSongUseCase: UnlikeSongUseCase,
-    private val unlikeTemplateUseCase: UnlikeTemplateUseCase
+    private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProjectsUiState>(ProjectsUiState.Loading)
@@ -103,6 +106,13 @@ class ProjectsViewModel(
 
     private val _toastState = MutableStateFlow<ProcessToastState?>(null)
     val toastState: StateFlow<ProcessToastState?> = _toastState.asStateFlow()
+
+    // Rewarded ad state for download
+    private val _showWatchAdDialog = MutableStateFlow(false)
+    val showWatchAdDialog: StateFlow<Boolean> = _showWatchAdDialog.asStateFlow()
+
+    private val _pendingDownloadProject = MutableStateFlow<Project?>(null)
+    val pendingDownloadProject: StateFlow<Project?> = _pendingDownloadProject.asStateFlow()
 
     val templateStateLocal: StateFlow<List<VideoTemplate>> = observeLikedTemplatesUseCase()
         .catch { e -> emit(emptyList()) }
@@ -253,15 +263,54 @@ class ProjectsViewModel(
     }
 
     /**
-     * Download project video to gallery
+     * Download project video to gallery (shows rewarded ad first)
      */
     fun onDownloadProject(project: Project, context: Context) {
+        // Check if ad is enabled for this placement
+        if (!adsLoaderService.canLoadAd(AdPlacement.REWARD_DOWNLOAD_VIDEO)) {
+            // Ad disabled - proceed directly with download
+            android.util.Log.d("ProjectsViewModel", "⏭️ Ad disabled for download - proceeding without ad")
+            performDownload(project, context)
+            return
+        }
+
+        _pendingDownloadProject.value = project
+        _showWatchAdDialog.value = true
+    }
+
+    /**
+     * Dismiss watch ad dialog
+     */
+    fun onWatchAdDialogDismiss() {
+        _showWatchAdDialog.value = false
+        _pendingDownloadProject.value = null
+    }
+
+    /**
+     * User confirmed watching ad
+     */
+    fun onWatchAdConfirmed() {
+        _showWatchAdDialog.value = false
+    }
+
+    /**
+     * Ad failed to load or user dismissed without watching
+     */
+    fun onAdFailed() {
+        _pendingDownloadProject.value = null
+    }
+
+    /**
+     * Perform actual download (called after ad is watched successfully)
+     */
+    fun performDownload(project: Project, context: Context) {
         viewModelScope.launch {
             _toastState.value = ProcessToastState.Loading("Downloading...")
 
             val videoFile = findProjectVideoFile(context, project.id)
             if (videoFile == null) {
                 _toastState.value = ProcessToastState.Error("Video file not found")
+                _pendingDownloadProject.value = null
                 return@launch
             }
 
@@ -281,6 +330,8 @@ class ProjectsViewModel(
                     ProcessToastState.Error(result.message)
                 }
             }
+
+            _pendingDownloadProject.value = null
         }
     }
 

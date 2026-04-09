@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import com.videomaker.aimusic.VideoMakerApplication
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
@@ -42,6 +44,20 @@ class OnboardingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Preload PAGE3 ad + Fullscreen ad (1-step-ahead from PAGE1/PAGE2)
+        // PAGE1 and PAGE2 were already preloaded in LanguageSelectionActivity
+        //
+        // Feature Selection ads will be preloaded dynamically when user reaches Welcome Page 3
+        // (triggered by OnboardingScreen LaunchedEffect)
+        //
+        // CRITICAL: Use Application-scoped preload (NOT lifecycleScope)
+        // VideoMakerApplication.preloadNativeAd() uses appScope internally,
+        // which survives Activity destruction. This prevents cancellation if user
+        // quickly swipes through pages.
+        android.util.Log.d("OnboardingActivity", "🔄 Preloading PAGE3 ad + Fullscreen ad")
+        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE3)
+        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
+
         setContent {
             VideoMakerTheme {
                 var showExitDialog by remember { mutableStateOf(false) }
@@ -65,11 +81,9 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     private fun completeOnboardingAndNavigate() {
-        lifecycleScope.launch {
-            // Failure is non-fatal: persist flag best-effort, always navigate
-            completeOnboardingUseCase().getOrNull()
-            navigateToFeatureSelection()
-        }
+        // Don't mark onboarding complete here - it's marked at the END (Feature Selection)
+        // With simplified flow, onboarding is only complete after ALL steps finish
+        navigateToFeatureSelection()
     }
 
     private fun navigateToFeatureSelection() {

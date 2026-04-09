@@ -1,0 +1,138 @@
+package com.videomaker.aimusic.core.ads
+
+import android.app.Activity
+import co.alcheclub.lib.acccore.ads.helpers.InterstitialAdHelper
+import co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator
+
+/**
+ * App-level extension for InterstitialAdHelper.
+ *
+ * Provides convenient methods for preloading and showing interstitial ads
+ * with app-specific configuration (frequency cap, min interval, etc.).
+ *
+ * Why this exists:
+ * - InterstitialAdHelper is framework-level (no app-specific knowledge)
+ * - This extension injects app-specific dependencies and settings
+ * - Wraps ACCCore's helper with Video Maker-specific logic
+ *
+ * Usage:
+ * ```kotlin
+ * // Preload ad when entering a screen
+ * interstitialAdHelper.preloadInterstitial(AdPlacement.INTERSTITIAL_EDITOR_ENTER)
+ *
+ * // Show ad at appropriate moment
+ * interstitialAdHelper.showInterstitial(
+ *     activity = this,
+ *     placementId = AdPlacement.INTERSTITIAL_EDITOR_ENTER,
+ *     onAdDismissed = { navigateToEditor() },
+ *     onAdFailedToShow = { navigateToEditor() }
+ * )
+ * ```
+ */
+class InterstitialAdHelperExt(
+    private val helper: InterstitialAdHelper,
+    private val adMobMediator: AdMobMediator,
+    private val placementConfigService: AdPlacementConfigService
+) {
+
+    /**
+     * Preload interstitial ad for a specific placement.
+     *
+     * Call this BEFORE you need to show the ad (e.g., when entering a screen).
+     * Ad loading is asynchronous - the ad may not be ready immediately.
+     *
+     * Example:
+     * ```kotlin
+     * // When user taps on a photo to enter Editor
+     * preloadInterstitial(AdPlacement.INTERSTITIAL_EDITOR_ENTER)
+     * // ... navigate to Editor after short delay or when ad loads
+     * ```
+     *
+     * @param placementId Ad placement ID from AdPlacement.kt
+     */
+    fun preloadInterstitial(placementId: String) {
+        helper.preload(
+            placementId = placementId,
+            timeout = placementConfigService.adLoadTimeout * 1000 // Convert to milliseconds
+        )
+    }
+
+    /**
+     * Show interstitial ad for a specific placement.
+     *
+     * Respects minimum interval between ad shows (configured in Remote Config).
+     * If ad is not ready or interval hasn't passed, callbacks fire immediately.
+     *
+     * Example:
+     * ```kotlin
+     * showInterstitial(
+     *     activity = this,
+     *     placementId = AdPlacement.INTERSTITIAL_EDITOR_ENTER,
+     *     onAdDismissed = { navigateToEditor() },
+     *     onAdFailedToShow = { navigateToEditor() }
+     * )
+     * ```
+     *
+     * @param activity Activity context required for ad display
+     * @param placementId Ad placement ID from AdPlacement.kt
+     * @param onAdDismissed Called when user dismisses ad (proceed with app flow)
+     * @param onAdFailedToShow Called when ad fails to show (proceed with app flow)
+     */
+    fun showInterstitial(
+        activity: Activity,
+        placementId: String,
+        onAdDismissed: () -> Unit,
+        onAdFailedToShow: () -> Unit
+    ) {
+        // Check minimum interval
+        val minInterval = placementConfigService.interstitialMinInterval * 1000 // Convert to milliseconds
+        if (!helper.canShowAd(placementId, minIntervalMs = minInterval)) {
+            android.util.Log.d("InterstitialAdHelper", "⏭️ Skipping $placementId - interval not met")
+            onAdFailedToShow()
+            return
+        }
+
+        // Show ad
+        helper.show(
+            activity = activity,
+            placementId = placementId,
+            onAdDismissed = {
+                android.util.Log.d("InterstitialAdHelper", "✅ Ad dismissed: $placementId")
+                onAdDismissed()
+            },
+            onAdFailedToShow = { error ->
+                android.util.Log.w("InterstitialAdHelper", "⚠️ Ad failed to show: $placementId - $error")
+                onAdFailedToShow()
+            }
+        )
+    }
+
+    /**
+     * Check if ad can be shown for a specific placement.
+     *
+     * Returns true if:
+     * - Minimum interval has passed since last ad show
+     * - Ad is loaded and ready
+     * - Placement is enabled in Remote Config
+     *
+     * @param placementId Ad placement ID from AdPlacement.kt
+     * @return true if ad can be shown, false otherwise
+     */
+    fun canShowAd(placementId: String): Boolean {
+        val minInterval = placementConfigService.interstitialMinInterval * 1000
+        return helper.canShowAd(placementId, minIntervalMs = minInterval)
+    }
+
+    /**
+     * Get time remaining until next ad can be shown (milliseconds).
+     *
+     * Returns 0 if ad can be shown immediately.
+     *
+     * @param placementId Ad placement ID from AdPlacement.kt
+     * @return milliseconds until ad can be shown
+     */
+    fun getTimeUntilNextAd(placementId: String): Long {
+        val minInterval = placementConfigService.interstitialMinInterval * 1000
+        return helper.getTimeUntilNextAd(placementId, minIntervalMs = minInterval)
+    }
+}

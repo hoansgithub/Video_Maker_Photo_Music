@@ -37,6 +37,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -73,7 +75,9 @@ internal val featureItems = listOf(
 @Composable
 fun FeatureSurveyPage(
     selectedFeatures: List<String>,
-    onFeatureToggle: (String) -> Unit
+    onFeatureToggle: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    bottomPaddingDp: androidx.compose.ui.unit.Dp = 0.dp  // Dynamic bottom padding from parent
 ) {
     val cardAnimations = remember {
         featureItems.map { Pair(Animatable(0f), Animatable(32f)) }
@@ -90,12 +94,15 @@ fun FeatureSurveyPage(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
-            .padding(top = 140.dp, bottom = 200.dp),
+            .padding(
+                top = 140.dp,
+                bottom = bottomPaddingDp + 24.dp  // Dynamic padding based on measured bottom section height
+            ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -115,12 +122,12 @@ fun FeatureSurveyPage(
             textAlign = TextAlign.Center
         )
 
-        Spacer(Modifier.height(36.dp))
+        Spacer(Modifier.height(32.dp))  // Reduced from 36dp to 32dp
 
         featureItems.forEachIndexed { index, item ->
             val (alpha, translateY) = cardAnimations[index]
             val isSelected = selectedFeatures.contains(item.id)
-            Spacer(Modifier.height(16.dp))
+
             FeatureCard(
                 item = item,
                 isSelected = isSelected,
@@ -130,7 +137,7 @@ fun FeatureSurveyPage(
                     .graphicsLayer { translationY = translateY.value }
             )
 
-            if (index < featureItems.lastIndex) Spacer(Modifier.height(12.dp))
+            if (index < featureItems.lastIndex) Spacer(Modifier.height(16.dp))  // Consistent 16dp spacing
         }
     }
 }
@@ -159,13 +166,13 @@ private fun FeatureCard(
                 shape = cardShape
             )
             .clickableSingle { onFeatureToggle(item.id) }
-            .padding(vertical = 24.dp, horizontal = 16.dp)
+            .padding(vertical = 20.dp, horizontal = 16.dp)  // Reduced from 24dp to 20dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.Center),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),  // Reduced from 24dp to 16dp
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
@@ -173,17 +180,17 @@ private fun FeatureCard(
                 contentDescription = null,
                 tint = if (isSelected) Primary else MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(32.dp)  // Reduced from 36dp to 32dp for more compact layout
             )
 
             Text(
                 text = stringResource(item.nameResId),
-                fontSize = 18.sp,
+                fontSize = 17.sp,  // Reduced from 18sp to 17sp
                 fontWeight = FontWeight.W500,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 50.dp),
+                    .padding(horizontal = 40.dp),  // Reduced from 50dp to 40dp
                 textAlign = TextAlign.Center
             )
         }

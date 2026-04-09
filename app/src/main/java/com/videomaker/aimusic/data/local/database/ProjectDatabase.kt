@@ -25,7 +25,7 @@ import com.videomaker.aimusic.data.local.database.entity.ProjectEntity
         LikedSongEntity::class,
         LikedTemplateEntity::class
     ],
-    version = 9,  // Incremented for processedAudioUri (downloaded local music)
+    version = 10,  // Incremented for isWatermarkFree field
     exportSchema = true
 )
 abstract class ProjectDatabase : RoomDatabase() {
