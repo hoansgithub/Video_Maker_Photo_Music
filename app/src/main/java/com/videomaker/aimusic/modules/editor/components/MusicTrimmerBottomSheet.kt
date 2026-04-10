@@ -112,6 +112,8 @@ fun MusicSettingsBottomSheet(
     var actualDurationMs by remember { mutableLongStateOf(songDurationMs) }
     var isDragging by remember { mutableStateOf(false) }
     var waveformData by remember { mutableStateOf<List<Float>?>(null) }
+    val waveformHeight = 50.dp
+    val headerToTrimLabelSpacing = waveformHeight * 0.18f
 
     // Extract real waveform data
     LaunchedEffect(songUrl) {
@@ -210,7 +212,7 @@ fun MusicSettingsBottomSheet(
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
                 .padding(top = 24.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.Top
         ) {
             // Header with song name and apply button
             Row(
@@ -246,7 +248,7 @@ fun MusicSettingsBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(headerToTrimLabelSpacing))
 
             // Trim section label
             Text(
@@ -256,7 +258,7 @@ fun MusicSettingsBottomSheet(
                 fontWeight = FontWeight.Medium
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Waveform with two draggable handles
             MusicWaveformView(
@@ -273,8 +275,12 @@ fun MusicSettingsBottomSheet(
                         musicPlayer.pause()
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(waveformHeight)
             )
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             Text(
                 text = "${stringResource(R.string.editor_music_trim_duration)}: " +
