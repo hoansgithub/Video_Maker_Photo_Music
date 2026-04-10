@@ -148,6 +148,12 @@ fun WidgetScreen(
         val currentPage = pagerState.settledPage
         if (currentPage != lastSettledPage) {
             val currentType = widgetTypes[currentPage]
+            if (currentType == WidgetType.SONG || currentType == WidgetType.TEMPLATE) {
+                Analytics.trackWidgetView(
+                    widgetType = currentType.analyticsType(),
+                    widgetSize = WIDGET_ANALYTICS_SIZE
+                )
+            }
             Analytics.trackWidgetSelect(
                 widgetType = currentType.analyticsType(),
                 widgetSize = WIDGET_ANALYTICS_SIZE
