@@ -145,7 +145,6 @@ fun SongsScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
     val audioPreviewCache: AudioPreviewCache = koinInject()
-    val screenSessionId = remember { Analytics.newScreenSessionId() }
     var selectedSongLocation by rememberSaveable {
         mutableStateOf(AnalyticsEvent.Value.Location.SONG_PREVIEW)
     }
@@ -185,7 +184,6 @@ fun SongsScreen(
 
             SongsContent(
                 topBarHeight = topBarHeight,
-                screenSessionId = screenSessionId,
                 suggestedState = suggestedState,
                 rankingState = rankingState,
                 stationState = stationState,
@@ -239,7 +237,6 @@ fun SongsScreen(
 @Composable
 private fun SongsContent(
     topBarHeight: Dp = 0.dp,
-    screenSessionId: String,
     suggestedState: SectionState<List<MusicSong>>,
     rankingState: SectionState<List<MusicSong>>,
     stationState: SectionState<List<MusicSong>>,
@@ -312,8 +309,7 @@ private fun SongsContent(
             item(key = "suggest_list", contentType = "horizontal_list") {
                 SuggestSongsList(
                     state = suggestedState,
-                    onSongClick = onSongClick,
-                    screenSessionId = screenSessionId
+                    onSongClick = onSongClick
                 )
                 Spacer(modifier = Modifier.height(dimens.spaceMd))
             }
@@ -332,8 +328,7 @@ private fun SongsContent(
             item(key = "ranking_pager", contentType = "pager") {
                 WeeklyRankingSection(
                     state = rankingState,
-                    onSongClick = onSongClick,
-                    screenSessionId = screenSessionId
+                    onSongClick = onSongClick
                 )
                 Spacer(modifier = Modifier.height(dimens.spaceMd))
             }
@@ -360,8 +355,7 @@ private fun SongsContent(
             item(key = "station_songs", contentType = "station_songs") {
                 StationSongsSection(
                     state = stationState,
-                    onSongClick = onSongClick,
-                    screenSessionId = screenSessionId
+                    onSongClick = onSongClick
                 )
             }
         }
@@ -384,7 +378,6 @@ private const val SUGGEST_PLACEHOLDER_COUNT = 5
 private fun SuggestSongsList(
     state: SectionState<List<MusicSong>>,
     onSongClick: (MusicSong, String) -> Unit,
-    screenSessionId: String,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
@@ -419,14 +412,6 @@ private fun SuggestSongsList(
             }
             is SectionState.Success -> {
                 state.data.forEach { song ->
-                    LaunchedEffect(song.id, screenSessionId) {
-                        Analytics.trackSongImpression(
-                            songId = song.id.toString(),
-                            songName = song.name,
-                            location = AnalyticsEvent.Value.Location.SONG_FORYOU,
-                            screenSessionId = screenSessionId
-                        )
-                    }
                     SuggestSongCard(
                         song = song,
                         onClick = {
@@ -471,7 +456,6 @@ private const val RANKING_PLACEHOLDER_COUNT = 3
 private fun WeeklyRankingSection(
     state: SectionState<List<MusicSong>>,
     onSongClick: (MusicSong, String) -> Unit,
-    screenSessionId: String,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
@@ -493,7 +477,6 @@ private fun WeeklyRankingSection(
             WeeklyRankingPager(
                 songs = state.data,
                 onSongClick = onSongClick,
-                screenSessionId = screenSessionId,
                 modifier = modifier
             )
         }
@@ -519,7 +502,6 @@ private fun WeeklyRankingSection(
 private fun WeeklyRankingPager(
     songs: List<MusicSong>,
     onSongClick: (MusicSong, String) -> Unit,
-    screenSessionId: String,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
@@ -546,14 +528,6 @@ private fun WeeklyRankingPager(
             verticalArrangement = Arrangement.spacedBy(dimens.spaceSm)
         ) {
             pages.getOrNull(pageIndex)?.forEachIndexed { index, song ->
-                LaunchedEffect(song.id, screenSessionId) {
-                    Analytics.trackSongImpression(
-                        songId = song.id.toString(),
-                        songName = song.name,
-                        location = AnalyticsEvent.Value.Location.SONG_RANKING,
-                        screenSessionId = screenSessionId
-                    )
-                }
                 RankingSongCard(
                     song = song,
                     ranking = pageIndex * 3 + index + 1,
@@ -581,7 +555,6 @@ private const val STATION_PLACEHOLDER_COUNT = 5
 private fun StationSongsSection(
     state: SectionState<List<MusicSong>>,
     onSongClick: (MusicSong, String) -> Unit,
-    screenSessionId: String,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
@@ -626,7 +599,6 @@ private fun StationSongsSection(
                         is StationGridItem.SongItem -> {
                             StationSongItem(
                                 song = item.song,
-                                screenSessionId = screenSessionId,
                                 onSongClick = {
                                     Analytics.trackSongClick(
                                         songId = item.song.id.toString(),
@@ -682,19 +654,9 @@ private fun StationSongItemPlaceholder(modifier: Modifier = Modifier) {
 @Composable
 private fun StationSongItem(
     song: MusicSong,
-    screenSessionId: String,
     onSongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // ✅ Track impression only once when song enters composition
-    LaunchedEffect(Unit) {
-        Analytics.trackSongImpression(
-            songId = song.id.toString(),
-            songName = song.name,
-            location = AnalyticsEvent.Value.Location.SONG_STATIONS,
-            screenSessionId = screenSessionId
-        )
-    }
     SongListItem(
         name = song.name,
         artist = song.artist,
@@ -813,7 +775,6 @@ private fun SongsContentLoadedPreview() {
                 )
                 SongsContent(
                     topBarHeight = 56.dp,
-                    screenSessionId = "preview",
                     suggestedState = SectionState.Success(previewSongs),
                     rankingState = SectionState.Success(previewSongs.take(9)),
                     stationState = SectionState.Success(previewSongs),
@@ -846,7 +807,6 @@ private fun SongsContentLoadingPreview() {
                 )
                 SongsContent(
                     topBarHeight = 56.dp,
-                    screenSessionId = "preview",
                     suggestedState = SectionState.Loading,
                     rankingState = SectionState.Loading,
                     stationState = SectionState.Loading,
@@ -890,8 +850,7 @@ private fun RankingPagerPage1Preview() {
         Surface(color = MaterialTheme.colorScheme.background) {
             WeeklyRankingSection(
                 state = SectionState.Success(previewSongs.take(9)),
-                onSongClick = { _, _ -> },
-                screenSessionId = "preview"
+                onSongClick = { _, _ -> }
             )
         }
     }
@@ -905,8 +864,7 @@ private fun RankingPagerLoadingPreview() {
             Surface(color = MaterialTheme.colorScheme.background) {
                 WeeklyRankingSection(
                     state = SectionState.Loading,
-                    onSongClick = { _, _ -> },
-                    screenSessionId = "preview"
+                    onSongClick = { _, _ -> }
                 )
             }
         }
@@ -922,8 +880,8 @@ private fun StationSongItemPreview() {
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                StationSongItem(song = previewSongs[0], screenSessionId = "preview", onSongClick = {})
-                StationSongItem(song = previewSongs[1], screenSessionId = "preview", onSongClick = {})
+                StationSongItem(song = previewSongs[0], onSongClick = {})
+                StationSongItem(song = previewSongs[1], onSongClick = {})
             }
         }
     }
