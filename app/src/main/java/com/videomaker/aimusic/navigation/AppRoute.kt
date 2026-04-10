@@ -2,6 +2,7 @@ package com.videomaker.aimusic.navigation
 
 import androidx.compose.runtime.Immutable
 import androidx.navigation3.runtime.NavKey
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.AspectRatio
 import kotlinx.serialization.Serializable
 
@@ -147,7 +148,9 @@ sealed interface AppRoute : NavKey {
     // ============================================
 
     @Serializable
-    data object Settings : AppRoute
+    data class Settings(
+        val settingLocation: String = AnalyticsEvent.Value.Location.UNKNOWN
+    ) : AppRoute
 
     @Serializable
     data object LanguageSettings : AppRoute

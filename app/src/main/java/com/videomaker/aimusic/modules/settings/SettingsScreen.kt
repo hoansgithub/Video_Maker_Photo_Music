@@ -89,12 +89,11 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLanguageSettings: () -> Unit = {},
     onNavigateToWidgetScreen: () -> Unit = {},
+    settingLocation: String = AnalyticsEvent.Value.Location.UNKNOWN,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val reviewManager = remember(context) { ReviewManagerFactory.create(context) }
-    val settingLocation = AnalyticsEvent.Value.Location.UNKNOWN
-
     LaunchedEffect(Unit) {
         Analytics.trackSettingView(settingLocation)
     }

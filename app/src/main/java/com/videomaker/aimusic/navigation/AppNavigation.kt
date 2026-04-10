@@ -271,7 +271,9 @@ fun AppNavigation(
                     projectsViewModel = projectsViewModel,
                     initialTab = route.initialTab,
                     onCreateClick = { backStack.add(AppRoute.AssetPicker()) },
-                    onSettingsClick = { backStack.add(AppRoute.Settings) },
+                    onSettingsClick = { location ->
+                        backStack.add(AppRoute.Settings(settingLocation = location))
+                    },
                     onNavigateToSearch = { backStack.add(AppRoute.UnifiedSearch(SearchSection.TEMPLATES)) },
                     onNavigateToSongSearch = { backStack.add(AppRoute.UnifiedSearch(SearchSection.MUSIC)) },
                     onNavigateToSuggestedSongsList = { backStack.add(AppRoute.SuggestedSongsList) },
@@ -542,11 +544,12 @@ fun AppNavigation(
             // ============================================
             // SETTINGS
             // ============================================
-            entry<AppRoute.Settings> {
+            entry<AppRoute.Settings> { route ->
                 SettingsScreen(
                     onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToLanguageSettings = { backStack.add(AppRoute.LanguageSettings) },
-                    onNavigateToWidgetScreen = { backStack.add(AppRoute.WidgetScreen) }
+                    onNavigateToWidgetScreen = { backStack.add(AppRoute.WidgetScreen) },
+                    settingLocation = route.settingLocation
                 )
             }
 
