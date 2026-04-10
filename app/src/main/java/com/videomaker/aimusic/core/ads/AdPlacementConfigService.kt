@@ -483,6 +483,17 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Reward: Unlock Song (uses same ad units as unlock template)
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.REWARD_UNLOCK_SONG,
+            type = "reward",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1281667047",  // Primary (same as template/effect)
+                "ca-app-pub-7121075950716954/4323092928"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }

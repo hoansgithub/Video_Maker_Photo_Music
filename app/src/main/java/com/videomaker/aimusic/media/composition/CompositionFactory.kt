@@ -27,6 +27,8 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * CompositionFactory - Creates Media3 Composition from Project domain model
@@ -179,7 +181,8 @@ class CompositionFactory(
         assets: List<Asset>,
         settings: ProjectSettings,
         textureSize: Int
-    ): Map<Int, ProcessedImage> {
+    ): Map<Int, ProcessedImage> = withContext(Dispatchers.IO) {
+        // ✅ Explicit IO dispatcher to avoid ANR during bitmap operations
         val targetAspectRatio = settings.aspectRatio.ratio
         val results = mutableMapOf<Int, ProcessedImage>()
         val cacheFiles = mutableListOf<File>()
@@ -229,7 +232,7 @@ class CompositionFactory(
         // Track cache files for cleanup
         lastCacheFiles.set(cacheFiles)
 
-        return results
+        results  // Return from withContext
     }
 
     /**
@@ -249,7 +252,8 @@ class CompositionFactory(
     private suspend fun loadTransitionBitmapsFromCache(
         processedImages: Map<Int, ProcessedImage>,
         settings: ProjectSettings
-    ): Map<Int, TransitionBitmapPair> {
+    ): Map<Int, TransitionBitmapPair> = withContext(Dispatchers.IO) {
+        // ✅ Explicit IO dispatcher to avoid ANR during bitmap loading
         val results = mutableMapOf<Int, TransitionBitmapPair>()
         val sortedIndices = processedImages.keys.sorted()
 
@@ -289,7 +293,7 @@ class CompositionFactory(
             }
         }
 
-        return results
+        results  // Return from withContext
     }
 
     // CPU blur code removed - now using GPU preprocessing via GPUImagePreprocessor

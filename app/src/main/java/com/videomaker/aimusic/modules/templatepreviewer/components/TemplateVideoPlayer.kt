@@ -35,6 +35,31 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import org.koin.compose.koinInject
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+// ============================================
+// HELPER - Release player async to avoid ANR
+// ============================================
+
+/**
+ * Release ExoPlayer asynchronously on background thread to avoid ANR.
+ * ExoPlayer.release() can block for 10+ seconds when releasing GPU resources.
+ */
+private fun ExoPlayer.releaseAsync() {
+    val playerToRelease = this
+    ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+        runCatching {
+            android.util.Log.d("TemplateVideoPlayer", "Releasing player on background thread...")
+            playerToRelease.release()
+            android.util.Log.d("TemplateVideoPlayer", "Player released successfully")
+        }.onFailure { e ->
+            android.util.Log.e("TemplateVideoPlayer", "Failed to release player", e)
+        }
+    }
+}
 
 /**
  * TemplateVideoPlayer - Lazy loading video player with disk caching
@@ -196,7 +221,7 @@ fun TemplateVideoPlayer(
             android.util.Log.d("TemplateVideoPlayer", "Disposing player for: $videoUrl")
             lifecycleOwner.lifecycle.removeObserver(observer)
             player.removeListener(listener)  // Remove listener before release to prevent leaks
-            player.release()
+            player.releaseAsync()  // ✅ Release async to avoid ANR
         }
     }
 

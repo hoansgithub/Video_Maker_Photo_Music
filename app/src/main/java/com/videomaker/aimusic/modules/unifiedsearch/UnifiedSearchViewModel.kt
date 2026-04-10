@@ -165,7 +165,9 @@ class UnifiedSearchViewModel(
 
     init {
         Analytics.trackSearchOpen(searchOpenLocation())
-        _recentSearches.value = preferencesManager.getRecentSearches()
+        viewModelScope.launch {
+            _recentSearches.value = preferencesManager.getRecentSearches()
+        }
 
         viewModelScope.launch(Dispatchers.IO) {
             templateRepository.getVibeTags()
@@ -283,13 +285,17 @@ class UnifiedSearchViewModel(
 
     fun onRemoveRecentSearch(query: String) {
         Analytics.trackSearchRecentDelete(query)
-        preferencesManager.removeRecentSearch(query)
-        _recentSearches.value = preferencesManager.getRecentSearches()
+        viewModelScope.launch {
+            preferencesManager.removeRecentSearch(query)
+            _recentSearches.value = preferencesManager.getRecentSearches()
+        }
     }
 
     fun onClearAllRecents() {
-        preferencesManager.clearRecentSearches()
-        _recentSearches.value = emptyList()
+        viewModelScope.launch {
+            preferencesManager.clearRecentSearches()
+            _recentSearches.value = emptyList()
+        }
     }
 
     fun onVibeTagClick(tag: VibeTag) {
@@ -569,8 +575,10 @@ class UnifiedSearchViewModel(
     }
 
     private fun rememberQuery(query: String) {
-        preferencesManager.addRecentSearch(query)
-        _recentSearches.value = preferencesManager.getRecentSearches()
+        viewModelScope.launch {
+            preferencesManager.addRecentSearch(query)
+            _recentSearches.value = preferencesManager.getRecentSearches()
+        }
     }
 
     private fun acquireExplicitSearchControl() {

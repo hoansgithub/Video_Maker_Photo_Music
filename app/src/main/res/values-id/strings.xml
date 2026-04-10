@@ -495,4 +495,8 @@
     <string name="template_watch_ad_title">Tonton iklan untuk membuka template ini?</string>
     <string name="template_watch_ad_subtitle">Buka kunci template ini secara permanen dengan menonton iklan singkat</string>
 
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Tonton iklan untuk membuka lagu ini?</string>
+    <string name="song_watch_ad_subtitle">Setelah menonton, Anda dapat menggunakan lagu ini untuk membuat video. Unlock permanen.</string>
+
 </resources>

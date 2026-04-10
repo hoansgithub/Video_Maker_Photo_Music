@@ -495,4 +495,8 @@
     <string name="template_watch_ad_title">Bu şablonun kilidini açmak için reklam izle?</string>
     <string name="template_watch_ad_subtitle">Kısa bir reklam izleyerek bu şablonun kilidini kalıcı olarak aç</string>
 
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Bu şarkıyı açmak için reklam izle?</string>
+    <string name="song_watch_ad_subtitle">İzledikten sonra bu şarkıyı video oluşturmak için kullanabilirsiniz. Kilit açma kalıcıdır.</string>
+
 </resources>

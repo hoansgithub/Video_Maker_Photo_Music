@@ -67,6 +67,31 @@ import java.util.concurrent.atomic.AtomicBoolean
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.DeviceAudioTrack
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+// ============================================
+// HELPER - Release player async to avoid ANR
+// ============================================
+
+/**
+ * Release MediaPlayer asynchronously on background thread to avoid ANR.
+ * MediaPlayer.release() can block when releasing audio resources.
+ */
+private fun android.media.MediaPlayer.releaseAsync() {
+    val playerToRelease = this
+    ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+        runCatching {
+            android.util.Log.d("MusicPickerScreen", "Releasing MediaPlayer on background thread...")
+            playerToRelease.release()
+            android.util.Log.d("MusicPickerScreen", "MediaPlayer released successfully")
+        }.onFailure { e ->
+            android.util.Log.e("MusicPickerScreen", "Failed to release MediaPlayer", e)
+        }
+    }
+}
 
 /**
  * MusicPickerScreen - Bottom sheet for selecting custom audio from device
@@ -109,7 +134,7 @@ fun MusicPickerScreen(
                 } catch (e: IllegalStateException) {
                     // Ignore - player in invalid state
                 }
-                player.release()
+                player.releaseAsync()  // ✅ Release async to avoid ANR
             }
             mediaPlayer = null
         }

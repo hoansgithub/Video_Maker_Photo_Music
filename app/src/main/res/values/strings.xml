@@ -501,4 +501,8 @@
     <string name="template_watch_ad_title">Watch an ad to unlock this template?</string>
     <string name="template_watch_ad_subtitle">Unlock this template permanently by watching a short ad</string>
 
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Watch an ad to unlock this song?</string>
+    <string name="song_watch_ad_subtitle">After watching, you\'ll be able to use this song to create videos. Unlock is permanent.</string>
+
 </resources>

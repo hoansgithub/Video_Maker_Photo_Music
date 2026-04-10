@@ -135,6 +135,31 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import androidx.core.content.edit
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+// ============================================
+// HELPER - Release player async to avoid ANR
+// ============================================
+
+/**
+ * Release ExoPlayer asynchronously on background thread to avoid ANR.
+ * ExoPlayer.release() can block for 10+ seconds when releasing resources.
+ */
+private fun ExoPlayer.releaseAsync() {
+    val playerToRelease = this
+    ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+        runCatching {
+            android.util.Log.d("TemplatePreviewerScreen", "Releasing player on background thread...")
+            playerToRelease.release()
+            android.util.Log.d("TemplatePreviewerScreen", "Player released successfully")
+        }.onFailure { e ->
+            android.util.Log.e("TemplatePreviewerScreen", "Failed to release player", e)
+        }
+    }
+}
 
 // Virtual page count for infinite-scroll illusion.
 private const val VIRTUAL_PAGE_COUNT = 10_000
@@ -308,7 +333,7 @@ fun TemplatePreviewerScreen(
     }
 
     DisposableEffect(Unit) {
-        onDispose { player.release() }
+        onDispose { player.releaseAsync() }  // ✅ Release async to avoid ANR
     }
 
     // Pause/resume on app background

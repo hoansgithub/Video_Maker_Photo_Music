@@ -497,4 +497,8 @@
     <string name="template_watch_ad_title">इस टेम्पलेट को अनलॉक करने के लिए विज्ञापन देखें?</string>
     <string name="template_watch_ad_subtitle">एक छोटा विज्ञापन देखकर इस टेम्पलेट को स्थायी रूप से अनलॉक करें</string>
 
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">इस गाने को अनलॉक करने के लिए विज्ञापन देखें?</string>
+    <string name="song_watch_ad_subtitle">देखने के बाद, आप वीडियो बनाने के लिए इस गाने का उपयोग कर सकेंगे। अनलॉक स्थायी है।</string>
+
 </resources>

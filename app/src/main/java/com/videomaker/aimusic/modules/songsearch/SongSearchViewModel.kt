@@ -106,7 +106,9 @@ class SongSearchViewModel(
     private var debounceLockedOut = false
 
     init {
-        _recentSearches.value = preferencesManager.getRecentSearches()
+        viewModelScope.launch {
+            _recentSearches.value = preferencesManager.getRecentSearches()
+        }
 
         viewModelScope.launch(Dispatchers.IO) {
             getSuggestedSongsUseCase(limit = 8)
@@ -154,8 +156,10 @@ class SongSearchViewModel(
         val q = _displayText.value.trim()
         if (q.isNotBlank()) {
             acquireExplicitSearchControl()
-            preferencesManager.addRecentSearch(q)
-            _recentSearches.value = preferencesManager.getRecentSearches()
+            viewModelScope.launch {
+                preferencesManager.addRecentSearch(q)
+                _recentSearches.value = preferencesManager.getRecentSearches()
+            }
             launchExplicitSearch(q)
         }
     }
@@ -171,19 +175,25 @@ class SongSearchViewModel(
     fun onRecentSearchClick(query: String) {
         acquireExplicitSearchControl()
         _displayText.value = query
-        preferencesManager.addRecentSearch(query)
-        _recentSearches.value = preferencesManager.getRecentSearches()
+        viewModelScope.launch {
+            preferencesManager.addRecentSearch(query)
+            _recentSearches.value = preferencesManager.getRecentSearches()
+        }
         launchExplicitSearch(query)
     }
 
     fun onRemoveRecentSearch(query: String) {
-        preferencesManager.removeRecentSearch(query)
-        _recentSearches.value = preferencesManager.getRecentSearches()
+        viewModelScope.launch {
+            preferencesManager.removeRecentSearch(query)
+            _recentSearches.value = preferencesManager.getRecentSearches()
+        }
     }
 
     fun onClearAllRecents() {
-        preferencesManager.clearRecentSearches()
-        _recentSearches.value = emptyList()
+        viewModelScope.launch {
+            preferencesManager.clearRecentSearches()
+            _recentSearches.value = emptyList()
+        }
     }
 
     /**

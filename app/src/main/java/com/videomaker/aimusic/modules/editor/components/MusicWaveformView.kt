@@ -100,12 +100,22 @@ fun MusicWaveformView(
                         val startHandleX = (localTrimStart / songDurationMs) * width
                         val endHandleX = (localTrimEnd / songDurationMs) * width
 
+                        // Calculate distances to both handles
+                        val distanceToStart = abs(tapX - startHandleX)
+                        val distanceToEnd = abs(tapX - endHandleX)
+
                         // Larger touch target for easier dragging
                         val touchTarget = 80.dp.toPx()
 
+                        // Select the closest handle within touch target
+                        // This ensures correct handle selection when handles are close together
                         draggingHandle = when {
-                            abs(tapX - startHandleX) < touchTarget -> DragHandle.START
-                            abs(tapX - endHandleX) < touchTarget -> DragHandle.END
+                            distanceToStart < touchTarget && distanceToEnd < touchTarget -> {
+                                // Both handles are within touch target - select the closest one
+                                if (distanceToStart <= distanceToEnd) DragHandle.START else DragHandle.END
+                            }
+                            distanceToStart < touchTarget -> DragHandle.START
+                            distanceToEnd < touchTarget -> DragHandle.END
                             else -> null
                         }
 

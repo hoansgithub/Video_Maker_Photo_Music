@@ -495,4 +495,8 @@
     <string name="template_watch_ad_title">Assistir a um anúncio para desbloquear este modelo?</string>
     <string name="template_watch_ad_subtitle">Desbloqueie este modelo permanentemente assistindo a um anúncio curto</string>
 
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Assistir a um anúncio para desbloquear esta música?</string>
+    <string name="song_watch_ad_subtitle">Depois de assistir, você poderá usar esta música para criar vídeos. O desbloqueio é permanente.</string>
+
 </resources>

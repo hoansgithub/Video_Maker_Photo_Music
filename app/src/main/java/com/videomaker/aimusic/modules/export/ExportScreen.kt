@@ -124,6 +124,31 @@ import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import java.io.File
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+// ============================================
+// HELPER - Release player async to avoid ANR
+// ============================================
+
+/**
+ * Release ExoPlayer asynchronously on background thread to avoid ANR.
+ * ExoPlayer.release() can block for 5-10 seconds when releasing video resources.
+ */
+private fun ExoPlayer.releaseAsync() {
+    val playerToRelease = this
+    ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+        runCatching {
+            android.util.Log.d("ExportScreen", "Releasing player on background thread...")
+            playerToRelease.release()
+            android.util.Log.d("ExportScreen", "Player released successfully")
+        }.onFailure { e ->
+            android.util.Log.e("ExportScreen", "Failed to release player", e)
+        }
+    }
+}
 
 /**
  * Responsive sizing configuration for export buttons
@@ -788,7 +813,7 @@ private fun SuccessContent(
             lifecycleOwner.lifecycle.addObserver(observer)
             onDispose {
                 lifecycleOwner.lifecycle.removeObserver(observer)
-                player.release()
+                player.releaseAsync()  // ✅ Release async to avoid ANR
             }
         } ?: onDispose { }
     }

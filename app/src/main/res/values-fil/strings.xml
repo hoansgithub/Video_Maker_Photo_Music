@@ -495,4 +495,8 @@
     <string name="template_watch_ad_title">Manood ng ad para i-unlock ang template na ito?</string>
     <string name="template_watch_ad_subtitle">I-unlock ang template na ito nang permanente sa pamamagitan ng panonood ng maikling ad</string>
 
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Manood ng ad para i-unlock ang kanta?</string>
+    <string name="song_watch_ad_subtitle">Pagkatapos manood, magagamit mo ang kantang ito para gumawa ng mga video. Permanente ang pag-unlock.</string>
+
 </resources>

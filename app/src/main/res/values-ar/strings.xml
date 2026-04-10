@@ -495,4 +495,8 @@
     <string name="template_watch_ad_title">شاهد إعلانًا لفتح هذا القالب؟</string>
     <string name="template_watch_ad_subtitle">افتح هذا القالب بشكل دائم من خلال مشاهدة إعلان قصير</string>
 
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">شاهد إعلانًا لفتح هذه الأغنية؟</string>
+    <string name="song_watch_ad_subtitle">بعد المشاهدة، ستتمكن من استخدام هذه الأغنية لإنشاء مقاطع الفيديو. الفتح دائم.</string>
+
 </resources>
