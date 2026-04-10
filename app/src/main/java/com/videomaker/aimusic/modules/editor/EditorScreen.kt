@@ -663,7 +663,7 @@ fun EditorScreen(
 
             MusicSearchBottomSheet(
                 viewModel = songSearchViewModel,
-                onSongSelected = { song ->
+                onSongClick = { song ->
                     val videoId = currentVideoId()
                     if (videoId != null) {
                         Analytics.trackEditorSongClick(
@@ -671,6 +671,11 @@ fun EditorScreen(
                             songId = song.id.toString(),
                             songName = song.name
                         )
+                    }
+                },
+                onSongSelected = { song ->
+                    val videoId = currentVideoId()
+                    if (videoId != null) {
                         Analytics.trackEditorSongSelect(
                             videoId = videoId,
                             songId = song.id.toString(),
