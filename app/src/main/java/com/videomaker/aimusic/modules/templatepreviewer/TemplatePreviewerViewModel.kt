@@ -17,6 +17,7 @@ import com.videomaker.aimusic.domain.usecase.UnlikeTemplateUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.storage.UnlockedTemplatesManager
 import kotlinx.coroutines.Job
@@ -135,9 +136,16 @@ class TemplatePreviewerViewModel(
     // Unlocked template IDs — observed from UnlockedTemplatesManager
     val unlockedTemplateIds: StateFlow<Set<String>> = unlockedTemplatesManager.unlockedTemplateIds
 
-    // Watch ad dialog state
-    private val _showWatchAdDialog = MutableStateFlow(false)
-    val showWatchAdDialog: StateFlow<Boolean> = _showWatchAdDialog.asStateFlow()
+    // Rewarded ad controller for template unlock
+    private val rewardedAdController = RewardedAdController(
+        placement = AdPlacement.REWARD_UNLOCK_TEMPLATE,
+        adsLoaderService = adsLoaderService,
+        viewModelScope = viewModelScope
+    )
+
+    // Expose rewarded ad states
+    val showWatchAdDialog: StateFlow<Boolean> = rewardedAdController.showWatchAdDialog
+    val shouldPresentAd: StateFlow<Boolean> = rewardedAdController.shouldPresentAd
 
     // Pending template to unlock (set when dialog shows)
     private val _pendingUnlockTemplate = MutableStateFlow<VideoTemplate?>(null)
@@ -146,10 +154,6 @@ class TemplatePreviewerViewModel(
     // Pending selected ratio (set when user selects ratio for locked template)
     private val _pendingSelectedRatio = MutableStateFlow<AspectRatio?>(null)
     val pendingSelectedRatio: StateFlow<AspectRatio?> = _pendingSelectedRatio.asStateFlow()
-
-    // Trigger to present ad (set when user clicks "Watch Ad" in dialog)
-    private val _shouldPresentAd = MutableStateFlow(false)
-    val shouldPresentAd: StateFlow<Boolean> = _shouldPresentAd.asStateFlow()
 
     // Error message for snackbar
     private val _errorMessage = MutableStateFlow<String?>(null)
@@ -253,73 +257,55 @@ class TemplatePreviewerViewModel(
      * - If ad is disabled: unlock directly and navigate
      */
     fun onRatioSelected(template: VideoTemplate, selectedRatio: AspectRatio) {
-        // Check if ad is enabled for this placement
-        if (!adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_TEMPLATE)) {
-            // Ad disabled - unlock directly and navigate
-            android.util.Log.d("TemplatePreviewerVM", "⏭️ Ad disabled for unlock - proceeding without ad")
-            viewModelScope.launch {
-                unlockedTemplatesManager.unlockTemplate(template.id)
-                android.util.Log.d("TemplatePreviewerVM", "✅ Template auto-unlocked (ad disabled): ${template.id}")
-            }
-            // Navigate immediately with selected ratio
-            _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
-                template = template,
-                overrideSongId = overrideSongId,
-                aspectRatio = selectedRatio
-            )
-            return
-        }
-
-        // Ad enabled - store template and ratio, show watch ad dialog
+        // Store template and ratio for later use
         _pendingUnlockTemplate.value = template
         _pendingSelectedRatio.value = selectedRatio
-        _showWatchAdDialog.value = true
+
+        // Request ad (with auto-unlock if disabled)
+        rewardedAdController.requestAd(
+            onReward = {
+                // Unlock template and navigate
+                viewModelScope.launch {
+                    unlockedTemplatesManager.unlockTemplate(template.id)
+                    android.util.Log.d("TemplatePreviewerVM", "✅ Template unlocked: ${template.id}")
+
+                    _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
+                        template = template,
+                        overrideSongId = overrideSongId,
+                        aspectRatio = selectedRatio
+                    )
+
+                    // Clear pending state
+                    _pendingUnlockTemplate.value = null
+                    _pendingSelectedRatio.value = null
+                }
+            },
+            checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_TEMPLATE) }
+        )
     }
 
     /** User dismissed watch ad dialog without watching */
     fun onWatchAdDialogDismiss() {
-        _showWatchAdDialog.value = false
+        rewardedAdController.onDialogDismiss()
         _pendingUnlockTemplate.value = null
         _pendingSelectedRatio.value = null
-        _shouldPresentAd.value = false
     }
 
     /** User confirmed they want to watch ad - triggers ad presentation */
     fun onWatchAdConfirmed() {
-        _showWatchAdDialog.value = false
-        _shouldPresentAd.value = true  // Trigger LaunchedEffect to present ad
+        rewardedAdController.onDialogConfirm()
     }
 
     /** Rewarded ad completed successfully - unlock template and navigate */
     fun onRewardEarned() {
-        val template = _pendingUnlockTemplate.value ?: return
-        val selectedRatio = _pendingSelectedRatio.value ?: return
-
-        viewModelScope.launch {
-            // Unlock template locally
-            unlockedTemplatesManager.unlockTemplate(template.id)
-
-            android.util.Log.d("TemplatePreviewerVM", "✅ Template unlocked: ${template.id}")
-
-            // Navigate to asset picker with selected ratio
-            _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
-                template = template,
-                overrideSongId = overrideSongId,
-                aspectRatio = selectedRatio
-            )
-
-            // Clear pending state
-            _pendingUnlockTemplate.value = null
-            _pendingSelectedRatio.value = null
-            _shouldPresentAd.value = false
-        }
+        rewardedAdController.onRewardEarned()
     }
 
     /** Rewarded ad failed or user canceled */
     fun onAdFailed() {
+        rewardedAdController.onAdFailed()
         _pendingUnlockTemplate.value = null
         _pendingSelectedRatio.value = null
-        _shouldPresentAd.value = false
         _errorMessage.value = "AD_NOT_AVAILABLE"
     }
 

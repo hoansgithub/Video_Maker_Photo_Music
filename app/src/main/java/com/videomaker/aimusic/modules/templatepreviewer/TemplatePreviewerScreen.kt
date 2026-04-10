@@ -89,6 +89,7 @@ import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
+import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.TimeoutCancellationException
@@ -233,67 +234,14 @@ fun TemplatePreviewerScreen(
         }
     }
 
-    // Handle rewarded ad presentation when user clicks "Watch Ad" button
-    LaunchedEffect(shouldPresentAd) {
-        if (!shouldPresentAd) return@LaunchedEffect
-
-        val template = pendingUnlockTemplate
-        if (template == null) {
-            android.util.Log.w("TemplatePreviewerScreen", "No pending template to unlock")
-            viewModel.onAdFailed()
-            return@LaunchedEffect
-        }
-
-        // Check if Activity is available
-        if (activity == null) {
-            android.util.Log.w("TemplatePreviewerScreen", "Activity unavailable for ad presentation")
-            viewModel.onAdFailed()
-            return@LaunchedEffect
-        }
-
-        try {
-            // 1. Check if ad is ready
-            if (!adsLoaderService.isRewardedAdReady(AdPlacement.REWARD_UNLOCK_TEMPLATE)) {
-                // 2. Show loading overlay
-                AdsLoadingState.show(context.getString(R.string.ad_loading))
-
-                // 3. Load ad with 60s timeout
-                withTimeout(60_000) {
-                    adsLoaderService.loadRewarded(AdPlacement.REWARD_UNLOCK_TEMPLATE)
-                }
-
-                // 4. Hide loading overlay
-                AdsLoadingState.hide()
-            }
-
-            // 5. Present ad and wait for result (blocking)
-            val result = adsLoaderService.presentRewarded(
-                placement = AdPlacement.REWARD_UNLOCK_TEMPLATE,
-                activity = activity
-            )
-
-            // 6. Check if user earned reward
-            if (result.earnedReward) {
-                viewModel.onRewardEarned()  // Unlocks template and navigates
-            } else {
-                android.util.Log.d("TemplatePreviewerScreen", "User did not earn reward (closed ad early)")
-                viewModel.onAdFailed()
-            }
-
-        } catch (e: TimeoutCancellationException) {
-            android.util.Log.w("TemplatePreviewerScreen", "Ad load timeout")
-            AdsLoadingState.hide()
-            viewModel.onAdFailed()
-        } catch (e: AdsLoaderException) {
-            android.util.Log.w("TemplatePreviewerScreen", "Ad load error: ${e.message}")
-            AdsLoadingState.hide()
-            viewModel.onAdFailed()
-        } catch (e: Exception) {
-            android.util.Log.e("TemplatePreviewerScreen", "Unexpected error: ${e.message}", e)
-            AdsLoadingState.hide()
-            viewModel.onAdFailed()
-        }
-    }
+    // Handle rewarded ad presentation using reusable presenter
+    RewardedAdPresenter(
+        shouldPresent = shouldPresentAd,
+        placement = AdPlacement.REWARD_UNLOCK_TEMPLATE,
+        adsLoaderService = adsLoaderService,
+        onRewardEarned = viewModel::onRewardEarned,
+        onAdFailed = viewModel::onAdFailed
+    )
 
     // Single ExoPlayer for the entire screen — crossfaded on page change
     val player = remember {
