@@ -276,7 +276,7 @@ fun ProjectsTabContent(
                                             duration = project.totalDurationMs,
                                             ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
                                             volume = (project.settings.audioVolume * 100f).toInt(),
-                                            mediaQuality = null
+                                            mediaQuality = AnalyticsEvent.Value.Location.UNKNOWN
                                         )
                                         viewModel.onDeleteProject(project)
                                     },
