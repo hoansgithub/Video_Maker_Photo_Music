@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.EditorInitialData
@@ -692,6 +693,10 @@ class AssetPickerViewModel(
     fun confirmSelection() {
         val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
         if (currentState.selectedAssets.size < minSelection) return
+        Analytics.trackExitSave(
+            videoId = projectId,
+            location = AnalyticsEvent.Value.Location.MEDIA_SELECT
+        )
         Analytics.trackMediaComplete(currentState.selectedAssets.size)
 
         viewModelScope.launch {
