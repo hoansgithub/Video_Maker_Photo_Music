@@ -5,10 +5,9 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -26,7 +25,6 @@ import com.videomaker.aimusic.media.export.MediaStoreHelper
 import com.videomaker.aimusic.modules.rate.RatingStep
 import com.videomaker.aimusic.ui.components.ProcessToastState
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +32,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import java.io.File
 import java.util.UUID
 import kotlin.math.roundToInt
@@ -174,9 +171,16 @@ class ExportViewModel(
     private val _saveToastState = MutableStateFlow<ProcessToastState?>(null)
     val saveToastState: StateFlow<ProcessToastState?> = _saveToastState.asStateFlow()
 
-    // Watch ad dialog state for download
-    private val _showWatchAdDialog = MutableStateFlow(false)
-    val showWatchAdDialog: StateFlow<Boolean> = _showWatchAdDialog.asStateFlow()
+    // Rewarded ad controller for video download
+    private val downloadAdController = RewardedAdController(
+        placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+        adsLoaderService = adsLoaderService,
+        viewModelScope = viewModelScope
+    )
+
+    // Expose download ad states
+    val showWatchAdDialog: StateFlow<Boolean> = downloadAdController.showWatchAdDialog
+    val shouldPresentDownloadAd: StateFlow<Boolean> = downloadAdController.shouldPresentAd
 
     // Pending download request - stored when user initiates download
     private var pendingDownloadRequest: (() -> Unit)? = null
@@ -185,9 +189,16 @@ class ExportViewModel(
     private val _showWatermark = MutableStateFlow(true)
     val showWatermark: StateFlow<Boolean> = _showWatermark.asStateFlow()
 
-    // Watermark ad dialog state
-    private val _showWatermarkAdDialog = MutableStateFlow(false)
-    val showWatermarkAdDialog: StateFlow<Boolean> = _showWatermarkAdDialog.asStateFlow()
+    // Rewarded ad controller for watermark removal
+    private val watermarkAdController = RewardedAdController(
+        placement = AdPlacement.REWARD_REMOVE_WATERMARK,
+        adsLoaderService = adsLoaderService,
+        viewModelScope = viewModelScope
+    )
+
+    // Expose watermark ad states
+    val showWatermarkAdDialog: StateFlow<Boolean> = watermarkAdController.showWatchAdDialog
+    val shouldPresentWatermarkAd: StateFlow<Boolean> = watermarkAdController.shouldPresentAd
 
     // ============================================
     // RATING STATE
@@ -560,7 +571,7 @@ class ExportViewModel(
 
     /**
      * Called when user initiates download (clicks download button)
-     * Shows watch ad dialog immediately (exact flow as android-short-drama-app)
+     * Shows watch ad dialog or proceeds directly if ad disabled
      *
      * @param applicationContext Application context for download
      * @param loadingMessage Localized message for loading state
@@ -573,19 +584,6 @@ class ExportViewModel(
         successMessage: String,
         errorMessage: String
     ) {
-        // Check if ad is enabled for this placement
-        if (!adsLoaderService.canLoadAd(AdPlacement.REWARD_DOWNLOAD_VIDEO)) {
-            // Ad disabled - proceed directly with download
-            android.util.Log.d("ExportViewModel", "⏭️ Ad disabled for download - proceeding without ad")
-            saveToGallery(
-                applicationContext = applicationContext,
-                loadingMessage = loadingMessage,
-                successMessage = successMessage,
-                errorMessage = errorMessage
-            )
-            return
-        }
-
         // Store pending download request
         pendingDownloadRequest = {
             saveToGallery(
@@ -596,128 +594,77 @@ class ExportViewModel(
             )
         }
 
-        // Show watch ad dialog (ad will load when user confirms)
-        android.util.Log.d("ExportViewModel", "🎁 Showing watch ad dialog")
-        _showWatchAdDialog.value = true
+        // Request ad via controller
+        downloadAdController.requestAd(
+            onReward = {
+                // Download after ad is watched
+                pendingDownloadRequest?.invoke()
+                pendingDownloadRequest = null
+            },
+            onSkip = {
+                // Ad disabled or fallback - proceed with download
+                android.util.Log.d("ExportViewModel", "⏭️ Ad disabled/unavailable - proceeding with download")
+                pendingDownloadRequest?.invoke()
+                pendingDownloadRequest = null
+            },
+            checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_DOWNLOAD_VIDEO) }
+        )
     }
 
     /**
      * Called when user dismisses watch ad dialog (clicks "Close")
      */
     fun onWatchAdDialogDismiss() {
-        _showWatchAdDialog.value = false
+        downloadAdController.onDialogDismiss()
         pendingDownloadRequest = null
     }
 
     /**
-     * Called when user confirms watch ad (clicks "Watch Ad")
-     * Dismisses dialog and initiates rewarded ad loading/showing
+     * Called when user confirms watching ad (clicks "Watch Ad")
      */
     fun onWatchAdConfirmed() {
-        _showWatchAdDialog.value = false
+        downloadAdController.onDialogConfirm()
     }
 
     /**
-     * Execute pending download without ad (fallback for activity unavailable)
-     * Called from UI when activity context is not available
+     * Called by UI after user earns reward from watching download ad
      */
-    fun executePendingDownload() {
+    fun onDownloadRewardEarned() {
+        downloadAdController.onRewardEarned()
+    }
+
+    /**
+     * Called by UI when download ad fails to load or user closes ad without watching
+     * Allows download anyway with error toast (per requirement: fallback on timeout/error)
+     */
+    fun onDownloadAdFailed() {
+        downloadAdController.onAdFailed()
+        _saveToastState.value = ProcessToastState.Error("Ad not available right now")
+        // Allow download anyway on failure (per requirement)
         pendingDownloadRequest?.invoke()
         pendingDownloadRequest = null
     }
 
     /**
-     * Show rewarded ad inline (drama app pattern)
-     * Called from UI after user confirms watching ad
-     *
-     * @param activity Activity context for showing the ad
-     */
-    fun showRewardedAd(activity: Activity) {
-        viewModelScope.launch {
-            try {
-                // Load reward ad if not already cached (show loading indicator while loading)
-                if (!adsLoaderService.isRewardedAdReady(AdPlacement.REWARD_DOWNLOAD_VIDEO)) {
-                    android.util.Log.d("ExportViewModel", "⏳ Loading rewarded ad...")
-
-                    // Show loading indicator (like drama app)
-                    AdsLoadingState.show("Loading ad...")
-
-                    // Load with 60 second timeout
-                    withTimeout(60_000) {
-                        adsLoaderService.loadRewarded(AdPlacement.REWARD_DOWNLOAD_VIDEO)
-                    }
-
-                    // Hide loading indicator before presenting ad
-                    AdsLoadingState.hide()
-                }
-
-                // Present reward ad and wait for result (blocking call)
-                val result = adsLoaderService.presentRewarded(
-                    placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
-                    activity = activity
-                )
-
-                // Check if user earned the reward (watched full ad)
-                if (result.earnedReward) {
-                    android.util.Log.d("ExportViewModel", "✅ User earned reward - proceeding with download")
-                    // Execute pending download request
-                    pendingDownloadRequest?.invoke()
-                    pendingDownloadRequest = null
-                } else {
-                    android.util.Log.d("ExportViewModel", "❌ User did not earn reward (closed ad early)")
-                    // User closed ad without watching - clear pending request
-                    // User can click download button again to retry
-                    pendingDownloadRequest = null
-                }
-
-            } catch (e: TimeoutCancellationException) {
-                android.util.Log.w("ExportViewModel", "Ad load timeout - allowing direct download")
-                // Timeout loading ad - allow download anyway (per user requirement)
-                AdsLoadingState.hide()
-                pendingDownloadRequest?.invoke()
-                pendingDownloadRequest = null
-
-            } catch (e: AdsLoaderException.NoAdToShow) {
-                android.util.Log.w("ExportViewModel", "No ad available - allowing direct download")
-                // If no ad available, allow download anyway (per user requirement)
-                AdsLoadingState.hide()
-                // Show toast: ad not available
-                _saveToastState.value = ProcessToastState.Error("Ad not available right now")
-                pendingDownloadRequest?.invoke()
-                pendingDownloadRequest = null
-
-            } catch (e: Exception) {
-                android.util.Log.e("ExportViewModel", "Failed to show rewarded ad: ${e.message}")
-                // On error, allow download anyway (per user requirement)
-                AdsLoadingState.hide()
-                // Show toast: ad not available
-                _saveToastState.value = ProcessToastState.Error("Ad not available right now")
-                pendingDownloadRequest?.invoke()
-                pendingDownloadRequest = null
-
-            } finally {
-                // Ensure loading indicator is always hidden
-                AdsLoadingState.hide()
-            }
-        }
-    }
-
-    /**
      * Called when user clicks watermark overlay
-     * Shows watermark ad dialog immediately
+     * Shows watermark ad dialog or removes watermark immediately if ad disabled
      */
     fun onWatermarkClick() {
-        // Check if ad is enabled for this placement
-        if (!adsLoaderService.canLoadAd(AdPlacement.REWARD_REMOVE_WATERMARK)) {
-            // Ad disabled - remove watermark immediately
-            android.util.Log.d("ExportViewModel", "⏭️ Ad disabled for watermark removal - removing watermark")
-            _showWatermark.value = false
-            saveWatermarkFreeStatus()
-            return
-        }
-
-        android.util.Log.d("ExportViewModel", "🎁 Showing watermark ad dialog")
-        _showWatermarkAdDialog.value = true
+        watermarkAdController.requestAd(
+            onReward = {
+                // Remove watermark and save status
+                _showWatermark.value = false
+                saveWatermarkFreeStatus()
+                android.util.Log.d("ExportViewModel", "✅ Watermark removed after ad")
+            },
+            onSkip = {
+                // Ad disabled - remove watermark immediately
+                android.util.Log.d("ExportViewModel", "⏭️ Ad disabled - removing watermark")
+                _showWatermark.value = false
+                saveWatermarkFreeStatus()
+            },
+            checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_REMOVE_WATERMARK) }
+        )
     }
 
     /**
@@ -734,90 +681,30 @@ class ExportViewModel(
      * Called when user dismisses watermark ad dialog (clicks "Close")
      */
     fun onWatermarkAdDialogDismiss() {
-        _showWatermarkAdDialog.value = false
+        watermarkAdController.onDialogDismiss()
     }
 
     /**
      * Called when user confirms watching watermark ad (clicks "Watch Ad")
-     * Dismisses dialog and initiates rewarded ad loading/showing
      */
     fun onWatermarkAdConfirmed() {
-        _showWatermarkAdDialog.value = false
+        watermarkAdController.onDialogConfirm()
     }
 
     /**
-     * Show rewarded ad for watermark removal (inline loading pattern from drama app)
-     * Called from UI after user confirms watching ad
-     *
-     * IMPORTANT: Unlike download ad, watermark is NOT removed on timeout/error
-     * User MUST watch the full ad to remove watermark
-     *
-     * @param activity Activity context for showing the ad
+     * Called by UI after user earns reward from watching watermark ad
      */
-    fun showWatermarkRewardedAd(activity: Activity) {
-        viewModelScope.launch {
-            try {
-                // Load watermark removal ad if not already cached (show loading indicator while loading)
-                if (!adsLoaderService.isRewardedAdReady(AdPlacement.REWARD_REMOVE_WATERMARK)) {
-                    android.util.Log.d("ExportViewModel", "⏳ Loading watermark removal ad...")
+    fun onWatermarkRewardEarned() {
+        watermarkAdController.onRewardEarned()
+    }
 
-                    // Show loading indicator (like drama app)
-                    AdsLoadingState.show("Loading ad...")
-
-                    // Load with 60 second timeout
-                    withTimeout(60_000) {
-                        adsLoaderService.loadRewarded(AdPlacement.REWARD_REMOVE_WATERMARK)
-                    }
-
-                    // Hide loading indicator before presenting ad
-                    AdsLoadingState.hide()
-                }
-
-                // Present reward ad and wait for result (blocking call)
-                val result = adsLoaderService.presentRewarded(
-                    placement = AdPlacement.REWARD_REMOVE_WATERMARK,
-                    activity = activity
-                )
-
-                // Check if user earned the reward (watched full ad)
-                if (result.earnedReward) {
-                    android.util.Log.d("ExportViewModel", "✅ User earned reward - removing watermark")
-                    // Remove watermark
-                    _showWatermark.value = false
-                    // Save watermark-free status to database
-                    saveWatermarkFreeStatus()
-                } else {
-                    android.util.Log.d("ExportViewModel", "❌ User did not earn reward (closed ad early)")
-                    // User closed ad without watching - watermark stays visible
-                    // User can click watermark again to retry
-                }
-
-            } catch (e: TimeoutCancellationException) {
-                android.util.Log.w("ExportViewModel", "Ad load timeout - watermark NOT removed")
-                // Timeout loading ad - watermark stays visible (unlike download)
-                AdsLoadingState.hide()
-                // Show toast: ad not available
-                _saveToastState.value = ProcessToastState.Error("Ad not available right now")
-
-            } catch (e: AdsLoaderException.NoAdToShow) {
-                android.util.Log.w("ExportViewModel", "No ad available - watermark NOT removed")
-                // If no ad available, watermark stays visible (unlike download)
-                AdsLoadingState.hide()
-                // Show toast: ad not available
-                _saveToastState.value = ProcessToastState.Error("Ad not available right now")
-
-            } catch (e: Exception) {
-                android.util.Log.e("ExportViewModel", "Failed to show watermark removal ad: ${e.message}")
-                // On error, watermark stays visible (unlike download)
-                AdsLoadingState.hide()
-                // Show toast: ad not available
-                _saveToastState.value = ProcessToastState.Error("Ad not available right now")
-
-            } finally {
-                // Ensure loading indicator is always hidden
-                AdsLoadingState.hide()
-            }
-        }
+    /**
+     * Called by UI when watermark ad fails to load or user closes ad without watching
+     * Shows error toast - watermark stays visible
+     */
+    fun onWatermarkAdFailed() {
+        watermarkAdController.onAdFailed()
+        _saveToastState.value = ProcessToastState.Error("Ad not available right now")
     }
 
     /**

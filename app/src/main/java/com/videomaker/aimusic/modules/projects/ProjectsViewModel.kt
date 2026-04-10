@@ -1,13 +1,11 @@
 package com.videomaker.aimusic.modules.projects
 
-import android.app.Activity
 import android.content.Context
 import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
+import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.media.export.MediaStoreHelper
 import com.videomaker.aimusic.domain.model.MusicSong
@@ -31,10 +29,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import java.io.File
 
 // ============================================
@@ -112,10 +108,18 @@ class ProjectsViewModel(
     private val _toastState = MutableStateFlow<ProcessToastState?>(null)
     val toastState: StateFlow<ProcessToastState?> = _toastState.asStateFlow()
 
-    // Rewarded ad state for download
-    private val _showWatchAdDialog = MutableStateFlow(false)
-    val showWatchAdDialog: StateFlow<Boolean> = _showWatchAdDialog.asStateFlow()
+    // Rewarded ad controller for video download
+    private val rewardedAdController = RewardedAdController(
+        placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+        adsLoaderService = adsLoaderService,
+        viewModelScope = viewModelScope
+    )
 
+    // Expose rewarded ad states
+    val showWatchAdDialog: StateFlow<Boolean> = rewardedAdController.showWatchAdDialog
+    val shouldPresentAd: StateFlow<Boolean> = rewardedAdController.shouldPresentAd
+
+    // Pending download project (stored for callback after ad)
     private val _pendingDownloadProject = MutableStateFlow<Project?>(null)
     val pendingDownloadProject: StateFlow<Project?> = _pendingDownloadProject.asStateFlow()
 
@@ -269,119 +273,68 @@ class ProjectsViewModel(
 
     /**
      * Download project video to gallery (shows rewarded ad first)
+     * Stores context for later use after ad is watched
      */
-    fun onDownloadProject(project: Project, context: Context) {
-        // Check if ad is enabled for this placement
-        if (!adsLoaderService.canLoadAd(AdPlacement.REWARD_DOWNLOAD_VIDEO)) {
-            // Ad disabled - proceed directly with download
-            android.util.Log.d("ProjectsViewModel", "⏭️ Ad disabled for download - proceeding without ad")
-            performDownload(project, context)
-            return
-        }
+    private var downloadContext: Context? = null
 
+    fun onDownloadProject(project: Project, context: Context) {
+        // Store context for later use
+        downloadContext = context
+
+        // Store pending project
         _pendingDownloadProject.value = project
-        _showWatchAdDialog.value = true
+
+        // Request ad via controller
+        rewardedAdController.requestAd(
+            onReward = {
+                // Download after ad is watched
+                _pendingDownloadProject.value?.let { pendingProject ->
+                    performDownload(pendingProject, context)
+                }
+                _pendingDownloadProject.value = null
+                downloadContext = null
+            },
+            onSkip = {
+                // Ad disabled or not available - proceed with download
+                android.util.Log.d("ProjectsViewModel", "⏭️ Ad disabled/unavailable - proceeding with download")
+                performDownload(project, context)
+                _pendingDownloadProject.value = null
+                downloadContext = null
+            },
+            checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_DOWNLOAD_VIDEO) }
+        )
     }
 
     /**
-     * Dismiss watch ad dialog
+     * User dismissed watch ad dialog (clicked "Close")
      */
     fun onWatchAdDialogDismiss() {
-        _showWatchAdDialog.value = false
+        rewardedAdController.onDialogDismiss()
         _pendingDownloadProject.value = null
+        downloadContext = null
     }
 
     /**
-     * User confirmed watching ad
-     * Dismisses dialog - UI should then call showRewardedAd(activity)
+     * User confirmed watching ad (clicked "Watch Ad")
      */
     fun onWatchAdConfirmed() {
-        _showWatchAdDialog.value = false
+        rewardedAdController.onDialogConfirm()
     }
 
     /**
-     * Show rewarded ad inline (drama app pattern)
-     * Called from UI after user confirms watching ad
-     *
-     * @param activity Activity context for showing the ad
-     * @param context Application context for download
+     * Called by UI after user earns reward from watching ad
      */
-    fun showRewardedAd(activity: Activity, context: Context) {
-        viewModelScope.launch {
-            try {
-                // Load reward ad if not already cached (show loading indicator while loading)
-                if (!adsLoaderService.isRewardedAdReady(AdPlacement.REWARD_DOWNLOAD_VIDEO)) {
-                    android.util.Log.d("ProjectsViewModel", "⏳ Loading rewarded ad...")
-
-                    // Show loading indicator (like drama app)
-                    AdsLoadingState.show("Loading ad...")
-
-                    // Load with 60 second timeout
-                    withTimeout(60_000) {
-                        adsLoaderService.loadRewarded(AdPlacement.REWARD_DOWNLOAD_VIDEO)
-                    }
-
-                    // Hide loading indicator before presenting ad
-                    AdsLoadingState.hide()
-                }
-
-                // Present reward ad and wait for result (blocking call)
-                val result = adsLoaderService.presentRewarded(
-                    placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
-                    activity = activity
-                )
-
-                // Check if user earned the reward (watched full ad)
-                if (result.earnedReward) {
-                    android.util.Log.d("ProjectsViewModel", "✅ User earned reward - proceeding with download")
-                    // Execute pending download
-                    _pendingDownloadProject.value?.let { project ->
-                        performDownload(project, context)
-                    }
-                } else {
-                    android.util.Log.d("ProjectsViewModel", "❌ User did not earn reward (closed ad early)")
-                    // User closed ad without watching - clear pending request
-                    _pendingDownloadProject.value = null
-                }
-
-            } catch (e: TimeoutCancellationException) {
-                android.util.Log.w("ProjectsViewModel", "Ad load timeout - allowing direct download")
-                // Timeout loading ad - allow download anyway (per user requirement)
-                AdsLoadingState.hide()
-                _pendingDownloadProject.value?.let { project ->
-                    performDownload(project, context)
-                }
-
-            } catch (e: AdsLoaderException.NoAdToShow) {
-                android.util.Log.w("ProjectsViewModel", "No ad available - allowing direct download")
-                // If no ad available, allow download anyway (per user requirement)
-                AdsLoadingState.hide()
-                _toastState.value = ProcessToastState.Error("Ad not available right now")
-                _pendingDownloadProject.value?.let { project ->
-                    performDownload(project, context)
-                }
-
-            } catch (e: Exception) {
-                android.util.Log.e("ProjectsViewModel", "Failed to show rewarded ad: ${e.message}")
-                // On error, allow download anyway (per user requirement)
-                AdsLoadingState.hide()
-                _toastState.value = ProcessToastState.Error("Ad not available right now")
-                _pendingDownloadProject.value?.let { project ->
-                    performDownload(project, context)
-                }
-
-            } finally {
-                // Ensure loading indicator is always hidden
-                AdsLoadingState.hide()
-            }
-        }
+    fun onRewardEarned() {
+        rewardedAdController.onRewardEarned()
     }
 
     /**
-     * Ad failed to load or user dismissed without watching
+     * Called by UI when ad fails to load or user closes ad without watching
      */
     fun onAdFailed() {
+        rewardedAdController.onAdFailed()
         _pendingDownloadProject.value = null
+        downloadContext = null
     }
 
     /**

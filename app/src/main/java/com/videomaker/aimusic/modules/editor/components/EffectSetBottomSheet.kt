@@ -62,6 +62,7 @@ import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import org.koin.compose.koinInject
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.EffectSet
@@ -93,6 +94,7 @@ fun EffectSetBottomSheet(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
+    val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
     val pendingUnlockEffectSet by viewModel.pendingUnlockEffectSet.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val unlockedIds by viewModel.unlockedEffectSetIds.collectAsStateWithLifecycle()
@@ -105,70 +107,14 @@ fun EffectSetBottomSheet(
     val adsLoaderService = koinInject<AdsLoaderService>()
     val coroutineScope = rememberCoroutineScope()
 
-    // Handle ad presentation when user confirms watching ad
-    LaunchedEffect(pendingUnlockEffectSet) {
-        val effectSet = pendingUnlockEffectSet ?: return@LaunchedEffect
-
-        // Check if Activity is available
-        if (activity == null) {
-            android.util.Log.w("EffectSetBottomSheet", "Activity unavailable for ad presentation")
-            snackbarHostState.showSnackbar(context.getString(R.string.effect_set_ad_not_available))
-            viewModel.onAdFailed()
-            return@LaunchedEffect
-        }
-
-        try {
-            // 1. Check if ad is ready
-            if (!adsLoaderService.isRewardedAdReady(AdPlacement.REWARD_UNLOCK_EFFECT_SET)) {
-                // 2. Show loading overlay
-                AdsLoadingState.show("Loading ad...")
-
-                // 3. Load ad with 60s timeout
-                withTimeout(60_000) {
-                    adsLoaderService.loadRewarded(AdPlacement.REWARD_UNLOCK_EFFECT_SET)
-                }
-
-                // 4. Hide loading overlay
-                AdsLoadingState.hide()
-            }
-
-            // 5. Present ad and wait for result (blocking)
-            val result = adsLoaderService.presentRewarded(
-                placement = AdPlacement.REWARD_UNLOCK_EFFECT_SET,
-                activity = activity
-            )
-
-            // 6. Check if user earned reward
-            if (result.earnedReward) {
-                viewModel.onRewardEarned(onEffectSetSelected)
-            } else {
-                android.util.Log.d("EffectSetBottomSheet", "User did not earn reward (closed ad early)")
-                viewModel.onAdFailed()
-            }
-
-        } catch (e: TimeoutCancellationException) {
-            android.util.Log.w("EffectSetBottomSheet", "Ad load timeout")
-            AdsLoadingState.hide()
-            viewModel.showError(context.getString(R.string.effect_set_ad_not_available))
-            viewModel.onAdFailed()
-
-        } catch (e: AdsLoaderException.NoAdToShow) {
-            android.util.Log.w("EffectSetBottomSheet", "No ad available")
-            AdsLoadingState.hide()
-            viewModel.showError(context.getString(R.string.effect_set_ad_not_available))
-            viewModel.onAdFailed()
-
-        } catch (e: Exception) {
-            android.util.Log.e("EffectSetBottomSheet", "Failed to show rewarded ad: ${e.message}")
-            AdsLoadingState.hide()
-            viewModel.showError(context.getString(R.string.effect_set_ad_not_available))
-            viewModel.onAdFailed()
-
-        } finally {
-            // Always hide loading overlay
-            AdsLoadingState.hide()
-        }
-    }
+    // Handle rewarded ad presentation using reusable presenter
+    RewardedAdPresenter(
+        shouldPresent = shouldPresentAd,
+        placement = AdPlacement.REWARD_UNLOCK_EFFECT_SET,
+        adsLoaderService = adsLoaderService,
+        onRewardEarned = viewModel::onRewardEarned,
+        onAdFailed = viewModel::onAdFailed
+    )
 
     // Show error message if ad not available
     LaunchedEffect(errorMessage) {

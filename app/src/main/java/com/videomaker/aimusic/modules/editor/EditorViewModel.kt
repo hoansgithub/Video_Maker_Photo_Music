@@ -3,6 +3,8 @@ package com.videomaker.aimusic.modules.editor
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.net.Uri
+import com.videomaker.aimusic.core.ads.RewardedAdController
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.EditorInitialData
@@ -113,13 +115,16 @@ class EditorViewModel(
     private val _isQualityUnlocked = MutableStateFlow(false)
     val isQualityUnlocked: StateFlow<Boolean> = _isQualityUnlocked.asStateFlow()
 
-    // Watch ad dialog for quality unlock
-    private val _showQualityAdDialog = MutableStateFlow(false)
-    val showQualityAdDialog: StateFlow<Boolean> = _showQualityAdDialog.asStateFlow()
+    // Rewarded ad controller for quality unlock
+    private val qualityAdController = RewardedAdController(
+        placement = AdPlacement.REWARD_UNLOCK_QUALITY,
+        adsLoaderService = adsLoaderService,
+        viewModelScope = viewModelScope
+    )
 
-    // Pending quality unlock (triggers ad presentation in UI)
-    private val _pendingQualityUnlock = MutableStateFlow(false)
-    val pendingQualityUnlock: StateFlow<Boolean> = _pendingQualityUnlock.asStateFlow()
+    // Expose quality ad states
+    val showQualityAdDialog: StateFlow<Boolean> = qualityAdController.showWatchAdDialog
+    val shouldPresentQualityAd: StateFlow<Boolean> = qualityAdController.shouldPresentAd
 
     // Error message for ad failures
     private val _qualityAdError = MutableStateFlow<String?>(null)
@@ -999,17 +1004,22 @@ class EditorViewModel(
         if (currentState !is EditorUiState.Success) return
 
         if (isQualityLocked(currentState.selectedQuality)) {
-            // Quality locked - check if ad is enabled
-            if (!adsLoaderService.canLoadAd(com.videomaker.aimusic.core.constants.AdPlacement.REWARD_UNLOCK_QUALITY)) {
-                // Ad disabled - unlock quality for free and proceed
-                android.util.Log.d("EditorViewModel", "⏭️ Ad disabled for quality unlock - unlocking for free")
-                _isQualityUnlocked.value = true
-                navigateToExport()
-                return
-            }
-
-            // Ad enabled - show watch ad dialog
-            _showQualityAdDialog.value = true
+            // Quality locked - request ad via controller
+            qualityAdController.requestAd(
+                onReward = {
+                    // Unlock quality for session and navigate
+                    android.util.Log.d("EditorViewModel", "✅ Quality unlocked for session")
+                    _isQualityUnlocked.value = true
+                    navigateToExport()
+                },
+                onSkip = {
+                    // Ad disabled - unlock for free and proceed
+                    android.util.Log.d("EditorViewModel", "⏭️ Ad disabled - unlocking quality for free")
+                    _isQualityUnlocked.value = true
+                    navigateToExport()
+                },
+                checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_QUALITY) }
+            )
         } else {
             // Quality unlocked or free - proceed to export
             navigateToExport()
@@ -1020,38 +1030,28 @@ class EditorViewModel(
      * User dismissed quality ad dialog (clicked "Close")
      */
     fun onQualityAdDialogDismiss() {
-        _showQualityAdDialog.value = false
-        _pendingQualityUnlock.value = false
+        qualityAdController.onDialogDismiss()
     }
 
     /**
      * User confirmed watching ad (clicked "Watch Ad")
-     * Sets pending flag - UI layer will handle ad presentation
      */
     fun onQualityAdConfirmed() {
-        _showQualityAdDialog.value = false
-        _pendingQualityUnlock.value = true
-        // UI will detect pendingQualityUnlock and present ad
+        qualityAdController.onDialogConfirm()
     }
 
     /**
-     * Called by UI after user earns reward from watching quality unlock ad.
-     * Unlocks quality for this session and proceeds to export.
+     * Called by UI after user earns reward from watching quality unlock ad
      */
     fun onQualityRewardEarned() {
-        android.util.Log.d("EditorViewModel", "✅ User earned reward - unlocking quality for session")
-        _isQualityUnlocked.value = true
-        _pendingQualityUnlock.value = false
-        navigateToExport()
+        qualityAdController.onRewardEarned()
     }
 
     /**
-     * Called by UI when quality ad fails to load or user closes ad without watching.
+     * Called by UI when quality ad fails to load or user closes ad without watching
      */
     fun onQualityAdFailed() {
-        android.util.Log.d("EditorViewModel", "❌ Quality ad failed or user cancelled")
-        _pendingQualityUnlock.value = false
-        // User stays in editor, can try again or select free quality
+        qualityAdController.onAdFailed()
     }
 
     /**

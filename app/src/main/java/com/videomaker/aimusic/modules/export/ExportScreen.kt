@@ -10,6 +10,7 @@ import androidx.activity.compose.BackHandler
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
@@ -161,8 +162,10 @@ fun ExportScreen(
     val saveToastState by viewModel.saveToastState.collectAsStateWithLifecycle()
     val ratingStep by viewModel.ratingStep.collectAsStateWithLifecycle()
     val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
+    val shouldPresentDownloadAd by viewModel.shouldPresentDownloadAd.collectAsStateWithLifecycle()
     val showWatermark by viewModel.showWatermark.collectAsStateWithLifecycle()
     val showWatermarkAdDialog by viewModel.showWatermarkAdDialog.collectAsStateWithLifecycle()
+    val shouldPresentWatermarkAd by viewModel.shouldPresentWatermarkAd.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -434,34 +437,35 @@ fun ExportScreen(
         if (showWatchAdDialog) {
             WatchAdDialog(
                 onDismiss = viewModel::onWatchAdDialogDismiss,
-                onWatchAd = {
-                    viewModel.onWatchAdConfirmed()
-                    // Show rewarded ad (drama app pattern - inline loading in ViewModel)
-                    if (activity != null) {
-                        viewModel.showRewardedAd(activity)
-                    } else {
-                        // Activity context unavailable - allow direct download
-                        android.util.Log.w("ExportScreen", "Activity unavailable for rewarded ad - allowing direct download")
-                        viewModel.executePendingDownload()
-                    }
-                }
+                onWatchAd = viewModel::onWatchAdConfirmed
             )
         }
+
+        // Handle download ad presentation using reusable presenter
+        RewardedAdPresenter(
+            shouldPresent = shouldPresentDownloadAd,
+            placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+            adsLoaderService = adsLoaderService,
+            onRewardEarned = viewModel::onDownloadRewardEarned,
+            onAdFailed = viewModel::onDownloadAdFailed
+        )
 
         // Watermark ad dialog
         if (showWatermarkAdDialog) {
             WatermarkAdDialog(
                 onDismiss = viewModel::onWatermarkAdDialogDismiss,
-                onWatchAd = {
-                    viewModel.onWatermarkAdConfirmed()
-                    if (activity != null) {
-                        viewModel.showWatermarkRewardedAd(activity)
-                    } else {
-                        android.util.Log.w("ExportScreen", "Activity unavailable for watermark ad - keeping watermark")
-                    }
-                }
+                onWatchAd = viewModel::onWatermarkAdConfirmed
             )
         }
+
+        // Handle watermark ad presentation using reusable presenter
+        RewardedAdPresenter(
+            shouldPresent = shouldPresentWatermarkAd,
+            placement = AdPlacement.REWARD_REMOVE_WATERMARK,
+            adsLoaderService = adsLoaderService,
+            onRewardEarned = viewModel::onWatermarkRewardEarned,
+            onAdFailed = viewModel::onWatermarkAdFailed
+        )
 
         // Ads loading overlay (shows when rewarded ad is loading)
         AdsLoadingOverlay()
