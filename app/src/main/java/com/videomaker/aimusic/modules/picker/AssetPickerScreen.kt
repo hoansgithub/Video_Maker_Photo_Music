@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -64,10 +65,8 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -120,10 +119,10 @@ private const val THUMBNAIL_SIZE_DP = 120
 private const val GRID_COLUMNS = 3
 
 /**
- * Delay before loading images to allow bottom sheet animation to complete
- * This prevents janky animation when loading images while sheet is expanding
+ * Delay before loading images to allow initial composition to complete
+ * This prevents janky animation when loading images on first render
  */
-private const val SHEET_ANIMATION_DELAY_MS = 350L
+private const val INITIAL_LOAD_DELAY_MS = 100L
 
 private fun readPermissionSnapshot(context: android.content.Context): PermissionSnapshot {
     val hasFullPermission = when {
@@ -151,12 +150,12 @@ private fun readPermissionSnapshot(context: android.content.Context): Permission
 }
 
 /**
- * AssetPickerScreen - Bottom sheet image picker with permission handling
+ * AssetPickerScreen - Full-screen image picker with permission handling
  *
  * Permission states:
  * - Full access (READ_MEDIA_IMAGES / READ_EXTERNAL_STORAGE) → AllPermission: loads entire gallery
  * - Limited access (READ_MEDIA_VISUAL_USER_SELECTED, Android 14+) → LimitPermission: loads selected photos only
- * - Denied → DeniedPermission: shows "Go to Settings" prompt inside the sheet
+ * - Denied → DeniedPermission: shows "Go to Settings" prompt
  *
  * Performance optimizations:
  * - LazyVerticalGrid for virtualized rendering
@@ -188,10 +187,6 @@ fun AssetPickerScreen(
     var showExitConfirmDialog by remember { mutableStateOf(false) }
     var hasTrackedMediaRender by remember { mutableStateOf(false) }
     var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
-
-    // Show bottom sheet immediately for smooth transition
-    var showBottomSheet by remember { mutableStateOf(true) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     // Permissions to request, based on Android version:
     // - API 34+: request both full and limited so the system dialog shows all 3 options
@@ -296,9 +291,9 @@ fun AssetPickerScreen(
         }
     }
 
-    // Wait for sheet animation to complete, then check permission and load images
+    // Wait for initial composition to complete, then check permission and load images
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(SHEET_ANIMATION_DELAY_MS)
+        kotlinx.coroutines.delay(INITIAL_LOAD_DELAY_MS)
         hasInitializedPermissionCheck = true
         viewModel.onPermissionSnapshot(
             snapshot = readPermissionSnapshot(context),
@@ -412,7 +407,6 @@ fun AssetPickerScreen(
     }
 
     val closePickerAndNavigateBack = {
-        showBottomSheet = false
         viewModel.onPickerClosed()
         viewModel.navigateBack()
     }
@@ -431,36 +425,36 @@ fun AssetPickerScreen(
         }
     }
 
-    // Bottom Sheet
-    if (showBottomSheet) {
-        ModalBottomSheet(
-            onDismissRequest = {
+    // Handle system back button
+    BackHandler(enabled = true) {
+        requestExit()
+    }
+
+    // Full-screen content
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+    ) {
+        AssetPickerContent(
+            uiState = uiState,
+            minSelection = viewModel.minSelection,
+            initialGridScrollState = gridScrollState,
+            onAlbumSelect = { albumId -> viewModel.selectAlbum(albumId) },
+            onAssetClick = { asset -> viewModel.toggleAssetSelection(asset) },
+            onGridScrollChanged = { index, offset ->
+                viewModel.onGridScrollChanged(index, offset)
+            },
+            onConfirmClick = { viewModel.confirmSelection() },
+            onClearSelection = {viewModel.clearSelection()},
+            onCloseClick = {
                 requestExit()
             },
-            sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-            contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
-        ) {
-            AssetPickerContent(
-                uiState = uiState,
-                minSelection = viewModel.minSelection,
-                initialGridScrollState = gridScrollState,
-                onAlbumSelect = { albumId -> viewModel.selectAlbum(albumId) },
-                onAssetClick = { asset -> viewModel.toggleAssetSelection(asset) },
-                onGridScrollChanged = { index, offset ->
-                    viewModel.onGridScrollChanged(index, offset)
-                },
-                onConfirmClick = { viewModel.confirmSelection() },
-                onClearSelection = {viewModel.clearSelection()},
-                onCloseClick = {
-                    requestExit()
-                },
-                onGoToSettings = goToAppSettings,
-                onAddMorePhotos = onAddMorePhotos,
-                onCameraClick = onCameraClick
-            )
-        }
+            onGoToSettings = goToAppSettings,
+            onAddMorePhotos = onAddMorePhotos,
+            onCameraClick = onCameraClick
+        )
     }
 
     if (showExitConfirmDialog) {
@@ -525,9 +519,7 @@ private fun AssetPickerContent(
 
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.navigationBars)
+        modifier = Modifier.fillMaxSize()
     ) {
         // Header
         Row(
