@@ -413,12 +413,20 @@ class ExportViewModel(
     }
 
     /**
+     * User explicitly exits result screen (Done/Back gesture on success state).
+     * Keep analytics trigger at UI action boundary to avoid passive/programmatic firing.
+     */
+    fun onResultExitClick() {
+        Analytics.trackExitClick(AnalyticsEvent.Value.Location.RESULT)
+        navigateToHomeMyVideos()
+    }
+
+    /**
      * Navigate to Home screen with My Videos tab (tab index 2)
      * Resets savedToGallery state so button is enabled on next export
      * Checks if exit ad is ready and shows it before navigation
      */
     fun navigateToHomeMyVideos() {
-        Analytics.trackExitClick(AnalyticsEvent.Value.Location.VIDEO_GENERATE)
 
         // Reset saved state so button is enabled next time
         val currentState = _uiState.value

@@ -227,7 +227,7 @@ fun ExportScreen(
 
     // Intercept system back gesture (swipe) in Success state - same ad logic as close button
     BackHandler(enabled = uiState is ExportUiState.Success) {
-        viewModel.navigateToHomeMyVideos()
+        viewModel.onResultExitClick()
     }
 
     // Cancel export when app goes to background
@@ -383,7 +383,7 @@ fun ExportScreen(
                     onQualityChange = { quality ->
                         viewModel.changeQuality(quality)
                     },
-                    onDoneClick = viewModel::navigateToHomeMyVideos,
+                    onDoneClick = viewModel::onResultExitClick,
                     onTemplateClick = viewModel::onTemplateClick,
                     onSaveToastDismissed = viewModel::onSaveToastDismissed
                 )
