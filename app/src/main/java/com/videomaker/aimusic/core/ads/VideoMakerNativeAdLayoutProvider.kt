@@ -79,10 +79,10 @@ class VideoMakerNativeAdLayoutProvider : NativeAdLayoutProvider {
             body = R.id.ad_body,                // Required: Body text
             callToAction = R.id.ad_call_to_action, // Required: CTA button
             icon = R.id.ad_icon,                // Required: App icon
-            badge = R.id.ad_badge,              // Optional: "Ad" badge
+            badge = 0,                          // Not used: Using AdChoices instead
             advertiser = R.id.ad_advertiser,    // Optional: Advertiser name
             store = R.id.ad_store,              // Optional: App store name
-            choicesContainer = R.id.ad_choices_container // Optional: Ad choices icon
+            choicesContainer = R.id.ad_choices_container // Required: Ad choices icon (replaces custom badge)
         )
     }
 }

@@ -52,37 +52,16 @@ Native Ad Layout: Fullscreen Clean
             android:background="@drawable/bg_native_overlay_card"
             android:padding="16dp">
 
-            <!-- Headline row with ad badge -->
-            <LinearLayout
+            <!-- Headline -->
+            <TextView
+                android:id="@+id/ad_headline"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <TextView
-                    android:id="@+id/ad_headline"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textSize="20sp"
-                    android:textColor="@color/white"
-                    android:textStyle="bold"
-                    android:maxLines="2"
-                    android:ellipsize="end" />
-
-                <TextView
-                    android:id="@+id/ad_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/ad_badge"
-                    android:textSize="10sp"
-                    android:textColor="@color/foundation_black"
-                    android:textStyle="bold"
-                    android:background="@drawable/bg_ad_badge"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="3dp"
-                    android:layout_marginStart="12dp" />
-            </LinearLayout>
+                android:textSize="20sp"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end" />
 
             <!-- Body text -->
             <TextView
