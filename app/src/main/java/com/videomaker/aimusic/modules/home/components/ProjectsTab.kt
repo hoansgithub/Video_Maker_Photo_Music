@@ -242,7 +242,15 @@ fun ProjectsTabContent(
                             }
 
                             is ProjectsUiState.Empty -> {
-                                ProjectsEmptyState(onCreateClick = onCreateClick)
+                                ProjectsEmptyState(onCreateClick = {
+                                    Analytics.trackVideoClick(
+                                        videoId = "",
+                                        templateId = "",
+                                        songId = "",
+                                        location = AnalyticsEvent.Value.Location.NEW
+                                    )
+                                    onCreateClick.invoke()
+                                })
                             }
 
                             is ProjectsUiState.Success -> {
@@ -268,7 +276,7 @@ fun ProjectsTabContent(
                                             duration = project.totalDurationMs,
                                             ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
                                             volume = (project.settings.audioVolume * 100f).toInt(),
-                                            mediaQuality = null
+                                            mediaQuality = AnalyticsEvent.Value.Location.UNKNOWN
                                         )
                                         viewModel.onDeleteProject(project)
                                     },

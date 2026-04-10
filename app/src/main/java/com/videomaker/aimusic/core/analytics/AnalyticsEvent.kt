@@ -239,7 +239,7 @@ object AnalyticsEvent {
 
         const val QUALITY = "quality"
         const val DURATION = "duration"
-        const val RATIO_SIZE = "ratio_size"
+        const val RATIO_SIZE = "ratio"
         const val VOLUME = "volume"
         const val VIDEO_QUALITY = "video_quality"
         const val MEDIA_QUALITY = "media_quality"

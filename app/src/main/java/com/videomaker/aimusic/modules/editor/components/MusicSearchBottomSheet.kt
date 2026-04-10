@@ -94,6 +94,7 @@ import com.videomaker.aimusic.ui.theme.TextTertiary
 @Composable
 internal fun MusicSearchBottomSheet(
     viewModel: SongSearchViewModel,
+    onSongClick: (MusicSong) -> Unit,
     onSongSelected: (MusicSong) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -394,6 +395,7 @@ internal fun MusicSearchBottomSheet(
                                 isSelected = song.id == selectedForConfirmId,
                                 isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                 onSongClick = {
+                                    onSongClick(song)
                                     Analytics.trackSongClick(
                                         songId = song.id.toString(),
                                         songName = song.name,
@@ -516,6 +518,7 @@ internal fun MusicSearchBottomSheet(
                                     isSelected = song.id == selectedForConfirmId,
                                     isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                     onSongClick = {
+                                        onSongClick(song)
                                         Analytics.trackSongClick(
                                             songId = song.id.toString(),
                                             songName = song.name,
@@ -623,6 +626,7 @@ internal fun MusicSearchBottomSheet(
                                     isSelected = song.id == selectedForConfirmId,
                                     isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                     onSongClick = {
+                                        onSongClick(song)
                                         Analytics.trackSongClick(
                                             songId = song.id.toString(),
                                             songName = song.name,

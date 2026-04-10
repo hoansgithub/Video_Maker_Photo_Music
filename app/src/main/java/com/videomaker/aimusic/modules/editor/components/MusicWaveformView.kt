@@ -231,6 +231,7 @@ fun MusicWaveformView(
                 maxWidth = width,
                 baselineY = labelBaselinePx,
                 horizontalPadding = labelHorizontalPaddingPx,
+                side = LabelSide.LEFT_OF_HANDLE,
                 paint = labelPaint
             )
             drawHandleLabel(
@@ -239,6 +240,7 @@ fun MusicWaveformView(
                 maxWidth = width,
                 baselineY = labelBaselinePx,
                 horizontalPadding = labelHorizontalPaddingPx,
+                side = LabelSide.RIGHT_OF_HANDLE,
                 paint = labelPaint
             )
 
@@ -269,12 +271,22 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHandleLabel(
     maxWidth: Float,
     baselineY: Float,
     horizontalPadding: Float,
+    side: LabelSide,
     paint: FrameworkPaint
 ) {
     val textWidth = paint.measureText(text)
     val maxX = (maxWidth - textWidth - horizontalPadding).coerceAtLeast(horizontalPadding)
-    val textX = (anchorX - textWidth / 2f).coerceIn(horizontalPadding, maxX)
+    val rawTextX = when (side) {
+        LabelSide.LEFT_OF_HANDLE -> anchorX - textWidth - horizontalPadding
+        LabelSide.RIGHT_OF_HANDLE -> anchorX + horizontalPadding
+    }
+    val textX = rawTextX.coerceIn(horizontalPadding, maxX)
     drawContext.canvas.nativeCanvas.drawText(text, textX, baselineY, paint)
+}
+
+private enum class LabelSide {
+    LEFT_OF_HANDLE,
+    RIGHT_OF_HANDLE
 }
 
 /**

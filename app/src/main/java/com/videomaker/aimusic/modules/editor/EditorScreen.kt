@@ -433,6 +433,7 @@ fun EditorScreen(
                                 songId = state.displaySettings.musicSongId?.toString() ?: "unknown",
                                 songName = state.displaySettings.musicSongName ?: "unknown"
                             )
+                            Analytics.trackSearchOpen(AnalyticsEvent.Value.Location.EDIT)
                             showMusicSearchSheet = true
                         },
                         onVolumeClick = {
@@ -663,7 +664,7 @@ fun EditorScreen(
 
             MusicSearchBottomSheet(
                 viewModel = songSearchViewModel,
-                onSongSelected = { song ->
+                onSongClick = { song ->
                     val videoId = currentVideoId()
                     if (videoId != null) {
                         Analytics.trackEditorSongClick(
@@ -671,6 +672,11 @@ fun EditorScreen(
                             songId = song.id.toString(),
                             songName = song.name
                         )
+                    }
+                },
+                onSongSelected = { song ->
+                    val videoId = currentVideoId()
+                    if (videoId != null) {
                         Analytics.trackEditorSongSelect(
                             videoId = videoId,
                             songId = song.id.toString(),

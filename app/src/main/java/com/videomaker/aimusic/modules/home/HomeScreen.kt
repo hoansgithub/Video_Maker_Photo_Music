@@ -86,7 +86,7 @@ fun HomeScreen(
     songsViewModel: SongsViewModel,
     projectsViewModel: ProjectsViewModel,
     initialTab: Int = 0,
-    onSettingsClick: () -> Unit = {},
+    onSettingsClick: (String) -> Unit = {},
     onCreateClick: () -> Unit = {},
     onProjectClick: (String) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
@@ -249,13 +249,13 @@ private fun HomeTopBar(
     tabs: List<String>,
     selectedTabIndex: Int,
     onTabSelected: (Int) -> Unit,
-    onSettingsClick: () -> Unit,
+    onSettingsClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
     val currentLocation = when (selectedTabIndex) {
         0 -> AnalyticsEvent.Value.Location.GALLERY
-        1 -> AnalyticsEvent.Value.Location.SONG
+        1 -> "songs"
         else -> AnalyticsEvent.Value.Location.LIBRARY
     }
 
@@ -322,7 +322,7 @@ private fun HomeTopBar(
             // Settings Button on the right
             IconButton(onClick = {
                 Analytics.trackSettingOpen(currentLocation)
-                onSettingsClick()
+                onSettingsClick(currentLocation)
             }) {
                 Icon(
                     imageVector = Icons.Default.Settings,
