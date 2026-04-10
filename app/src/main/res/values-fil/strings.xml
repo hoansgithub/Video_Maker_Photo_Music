@@ -486,4 +486,8 @@
     <string name="effect_set_locked">Naka-lock na effect set</string>
     <string name="ad_not_available">Walang available na ad sa ngayon. Subukan ulit mamaya.</string>
 
+    <!-- Quality Export Rewarded Ad -->
+    <string name="quality_watch_ad_title">Manood ng ad para mag-export sa high quality?</string>
+    <string name="quality_watch_ad_subtitle">I-unlock ang 720p/1080p export para sa session na ito sa pamamagitan ng panonood ng maikling ad</string>
+
 </resources>

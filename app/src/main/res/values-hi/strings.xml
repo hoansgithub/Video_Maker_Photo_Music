@@ -488,4 +488,8 @@
     <string name="effect_set_locked">लॉक इफेक्ट सेट</string>
     <string name="ad_not_available">विज्ञापन अभी उपलब्ध नहीं है। बाद में पुनः प्रयास करें।</string>
 
+    <!-- Quality Export Rewarded Ad -->
+    <string name="quality_watch_ad_title">उच्च गुणवत्ता में एक्सपोर्ट करने के लिए विज्ञापन देखें?</string>
+    <string name="quality_watch_ad_subtitle">एक छोटा विज्ञापन देखकर इस सत्र के लिए 720p/1080p एक्सपोर्ट अनलॉक करें</string>
+
 </resources>

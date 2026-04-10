@@ -70,13 +70,13 @@ fun WatchAdDialog(
                     color = SurfaceDark,
                     shape = RoundedCornerShape(24.dp)
                 )
-                .padding(32.dp),
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // [AD] label badge
             AdBadge(style = AdBadgeStyle.Large())
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Title
             Text(
@@ -100,19 +100,19 @@ fun WatchAdDialog(
                 lineHeight = 20.sp
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Buttons row - Close (1/3 width) + Watch Ad (2/3 width)
+            // Buttons row - Close + Watch Ad
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Close button (secondary, 1/3 width)
+                // Close button (secondary)
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier
                         .weight(1f)
-                        .height(56.dp),
+                        .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = Color.White
@@ -120,19 +120,19 @@ fun WatchAdDialog(
                 ) {
                     Text(
                         text = stringResource(R.string.export_watch_ad_close),
-                        fontSize = 12.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                // Watch Ad button (primary, 2/3 width, with icon)
+                // Watch Ad button (primary, with icon)
                 Button(
                     onClick = onWatchAd,
                     modifier = Modifier
                         .weight(2f)
-                        .height(56.dp),
+                        .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = BackgroundLight,
@@ -142,12 +142,12 @@ fun WatchAdDialog(
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.size(8.dp))
+                    Spacer(modifier = Modifier.size(6.dp))
                     Text(
                         text = stringResource(R.string.export_watch_ad_button),
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis

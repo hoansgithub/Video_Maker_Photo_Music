@@ -486,4 +486,8 @@
     <string name="effect_set_locked">Kilitli efekt seti</string>
     <string name="ad_not_available">Reklam şu anda mevcut değil. Daha sonra tekrar deneyin.</string>
 
+    <!-- Quality Export Rewarded Ad -->
+    <string name="quality_watch_ad_title">Yüksek kalitede dışa aktarmak için reklam izle?</string>
+    <string name="quality_watch_ad_subtitle">Kısa bir reklam izleyerek bu oturum için 720p/1080p dışa aktarmayı aç</string>
+
 </resources>

@@ -486,4 +486,8 @@
     <string name="effect_set_locked">Conjunto de efectos bloqueado</string>
     <string name="ad_not_available">Anuncio no disponible ahora. Inténtalo de nuevo más tarde.</string>
 
+    <!-- Quality Export Rewarded Ad -->
+    <string name="quality_watch_ad_title">¿Ver un anuncio para exportar en alta calidad?</string>
+    <string name="quality_watch_ad_subtitle">Desbloquea la exportación 720p/1080p para esta sesión viendo un anuncio corto</string>
+
 </resources>

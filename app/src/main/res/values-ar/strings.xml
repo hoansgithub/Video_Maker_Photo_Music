@@ -486,4 +486,8 @@
     <string name="effect_set_locked">مجموعة تأثيرات مقفلة</string>
     <string name="ad_not_available">لا يتوفر إعلان حاليًا. يرجى المحاولة مرة أخرى لاحقًا.</string>
 
+    <!-- Quality Export Rewarded Ad -->
+    <string name="quality_watch_ad_title">شاهد إعلانًا للتصدير بجودة عالية؟</string>
+    <string name="quality_watch_ad_subtitle">افتح تصدير 720p/1080p لهذه الجلسة من خلال مشاهدة إعلان قصير</string>
+
 </resources>

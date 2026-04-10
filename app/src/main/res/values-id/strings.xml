@@ -486,4 +486,8 @@
     <string name="effect_set_locked">Set efek terkunci</string>
     <string name="ad_not_available">Iklan tidak tersedia saat ini. Coba lagi nanti.</string>
 
+    <!-- Quality Export Rewarded Ad -->
+    <string name="quality_watch_ad_title">Tonton iklan untuk ekspor berkualitas tinggi?</string>
+    <string name="quality_watch_ad_subtitle">Buka kunci ekspor 720p/1080p untuk sesi ini dengan menonton iklan singkat</string>
+
 </resources>
