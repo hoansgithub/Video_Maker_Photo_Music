@@ -470,6 +470,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Rewarded ad for template unlock (shown when user selects ratio for locked template)
+        // User must watch full ad to earn reward (template unlock - stored locally)
+        // Waterfall: Primary unit → Secondary unit (same as effect set unlock)
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.REWARD_UNLOCK_TEMPLATE,
+            type = "reward",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1281667047",  // Primary (shared with effect set)
+                "ca-app-pub-7121075950716954/4323092928"   // Secondary (shared with effect set)
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }

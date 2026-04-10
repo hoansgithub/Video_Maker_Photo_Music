@@ -4,6 +4,7 @@
 
     <!-- Loading -->
     <string name="loading">Yükleniyor…</string>
+    <string name="ad_loading">Reklam yükleniyor…</string>
 
     <!-- Language Selection -->
     <string name="language_select_title">Dilleri Seçin</string>
@@ -489,5 +490,9 @@
     <!-- Quality Export Rewarded Ad -->
     <string name="quality_watch_ad_title">Yüksek kalitede dışa aktarmak için reklam izle?</string>
     <string name="quality_watch_ad_subtitle">Kısa bir reklam izleyerek bu oturum için 720p/1080p dışa aktarmayı aç</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">Bu şablonun kilidini açmak için reklam izle?</string>
+    <string name="template_watch_ad_subtitle">Kısa bir reklam izleyerek bu şablonun kilidini kalıcı olarak aç</string>
 
 </resources>

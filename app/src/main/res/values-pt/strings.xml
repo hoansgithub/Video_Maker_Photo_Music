@@ -4,6 +4,7 @@
 
     <!-- Loading -->
     <string name="loading">Carregando…</string>
+    <string name="ad_loading">Carregando anúncio…</string>
 
     <!-- Language Selection -->
     <string name="language_select_title">Escolher idiomas</string>
@@ -489,5 +490,9 @@
     <!-- Quality Export Rewarded Ad -->
     <string name="quality_watch_ad_title">Assistir a um anúncio para exportar em alta qualidade?</string>
     <string name="quality_watch_ad_subtitle">Desbloqueie a exportação em 720p/1080p para esta sessão assistindo a um anúncio curto</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">Assistir a um anúncio para desbloquear este modelo?</string>
+    <string name="template_watch_ad_subtitle">Desbloqueie este modelo permanentemente assistindo a um anúncio curto</string>
 
 </resources>

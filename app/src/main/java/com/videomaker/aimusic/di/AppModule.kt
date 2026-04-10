@@ -127,6 +127,7 @@ val dataModule = module {
     single { PreferencesManager(androidContext()) }
     single { LanguageManager(androidContext()) }
     single { com.videomaker.aimusic.core.storage.UnlockedEffectSetsManager(androidContext()) }
+    single { com.videomaker.aimusic.core.storage.UnlockedTemplatesManager(androidContext()) }
 
     // Language config service (singleton - ConfigurableObject for Remote Config)
     single {
@@ -564,7 +565,8 @@ class TemplatePreviewerViewModelFactory(
     private val likeTemplateUseCase: LikeTemplateUseCase,
     private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
     private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
-    private val adsLoaderService: AdsLoaderService
+    private val adsLoaderService: AdsLoaderService,
+    private val unlockedTemplatesManager: com.videomaker.aimusic.core.storage.UnlockedTemplatesManager
 ) {
     fun create(
         templateId: String,
@@ -582,7 +584,8 @@ class TemplatePreviewerViewModelFactory(
             likeTemplateUseCase = likeTemplateUseCase,
             unlikeTemplateUseCase = unlikeTemplateUseCase,
             observeLikedTemplatesUseCase = observeLikedTemplatesUseCase,
-            adsLoaderService = adsLoaderService
+            adsLoaderService = adsLoaderService,
+            unlockedTemplatesManager = unlockedTemplatesManager
         )
     }
 }
@@ -845,7 +848,8 @@ val presentationModule = module {
             likeTemplateUseCase = get(),
             unlikeTemplateUseCase = get(),
             observeLikedTemplatesUseCase = get(),
-            adsLoaderService = get()
+            adsLoaderService = get(),
+            unlockedTemplatesManager = get()
         )
     }
 

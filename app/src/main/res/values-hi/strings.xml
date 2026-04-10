@@ -4,6 +4,7 @@
 
     <!-- Loading -->
     <string name="loading">लोड हो रहा है…</string>
+    <string name="ad_loading">विज्ञापन लोड हो रहा है…</string>
 
     <!-- Language Selection -->
     <string name="language_select_title">भाषाएँ चुनें</string>
@@ -491,5 +492,9 @@
     <!-- Quality Export Rewarded Ad -->
     <string name="quality_watch_ad_title">उच्च गुणवत्ता में एक्सपोर्ट करने के लिए विज्ञापन देखें?</string>
     <string name="quality_watch_ad_subtitle">एक छोटा विज्ञापन देखकर इस सत्र के लिए 720p/1080p एक्सपोर्ट अनलॉक करें</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">इस टेम्पलेट को अनलॉक करने के लिए विज्ञापन देखें?</string>
+    <string name="template_watch_ad_subtitle">एक छोटा विज्ञापन देखकर इस टेम्पलेट को स्थायी रूप से अनलॉक करें</string>
 
 </resources>

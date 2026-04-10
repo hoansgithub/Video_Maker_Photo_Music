@@ -505,6 +505,28 @@ object AdPlacement {
     const val REWARD_UNLOCK_EFFECT_SET = "ad_reward_unlock_effect_set"
 
     /**
+     * Rewarded ad shown when user wants to unlock a locked template.
+     * Timing: User taps "Use This Template" on locked template → dialog appears → user watches ad → template unlocked.
+     * User MUST watch the full ad to earn the reward (template unlock).
+     *
+     * Flow:
+     * 1. User taps "Use This Template" button on template previewer (shows [AD] badge)
+     * 2. Dialog shows: "Watch an ad to unlock this template?"
+     * 3. User taps "Watch Ad" → Ad loads and plays
+     * 4. User watches full ad → onUserEarnedReward callback
+     * 5. Template is unlocked and stored locally in SharedPreferences
+     * 6. [AD] badge disappears, ratio selection bottom sheet appears
+     * 7. Unlock persists across app restarts
+     *
+     * Ad units (priority order):
+     * - Primary: TBD (will be assigned by AdMob)
+     * - Secondary: TBD (will be assigned by AdMob)
+     *
+     * Remote Config key: ad_reward_unlock_template
+     */
+    const val REWARD_UNLOCK_TEMPLATE = "ad_reward_unlock_template"
+
+    /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
      */
@@ -535,6 +557,7 @@ object AdPlacement {
         REWARD_DOWNLOAD_VIDEO,
         REWARD_REMOVE_WATERMARK,
         REWARD_UNLOCK_QUALITY,
-        REWARD_UNLOCK_EFFECT_SET
+        REWARD_UNLOCK_EFFECT_SET,
+        REWARD_UNLOCK_TEMPLATE
     )
 }
