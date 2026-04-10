@@ -488,16 +488,21 @@ fun VideoPreviewPlayer(
                         actualMusicSegmentDurationMs = segmentDuration
                     } else {
                         // No trim: wait for player to be ready to get actual duration
-                        // Conservative default: assume no loop (will update when ready)
-                        audio.repeatMode = Player.REPEAT_MODE_OFF
-                        android.util.Log.d("VideoPreviewPlayer", "Music no trim: waiting for actual duration")
+                        // OPTIMISTIC default: assume loop (safer - ensures all images are shown)
+                        // Will update to REPEAT_MODE_OFF if actual duration >= video duration
+                        audio.repeatMode = Player.REPEAT_MODE_ALL
+                        android.util.Log.d("VideoPreviewPlayer", "Music no trim: defaulting to REPEAT_MODE_ALL, will update when duration known")
+
+                        // Track if duration update was applied
+                        var durationUpdateApplied = false
 
                         // Add listener to update repeat mode when actual duration is known
                         // AND handle audio loading errors
                         audio.addListener(object : Player.Listener {
                             override fun onPlaybackStateChanged(playbackState: Int) {
-                                if (playbackState == Player.STATE_READY) {
+                                if (playbackState == Player.STATE_READY && !durationUpdateApplied) {
                                     val actualDuration = audio.duration.coerceAtLeast(0L)
+
                                     if (actualDuration > 0) {
                                         android.util.Log.d("VideoPreviewPlayer", "Audio ready: actual duration=${actualDuration}ms, video=${videoDurationMs}ms")
 
@@ -513,7 +518,13 @@ fun VideoPreviewPlayer(
                                             android.util.Log.d("VideoPreviewPlayer", "Music no loop (untrimmed): actual=${actualDuration}ms >= video=${videoDurationMs}ms")
                                         }
 
+                                        durationUpdateApplied = true
                                         // Remove this listener after first update
+                                        audio.removeListener(this)
+                                    } else {
+                                        // Duration detection failed (duration = 0) - keep REPEAT_MODE_ALL
+                                        android.util.Log.w("VideoPreviewPlayer", "Audio duration = 0, keeping REPEAT_MODE_ALL as fallback")
+                                        durationUpdateApplied = true
                                         audio.removeListener(this)
                                     }
                                 }
@@ -523,6 +534,10 @@ fun VideoPreviewPlayer(
                                 android.util.Log.e("VideoPreviewPlayer", "Audio player error occurred", error)
                                 android.util.Log.e("VideoPreviewPlayer", "Audio error code: ${error.errorCode}")
                                 android.util.Log.e("VideoPreviewPlayer", "Audio error message: ${error.message}")
+
+                                // On error, keep REPEAT_MODE_ALL (already set as default)
+                                android.util.Log.w("VideoPreviewPlayer", "Audio error, keeping REPEAT_MODE_ALL as fallback")
+                                durationUpdateApplied = true
 
                                 // Set error state - will show error overlay with localized message
                                 val errorMsg = when {
