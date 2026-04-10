@@ -87,7 +87,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun UnifiedSearchResultsContent(
-    screenSessionId: String,
     state: UnifiedSearchUiState.Results,
     query: String,
     relatedSearches: List<String>,
@@ -225,14 +224,6 @@ fun UnifiedSearchResultsContent(
                                         horizontalArrangement = Arrangement.spacedBy(dimens.spaceMd)
                                     ) {
                                         items(state.songEmpty, key = { "empty_song_${it.id}" }) { song ->
-                                            LaunchedEffect(song.id, screenSessionId) {
-                                                Analytics.trackSongImpression(
-                                                    songId = song.id.toString(),
-                                                    songName = song.name,
-                                                    location = AnalyticsEvent.Value.Location.SEARCH_RCM,
-                                                    screenSessionId = screenSessionId
-                                                )
-                                            }
                                             SuggestSongCard(
                                                 song = song,
                                                 onClick = {
@@ -347,14 +338,6 @@ fun UnifiedSearchResultsContent(
                                 items = state.music.songs,
                                 key = { "song_${it.id}" }
                             ) { song ->
-                                LaunchedEffect(song.id, screenSessionId) {
-                                    Analytics.trackSongImpression(
-                                        songId = song.id.toString(),
-                                        songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.SEARCH_RESULT,
-                                        screenSessionId = screenSessionId
-                                    )
-                                }
                                 SongListItem(
                                     name = song.name,
                                     artist = song.artist,
