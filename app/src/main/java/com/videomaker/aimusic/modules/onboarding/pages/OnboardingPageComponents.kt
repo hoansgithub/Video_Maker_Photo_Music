@@ -62,10 +62,6 @@ internal fun WelcomePage(
     onCta: () -> Unit,
     pageIndex: Int = 0  // 0-based index for ad placement
 ) {
-    val density = LocalDensity.current
-    var bottomSectionHeight by remember { mutableIntStateOf(0) }
-    val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
-
     // Map page index to ad placement
     val adPlacement = when (pageIndex) {
         0 -> AdPlacement.NATIVE_ONBOARDING_PAGE1
@@ -74,16 +70,16 @@ internal fun WelcomePage(
         else -> null
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // ── Main content (pushed up by bottom section) ──────────────────
+        // ── Main content area (takes remaining space above ad) ──────────
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = bottomPaddingDp)
+                .fillMaxWidth()
+                .weight(1f)  // Takes all available space, pushing ad to bottom
         ) {
             // Banner image — fills entire area with Crop
             Image(
@@ -153,16 +149,12 @@ internal fun WelcomePage(
             }
         }
 
-        // ── Bottom section: Native Ad only ──────────────────────────────
+        // ── Native Ad at bottom (takes only needed height) ──────────────
         if (adPlacement != null) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
                     .windowInsetsPadding(WindowInsets.navigationBars)
-                    .onSizeChanged { size ->
-                        bottomSectionHeight = size.height
-                    }
             ) {
                 NativeAdView(
                     placement = adPlacement,

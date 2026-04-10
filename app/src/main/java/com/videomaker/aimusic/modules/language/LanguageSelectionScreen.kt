@@ -160,9 +160,11 @@ fun LanguageSelectionScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (showBackButton) {
-                Box(
+                // Top bar with back button (left) and done button (right)
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.CenterStart
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -171,6 +173,24 @@ fun LanguageSelectionScreen(
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
+
+                    // Done button in top right
+                    OnboardingCtaButton(
+                        text = stringResource(R.string.done),
+                        onClick = {
+                            onContinue.invoke()
+                            selectedLanguage?.let {
+                                Analytics.track(
+                                    name = "language_next",
+                                    params = mapOf(
+                                        "language" to it
+                                    )
+                                )
+                            }
+                        },
+                        color = Primary,
+                        enabled = selectedLanguage != null && delayedButtonEnabled
+                    )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             } else {
@@ -182,7 +202,7 @@ fun LanguageSelectionScreen(
                 fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onBackground,
-                textAlign = if (showBackButton) TextAlign.Start else TextAlign.Center,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -192,7 +212,7 @@ fun LanguageSelectionScreen(
                 text = stringResource(R.string.language_select_subtitle),
                 fontSize = 17.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = if (showBackButton) TextAlign.Start else TextAlign.Center,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -223,60 +243,29 @@ fun LanguageSelectionScreen(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // Bottom section: Button + Native ad (measures its own height)
-        Column(
+        // Bottom section: Native ad only (button moved to top right for showBackButton=true)
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
+                .padding(horizontal = 24.dp, vertical = 16.dp)
                 .onSizeChanged { size ->
                     bottomSectionHeight = size.height  // Measure actual height dynamically!
                 }
         ) {
-            if (showBackButton) {
-                // Button at bottom for onboarding flow
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp)
-                ) {
-                    OnboardingCtaMaxWidthButton(
-                        text = stringResource(R.string.language_continue),
-                        onClick = {
-                            onContinue.invoke()
-                            selectedLanguage?.let {
-                                Analytics.track(
-                                    name = "language_next",
-                                    params = mapOf(
-                                        "language" to it
-                                    )
-                                )
-                            }
-                        },
-                        enabled = selectedLanguage != null && delayedButtonEnabled
-                    )
-                }
-            }
+            // ALT ad - bottom layer, always at full opacity
+            NativeAdView(
+                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-            // Native ad (intrinsic height - measures itself!)
-            Box(
+            // PRIMARY ad - top layer, fades out when user selects
+            NativeAdView(
+                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
-            ) {
-                // ALT ad - bottom layer, always at full opacity
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // PRIMARY ad - top layer, fades out when user selects
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .alpha(if (delayedHasSelection) 0f else 1f)
-                )
-            }
+                    .alpha(if (delayedHasSelection) 0f else 1f)
+            )
         }
 
         // Top-right button for settings flow (outside bottom section)

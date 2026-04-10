@@ -174,6 +174,10 @@ fun UninstallScreen(
                         )
                     }
                 },
+                actions = {
+                    // Empty spacer to balance the back button and center the title
+                    Spacer(modifier = Modifier.width(48.dp))
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = FoundationBlack
                 )
