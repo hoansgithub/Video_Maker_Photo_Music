@@ -157,7 +157,9 @@ fun UninstallScreen(
                         text = stringResource(R.string.uninstall_title),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.W600,
-                        color = Color.White
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 },
                 navigationIcon = {
