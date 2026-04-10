@@ -242,7 +242,15 @@ fun ProjectsTabContent(
                             }
 
                             is ProjectsUiState.Empty -> {
-                                ProjectsEmptyState(onCreateClick = onCreateClick)
+                                ProjectsEmptyState(onCreateClick = {
+                                    Analytics.trackVideoClick(
+                                        videoId = "",
+                                        templateId = "",
+                                        songId = "",
+                                        location = AnalyticsEvent.Value.Location.NEW
+                                    )
+                                    onCreateClick.invoke()
+                                })
                             }
 
                             is ProjectsUiState.Success -> {
