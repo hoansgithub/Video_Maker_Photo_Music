@@ -418,6 +418,8 @@ class ExportViewModel(
      * Checks if exit ad is ready and shows it before navigation
      */
     fun navigateToHomeMyVideos() {
+        Analytics.trackExitClick(AnalyticsEvent.Value.Location.VIDEO_GENERATE)
+
         // Reset saved state so button is enabled next time
         val currentState = _uiState.value
         if (currentState is ExportUiState.Success && currentState.savedToGallery) {
