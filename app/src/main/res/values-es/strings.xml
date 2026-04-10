@@ -4,6 +4,7 @@
 
     <!-- Loading -->
     <string name="loading">Cargando…</string>
+    <string name="ad_loading">Cargando anuncio…</string>
 
     <!-- Language Selection -->
     <string name="language_select_title">Elegir idiomas</string>
@@ -489,5 +490,13 @@
     <!-- Quality Export Rewarded Ad -->
     <string name="quality_watch_ad_title">¿Ver un anuncio para exportar en alta calidad?</string>
     <string name="quality_watch_ad_subtitle">Desbloquea la exportación 720p/1080p para esta sesión viendo un anuncio corto</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">¿Ver un anuncio para desbloquear esta plantilla?</string>
+    <string name="template_watch_ad_subtitle">Desbloquea esta plantilla permanentemente viendo un anuncio corto</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">¿Ver un anuncio para desbloquear esta canción?</string>
+    <string name="song_watch_ad_subtitle">Después de verlo, podrás usar esta canción para crear videos. El desbloqueo es permanente.</string>
 
 </resources>

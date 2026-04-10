@@ -4,6 +4,7 @@
 
     <!-- Loading -->
     <string name="loading">Naglo-load…</string>
+    <string name="ad_loading">Nilo-load ang ad…</string>
 
     <!-- Language Selection -->
     <string name="language_select_title">Pumili ng mga Wika</string>
@@ -489,5 +490,13 @@
     <!-- Quality Export Rewarded Ad -->
     <string name="quality_watch_ad_title">Manood ng ad para mag-export sa high quality?</string>
     <string name="quality_watch_ad_subtitle">I-unlock ang 720p/1080p export para sa session na ito sa pamamagitan ng panonood ng maikling ad</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">Manood ng ad para i-unlock ang template na ito?</string>
+    <string name="template_watch_ad_subtitle">I-unlock ang template na ito nang permanente sa pamamagitan ng panonood ng maikling ad</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Manood ng ad para i-unlock ang kanta?</string>
+    <string name="song_watch_ad_subtitle">Pagkatapos manood, magagamit mo ang kantang ito para gumawa ng mga video. Permanente ang pag-unlock.</string>
 
 </resources>

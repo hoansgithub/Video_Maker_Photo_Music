@@ -74,6 +74,7 @@ import androidx.media3.common.util.UnstableApi
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.modules.export.WatchAdDialog
@@ -132,6 +133,7 @@ fun ProjectsTabContent(
 
     // Ad states
     val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
+    val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
 
     LaunchedEffect(showRemovedMessage) {
         if (showRemovedMessage) {
@@ -481,20 +483,18 @@ fun ProjectsTabContent(
             title = stringResource(R.string.export_watch_ad_title),
             subtitle = stringResource(R.string.export_watch_ad_subtitle),
             onDismiss = viewModel::onWatchAdDialogDismiss,
-            onWatchAd = {
-                // Dismiss dialog and show ad
-                viewModel.onWatchAdConfirmed()
-
-                // Call ViewModel to handle ad loading and presentation
-                // Only if activity is available
-                activity?.let {
-                    viewModel.showRewardedAd(it, context)
-                } ?: run {
-                    android.util.Log.w("ProjectsTab", "Activity unavailable for ad presentation")
-                }
-            }
+            onWatchAd = viewModel::onWatchAdConfirmed
         )
     }
+
+    // Handle rewarded ad presentation using reusable presenter
+    RewardedAdPresenter(
+        shouldPresent = shouldPresentAd,
+        placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+        adsLoaderService = koinInject(),
+        onRewardEarned = viewModel::onRewardEarned,
+        onAdFailed = viewModel::onAdFailed
+    )
 
     // Music player bottom sheet — shown when a song is tapped
     selectedSong?.let { song ->

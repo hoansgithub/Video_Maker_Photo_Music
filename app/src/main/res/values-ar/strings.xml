@@ -4,6 +4,7 @@
 
     <!-- Loading -->
     <string name="loading">جاري التحميل…</string>
+    <string name="ad_loading">تحميل الإعلان…</string>
 
     <!-- Language Selection -->
     <string name="language_select_title">اختر اللغات</string>
@@ -489,5 +490,13 @@
     <!-- Quality Export Rewarded Ad -->
     <string name="quality_watch_ad_title">شاهد إعلانًا للتصدير بجودة عالية؟</string>
     <string name="quality_watch_ad_subtitle">افتح تصدير 720p/1080p لهذه الجلسة من خلال مشاهدة إعلان قصير</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">شاهد إعلانًا لفتح هذا القالب؟</string>
+    <string name="template_watch_ad_subtitle">افتح هذا القالب بشكل دائم من خلال مشاهدة إعلان قصير</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">شاهد إعلانًا لفتح هذه الأغنية؟</string>
+    <string name="song_watch_ad_subtitle">بعد المشاهدة، ستتمكن من استخدام هذه الأغنية لإنشاء مقاطع الفيديو. الفتح دائم.</string>
 
 </resources>

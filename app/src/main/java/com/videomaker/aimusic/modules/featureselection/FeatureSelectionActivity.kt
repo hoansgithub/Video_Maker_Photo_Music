@@ -37,6 +37,8 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.delay
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class FeatureSelectionActivity : AppCompatActivity() {
 
@@ -166,13 +168,17 @@ class FeatureSelectionActivity : AppCompatActivity() {
                                             // Mark onboarding as COMPLETE (simplified flow)
                                             // This is the END of the full flow: Language → Onboarding → Feature Selection
                                             android.util.Log.d("FeatureSelection", "🎯 Marking onboarding as COMPLETE")
-                                            preferencesManager.setOnboardingComplete(true)
 
-                                            // Verify it was saved
-                                            val isComplete = preferencesManager.isOnboardingComplete()
-                                            android.util.Log.d("FeatureSelection", "🎯 Verified onboarding complete: $isComplete")
+                                            // ✅ Launch coroutine to call suspend function
+                                            lifecycleScope.launch {
+                                                preferencesManager.setOnboardingComplete(true)
 
-                                            navigateToMain(initialTab)
+                                                // Verify it was saved
+                                                val isComplete = preferencesManager.isOnboardingComplete()
+                                                android.util.Log.d("FeatureSelection", "🎯 Verified onboarding complete: $isComplete")
+
+                                                navigateToMain(initialTab)
+                                            }
                                         }.onFailure {
                                             isSaving = false
                                             Toast.makeText(

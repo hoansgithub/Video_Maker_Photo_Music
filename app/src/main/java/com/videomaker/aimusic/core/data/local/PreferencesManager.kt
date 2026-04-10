@@ -3,6 +3,8 @@ package com.videomaker.aimusic.core.data.local
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Manages SharedPreferences for the app
@@ -78,10 +80,10 @@ class PreferencesManager(context: Context) {
 
     /**
      * Mark onboarding as complete
-     * Uses .commit() for immediate synchronous write to prevent onboarding loop
-     * if app is killed before async .apply() completes
+     * FIXED: Runs .commit() on IO thread to prevent ANR while ensuring immediate write
+     * to prevent onboarding loop if app is killed before write completes
      */
-    fun setOnboardingComplete(complete: Boolean) {
+    suspend fun setOnboardingComplete(complete: Boolean) = withContext(Dispatchers.IO) {
         prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETE, complete).commit()
     }
 
@@ -99,18 +101,18 @@ class PreferencesManager(context: Context) {
     /**
      * Get recent search queries (most recent first)
      */
-    fun getRecentSearches(): List<String> {
-        val raw = prefs.getString(KEY_RECENT_SEARCHES, null) ?: return emptyList()
-        return raw.split(RECENT_SEARCHES_DELIMITER).filter { it.isNotBlank() }
+    suspend fun getRecentSearches(): List<String> = withContext(Dispatchers.IO) {
+        val raw = prefs.getString(KEY_RECENT_SEARCHES, null) ?: return@withContext emptyList()
+        raw.split(RECENT_SEARCHES_DELIMITER).filter { it.isNotBlank() }
     }
 
     /**
      * Add a search query to recent searches (most recent first, max 3)
+     * ✅ FIXED: Runs on IO dispatcher to avoid ANR
      */
-    @Synchronized
-    fun addRecentSearch(query: String) {
+    suspend fun addRecentSearch(query: String) = withContext(Dispatchers.IO) {
         val trimmed = query.trim()
-        if (trimmed.isBlank()) return
+        if (trimmed.isBlank()) return@withContext
 
         val current = getRecentSearches().toMutableList()
         current.remove(trimmed) // Remove duplicate if exists
@@ -124,9 +126,9 @@ class PreferencesManager(context: Context) {
 
     /**
      * Remove a specific search query from recent searches
+     * ✅ FIXED: Runs on IO dispatcher to avoid ANR
      */
-    @Synchronized
-    fun removeRecentSearch(query: String) {
+    suspend fun removeRecentSearch(query: String) = withContext(Dispatchers.IO) {
         val current = getRecentSearches().toMutableList()
         current.remove(query)
         prefs.edit {
@@ -136,9 +138,9 @@ class PreferencesManager(context: Context) {
 
     /**
      * Clear all recent searches
+     * ✅ FIXED: Runs on IO dispatcher to avoid ANR
      */
-    @Synchronized
-    fun clearRecentSearches() {
+    suspend fun clearRecentSearches() = withContext(Dispatchers.IO) {
         prefs.edit { remove(KEY_RECENT_SEARCHES) }
     }
 

@@ -4,6 +4,7 @@
 
     <!-- Loading -->
     <string name="loading">Memuat…</string>
+    <string name="ad_loading">Memuat iklan…</string>
 
     <!-- Language Selection -->
     <string name="language_select_title">Pilih Bahasa</string>
@@ -489,5 +490,13 @@
     <!-- Quality Export Rewarded Ad -->
     <string name="quality_watch_ad_title">Tonton iklan untuk ekspor berkualitas tinggi?</string>
     <string name="quality_watch_ad_subtitle">Buka kunci ekspor 720p/1080p untuk sesi ini dengan menonton iklan singkat</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">Tonton iklan untuk membuka template ini?</string>
+    <string name="template_watch_ad_subtitle">Buka kunci template ini secara permanen dengan menonton iklan singkat</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Tonton iklan untuk membuka lagu ini?</string>
+    <string name="song_watch_ad_subtitle">Setelah menonton, Anda dapat menggunakan lagu ini untuk membuat video. Unlock permanen.</string>
 
 </resources>

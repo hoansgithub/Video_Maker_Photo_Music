@@ -30,22 +30,6 @@ Native Ad Layout: Project Card (9:16 Portrait)
                 android:scaleType="centerCrop"
                 android:background="@color/foundation_black" />
 
-            <!-- Ad Badge at top-right -->
-            <TextView
-                android:id="@+id/ad_badge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="top|end"
-                android:layout_margin="6dp"
-                android:text="@string/ad_badge"
-                android:textSize="9sp"
-                android:textColor="#FFE5E5E5"
-                android:textStyle="bold"
-                android:background="@drawable/bg_template_badge"
-                android:paddingHorizontal="6dp"
-                android:paddingVertical="3dp"
-                android:minWidth="24dp"
-                android:gravity="center" />
         </FrameLayout>
 
         <!-- Info Section (bottom - very compact) -->

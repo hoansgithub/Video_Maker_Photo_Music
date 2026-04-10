@@ -87,12 +87,21 @@ import androidx.compose.ui.unit.sp
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
+import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
+import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.R
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.modules.export.WatchAdDialog
+import com.videomaker.aimusic.ui.components.AdBadge
+import com.videomaker.aimusic.ui.components.AdBadgeStyle
+import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
 import org.koin.compose.koinInject
@@ -126,6 +135,31 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import androidx.core.content.edit
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+// ============================================
+// HELPER - Release player async to avoid ANR
+// ============================================
+
+/**
+ * Release ExoPlayer asynchronously on background thread to avoid ANR.
+ * ExoPlayer.release() can block for 10+ seconds when releasing resources.
+ */
+private fun ExoPlayer.releaseAsync() {
+    val playerToRelease = this
+    ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+        runCatching {
+            android.util.Log.d("TemplatePreviewerScreen", "Releasing player on background thread...")
+            playerToRelease.release()
+            android.util.Log.d("TemplatePreviewerScreen", "Player released successfully")
+        }.onFailure { e ->
+            android.util.Log.e("TemplatePreviewerScreen", "Failed to release player", e)
+        }
+    }
+}
 
 // Virtual page count for infinite-scroll illusion.
 private const val VIRTUAL_PAGE_COUNT = 10_000
@@ -153,6 +187,11 @@ fun TemplatePreviewerScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val currentSong by viewModel.currentSong.collectAsStateWithLifecycle()
     val likedTemplateIds by viewModel.likedTemplateIds.collectAsStateWithLifecycle()
+    val unlockedTemplateIds by viewModel.unlockedTemplateIds.collectAsStateWithLifecycle()
+    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
+    val pendingUnlockTemplate by viewModel.pendingUnlockTemplate.collectAsStateWithLifecycle()
+    val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val eventLocation = remember(sourceLocation) {
@@ -220,6 +259,15 @@ fun TemplatePreviewerScreen(
         }
     }
 
+    // Handle rewarded ad presentation using reusable presenter
+    RewardedAdPresenter(
+        shouldPresent = shouldPresentAd,
+        placement = AdPlacement.REWARD_UNLOCK_TEMPLATE,
+        adsLoaderService = adsLoaderService,
+        onRewardEarned = viewModel::onRewardEarned,
+        onAdFailed = viewModel::onAdFailed
+    )
+
     // Single ExoPlayer for the entire screen — crossfaded on page change
     val player = remember {
         // Optimized LoadControl for faster music streaming
@@ -285,7 +333,7 @@ fun TemplatePreviewerScreen(
     }
 
     DisposableEffect(Unit) {
-        onDispose { player.release() }
+        onDispose { player.releaseAsync() }  // ✅ Release async to avoid ANR
     }
 
     // Pause/resume on app background
@@ -374,8 +422,10 @@ fun TemplatePreviewerScreen(
                     currentSong = currentSong,
                     playerDurationMs = playerDurationMs,
                     likedTemplateIds = likedTemplateIds,
+                    unlockedTemplateIds = unlockedTemplateIds,
                     onPageChanged = viewModel::onPageChanged,
                     onUseThisTemplate = viewModel::onUseThisTemplate,
+                    onRatioSelected = viewModel::onRatioSelected,
                     onLikeTemplate = viewModel::onLikeTemplate,
                     eventLocation = eventLocation,
                     onNavigateBack = viewModel::onNavigateBack
@@ -418,6 +468,22 @@ fun TemplatePreviewerScreen(
             }
         )
     }
+
+    // Watch ad dialog
+    if (showWatchAdDialog) {
+        WatchAdDialog(
+            title = stringResource(R.string.template_watch_ad_title),
+            subtitle = stringResource(R.string.template_watch_ad_subtitle),
+            onDismiss = viewModel::onWatchAdDialogDismiss,
+            onWatchAd = {
+                // Set pending template - LaunchedEffect will handle ad presentation
+                viewModel.onWatchAdConfirmed()
+            }
+        )
+    }
+
+    // Ads loading overlay
+    AdsLoadingOverlay()
 }
 
 // ============================================
@@ -489,8 +555,10 @@ private fun TemplatePreviewerReadyContent(
     currentSong: SongLoadState,
     playerDurationMs: Long?,
     likedTemplateIds: Set<String>,
+    unlockedTemplateIds: Set<String>,
     onPageChanged: (Int) -> Unit,
     onUseThisTemplate: (VideoTemplate, AspectRatio) -> Unit,
+    onRatioSelected: (VideoTemplate, AspectRatio) -> Unit,
     onLikeTemplate: (VideoTemplate) -> Unit,
     eventLocation: String = AnalyticsEvent.Value.Location.PREVIEW_SWIPE,
     onNavigateBack: () -> Unit
@@ -749,6 +817,7 @@ private fun TemplatePreviewerReadyContent(
 
                 // CTA button — spinner while music loads or project is being created.
                 // Enabled once music is ready (or template has no music) and not yet creating.
+                // Always shows ratio selector (lock check moved to ratio sheet)
                 val ctaLoading = state.isCreatingProject || currentSong is SongLoadState.Loading
                 val ctaEnabled = currentSong !is SongLoadState.Loading && !state.isCreatingProject
                 PrimaryButton(
@@ -760,6 +829,7 @@ private fun TemplatePreviewerReadyContent(
                             templateName = template.name,
                             location = eventLocation
                         )
+                        // Always show ratio selection bottom sheet
                         pendingTemplate = template
                     },
                     enabled = ctaEnabled,
@@ -792,8 +862,10 @@ private fun TemplatePreviewerReadyContent(
         // Ratio selection bottom sheet
         val template = pendingTemplate
         if (template != null) {
+            val isLocked = template.isPremium && !unlockedTemplateIds.contains(template.id)
             SelectRatioBottomSheet(
                 defaultRatio = aspectRatioFromString(template.aspectRatio),
+                isLocked = isLocked,
                 onDismiss = { pendingTemplate = null },
                 onConfirm = { selectedRatio ->
                     Analytics.trackRatioSelect(selectedRatio.shortLabel)
@@ -802,8 +874,17 @@ private fun TemplatePreviewerReadyContent(
                         templateName = template.name,
                         location = eventLocation
                     )
-                    pendingTemplate = null
-                    onUseThisTemplate(template, selectedRatio)
+
+                    if (isLocked) {
+                        // Template is locked - show watch ad dialog
+                        // Store the selected ratio for after ad completes
+                        pendingTemplate = null  // Dismiss ratio sheet
+                        onRatioSelected(template, selectedRatio)
+                    } else {
+                        // Template is unlocked - navigate immediately
+                        pendingTemplate = null
+                        onUseThisTemplate(template, selectedRatio)
+                    }
                 }
             )
         }
@@ -937,6 +1018,7 @@ private val AspectRatio.shortLabel: String
 @Composable
 private fun SelectRatioBottomSheet(
     defaultRatio: AspectRatio,
+    isLocked: Boolean,
     onDismiss: () -> Unit,
     onConfirm: (AspectRatio) -> Unit
 ) {
@@ -988,9 +1070,21 @@ private fun SelectRatioBottomSheet(
                 }
             }
 
+            // "Create Now" button with [AD] badge if locked
             PrimaryButton(
                 text = stringResource(R.string.template_create_now),
                 onClick = { onConfirm(selected) },
+                leadingIcon = if (isLocked) {
+                    {
+                        AdBadge(
+                            style = AdBadgeStyle.Small(
+                                textColor = Color.Black,
+                                backgroundColor = Color.White
+                            ),
+                            modifier = Modifier
+                        )
+                    }
+                } else null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
@@ -1276,8 +1370,10 @@ private fun PreviewTemplatePreviewerReady() {
                 currentSong = previewSongReady,
                 playerDurationMs = 182000L,
                 likedTemplateIds = emptySet(),
+                unlockedTemplateIds = emptySet(),
                 onPageChanged = {},
                 onUseThisTemplate = { _, _ -> },
+                onRatioSelected = { _, _ -> },
                 onLikeTemplate = {},
                 onNavigateBack = {}
             )
@@ -1303,8 +1399,10 @@ private fun PreviewTemplatePreviewerMusicLoading() {
                 currentSong = SongLoadState.Loading,
                 playerDurationMs = null,
                 likedTemplateIds = emptySet(),
+                unlockedTemplateIds = emptySet(),
                 onPageChanged = {},
                 onUseThisTemplate = { _, _ -> },
+                onRatioSelected = { _, _ -> },
                 onLikeTemplate = {},
                 onNavigateBack = {}
             )
@@ -1330,8 +1428,10 @@ private fun PreviewTemplatePreviewerNoMusic() {
                 currentSong = SongLoadState.None,
                 playerDurationMs = null,
                 likedTemplateIds = emptySet(),
+                unlockedTemplateIds = emptySet(),
                 onPageChanged = {},
                 onUseThisTemplate = { _, _ -> },
+                onRatioSelected = { _, _ -> },
                 onLikeTemplate = {},
                 onNavigateBack = {}
             )
@@ -1358,8 +1458,10 @@ private fun PreviewTemplatePreviewerCreating() {
                 currentSong = previewSongReady,
                 playerDurationMs = 182000L,
                 likedTemplateIds = setOf("t1"),
+                unlockedTemplateIds = emptySet(),
                 onPageChanged = {},
                 onUseThisTemplate = { _, _ -> },
+                onRatioSelected = { _, _ -> },
                 onLikeTemplate = {},
                 onNavigateBack = {}
             )

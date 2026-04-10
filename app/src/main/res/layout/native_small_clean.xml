@@ -30,21 +30,6 @@ Native Ad Layout: Small Clean
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop" />
-
-            <!-- Ad Badge overlay at top-right -->
-            <TextView
-                android:id="@+id/ad_badge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="top|end"
-                android:text="@string/ad_badge"
-                android:textSize="9sp"
-                android:textColor="@color/foundation_black"
-                android:textStyle="bold"
-                android:background="@drawable/bg_ad_badge"
-                android:paddingHorizontal="6dp"
-                android:paddingVertical="2dp"
-                android:layout_margin="8dp" />
         </FrameLayout>
 
         <!-- Content area (right side - 45% width) -->
@@ -132,13 +117,14 @@ Native Ad Layout: Small Clean
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:visibility="gone" />
-
-            <!-- Optional: Ad choices container (hidden if not provided) -->
-            <FrameLayout
-                android:id="@+id/ad_choices_container"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
+
+    <!-- AdChoices overlay at top-right of entire ad -->
+    <FrameLayout
+        android:id="@+id/ad_choices_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:padding="4dp" />
 </com.google.android.gms.ads.nativead.NativeAdView>

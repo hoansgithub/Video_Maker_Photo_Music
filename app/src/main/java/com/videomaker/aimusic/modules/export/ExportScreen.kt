@@ -10,6 +10,7 @@ import androidx.activity.compose.BackHandler
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
@@ -123,6 +124,31 @@ import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import java.io.File
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+// ============================================
+// HELPER - Release player async to avoid ANR
+// ============================================
+
+/**
+ * Release ExoPlayer asynchronously on background thread to avoid ANR.
+ * ExoPlayer.release() can block for 5-10 seconds when releasing video resources.
+ */
+private fun ExoPlayer.releaseAsync() {
+    val playerToRelease = this
+    ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+        runCatching {
+            android.util.Log.d("ExportScreen", "Releasing player on background thread...")
+            playerToRelease.release()
+            android.util.Log.d("ExportScreen", "Player released successfully")
+        }.onFailure { e ->
+            android.util.Log.e("ExportScreen", "Failed to release player", e)
+        }
+    }
+}
 
 /**
  * Responsive sizing configuration for export buttons
@@ -161,8 +187,10 @@ fun ExportScreen(
     val saveToastState by viewModel.saveToastState.collectAsStateWithLifecycle()
     val ratingStep by viewModel.ratingStep.collectAsStateWithLifecycle()
     val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
+    val shouldPresentDownloadAd by viewModel.shouldPresentDownloadAd.collectAsStateWithLifecycle()
     val showWatermark by viewModel.showWatermark.collectAsStateWithLifecycle()
     val showWatermarkAdDialog by viewModel.showWatermarkAdDialog.collectAsStateWithLifecycle()
+    val shouldPresentWatermarkAd by viewModel.shouldPresentWatermarkAd.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -434,34 +462,35 @@ fun ExportScreen(
         if (showWatchAdDialog) {
             WatchAdDialog(
                 onDismiss = viewModel::onWatchAdDialogDismiss,
-                onWatchAd = {
-                    viewModel.onWatchAdConfirmed()
-                    // Show rewarded ad (drama app pattern - inline loading in ViewModel)
-                    if (activity != null) {
-                        viewModel.showRewardedAd(activity)
-                    } else {
-                        // Activity context unavailable - allow direct download
-                        android.util.Log.w("ExportScreen", "Activity unavailable for rewarded ad - allowing direct download")
-                        viewModel.executePendingDownload()
-                    }
-                }
+                onWatchAd = viewModel::onWatchAdConfirmed
             )
         }
+
+        // Handle download ad presentation using reusable presenter
+        RewardedAdPresenter(
+            shouldPresent = shouldPresentDownloadAd,
+            placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+            adsLoaderService = adsLoaderService,
+            onRewardEarned = viewModel::onDownloadRewardEarned,
+            onAdFailed = viewModel::onDownloadAdFailed
+        )
 
         // Watermark ad dialog
         if (showWatermarkAdDialog) {
             WatermarkAdDialog(
                 onDismiss = viewModel::onWatermarkAdDialogDismiss,
-                onWatchAd = {
-                    viewModel.onWatermarkAdConfirmed()
-                    if (activity != null) {
-                        viewModel.showWatermarkRewardedAd(activity)
-                    } else {
-                        android.util.Log.w("ExportScreen", "Activity unavailable for watermark ad - keeping watermark")
-                    }
-                }
+                onWatchAd = viewModel::onWatermarkAdConfirmed
             )
         }
+
+        // Handle watermark ad presentation using reusable presenter
+        RewardedAdPresenter(
+            shouldPresent = shouldPresentWatermarkAd,
+            placement = AdPlacement.REWARD_REMOVE_WATERMARK,
+            adsLoaderService = adsLoaderService,
+            onRewardEarned = viewModel::onWatermarkRewardEarned,
+            onAdFailed = viewModel::onWatermarkAdFailed
+        )
 
         // Ads loading overlay (shows when rewarded ad is loading)
         AdsLoadingOverlay()
@@ -784,7 +813,7 @@ private fun SuccessContent(
             lifecycleOwner.lifecycle.addObserver(observer)
             onDispose {
                 lifecycleOwner.lifecycle.removeObserver(observer)
-                player.release()
+                player.releaseAsync()  // ✅ Release async to avoid ANR
             }
         } ?: onDispose { }
     }

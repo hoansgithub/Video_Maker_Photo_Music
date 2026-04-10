@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
+import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.storage.UnlockedEffectSetsManager
 import com.videomaker.aimusic.domain.model.EffectSet
@@ -56,20 +57,26 @@ class EffectSetViewModel(
     private val _uiState = MutableStateFlow<EffectSetUiState>(EffectSetUiState.Loading)
     val uiState: StateFlow<EffectSetUiState> = _uiState.asStateFlow()
 
-    // Watch Ad Dialog state
-    private val _showWatchAdDialog = MutableStateFlow(false)
-    val showWatchAdDialog: StateFlow<Boolean> = _showWatchAdDialog.asStateFlow()
+    // Rewarded ad controller for effect set unlock
+    private val rewardedAdController = RewardedAdController(
+        placement = AdPlacement.REWARD_UNLOCK_EFFECT_SET,
+        adsLoaderService = adsLoaderService,
+        viewModelScope = viewModelScope
+    )
 
-    // Effect set selected for dialog (NOT for ad trigger)
-    private val _selectedEffectSetForDialog = MutableStateFlow<EffectSet?>(null)
-    val selectedEffectSetForDialog: StateFlow<EffectSet?> = _selectedEffectSetForDialog.asStateFlow()
+    // Expose rewarded ad states
+    val showWatchAdDialog: StateFlow<Boolean> = rewardedAdController.showWatchAdDialog
+    val shouldPresentAd: StateFlow<Boolean> = rewardedAdController.shouldPresentAd
 
-    // Effect set waiting to be unlocked (triggers ad presentation in UI - only set after user confirms)
+    // Effect set waiting to be unlocked (stored for callback after ad)
     private val _pendingUnlockEffectSet = MutableStateFlow<EffectSet?>(null)
     val pendingUnlockEffectSet: StateFlow<EffectSet?> = _pendingUnlockEffectSet.asStateFlow()
 
     // Unlocked effect set IDs (from manager)
     val unlockedEffectSetIds = unlockedEffectSetsManager.unlockedEffectSetIds
+
+    // Callback for when effect set is unlocked (stored until reward earned)
+    private var onUnlockSuccessCallback: ((EffectSet) -> Unit)? = null
 
     // Error message for ad failures
     private val _errorMessage = MutableStateFlow<String?>(null)
@@ -112,20 +119,26 @@ class EffectSetViewModel(
             // Unlocked - proceed with selection
             onUnlockedEffectSetSelected(effectSet)
         } else {
-            // Locked - check if ad is enabled
-            if (!adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_EFFECT_SET)) {
-                // Ad disabled - unlock for free and proceed
-                android.util.Log.d("EffectSetViewModel", "⏭️ Ad disabled for effect set unlock - unlocking for free")
-                viewModelScope.launch {
-                    unlockedEffectSetsManager.unlockEffectSet(effectSet.id)
-                    onUnlockedEffectSetSelected(effectSet)
-                }
-                return
-            }
+            // Locked - store effect set and callback, request ad
+            _pendingUnlockEffectSet.value = effectSet
+            onUnlockSuccessCallback = onUnlockedEffectSetSelected
 
-            // Ad enabled - show watch ad dialog (but don't trigger ad yet)
-            _selectedEffectSetForDialog.value = effectSet
-            _showWatchAdDialog.value = true
+            rewardedAdController.requestAd(
+                onReward = {
+                    // Unlock effect set and call success callback
+                    viewModelScope.launch {
+                        unlockedEffectSetsManager.unlockEffectSet(effectSet.id)
+                        android.util.Log.d("EffectSetViewModel", "✅ Effect set unlocked: ${effectSet.id}")
+
+                        onUnlockSuccessCallback?.invoke(effectSet)
+
+                        // Clear state
+                        _pendingUnlockEffectSet.value = null
+                        onUnlockSuccessCallback = null
+                    }
+                },
+                checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_EFFECT_SET) }
+            )
         }
     }
 
@@ -133,54 +146,32 @@ class EffectSetViewModel(
      * User dismissed watch ad dialog (clicked "Close")
      */
     fun onWatchAdDialogDismiss() {
-        _showWatchAdDialog.value = false
-        _selectedEffectSetForDialog.value = null
-        // Don't set pendingUnlockEffectSet - user cancelled
+        rewardedAdController.onDialogDismiss()
+        _pendingUnlockEffectSet.value = null
+        onUnlockSuccessCallback = null
     }
 
     /**
      * User confirmed watching ad (clicked "Watch Ad")
-     * Move selected effect set to pending to trigger ad presentation
      */
     fun onWatchAdConfirmed() {
-        _showWatchAdDialog.value = false
-        // Transfer from dialog state to pending state - this triggers LaunchedEffect
-        _pendingUnlockEffectSet.value = _selectedEffectSetForDialog.value
-        _selectedEffectSetForDialog.value = null
+        rewardedAdController.onDialogConfirm()
     }
 
     /**
-     * Called by UI after user earns reward from watching ad.
-     * Unlocks the pending effect set and notifies success.
-     *
-     * @param onUnlockSuccess Callback when effect set is unlocked
+     * Called by UI after user earns reward from watching ad
      */
-    suspend fun onRewardEarned(onUnlockSuccess: (EffectSet) -> Unit) {
-        val effectSetToUnlock = _pendingUnlockEffectSet.value
-        if (effectSetToUnlock == null) {
-            android.util.Log.w("EffectSetViewModel", "No effect set to unlock")
-            return
-        }
-
-        android.util.Log.d("EffectSetViewModel", "✅ User earned reward - unlocking effect set: ${effectSetToUnlock.id}")
-
-        // Unlock effect set locally
-        unlockedEffectSetsManager.unlockEffectSet(effectSetToUnlock.id)
-
-        // Notify success callback
-        onUnlockSuccess(effectSetToUnlock)
-
-        // Clear pending
-        _pendingUnlockEffectSet.value = null
+    fun onRewardEarned() {
+        rewardedAdController.onRewardEarned()
     }
 
     /**
-     * Called by UI when ad fails to load or user closes ad without watching.
-     * Clears pending state.
+     * Called by UI when ad fails to load or user closes ad without watching
      */
     fun onAdFailed() {
-        android.util.Log.d("EffectSetViewModel", "❌ Ad failed or user cancelled")
+        rewardedAdController.onAdFailed()
         _pendingUnlockEffectSet.value = null
+        onUnlockSuccessCallback = null
     }
 
     /**

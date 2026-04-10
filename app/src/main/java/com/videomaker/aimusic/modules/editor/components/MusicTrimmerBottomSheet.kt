@@ -51,11 +51,35 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import java.nio.ByteBuffer
 import kotlin.math.abs
 import kotlin.math.sqrt
+
+// ============================================
+// HELPER - Release player async to avoid ANR
+// ============================================
+
+/**
+ * Release ExoPlayer asynchronously on background thread to avoid ANR.
+ * ExoPlayer.release() can sometimes block for several seconds.
+ */
+private fun ExoPlayer.releaseAsync() {
+    val playerToRelease = this
+    ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+        runCatching {
+            android.util.Log.d("MusicTrimmer", "Releasing player on background thread...")
+            playerToRelease.release()
+            android.util.Log.d("MusicTrimmer", "Player released successfully")
+        }.onFailure { e ->
+            android.util.Log.e("MusicTrimmer", "Failed to release player", e)
+        }
+    }
+}
 
 /**
  * MusicSettingsBottomSheet - Combined music trim and volume control
@@ -196,7 +220,8 @@ fun MusicSettingsBottomSheet(
 
         onDispose {
             musicPlayer.removeListener(listener)
-            musicPlayer.release() // Release player when bottom sheet closes
+            musicPlayer.stop()  // ✅ Stop immediately (synchronous)
+            musicPlayer.releaseAsync() // Release player async to avoid ANR
         }
     }
 

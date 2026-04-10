@@ -127,6 +127,8 @@ val dataModule = module {
     single { PreferencesManager(androidContext()) }
     single { LanguageManager(androidContext()) }
     single { com.videomaker.aimusic.core.storage.UnlockedEffectSetsManager(androidContext()) }
+    single { com.videomaker.aimusic.core.storage.UnlockedTemplatesManager(androidContext()) }
+    single { com.videomaker.aimusic.core.storage.UnlockedSongsManager(androidContext()) }
 
     // Language config service (singleton - ConfigurableObject for Remote Config)
     single {
@@ -564,7 +566,8 @@ class TemplatePreviewerViewModelFactory(
     private val likeTemplateUseCase: LikeTemplateUseCase,
     private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
     private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
-    private val adsLoaderService: AdsLoaderService
+    private val adsLoaderService: AdsLoaderService,
+    private val unlockedTemplatesManager: com.videomaker.aimusic.core.storage.UnlockedTemplatesManager
 ) {
     fun create(
         templateId: String,
@@ -582,7 +585,8 @@ class TemplatePreviewerViewModelFactory(
             likeTemplateUseCase = likeTemplateUseCase,
             unlikeTemplateUseCase = unlikeTemplateUseCase,
             observeLikedTemplatesUseCase = observeLikedTemplatesUseCase,
-            adsLoaderService = adsLoaderService
+            adsLoaderService = adsLoaderService,
+            unlockedTemplatesManager = unlockedTemplatesManager
         )
     }
 }
@@ -650,13 +654,18 @@ class EffectSetViewModelFactory(
 class MusicPlayerViewModelFactory(
     private val likeSongUseCase: LikeSongUseCase,
     private val unlikeSongUseCase: UnlikeSongUseCase,
-    private val likedSongRepository: LikedSongRepository
+    private val likedSongRepository: LikedSongRepository,
+    private val unlockedSongsManager: com.videomaker.aimusic.core.storage.UnlockedSongsManager,
+    private val adsLoaderService: AdsLoaderService
 ) {
-    fun create(songId: Long): MusicPlayerViewModel = MusicPlayerViewModel(
+    fun create(songId: Long, song: com.videomaker.aimusic.domain.model.MusicSong): MusicPlayerViewModel = MusicPlayerViewModel(
         songId = songId,
+        song = song,
         likeSongUseCase = likeSongUseCase,
         unlikeSongUseCase = unlikeSongUseCase,
-        likedSongRepository = likedSongRepository
+        likedSongRepository = likedSongRepository,
+        unlockedSongsManager = unlockedSongsManager,
+        adsLoaderService = adsLoaderService
     )
 }
 
@@ -845,7 +854,8 @@ val presentationModule = module {
             likeTemplateUseCase = get(),
             unlikeTemplateUseCase = get(),
             observeLikedTemplatesUseCase = get(),
-            adsLoaderService = get()
+            adsLoaderService = get(),
+            unlockedTemplatesManager = get()
         )
     }
 
@@ -902,7 +912,9 @@ val presentationModule = module {
         MusicPlayerViewModelFactory(
             likeSongUseCase = get(),
             unlikeSongUseCase = get(),
-            likedSongRepository = get()
+            likedSongRepository = get(),
+            unlockedSongsManager = get(),
+            adsLoaderService = get()
         )
     }
 }

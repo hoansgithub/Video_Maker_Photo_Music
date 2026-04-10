@@ -62,8 +62,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.AdPlacement
 // import com.videomaker.aimusic.di.MusicPickerViewModelFactory // Commented out - using Supabase only
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
@@ -94,9 +96,6 @@ import kotlin.math.roundToInt
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
-import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
-import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.material3.SnackbarHostState
 
 /**
@@ -125,7 +124,7 @@ fun EditorScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val showQualityAdDialog by viewModel.showQualityAdDialog.collectAsStateWithLifecycle()
-    val pendingQualityUnlock by viewModel.pendingQualityUnlock.collectAsStateWithLifecycle()
+    val shouldPresentQualityAd by viewModel.shouldPresentQualityAd.collectAsStateWithLifecycle()
     val qualityAdError by viewModel.qualityAdError.collectAsStateWithLifecycle()
     val isQualityUnlocked by viewModel.isQualityUnlocked.collectAsStateWithLifecycle()
 
@@ -224,72 +223,14 @@ fun EditorScreen(
         }
     }
 
-    // Handle quality ad presentation when user confirms watching ad
-    LaunchedEffect(pendingQualityUnlock) {
-        if (!pendingQualityUnlock) return@LaunchedEffect
-
-        val state = currentState() ?: return@LaunchedEffect
-
-        // Check if Activity is available
-        if (activity == null) {
-            android.util.Log.w("EditorScreen", "Activity unavailable for quality ad presentation")
-            snackbarHostState.showSnackbar(context.getString(com.videomaker.aimusic.R.string.quality_ad_not_available))
-            viewModel.onQualityAdFailed()
-            return@LaunchedEffect
-        }
-
-        try {
-            // 1. Check if ad is ready
-            if (!adsLoaderService.isRewardedAdReady(com.videomaker.aimusic.core.constants.AdPlacement.REWARD_UNLOCK_QUALITY)) {
-                // 2. Show loading overlay
-                co.alcheclub.lib.acccore.ads.state.AdsLoadingState.show("Loading ad...")
-
-                // 3. Load ad with 60s timeout
-                kotlinx.coroutines.withTimeout(60_000) {
-                    adsLoaderService.loadRewarded(com.videomaker.aimusic.core.constants.AdPlacement.REWARD_UNLOCK_QUALITY)
-                }
-
-                // 4. Hide loading overlay
-                co.alcheclub.lib.acccore.ads.state.AdsLoadingState.hide()
-            }
-
-            // 5. Present ad and wait for result (blocking)
-            val result = adsLoaderService.presentRewarded(
-                placement = com.videomaker.aimusic.core.constants.AdPlacement.REWARD_UNLOCK_QUALITY,
-                activity = activity
-            )
-
-            // 6. Check if user earned reward
-            if (result.earnedReward) {
-                viewModel.onQualityRewardEarned()
-            } else {
-                android.util.Log.d("EditorScreen", "User did not earn reward (closed ad early)")
-                viewModel.onQualityAdFailed()
-            }
-
-        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-            android.util.Log.w("EditorScreen", "Quality ad load timeout")
-            co.alcheclub.lib.acccore.ads.state.AdsLoadingState.hide()
-            viewModel.showQualityAdError(context.getString(com.videomaker.aimusic.R.string.quality_ad_not_available))
-            viewModel.onQualityAdFailed()
-
-        } catch (e: co.alcheclub.lib.acccore.ads.loader.AdsLoaderException.NoAdToShow) {
-            android.util.Log.w("EditorScreen", "No quality ad available")
-            co.alcheclub.lib.acccore.ads.state.AdsLoadingState.hide()
-            viewModel.showQualityAdError(context.getString(com.videomaker.aimusic.R.string.quality_ad_not_available))
-            viewModel.onQualityAdFailed()
-
-        } catch (e: Exception) {
-            android.util.Log.e("EditorScreen", "Failed to show quality rewarded ad: ${e.message}")
-            co.alcheclub.lib.acccore.ads.state.AdsLoadingState.hide()
-            viewModel.showQualityAdError(context.getString(com.videomaker.aimusic.R.string.quality_ad_not_available))
-            viewModel.onQualityAdFailed()
-
-        } finally {
-            // Always hide loading overlay
-            co.alcheclub.lib.acccore.ads.state.AdsLoadingState.hide()
-        }
-    }
+    // Handle quality ad presentation using reusable presenter
+    RewardedAdPresenter(
+        shouldPresent = shouldPresentQualityAd,
+        placement = AdPlacement.REWARD_UNLOCK_QUALITY,
+        adsLoaderService = adsLoaderService,
+        onRewardEarned = viewModel::onQualityRewardEarned,
+        onAdFailed = viewModel::onQualityAdFailed
+    )
 
     // Show error message for quality ad failures
     LaunchedEffect(qualityAdError) {
@@ -853,10 +794,7 @@ fun EditorScreen(
                 title = stringResource(com.videomaker.aimusic.R.string.quality_watch_ad_title),
                 subtitle = stringResource(com.videomaker.aimusic.R.string.quality_watch_ad_subtitle),
                 onDismiss = viewModel::onQualityAdDialogDismiss,
-                onWatchAd = {
-                    // Set pending flag - LaunchedEffect will handle ad presentation
-                    viewModel.onQualityAdConfirmed()
-                }
+                onWatchAd = viewModel::onQualityAdConfirmed
             )
         }
 
