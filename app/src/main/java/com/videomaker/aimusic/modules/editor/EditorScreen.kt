@@ -433,6 +433,7 @@ fun EditorScreen(
                                 songId = state.displaySettings.musicSongId?.toString() ?: "unknown",
                                 songName = state.displaySettings.musicSongName ?: "unknown"
                             )
+                            Analytics.trackSearchOpen(AnalyticsEvent.Value.Location.EDIT)
                             showMusicSearchSheet = true
                         },
                         onVolumeClick = {
