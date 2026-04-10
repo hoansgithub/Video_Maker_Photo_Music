@@ -125,6 +125,8 @@ fun MusicPlayerBottomSheet(
     var isSeeking  by remember { mutableStateOf(false) }
     var seekValue  by remember { mutableFloatStateOf(0f) }
     var hasTrackedAutoPreview by remember(song.id) { mutableStateOf(false) }
+    var hasTrackedImpression by remember(song.id) { mutableStateOf(false) }
+    val playerSessionId = remember(song.id) { Analytics.newScreenSessionId() }
 
     val context = LocalContext.current
     // Player is created once per sheet open and released on close.
@@ -165,6 +167,15 @@ fun MusicPlayerBottomSheet(
                                 location = location
                             )
                             hasTrackedAutoPreview = true
+                        }
+                        if (!hasTrackedImpression) {
+                            Analytics.trackSongImpression(
+                                songId = song.id.toString(),
+                                songName = song.name,
+                                location = location,
+                                screenSessionId = playerSessionId
+                            )
+                            hasTrackedImpression = true
                         }
                     }
                     Player.STATE_ENDED -> {

@@ -13,12 +13,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.videomaker.aimusic.core.analytics.Analytics
-import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.theme.AppDimens
@@ -30,7 +26,6 @@ fun ContentSong(
     onDeleteSongClick: (MusicSong) -> Unit,
 ) {
     val dimens = AppDimens.current
-    val screenSessionId = remember { Analytics.newScreenSessionId() }
 
     LazyColumn(
         modifier = Modifier
@@ -44,14 +39,6 @@ fun ContentSong(
     ) {
 
         items(songs, key = { song -> song.id }) { song ->
-            LaunchedEffect(song.id, screenSessionId) {
-                Analytics.trackSongImpression(
-                    songId = song.id.toString(),
-                    songName = song.name,
-                    location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
-                    screenSessionId = screenSessionId
-                )
-            }
             SongListItem(
                 name = song.name,
                 artist = song.artist,

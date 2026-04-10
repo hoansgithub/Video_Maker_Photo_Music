@@ -36,7 +36,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
-import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
@@ -74,7 +73,6 @@ fun UnifiedSearchScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
     val audioPreviewCache: AudioPreviewCache = koinInject()
-    val screenSessionId = remember { Analytics.newScreenSessionId() }
     var selectedSongLocation by rememberSaveable {
         mutableStateOf(AnalyticsEvent.Value.Location.SEARCH_RCM)
     }
@@ -126,7 +124,6 @@ fun UnifiedSearchScreen(
     ) {
         when (val state = uiState) {
             is UnifiedSearchUiState.Idle -> UnifiedSearchIdleContent(
-                screenSessionId = screenSessionId,
                 initialSection = state.initialSection,
                 recentSearches = recentSearches,
                 suggestionVibeTags = suggestionVibeTags,
@@ -166,7 +163,6 @@ fun UnifiedSearchScreen(
             )
 
             is UnifiedSearchUiState.Results -> UnifiedSearchResultsContent(
-                screenSessionId = screenSessionId,
                 state = state,
                 query = displayText,
                 relatedSearches = persistentRelatedSearches,

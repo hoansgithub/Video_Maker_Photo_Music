@@ -114,7 +114,6 @@ internal fun MusicSearchBottomSheet(
     val dimens = AppDimens.current
     val context = LocalContext.current
     val audioCache: AudioPreviewCache = koinInject()
-    val screenSessionId = remember { Analytics.newScreenSessionId() }
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -379,14 +378,6 @@ internal fun MusicSearchBottomSheet(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(state.songs, key = { "song_${it.id}" }) { song ->
-                            LaunchedEffect(song.id, screenSessionId) {
-                                Analytics.trackSongImpression(
-                                    songId = song.id.toString(),
-                                    songName = song.name,
-                                    location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH,
-                                    screenSessionId = screenSessionId
-                                )
-                            }
                             SongListItem(
                                 name = song.name,
                                 artist = song.artist,
@@ -502,14 +493,6 @@ internal fun MusicSearchBottomSheet(
                                 Spacer(modifier = Modifier.height(dimens.spaceSm))
                             }
                             items(suggestedSongs, key = { "empty_song_${it.id}" }) { song ->
-                                LaunchedEffect(song.id, screenSessionId) {
-                                    Analytics.trackSongImpression(
-                                        songId = song.id.toString(),
-                                        songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
-                                        screenSessionId = screenSessionId
-                                    )
-                                }
                                 SongListItem(
                                     name = song.name,
                                     artist = song.artist,
@@ -610,14 +593,6 @@ internal fun MusicSearchBottomSheet(
                                 Spacer(modifier = Modifier.height(dimens.spaceSm))
                             }
                             items(suggestedSongs, key = { "suggested_${it.id}" }) { song ->
-                                LaunchedEffect(song.id, screenSessionId) {
-                                    Analytics.trackSongImpression(
-                                        songId = song.id.toString(),
-                                        songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
-                                        screenSessionId = screenSessionId
-                                    )
-                                }
                                 SongListItem(
                                     name = song.name,
                                     artist = song.artist,
