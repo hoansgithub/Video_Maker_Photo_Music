@@ -88,10 +88,11 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
          * 3. Add your device ID to this list
          *
          * IMPORTANT: Only used in debug builds (see BuildConfig.DEBUG check below)
+         * COMMENTED OUT - Using real production UMP consent
          */
-        private val UMP_TEST_DEVICE_IDS = listOf<String>(
-            "562AA2413BCC3872B79F7F30261CF7CD"  // Test device for UMP consent
-        )
+        // private val UMP_TEST_DEVICE_IDS = listOf<String>(
+        //     "562AA2413BCC3872B79F7F30261CF7CD"  // Test device for UMP consent
+        // )
 
         /**
          * Test device IDs for Meta Audience Network (Facebook Ads)
@@ -205,9 +206,25 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
             scope.launch(Dispatchers.Main) {
                 try {
+                    // Step 1: Wait for Remote Config to fetch/activate BEFORE UMP
+                    // This ensures all Remote Config values are available when RootViewModel reads them
+                    android.util.Log.d("VideoMakerApp", "⏳ Waiting for Remote Config to be ready...")
+                    try {
+                        withTimeout(60_000L) {  // 1 minute timeout for Remote Config
+                            val remoteConfig = org.koin.core.context.GlobalContext.get()
+                                .get<co.alcheclub.lib.acccore.remoteconfig.RemoteConfig>()
+                            remoteConfig.fetchAndActivate()
+                            android.util.Log.d("VideoMakerApp", "✅ Remote Config ready!")
+                        }
+                    } catch (e: TimeoutCancellationException) {
+                        android.util.Log.w("VideoMakerApp", "⏱️ Remote Config fetch timed out after 60 seconds - continuing anyway")
+                    } catch (e: Exception) {
+                        android.util.Log.w("VideoMakerApp", "⚠️ Remote Config fetch failed: ${e.message} - continuing anyway")
+                    }
+
                     android.util.Log.d("VideoMakerApp", "🔄 Starting UMP consent flow...")
 
-                    // Step 1 & 2: Initialize UMP + Present consent form (1 minute timeout for BOTH)
+                    // Step 2 & 3: Initialize UMP + Present consent form (1 minute timeout for BOTH)
                     // Wraps entire consent flow to prevent infinite loading if network hangs
                     try {
                         withTimeout(60_000L) {  // 1 minute for entire consent flow
@@ -223,12 +240,13 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
                     android.util.Log.d("VideoMakerApp", "🔄 Initializing AdMob SDK...")
 
-                    // Step 3: Initialize AdMob SDK with test device config
-                    val config: Map<String, Any> = if (BuildConfig.DEBUG) {
-                        mapOf("testDeviceIds" to UMP_TEST_DEVICE_IDS)
-                    } else {
-                        emptyMap()
-                    }
+                    // Step 4: Initialize AdMob SDK - PRODUCTION MODE (no test devices)
+                    val config: Map<String, Any> = emptyMap()
+                    // val config: Map<String, Any> = if (BuildConfig.DEBUG) {
+                    //     mapOf("testDeviceIds" to UMP_TEST_DEVICE_IDS)
+                    // } else {
+                    //     emptyMap()
+                    // }
                     adMobMediator.initialize(activity.applicationContext, config)
 
                     adsInitialized.set(true)
@@ -308,16 +326,17 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                     devKey = BuildConfig.APPSFLYER_DEV_KEY,
                     isDebug = BuildConfig.DEBUG
                 ),
-                // AdMob: UMP consent setup
-                // DEBUG_GEOGRAPHY_EEA forces consent form to show (simulates user in Europe)
-                // Requires GDPR message to be published in AdMob Console → Privacy & Messaging
+                // AdMob: UMP consent setup - PRODUCTION MODE (no test config)
+                // Test mode commented out - using real UMP consent flow
                 adMobModule(
-                    testDeviceIds = if (BuildConfig.DEBUG) UMP_TEST_DEVICE_IDS else emptyList(),
-                    debugGeography = if (BuildConfig.DEBUG) {
-                        ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA
-                    } else {
-                        ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_DISABLED
-                    }
+                    testDeviceIds = emptyList(),
+                    debugGeography = ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_DISABLED
+                    // testDeviceIds = if (BuildConfig.DEBUG) UMP_TEST_DEVICE_IDS else emptyList(),
+                    // debugGeography = if (BuildConfig.DEBUG) {
+                    //     ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA
+                    // } else {
+                    //     ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_DISABLED
+                    // }
                 ),
                 coreModuleFromDI(                                   // ← 4. Creates coordinators (with app scope)
                     applicationScope = applicationScope,

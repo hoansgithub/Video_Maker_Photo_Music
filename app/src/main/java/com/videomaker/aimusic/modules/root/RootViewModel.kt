@@ -203,10 +203,13 @@ class RootViewModel(
             // Default: 45 seconds (can be adjusted remotely without app update)
             // Longer timeout allows for slower networks while still preventing infinite loading
             initTimeoutMs = try {
-                remoteConfig.getLong(RemoteConfigKeys.APP_INIT_TIMEOUT_MS, 45_000L)
+                val configValue = remoteConfig.getLong(RemoteConfigKeys.APP_INIT_TIMEOUT_MS, 45_000L)
+                // Validate: Remote Config might return 0 or invalid value
+                if (configValue > 0) configValue else 45_000L
             } catch (e: Exception) {
                 45_000L  // Fallback to 45 seconds if Remote Config fails
             }
+            android.util.Log.d("RootViewModel", "📊 Init timeout: ${initTimeoutMs}ms")
 
             // ============================================
             // CRITICAL: Timeout wrapper prevents infinite loading
