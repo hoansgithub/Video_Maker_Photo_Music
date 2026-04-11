@@ -2,6 +2,7 @@ package com.videomaker.aimusic.navigation
 
 import androidx.compose.runtime.Immutable
 import androidx.navigation3.runtime.NavKey
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.AspectRatio
 import kotlinx.serialization.Serializable
 
@@ -88,7 +89,8 @@ sealed interface AppRoute : NavKey {
         val projectId: String? = null,
         val templateId: String? = null,
         val overrideSongId: Long = -1L,
-        val aspectRatio: AspectRatio? = null
+        val aspectRatio: AspectRatio? = null,
+        val sourceLocation: String? = null
     ) : AppRoute
 
     /**
@@ -137,7 +139,8 @@ sealed interface AppRoute : NavKey {
     data class TemplatePreviewer(
         val templateId: String,
         val imageUris: List<String> = emptyList(), // Empty = browse mode with sample images
-        val overrideSongId: Long = -1L
+        val overrideSongId: Long = -1L,
+        val sourceLocation: String? = null
     ) : AppRoute
 
     // ============================================
@@ -145,7 +148,9 @@ sealed interface AppRoute : NavKey {
     // ============================================
 
     @Serializable
-    data object Settings : AppRoute
+    data class Settings(
+        val settingLocation: String = AnalyticsEvent.Value.Location.UNKNOWN
+    ) : AppRoute
 
     @Serializable
     data object LanguageSettings : AppRoute

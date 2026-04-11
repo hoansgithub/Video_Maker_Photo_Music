@@ -16,12 +16,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -34,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.modules.unifiedsearch.components.UnifiedSearchEmptyContent
@@ -69,6 +73,9 @@ fun UnifiedSearchScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
     val audioPreviewCache: AudioPreviewCache = koinInject()
+    var selectedSongLocation by rememberSaveable {
+        mutableStateOf(AnalyticsEvent.Value.Location.SEARCH_RCM)
+    }
 
     // ✅ FIX: Refresh data when locale changes (genres, vibe tags, templates, songs)
     // Use rememberSaveable to persist previousLocale across Activity recreation
@@ -92,6 +99,20 @@ fun UnifiedSearchScreen(
                     onNavigateToSongDetail(event.songId)
             }
             viewModel.onNavigationHandled()
+        }
+    }
+
+    LaunchedEffect(uiState, recentSearches) {
+        uiState as? UnifiedSearchUiState.Idle ?: return@LaunchedEffect
+        if (recentSearches.isNotEmpty()) {
+            viewModel.onRecentSearchesRendered(recentSearches)
+        }
+    }
+
+    LaunchedEffect(uiState) {
+        val typingState = uiState as? UnifiedSearchUiState.Typing ?: return@LaunchedEffect
+        if (typingState.suggestions.isNotEmpty()) {
+            viewModel.onSuggestionsRendered(typingState.suggestions)
         }
     }
 
@@ -119,12 +140,13 @@ fun UnifiedSearchScreen(
                 onVibeTagClick = viewModel::onVibeTagClick,
                 onGenreClick = viewModel::onGenreClick,
                 onTemplateClick = viewModel::onTemplateClick,
-                onSeeMoreTemplates = viewModel::onSeeMoreFeaturedTemplates,
-                onSongClick = { song ->
+                onSeeMoreTemplates = viewModel::onSeeMoreFeaturedTemplatesClick,
+                onSongClick = { song, location ->
                     keyboardController?.hide()
+                    selectedSongLocation = location
                     viewModel.onSongClick(song)
                 },
-                onSeeMoreSongs = viewModel::onSeeMoreSuggestedSongs
+                onSeeMoreSongs = viewModel::onSeeMoreSuggestedSongsClick
             )
 
             is UnifiedSearchUiState.Typing -> UnifiedSearchTypingOverlay(
@@ -145,8 +167,9 @@ fun UnifiedSearchScreen(
                 query = displayText,
                 relatedSearches = persistentRelatedSearches,
                 onTemplateClick = viewModel::onTemplateClick,
-                onSongClick = { song ->
+                onSongClick = { song, location ->
                     keyboardController?.hide()
+                    selectedSongLocation = location
                     viewModel.onSongClick(song)
                 },
                 onExplore = viewModel::onExplore,
@@ -158,7 +181,6 @@ fun UnifiedSearchScreen(
                 onExploreMore = viewModel::onExploreMore,
             )
         }
-
 
         UnifiedSearchTopBar(
             query = displayText,
@@ -173,9 +195,9 @@ fun UnifiedSearchScreen(
         MusicPlayerBottomSheet(
             song = song,
             cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+            location = selectedSongLocation,
             onDismiss = viewModel::onDismissPlayer,
             onUseToCreate = viewModel::onUseToCreateVideo
         )
     }
 }
-

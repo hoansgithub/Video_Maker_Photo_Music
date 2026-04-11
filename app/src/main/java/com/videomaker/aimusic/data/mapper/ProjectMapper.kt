@@ -28,7 +28,8 @@ object ProjectMapper {
             settings = toSettings(entity.project),
             assets = entity.assets
                 .sortedBy { it.orderIndex }
-                .map { toDomain(it) }
+                .map { toDomain(it) },
+            isWatermarkFree = entity.project.isWatermarkFree
         )
     }
 
@@ -90,7 +91,8 @@ object ProjectMapper {
             audioVolume = project.settings.audioVolume,
             musicTrimStartMs = project.settings.musicTrimStartMs,
             musicTrimEndMs = project.settings.musicTrimEndMs,
-            aspectRatio = project.settings.aspectRatio.name
+            aspectRatio = project.settings.aspectRatio.name,
+            isWatermarkFree = project.isWatermarkFree
         )
     }
 

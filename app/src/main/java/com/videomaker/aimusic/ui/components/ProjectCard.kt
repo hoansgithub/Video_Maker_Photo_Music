@@ -82,6 +82,7 @@ import java.time.format.DateTimeFormatter
 fun ProjectCard(
     project: Project,
     onClick: () -> Unit,
+    onOptionClick: () -> Unit = {},
     onDelete: () -> Unit,
     onDownload: () -> Unit,
     onShare: () -> Unit,
@@ -209,7 +210,10 @@ fun ProjectCard(
                             color = Color.Black.copy(alpha = 0.5f),
                             shape = CircleShape
                         )
-                        .clickableSingle { showMenu = true },
+                        .clickableSingle {
+                            onOptionClick()
+                            showMenu = true
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -225,7 +229,20 @@ fun ProjectCard(
                             onDismissRequest = { showMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.projects_download)) },
+                                text = {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text(stringResource(R.string.projects_download))
+                                        AdBadge(
+                                            style = AdBadgeStyle.Small(
+                                                textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                                backgroundColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                            )
+                                        )
+                                    }
+                                },
                                 onClick = {
                                     showMenu = false
                                     onDownload()
@@ -356,6 +373,7 @@ private fun ProjectCardPreview() {
                     )
                 ),
                 onClick = {},
+                onOptionClick = {},
                 onDelete = {},
                 onDownload = {},
                 onShare = {}

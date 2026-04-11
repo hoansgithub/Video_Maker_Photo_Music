@@ -4,6 +4,7 @@
 
     <!-- Loading -->
     <string name="loading">Naglo-load…</string>
+    <string name="ad_loading">Nilo-load ang ad…</string>
 
     <!-- Language Selection -->
     <string name="language_select_title">Pumili ng mga Wika</string>
@@ -34,6 +35,11 @@
     <string name="root_no_internet_title">Walang koneksyon sa internet</string>
     <string name="root_no_internet_message">Kasalukuyang offline ang iyong device. Kumonekta muli para magpatuloy.</string>
     <string name="root_try_again">Subukan Muli</string>
+    <string name="root_loading_initializing">Nagsisimula...</string>
+    <string name="root_loading_fetching_config">Nilo-load ang configuration...</string>
+    <string name="root_loading_ad">Maaaring may mga ad ito</string>
+    <string name="root_loading_checking_status">Sinusuri ang status...</string>
+    <string name="root_loading_preparing">Naghahanda...</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Gallery</string>
@@ -221,6 +227,14 @@
     <string name="export_error_share_failed">Hindi maibahagi ang video</string>
     <string name="export_try_another_templates">Subukan ang Iba Pang Template</string>
     <string name="export_templates_load_failed">Nabigo ang pag-load ng mga template</string>
+    <string name="export_watch_ad_title">Manood ng ad para mag-download?</string>
+    <string name="export_watch_ad_subtitle">Tulungan mo kaming panatilihing libre ang app na ito sa pamamagitan ng panonood ng maikling ad. Mag-download ang iyong video pagkatapos!</string>
+    <string name="export_watch_ad_button">Manood ng Ad</string>
+    <string name="export_watch_ad_close">Isara</string>
+    <string name="export_watermark_remove_title">Alisin ang watermark?</string>
+    <string name="export_watermark_remove_subtitle">Manood ng maikling ad para alisin ang watermark sa iyong video preview.</string>
+    <string name="export_watermark_remove_button">Manood ng Ad</string>
+    <string name="export_watermark_remove_close">Isara</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Pumili ng Larawan</string>
@@ -340,6 +354,7 @@
     <!-- Error states -->
     <string name="error_load_failed">Nabigo ang pag-load. Mag-swipe pababa para subukan muli.</string>
     <string name="error_network_title">Network Error</string>
+    <string name="loading_building_feed">Binubuo ang Iyong Feed</string>
     <string name="error_network_message">Hindi ma-load ang musika. Pakisuri ang iyong koneksyon at subukang muli.</string>
     <string name="error_network_timeout">Network timeout. Pakisuri ang iyong koneksyon at subukang muli.</string>
     <string name="error_preview_title">Preview Error</string>
@@ -460,5 +475,28 @@
     <string name="rating_feedback_reason_performance">Mabagal ang app o madalas mag-crash</string>
     <string name="rating_feedback_reason_templates">Kulang ang templates / updates ng content</string>
     <string name="rating_feedback_reason_other">Iba pa</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">Ad</string>
+    <string name="ad_icon">Icon ng advertisement</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">Manood ng ad para i-unlock ang epektong ito?</string>
+    <string name="effect_set_watch_ad_subtitle">I-unlock ang effect set na ito nang permanente sa pamamagitan ng panonood ng maikling ad</string>
+    <string name="effect_set_ad_not_available">Walang available na ad sa ngayon. Subukan ulit mamaya.</string>
+    <string name="effect_set_locked">Naka-lock na effect set</string>
+    <string name="ad_not_available">Walang available na ad sa ngayon. Subukan ulit mamaya.</string>
+
+    <!-- Quality Export Rewarded Ad -->
+    <string name="quality_watch_ad_title">Manood ng ad para mag-export sa high quality?</string>
+    <string name="quality_watch_ad_subtitle">I-unlock ang 720p/1080p export para sa session na ito sa pamamagitan ng panonood ng maikling ad</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">Manood ng ad para i-unlock ang template na ito?</string>
+    <string name="template_watch_ad_subtitle">I-unlock ang template na ito nang permanente sa pamamagitan ng panonood ng maikling ad</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Manood ng ad para i-unlock ang kanta?</string>
+    <string name="song_watch_ad_subtitle">Pagkatapos manood, magagamit mo ang kantang ito para gumawa ng mga video. Permanente ang pag-unlock.</string>
 
 </resources>

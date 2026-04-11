@@ -34,6 +34,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.repository.SongRepository
 import org.koin.core.component.KoinComponent
@@ -48,6 +49,10 @@ class TrendingSongAppWidget : GlanceAppWidget(), KoinComponent {
     private val songRepository: SongRepository by inject()
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        Analytics.trackWidgetImpression(
+            widgetType = "trending_song",
+            widgetSize = "4x3"
+        )
         val songs = songRepository.getFeaturedSongs(limit = 3)
             .getOrElse { emptyList() }
 

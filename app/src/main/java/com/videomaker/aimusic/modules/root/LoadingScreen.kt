@@ -55,9 +55,16 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 @Composable
 fun LoadingScreen(
     isLoading: Boolean,
-    message: String,
+    loadingStep: LoadingStep,
     modifier: Modifier = Modifier
 ) {
+    val message = when (loadingStep) {
+        LoadingStep.INITIALIZING -> stringResource(R.string.root_loading_initializing)
+        LoadingStep.FETCHING_CONFIG -> stringResource(R.string.root_loading_fetching_config)
+        LoadingStep.LOADING_AD -> stringResource(R.string.root_loading_ad)
+        LoadingStep.CHECKING_STATUS -> stringResource(R.string.root_loading_checking_status)
+        LoadingStep.PREPARING -> stringResource(R.string.root_loading_preparing)
+    }
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -164,7 +171,7 @@ private fun LoadingScreenPreview() {
     VideoMakerTheme {
         LoadingScreen(
             isLoading = true,
-            message = "Loading..."
+            loadingStep = LoadingStep.FETCHING_CONFIG
         )
     }
 }

@@ -4,6 +4,7 @@
 
     <!-- Loading -->
     <string name="loading">Cargando…</string>
+    <string name="ad_loading">Cargando anuncio…</string>
 
     <!-- Language Selection -->
     <string name="language_select_title">Elegir idiomas</string>
@@ -34,6 +35,11 @@
     <string name="root_no_internet_title">Sin conexión a Internet</string>
     <string name="root_no_internet_message">Tu dispositivo está desconectado. Vuelve a conectarte para continuar.</string>
     <string name="root_try_again">Intentar de Nuevo</string>
+    <string name="root_loading_initializing">Inicializando...</string>
+    <string name="root_loading_fetching_config">Cargando configuración...</string>
+    <string name="root_loading_ad">Esto puede contener anuncios</string>
+    <string name="root_loading_checking_status">Verificando estado...</string>
+    <string name="root_loading_preparing">Preparando...</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galería</string>
@@ -221,6 +227,14 @@
     <string name="export_error_share_failed">Error al compartir video</string>
     <string name="export_try_another_templates">Prueba Otras Plantillas</string>
     <string name="export_templates_load_failed">Error al cargar plantillas</string>
+    <string name="export_watch_ad_title">¿Ver un anuncio para descargar?</string>
+    <string name="export_watch_ad_subtitle">Ayúdanos a mantener esta aplicación gratis viendo un breve anuncio. ¡Tu video se descargará justo después!</string>
+    <string name="export_watch_ad_button">Ver Anuncio</string>
+    <string name="export_watch_ad_close">Cerrar</string>
+    <string name="export_watermark_remove_title">¿Eliminar marca de agua?</string>
+    <string name="export_watermark_remove_subtitle">Mira un breve anuncio para eliminar la marca de agua de tu vista previa de video.</string>
+    <string name="export_watermark_remove_button">Ver Anuncio</string>
+    <string name="export_watermark_remove_close">Cerrar</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Seleccionar Fotos</string>
@@ -340,6 +354,7 @@
     <!-- Error states -->
     <string name="error_load_failed">Error al cargar. Desliza hacia abajo para reintentar.</string>
     <string name="error_network_title">Error de Red</string>
+    <string name="loading_building_feed">Construyendo tu Feed</string>
     <string name="error_network_message">No se pudo cargar la música. Verifica tu conexión e inténtalo de nuevo.</string>
     <string name="error_network_timeout">Tiempo de espera de red agotado. Verifica tu conexión e inténtalo de nuevo.</string>
     <string name="error_preview_title">Error de Vista Previa</string>
@@ -460,5 +475,28 @@
     <string name="rating_feedback_reason_performance">La app es lenta o falla con frecuencia</string>
     <string name="rating_feedback_reason_templates">No hay suficientes plantillas / actualizaciones de contenido</string>
     <string name="rating_feedback_reason_other">Otro</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">Anuncio</string>
+    <string name="ad_icon">Icono de anuncio</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">¿Ver un anuncio para desbloquear este efecto?</string>
+    <string name="effect_set_watch_ad_subtitle">Desbloquea este conjunto de efectos permanentemente viendo un anuncio corto</string>
+    <string name="effect_set_ad_not_available">Anuncio no disponible ahora. Inténtalo de nuevo más tarde.</string>
+    <string name="effect_set_locked">Conjunto de efectos bloqueado</string>
+    <string name="ad_not_available">Anuncio no disponible ahora. Inténtalo de nuevo más tarde.</string>
+
+    <!-- Quality Export Rewarded Ad -->
+    <string name="quality_watch_ad_title">¿Ver un anuncio para exportar en alta calidad?</string>
+    <string name="quality_watch_ad_subtitle">Desbloquea la exportación 720p/1080p para esta sesión viendo un anuncio corto</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">¿Ver un anuncio para desbloquear esta plantilla?</string>
+    <string name="template_watch_ad_subtitle">Desbloquea esta plantilla permanentemente viendo un anuncio corto</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">¿Ver un anuncio para desbloquear esta canción?</string>
+    <string name="song_watch_ad_subtitle">Después de verlo, podrás usar esta canción para crear videos. El desbloqueo es permanente.</string>
 
 </resources>

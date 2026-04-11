@@ -75,16 +75,43 @@ sealed class PreviewState {
  * Release a CompositionPlayer asynchronously to avoid blocking the main thread.
  * CompositionPlayer.release() can block for 10+ seconds causing ANR.
  *
+ * CRITICAL: release() must run on a BACKGROUND thread, not main thread!
+ * Unlike prepare(), play(), pause() which require main thread, release() can be called from any thread.
+ * Running on background thread prevents ANR.
+ *
  * Use ProcessLifecycleOwner scope instead of GlobalScope.
  * ProcessLifecycleOwner is tied to the process lifetime (not Activity),
  * so release() completes even after the composable is disposed.
  */
 private fun CompositionPlayer.releaseAsync() {
     val playerToRelease = this
-    // CompositionPlayer.release() must be called on the main thread (Media3 threading contract).
-    // Post via Handler so it runs on main without blocking the calling thread.
-    android.os.Handler(android.os.Looper.getMainLooper()).post {
-        runCatching { playerToRelease.release() }
+    // Run release() on background thread using ProcessLifecycleOwner scope
+    // This prevents blocking the main thread for 10+ seconds
+    androidx.lifecycle.ProcessLifecycleOwner.get().lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+        runCatching {
+            android.util.Log.d("VideoPreviewPlayer", "Releasing CompositionPlayer on background thread...")
+            playerToRelease.release()
+            android.util.Log.d("VideoPreviewPlayer", "CompositionPlayer released successfully")
+        }.onFailure { e ->
+            android.util.Log.e("VideoPreviewPlayer", "Failed to release CompositionPlayer", e)
+        }
+    }
+}
+
+/**
+ * Release an ExoPlayer asynchronously to avoid blocking the main thread.
+ * Same as CompositionPlayer.releaseAsync() but for ExoPlayer.
+ */
+private fun androidx.media3.exoplayer.ExoPlayer.releaseAsync() {
+    val playerToRelease = this
+    androidx.lifecycle.ProcessLifecycleOwner.get().lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+        runCatching {
+            android.util.Log.d("VideoPreviewPlayer", "Releasing ExoPlayer on background thread...")
+            playerToRelease.release()
+            android.util.Log.d("VideoPreviewPlayer", "ExoPlayer released successfully")
+        }.onFailure { e ->
+            android.util.Log.e("VideoPreviewPlayer", "Failed to release ExoPlayer", e)
+        }
     }
 }
 
@@ -406,7 +433,7 @@ fun VideoPreviewPlayer(
             if (project.assets.isEmpty()) {
                 previewState = PreviewState.Error("No assets to preview")
                 oldVideoPlayer?.releaseAsync()
-                oldAudioPlayer?.release()
+                oldAudioPlayer?.releaseAsync()
                 videoPlayer = null
                 audioPlayer = null
                 return@LaunchedEffect
@@ -488,16 +515,21 @@ fun VideoPreviewPlayer(
                         actualMusicSegmentDurationMs = segmentDuration
                     } else {
                         // No trim: wait for player to be ready to get actual duration
-                        // Conservative default: assume no loop (will update when ready)
-                        audio.repeatMode = Player.REPEAT_MODE_OFF
-                        android.util.Log.d("VideoPreviewPlayer", "Music no trim: waiting for actual duration")
+                        // OPTIMISTIC default: assume loop (safer - ensures all images are shown)
+                        // Will update to REPEAT_MODE_OFF if actual duration >= video duration
+                        audio.repeatMode = Player.REPEAT_MODE_ALL
+                        android.util.Log.d("VideoPreviewPlayer", "Music no trim: defaulting to REPEAT_MODE_ALL, will update when duration known")
+
+                        // Track if duration update was applied
+                        var durationUpdateApplied = false
 
                         // Add listener to update repeat mode when actual duration is known
                         // AND handle audio loading errors
                         audio.addListener(object : Player.Listener {
                             override fun onPlaybackStateChanged(playbackState: Int) {
-                                if (playbackState == Player.STATE_READY) {
+                                if (playbackState == Player.STATE_READY && !durationUpdateApplied) {
                                     val actualDuration = audio.duration.coerceAtLeast(0L)
+
                                     if (actualDuration > 0) {
                                         android.util.Log.d("VideoPreviewPlayer", "Audio ready: actual duration=${actualDuration}ms, video=${videoDurationMs}ms")
 
@@ -513,7 +545,13 @@ fun VideoPreviewPlayer(
                                             android.util.Log.d("VideoPreviewPlayer", "Music no loop (untrimmed): actual=${actualDuration}ms >= video=${videoDurationMs}ms")
                                         }
 
+                                        durationUpdateApplied = true
                                         // Remove this listener after first update
+                                        audio.removeListener(this)
+                                    } else {
+                                        // Duration detection failed (duration = 0) - keep REPEAT_MODE_ALL
+                                        android.util.Log.w("VideoPreviewPlayer", "Audio duration = 0, keeping REPEAT_MODE_ALL as fallback")
+                                        durationUpdateApplied = true
                                         audio.removeListener(this)
                                     }
                                 }
@@ -523,6 +561,10 @@ fun VideoPreviewPlayer(
                                 android.util.Log.e("VideoPreviewPlayer", "Audio player error occurred", error)
                                 android.util.Log.e("VideoPreviewPlayer", "Audio error code: ${error.errorCode}")
                                 android.util.Log.e("VideoPreviewPlayer", "Audio error message: ${error.message}")
+
+                                // On error, keep REPEAT_MODE_ALL (already set as default)
+                                android.util.Log.w("VideoPreviewPlayer", "Audio error, keeping REPEAT_MODE_ALL as fallback")
+                                durationUpdateApplied = true
 
                                 // Set error state - will show error overlay with localized message
                                 val errorMsg = when {
@@ -596,12 +638,12 @@ fun VideoPreviewPlayer(
 
                 // Release old players - guaranteed execution
                 oldVideo?.releaseAsync()
-                oldAudio?.release()
+                oldAudio?.releaseAsync()
             } catch (e: Exception) {
                 // Rollback on error - release new players and restore old state
                 android.util.Log.e("VideoPreviewPlayer", "Player swap failed, rolling back", e)
                 newVideoPlayer.releaseAsync()
-                newAudioPlayer?.release()
+                newAudioPlayer?.releaseAsync()
                 throw e
             }
 
@@ -628,7 +670,7 @@ fun VideoPreviewPlayer(
                     audioPlayer = oldAudioPlayer
                 } else {
                     oldVideoPlayer?.releaseAsync()
-                    oldAudioPlayer?.release()
+                    oldAudioPlayer?.releaseAsync()
                 }
             }
         } finally {
@@ -704,7 +746,7 @@ fun VideoPreviewPlayer(
         onDispose {
             // Release players asynchronously to avoid ANR
             videoPlayer?.releaseAsync()
-            audioPlayer?.release()
+            audioPlayer?.releaseAsync()
             videoPlayer = null
             audioPlayer = null
             // Recycle transition bitmaps to free memory
@@ -729,7 +771,7 @@ fun VideoPreviewPlayer(
 
                     // Release players to free memory
                     videoPlayer?.releaseAsync()
-                    audioPlayer?.release()
+                    audioPlayer?.releaseAsync()
                     videoPlayer = null
                     audioPlayer = null
 

@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.home.components
 
+import android.app.Activity
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -51,6 +52,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -69,7 +71,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.ads.RewardedAdPresenter
+import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.modules.export.WatchAdDialog
+import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.favourite_songs.ContentSong
@@ -101,7 +110,7 @@ fun ProjectsTabContent(
     viewModel: ProjectsViewModel,
     onCreateClick: () -> Unit,
     onProjectClick: (String) -> Unit,
-    onNavigateToTemplateDetail: (String) -> Unit = {},
+    onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToSongSearch: () -> Unit = {},
     onNavigateToAllSongs: () -> Unit = {},
     onNavigateToTemplateSearch: () -> Unit = {},
@@ -120,6 +129,11 @@ fun ProjectsTabContent(
     val audioPreviewCache: AudioPreviewCache = koinInject()
     var showRemovedMessage by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val activity = context as? Activity
+
+    // Ad states
+    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
+    val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
 
     LaunchedEffect(showRemovedMessage) {
         if (showRemovedMessage) {
@@ -154,6 +168,14 @@ fun ProjectsTabContent(
         initialPage = 0,
         pageCount = { tabs.size }
     )
+    val libraryTabByIndex: (Int) -> String = { index ->
+        when (index) {
+            0 -> AnalyticsEvent.Value.LibraryTab.VIDEO
+            1 -> AnalyticsEvent.Value.LibraryTab.TEMPLATE_FAVORITE
+            else -> AnalyticsEvent.Value.LibraryTab.SONG_FAVORITE
+        }
+    }
+    var lastSettledPage by remember { mutableStateOf(pagerState.settledPage) }
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
 
@@ -164,6 +186,14 @@ fun ProjectsTabContent(
 
     // Animate LazyRow to selected tab when pager settles, and notify VM for swipe case
     LaunchedEffect(pagerState.settledPage) {
+        val currentPage = pagerState.settledPage
+        if (currentPage != lastSettledPage) {
+            Analytics.trackLibraryClick(
+                from = libraryTabByIndex(lastSettledPage),
+                to = libraryTabByIndex(currentPage)
+            )
+            lastSettledPage = currentPage
+        }
         lazyListState.animateScrollToItem(pagerState.settledPage)
         viewModel.onTabSelected(pagerState.settledPage)
     }
@@ -214,22 +244,68 @@ fun ProjectsTabContent(
                             }
 
                             is ProjectsUiState.Empty -> {
-                                ProjectsEmptyState(onCreateClick = onCreateClick)
+                                ProjectsEmptyState(onCreateClick = {
+                                    Analytics.trackVideoClick(
+                                        videoId = "",
+                                        templateId = "",
+                                        songId = "",
+                                        location = AnalyticsEvent.Value.Location.NEW
+                                    )
+                                    onCreateClick.invoke()
+                                })
                             }
 
                             is ProjectsUiState.Success -> {
                                 ProjectsListContent(
                                     projects = state.projects,
                                     onProjectClick = { project ->
+                                        Analytics.trackVideoClick(
+                                            videoId = project.id,
+                                            templateId = project.settings.effectSetId,
+                                            songId = project.settings.musicSongId?.toString(),
+                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                        )
                                         onProjectClick(project.id)
                                     },
+                                    onProjectOption = { project ->
+                                        Analytics.trackVideoOption(project.id)
+                                    },
                                     onDeleteProject = { project ->
+                                        Analytics.trackVideoDelete(
+                                            videoId = project.id,
+                                            templateId = project.settings.effectSetId,
+                                            songId = project.settings.musicSongId?.toString(),
+                                            duration = project.totalDurationMs,
+                                            ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
+                                            volume = (project.settings.audioVolume * 100f).toInt(),
+                                            mediaQuality = AnalyticsEvent.Value.Location.UNKNOWN
+                                        )
                                         viewModel.onDeleteProject(project)
                                     },
                                     onDownloadProject = { project ->
+                                        Analytics.trackVideoDownload(
+                                            videoId = project.id,
+                                            templateId = project.settings.effectSetId,
+                                            songId = project.settings.musicSongId?.toString(),
+                                            duration = project.totalDurationMs,
+                                            ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
+                                            volume = (project.settings.audioVolume * 100f).toInt(),
+                                            mediaQuantity = project.assets.size,
+                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                        )
                                         viewModel.onDownloadProject(project, context)
                                     },
                                     onShareProject = { project ->
+                                        Analytics.trackVideoShare(
+                                            videoId = project.id,
+                                            templateId = project.settings.effectSetId,
+                                            songId = project.settings.musicSongId?.toString(),
+                                            duration = project.totalDurationMs,
+                                            ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
+                                            volume = (project.settings.audioVolume * 100f).toInt(),
+                                            mediaQuantity = project.assets.size,
+                                            location = AnalyticsEvent.Value.Location.LIBRARY
+                                        )
                                         shareProjectVideo(context, project, viewModel)
                                     },
                                     onCreateClick = onCreateClick
@@ -253,8 +329,36 @@ fun ProjectsTabContent(
                             if (templateStateLocal.isNotEmpty()){
                                 ContentTemplate(
                                     state = templateStateLocal,
-                                    onTemplateClick = onNavigateToTemplateDetail,
+                                    onTemplateClick = { templateId ->
+                                        val templateName = templateStateLocal
+                                            .firstOrNull { it.id == templateId }
+                                            ?.name
+                                            ?: "unknown"
+                                        Analytics.trackTemplateClick(
+                                            templateId = templateId,
+                                            templateName = templateName,
+                                            location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE
+                                        )
+                                        onNavigateToTemplateDetail(
+                                            templateId,
+                                            AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE
+                                        )
+                                    },
                                     onDeleteTemplateClick = {
+                                        val templateName = templateStateLocal
+                                            .firstOrNull { template -> template.id == it }
+                                            ?.name
+                                            ?: "unknown"
+                                        Analytics.trackTemplateOption(
+                                            templateId = it,
+                                            templateName = templateName,
+                                            location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE
+                                        )
+                                        Analytics.trackTemplateUnfavorite(
+                                            templateId = it,
+                                            templateName = templateName,
+                                            location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE
+                                        )
                                         viewModel.onUnlikeTemplate(it)
                                         showRemovedMessage = true
                                     }
@@ -262,7 +366,12 @@ fun ProjectsTabContent(
                             } else {
                                 LikeTemplateEmpty(
                                     state = templateState,
-                                    onTemplateClick = onNavigateToTemplateDetail,
+                                    onTemplateClick = { templateId ->
+                                        onNavigateToTemplateDetail(
+                                            templateId,
+                                            AnalyticsEvent.Value.Location.LIBRARY_RCM
+                                        )
+                                    },
                                     onSeeAllClick = viewModel::onSeeAllTemplates,
                                     onSearch = viewModel::onTemplateSearch
                                 )
@@ -273,8 +382,25 @@ fun ProjectsTabContent(
                             if (songStateLocal.isNotEmpty()){
                                 ContentSong(
                                     songs = songStateLocal,
-                                    onSongClick = viewModel::onSongClick,
+                                    onSongClick = { song ->
+                                        Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE
+                                        )
+                                        viewModel.onSongClick(song)
+                                    },
                                     onDeleteSongClick = {
+                                        Analytics.trackSongOption(
+                                            songId = it.id.toString(),
+                                            songName = it.name,
+                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE
+                                        )
+                                        Analytics.trackSongUnfavorite(
+                                            songId = it.id.toString(),
+                                            songName = it.name,
+                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE
+                                        )
                                         viewModel.onUnlikeSong(it)
                                         showRemovedMessage = true
                                     }
@@ -284,7 +410,14 @@ fun ProjectsTabContent(
                                     state = songState,
                                     onSeeAllClick = viewModel::onSeeAllSongs,
                                     onSearch = viewModel::onSongSearch,
-                                    onSongClick = viewModel::onSongClick
+                                    onSongClick = { song ->
+                                        Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE
+                                        )
+                                        viewModel.onSongClick(song)
+                                    }
                                 )
                             }
                         }
@@ -337,13 +470,38 @@ fun ProjectsTabContent(
             state = toastState,
             onDismiss = viewModel::onToastDismissed
         )
+
+        // Ads loading overlay - MUST be last in Box to render on top of all other overlays
+        // Z-ordering: Last declared composable in Box appears on top layer
+        // This ensures loading overlay blocks all interactions during ad loading
+        com.videomaker.aimusic.ui.components.AdsLoadingOverlay()
     }
+
+    // Watch ad dialog for download
+    if (showWatchAdDialog) {
+        WatchAdDialog(
+            title = stringResource(R.string.export_watch_ad_title),
+            subtitle = stringResource(R.string.export_watch_ad_subtitle),
+            onDismiss = viewModel::onWatchAdDialogDismiss,
+            onWatchAd = viewModel::onWatchAdConfirmed
+        )
+    }
+
+    // Handle rewarded ad presentation using reusable presenter
+    RewardedAdPresenter(
+        shouldPresent = shouldPresentAd,
+        placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+        adsLoaderService = koinInject(),
+        onRewardEarned = viewModel::onRewardEarned,
+        onAdFailed = viewModel::onAdFailed
+    )
 
     // Music player bottom sheet — shown when a song is tapped
     selectedSong?.let { song ->
         MusicPlayerBottomSheet(
             song = song,
             cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+            location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
             onDismiss = viewModel::onDismissPlayer,
             onUseToCreate = { viewModel.onUseToCreateVideo(song) }
         )
@@ -495,6 +653,7 @@ private fun ProjectsEmptyState(
 private fun ProjectsListContent(
     projects: List<Project>,
     onProjectClick: (Project) -> Unit,
+    onProjectOption: (Project) -> Unit,
     onDeleteProject: (Project) -> Unit,
     onDownloadProject: (Project) -> Unit,
     onShareProject: (Project) -> Unit,
@@ -517,6 +676,7 @@ private fun ProjectsListContent(
                 ProjectsStaggeredGrid(
                     projects = projects,
                     onProjectClick = onProjectClick,
+                    onProjectOption = onProjectOption,
                     onDeleteProject = onDeleteProject,
                     onDownloadProject = onDownloadProject,
                     onShareProject = onShareProject,
@@ -553,12 +713,43 @@ private fun ProjectsListContent(
 }
 
 /**
+ * Item type for projects grid - can be either a Project or an Ad
+ */
+@Stable
+private sealed class ProjectGridItem {
+    data class ProjectItem(val project: Project) : ProjectGridItem()
+    data object AdItem : ProjectGridItem()
+}
+
+/**
+ * Calculate aspect ratio for grid item without capturing project instances
+ */
+private fun calculateAspectRatio(
+    item: ProjectGridItem,
+    infoSectionHeightDp: Float,
+    adAspectRatio: Float
+): Float {
+    return when (item) {
+        is ProjectGridItem.ProjectItem -> {
+            val thumbnailRatio = item.project.settings.aspectRatio.ratio
+            val cardWidth = 180f
+            val thumbnailHeight = cardWidth / thumbnailRatio
+            val totalCardHeight = thumbnailHeight + infoSectionHeightDp
+            cardWidth / totalCardHeight
+        }
+        is ProjectGridItem.AdItem -> adAspectRatio
+    }
+}
+
+/**
  * Staggered grid for projects based on aspect ratio
+ * Inserts native ad at position 2 when projects list is not empty
  */
 @Composable
 private fun ProjectsStaggeredGrid(
     projects: List<Project>,
     onProjectClick: (Project) -> Unit,
+    onProjectOption: (Project) -> Unit,
     onDeleteProject: (Project) -> Unit,
     onDownloadProject: (Project) -> Unit,
     onShareProject: (Project) -> Unit,
@@ -566,34 +757,59 @@ private fun ProjectsStaggeredGrid(
 ) {
     if (projects.isEmpty()) return
 
-    // ✅ OPTIMIZED: Pre-calculate adjusted aspect ratios once when projects list changes
-    // Info section needs ~40dp for: date+menu row (20dp) + padding (20dp)
+    // ✅ Create mixed list with ad inserted at position 2 (after first project)
+    val gridItems = remember(projects) {
+        buildList {
+            projects.forEachIndexed { index, project ->
+                add(ProjectGridItem.ProjectItem(project))
+                // Insert ad after 1st project (index 0) - shows when at least 1 project exists
+                if (index == 0) {
+                    add(ProjectGridItem.AdItem)
+                }
+            }
+        }
+    }
+
+    // Aspect ratios adjusted for 40dp info section (date + menu)
     val infoSectionHeightDp = 40f
-    val aspectRatios = remember(projects) {
-        projects.map { project ->
-            val thumbnailRatio = project.settings.aspectRatio.ratio
-            // Adjust ratio: assume card width of 180dp as baseline
-            val cardWidth = 180f
-            val thumbnailHeight = cardWidth / thumbnailRatio
-            val totalCardHeight = thumbnailHeight + infoSectionHeightDp
-            cardWidth / totalCardHeight // Adjusted ratio for full card including info section
+    val adAspectRatio = 9f / 16f  // Ad media uses 9:16 portrait
+
+    val aspectRatios = remember(gridItems.size, gridItems.firstOrNull()) {
+        gridItems.map { item ->
+            calculateAspectRatio(item, infoSectionHeightDp, adAspectRatio)
         }
     }
 
     StaggeredGrid(
-        items = projects,
+        items = gridItems,
         aspectRatios = aspectRatios,
         columns = 2,
         spacing = spacing,
-        key = { project -> project.id }
-    ) { project ->
-        ProjectCard(
-            project = project,
-            onClick = { onProjectClick(project) },
-            onDelete = { onDeleteProject(project) },
-            onDownload = { onDownloadProject(project) },
-            onShare = { onShareProject(project) }
-        )
+        key = { item ->
+            when (item) {
+                is ProjectGridItem.ProjectItem -> "project_${item.project.id}"
+                is ProjectGridItem.AdItem -> "ad_projects_grid"
+            }
+        }
+    ) { item ->
+        when (item) {
+            is ProjectGridItem.ProjectItem -> {
+                ProjectCard(
+                    project = item.project,
+                    onClick = { onProjectClick(item.project) },
+                    onOptionClick = { onProjectOption(item.project) },
+                    onDelete = { onDeleteProject(item.project) },
+                    onDownload = { onDownloadProject(item.project) },
+                    onShare = { onShareProject(item.project) }
+                )
+            }
+            is ProjectGridItem.AdItem -> {
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_PROJECTS_GRID,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }
 
@@ -669,4 +885,11 @@ private fun shareProjectVideo(
         android.util.Log.e("ProjectsTab", "Share failed", e)
         viewModel.onShareError(e.message ?: context.getString(R.string.export_error_share_failed))
     }
+}
+
+private fun AspectRatio.toAnalyticsRatioSize(): String = when (this) {
+    AspectRatio.RATIO_16_9 -> "16:9"
+    AspectRatio.RATIO_9_16 -> "9:16"
+    AspectRatio.RATIO_4_5 -> "4:5"
+    AspectRatio.RATIO_1_1 -> "1:1"
 }

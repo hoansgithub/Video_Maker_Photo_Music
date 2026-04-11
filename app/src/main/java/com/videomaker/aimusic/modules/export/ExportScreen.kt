@@ -1,11 +1,19 @@
 package com.videomaker.aimusic.modules.export
 
+import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.ads.RewardedAdPresenter
+import com.videomaker.aimusic.core.constants.AdPlacement
+import kotlinx.coroutines.delay
+import org.koin.compose.koinInject
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,6 +25,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -27,11 +36,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.shadow
 import androidx.compose.material.icons.Icons
@@ -44,6 +55,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -67,10 +79,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.text.font.FontWeight
@@ -99,6 +112,7 @@ import com.videomaker.aimusic.modules.rate.RatingSatisfactionPopup
 import com.videomaker.aimusic.modules.rate.RatingStarsPopup
 import com.videomaker.aimusic.modules.rate.RatingStep
 import com.videomaker.aimusic.modules.rate.RatingStep.*
+import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
 import com.videomaker.aimusic.ui.components.ProcessToast
 import com.videomaker.aimusic.ui.components.ProcessToastState
 import com.videomaker.aimusic.ui.components.QualityPicker
@@ -109,8 +123,32 @@ import com.videomaker.aimusic.ui.theme.Neutral_N800
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
-import kotlinx.coroutines.delay
 import java.io.File
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+// ============================================
+// HELPER - Release player async to avoid ANR
+// ============================================
+
+/**
+ * Release ExoPlayer asynchronously on background thread to avoid ANR.
+ * ExoPlayer.release() can block for 5-10 seconds when releasing video resources.
+ */
+private fun ExoPlayer.releaseAsync() {
+    val playerToRelease = this
+    ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+        runCatching {
+            android.util.Log.d("ExportScreen", "Releasing player on background thread...")
+            playerToRelease.release()
+            android.util.Log.d("ExportScreen", "Player released successfully")
+        }.onFailure { e ->
+            android.util.Log.e("ExportScreen", "Failed to release player", e)
+        }
+    }
+}
 
 /**
  * Responsive sizing configuration for export buttons
@@ -148,8 +186,77 @@ fun ExportScreen(
     val featuredTemplatesState by viewModel.featuredTemplatesState.collectAsStateWithLifecycle()
     val saveToastState by viewModel.saveToastState.collectAsStateWithLifecycle()
     val ratingStep by viewModel.ratingStep.collectAsStateWithLifecycle()
+    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
+    val shouldPresentDownloadAd by viewModel.shouldPresentDownloadAd.collectAsStateWithLifecycle()
+    val showWatermark by viewModel.showWatermark.collectAsStateWithLifecycle()
+    val showWatermarkAdDialog by viewModel.showWatermarkAdDialog.collectAsStateWithLifecycle()
+    val shouldPresentWatermarkAd by viewModel.shouldPresentWatermarkAd.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Get dependencies for ad showing
+    val activity = context as? Activity
+    val adsLoaderService = koinInject<AdsLoaderService>()
+
+    // Track ad loading state for Processing overlay
+    var adReady by remember { mutableStateOf(false) }
+    var processingAdComplete by remember { mutableStateOf(false) }
+
+    // Ad loading with timeout when Processing state starts:
+    // - Wait up to 10s for ad to load
+    // - When ad loads: wait 2s for impression, then proceed
+    // - If timeout (10s): proceed immediately
+    val isProcessing = uiState is ExportUiState.Processing
+    LaunchedEffect(isProcessing) {
+        if (isProcessing) {
+            // Reset states when processing starts
+            adReady = false
+            processingAdComplete = false
+
+            val startTime = System.currentTimeMillis()
+
+            // Check if ad is already loaded
+            adReady = adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_EXPORT_GENERATING)
+
+            if (adReady) {
+                android.util.Log.d("ExportProcessing", "✅ Ad already loaded (preload successful)")
+            } else {
+                android.util.Log.d("ExportProcessing", "⏳ Ad not ready, polling...")
+
+                // Poll for ad ready state (or timeout after 10s)
+                while (!adReady && (System.currentTimeMillis() - startTime) < 10_000) {
+                    delay(500) // Check every 500ms
+
+                    // Check if native ad has loaded
+                    if (adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_EXPORT_GENERATING)) {
+                        val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000.0
+                        android.util.Log.d("ExportProcessing", "✅ Ad loaded after ${elapsedSeconds}s")
+                        adReady = true
+                    }
+                }
+            }
+
+            if (adReady) {
+                android.util.Log.d("ExportProcessing", "📊 Ad ready - showing for 2 more seconds")
+                delay(2_000) // Show ad for 2 seconds after ready
+            } else {
+                android.util.Log.d("ExportProcessing", "⏱️ Ad timeout (10s) - proceeding immediately")
+            }
+
+            processingAdComplete = true
+        } else {
+            // When not processing, immediately mark as complete
+            processingAdComplete = true
+        }
+    }
+
+    // Show Processing UI when either exporting or ad timing not complete
+    val shouldShowProcessing = isProcessing || !processingAdComplete
+
+    // Intercept system back gesture (swipe) in Success state - same ad logic as close button
+    BackHandler(enabled = uiState is ExportUiState.Success) {
+        viewModel.onResultExitClick()
+    }
 
     // Cancel export when app goes to background
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -178,6 +285,37 @@ fun ExportScreen(
             when (event) {
                 is ExportNavigationEvent.NavigateBack -> onNavigateBack()
                 is ExportNavigationEvent.NavigateToHomeMyVideos -> onNavigateToHomeMyVideos()
+
+                is ExportNavigationEvent.RequestExitWithAd -> {
+                    // Show ad if ready, otherwise navigate immediately (non-blocking)
+                    if (event.shouldShowAd && activity != null) {
+                        android.util.Log.d("ExportScreen", "📺 Showing exit ad...")
+
+                        InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = AdPlacement.INTERSTITIAL_EXPORT_RESULT_EXIT,
+                            action = {
+                                // Ad closed - navigate
+                                android.util.Log.d("ExportScreen", "✅ Exit ad closed - navigating")
+                            },
+                            onShown = {
+                                // Navigate immediately when ad shows (parallel)
+                                android.util.Log.d("ExportScreen", "🎬 Exit ad shown - navigating")
+                                onNavigateToHomeMyVideos()
+                            },
+                            bypassFrequencyCap = true,  // Exit ads always show
+                            showLoadingOverlay = false  // Ad already preloaded
+                        )
+                    } else {
+                        // Ad not ready or no activity - navigate immediately
+                        if (!event.shouldShowAd) {
+                            android.util.Log.d("ExportScreen", "⚠️ Exit ad not ready - navigating immediately")
+                        }
+                        onNavigateToHomeMyVideos()
+                    }
+                }
+
                 is ExportNavigationEvent.NavigateToTemplateDetail -> {
                     onNavigateToTemplateDetail(event.templateId)
                 }
@@ -232,6 +370,16 @@ fun ExportScreen(
             }
 
             is ExportUiState.Success -> {
+                // Keep showing Processing UI until ad timing completes
+                if (shouldShowProcessing) {
+                    // Export done but ad timing not complete - show processing at 100%
+                    ProcessingContent(
+                        progress = 100,
+                        thumbnailUri = thumbnailUri,
+                        aspectRatio = aspectRatio
+                    )
+                } else {
+                    // Ad timing complete - show success
                 SuccessContent(
                     outputPath = state.outputPath,
                     savedToGallery = state.savedToGallery,
@@ -241,8 +389,11 @@ fun ExportScreen(
                     currentQuality = currentQuality,
                     featuredTemplatesState = featuredTemplatesState,
                     saveToastState = saveToastState,
+                    showWatermark = showWatermark,
+                    onWatermarkClick = viewModel::onWatermarkClick,
+                    onWatermarkDismiss = viewModel::onWatermarkDismiss,
                     onSaveToGalleryClick = {
-                        viewModel.saveToGallery(
+                        viewModel.onDownloadClick(
                             applicationContext = context.applicationContext,
                             loadingMessage = context.getString(R.string.export_saving_to_gallery),
                             successMessage = context.getString(R.string.export_saved_to_gallery),
@@ -250,6 +401,7 @@ fun ExportScreen(
                         )
                     },
                     onShareClick = {
+                        viewModel.trackShareAction()
                         shareVideo(
                             context = context,
                             outputPath = state.outputPath,
@@ -259,10 +411,11 @@ fun ExportScreen(
                     onQualityChange = { quality ->
                         viewModel.changeQuality(quality)
                     },
-                    onDoneClick = viewModel::navigateToHomeMyVideos,
+                    onDoneClick = viewModel::onResultExitClick,
                     onTemplateClick = viewModel::onTemplateClick,
                     onSaveToastDismissed = viewModel::onSaveToastDismissed
                 )
+                }
             }
 
             is ExportUiState.Error -> {
@@ -304,6 +457,43 @@ fun ExportScreen(
                 None -> { /* No popup shown */ }
             }
         }
+
+        // Watch ad dialog for download
+        if (showWatchAdDialog) {
+            WatchAdDialog(
+                onDismiss = viewModel::onWatchAdDialogDismiss,
+                onWatchAd = viewModel::onWatchAdConfirmed
+            )
+        }
+
+        // Handle download ad presentation using reusable presenter
+        RewardedAdPresenter(
+            shouldPresent = shouldPresentDownloadAd,
+            placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+            adsLoaderService = adsLoaderService,
+            onRewardEarned = viewModel::onDownloadRewardEarned,
+            onAdFailed = viewModel::onDownloadAdFailed
+        )
+
+        // Watermark ad dialog
+        if (showWatermarkAdDialog) {
+            WatermarkAdDialog(
+                onDismiss = viewModel::onWatermarkAdDialogDismiss,
+                onWatchAd = viewModel::onWatermarkAdConfirmed
+            )
+        }
+
+        // Handle watermark ad presentation using reusable presenter
+        RewardedAdPresenter(
+            shouldPresent = shouldPresentWatermarkAd,
+            placement = AdPlacement.REWARD_REMOVE_WATERMARK,
+            adsLoaderService = adsLoaderService,
+            onRewardEarned = viewModel::onWatermarkRewardEarned,
+            onAdFailed = viewModel::onWatermarkAdFailed
+        )
+
+        // Ads loading overlay (shows when rewarded ad is loading)
+        AdsLoadingOverlay()
     }
 }
 
@@ -364,36 +554,53 @@ private fun ProcessingContent(
         modifier = Modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.statusBars)
-            .padding(32.dp)
+            .padding(vertical = 16.dp)  // Only vertical padding - let ad be edge-to-edge
     ) {
-        // Top: "Generating" text
+        // Top: "Generating" text (auto-scales to fit with ad)
         Text(
             text = stringResource(R.string.export_generating),
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(top = 40.dp)
+            modifier = Modifier
+                .padding(horizontal = 32.dp)  // Add horizontal padding to text only
+                .padding(top = 16.dp)
         )
 
-        // Center: Thumbnail with progress overlay
+        // Center: Thumbnail with progress overlay (auto-scales to available height)
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.Center
         ) {
-            // Thumbnail with progress overlay (matches video aspect ratio)
-            // Use wider width for landscape and square ratios
-            val thumbnailWidthFraction = when (aspectRatio) {
-                AspectRatio.RATIO_16_9 -> 0.95f // Landscape - almost full width
-                AspectRatio.RATIO_1_1 -> 0.8f   // Square - wider
-                else -> 0.7f                     // Portrait - default
-            }
+            // Auto-scale thumbnail based on available height
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                // Reserve space for tip text and spacer below thumbnail
+                val tipTextHeight = 60.dp // Estimated: 2 lines of bodyMedium text
+                val spacerHeight = 16.dp
+                val reservedHeight = tipTextHeight + spacerHeight
+
+                // Calculate available height for thumbnail
+                val availableHeight = maxHeight - reservedHeight
+
+                // Calculate thumbnail dimensions maintaining aspect ratio
+                // Start with height-based sizing to fit available space
+                val thumbnailHeight = availableHeight * 0.85f // Use 85% of available height
+                val thumbnailWidth = thumbnailHeight * aspectRatio.ratio
+
+                // Ensure width doesn't exceed screen width (with margin)
+                val maxThumbnailWidth = maxWidth * 0.85f
+                val finalWidth = minOf(thumbnailWidth, maxThumbnailWidth)
+                val finalHeight = finalWidth / aspectRatio.ratio
 
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .fillMaxWidth(thumbnailWidthFraction)
-                    .aspectRatio(aspectRatio.ratio)
+                    .width(finalWidth)
+                    .height(finalHeight)
             ) {
                 // Real thumbnail with white outer shadow
                 Box(
@@ -456,41 +663,57 @@ private fun ProcessingContent(
                     )
                 }
             }
+            }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Rotating tip message below thumbnail
             Text(
                 text = tipMessages[currentTipIndex],
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                lineHeight = 24.sp
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(horizontal = 32.dp)  // Add horizontal padding to text
             )
         }
 
-        // Warning capsule at bottom
-        Row(
-            modifier = Modifier
-                .background(
-                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+        // Bottom section: Warning + Native Ad
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth()  // Ensure full width for edge-to-edge ad
         ) {
-            Icon(
-                imageVector = Icons.Default.Info,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.size(20.dp)
-            )
-            Text(
-                text = stringResource(R.string.export_dont_close),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                fontWeight = FontWeight.Medium
+            // Warning capsule
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 32.dp)  // Add padding to warning (not ad)
+                    .background(
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = stringResource(R.string.export_dont_close),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            // Native ad at bottom (edge-to-edge, no horizontal padding)
+            NativeAdView(
+                placement = AdPlacement.NATIVE_EXPORT_GENERATING,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -506,6 +729,9 @@ private fun SuccessContent(
     currentQuality: VideoQuality,
     featuredTemplatesState: FeaturedTemplatesState = FeaturedTemplatesState.Loading,
     saveToastState: ProcessToastState? = null,
+    showWatermark: Boolean = true,
+    onWatermarkClick: () -> Unit = {},
+    onWatermarkDismiss: () -> Unit = {},
     onSaveToGalleryClick: () -> Unit,
     onShareClick: () -> Unit,
     onQualityChange: (VideoQuality) -> Unit = {},
@@ -587,7 +813,7 @@ private fun SuccessContent(
             lifecycleOwner.lifecycle.addObserver(observer)
             onDispose {
                 lifecycleOwner.lifecycle.removeObserver(observer)
-                player.release()
+                player.releaseAsync()  // ✅ Release async to avoid ANR
             }
         } ?: onDispose { }
     }
@@ -713,6 +939,67 @@ private fun SuccessContent(
                         )
                     }
                 }
+
+                // Watermark overlay - bottom right
+                if (showWatermark) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(16.dp)
+                    ) {
+                        // Main watermark content
+                        Row(
+                            modifier = Modifier
+                                .background(
+                                    color = Color.Black.copy(alpha = 0.75f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .clickable { onWatermarkClick() }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.app_icon_loading),
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = Color.Unspecified
+                            )
+                            Text(
+                                text = stringResource(R.string.app_name),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                maxLines = 1
+                            )
+                        }
+
+                        // Close button - circular at top right corner
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = 6.dp, y = (-6).dp)
+                                .size(28.dp)
+                                .background(
+                                    color = Color.White,
+                                    shape = CircleShape
+                                )
+                                .border(
+                                    width = 2.dp,
+                                    color = Color.Black.copy(alpha = 0.2f),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Remove watermark",
+                                tint = Color.Black,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -795,7 +1082,7 @@ private fun SuccessContent(
                     )
                 }
 
-                // Save to Gallery button - right side (always enabled, no state change)
+                // Save to Gallery button - right side (shows [AD] badge, triggers rewarded ad)
                 Button(
                     onClick = onSaveToGalleryClick,
                     modifier = Modifier
@@ -808,10 +1095,12 @@ private fun SuccessContent(
                     ),
                     contentPadding = contentPadding
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Download,
-                        contentDescription = null,
-                        modifier = Modifier.size(iconSize)
+                    // [AD] badge
+                    com.videomaker.aimusic.ui.components.AdBadge(
+                        style = com.videomaker.aimusic.ui.components.AdBadgeStyle.Small(
+                            textColor = SurfaceDark,
+                            backgroundColor = SurfaceDark.copy(alpha = 0.15f)
+                        )
                     )
                     Spacer(modifier = Modifier.width(iconSpacing))
                     Text(
@@ -1274,4 +1563,3 @@ private fun CancelledContentPreview() {
         }
     }
 }
-

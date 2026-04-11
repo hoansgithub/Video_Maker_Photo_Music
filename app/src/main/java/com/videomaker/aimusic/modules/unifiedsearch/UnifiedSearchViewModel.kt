@@ -3,6 +3,8 @@ package com.videomaker.aimusic.modules.unifiedsearch
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
@@ -156,11 +158,16 @@ class UnifiedSearchViewModel(
     private var explicitSearchJob: Job? = null
     private var debounceLockedOut = false
     private val searchSessionId = AtomicInteger(0)
+    private var lastRecentViewSignature: String? = null
+    private var lastSuggestViewSignature: String? = null
 
     // Full server results cached for client-side "See More" (no re-fetch needed)
 
     init {
-        _recentSearches.value = preferencesManager.getRecentSearches()
+        Analytics.trackSearchOpen(searchOpenLocation())
+        viewModelScope.launch {
+            _recentSearches.value = preferencesManager.getRecentSearches()
+        }
 
         viewModelScope.launch(Dispatchers.IO) {
             templateRepository.getVibeTags()
@@ -215,6 +222,9 @@ class UnifiedSearchViewModel(
         _displayText.value = newQuery
 
         val normalized = newQuery.trim()
+        if (normalized.isNotBlank()) {
+            Analytics.trackSearchType(normalized)
+        }
         _query.value = normalized
 
         // Dual-layer UI: Show instant suggestions while debounced search loads
@@ -232,6 +242,7 @@ class UnifiedSearchViewModel(
         val q = _displayText.value.trim()
         if (q.isBlank()) return
 
+        Analytics.trackSearchSubmit(q)
         acquireExplicitSearchControl()
         rememberQuery(q)
         launchExplicitSearch(q)
@@ -241,6 +252,8 @@ class UnifiedSearchViewModel(
         val q = query.trim()
         if (q.isBlank()) return
 
+        Analytics.trackSearchClick(type = "suggest", keyword = q)
+        Analytics.trackSearchSuggestClick(q)
         acquireExplicitSearchControl()
         _displayText.value = q
         rememberQuery(q)
@@ -263,6 +276,7 @@ class UnifiedSearchViewModel(
         val q = query.trim()
         if (q.isBlank()) return
 
+        Analytics.trackSearchClick(type = "recent", keyword = q)
         acquireExplicitSearchControl()
         _displayText.value = q
         rememberQuery(q)
@@ -270,13 +284,18 @@ class UnifiedSearchViewModel(
     }
 
     fun onRemoveRecentSearch(query: String) {
-        preferencesManager.removeRecentSearch(query)
-        _recentSearches.value = preferencesManager.getRecentSearches()
+        Analytics.trackSearchRecentDelete(query)
+        viewModelScope.launch {
+            preferencesManager.removeRecentSearch(query)
+            _recentSearches.value = preferencesManager.getRecentSearches()
+        }
     }
 
     fun onClearAllRecents() {
-        preferencesManager.clearRecentSearches()
-        _recentSearches.value = emptyList()
+        viewModelScope.launch {
+            preferencesManager.clearRecentSearches()
+            _recentSearches.value = emptyList()
+        }
     }
 
     fun onVibeTagClick(tag: VibeTag) {
@@ -410,6 +429,14 @@ class UnifiedSearchViewModel(
         }
     }
 
+    fun onSeeMoreFeaturedTemplatesClick() {
+        Analytics.trackSearchSeeMore(
+            keyword = currentSearchKeywordForSeeMore(),
+            section = AnalyticsEvent.Value.Section.TEMPLATE
+        )
+        onSeeMoreFeaturedTemplates()
+    }
+
     fun onSeeMoreSuggestedSongs() {
         if (_isLoadingMoreSuggestedSongs.value || !_hasMoreSuggestedSongs.value) return
 
@@ -431,7 +458,44 @@ class UnifiedSearchViewModel(
         }
     }
 
+    fun onSeeMoreSuggestedSongsClick() {
+        Analytics.trackSearchSeeMore(
+            keyword = currentSearchKeywordForSeeMore(),
+            section = AnalyticsEvent.Value.Section.MUSIC
+        )
+        onSeeMoreSuggestedSongs()
+    }
+
+    fun onRecentSearchesRendered(recentKeywords: List<String>) {
+        val keywords = recentKeywords
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .take(3)
+        if (keywords.isEmpty()) return
+
+        val signature = keywords.joinToString("|") { it.lowercase() }
+        if (signature == lastRecentViewSignature) return
+
+        lastRecentViewSignature = signature
+        Analytics.trackSearchRecentView(keywords)
+    }
+
+    fun onSuggestionsRendered(suggestKeywords: List<String>) {
+        val keywords = suggestKeywords
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .take(3)
+        if (keywords.isEmpty()) return
+
+        val signature = keywords.joinToString("|") { it.lowercase() }
+        if (signature == lastSuggestViewSignature) return
+
+        lastSuggestViewSignature = signature
+        Analytics.trackSearchSuggestView(keywords)
+    }
+
     fun onNavigateBack() {
+        Analytics.trackSearchCancel(_displayText.value.trim())
         _navigationEvent.value = UnifiedSearchNavigationEvent.NavigateBack
     }
 
@@ -511,8 +575,10 @@ class UnifiedSearchViewModel(
     }
 
     private fun rememberQuery(query: String) {
-        preferencesManager.addRecentSearch(query)
-        _recentSearches.value = preferencesManager.getRecentSearches()
+        viewModelScope.launch {
+            preferencesManager.addRecentSearch(query)
+            _recentSearches.value = preferencesManager.getRecentSearches()
+        }
     }
 
     private fun acquireExplicitSearchControl() {
@@ -570,8 +636,15 @@ class UnifiedSearchViewModel(
         val allSongs = musicResult.getOrElse { emptyList() }
 
         if (allTemplates.isEmpty() && allSongs.isEmpty()) {
+            Analytics.trackSearchNoResult(query)
             return@coroutineScope UnifiedSearchUiState.Empty(query = query)
         }
+
+        Analytics.trackSearchResultView(
+            keyword = query,
+            templateCount = allTemplates.size,
+            musicCount = allSongs.size
+        )
 
         // Generate related searches from actual result titles (max 3)
         // Only show titles that start with the query
@@ -621,6 +694,17 @@ class UnifiedSearchViewModel(
             .distinctBy { it.lowercase() }
             .filter { it.lowercase().startsWith(needle) }
             .take(limit)
+    }
+
+    private fun searchOpenLocation(): String {
+        return when (initialSection) {
+            SearchSection.TEMPLATES -> AnalyticsEvent.Value.Location.GALLERY
+            SearchSection.MUSIC -> AnalyticsEvent.Value.Location.SONG
+        }
+    }
+
+    private fun currentSearchKeywordForSeeMore(): String {
+        return _displayText.value.trim().ifBlank { AnalyticsEvent.Value.ALL }
     }
 }
 

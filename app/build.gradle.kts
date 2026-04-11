@@ -38,7 +38,7 @@ android {
         applicationId = "com.videomaker.aimusic"
         minSdk = 28
         targetSdk = 36
-        versionCode = 5
+        versionCode = 12
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -48,6 +48,11 @@ android {
         // ============================================
         buildConfigField("String", "SUPABASE_URL", "\"${getPropertyOrEmpty("SUPABASE_URL")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${getPropertyOrEmpty("SUPABASE_ANON_KEY")}\"")
+
+        // ============================================
+        // APPSFLYER CONFIGURATION (from local.properties)
+        // ============================================
+        buildConfigField("String", "APPSFLYER_DEV_KEY", "\"${getPropertyOrEmpty("APPSFLYER_DEV_KEY")}\"")
 
         // ============================================
         // APP THINNING OPTIMIZATION
@@ -239,9 +244,10 @@ dependencies {
     // ============================================
     implementation(libs.acccore)
     implementation(libs.acccore.firebase)    // Firebase Analytics, Crashlytics, RemoteConfig, Performance
+    implementation(libs.acccore.facebook)    // Facebook Analytics only (no login)
+    implementation(libs.acccore.appsflyer)   // AppsFlyer analytics integration
+    implementation(libs.acccore.ads)         // AdMob with UMP consent
     // implementation(libs.acccore.revenuecat)  // Uncomment when RevenueCat needed
-    // implementation(libs.acccore.ads)         // Uncomment when Ads needed
-    // implementation(libs.acccore.appsflyer)   // Uncomment when AppsFlyer needed
 
     // ============================================
     // WIDGETS (Glance)
@@ -257,6 +263,26 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.coil.video)
     implementation(libs.lottie.compose)
+
+    // ============================================
+    // ADMOB MEDIATION ADAPTERS
+    // ============================================
+    // Pangle (TikTok Audience Network) - All formats, bidding + waterfall
+    implementation("com.google.ads.mediation:pangle:7.9.1.2.0")
+
+    // AppLovin MAX - Requires BOTH SDK and adapter
+    implementation("com.applovin:applovin-sdk:13.6.2")
+    implementation("com.google.ads.mediation:applovin:13.6.2.0")
+
+    // Meta Audience Network (Facebook) - Bidding only
+    // Adapter includes Facebook SDK as transitive dependency
+    implementation("com.google.ads.mediation:facebook:6.21.0.0")
+
+    // Liftoff Monetize (Vungle) - All formats, bidding + waterfall
+    implementation("com.google.ads.mediation:vungle:7.7.1.0")
+
+    // Mintegral - All formats, bidding + waterfall
+    implementation("com.google.ads.mediation:mintegral:17.1.31.0")
 
     // ============================================
     // PLAY SERVICES (Optional)

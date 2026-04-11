@@ -4,6 +4,7 @@
 
     <!-- Loading -->
     <string name="loading">Yükleniyor…</string>
+    <string name="ad_loading">Reklam yükleniyor…</string>
 
     <!-- Language Selection -->
     <string name="language_select_title">Dilleri Seçin</string>
@@ -34,6 +35,11 @@
     <string name="root_no_internet_title">İnternet Bağlantısı Yok</string>
     <string name="root_no_internet_message">Cihazınız şu anda çevrimdışı. Devam etmek için lütfen yeniden bağlanın.</string>
     <string name="root_try_again">Tekrar Dene</string>
+    <string name="root_loading_initializing">Başlatılıyor...</string>
+    <string name="root_loading_fetching_config">Yapılandırma yükleniyor...</string>
+    <string name="root_loading_ad">Bu reklamlar içerebilir</string>
+    <string name="root_loading_checking_status">Durum kontrol ediliyor...</string>
+    <string name="root_loading_preparing">Hazırlanıyor...</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Galeri</string>
@@ -221,6 +227,14 @@
     <string name="export_error_share_failed">Video paylaşma başarısız</string>
     <string name="export_try_another_templates">Başka Şablonları Deneyin</string>
     <string name="export_templates_load_failed">Şablonlar yüklenemedi</string>
+    <string name="export_watch_ad_title">İndirmek için reklam izle?</string>
+    <string name="export_watch_ad_subtitle">Kısa bir reklam izleyerek bu uygulamayı ücretsiz tutmamıza yardımcı olun. Videonuz hemen ardından indirilecek!</string>
+    <string name="export_watch_ad_button">Reklam İzle</string>
+    <string name="export_watch_ad_close">Kapat</string>
+    <string name="export_watermark_remove_title">Filigran kaldırılsın mı?</string>
+    <string name="export_watermark_remove_subtitle">Video önizlemenizden filigranı kaldırmak için kısa bir reklam izleyin.</string>
+    <string name="export_watermark_remove_button">Reklam İzle</string>
+    <string name="export_watermark_remove_close">Kapat</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Fotoğraf Seç</string>
@@ -340,6 +354,7 @@
     <!-- Error states -->
     <string name="error_load_failed">Yüklenemedi. Yeniden denemek için aşağı çekin.</string>
     <string name="error_network_title">Ağ Hatası</string>
+    <string name="loading_building_feed">Akışınız Oluşturuluyor</string>
     <string name="error_network_message">Müzik yüklenemedi. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
     <string name="error_network_timeout">Ağ zaman aşımı. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
     <string name="error_preview_title">Önizleme Hatası</string>
@@ -460,5 +475,28 @@
     <string name="rating_feedback_reason_performance">Uygulama yavaş veya sık sık çöküyor</string>
     <string name="rating_feedback_reason_templates">Yeterli şablon yok / içerik güncellemeleri yetersiz</string>
     <string name="rating_feedback_reason_other">Diğer</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">Reklam</string>
+    <string name="ad_icon">Reklam simgesi</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">Bu efektin kilidini açmak için reklam izle?</string>
+    <string name="effect_set_watch_ad_subtitle">Kısa bir reklam izleyerek bu efekt setinin kilidini kalıcı olarak açın</string>
+    <string name="effect_set_ad_not_available">Reklam şu anda mevcut değil. Daha sonra tekrar deneyin.</string>
+    <string name="effect_set_locked">Kilitli efekt seti</string>
+    <string name="ad_not_available">Reklam şu anda mevcut değil. Daha sonra tekrar deneyin.</string>
+
+    <!-- Quality Export Rewarded Ad -->
+    <string name="quality_watch_ad_title">Yüksek kalitede dışa aktarmak için reklam izle?</string>
+    <string name="quality_watch_ad_subtitle">Kısa bir reklam izleyerek bu oturum için 720p/1080p dışa aktarmayı aç</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">Bu şablonun kilidini açmak için reklam izle?</string>
+    <string name="template_watch_ad_subtitle">Kısa bir reklam izleyerek bu şablonun kilidini kalıcı olarak aç</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Bu şarkıyı açmak için reklam izle?</string>
+    <string name="song_watch_ad_subtitle">İzledikten sonra bu şarkıyı video oluşturmak için kullanabilirsiniz. Kilit açma kalıcıdır.</string>
 
 </resources>

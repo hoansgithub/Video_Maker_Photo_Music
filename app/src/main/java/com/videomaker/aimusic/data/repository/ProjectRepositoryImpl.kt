@@ -208,4 +208,13 @@ class ProjectRepositoryImpl(
             ))
         }
     }
+
+    override suspend fun updateWatermarkFreeStatus(projectId: String, isWatermarkFree: Boolean) {
+        projectDao.getById(projectId)?.let { project ->
+            projectDao.update(project.copy(
+                isWatermarkFree = isWatermarkFree,
+                updatedAt = System.currentTimeMillis()
+            ))
+        }
+    }
 }

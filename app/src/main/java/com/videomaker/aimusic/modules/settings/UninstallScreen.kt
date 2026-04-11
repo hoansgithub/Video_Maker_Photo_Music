@@ -43,8 +43,11 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -59,7 +62,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import coil.compose.AsyncImage
 import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
@@ -67,6 +72,9 @@ import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
@@ -102,6 +110,10 @@ fun UninstallScreen(
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
     val audioPreviewCache: AudioPreviewCache = koinInject()
 
+    LaunchedEffect(Unit) {
+        Analytics.trackUninstallView()
+    }
+
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
@@ -119,6 +131,7 @@ fun UninstallScreen(
         MusicPlayerBottomSheet(
             song = song,
             cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+            location = AnalyticsEvent.Value.Location.UNINSTALL,
             onDismiss = viewModel::onDismissPlayer,
             onUseToCreate = { viewModel.onUseToCreateVideo(song) }
         )
@@ -139,15 +152,31 @@ fun UninstallScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {},
+                title = {
+                    Text(
+                        text = stringResource(R.string.uninstall_title),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.W600,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        Analytics.trackUninstallCtaClick(type = "dont_uninstall")
+                        onNavigateBack()
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
+                },
+                actions = {
+                    // Empty spacer to balance the back button and center the title
+                    Spacer(modifier = Modifier.width(48.dp))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = FoundationBlack
@@ -161,38 +190,25 @@ fun UninstallScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = 18.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(horizontal = 18.dp)
         ) {
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = stringResource(R.string.uninstall_title),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.W600,
-                color = Color.White,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
             Text(
                 text = stringResource(R.string.uninstall_description),
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 color = FoundationBlack_100,
                 textAlign = TextAlign.Center,
-                lineHeight = 22.sp
+                lineHeight = 18.sp
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             Column(
                 modifier = Modifier
-                    .padding(vertical = 24.dp)
+                    .weight(1f)
                     .fillMaxWidth()
                     .background(Color.White.copy(0.08f), RoundedCornerShape(12.dp))
-                    .padding(vertical = 10.dp, horizontal = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(vertical = 8.dp, horizontal = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
 
                 // ---- Liked Templates header ----
@@ -209,7 +225,7 @@ fun UninstallScreen(
                     )
                     Text(
                         text = stringResource(R.string.like_template_section_header),
-                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp),
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         modifier = Modifier.weight(1f)
@@ -273,7 +289,7 @@ fun UninstallScreen(
                     )
                     Text(
                         text = stringResource(R.string.home_tab_songs),
-                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 16.sp),
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 14.sp),
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         modifier = Modifier.weight(1f)
@@ -307,7 +323,7 @@ fun UninstallScreen(
                             ShimmerPlaceholder(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(66.dp),
+                                    .aspectRatio(3f),
                                 cornerRadius = 8.dp
                             )
                         }
@@ -315,14 +331,16 @@ fun UninstallScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
             Text(
                 text = stringResource(R.string.uninstall_confirm),
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.W500,
                 color = Color.White,
                 modifier = Modifier
                     .clickableSingle{
+                        Analytics.trackUninstallCtaClick(type = "uninstall")
                         val packageUri = Uri.parse("package:${context.packageName}")
 
                         val uninstallIntent = Intent(Intent.ACTION_DELETE).apply {
@@ -347,10 +365,13 @@ fun UninstallScreen(
                     .padding(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Button(
-                onClick = onNavigateBack,
+                onClick = {
+                    Analytics.trackUninstallCtaClick(type = "dont_uninstall")
+                    onNavigateBack()
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -359,12 +380,20 @@ fun UninstallScreen(
             ) {
                 Text(
                     text = stringResource(R.string.uninstall_cancel),
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.W500,
                     color = Neutral_N100,
-                    modifier = Modifier.padding(vertical = 6.dp)
+                    modifier = Modifier.padding(vertical = 4.dp)
                 )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Native Ad at bottom (auto height - TOP PRIORITY)
+            NativeAdView(
+                placement = AdPlacement.NATIVE_UNINSTALL_BOTTOM,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

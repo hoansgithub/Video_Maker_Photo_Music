@@ -29,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,13 +47,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.SupportedLanguage
 import com.videomaker.aimusic.core.data.local.getAllLanguages
+import com.videomaker.aimusic.core.language.LanguageConfigService
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.ui.theme.Black12
 import com.videomaker.aimusic.ui.theme.Black20
@@ -60,6 +66,11 @@ import com.videomaker.aimusic.ui.theme.Gray700
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.White20
 import com.videomaker.aimusic.ui.theme.White40
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.constants.AdPlacement
+import kotlinx.coroutines.delay
+import org.koin.compose.koinInject
 
 /**
  * LanguageSelectionScreen - Language picker for onboarding and settings.
@@ -74,10 +85,61 @@ fun LanguageSelectionScreen(
     onLanguageSelected: (String) -> Unit,
     onContinue: () -> Unit,
     showBackButton: Boolean = false,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    languageConfigService: LanguageConfigService = koinInject()
 ) {
+    Analytics.trackScreenView(
+        screenName = "language_show",
+        screenClass = "LanguageSelectionScreen"
+    )
+    val density = LocalDensity.current
     var selectedLanguage by remember { mutableStateOf<String?>(null) }
-    val languages = remember { LanguageManager.getAllLanguages() }
+
+    // Get sorted languages (country-based priority)
+    val languages = remember { languageConfigService.getSortedLanguages() }
+
+    // Track bottom section height dynamically (button + ad)
+    var bottomSectionHeight by remember { mutableStateOf(0) }
+    val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
+
+    // Delayed states for ad viewability compliance (0.5-second per ad)
+    // Sequential delays ensuring EACH ad gets at least 0.5 second of display time
+    // Pipeline: FIRST user interaction → PRIMARY shows 0.5s → ALT shows 0.5s → Button enables
+    // Total 1s delay for faster UX while maintaining ad viewability
+    var delayedHasSelection by remember { mutableStateOf(false) }
+    var delayedButtonEnabled by remember { mutableStateOf(false) }
+    var hasStartedDelay by remember { mutableStateOf(false) }
+
+    // Sequential delays ensuring EACH ad gets at least 0.5 second of display time
+    // Timer starts on FIRST selection and does NOT reset on subsequent selections
+    LaunchedEffect(hasStartedDelay) {
+        if (hasStartedDelay) {
+            // Step 1: Wait 0.5s from FIRST interaction before switching to ALT ad
+            // NATIVE_ONBOARDING_LANGUAGE (PRIMARY) gets guaranteed 0.5s visibility
+            delay(500)
+            delayedHasSelection = true
+
+            // Step 2: Wait another 0.5s before enabling button
+            // NATIVE_ONBOARDING_LANGUAGE_ALT gets guaranteed 0.5s visibility
+            delay(500)
+            delayedButtonEnabled = true
+        }
+    }
+
+    // Watch for first interaction and reset when deselected
+    LaunchedEffect(selectedLanguage) {
+        if (selectedLanguage != null && !hasStartedDelay) {
+            // First interaction - start the timer (only happens once)
+            hasStartedDelay = true
+            android.util.Log.d("LanguageSelection", "🎬 Started IAB viewability timer")
+        } else if (selectedLanguage == null && hasStartedDelay) {
+            // User deselected - reset everything
+            hasStartedDelay = false
+            delayedHasSelection = false
+            delayedButtonEnabled = false
+            android.util.Log.d("LanguageSelection", "🔄 Reset IAB viewability timer")
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -85,18 +147,24 @@ fun LanguageSelectionScreen(
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
-        // Scrollable content
+        // Scrollable content with dynamic bottom padding
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
-                .padding(top = 16.dp, bottom = if (showBackButton) 120.dp else 16.dp),
+                .padding(
+                    top = 16.dp,
+                    bottom = bottomPaddingDp + 24.dp  // Dynamic padding based on measured bottom section height
+                ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (showBackButton) {
-                Box(
+                // Top bar with back button (left) and done button (right)
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.CenterStart
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -105,6 +173,24 @@ fun LanguageSelectionScreen(
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
+
+                    // Done button in top right
+                    OnboardingCtaButton(
+                        text = stringResource(R.string.done),
+                        onClick = {
+                            onContinue.invoke()
+                            selectedLanguage?.let {
+                                Analytics.track(
+                                    name = "language_next",
+                                    params = mapOf(
+                                        "language" to it
+                                    )
+                                )
+                            }
+                        },
+                        color = Primary,
+                        enabled = selectedLanguage != null && delayedButtonEnabled
+                    )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             } else {
@@ -116,7 +202,7 @@ fun LanguageSelectionScreen(
                 fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onBackground,
-                textAlign = if (showBackButton) TextAlign.Start else TextAlign.Center,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -126,54 +212,64 @@ fun LanguageSelectionScreen(
                 text = stringResource(R.string.language_select_subtitle),
                 fontSize = 17.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = if (showBackButton) TextAlign.Start else TextAlign.Center,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
 
+            Spacer(modifier = Modifier.height(36.dp))
+
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-
-                Spacer(modifier = Modifier.height(36.dp))
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    languages.forEach { language ->
-                        LanguageCard(
-                            language = language,
-                            isSelected = selectedLanguage == language.code,
-                            onClick = {
-                                selectedLanguage = language.code
-                                onLanguageSelected(language.code)
-                            }
-                        )
-                    }
-
+                languages.forEach { language ->
+                    LanguageCard(
+                        language = language,
+                        isSelected = selectedLanguage == language.code,
+                        onClick = {
+                            selectedLanguage = language.code
+                            onLanguageSelected(language.code)
+                            Analytics.track(
+                                name = "language_select",
+                                params = mapOf(
+                                    "language" to language.code
+                                )
+                            )
+                        }
+                    )
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // Fixed CTA at bottom
-        if (showBackButton){
-            Box(
+        // Bottom section: Native ad only (button moved to top right for showBackButton=true)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .onSizeChanged { size ->
+                    bottomSectionHeight = size.height  // Measure actual height dynamically!
+                }
+        ) {
+            // ALT ad - bottom layer, always at full opacity
+            NativeAdView(
+                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // PRIMARY ad - top layer, fades out when user selects
+            NativeAdView(
+                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 48.dp)
-            ) {
-                OnboardingCtaMaxWidthButton(
-                    text = stringResource(R.string.language_continue),
-                    onClick = onContinue,
-                    enabled = selectedLanguage != null
-                )
-            }
-        } else {
+                    .alpha(if (delayedHasSelection) 0f else 1f)
+            )
+        }
+
+        // Top-right button for settings flow (outside bottom section)
+        if (!showBackButton) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -183,8 +279,18 @@ fun LanguageSelectionScreen(
                     text = stringResource(R.string.onboarding_next),
                     icon = R.drawable.ic_right_arrow,
                     color = Primary,
-                    onClick = onContinue,
-                    enabled = selectedLanguage != null
+                    onClick = {
+                        onContinue.invoke()
+                        selectedLanguage?.let {
+                            Analytics.track(
+                                name = "language_next",
+                                params = mapOf(
+                                    "language" to it
+                                )
+                            )
+                        }
+                    },
+                    enabled = selectedLanguage != null && delayedButtonEnabled
                 )
             }
         }

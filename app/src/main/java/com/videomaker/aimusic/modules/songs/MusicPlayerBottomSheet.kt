@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,6 +26,13 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Slideshow
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.RewardedAdPresenter
+import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.modules.export.WatchAdDialog
+import com.videomaker.aimusic.ui.components.AdBadge
+import com.videomaker.aimusic.ui.components.AdBadgeStyle
+import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -66,6 +75,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.di.MusicPlayerViewModelFactory
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.ui.components.AppAsyncImage
@@ -83,6 +94,31 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.theme.White16
 import kotlinx.coroutines.delay
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+// ============================================
+// HELPER - Release player async to avoid ANR
+// ============================================
+
+/**
+ * Release ExoPlayer asynchronously on background thread to avoid ANR.
+ * ExoPlayer.release() can block for several seconds when releasing audio resources.
+ */
+private fun ExoPlayer.releaseAsync() {
+    val playerToRelease = this
+    ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+        runCatching {
+            android.util.Log.d("MusicPlayerBottomSheet", "Releasing player on background thread...")
+            playerToRelease.release()
+            android.util.Log.d("MusicPlayerBottomSheet", "Player released successfully")
+        }.onFailure { e ->
+            android.util.Log.e("MusicPlayerBottomSheet", "Failed to release player", e)
+        }
+    }
+}
 
 // ============================================
 // MUSIC PLAYER BOTTOM SHEET
@@ -94,6 +130,7 @@ import kotlinx.coroutines.delay
 fun MusicPlayerBottomSheet(
     song: MusicSong,
     cacheDataSourceFactory: CacheDataSource.Factory,
+    location: String = AnalyticsEvent.Value.Location.SONG_PREVIEW,
     onDismiss: () -> Unit,
     onUseToCreate: () -> Unit,
 ) {
@@ -102,7 +139,7 @@ fun MusicPlayerBottomSheet(
         key = "player_${song.id}",
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val viewModel = playerFactory.create(song.id)
+                val viewModel = playerFactory.create(song.id, song)
                 if (modelClass.isAssignableFrom(viewModel::class.java)) {
                     @Suppress("UNCHECKED_CAST")
                     return viewModel as T
@@ -115,12 +152,19 @@ fun MusicPlayerBottomSheet(
         }
     )
     val isLiked by viewModel.isLiked.collectAsStateWithLifecycle()
+    val isSongUnlocked by viewModel.isSongUnlocked.collectAsStateWithLifecycle()
+    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
+    val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
+    val adsLoaderService = koinInject<AdsLoaderService>()
     var isPlaying  by remember { mutableStateOf(false) }
     var isPrepared by remember { mutableStateOf(false) }
     var currentMs  by remember { mutableIntStateOf(0) }
     var durationMs by remember { mutableIntStateOf((song.durationMs ?: 0).coerceAtLeast(1)) }
     var isSeeking  by remember { mutableStateOf(false) }
     var seekValue  by remember { mutableFloatStateOf(0f) }
+    var hasTrackedAutoPreview by remember(song.id) { mutableStateOf(false) }
+    var hasTrackedImpression by remember(song.id) { mutableStateOf(false) }
+    val playerSessionId = remember(song.id) { Analytics.newScreenSessionId() }
 
     val context = LocalContext.current
     // Player is created once per sheet open and released on close.
@@ -154,6 +198,23 @@ fun MusicPlayerBottomSheet(
                         player.play()
                         isPlaying = true
                         isPrepared = true
+                        if (!hasTrackedAutoPreview) {
+                            Analytics.trackSongPreview(
+                                songId = song.id.toString(),
+                                songName = song.name,
+                                location = location
+                            )
+                            hasTrackedAutoPreview = true
+                        }
+                        if (!hasTrackedImpression) {
+                            Analytics.trackSongImpression(
+                                songId = song.id.toString(),
+                                songName = song.name,
+                                location = location,
+                                screenSessionId = playerSessionId
+                            )
+                            hasTrackedImpression = true
+                        }
                     }
                     Player.STATE_ENDED -> {
                         isPlaying = false
@@ -177,7 +238,8 @@ fun MusicPlayerBottomSheet(
         }
         onDispose {
             player.removeListener(listener)
-            player.release()
+            player.stop()  // ✅ Stop immediately (synchronous)
+            player.releaseAsync()  // ✅ Release async to avoid ANR
         }
     }
 
@@ -193,10 +255,19 @@ fun MusicPlayerBottomSheet(
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    // Pause music when ad is about to show
+    LaunchedEffect(shouldPresentAd) {
+        if (shouldPresentAd && player.isPlaying) {
+            player.pause()
+            isPlaying = false
+            android.util.Log.d("MusicPlayerBottomSheet", "Paused music for ad presentation")
+        }
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = SurfaceDark,
+        containerColor = Color.Transparent,  // Transparent sheet background
         scrimColor = Black60,
         dragHandle = {
             Box(
@@ -206,14 +277,25 @@ fun MusicPlayerBottomSheet(
                     .clip(RoundedCornerShape(2.dp))
                     .background(Gray600)
             )
-        }
+        },
+        modifier = Modifier.fillMaxHeight()  // Fullscreen sheet
     ) {
-        Column(
+        // Box fills entire screen with dim background
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 40.dp)
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.3f))  // Dim transparent background
         ) {
+            // Player content at bottom with solid background and rounded top corners
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                    .background(SurfaceDark)  // Solid background for player area
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 40.dp)
+            ) {
             // ── Title row ─────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -297,7 +379,22 @@ fun MusicPlayerBottomSheet(
                             contentDescription = null,
                             modifier = Modifier
                                 .size(24.dp)
-                                .clickableSingle{ viewModel.toggleLike(song) }
+                                .clickableSingle{
+                                    if (isLiked) {
+                                        Analytics.trackSongUnfavorite(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = location
+                                        )
+                                    } else {
+                                        Analytics.trackSongFavorite(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = location
+                                        )
+                                    }
+                                    viewModel.toggleLike(song)
+                                }
                         )
                     }
 
@@ -334,13 +431,32 @@ fun MusicPlayerBottomSheet(
                             IconButton(
                                 onClick = {
                                     when {
-                                        player.isPlaying -> player.pause()
+                                        player.isPlaying -> {
+                                            player.pause()
+                                            Analytics.trackSongPause(
+                                                songId = song.id.toString(),
+                                                songName = song.name,
+                                                location = location
+                                            )
+                                        }
                                         player.playbackState == Player.STATE_ENDED -> {
                                             player.seekTo(0)
                                             currentMs = 0
                                             player.play()
+                                            Analytics.trackSongPlay(
+                                                songId = song.id.toString(),
+                                                songName = song.name,
+                                                location = location
+                                            )
                                         }
-                                        else -> player.play()
+                                        else -> {
+                                            player.play()
+                                            Analytics.trackSongPlay(
+                                                songId = song.id.toString(),
+                                                songName = song.name,
+                                                location = location
+                                            )
+                                        }
                                     }
                                 },
                                 modifier = Modifier
@@ -432,18 +548,36 @@ fun MusicPlayerBottomSheet(
                     .height(56.dp)
                     .clip(RoundedCornerShape(50))
                     .background(Primary)
-                    .clickableSingle(onClick = onUseToCreate)
+                    .clickableSingle(onClick = {
+                        Analytics.trackSongSelect(
+                            songId = song.id.toString(),
+                            songName = song.name,
+                            location = location
+                        )
+                        Analytics.trackCreationStart(AnalyticsEvent.Value.Location.SONG)
+                        viewModel.onUseToCreateClick(onProceed = onUseToCreate)
+                    })
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Slideshow,
-                        contentDescription = null,
-                        tint = TextOnPrimary,
-                        modifier = Modifier.size(22.dp)
-                    )
+                    if (!isSongUnlocked) {
+                        // Show ad badge instead of slideshow icon
+                        AdBadge(
+                            style = AdBadgeStyle.Small(
+                                textColor = Primary,
+                                backgroundColor = TextOnPrimary
+                            )
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Slideshow,
+                            contentDescription = null,
+                            tint = TextOnPrimary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = stringResource(R.string.music_player_use_to_create),
@@ -453,8 +587,31 @@ fun MusicPlayerBottomSheet(
                     )
                 }
             }
-        }
+            }  // End Column
+
+            // Standard ad loading overlay - covers entire fullscreen sheet
+            AdsLoadingOverlay()
+        }  // End Box
+    }  // End ModalBottomSheet
+
+    // Watch ad dialog for song unlock
+    if (showWatchAdDialog) {
+        WatchAdDialog(
+            title = stringResource(R.string.song_watch_ad_title),
+            subtitle = stringResource(R.string.song_watch_ad_subtitle),
+            onDismiss = viewModel::onWatchAdDialogDismiss,
+            onWatchAd = viewModel::onWatchAdConfirmed
+        )
     }
+
+    // Handle rewarded ad presentation
+    RewardedAdPresenter(
+        shouldPresent = shouldPresentAd,
+        placement = AdPlacement.REWARD_UNLOCK_SONG,
+        adsLoaderService = adsLoaderService,
+        onRewardEarned = viewModel::onRewardEarned,
+        onAdFailed = viewModel::onAdFailed
+    )
 }
 
 // ============================================

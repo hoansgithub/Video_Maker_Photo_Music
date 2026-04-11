@@ -15,6 +15,11 @@ import com.videomaker.aimusic.domain.usecase.LikeTemplateUseCase
 import com.videomaker.aimusic.domain.usecase.ObserveLikedTemplatesUseCase
 import com.videomaker.aimusic.domain.usecase.UnlikeTemplateUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.ads.RewardedAdController
+import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.storage.UnlockedTemplatesManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -61,7 +66,18 @@ sealed class SongLoadState {
 // ============================================
 
 sealed class TemplatePreviewerNavigationEvent {
+    /**
+     * Legacy back navigation (no ad check)
+     * Use RequestBackWithAd instead for ad support
+     */
     data object NavigateBack : TemplatePreviewerNavigationEvent()
+
+    /**
+     * Request back navigation with optional ad
+     * @param shouldShowAd true if ad is ready and should be shown
+     */
+    data class RequestBackWithAd(val shouldShowAd: Boolean) : TemplatePreviewerNavigationEvent()
+
     data class NavigateToAssetPicker(
         val template: VideoTemplate,
         val overrideSongId: Long,
@@ -85,7 +101,9 @@ class TemplatePreviewerViewModel(
     private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase,
     private val likeTemplateUseCase: LikeTemplateUseCase,
     private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
-    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase
+    private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
+    private val adsLoaderService: AdsLoaderService,
+    private val unlockedTemplatesManager: UnlockedTemplatesManager
 ) : ViewModel() {
 
     private val imageUris: List<Uri> = imageUrisStr.mapNotNull { uriStr ->
@@ -115,6 +133,32 @@ class TemplatePreviewerViewModel(
             initialValue = emptySet()
         )
 
+    // Unlocked template IDs — observed from UnlockedTemplatesManager
+    val unlockedTemplateIds: StateFlow<Set<String>> = unlockedTemplatesManager.unlockedTemplateIds
+
+    // Rewarded ad controller for template unlock
+    private val rewardedAdController = RewardedAdController(
+        placement = AdPlacement.REWARD_UNLOCK_TEMPLATE,
+        adsLoaderService = adsLoaderService,
+        viewModelScope = viewModelScope
+    )
+
+    // Expose rewarded ad states
+    val showWatchAdDialog: StateFlow<Boolean> = rewardedAdController.showWatchAdDialog
+    val shouldPresentAd: StateFlow<Boolean> = rewardedAdController.shouldPresentAd
+
+    // Pending template to unlock (set when dialog shows)
+    private val _pendingUnlockTemplate = MutableStateFlow<VideoTemplate?>(null)
+    val pendingUnlockTemplate: StateFlow<VideoTemplate?> = _pendingUnlockTemplate.asStateFlow()
+
+    // Pending selected ratio (set when user selects ratio for locked template)
+    private val _pendingSelectedRatio = MutableStateFlow<AspectRatio?>(null)
+    val pendingSelectedRatio: StateFlow<AspectRatio?> = _pendingSelectedRatio.asStateFlow()
+
+    // Error message for snackbar
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     // Pagination tracking
     private var currentOffset = 0
     private var isLoadingMore = false
@@ -129,6 +173,29 @@ class TemplatePreviewerViewModel(
 
     init {
         loadInitialTemplates()
+
+        // Preload back button interstitial ad
+        // Ad loads in background with no timeout - may be used later if back is pressed
+        // Non-blocking: back button works normally if ad not ready yet
+        viewModelScope.launch {
+            android.util.Log.d("TemplatePreviewerVM", "🎬 Preloading back button ad...")
+            runCatching {
+                InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
+                    loadTimeoutMillis = null,  // No timeout - load as long as needed
+                    showLoadingOverlay = false  // Background preload, no overlay
+                )
+            }.onSuccess { success ->
+                if (success) {
+                    android.util.Log.d("TemplatePreviewerVM", "✅ Back button ad preload SUCCESS")
+                } else {
+                    android.util.Log.w("TemplatePreviewerVM", "⚠️ Back button ad preload FAILED")
+                }
+            }.onFailure { e ->
+                android.util.Log.e("TemplatePreviewerVM", "❌ Back button ad preload exception: ${e.message}", e)
+            }
+        }
     }
 
     // ============================================
@@ -159,7 +226,14 @@ class TemplatePreviewerViewModel(
     }
 
     fun onNavigateBack() {
-        _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateBack
+        // Check if back button ad is ready (non-blocking)
+        val isAdReady = adsLoaderService.isInterstitialReady(AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_BACK)
+
+        android.util.Log.d("TemplatePreviewerVM", "🔙 onNavigateBack - Ad ready: $isAdReady")
+
+        // Send navigation event with ad status
+        // Screen will show ad if ready, otherwise navigate immediately
+        _navigationEvent.value = TemplatePreviewerNavigationEvent.RequestBackWithAd(isAdReady)
     }
 
     /** Called by UI after navigation is handled — clears the event */
@@ -175,6 +249,64 @@ class TemplatePreviewerViewModel(
                 likeTemplateUseCase(template)
             }
         }
+    }
+
+    /**
+     * Called when user selects a ratio for a locked template
+     * - If ad is enabled: show WatchAdDialog
+     * - If ad is disabled: unlock directly and navigate
+     */
+    fun onRatioSelected(template: VideoTemplate, selectedRatio: AspectRatio) {
+        // Store template and ratio for later use
+        _pendingUnlockTemplate.value = template
+        _pendingSelectedRatio.value = selectedRatio
+
+        // Request ad (with auto-unlock if disabled)
+        rewardedAdController.requestAd(
+            onReward = {
+                // Unlock template and navigate
+                viewModelScope.launch {
+                    unlockedTemplatesManager.unlockTemplate(template.id)
+                    android.util.Log.d("TemplatePreviewerVM", "✅ Template unlocked: ${template.id}")
+
+                    _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
+                        template = template,
+                        overrideSongId = overrideSongId,
+                        aspectRatio = selectedRatio
+                    )
+
+                    // Clear pending state
+                    _pendingUnlockTemplate.value = null
+                    _pendingSelectedRatio.value = null
+                }
+            },
+            checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_TEMPLATE) }
+        )
+    }
+
+    /** User dismissed watch ad dialog without watching */
+    fun onWatchAdDialogDismiss() {
+        rewardedAdController.onDialogDismiss()
+        _pendingUnlockTemplate.value = null
+        _pendingSelectedRatio.value = null
+    }
+
+    /** User confirmed they want to watch ad - triggers ad presentation */
+    fun onWatchAdConfirmed() {
+        rewardedAdController.onDialogConfirm()
+    }
+
+    /** Rewarded ad completed successfully - unlock template and navigate */
+    fun onRewardEarned() {
+        rewardedAdController.onRewardEarned()
+    }
+
+    /** Rewarded ad failed or user canceled */
+    fun onAdFailed() {
+        rewardedAdController.onAdFailed()
+        _pendingUnlockTemplate.value = null
+        _pendingSelectedRatio.value = null
+        _errorMessage.value = "AD_NOT_AVAILABLE"
     }
 
     // ============================================

@@ -100,12 +100,22 @@ fun MusicWaveformView(
                         val startHandleX = (localTrimStart / songDurationMs) * width
                         val endHandleX = (localTrimEnd / songDurationMs) * width
 
+                        // Calculate distances to both handles
+                        val distanceToStart = abs(tapX - startHandleX)
+                        val distanceToEnd = abs(tapX - endHandleX)
+
                         // Larger touch target for easier dragging
                         val touchTarget = 80.dp.toPx()
 
+                        // Select the closest handle within touch target
+                        // This ensures correct handle selection when handles are close together
                         draggingHandle = when {
-                            abs(tapX - startHandleX) < touchTarget -> DragHandle.START
-                            abs(tapX - endHandleX) < touchTarget -> DragHandle.END
+                            distanceToStart < touchTarget && distanceToEnd < touchTarget -> {
+                                // Both handles are within touch target - select the closest one
+                                if (distanceToStart <= distanceToEnd) DragHandle.START else DragHandle.END
+                            }
+                            distanceToStart < touchTarget -> DragHandle.START
+                            distanceToEnd < touchTarget -> DragHandle.END
                             else -> null
                         }
 
@@ -231,6 +241,7 @@ fun MusicWaveformView(
                 maxWidth = width,
                 baselineY = labelBaselinePx,
                 horizontalPadding = labelHorizontalPaddingPx,
+                side = LabelSide.LEFT_OF_HANDLE,
                 paint = labelPaint
             )
             drawHandleLabel(
@@ -239,6 +250,7 @@ fun MusicWaveformView(
                 maxWidth = width,
                 baselineY = labelBaselinePx,
                 horizontalPadding = labelHorizontalPaddingPx,
+                side = LabelSide.RIGHT_OF_HANDLE,
                 paint = labelPaint
             )
 
@@ -269,12 +281,22 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHandleLabel(
     maxWidth: Float,
     baselineY: Float,
     horizontalPadding: Float,
+    side: LabelSide,
     paint: FrameworkPaint
 ) {
     val textWidth = paint.measureText(text)
     val maxX = (maxWidth - textWidth - horizontalPadding).coerceAtLeast(horizontalPadding)
-    val textX = (anchorX - textWidth / 2f).coerceIn(horizontalPadding, maxX)
+    val rawTextX = when (side) {
+        LabelSide.LEFT_OF_HANDLE -> anchorX - textWidth - horizontalPadding
+        LabelSide.RIGHT_OF_HANDLE -> anchorX + horizontalPadding
+    }
+    val textX = rawTextX.coerceIn(horizontalPadding, maxX)
     drawContext.canvas.nativeCanvas.drawText(text, textX, baselineY, paint)
+}
+
+private enum class LabelSide {
+    LEFT_OF_HANDLE,
+    RIGHT_OF_HANDLE
 }
 
 /**

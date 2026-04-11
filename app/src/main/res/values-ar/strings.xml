@@ -4,6 +4,7 @@
 
     <!-- Loading -->
     <string name="loading">جاري التحميل…</string>
+    <string name="ad_loading">تحميل الإعلان…</string>
 
     <!-- Language Selection -->
     <string name="language_select_title">اختر اللغات</string>
@@ -34,6 +35,11 @@
     <string name="root_no_internet_title">لا يوجد اتصال بالإنترنت</string>
     <string name="root_no_internet_message">جهازك غير متصل حالياً. يُرجى إعادة الاتصال للمتابعة.</string>
     <string name="root_try_again">حاول مرة أخرى</string>
+    <string name="root_loading_initializing">جاري التهيئة...</string>
+    <string name="root_loading_fetching_config">جاري تحميل الإعدادات...</string>
+    <string name="root_loading_ad">قد يحتوي هذا على إعلانات</string>
+    <string name="root_loading_checking_status">جاري التحقق من الحالة...</string>
+    <string name="root_loading_preparing">جاري التحضير...</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">معرض</string>
@@ -221,6 +227,14 @@
     <string name="export_error_share_failed">فشلت مشاركة الفيديو</string>
     <string name="export_try_another_templates">جرب قوالب أخرى</string>
     <string name="export_templates_load_failed">فشل تحميل القوالب</string>
+    <string name="export_watch_ad_title">شاهد إعلان للتنزيل؟</string>
+    <string name="export_watch_ad_subtitle">ساعدنا في الحفاظ على هذا التطبيق مجانيًا بمشاهدة إعلان قصير. سيتم تنزيل الفيديو الخاص بك مباشرة بعد ذلك!</string>
+    <string name="export_watch_ad_button">شاهد الإعلان</string>
+    <string name="export_watch_ad_close">إغلاق</string>
+    <string name="export_watermark_remove_title">إزالة العلامة المائية؟</string>
+    <string name="export_watermark_remove_subtitle">شاهد إعلانًا قصيرًا لإزالة العلامة المائية من معاينة الفيديو.</string>
+    <string name="export_watermark_remove_button">شاهد الإعلان</string>
+    <string name="export_watermark_remove_close">إغلاق</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">اختر الصور</string>
@@ -340,6 +354,7 @@
     <!-- Error states -->
     <string name="error_load_failed">فشل التحميل. اسحب للأسفل للمحاولة مجدداً.</string>
     <string name="error_network_title">خطأ في الشبكة</string>
+    <string name="loading_building_feed">جارٍ بناء موجزك</string>
     <string name="error_network_message">فشل تحميل الموسيقى. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
     <string name="error_network_timeout">انتهت مهلة الشبكة. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
     <string name="error_preview_title">خطأ في المعاينة</string>
@@ -460,5 +475,28 @@
     <string name="rating_feedback_reason_performance">التطبيق بطيء أو يتعطل كثيرًا</string>
     <string name="rating_feedback_reason_templates">لا توجد قوالب كافية / تحديثات المحتوى قليلة</string>
     <string name="rating_feedback_reason_other">أخرى</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">إعلان</string>
+    <string name="ad_icon">رمز الإعلان</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">شاهد إعلانًا لفتح هذا التأثير؟</string>
+    <string name="effect_set_watch_ad_subtitle">افتح مجموعة التأثيرات هذه بشكل دائم من خلال مشاهدة إعلان قصير</string>
+    <string name="effect_set_ad_not_available">لا يتوفر إعلان حاليًا. يرجى المحاولة مرة أخرى لاحقًا.</string>
+    <string name="effect_set_locked">مجموعة تأثيرات مقفلة</string>
+    <string name="ad_not_available">لا يتوفر إعلان حاليًا. يرجى المحاولة مرة أخرى لاحقًا.</string>
+
+    <!-- Quality Export Rewarded Ad -->
+    <string name="quality_watch_ad_title">شاهد إعلانًا للتصدير بجودة عالية؟</string>
+    <string name="quality_watch_ad_subtitle">افتح تصدير 720p/1080p لهذه الجلسة من خلال مشاهدة إعلان قصير</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">شاهد إعلانًا لفتح هذا القالب؟</string>
+    <string name="template_watch_ad_subtitle">افتح هذا القالب بشكل دائم من خلال مشاهدة إعلان قصير</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">شاهد إعلانًا لفتح هذه الأغنية؟</string>
+    <string name="song_watch_ad_subtitle">بعد المشاهدة، ستتمكن من استخدام هذه الأغنية لإنشاء مقاطع الفيديو. الفتح دائم.</string>
 
 </resources>

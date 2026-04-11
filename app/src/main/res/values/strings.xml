@@ -1,8 +1,13 @@
 <resources>
     <string name="app_name">Video Maker</string>
 
+    <!-- Facebook SDK (Analytics only) -->
+    <string name="facebook_app_id">2394935491027358</string>
+    <string name="facebook_client_token">59adbbae92079f20f43d002f331d8e9d</string>
+
     <!-- Loading -->
     <string name="loading">Loading…</string>
+    <string name="ad_loading">Loading ad…</string>
 
     <!-- Language Selection -->
     <string name="language_select_title">Choose Languages</string>
@@ -33,6 +38,11 @@
     <string name="root_no_internet_title">No Internet Connection</string>
     <string name="root_no_internet_message">Your device is currently offline. Please reconnect to continue your progress</string>
     <string name="root_try_again">Try Again</string>
+    <string name="root_loading_initializing">Initializing...</string>
+    <string name="root_loading_fetching_config">Loading configuration...</string>
+    <string name="root_loading_ad">This may contain ads</string>
+    <string name="root_loading_checking_status">Checking status...</string>
+    <string name="root_loading_preparing">Preparing...</string>
 
     <!-- Home Tabs -->
     <string name="home_tab_gallery">Gallery</string>
@@ -222,6 +232,14 @@
     <string name="export_error_share_failed">Failed to share video</string>
     <string name="export_try_another_templates">Try Another Templates</string>
     <string name="export_templates_load_failed">Failed to load templates</string>
+    <string name="export_watch_ad_title">Watch an ad to download?</string>
+    <string name="export_watch_ad_subtitle">Help us keep this app free by watching a short ad. Your video will download right after!</string>
+    <string name="export_watch_ad_button">Watch Ad</string>
+    <string name="export_watch_ad_close">Close</string>
+    <string name="export_watermark_remove_title">Remove watermark?</string>
+    <string name="export_watermark_remove_subtitle">Watch a short ad to remove the watermark from your video preview.</string>
+    <string name="export_watermark_remove_button">Watch Ad</string>
+    <string name="export_watermark_remove_close">Close</string>
 
     <!-- Asset Picker -->
     <string name="picker_title">Select your image</string>
@@ -341,6 +359,7 @@
     <!-- Error states -->
     <string name="error_load_failed">Failed to load. Pull down to retry.</string>
     <string name="error_network_title">Network Error</string>
+    <string name="loading_building_feed">Building Your Feed</string>
     <string name="error_network_message">Failed to load music. Please check your connection and try again.</string>
     <string name="error_network_timeout">Network timeout. Please check your connection and try again.</string>
     <string name="error_preview_title">Preview Error</string>
@@ -461,5 +480,29 @@
     <string name="rating_feedback_reason_performance">App is slow or crashes frequently</string>
     <string name="rating_feedback_reason_templates">Not enough templates / content updates</string>
     <string name="rating_feedback_reason_other">Other</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">Ad</string>
+    <string name="ad_icon">Advertisement icon</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">Watch an ad to unlock this effect?</string>
+    <string name="effect_set_watch_ad_subtitle">Unlock this effect set permanently by watching a short ad</string>
+    <string name="effect_set_ad_not_available">Ad not available right now. Please try again later.</string>
+    <string name="effect_set_locked">Locked effect set</string>
+    <string name="ad_not_available">Ad not available right now. Please try again later.</string>
+
+    <!-- Quality Unlock Rewarded Ad -->
+    <string name="quality_watch_ad_title">Watch an ad to export in high quality?</string>
+    <string name="quality_watch_ad_subtitle">Unlock 720p/1080p export for this session by watching a short ad</string>
+    <string name="quality_ad_not_available">Ad not available right now. Please try again later or select a lower quality.</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">Watch an ad to unlock this template?</string>
+    <string name="template_watch_ad_subtitle">Unlock this template permanently by watching a short ad</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Watch an ad to unlock this song?</string>
+    <string name="song_watch_ad_subtitle">After watching, you\'ll be able to use this song to create videos. Unlock is permanent.</string>
 
 </resources>

@@ -38,6 +38,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -50,6 +51,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,11 +66,21 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.RewardedAdPresenter
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.storage.UnlockedSongsManager
+import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.modules.songsearch.SongSearchUiState
 import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
+import com.videomaker.aimusic.ui.components.AdBadge
+import com.videomaker.aimusic.ui.components.AdBadgeStyle
+import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
 import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
@@ -82,6 +94,31 @@ import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.theme.TextTertiary
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+// ============================================
+// HELPER - Release player async to avoid ANR
+// ============================================
+
+/**
+ * Release ExoPlayer asynchronously on background thread to avoid ANR.
+ * ExoPlayer.release() can sometimes block for several seconds.
+ */
+private fun ExoPlayer.releaseAsync() {
+    val playerToRelease = this
+    ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+        runCatching {
+            android.util.Log.d("MusicSearch", "Releasing player on background thread...")
+            playerToRelease.release()
+            android.util.Log.d("MusicSearch", "Player released successfully")
+        }.onFailure { e ->
+            android.util.Log.e("MusicSearch", "Failed to release player", e)
+        }
+    }
+}
 
 /**
  * Music Search Bottom Sheet (Full Screen)
@@ -92,6 +129,7 @@ import com.videomaker.aimusic.ui.theme.TextTertiary
 @Composable
 internal fun MusicSearchBottomSheet(
     viewModel: SongSearchViewModel,
+    onSongClick: (MusicSong) -> Unit,
     onSongSelected: (MusicSong) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -110,7 +148,67 @@ internal fun MusicSearchBottomSheet(
     val focusRequester = remember { FocusRequester() }
     val dimens = AppDimens.current
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val audioCache: AudioPreviewCache = koinInject()
+    val unlockedSongsManager: UnlockedSongsManager = koinInject()
+    val adsLoaderService: AdsLoaderService = koinInject()
+    val screenSessionId = remember { Analytics.newScreenSessionId() }
+
+    // State for watch ad flow
+    var showWatchAdDialog by remember { mutableStateOf(false) }
+    var shouldPresentAd by remember { mutableStateOf(false) }
+    var pendingSongToUnlock by remember { mutableStateOf<MusicSong?>(null) }
+
+    // Helper function to check if song is locked
+    fun isSongLocked(song: MusicSong): Boolean {
+        return song.isPremium && !unlockedSongsManager.isUnlocked(song.id)
+    }
+
+    // Handle confirm button click
+    fun onConfirmClick() {
+        val selectedId = MusicPreviewManager.getSelectedId() ?: return
+        val song = when (val state = uiState) {
+            is SongSearchUiState.Results -> state.songs.find { it.id == selectedId }
+            else -> suggestedSongs.find { it.id == selectedId }
+        } ?: return
+
+        if (isSongLocked(song)) {
+            // Song is locked - show watch ad dialog
+            pendingSongToUnlock = song
+            showWatchAdDialog = true
+        } else {
+            // Song is unlocked or free - directly select
+            MusicPreviewManager.clearPreviewState()
+            onSongSelected(song)
+        }
+    }
+
+    // Watch ad dialog handlers
+    fun onWatchAdDialogDismiss() {
+        showWatchAdDialog = false
+        pendingSongToUnlock = null
+    }
+
+    fun onWatchAdConfirmed() {
+        showWatchAdDialog = false
+        shouldPresentAd = true
+    }
+
+    fun onRewardEarned() {
+        val song = pendingSongToUnlock ?: return
+        coroutineScope.launch {
+            unlockedSongsManager.unlockSong(song.id)
+            pendingSongToUnlock = null
+            shouldPresentAd = false
+            MusicPreviewManager.clearPreviewState()
+            onSongSelected(song)
+        }
+    }
+
+    fun onAdFailed() {
+        pendingSongToUnlock = null
+        shouldPresentAd = false
+    }
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -133,8 +231,16 @@ internal fun MusicSearchBottomSheet(
     // Cleanup ExoPlayer
     DisposableEffect(Unit) {
         onDispose {
-            exoPlayer.stop()
-            exoPlayer.release()
+            exoPlayer.stop()  // ✅ Already stopping immediately (good!)
+            exoPlayer.releaseAsync() // Release async to avoid ANR
+        }
+    }
+
+    // Pause music preview when ad is about to show
+    LaunchedEffect(shouldPresentAd) {
+        if (shouldPresentAd && exoPlayer.isPlaying) {
+            exoPlayer.pause()
+            android.util.Log.d("MusicSearchBottomSheet", "Paused music preview for ad presentation")
         }
     }
 
@@ -206,7 +312,9 @@ internal fun MusicSearchBottomSheet(
         shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
         modifier = Modifier.fillMaxHeight() // Full screen height, covers all content including tabs
     ) {
-        Column(
+        // Box wrapper to allow overlay to cover entire bottom sheet area
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 20.dp)
@@ -241,32 +349,58 @@ internal fun MusicSearchBottomSheet(
                 // Confirm button (right) - only visible when song is selected
                 if (selectedForConfirmId != null) {
                     Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary)
-                            .clickableSingle {
-                                val selectedId = MusicPreviewManager.getSelectedId()
-                                if (selectedId != null) {
-                                    val song = when (val state = uiState) {
-                                        is SongSearchUiState.Results -> state.songs.find { it.id == selectedId }
-                                        else -> suggestedSongs.find { it.id == selectedId }
-                                    }
-                                    if (song != null) {
-                                        MusicPreviewManager.clearPreviewState()
-                                        onSongSelected(song)
-                                    }
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = stringResource(R.string.confirm),
-                            tint = SplashBackground, // Dark color from theme
-                            modifier = Modifier.size(24.dp)
-                        )
+
+                    // Check if selected song is locked
+                    val selectedSong = remember(selectedForConfirmId, uiState, suggestedSongs) {
+                        val selectedId = selectedForConfirmId
+                        when (val state = uiState) {
+                            is SongSearchUiState.Results -> state.songs.find { it.id == selectedId }
+                            else -> suggestedSongs.find { it.id == selectedId }
+                        }
+                    }
+                    val isLocked = selectedSong?.let { isSongLocked(it) } ?: false
+
+                    if (isLocked) {
+                        // Locked song - show "Done" button with ad badge
+                        Box(
+                            modifier = Modifier
+                                .height(40.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(MaterialTheme.colorScheme.primary)
+                                .clickableSingle { onConfirmClick() }
+                                .padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Done,
+                                    contentDescription = stringResource(R.string.confirm),
+                                    tint = SplashBackground,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                AdBadge(style = AdBadgeStyle.Small(textColor = SplashBackground))
+                            }
+                        }
+                    } else {
+                        // Unlocked song - show checkmark button
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary)
+                                .clickableSingle { onConfirmClick() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = stringResource(R.string.confirm),
+                                tint = SplashBackground,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -383,6 +517,12 @@ internal fun MusicSearchBottomSheet(
                                 isSelected = song.id == selectedForConfirmId,
                                 isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                 onSongClick = {
+                                    onSongClick(song)
+                                    Analytics.trackSongClick(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
+                                    )
                                     focusManager.clearFocus()
                                     keyboardController?.hide()
                                     MusicPreviewManager.togglePreview(song.id)
@@ -492,6 +632,12 @@ internal fun MusicSearchBottomSheet(
                                     isSelected = song.id == selectedForConfirmId,
                                     isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                     onSongClick = {
+                                        onSongClick(song)
+                                        Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                        )
                                         focusManager.clearFocus()
                                         keyboardController?.hide()
                                         MusicPreviewManager.togglePreview(song.id)
@@ -586,6 +732,12 @@ internal fun MusicSearchBottomSheet(
                                     isSelected = song.id == selectedForConfirmId,
                                     isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                     onSongClick = {
+                                        onSongClick(song)
+                                        Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                        )
                                         focusManager.clearFocus()
                                         keyboardController?.hide()
                                         MusicPreviewManager.togglePreview(song.id)
@@ -596,8 +748,31 @@ internal fun MusicSearchBottomSheet(
                     }
                 }
             }
-        }
+            }  // End Column
+
+            // Ads loading overlay - covers entire bottom sheet area (inside same window)
+            AdsLoadingOverlay()
+        }  // End Box
+    }  // End ModalBottomSheet
+
+    // Watch ad dialog for song unlock
+    if (showWatchAdDialog) {
+        WatchAdDialog(
+            title = stringResource(R.string.song_watch_ad_title),
+            subtitle = stringResource(R.string.song_watch_ad_subtitle),
+            onDismiss = ::onWatchAdDialogDismiss,
+            onWatchAd = ::onWatchAdConfirmed
+        )
     }
+
+    // Handle rewarded ad presentation
+    RewardedAdPresenter(
+        shouldPresent = shouldPresentAd,
+        placement = AdPlacement.REWARD_UNLOCK_SONG,
+        adsLoaderService = adsLoaderService,
+        onRewardEarned = ::onRewardEarned,
+        onAdFailed = ::onAdFailed
+    )
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()

@@ -4,6 +4,9 @@ import android.content.Context
 import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.RewardedAdController
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.media.export.MediaStoreHelper
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.Project
@@ -83,7 +86,8 @@ class ProjectsViewModel(
     private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
     private val likeSongUseCase: LikeSongUseCase,
     private val unlikeSongUseCase: UnlikeSongUseCase,
-    private val unlikeTemplateUseCase: UnlikeTemplateUseCase
+    private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProjectsUiState>(ProjectsUiState.Loading)
@@ -103,6 +107,21 @@ class ProjectsViewModel(
 
     private val _toastState = MutableStateFlow<ProcessToastState?>(null)
     val toastState: StateFlow<ProcessToastState?> = _toastState.asStateFlow()
+
+    // Rewarded ad controller for video download
+    private val rewardedAdController = RewardedAdController(
+        placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+        adsLoaderService = adsLoaderService,
+        viewModelScope = viewModelScope
+    )
+
+    // Expose rewarded ad states
+    val showWatchAdDialog: StateFlow<Boolean> = rewardedAdController.showWatchAdDialog
+    val shouldPresentAd: StateFlow<Boolean> = rewardedAdController.shouldPresentAd
+
+    // Pending download project (stored for callback after ad)
+    private val _pendingDownloadProject = MutableStateFlow<Project?>(null)
+    val pendingDownloadProject: StateFlow<Project?> = _pendingDownloadProject.asStateFlow()
 
     val templateStateLocal: StateFlow<List<VideoTemplate>> = observeLikedTemplatesUseCase()
         .catch { e -> emit(emptyList()) }
@@ -253,15 +272,82 @@ class ProjectsViewModel(
     }
 
     /**
-     * Download project video to gallery
+     * Download project video to gallery (shows rewarded ad first)
+     * Stores context for later use after ad is watched
      */
+    private var downloadContext: Context? = null
+
     fun onDownloadProject(project: Project, context: Context) {
+        // Store context for later use
+        downloadContext = context
+
+        // Store pending project
+        _pendingDownloadProject.value = project
+
+        // Request ad via controller
+        rewardedAdController.requestAd(
+            onReward = {
+                // Download after ad is watched
+                _pendingDownloadProject.value?.let { pendingProject ->
+                    performDownload(pendingProject, context)
+                }
+                _pendingDownloadProject.value = null
+                downloadContext = null
+            },
+            onSkip = {
+                // Ad disabled or not available - proceed with download
+                android.util.Log.d("ProjectsViewModel", "⏭️ Ad disabled/unavailable - proceeding with download")
+                performDownload(project, context)
+                _pendingDownloadProject.value = null
+                downloadContext = null
+            },
+            checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_DOWNLOAD_VIDEO) }
+        )
+    }
+
+    /**
+     * User dismissed watch ad dialog (clicked "Close")
+     */
+    fun onWatchAdDialogDismiss() {
+        rewardedAdController.onDialogDismiss()
+        _pendingDownloadProject.value = null
+        downloadContext = null
+    }
+
+    /**
+     * User confirmed watching ad (clicked "Watch Ad")
+     */
+    fun onWatchAdConfirmed() {
+        rewardedAdController.onDialogConfirm()
+    }
+
+    /**
+     * Called by UI after user earns reward from watching ad
+     */
+    fun onRewardEarned() {
+        rewardedAdController.onRewardEarned()
+    }
+
+    /**
+     * Called by UI when ad fails to load or user closes ad without watching
+     */
+    fun onAdFailed() {
+        rewardedAdController.onAdFailed()
+        _pendingDownloadProject.value = null
+        downloadContext = null
+    }
+
+    /**
+     * Perform actual download (called after ad is watched successfully)
+     */
+    fun performDownload(project: Project, context: Context) {
         viewModelScope.launch {
             _toastState.value = ProcessToastState.Loading("Downloading...")
 
             val videoFile = findProjectVideoFile(context, project.id)
             if (videoFile == null) {
                 _toastState.value = ProcessToastState.Error("Video file not found")
+                _pendingDownloadProject.value = null
                 return@launch
             }
 
@@ -281,6 +367,8 @@ class ProjectsViewModel(
                     ProcessToastState.Error(result.message)
                 }
             }
+
+            _pendingDownloadProject.value = null
         }
     }
 

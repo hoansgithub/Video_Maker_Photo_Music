@@ -36,11 +36,14 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.os.LocaleListCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.language.LanguageSelectionActivity
 import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
 import com.videomaker.aimusic.modules.root.LoadingScreen
+import com.videomaker.aimusic.modules.root.LoadingStep
 import com.videomaker.aimusic.modules.root.RootNavigationEvent
 import com.videomaker.aimusic.modules.root.RootViewModel
 import com.videomaker.aimusic.navigation.AppRoute
@@ -89,13 +92,15 @@ class RootViewActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
+        Analytics.track(name = "splash_show")
 
-        // 3. Initialize app (ads, remote config, status checks)
-        rootViewModel.initializeApp()
+        // 3. Initialize app (UMP consent, ads, remote config, status checks)
+        // CRITICAL: Pass Activity for UMP consent form
+        rootViewModel.initializeApp(this)
 
         setContent {
             val isLoading by rootViewModel.isLoading.collectAsStateWithLifecycle()
-            val loadingMessage by rootViewModel.loadingMessage.collectAsStateWithLifecycle()
+            val loadingStep by rootViewModel.loadingStep.collectAsStateWithLifecycle()
             val navigationEvent by rootViewModel.navigationEvent.collectAsStateWithLifecycle()
             val showNoInternetDialog by rootViewModel.showNoInternetDialog.collectAsStateWithLifecycle()
 
@@ -118,7 +123,7 @@ class RootViewActivity : AppCompatActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     LoadingScreen(
                         isLoading = isLoading,
-                        message = loadingMessage
+                        loadingStep = loadingStep
                     )
 
                     if (showNoInternetDialog) {
@@ -216,7 +221,7 @@ class RootViewActivity : AppCompatActivity() {
     private fun applyDefaultTransition() {
         if (Build.VERSION.SDK_INT >= 34) {  // Android 14+
             overrideActivityTransition(
-                Activity.OVERRIDE_TRANSITION_OPEN,
+                OVERRIDE_TRANSITION_OPEN,
                 android.R.anim.fade_in,
                 android.R.anim.fade_out
             )

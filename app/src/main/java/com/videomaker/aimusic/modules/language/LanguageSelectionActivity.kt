@@ -11,6 +11,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import com.videomaker.aimusic.VideoMakerApplication
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
@@ -47,6 +49,13 @@ class LanguageSelectionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Preload onboarding page ads (1-step-ahead strategy)
+        // PAGE1 and PAGE2 are preloaded here at language selection
+        // PAGE3 will be preloaded in OnboardingActivity
+        android.util.Log.d("LanguageSelection", "🔄 Preloading onboarding page ads (1-step-ahead)")
+        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
+        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
 
         setContent {
             VideoMakerTheme {
