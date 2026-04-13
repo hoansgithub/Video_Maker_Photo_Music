@@ -190,7 +190,8 @@ fun UninstallScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 18.dp)
+                .padding(horizontal = 18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = stringResource(R.string.uninstall_description),
@@ -204,7 +205,6 @@ fun UninstallScreen(
 
             Column(
                 modifier = Modifier
-                    .weight(1f)
                     .fillMaxWidth()
                     .background(Color.White.copy(0.08f), RoundedCornerShape(12.dp))
                     .padding(vertical = 8.dp, horizontal = 12.dp),
@@ -390,10 +390,10 @@ fun UninstallScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Native Ad at bottom (auto height - TOP PRIORITY)
-            NativeAdView(
-                placement = AdPlacement.NATIVE_UNINSTALL_BOTTOM,
-                modifier = Modifier.fillMaxWidth()
-            )
+//            NativeAdView(
+//                placement = AdPlacement.NATIVE_UNINSTALL_BOTTOM,
+//                modifier = Modifier.fillMaxWidth()
+//            )
         }
     }
 }

@@ -459,11 +459,11 @@
     <string name="volume_title">Volume</string>
 
     <!-- Rating Popup -->
-    <string name="rating_satisfaction_title">Terima kasih atas waktu Anda bersama Video Maker</string>
+    <string name="rating_satisfaction_title">Kami berterima kasih atas waktu Anda di Video Generating</string>
     <string name="rating_satisfaction_subtitle">Apakah Anda puas dengan aplikasi kami?</string>
     <string name="rating_not_really">Tidak begitu</string>
     <string name="rating_good">Bagus</string>
-    <string name="rating_experience_title">Nilai pengalaman Anda bersama kami</string>
+    <string name="rating_experience_title">Nilai pengalaman\nAnda bersama kami</string>
     <string name="rating_submit">Kirim</string>
     <string name="rating_feedback_title">Maaf mendengar hal itu 🥲</string>
     <string name="rating_feedback_subtitle">Kami akan bekerja lebih keras untuk meningkatkan pengalaman Anda</string>
