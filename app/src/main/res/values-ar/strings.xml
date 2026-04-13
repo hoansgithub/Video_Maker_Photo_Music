@@ -459,7 +459,7 @@
     <string name="volume_title">مستوى الصوت</string>
 
     <!-- Rating Popup -->
-    <string name="rating_satisfaction_title">شكرًا لوقتك مع Video Maker</string>
+    <string name="rating_satisfaction_title">نحن ممتنون لوقتك على Video Generating</string>
     <string name="rating_satisfaction_subtitle">هل أنت راضٍ عن تطبيقنا؟</string>
     <string name="rating_not_really">ليس كثيرًا</string>
     <string name="rating_good">جيد</string>

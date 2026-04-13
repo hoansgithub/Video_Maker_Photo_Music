@@ -459,7 +459,7 @@
     <string name="volume_title">Volume</string>
 
     <!-- Rating Popup -->
-    <string name="rating_satisfaction_title">Salamat sa oras mo sa Video Maker</string>
+    <string name="rating_satisfaction_title">Nagpapasalamat kami sa oras mo sa Video Generating</string>
     <string name="rating_satisfaction_subtitle">Nasiyahan ka ba sa aming app?</string>
     <string name="rating_not_really">Hindi gaano</string>
     <string name="rating_good">Maganda</string>

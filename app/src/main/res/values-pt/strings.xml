@@ -459,7 +459,7 @@
     <string name="volume_title">Volume</string>
 
     <!-- Rating Popup -->
-    <string name="rating_satisfaction_title">Obrigado pelo seu tempo com o Video Maker</string>
+    <string name="rating_satisfaction_title">Somos gratos pelo seu tempo no Video Generating</string>
     <string name="rating_satisfaction_subtitle">Você está satisfeito com nosso app?</string>
     <string name="rating_not_really">Não muito</string>
     <string name="rating_good">Bom</string>

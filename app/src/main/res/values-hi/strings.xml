@@ -461,7 +461,7 @@
     <string name="volume_title">वॉल्यूम</string>
 
     <!-- Rating Popup -->
-    <string name="rating_satisfaction_title">Video Maker के साथ आपका समय देने के लिए धन्यवाद</string>
+    <string name="rating_satisfaction_title">Video Generating पर आपका समय देने के लिए हम आभारी हैं</string>
     <string name="rating_satisfaction_subtitle">क्या आप हमारे ऐप से संतुष्ट हैं?</string>
     <string name="rating_not_really">ज्यादा नहीं</string>
     <string name="rating_good">अच्छा</string>

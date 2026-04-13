@@ -459,7 +459,7 @@
     <string name="volume_title">Ses Seviyesi</string>
 
     <!-- Rating Popup -->
-    <string name="rating_satisfaction_title">Video Maker ile geçirdiğiniz zaman için teşekkürler</string>
+    <string name="rating_satisfaction_title">Video Generating\'de geçirdiğiniz zaman için minnettarız</string>
     <string name="rating_satisfaction_subtitle">Uygulamamızdan memnun musunuz?</string>
     <string name="rating_not_really">Pek değil</string>
     <string name="rating_good">İyi</string>
