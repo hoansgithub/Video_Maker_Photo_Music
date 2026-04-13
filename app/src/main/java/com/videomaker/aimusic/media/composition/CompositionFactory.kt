@@ -603,17 +603,19 @@ class CompositionFactory(
                     totalVideoDurationMs
                 }
 
-                if (segmentDurationMs < totalVideoDurationMs) {
-                    // LOOP: Segment shorter than video - loop to fill duration exactly
-                    val fullLoops = (totalVideoDurationMs / segmentDurationMs).toInt()
-                    val remainingMs = totalVideoDurationMs % segmentDurationMs
+                val loopPlan = ExportAudioLoopPlanner.plan(
+                    segmentDurationMs = segmentDurationMs,
+                    totalVideoDurationMs = totalVideoDurationMs
+                )
 
-                    android.util.Log.d("CompositionFactory", "Export: Looping segment (segment=${segmentDurationMs}ms < video=${totalVideoDurationMs}ms) - fullLoops=$fullLoops, remainingMs=$remainingMs")
+                if (loopPlan.shouldLoop) {
+                    // LOOP: Segment shorter than video - loop to fill duration exactly
+                    android.util.Log.d("CompositionFactory", "Export: Looping segment (segment=${segmentDurationMs}ms < video=${totalVideoDurationMs}ms) - fullLoops=${loopPlan.fullLoops}, remainingMs=${loopPlan.remainingMs}")
 
                     val loopedItems = mutableListOf<EditedMediaItem>()
 
                     // Add full loops
-                    repeat(fullLoops) { index ->
+                    repeat(loopPlan.fullLoops) { index ->
                         val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
                             .setStartPositionMs(trimStartMs)
 
@@ -636,10 +638,10 @@ class CompositionFactory(
                     }
 
                     // Add partial loop if there's remaining time
-                    if (remainingMs > 0) {
+                    if (loopPlan.remainingMs > 0) {
                         val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
                             .setStartPositionMs(trimStartMs)
-                            .setEndPositionMs(trimStartMs + remainingMs) // Clip to exact remaining duration
+                            .setEndPositionMs(trimStartMs + loopPlan.remainingMs) // Clip to exact remaining duration
 
                         val mediaItem = MediaItem.Builder()
                             .setUri(audioUri)
@@ -712,17 +714,19 @@ class CompositionFactory(
 
                 if (forExport) {
                     // EXPORT: Apply smart looping/clipping based on actual duration
-                    if (actualAudioDurationMs < totalVideoDurationMs) {
-                        // LOOP: Audio shorter than video - loop to fill duration exactly
-                        val fullLoops = (totalVideoDurationMs / actualAudioDurationMs).toInt()
-                        val remainingMs = totalVideoDurationMs % actualAudioDurationMs
+                    val loopPlan = ExportAudioLoopPlanner.plan(
+                        segmentDurationMs = actualAudioDurationMs,
+                        totalVideoDurationMs = totalVideoDurationMs
+                    )
 
-                        android.util.Log.d("CompositionFactory", "Export (untrimmed): Looping (audio=${actualAudioDurationMs}ms < video=${totalVideoDurationMs}ms) - fullLoops=$fullLoops, remainingMs=$remainingMs")
+                    if (loopPlan.shouldLoop) {
+                        // LOOP: Audio shorter than video - loop to fill duration exactly
+                        android.util.Log.d("CompositionFactory", "Export (untrimmed): Looping (audio=${actualAudioDurationMs}ms < video=${totalVideoDurationMs}ms) - fullLoops=${loopPlan.fullLoops}, remainingMs=${loopPlan.remainingMs}")
 
                         val loopedItems = mutableListOf<EditedMediaItem>()
 
                         // Add full loops
-                        repeat(fullLoops) { index ->
+                        repeat(loopPlan.fullLoops) { index ->
                             val mediaItem = MediaItem.Builder()
                                 .setUri(audioUri)
                                 .setMediaId("loop_${index}_${audioUri.hashCode()}")
@@ -737,10 +741,10 @@ class CompositionFactory(
                         }
 
                         // Add partial loop if there's remaining time
-                        if (remainingMs > 0) {
+                        if (loopPlan.remainingMs > 0) {
                             val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
                                 .setStartPositionMs(0L)
-                                .setEndPositionMs(remainingMs) // Clip to exact remaining duration
+                                .setEndPositionMs(loopPlan.remainingMs) // Clip to exact remaining duration
 
                             val mediaItem = MediaItem.Builder()
                                 .setUri(audioUri)

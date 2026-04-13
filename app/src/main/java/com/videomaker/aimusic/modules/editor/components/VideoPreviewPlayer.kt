@@ -52,6 +52,7 @@ import kotlinx.coroutines.flow.first
 import kotlin.coroutines.resume
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -225,6 +226,7 @@ fun VideoPreviewPlayer(
 
     // Actual music segment duration (updated when audio player is ready with actual duration)
     var actualMusicSegmentDurationMs by remember { mutableStateOf<Long?>(null) }
+    var lastBoundaryLoopRestartAtMs by remember { mutableStateOf(0L) }
 
     // Notify parent of preview state changes
     LaunchedEffect(previewState) {
@@ -246,17 +248,21 @@ fun VideoPreviewPlayer(
     }
 
     // Calculate music segment duration for sync logic
-    // Priority 1: Use actual duration from player (when available)
-    // Priority 2: Use manual trim positions (when trimEnd is set)
-    // Priority 3: Fallback to video duration (conservative - will be updated when player is ready)
-    val musicSegmentDurationMs = actualMusicSegmentDurationMs ?: remember(project.settings.musicTrimStartMs, project.settings.musicTrimEndMs) {
-        val trimStart = project.settings.musicTrimStartMs
-        val trimEnd = project.settings.musicTrimEndMs
-        if (trimEnd != null && trimEnd > trimStart) {
-            trimEnd - trimStart
-        } else {
-            videoDurationMs // Fallback: will be updated when audio player is ready
-        }
+    // Priority 1: Use trim range when valid
+    // Priority 2: Use actual duration from player when available
+    // Priority 3: Fallback to video duration
+    val musicSegmentDurationMs = remember(
+        actualMusicSegmentDurationMs,
+        project.settings.musicTrimStartMs,
+        project.settings.musicTrimEndMs,
+        videoDurationMs
+    ) {
+        PreviewLoopPolicy.resolveSegmentDurationMs(
+            trimStartMs = project.settings.musicTrimStartMs,
+            trimEndMs = project.settings.musicTrimEndMs ?: 0L,
+            detectedDurationMs = actualMusicSegmentDurationMs ?: 0L,
+            videoDurationMs = videoDurationMs
+        )
     }
 
     // Helper function to sync audio position to video position
@@ -270,44 +276,38 @@ fun VideoPreviewPlayer(
         try {
             val segmentDuration = musicSegmentDurationMs
 
-            if (segmentDuration < videoDurationMs) {
-                // LOOPING: Calculate position within looped segment
-                // Audio timeline is already relative to clipped range, so use position directly
-                val positionInSegment = videoPositionMs % segmentDuration
-                val targetAudioPos = positionInSegment // NO trim offset needed!
+            val targetAudioPos = PreviewLoopPolicy.mapVideoToAudioPosition(
+                videoPositionMs = videoPositionMs,
+                segmentDurationMs = segmentDuration,
+                videoDurationMs = videoDurationMs
+            )
 
-                // Only seek if drift is significant to avoid audio glitching
-                // Use larger threshold (200ms) to reduce unnecessary seeks
-                val currentAudioPos = audio.currentPosition
-                val drift = abs(currentAudioPos - targetAudioPos)
-                if (drift > 200) {
-                    android.util.Log.d("VideoPreviewPlayer", "Syncing audio: drift=${drift}ms, seeking to ${targetAudioPos}ms")
-                    audio.seekTo(targetAudioPos)
-                }
-            } else {
-                // NO LOOPING: Direct 1:1 mapping
-                // Audio timeline is already relative to clipped range
-                val targetAudioPos = videoPositionMs // NO trim offset needed!
-
-                // Check if we should stop audio (video ended but audio is longer)
-                if (videoPositionMs >= videoDurationMs) {
-                    if (audio.isPlaying) {
-                        audio.pause()
-                        audio.seekTo(0) // Reset to start of clipped range
-                    }
-                } else {
-                    val currentAudioPos = audio.currentPosition
-                    val drift = abs(currentAudioPos - targetAudioPos)
-                    if (drift > 200) {
-                        android.util.Log.d("VideoPreviewPlayer", "Syncing audio: drift=${drift}ms, seeking to ${targetAudioPos}ms")
-                        audio.seekTo(targetAudioPos)
-                    }
-                }
+            // Only seek if drift is significant to avoid audio glitching
+            // Use larger threshold (200ms) to reduce unnecessary seeks
+            val currentAudioPos = audio.currentPosition
+            val drift = abs(currentAudioPos - targetAudioPos)
+            if (drift > 200) {
+                android.util.Log.d("VideoPreviewPlayer", "Syncing audio: drift=${drift}ms, seeking to ${targetAudioPos}ms")
+                audio.seekTo(targetAudioPos)
             }
         } catch (e: IllegalStateException) {
             // Player was released between null check and usage - safe to ignore
             android.util.Log.w("VideoPreviewPlayer", "Audio player released during sync")
         }
+    }
+
+    fun restartPreviewAtBeginning(video: CompositionPlayer, audio: ExoPlayer?) {
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastBoundaryLoopRestartAtMs < 250L) return
+
+        lastBoundaryLoopRestartAtMs = now
+        video.playWhenReady = true
+        audio?.playWhenReady = true
+        video.seekTo(0)
+        audio?.seekTo(0) // Audio timeline is relative to clipped range
+        video.play()
+        audio?.play()
+        onPlaybackStateChange(true)
     }
 
     // Handler for periodic position updates
@@ -324,14 +324,14 @@ fun VideoPreviewPlayer(
                         // DON'T sync continuously - causes glitching!
                         // Only sync on user actions (seek, play, pause)
 
-                        // Stop both players when video duration is reached
-                        if (currentPos >= videoDurationMs && vp.isPlaying) {
-                            android.util.Log.d("VideoPreviewPlayer", "Video duration reached, stopping both players")
-                            vp.pause()
-                            audioPlayer?.pause()
-                            vp.seekTo(0)
-                            audioPlayer?.seekTo(0) // Audio timeline is relative to clipped range
-                            onPlaybackStateChange(false)
+                        if (PreviewLoopPolicy.shouldLoopPreviewAtEnd(
+                                currentVideoPositionMs = currentPos,
+                                videoDurationMs = videoDurationMs,
+                                isPlaying = vp.isPlaying
+                            )
+                        ) {
+                            android.util.Log.d("VideoPreviewPlayer", "Video duration reached, looping both players")
+                            restartPreviewAtBeginning(vp, audioPlayer)
                         }
                     }
                 }
@@ -500,11 +500,14 @@ fun VideoPreviewPlayer(
                     audio.setMediaItem(mediaItem)
 
                     // Set looping based on duration comparison
-                    // FIXED: When trimEnd is null, get actual duration from player when ready
                     if (trimEnd != null) {
-                        // Manual trim applied: use trim positions
-                        val segmentDuration = trimEnd - trimStart
-                        if (segmentDuration < videoDurationMs) {
+                        val segmentDuration = PreviewLoopPolicy.resolveSegmentDurationMs(
+                            trimStartMs = trimStart,
+                            trimEndMs = trimEnd,
+                            detectedDurationMs = 0L,
+                            videoDurationMs = videoDurationMs
+                        )
+                        if (PreviewLoopPolicy.shouldLoopAudio(segmentDuration, videoDurationMs)) {
                             audio.repeatMode = Player.REPEAT_MODE_ALL
                             android.util.Log.d("VideoPreviewPlayer", "Music looping enabled (trimmed): segment=${segmentDuration}ms < video=${videoDurationMs}ms")
                         } else {
@@ -533,11 +536,18 @@ fun VideoPreviewPlayer(
                                     if (actualDuration > 0) {
                                         android.util.Log.d("VideoPreviewPlayer", "Audio ready: actual duration=${actualDuration}ms, video=${videoDurationMs}ms")
 
+                                        val resolvedSegmentDuration = PreviewLoopPolicy.resolveSegmentDurationMs(
+                                            trimStartMs = trimStart,
+                                            trimEndMs = 0L,
+                                            detectedDurationMs = actualDuration,
+                                            videoDurationMs = videoDurationMs
+                                        )
+
                                         // Update segment duration state
-                                        actualMusicSegmentDurationMs = actualDuration
+                                        actualMusicSegmentDurationMs = resolvedSegmentDuration
 
                                         // Update repeat mode based on actual duration
-                                        if (actualDuration < videoDurationMs) {
+                                        if (PreviewLoopPolicy.shouldLoopAudio(resolvedSegmentDuration, videoDurationMs)) {
                                             audio.repeatMode = Player.REPEAT_MODE_ALL
                                             android.util.Log.d("VideoPreviewPlayer", "Music looping enabled (untrimmed): actual=${actualDuration}ms < video=${videoDurationMs}ms")
                                         } else {
@@ -549,6 +559,7 @@ fun VideoPreviewPlayer(
                                         // Remove this listener after first update
                                         audio.removeListener(this)
                                     } else {
+                                        audio.repeatMode = Player.REPEAT_MODE_ALL
                                         // Duration detection failed (duration = 0) - keep REPEAT_MODE_ALL
                                         android.util.Log.w("VideoPreviewPlayer", "Audio duration = 0, keeping REPEAT_MODE_ALL as fallback")
                                         durationUpdateApplied = true
@@ -562,6 +573,7 @@ fun VideoPreviewPlayer(
                                 android.util.Log.e("VideoPreviewPlayer", "Audio error code: ${error.errorCode}")
                                 android.util.Log.e("VideoPreviewPlayer", "Audio error message: ${error.message}")
 
+                                audio.repeatMode = Player.REPEAT_MODE_ALL
                                 // On error, keep REPEAT_MODE_ALL (already set as default)
                                 android.util.Log.w("VideoPreviewPlayer", "Audio error, keeping REPEAT_MODE_ALL as fallback")
                                 durationUpdateApplied = true
@@ -611,9 +623,7 @@ fun VideoPreviewPlayer(
                             playerReadyFlow.value = true
                         }
                         Player.STATE_ENDED -> {
-                            newVideoPlayer.seekTo(0)
-                            newAudioPlayer?.seekTo(0) // Audio timeline is relative to clipped range
-                            onPlaybackStateChange(false)
+                            restartPreviewAtBeginning(newVideoPlayer, newAudioPlayer)
                         }
                     }
                 }
