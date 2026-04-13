@@ -465,7 +465,7 @@
     <string name="rating_satisfaction_subtitle">क्या आप हमारे ऐप से संतुष्ट हैं?</string>
     <string name="rating_not_really">ज्यादा नहीं</string>
     <string name="rating_good">अच्छा</string>
-    <string name="rating_experience_title">हमारे साथ अपने अनुभव को रेट करें</string>
+    <string name="rating_experience_title">हमारे साथ अपने\nअनुभव को रेट करें</string>
     <string name="rating_submit">सबमिट करें</string>
     <string name="rating_feedback_title">यह सुनकर दुख हुआ 🥲</string>
     <string name="rating_feedback_subtitle">आपके अनुभव को बेहतर बनाने के लिए हम और मेहनत करेंगे</string>

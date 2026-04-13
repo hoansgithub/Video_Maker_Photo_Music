@@ -463,7 +463,7 @@
     <string name="rating_satisfaction_subtitle">Uygulamamızdan memnun musunuz?</string>
     <string name="rating_not_really">Pek değil</string>
     <string name="rating_good">İyi</string>
-    <string name="rating_experience_title">Bizimle deneyiminizi değerlendirin</string>
+    <string name="rating_experience_title">Bizimle deneyiminizi\nDeğerlendirin</string>
     <string name="rating_submit">Gönder</string>
     <string name="rating_feedback_title">Bunu duyduğumuza üzüldük 🥲</string>
     <string name="rating_feedback_subtitle">Deneyiminizi geliştirmek için daha çok çalışacağız</string>

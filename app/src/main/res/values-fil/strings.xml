@@ -463,7 +463,7 @@
     <string name="rating_satisfaction_subtitle">Nasiyahan ka ba sa aming app?</string>
     <string name="rating_not_really">Hindi gaano</string>
     <string name="rating_good">Maganda</string>
-    <string name="rating_experience_title">I-rate ang iyong karanasan sa amin</string>
+    <string name="rating_experience_title">I-rate ang iyong\nKaranasan sa amin</string>
     <string name="rating_submit">Isumite</string>
     <string name="rating_feedback_title">Ikinalulungkot naming marinig iyan 🥲</string>
     <string name="rating_feedback_subtitle">Magsisikap pa kami para mapabuti ang iyong karanasan</string>

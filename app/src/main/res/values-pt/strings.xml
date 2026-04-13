@@ -463,7 +463,7 @@
     <string name="rating_satisfaction_subtitle">Você está satisfeito com nosso app?</string>
     <string name="rating_not_really">Não muito</string>
     <string name="rating_good">Bom</string>
-    <string name="rating_experience_title">Avalie sua experiência conosco</string>
+    <string name="rating_experience_title">Avalie sua\nExperiência conosco</string>
     <string name="rating_submit">Enviar</string>
     <string name="rating_feedback_title">Lamentamos ouvir isso 🥲</string>
     <string name="rating_feedback_subtitle">Vamos nos esforçar mais para melhorar sua experiência</string>

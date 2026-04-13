@@ -463,7 +463,7 @@
     <string name="rating_satisfaction_subtitle">Apakah Anda puas dengan aplikasi kami?</string>
     <string name="rating_not_really">Tidak begitu</string>
     <string name="rating_good">Bagus</string>
-    <string name="rating_experience_title">Nilai pengalaman Anda bersama kami</string>
+    <string name="rating_experience_title">Nilai pengalaman\nAnda bersama kami</string>
     <string name="rating_submit">Kirim</string>
     <string name="rating_feedback_title">Maaf mendengar hal itu 🥲</string>
     <string name="rating_feedback_subtitle">Kami akan bekerja lebih keras untuk meningkatkan pengalaman Anda</string>
