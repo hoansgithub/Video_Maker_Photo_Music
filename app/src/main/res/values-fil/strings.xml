@@ -253,6 +253,12 @@
     <string name="picker_permission_title">Kailangan ang Access sa Larawan</string>
     <string name="picker_permission_message">Para gumawa ng mga video mula sa iyong mga larawan, kailangan namin ng pahintulot na ma-access ang iyong library ng larawan.</string>
     <string name="picker_allow_access">Payagan ang Access</string>
+    <string name="picker_give_access">Bigyan ng Access</string>
+    <string name="picker_give_access_settings">Naka-off ang access\nsa iyong mga larawan.</string>
+    <string name="picker_give_access_permission">Handa nang gumawa?</string>
+    <string name="picker_not_now">Huwag muna</string>
+    <string name="picker_full_access_custom_message">Para ma-browse ang iyong mga video at larawan, kailangan namin ng access sa iyong gallery.</string>
+    <string name="picker_full_access_settings_message">Para makapagsimulang mag-edit, i-enable ang \'Photos\' o \'Storage\' sa settings ng iyong device.</string>
     <string name="picker_limited_access_message">Binigyan mo ang Video Maker ng access sa ilang larawan lamang.</string>
     <string name="picker_add_more_photos">Magdagdag</string>
     <string name="picker_go_to_settings">Pumunta sa Settings</string>

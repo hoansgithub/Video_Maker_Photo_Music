@@ -82,6 +82,7 @@ import com.videomaker.aimusic.modules.root.RootViewModel
 import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
 import com.videomaker.aimusic.core.device.DeviceInfoProvider
+import com.videomaker.aimusic.core.permission.MediaPermissionCoordinator
 import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
 import com.videomaker.aimusic.core.rating.RatingTriggerManager
 import com.videomaker.aimusic.data.repository.FeedbackRepositoryImpl
@@ -174,6 +175,7 @@ val dataModule = module {
 
     // Rating trigger
     single { RatingTriggerManager(get()) }
+    single { MediaPermissionCoordinator(get()) }
     single { NotificationPermissionCoordinator(get()) }
 
     // Feedback repository

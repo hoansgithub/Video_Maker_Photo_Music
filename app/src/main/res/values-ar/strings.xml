@@ -253,6 +253,12 @@
     <string name="picker_permission_title">مطلوب الوصول للصور</string>
     <string name="picker_permission_message">لإنشاء فيديوهات من صورك، نحتاج إذن الوصول إلى مكتبة الصور.</string>
     <string name="picker_allow_access">السماح بالوصول</string>
+    <string name="picker_give_access">منح الوصول</string>
+    <string name="picker_give_access_settings">تم إيقاف الوصول إلى صورك\nحاليًا.</string>
+    <string name="picker_give_access_permission">جاهز للإنشاء؟</string>
+    <string name="picker_not_now">ليس الآن</string>
+    <string name="picker_full_access_custom_message">لتصفح مقاطع الفيديو والصور، نحتاج إلى الوصول إلى معرضك.</string>
+    <string name="picker_full_access_settings_message">لبدء التعديل، يرجى تفعيل \'الصور\' أو \'التخزين\' في إعدادات جهازك.</string>
     <string name="picker_limited_access_message">لقد منحت صانع الفيديو حق الوصول إلى عدد محدود من الصور.</string>
     <string name="picker_add_more_photos">إضافة</string>
     <string name="picker_go_to_settings">الانتقال إلى الإعدادات</string>

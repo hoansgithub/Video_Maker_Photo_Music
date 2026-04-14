@@ -32,6 +32,8 @@ class PreferencesManager(context: Context) {
         private const val KEY_RATING_COMPLETED = "rating_completed"
         private const val KEY_NOTIFICATION_PERMISSION_REQUEST_COUNT = "notification_permission_request_count"
         private const val KEY_NOTIFICATION_PERMISSION_BLOCKED = "notification_permission_blocked"
+        private const val KEY_MEDIA_FULL_PERMISSION_REQUEST_COUNT = "media_full_permission_request_count"
+        private const val KEY_MEDIA_FULL_PERMISSION_BLOCKED = "media_full_permission_blocked"
         private const val RECENT_SEARCHES_DELIMITER = "\u001F" // Unit Separator
         private const val GENRES_DELIMITER = ","
         private const val MAX_RECENT_SEARCHES = 3 // FIFO: First In First Out
@@ -189,6 +191,31 @@ class PreferencesManager(context: Context) {
     fun clearNotificationPermissionStateOnGrant() {
         prefs.edit {
             remove(KEY_NOTIFICATION_PERMISSION_BLOCKED)
+        }
+    }
+
+    // ============================================
+    // Media full-permission preferences
+    // ============================================
+
+    fun getMediaFullPermissionRequestCount(): Int =
+        prefs.getInt(KEY_MEDIA_FULL_PERMISSION_REQUEST_COUNT, 0)
+
+    fun setMediaFullPermissionRequestCount(count: Int) {
+        prefs.edit { putInt(KEY_MEDIA_FULL_PERMISSION_REQUEST_COUNT, count.coerceAtLeast(0)) }
+    }
+
+    fun isMediaFullPermissionBlockedAfterSecondDeny(): Boolean =
+        prefs.getBoolean(KEY_MEDIA_FULL_PERMISSION_BLOCKED, false)
+
+    fun setMediaFullPermissionBlockedAfterSecondDeny(blocked: Boolean) {
+        prefs.edit { putBoolean(KEY_MEDIA_FULL_PERMISSION_BLOCKED, blocked) }
+    }
+
+    fun clearMediaFullPermissionStateOnGrant() {
+        prefs.edit {
+            remove(KEY_MEDIA_FULL_PERMISSION_BLOCKED)
+            remove(KEY_MEDIA_FULL_PERMISSION_REQUEST_COUNT)
         }
     }
 

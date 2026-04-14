@@ -253,6 +253,12 @@
     <string name="picker_permission_title">Akses Foto Diperlukan</string>
     <string name="picker_permission_message">Untuk membuat video dari foto Anda, kami memerlukan izin untuk mengakses perpustakaan foto Anda.</string>
     <string name="picker_allow_access">Izinkan Akses</string>
+    <string name="picker_give_access">Beri Akses</string>
+    <string name="picker_give_access_settings">Akses ke foto Anda\nsedang dinonaktifkan.</string>
+    <string name="picker_give_access_permission">Siap berkreasi?</string>
+    <string name="picker_not_now">Nanti Saja</string>
+    <string name="picker_full_access_custom_message">Untuk menelusuri video dan foto Anda, kami memerlukan akses ke galeri Anda.</string>
+    <string name="picker_full_access_settings_message">Untuk mulai mengedit, aktifkan \'Foto\' atau \'Penyimpanan\' di pengaturan perangkat Anda.</string>
     <string name="picker_limited_access_message">Anda telah memberikan akses Video Maker ke sejumlah foto terbatas.</string>
     <string name="picker_add_more_photos">Tambah</string>
     <string name="picker_go_to_settings">Ke Pengaturan</string>

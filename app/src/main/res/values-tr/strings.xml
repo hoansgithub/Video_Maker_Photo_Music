@@ -253,6 +253,12 @@
     <string name="picker_permission_title">Fotoğraf Erişimi Gerekli</string>
     <string name="picker_permission_message">Fotoğraflarınızdan video oluşturmak için fotoğraf kütüphanenize erişim iznine ihtiyacımız var.</string>
     <string name="picker_allow_access">Erişime İzin Ver</string>
+    <string name="picker_give_access">Erişim Ver</string>
+    <string name="picker_give_access_settings">Fotoğraflarınıza erişim\nkapalı.</string>
+    <string name="picker_give_access_permission">Oluşturmaya hazır mısın?</string>
+    <string name="picker_not_now">Şimdi Değil</string>
+    <string name="picker_full_access_custom_message">Videolarınıza ve fotoğraflarınıza göz atmak için galerinizde erişime ihtiyacımız var.</string>
+    <string name="picker_full_access_settings_message">Düzenlemeye başlamak için cihaz ayarlarınızda \'Fotoğraflar\' veya \'Depolama\'yı etkinleştirin.</string>
     <string name="picker_limited_access_message">Video Maker\'a sınırlı sayıda fotoğrafa erişim izni verdiniz.</string>
     <string name="picker_add_more_photos">Ekle</string>
     <string name="picker_go_to_settings">Ayarlara Git</string>

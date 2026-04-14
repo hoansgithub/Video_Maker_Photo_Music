@@ -18,6 +18,12 @@ internal enum class PermissionUpdateSource {
     MANUAL_REFRESH
 }
 
+internal enum class FullPermissionPromptDecision {
+    NONE,
+    SHOW_PROMO,
+    SHOW_SETTINGS
+}
+
 internal fun resolvePermissionMode(snapshot: PermissionSnapshot): PermissionMode {
     return when {
         snapshot.fullGranted -> PermissionMode.FULL
@@ -38,4 +44,25 @@ internal fun retainSelectedUrisAfterReload(
     availableUris: Set<String>
 ): Set<String> {
     return selectedUris.intersect(availableUris)
+}
+
+internal fun resolveFullPermissionPromptDecision(
+    permissionMode: PermissionMode,
+    blockedAfterSecondAttempt: Boolean,
+    limitedUpsellShownThisSession: Boolean
+): FullPermissionPromptDecision {
+    if (permissionMode == PermissionMode.FULL) {
+        return FullPermissionPromptDecision.NONE
+    }
+    if (blockedAfterSecondAttempt) {
+        return FullPermissionPromptDecision.SHOW_SETTINGS
+    }
+    if (permissionMode == PermissionMode.DENIED) {
+        return FullPermissionPromptDecision.SHOW_PROMO
+    }
+    return if (limitedUpsellShownThisSession) {
+        FullPermissionPromptDecision.NONE
+    } else {
+        FullPermissionPromptDecision.SHOW_PROMO
+    }
 }

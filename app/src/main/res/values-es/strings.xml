@@ -253,6 +253,12 @@
     <string name="picker_permission_title">Acceso a Fotos Requerido</string>
     <string name="picker_permission_message">Para crear vídeos con tus fotos, necesitamos permiso para acceder a tu biblioteca de fotos.</string>
     <string name="picker_allow_access">Permitir Acceso</string>
+    <string name="picker_give_access">Dar Acceso</string>
+    <string name="picker_give_access_settings">El acceso a tus fotos\nestá desactivado.</string>
+    <string name="picker_give_access_permission">¿Listo para crear?</string>
+    <string name="picker_not_now">Ahora no</string>
+    <string name="picker_full_access_custom_message">Para explorar tus videos y fotos, necesitamos acceso a tu galería.</string>
+    <string name="picker_full_access_settings_message">Para empezar a editar, habilita \'Fotos\' o \'Almacenamiento\' en la configuración de tu dispositivo.</string>
     <string name="picker_limited_access_message">Has dado acceso a Video Maker a un número limitado de fotos.</string>
     <string name="picker_add_more_photos">Agregar</string>
     <string name="picker_go_to_settings">Ir a Configuración</string>

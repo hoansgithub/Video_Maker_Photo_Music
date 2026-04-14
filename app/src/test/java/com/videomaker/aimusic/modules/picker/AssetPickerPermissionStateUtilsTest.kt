@@ -63,4 +63,59 @@ class AssetPickerPermissionStateUtilsTest {
 
         assertEquals(setOf("a", "c"), retained)
     }
+
+    @Test
+    fun `prompt decision is settings when blocked even if denied`() {
+        val decision = resolveFullPermissionPromptDecision(
+            permissionMode = PermissionMode.DENIED,
+            blockedAfterSecondAttempt = true,
+            limitedUpsellShownThisSession = false
+        )
+
+        assertEquals(FullPermissionPromptDecision.SHOW_SETTINGS, decision)
+    }
+
+    @Test
+    fun `prompt decision is promo for denied when unblocked`() {
+        val decision = resolveFullPermissionPromptDecision(
+            permissionMode = PermissionMode.DENIED,
+            blockedAfterSecondAttempt = false,
+            limitedUpsellShownThisSession = false
+        )
+
+        assertEquals(FullPermissionPromptDecision.SHOW_PROMO, decision)
+    }
+
+    @Test
+    fun `prompt decision is promo for limited when unblocked and not shown in session`() {
+        val decision = resolveFullPermissionPromptDecision(
+            permissionMode = PermissionMode.LIMITED,
+            blockedAfterSecondAttempt = false,
+            limitedUpsellShownThisSession = false
+        )
+
+        assertEquals(FullPermissionPromptDecision.SHOW_PROMO, decision)
+    }
+
+    @Test
+    fun `prompt decision is none for limited when already shown in session`() {
+        val decision = resolveFullPermissionPromptDecision(
+            permissionMode = PermissionMode.LIMITED,
+            blockedAfterSecondAttempt = false,
+            limitedUpsellShownThisSession = true
+        )
+
+        assertEquals(FullPermissionPromptDecision.NONE, decision)
+    }
+
+    @Test
+    fun `prompt decision is none when full granted`() {
+        val decision = resolveFullPermissionPromptDecision(
+            permissionMode = PermissionMode.FULL,
+            blockedAfterSecondAttempt = false,
+            limitedUpsellShownThisSession = false
+        )
+
+        assertEquals(FullPermissionPromptDecision.NONE, decision)
+    }
 }
