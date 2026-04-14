@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.templatepreviewer
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
@@ -55,6 +56,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -98,10 +101,13 @@ import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
 import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.ui.components.AdBadge
 import com.videomaker.aimusic.ui.components.AdBadgeStyle
 import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
+import com.videomaker.aimusic.ui.components.NotificationPermissionPromoDialog
+import com.videomaker.aimusic.ui.components.NotificationPermissionSettingsGuideDialog
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
 import org.koin.compose.koinInject
@@ -204,6 +210,25 @@ fun TemplatePreviewerScreen(
     // Get dependencies for ad showing
     val activity = context as? Activity
     val adsLoaderService = koinInject<AdsLoaderService>()
+    val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
+    var showNotificationPromoDialog by remember { mutableStateOf(false) }
+    var showNotificationSettingsGuideDialog by remember { mutableStateOf(false) }
+    var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        Analytics.trackPermissionClick(
+            button = if (granted) {
+                AnalyticsEvent.Value.Option.ALLOW
+            } else {
+                AnalyticsEvent.Value.Option.NO_ALLOW
+            }
+        )
+        notificationPermissionCoordinator.onSystemPermissionResult(granted)
+        Analytics.trackPermissionCheck(allow = granted)
+        showNotificationPromoDialog = false
+    }
 
     // Intercept system back gesture (swipe) - same ad logic as back button
     BackHandler {
@@ -332,14 +357,41 @@ fun TemplatePreviewerScreen(
         loadingAdComplete = true
     }
 
+    LaunchedEffect(uiState, loadingAdComplete) {
+        if (uiState is TemplatePreviewerUiState.Ready &&
+            loadingAdComplete &&
+            notificationPermissionCoordinator.shouldShowTemplatePreviewerContextualPopup(context)
+        ) {
+            notificationPermissionCoordinator.markTemplatePreviewerContextualPopupShown()
+            if (notificationPermissionCoordinator.shouldShowSettingsGuide(context)) {
+                showNotificationSettingsGuideDialog = true
+                showNotificationPromoDialog = false
+            } else {
+                showNotificationPromoDialog = true
+                showNotificationSettingsGuideDialog = false
+            }
+            Analytics.trackPermissionRender()
+        }
+    }
+
     DisposableEffect(Unit) {
         onDispose { player.releaseAsync() }  // ✅ Release async to avoid ANR
     }
 
     // Pause/resume on app background
-    DisposableEffect(lifecycleOwner, loadingAdComplete) {
+    DisposableEffect(lifecycleOwner, loadingAdComplete, pendingPermissionCheckAfterSettings) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    if (pendingPermissionCheckAfterSettings) {
+                        val allow = notificationPermissionCoordinator.isNotificationGranted(context)
+                        if (allow) {
+                            notificationPermissionCoordinator.onSystemPermissionGranted()
+                        }
+                        Analytics.trackPermissionCheck(allow = allow)
+                        pendingPermissionCheckAfterSettings = false
+                    }
+                }
                 Lifecycle.Event.ON_STOP -> player.pause()
                 Lifecycle.Event.ON_START -> {
                     // Only resume playback after loading ad timing is complete
@@ -478,6 +530,46 @@ fun TemplatePreviewerScreen(
             onWatchAd = {
                 // Set pending template - LaunchedEffect will handle ad presentation
                 viewModel.onWatchAdConfirmed()
+            }
+        )
+    }
+
+    if (showNotificationPromoDialog) {
+        NotificationPermissionPromoDialog(
+            onNotifyMe = {
+                Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.ALLOW)
+                if (notificationPermissionCoordinator.canRequestSystemPermission(context)) {
+                    Analytics.trackPermissionRender()
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    showNotificationPromoDialog = false
+                } else {
+                    showNotificationPromoDialog = false
+                    showNotificationSettingsGuideDialog = true
+                }
+            },
+            onMaybeLater = {
+                Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.NO_ALLOW)
+                showNotificationPromoDialog = false
+            }
+        )
+    }
+
+    if (showNotificationSettingsGuideDialog) {
+        NotificationPermissionSettingsGuideDialog(
+            onOpenSettings = {
+                Analytics.trackPermissionGotoSetting()
+                pendingPermissionCheckAfterSettings = true
+                showNotificationSettingsGuideDialog = false
+                runCatching {
+                    context.startActivity(
+                        notificationPermissionCoordinator.buildOpenAppSettingsIntent(context)
+                    )
+                }.onFailure {
+                    pendingPermissionCheckAfterSettings = false
+                }
+            },
+            onDismiss = {
+                showNotificationSettingsGuideDialog = false
             }
         )
     }

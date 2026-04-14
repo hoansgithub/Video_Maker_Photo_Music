@@ -90,6 +90,13 @@
     <string name="settings_uninstall">अनइंस्टॉल करें</string>
     <string name="settings_share_subject">इस ऐप को देखें!</string>
     <string name="settings_share_message">हेलो! मैं इस बढ़िया ऐप का उपयोग कर रहा/रही हूं। इसे आज़माएं:\n%s</string>
+    <string name="notification_permission_trending_title">ट्रेंड से आगे रहें!</string>
+    <string name="notification_permission_trending_message">नए वायरल टेम्पलेट जुड़ते ही तुरंत अलर्ट पाने के लिए नोटिफिकेशन चालू करें।</string>
+    <string name="notification_permission_notify_me">मुझे सूचित करें</string>
+    <string name="notification_permission_maybe_later">शायद बाद में</string>
+    <string name="notification_permission_settings_title">नोटिफिकेशन\nफ़िलहाल बंद हैं।</string>
+    <string name="notification_permission_settings_message">टेम्पलेट अपडेट पाने के लिए कृपया इन्हें अपने डिवाइस सेटिंग्स में चालू करें।</string>
+    <string name="notification_permission_open_settings">सेटिंग्स खोलें</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">इसे एक और मौका दें</string>

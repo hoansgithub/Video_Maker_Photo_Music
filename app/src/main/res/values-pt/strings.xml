@@ -80,6 +80,13 @@
     <string name="settings_uninstall">Desinstalar</string>
     <string name="settings_share_subject">Confira este app!</string>
     <string name="settings_share_message">Oi! Estou usando este app incrível. Experimente:\n%s</string>
+    <string name="notification_permission_trending_title">Fique por dentro das tendências!</string>
+    <string name="notification_permission_trending_message">Ative as notificações para receber alertas instantâneos quando novos templates virais forem adicionados.</string>
+    <string name="notification_permission_notify_me">Quero receber</string>
+    <string name="notification_permission_maybe_later">Talvez depois</string>
+    <string name="notification_permission_settings_title">As notificações\nestão desativadas.</string>
+    <string name="notification_permission_settings_message">Ative-as nas configurações do seu dispositivo para receber atualizações de templates.</string>
+    <string name="notification_permission_open_settings">Ir para Configurações</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Dê mais uma chance</string>

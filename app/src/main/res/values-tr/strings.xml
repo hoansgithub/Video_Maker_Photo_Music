@@ -80,6 +80,13 @@
     <string name="settings_uninstall">Kaldır</string>
     <string name="settings_share_subject">Bu uygulamaya göz at!</string>
     <string name="settings_share_message">Merhaba! Bu harika uygulamayı kullanıyorum. Sen de dene:\n%s</string>
+    <string name="notification_permission_trending_title">Trendleri kaçırma!</string>
+    <string name="notification_permission_trending_message">Yeni viral şablonlar eklendiğinde anında bildirim almak için bildirimleri etkinleştirin.</string>
+    <string name="notification_permission_notify_me">Bana Bildir</string>
+    <string name="notification_permission_maybe_later">Belki Daha Sonra</string>
+    <string name="notification_permission_settings_title">Bildirimler\nşu anda kapalı.</string>
+    <string name="notification_permission_settings_message">Şablon güncellemelerini almak için lütfen cihaz ayarlarından bildirimleri açın.</string>
+    <string name="notification_permission_open_settings">Ayarlara Git</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Bir kez daha dene</string>

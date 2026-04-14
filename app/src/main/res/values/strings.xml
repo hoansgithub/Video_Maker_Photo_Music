@@ -93,6 +93,13 @@
     <string name="settings_uninstall">Uninstall</string>
     <string name="settings_share_subject">Check out this app!</string>
     <string name="settings_share_message">Hey! I\'m using this awesome app. Try it out:\n%s</string>
+    <string name="notification_permission_trending_title">Stay ahead of the trend!</string>
+    <string name="notification_permission_trending_message"> Enable notifications to get instant alerts when new viral templates are added.</string>
+    <string name="notification_permission_notify_me">Notify Me</string>
+    <string name="notification_permission_maybe_later">Maybe Later</string>
+    <string name="notification_permission_settings_title">Notifications are\ncurrently disabled.</string>
+    <string name="notification_permission_settings_message"> Please turn them on in your device settings to receive template updates</string>
+    <string name="notification_permission_open_settings">Go to Settings</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Give it another try</string>

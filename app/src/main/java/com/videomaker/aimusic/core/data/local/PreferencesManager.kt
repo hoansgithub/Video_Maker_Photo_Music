@@ -30,6 +30,8 @@ class PreferencesManager(context: Context) {
         private const val KEY_RATING_VIDEO_CREATE_COUNT = "rating_video_create_count"
         private const val KEY_RATING_SHOWN_COUNT = "rating_shown_count"
         private const val KEY_RATING_COMPLETED = "rating_completed"
+        private const val KEY_NOTIFICATION_PERMISSION_REQUEST_COUNT = "notification_permission_request_count"
+        private const val KEY_NOTIFICATION_PERMISSION_BLOCKED = "notification_permission_blocked"
         private const val RECENT_SEARCHES_DELIMITER = "\u001F" // Unit Separator
         private const val GENRES_DELIMITER = ","
         private const val MAX_RECENT_SEARCHES = 3 // FIFO: First In First Out
@@ -165,6 +167,30 @@ class PreferencesManager(context: Context) {
     var ratingCompleted: Boolean
         get() = prefs.getBoolean(KEY_RATING_COMPLETED, false)
         set(value) = prefs.edit { putBoolean(KEY_RATING_COMPLETED, value) }
+
+    // ============================================
+    // Notification permission preferences
+    // ============================================
+
+    fun getNotificationPermissionRequestCount(): Int =
+        prefs.getInt(KEY_NOTIFICATION_PERMISSION_REQUEST_COUNT, 0)
+
+    fun setNotificationPermissionRequestCount(count: Int) {
+        prefs.edit { putInt(KEY_NOTIFICATION_PERMISSION_REQUEST_COUNT, count.coerceAtLeast(0)) }
+    }
+
+    fun isNotificationPermissionBlockedAfterSecondDeny(): Boolean =
+        prefs.getBoolean(KEY_NOTIFICATION_PERMISSION_BLOCKED, false)
+
+    fun setNotificationPermissionBlockedAfterSecondDeny(blocked: Boolean) {
+        prefs.edit { putBoolean(KEY_NOTIFICATION_PERMISSION_BLOCKED, blocked) }
+    }
+
+    fun clearNotificationPermissionStateOnGrant() {
+        prefs.edit {
+            remove(KEY_NOTIFICATION_PERMISSION_BLOCKED)
+        }
+    }
 
     /**
      * Clear all preferences (for testing/logout)

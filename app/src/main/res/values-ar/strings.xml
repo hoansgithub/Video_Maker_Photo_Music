@@ -80,6 +80,13 @@
     <string name="settings_uninstall">إلغاء التثبيت</string>
     <string name="settings_share_subject">اطلع على هذا التطبيق!</string>
     <string name="settings_share_message">مرحباً! أستخدم هذا التطبيق الرائع. جربه:\n%s</string>
+    <string name="notification_permission_trending_title">ابقَ في صدارة الترند!</string>
+    <string name="notification_permission_trending_message">فعّل الإشعارات للحصول على تنبيهات فورية عند إضافة قوالب رائجة جديدة.</string>
+    <string name="notification_permission_notify_me">أبلغني</string>
+    <string name="notification_permission_maybe_later">ربما لاحقًا</string>
+    <string name="notification_permission_settings_title">الإشعارات\nمعطلة حاليًا.</string>
+    <string name="notification_permission_settings_message">يرجى تفعيلها من إعدادات جهازك لتلقي تحديثات القوالب.</string>
+    <string name="notification_permission_open_settings">الذهاب إلى الإعدادات</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">أعطها فرصة أخرى</string>

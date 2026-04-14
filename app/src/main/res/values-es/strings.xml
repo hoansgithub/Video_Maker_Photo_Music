@@ -80,6 +80,13 @@
     <string name="settings_uninstall">Desinstalar</string>
     <string name="settings_share_subject">¡Mira esta aplicación!</string>
     <string name="settings_share_message">¡Hola! Estoy usando esta increíble aplicación. Pruébala:\n%s</string>
+    <string name="notification_permission_trending_title">¡Mantente al día con las tendencias!</string>
+    <string name="notification_permission_trending_message">Activa las notificaciones para recibir alertas instantáneas cuando se agreguen nuevas plantillas virales.</string>
+    <string name="notification_permission_notify_me">Notificarme</string>
+    <string name="notification_permission_maybe_later">Quizás más tarde</string>
+    <string name="notification_permission_settings_title">Las notificaciones\nestán desactivadas.</string>
+    <string name="notification_permission_settings_message">Actívalas en la configuración de tu dispositivo para recibir actualizaciones de plantillas.</string>
+    <string name="notification_permission_open_settings">Ir a Configuración</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Dale otra oportunidad</string>

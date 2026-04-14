@@ -80,6 +80,13 @@
     <string name="settings_uninstall">I-uninstall</string>
     <string name="settings_share_subject">Tingnan mo itong app!</string>
     <string name="settings_share_message">Hoy! Gumagamit ako ng magandang app na ito. Subukan mo:\n%s</string>
+    <string name="notification_permission_trending_title">Mauna sa uso!</string>
+    <string name="notification_permission_trending_message">I-enable ang notifications para makatanggap ng instant na alerto kapag may mga bagong viral template.</string>
+    <string name="notification_permission_notify_me">I-notify Ako</string>
+    <string name="notification_permission_maybe_later">Mamaya Na</string>
+    <string name="notification_permission_settings_title">Ang notifications ay\nkasalukuyang naka-disable.</string>
+    <string name="notification_permission_settings_message">Paki-on ang mga ito sa settings ng iyong device para makatanggap ng mga update sa template.</string>
+    <string name="notification_permission_open_settings">Pumunta sa Settings</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Subukan muli ito</string>

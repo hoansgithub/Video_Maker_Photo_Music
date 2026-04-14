@@ -80,6 +80,13 @@
     <string name="settings_uninstall">Hapus Instalan</string>
     <string name="settings_share_subject">Lihat aplikasi ini!</string>
     <string name="settings_share_message">Halo! Saya menggunakan aplikasi luar biasa ini. Coba yuk:\n%s</string>
+    <string name="notification_permission_trending_title">Jangan ketinggalan tren!</string>
+    <string name="notification_permission_trending_message">Aktifkan notifikasi untuk mendapatkan pemberitahuan instan saat template viral baru ditambahkan.</string>
+    <string name="notification_permission_notify_me">Beri tahu saya</string>
+    <string name="notification_permission_maybe_later">Mungkin nanti</string>
+    <string name="notification_permission_settings_title">Notifikasi\nsaat ini dinonaktifkan.</string>
+    <string name="notification_permission_settings_message">Silakan aktifkan di pengaturan perangkat Anda untuk menerima pembaruan template.</string>
+    <string name="notification_permission_open_settings">Buka Pengaturan</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Coba lagi</string>
