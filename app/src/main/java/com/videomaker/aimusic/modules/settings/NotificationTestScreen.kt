@@ -31,6 +31,7 @@ import com.videomaker.aimusic.core.notification.NotificationChannels
 import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
+import com.videomaker.aimusic.core.notification.NotificationText
 import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.ui.theme.CtaText
 import com.videomaker.aimusic.ui.theme.FoundationBlack
@@ -103,9 +104,12 @@ fun NotificationTestScreen(
                             itemId = "909001",
                             itemType = "song",
                             channelId = NotificationChannels.CHANNEL_TREND_ALERTS,
-                            title = "New Trend Song!",
-                            body = "Kendrick's 'Not Like Us' is going viral! Create your edit in 1-tap before the trend peaks.",
-                            ctaText = "Play Song",
+                            title = NotificationText(R.string.notif_trending_song_title),
+                            body = NotificationText(
+                                R.string.notif_trending_song_body,
+                                listOf("Kendrick", "Not Like Us")
+                            ),
+                            ctaText = NotificationText(R.string.notif_cta_play_song),
                             deepLink = NotificationDeepLinkFactory.trendingSong(909001L),
                             imageCandidates = emptyList(),
                             fallbackImageRes = R.drawable.img_song1
@@ -124,9 +128,12 @@ fun NotificationTestScreen(
                             itemId = "debug_template_viral",
                             itemType = "template",
                             channelId = NotificationChannels.CHANNEL_TREND_ALERTS,
-                            title = "Trending templates for you. Try it now!",
-                            body = "1,000,000 people used this FlashCut today. Don't miss out on the hype!",
-                            ctaText = "Discover Templates",
+                            title = NotificationText(R.string.notif_viral_template_title),
+                            body = NotificationText(
+                                R.string.notif_viral_template_body,
+                                listOf("FlashCut")
+                            ),
+                            ctaText = NotificationText(R.string.notif_cta_discover_templates),
                             deepLink = NotificationDeepLinkFactory.viralTemplate("debug_template_viral"),
                             imageCandidates = emptyList(),
                             fallbackImageRes = R.drawable.img_template1
@@ -145,9 +152,9 @@ fun NotificationTestScreen(
                             itemId = "debug_project_01",
                             itemType = "video",
                             channelId = NotificationChannels.CHANNEL_MY_VIDEO_RETENTION,
-                            title = "Your masterpiece is waiting!",
-                            body = "You did the hard part, now let it shine. Your video is ready to be shared with the world!",
-                            ctaText = "Continue Editing",
+                            title = NotificationText(R.string.notif_forgotten_masterpiece_title),
+                            body = NotificationText(R.string.notif_forgotten_masterpiece_body),
+                            ctaText = NotificationText(R.string.notif_cta_continue_editing),
                             deepLink = NotificationDeepLinkFactory.myVideo("debug_project_01", "hint_share"),
                             imageCandidates = emptyList(),
                             fallbackImageRes = R.drawable.img_template2,
@@ -167,9 +174,9 @@ fun NotificationTestScreen(
                             itemId = "debug_project_02",
                             itemType = "video",
                             channelId = NotificationChannels.CHANNEL_MY_VIDEO_RETENTION,
-                            title = "Don't lose your work!",
-                            body = "Your edit looks amazing! Save it to your gallery now so you don't lose those perfect beat-syncs.",
-                            ctaText = "Continue Editing",
+                            title = NotificationText(R.string.notif_quick_save_title),
+                            body = NotificationText(R.string.notif_quick_save_body),
+                            ctaText = NotificationText(R.string.notif_cta_continue_editing),
                             deepLink = NotificationDeepLinkFactory.myVideo("debug_project_02", "hint_save"),
                             imageCandidates = emptyList(),
                             fallbackImageRes = R.drawable.img_template3,
@@ -189,9 +196,12 @@ fun NotificationTestScreen(
                             itemId = "debug_project_03",
                             itemType = "video",
                             channelId = NotificationChannels.CHANNEL_MY_VIDEO_RETENTION,
-                            title = "Ready for the 'Likes'?",
-                            body = "Your 'Not Like Us' edit is 100% beat-synced and ready to go. Post it to TikTok now!",
-                            ctaText = "Continue Editing",
+                            title = NotificationText(R.string.notif_share_encouragement_title),
+                            body = NotificationText(
+                                R.string.notif_share_encouragement_body,
+                                listOf("Not Like Us")
+                            ),
+                            ctaText = NotificationText(R.string.notif_cta_continue_editing),
                             deepLink = NotificationDeepLinkFactory.myVideo("debug_project_03", "hint_share"),
                             imageCandidates = emptyList(),
                             fallbackImageRes = R.drawable.img_song3
@@ -210,9 +220,9 @@ fun NotificationTestScreen(
                             itemId = "debug_draft_01",
                             itemType = "draft",
                             channelId = NotificationChannels.CHANNEL_CREATION_REMINDERS,
-                            title = "Don't leave the beat hanging!",
-                            body = "Your 'Not Like Us' edit is almost ready. Just pick a few photos to see the magic happen!",
-                            ctaText = "View Template",
+                            title = NotificationText(R.string.notif_abandoned_select_photos_title),
+                            body = NotificationText(R.string.notif_abandoned_select_photos_body),
+                            ctaText = NotificationText(R.string.notif_cta_view_template),
                             deepLink = NotificationDeepLinkFactory.resumeTemplate(
                                 templateId = "debug_template_viral",
                                 songId = 909001L,
@@ -235,9 +245,9 @@ fun NotificationTestScreen(
                             itemId = "debug_draft_02",
                             itemType = "draft",
                             channelId = NotificationChannels.CHANNEL_CREATION_REMINDERS,
-                            title = "Finish what you started!",
-                            body = "You are only one step away from a viral video. Come back and add your photos now!",
-                            ctaText = "View Template",
+                            title = NotificationText(R.string.notif_draft_completion_nudge_title),
+                            body = NotificationText(R.string.notif_draft_completion_nudge_body),
+                            ctaText = NotificationText(R.string.notif_cta_view_template),
                             deepLink = NotificationDeepLinkFactory.resumeTemplate(
                                 templateId = "debug_template_viral",
                                 songId = 909001L,

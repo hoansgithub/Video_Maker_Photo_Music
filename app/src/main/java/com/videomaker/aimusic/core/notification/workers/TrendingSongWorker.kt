@@ -12,6 +12,7 @@ import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.NotificationText
 import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.core.notification.TrendingCandidateResolver
 import com.videomaker.aimusic.domain.repository.SongRepository
@@ -106,9 +107,12 @@ class TrendingSongWorker(
                     itemId = candidate.id.toString(),
                     itemType = "song",
                     channelId = NotificationChannels.CHANNEL_TREND_ALERTS,
-                    title = "New Trend Song!",
-                    body = "${candidate.artist}'s '${candidate.name}' is going viral! Create your edit in 1-tap before the trend peaks.",
-                    ctaText = "Play Song",
+                    title = NotificationText(R.string.notif_trending_song_title),
+                    body = NotificationText(
+                        R.string.notif_trending_song_body,
+                        listOf(candidate.artist, candidate.name)
+                    ),
+                    ctaText = NotificationText(R.string.notif_cta_play_song),
                     deepLink = NotificationDeepLinkFactory.trendingSong(candidate.id),
                     imageCandidates = listOf(candidate.coverUrl),
                     fallbackImageRes = R.drawable.img_song1

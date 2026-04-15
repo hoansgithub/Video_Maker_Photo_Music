@@ -514,4 +514,24 @@
     <string name="song_watch_ad_title">इस गाने को अनलॉक करने के लिए विज्ञापन देखें?</string>
     <string name="song_watch_ad_subtitle">देखने के बाद, आप वीडियो बनाने के लिए इस गाने का उपयोग कर सकेंगे। अनलॉक स्थायी है।</string>
 
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">नया ट्रेंडिंग गाना!</string>
+    <string name="notif_trending_song_body">%1$s का \'%2$s\' वायरल हो रहा है! ट्रेंड पीक होने से पहले 1-टैप में अपना एडिट बनाएं।</string>
+    <string name="notif_viral_template_title">आपके लिए ट्रेंडिंग टेम्पलेट्स। अभी ट्राय करें!</string>
+    <string name="notif_viral_template_body">आज 1,000,000 लोगों ने %1$s का उपयोग किया। इस हाइप को मिस न करें!</string>
+    <string name="notif_forgotten_masterpiece_title">आपकी मास्टरपीस आपका इंतज़ार कर रही है!</string>
+    <string name="notif_forgotten_masterpiece_body">कठिन काम आप कर चुके हैं, अब इसे चमकने दें। आपका वीडियो दुनिया के साथ शेयर करने के लिए तैयार है!</string>
+    <string name="notif_quick_save_title">अपना काम मत खोइए!</string>
+    <string name="notif_quick_save_body">आपका एडिट शानदार है! इसे अभी गैलरी में सेव करें ताकि आपके परफेक्ट बीट-सिंक न खो जाएँ।</string>
+    <string name="notif_share_encouragement_title">\'Likes\' के लिए तैयार?</string>
+    <string name="notif_share_encouragement_body">आपका \'%1$s\' एडिट 100%% बीट-सिंक है और तैयार है। इसे अभी TikTok पर पोस्ट करें!</string>
+    <string name="notif_abandoned_select_photos_title">बीट को अधूरा मत छोड़िए!</string>
+    <string name="notif_abandoned_select_photos_body">आपका \'Not Like Us\' एडिट लगभग तैयार है। बस कुछ फोटो चुनें और जादू देखें!</string>
+    <string name="notif_draft_completion_nudge_title">जो शुरू किया है उसे पूरा करें!</string>
+    <string name="notif_draft_completion_nudge_body">आप वायरल वीडियो से बस एक कदम दूर हैं। वापस आएँ और अभी अपनी फोटो जोड़ें।</string>
+    <string name="notif_cta_play_song">गाना चलाएं</string>
+    <string name="notif_cta_discover_templates">टेम्पलेट्स देखें</string>
+    <string name="notif_cta_continue_editing">एडिट जारी रखें</string>
+    <string name="notif_cta_view_template">टेम्पलेट देखें</string>
+
 </resources>

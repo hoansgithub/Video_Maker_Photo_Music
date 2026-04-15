@@ -12,6 +12,7 @@ import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.NotificationText
 import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import org.koin.core.component.KoinComponent
@@ -81,9 +82,9 @@ class ForgottenMasterpieceWorker(
                 itemId = projectId,
                 itemType = "video",
                 channelId = NotificationChannels.CHANNEL_MY_VIDEO_RETENTION,
-                title = "Your masterpiece is waiting!",
-                body = "You did the hard part, now let it shine. Your video is ready to be shared with the world!",
-                ctaText = "Continue Editing",
+                title = NotificationText(R.string.notif_forgotten_masterpiece_title),
+                body = NotificationText(R.string.notif_forgotten_masterpiece_body),
+                ctaText = NotificationText(R.string.notif_cta_continue_editing),
                 deepLink = NotificationDeepLinkFactory.myVideo(projectId, hintMode = "hint_share"),
                 imageCandidates = listOfNotNull(
                     state.thumbnailUri,
@@ -113,4 +114,3 @@ class ForgottenMasterpieceWorker(
         return Result.success()
     }
 }
-

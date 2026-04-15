@@ -12,6 +12,7 @@ import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.NotificationText
 import com.videomaker.aimusic.core.notification.NotificationType
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -76,9 +77,9 @@ class DraftCompletionNudgeWorker(
                 itemId = draftId,
                 itemType = "draft",
                 channelId = NotificationChannels.CHANNEL_CREATION_REMINDERS,
-                title = "Finish what you started!",
-                body = "You are only one step away from a viral video. Come back and add your photos now!",
-                ctaText = "View Template",
+                title = NotificationText(R.string.notif_draft_completion_nudge_title),
+                body = NotificationText(R.string.notif_draft_completion_nudge_body),
+                ctaText = NotificationText(R.string.notif_cta_view_template),
                 deepLink = NotificationDeepLinkFactory.resumeTemplate(
                     templateId = state.templateId,
                     songId = state.songId ?: -1L,
@@ -113,4 +114,3 @@ class DraftCompletionNudgeWorker(
         private const val DEDUPE_WITH_ABANDONED_WINDOW_MS = 6L * 60L * 60_000L
     }
 }
-

@@ -12,6 +12,7 @@ import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.NotificationText
 import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import org.koin.core.component.KoinComponent
@@ -74,9 +75,12 @@ class ShareEncouragementWorker(
                 itemId = projectId,
                 itemType = "video",
                 channelId = NotificationChannels.CHANNEL_MY_VIDEO_RETENTION,
-                title = "Ready for the 'Likes'?",
-                body = "Your '$songName' edit is 100% beat-synced and ready to go. Post it to TikTok now!",
-                ctaText = "Continue Editing",
+                title = NotificationText(R.string.notif_share_encouragement_title),
+                body = NotificationText(
+                    R.string.notif_share_encouragement_body,
+                    listOf(songName)
+                ),
+                ctaText = NotificationText(R.string.notif_cta_continue_editing),
                 deepLink = NotificationDeepLinkFactory.myVideo(projectId, hintMode = "hint_share"),
                 imageCandidates = listOfNotNull(
                     state.thumbnailUri,
@@ -105,4 +109,3 @@ class ShareEncouragementWorker(
         return Result.success()
     }
 }
-

@@ -512,4 +512,24 @@
     <string name="song_watch_ad_title">Manood ng ad para i-unlock ang kanta?</string>
     <string name="song_watch_ad_subtitle">Pagkatapos manood, magagamit mo ang kantang ito para gumawa ng mga video. Permanente ang pag-unlock.</string>
 
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">Bagong Trending Song!</string>
+    <string name="notif_trending_song_body">Nagva-viral ang \'%2$s\' ni %1$s! Gawin ang edit mo sa 1-tap bago humupa ang trend.</string>
+    <string name="notif_viral_template_title">Trending templates para sa iyo. Subukan na!</string>
+    <string name="notif_viral_template_body">1,000,000 tao ang gumamit ng %1$s ngayon. Huwag palampasin ang hype!</string>
+    <string name="notif_forgotten_masterpiece_title">Naghihintay ang obra mo!</string>
+    <string name="notif_forgotten_masterpiece_body">Nagawa mo na ang mahirap na parte, ngayon ipakislap mo na. Handa nang i-share sa mundo ang video mo!</string>
+    <string name="notif_quick_save_title">Huwag mawala ang gawa mo!</string>
+    <string name="notif_quick_save_body">Ang ganda ng edit mo! I-save mo na sa gallery para hindi mawala ang perfect beat-syncs mo.</string>
+    <string name="notif_share_encouragement_title">Handa na sa \'Likes\'?</string>
+    <string name="notif_share_encouragement_body">100%% beat-synced at ready na ang edit mong \'%1$s\'. I-post mo na sa TikTok!</string>
+    <string name="notif_abandoned_select_photos_title">Huwag iwanang bitin ang beat!</string>
+    <string name="notif_abandoned_select_photos_body">Halos ready na ang \'Not Like Us\' edit mo. Pumili ka lang ng ilang photos para makita ang magic!</string>
+    <string name="notif_draft_completion_nudge_title">Tapusin mo ang sinimulan mo!</string>
+    <string name="notif_draft_completion_nudge_body">Isang hakbang ka na lang para sa viral video. Bumalik ka at idagdag na ang photos mo ngayon.</string>
+    <string name="notif_cta_play_song">I-play ang Song</string>
+    <string name="notif_cta_discover_templates">Tuklasin ang Templates</string>
+    <string name="notif_cta_continue_editing">Ipagpatuloy ang Edit</string>
+    <string name="notif_cta_view_template">Tingnan ang Template</string>
+
 </resources>

@@ -512,4 +512,24 @@
     <string name="song_watch_ad_title">Tonton iklan untuk membuka lagu ini?</string>
     <string name="song_watch_ad_subtitle">Setelah menonton, Anda dapat menggunakan lagu ini untuk membuat video. Unlock permanen.</string>
 
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">Lagu Tren Baru!</string>
+    <string name="notif_trending_song_body">\'%2$s\' dari %1$s sedang viral! Buat edit kamu dengan 1 tap sebelum tren mencapai puncak.</string>
+    <string name="notif_viral_template_title">Template tren untuk kamu. Coba sekarang!</string>
+    <string name="notif_viral_template_body">1,000,000 orang menggunakan %1$s hari ini. Jangan lewatkan hype-nya!</string>
+    <string name="notif_forgotten_masterpiece_title">Karya kamu menunggu!</string>
+    <string name="notif_forgotten_masterpiece_body">Kamu sudah melakukan bagian sulitnya, sekarang waktunya bersinar. Video kamu siap dibagikan ke dunia!</string>
+    <string name="notif_quick_save_title">Jangan sampai karya kamu hilang!</string>
+    <string name="notif_quick_save_body">Edit kamu keren banget! Simpan ke galeri sekarang agar beat-sync sempurnamu tidak hilang.</string>
+    <string name="notif_share_encouragement_title">Siap untuk \'Likes\'?</string>
+    <string name="notif_share_encouragement_body">Edit \'%1$s\' kamu sudah 100%% beat-synced dan siap diposting. Posting ke TikTok sekarang!</string>
+    <string name="notif_abandoned_select_photos_title">Jangan tinggalkan beat-nya!</string>
+    <string name="notif_abandoned_select_photos_body">Edit \'Not Like Us\' kamu hampir siap. Tinggal pilih beberapa foto untuk melihat keajaibannya!</string>
+    <string name="notif_draft_completion_nudge_title">Selesaikan yang sudah kamu mulai!</string>
+    <string name="notif_draft_completion_nudge_body">Kamu tinggal selangkah lagi menuju video viral. Kembali dan tambahkan foto kamu sekarang.</string>
+    <string name="notif_cta_play_song">Putar Lagu</string>
+    <string name="notif_cta_discover_templates">Lihat Template</string>
+    <string name="notif_cta_continue_editing">Lanjutkan Edit</string>
+    <string name="notif_cta_view_template">Lihat Template</string>
+
 </resources>

@@ -12,6 +12,7 @@ import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.NotificationText
 import com.videomaker.aimusic.core.notification.NotificationType
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -91,9 +92,9 @@ class AbandonedSelectPhotosWorker(
                 itemId = draftId,
                 itemType = "draft",
                 channelId = NotificationChannels.CHANNEL_CREATION_REMINDERS,
-                title = "Don't leave the beat hanging!",
-                body = "Your 'Not Like Us' edit is almost ready. Just pick a few photos to see the magic happen!",
-                ctaText = "View Template",
+                title = NotificationText(R.string.notif_abandoned_select_photos_title),
+                body = NotificationText(R.string.notif_abandoned_select_photos_body),
+                ctaText = NotificationText(R.string.notif_cta_view_template),
                 deepLink = NotificationDeepLinkFactory.resumeTemplate(
                     templateId = state.templateId,
                     songId = state.songId ?: -1L,
@@ -128,4 +129,3 @@ class AbandonedSelectPhotosWorker(
         return Result.success()
     }
 }
-

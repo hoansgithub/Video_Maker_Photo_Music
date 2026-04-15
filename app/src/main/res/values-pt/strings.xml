@@ -512,4 +512,24 @@
     <string name="song_watch_ad_title">Assistir a um anúncio para desbloquear esta música?</string>
     <string name="song_watch_ad_subtitle">Depois de assistir, você poderá usar esta música para criar vídeos. O desbloqueio é permanente.</string>
 
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">Nova Música em Alta!</string>
+    <string name="notif_trending_song_body">\'%2$s\', de %1$s, está viralizando! Crie seu edit com 1 toque antes que a tendência atinja o pico.</string>
+    <string name="notif_viral_template_title">Modelos em alta para você. Experimente agora!</string>
+    <string name="notif_viral_template_body">1,000,000 de pessoas usaram %1$s hoje. Não perca esse hype!</string>
+    <string name="notif_forgotten_masterpiece_title">Sua obra-prima está esperando!</string>
+    <string name="notif_forgotten_masterpiece_body">Você já fez a parte difícil, agora deixe brilhar. Seu vídeo está pronto para ser compartilhado com o mundo!</string>
+    <string name="notif_quick_save_title">Não perca seu trabalho!</string>
+    <string name="notif_quick_save_body">Seu edit está incrível! Salve na galeria agora para não perder esse sincronismo perfeito com a batida.</string>
+    <string name="notif_share_encouragement_title">Pronto para os \'Likes\'?</string>
+    <string name="notif_share_encouragement_body">Seu edit de \'%1$s\' está 100%% sincronizado com a batida e pronto para postar. Publique no TikTok agora!</string>
+    <string name="notif_abandoned_select_photos_title">Não deixe a batida no meio do caminho!</string>
+    <string name="notif_abandoned_select_photos_body">Seu edit de \'Not Like Us\' está quase pronto. Basta escolher algumas fotos para ver a mágica acontecer!</string>
+    <string name="notif_draft_completion_nudge_title">Termine o que você começou!</string>
+    <string name="notif_draft_completion_nudge_body">Você está a um passo de um vídeo viral. Volte e adicione suas fotos agora.</string>
+    <string name="notif_cta_play_song">Tocar Música</string>
+    <string name="notif_cta_discover_templates">Descobrir Modelos</string>
+    <string name="notif_cta_continue_editing">Continuar Edição</string>
+    <string name="notif_cta_view_template">Ver Modelo</string>
+
 </resources>

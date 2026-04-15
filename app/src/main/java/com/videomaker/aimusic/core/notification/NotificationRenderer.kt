@@ -33,6 +33,9 @@ class NotificationRenderer(
 
         val stableSeed = payload.itemId.hashCode().toLong().absoluteValue
         val notificationId = buildNotificationId(payload.type.ordinal.toLong(), stableSeed)
+        val resolvedTitle = payload.title.resolve(context)
+        val resolvedBody = payload.body.resolve(context)
+        val resolvedCtaText = payload.ctaText.resolve(context)
         val deepLinkIntent = NotificationDeepLinkFactory.toMainActivityIntent(context, payload.deepLink)
         val contentIntent = PendingIntent.getBroadcast(
             context,
@@ -58,7 +61,7 @@ class NotificationRenderer(
                 itemId = payload.itemId,
                 itemType = payload.itemType,
                 notificationId = notificationId,
-                cta = payload.ctaText.lowercase(Locale.ROOT).replace(" ", "_"),
+                cta = resolvedCtaText.lowercase(Locale.ROOT).replace(" ", "_"),
                 deepLinkDestination = payload.deepLink.deepLinkDestination,
                 deepLinkIntent = deepLinkIntent
             ),
@@ -77,13 +80,16 @@ class NotificationRenderer(
             PENDING_INTENT_FLAGS
         )
 
-        val heroBitmap = loadHeroBitmap(payload)
+        val heroBitmap = loadHeroBitmap(payload, resolvedCtaText)
         val notification = buildTrendingSongCustomNotification(
             payload = payload,
             heroBitmap = heroBitmap,
             contentIntent = contentIntent,
             actionIntent = actionIntent,
-            deleteIntent = deleteIntent
+            deleteIntent = deleteIntent,
+            resolvedTitle = resolvedTitle,
+            resolvedBody = resolvedBody,
+            resolvedCtaText = resolvedCtaText
         )
 
         return runCatching {
@@ -92,7 +98,10 @@ class NotificationRenderer(
         }.getOrElse { false }
     }
 
-    private suspend fun loadHeroBitmap(payload: NotificationPayload): Bitmap = withContext(Dispatchers.IO) {
+    private suspend fun loadHeroBitmap(
+        payload: NotificationPayload,
+        resolvedCtaText: String
+    ): Bitmap = withContext(Dispatchers.IO) {
         val baseBitmap = if (payload.type == NotificationType.VIRAL_TEMPLATE && payload.imageCandidates.size > 1) {
             val bitmaps = payload.imageCandidates.take(3).mapNotNull { loadBitmapFromSource(it) }
             if (bitmaps.isNotEmpty()) composeTemplateCollage(bitmaps) else null
@@ -109,7 +118,7 @@ class NotificationRenderer(
         if (payload.type == NotificationType.TRENDING_SONG) {
             return@withContext resolvedBitmap
         }
-        decorateHeroBitmap(payload, resolvedBitmap)
+        decorateHeroBitmap(payload.type, resolvedBitmap, resolvedCtaText)
     }
 
     private fun buildTrendingSongCustomNotification(
@@ -117,14 +126,17 @@ class NotificationRenderer(
         heroBitmap: Bitmap,
         contentIntent: PendingIntent,
         actionIntent: PendingIntent,
-        deleteIntent: PendingIntent
+        deleteIntent: PendingIntent,
+        resolvedTitle: String,
+        resolvedBody: String,
+        resolvedCtaText: String
     ): android.app.Notification {
         val collapsedView = RemoteViews(
             context.packageName,
             R.layout.notification_trending_song_collapsed
         ).apply {
-            setTextViewText(R.id.tvTitle, payload.title)
-            setTextViewText(R.id.tvBody, payload.body)
+            setTextViewText(R.id.tvTitle, resolvedTitle)
+            setTextViewText(R.id.tvBody, resolvedBody)
             setImageViewBitmap(R.id.ivThumb, scaleBitmapToFit(heroBitmap, dp(56), dp(56)))
             setOnClickPendingIntent(R.id.rootContainer, contentIntent)
             setOnClickPendingIntent(R.id.ivThumb, contentIntent)
@@ -134,9 +146,9 @@ class NotificationRenderer(
             context.packageName,
             R.layout.notification_trending_song_expanded
         ).apply {
-            setTextViewText(R.id.tvTitle, payload.title)
-            setTextViewText(R.id.tvBody, payload.body)
-            setTextViewText(R.id.tvCtaText, payload.ctaText)
+            setTextViewText(R.id.tvTitle, resolvedTitle)
+            setTextViewText(R.id.tvBody, resolvedBody)
+            setTextViewText(R.id.tvCtaText, resolvedCtaText)
             setImageViewResource(R.id.ivCtaIcon, payload.ivCtaIcon)
             setImageViewBitmap(R.id.ivHero, scaleBitmapToFit(heroBitmap, dp(384), dp(216)))
             setOnClickPendingIntent(R.id.rootContainer, contentIntent)
@@ -146,8 +158,8 @@ class NotificationRenderer(
 
         return NotificationCompat.Builder(context, payload.channelId)
             .setSmallIcon(R.drawable.app_icon_loading)
-            .setContentTitle(payload.title)
-            .setContentText(payload.body)
+            .setContentTitle(resolvedTitle)
+            .setContentText(resolvedBody)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setCustomContentView(collapsedView)
             .setCustomBigContentView(expandedView)
@@ -218,8 +230,12 @@ class NotificationRenderer(
         return output
     }
 
-    private fun decorateHeroBitmap(payload: NotificationPayload, base: Bitmap): Bitmap {
-        val style = resolveHeroStyle(payload.type) ?: return base
+    private fun decorateHeroBitmap(
+        type: NotificationType,
+        base: Bitmap,
+        resolvedCtaText: String
+    ): Bitmap {
+        val style = resolveHeroStyle(type) ?: return base
         val output = base.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(output)
         val density = context.resources.displayMetrics.density
@@ -250,7 +266,7 @@ class NotificationRenderer(
         drawCta(
             canvas = canvas,
             density = density,
-            ctaText = payload.ctaText.ifBlank { defaultCtaForType(payload.type) },
+            ctaText = resolvedCtaText,
             ctaColor = style.ctaColor,
             ctaTextColor = style.ctaTextColor
         )
@@ -314,18 +330,6 @@ class NotificationRenderer(
                 ctaTextColor = Color.parseColor("#111111"),
                 gradientColor = Color.argb(215, 0, 0, 0)
             )
-        }
-    }
-
-    private fun defaultCtaForType(type: NotificationType): String {
-        return when (type) {
-            NotificationType.TRENDING_SONG -> "Play Song"
-            NotificationType.VIRAL_TEMPLATE -> "Discover Templates"
-            NotificationType.FORGOTTEN_MASTERPIECE -> "Continue Editing"
-            NotificationType.QUICK_SAVE_REMINDER -> "Continue Editing"
-            NotificationType.SHARE_ENCOURAGEMENT -> "Continue Editing"
-            NotificationType.ABANDONED_SELECT_PHOTOS -> "View Template"
-            NotificationType.DRAFT_COMPLETION_NUDGE -> "View Template"
         }
     }
 

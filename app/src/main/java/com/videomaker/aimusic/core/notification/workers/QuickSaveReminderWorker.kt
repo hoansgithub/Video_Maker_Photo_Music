@@ -12,6 +12,7 @@ import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.NotificationText
 import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import org.koin.core.component.KoinComponent
@@ -75,9 +76,9 @@ class QuickSaveReminderWorker(
                 itemId = projectId,
                 itemType = "video",
                 channelId = NotificationChannels.CHANNEL_MY_VIDEO_RETENTION,
-                title = "Don't lose your work!",
-                body = "Your edit looks amazing! Save it to your gallery now so you don't lose those perfect beat-syncs.",
-                ctaText = "Continue Editing",
+                title = NotificationText(R.string.notif_quick_save_title),
+                body = NotificationText(R.string.notif_quick_save_body),
+                ctaText = NotificationText(R.string.notif_cta_continue_editing),
                 deepLink = NotificationDeepLinkFactory.myVideo(projectId, hintMode = "hint_save"),
                 imageCandidates = listOfNotNull(
                     state.thumbnailUri,
@@ -107,4 +108,3 @@ class QuickSaveReminderWorker(
         return Result.success()
     }
 }
-

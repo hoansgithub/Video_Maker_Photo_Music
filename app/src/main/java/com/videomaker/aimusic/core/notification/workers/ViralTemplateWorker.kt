@@ -12,6 +12,7 @@ import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.NotificationText
 import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.core.notification.ViralTemplateResolver
 import com.videomaker.aimusic.domain.repository.TemplateRepository
@@ -105,9 +106,12 @@ class ViralTemplateWorker(
                     itemId = candidate.template.id,
                     itemType = "template",
                     channelId = NotificationChannels.CHANNEL_TREND_ALERTS,
-                    title = "Trending templates for you. Try it now!",
-                    body = "1,000,000 people used this ${candidate.template.name} today. Don't miss out on the hype!",
-                    ctaText = "Discover Templates",
+                    title = NotificationText(R.string.notif_viral_template_title),
+                    body = NotificationText(
+                        R.string.notif_viral_template_body,
+                        listOf(candidate.template.name)
+                    ),
+                    ctaText = NotificationText(R.string.notif_cta_discover_templates),
                     deepLink = NotificationDeepLinkFactory.viralTemplate(candidate.template.id),
                     imageCandidates = candidate.collageSources,
                     fallbackImageRes = R.drawable.img_template1
@@ -141,4 +145,3 @@ class ViralTemplateWorker(
         }
     }
 }
-

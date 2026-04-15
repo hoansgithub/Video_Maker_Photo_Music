@@ -218,6 +218,7 @@ fun AppNavigation(
                 if (!templateId.isNullOrBlank()) {
                     backStack.apply {
                         clear()
+                        add(AppRoute.Home())
                         add(
                             AppRoute.TemplatePreviewer(
                                 templateId = templateId,
@@ -248,6 +249,7 @@ fun AppNavigation(
                 val draftId = intent.getStringExtra(NotificationDeepLinkFactory.EXTRA_DRAFT_ID)
                 backStack.apply {
                     clear()
+                    add(AppRoute.Home())
                     add(
                         AppRoute.AssetPicker(
                             templateId = templateId,

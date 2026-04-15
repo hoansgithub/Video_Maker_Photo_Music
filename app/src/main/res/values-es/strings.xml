@@ -512,4 +512,24 @@
     <string name="song_watch_ad_title">¿Ver un anuncio para desbloquear esta canción?</string>
     <string name="song_watch_ad_subtitle">Después de verlo, podrás usar esta canción para crear videos. El desbloqueo es permanente.</string>
 
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">¡Nueva canción en tendencia!</string>
+    <string name="notif_trending_song_body">\'%2$s\' de %1$s se está volviendo viral. ¡Crea tu edición en 1 toque antes de que pase la tendencia!</string>
+    <string name="notif_viral_template_title">Plantillas en tendencia para ti. ¡Pruébalo ahora!</string>
+    <string name="notif_viral_template_body">1,000,000 personas usaron %1$s hoy. ¡No te pierdas el hype!</string>
+    <string name="notif_forgotten_masterpiece_title">¡Tu obra maestra te espera!</string>
+    <string name="notif_forgotten_masterpiece_body">Ya hiciste la parte difícil, ahora hazla brillar. ¡Tu video está listo para compartir con el mundo!</string>
+    <string name="notif_quick_save_title">¡No pierdas tu trabajo!</string>
+    <string name="notif_quick_save_body">¡Tu edición se ve increíble! Guárdala ahora en tu galería para no perder esos sincronizados perfectos.</string>
+    <string name="notif_share_encouragement_title">¿Listo para los \'Likes\'?</string>
+    <string name="notif_share_encouragement_body">Tu edición de \'%1$s\' está 100%% sincronizada y lista. ¡Publícala en TikTok ahora!</string>
+    <string name="notif_abandoned_select_photos_title">¡No dejes el ritmo a medias!</string>
+    <string name="notif_abandoned_select_photos_body">Tu edición de \'Not Like Us\' casi está lista. Solo elige algunas fotos para ver la magia.</string>
+    <string name="notif_draft_completion_nudge_title">¡Termina lo que empezaste!</string>
+    <string name="notif_draft_completion_nudge_body">Estás a un paso de un video viral. Regresa y agrega tus fotos ahora.</string>
+    <string name="notif_cta_play_song">Reproducir canción</string>
+    <string name="notif_cta_discover_templates">Descubrir plantillas</string>
+    <string name="notif_cta_continue_editing">Seguir editando</string>
+    <string name="notif_cta_view_template">Ver plantilla</string>
+
 </resources>

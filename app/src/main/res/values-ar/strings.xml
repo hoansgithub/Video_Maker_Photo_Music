@@ -512,4 +512,24 @@
     <string name="song_watch_ad_title">شاهد إعلانًا لفتح هذه الأغنية؟</string>
     <string name="song_watch_ad_subtitle">بعد المشاهدة، ستتمكن من استخدام هذه الأغنية لإنشاء مقاطع الفيديو. الفتح دائم.</string>
 
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">أغنية ترند جديدة!</string>
+    <string name="notif_trending_song_body">أغنية \'%2$s\' لـ %1$s تنتشر بسرعة! أنشئ فيديوك بضغطة واحدة قبل أن يصل الترند للذروة.</string>
+    <string name="notif_viral_template_title">قوالب رائجة لك. جرّبها الآن!</string>
+    <string name="notif_viral_template_body">استخدم 1,000,000 شخص قالب %1$s اليوم. لا تفوّت الحماس!</string>
+    <string name="notif_forgotten_masterpiece_title">تحفتك الفنية تنتظرك!</string>
+    <string name="notif_forgotten_masterpiece_body">أنجزت الجزء الأصعب، والآن حان وقت التألق. فيديوك جاهز للمشاركة مع العالم!</string>
+    <string name="notif_quick_save_title">لا تفقد عملك!</string>
+    <string name="notif_quick_save_body">تعديلك رائع! احفظه الآن في المعرض حتى لا تفقد مزامنة الإيقاع المثالية.</string>
+    <string name="notif_share_encouragement_title">جاهز لـ \'Likes\'؟</string>
+    <string name="notif_share_encouragement_body">تعديلك على \'%1$s\' متزامن 100%% مع الإيقاع وجاهز للنشر. انشره على TikTok الآن!</string>
+    <string name="notif_abandoned_select_photos_title">لا تترك الإيقاع معلّقًا!</string>
+    <string name="notif_abandoned_select_photos_body">تعديلك على \'Not Like Us\' شبه جاهز. فقط اختر بعض الصور لتشاهد السحر!</string>
+    <string name="notif_draft_completion_nudge_title">أكمل ما بدأت!</string>
+    <string name="notif_draft_completion_nudge_body">أنت على بُعد خطوة واحدة من فيديو فيرال. عُد الآن وأضف صورك.</string>
+    <string name="notif_cta_play_song">تشغيل الأغنية</string>
+    <string name="notif_cta_discover_templates">اكتشف القوالب</string>
+    <string name="notif_cta_continue_editing">متابعة التعديل</string>
+    <string name="notif_cta_view_template">عرض القالب</string>
+
 </resources>
