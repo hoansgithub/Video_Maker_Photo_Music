@@ -8,7 +8,9 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.notification.NotificationCapPolicy
 import com.videomaker.aimusic.core.notification.NotificationChannels
+import com.videomaker.aimusic.core.notification.NotificationScheduleConfigService
 import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
+import com.videomaker.aimusic.core.notification.hasReachedDelay
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
@@ -25,6 +27,7 @@ class DraftCompletionNudgeWorker(
     private val preferencesManager: PreferencesManager by inject()
     private val notificationCapPolicy: NotificationCapPolicy by inject()
     private val notificationRenderer: NotificationRenderer by inject()
+    private val notificationScheduleConfigService: NotificationScheduleConfigService by inject()
 
     override suspend fun doWork(): Result {
         if (!isNotificationAllowed(applicationContext)) return Result.success()
@@ -32,10 +35,11 @@ class DraftCompletionNudgeWorker(
             ?: return Result.success()
         val state = preferencesManager.getDraftReminderState(draftId) ?: return Result.success()
         val nowMs = System.currentTimeMillis()
+        val delayMs = notificationScheduleConfigService.current().draftCompletionDelayMs
 
         if (state.selectedPhotoCount > 0) return Result.success()
         if (state.templateId.isNullOrBlank() && state.songId == null) return Result.success()
-        if ((nowMs - state.exitedAtMs) < NotificationScheduler.DRAFT_COMPLETION_DELAY_MS) return Result.success()
+        if (!hasReachedDelay(nowMs - state.exitedAtMs, delayMs)) return Result.success()
         if (state.lastAbandonedShownAtMs != null &&
             (nowMs - state.lastAbandonedShownAtMs) < DEDUPE_WITH_ABANDONED_WINDOW_MS
         ) {
@@ -68,7 +72,7 @@ class DraftCompletionNudgeWorker(
             copyVariant = "finish_what_started_v1",
             imageType = "template_key_art",
             sessionType = "exit_intent",
-            delayMinutes = 15
+            delayMinutes = delayMs / 60_000L
         )
 
         val shown = notificationRenderer.show(

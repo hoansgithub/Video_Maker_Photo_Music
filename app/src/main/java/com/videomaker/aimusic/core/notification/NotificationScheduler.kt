@@ -5,6 +5,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.Constraints
 import androidx.work.NetworkType
 import androidx.work.WorkManager
+import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.notification.workers.AbandonedSelectPhotosWorker
 import com.videomaker.aimusic.core.notification.workers.DraftCompletionNudgeWorker
 import com.videomaker.aimusic.core.notification.workers.ForgottenMasterpieceWorker
@@ -20,7 +21,9 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class NotificationScheduler(
-    private val workManager: WorkManager
+    private val workManager: WorkManager,
+    private val scheduleConfigService: NotificationScheduleConfigService,
+    private val preferencesManager: PreferencesManager
 ) {
 
     fun scheduleDailyBootstrap(now: ZonedDateTime = ZonedDateTime.now()) {
@@ -57,7 +60,10 @@ class NotificationScheduler(
     }
 
     fun scheduleForgottenMasterpiece(projectId: String, generatedAtMs: Long) {
-        val delayMs = (generatedAtMs + FORGOTTEN_MASTERPIECE_DELAY_MS) - System.currentTimeMillis()
+        val delayMs = oneTimeDelayMillis(
+            anchorTimeMs = generatedAtMs,
+            configuredDelayMs = currentConfig().forgottenMasterpieceDelayMs
+        )
         val request = OneTimeWorkRequestBuilder<ForgottenMasterpieceWorker>()
             .setInputData(
                 androidx.work.Data.Builder()
@@ -67,11 +73,15 @@ class NotificationScheduler(
             .setInitialDelay(delayMs.coerceAtLeast(0L), TimeUnit.MILLISECONDS)
             .addTag(TAG_MY_VIDEO)
             .build()
+        preferencesManager.addActiveVideoReminderId(projectId)
         workManager.enqueueUniqueWork(uniqueForgotten(projectId), ExistingWorkPolicy.REPLACE, request)
     }
 
     fun scheduleQuickSaveReminder(projectId: String, generatedAtMs: Long) {
-        val delayMs = (generatedAtMs + QUICK_SAVE_DELAY_MS) - System.currentTimeMillis()
+        val delayMs = oneTimeDelayMillis(
+            anchorTimeMs = generatedAtMs,
+            configuredDelayMs = currentConfig().quickSaveDelayMs
+        )
         val request = OneTimeWorkRequestBuilder<QuickSaveReminderWorker>()
             .setInputData(
                 androidx.work.Data.Builder()
@@ -81,11 +91,15 @@ class NotificationScheduler(
             .setInitialDelay(delayMs.coerceAtLeast(0L), TimeUnit.MILLISECONDS)
             .addTag(TAG_MY_VIDEO)
             .build()
+        preferencesManager.addActiveVideoReminderId(projectId)
         workManager.enqueueUniqueWork(uniqueQuickSave(projectId), ExistingWorkPolicy.REPLACE, request)
     }
 
     fun scheduleShareEncouragement(projectId: String, generatedAtMs: Long) {
-        val delayMs = (generatedAtMs + SHARE_ENCOURAGEMENT_DELAY_MS) - System.currentTimeMillis()
+        val delayMs = oneTimeDelayMillis(
+            anchorTimeMs = generatedAtMs,
+            configuredDelayMs = currentConfig().shareEncouragementDelayMs
+        )
         val request = OneTimeWorkRequestBuilder<ShareEncouragementWorker>()
             .setInputData(
                 androidx.work.Data.Builder()
@@ -95,6 +109,7 @@ class NotificationScheduler(
             .setInitialDelay(delayMs.coerceAtLeast(0L), TimeUnit.MILLISECONDS)
             .addTag(TAG_MY_VIDEO)
             .build()
+        preferencesManager.addActiveVideoReminderId(projectId)
         workManager.enqueueUniqueWork(uniqueShare(projectId), ExistingWorkPolicy.REPLACE, request)
     }
 
@@ -102,6 +117,7 @@ class NotificationScheduler(
         workManager.cancelUniqueWork(uniqueQuickSave(projectId))
         workManager.cancelUniqueWork(uniqueShare(projectId))
         workManager.cancelUniqueWork(uniqueForgotten(projectId))
+        preferencesManager.removeActiveVideoReminderId(projectId)
     }
 
     fun scheduleAbandonedSelectPhotos(draftId: String, sessionId: Long, exitedAtMs: Long) {
@@ -117,7 +133,13 @@ class NotificationScheduler(
                     .putString(KEY_ABANDON_MODE, ABANDON_MODE_SAME)
                     .build()
             )
-            .setInitialDelay(ABANDONED_SAME_SESSION_DELAY_MS, TimeUnit.MILLISECONDS)
+            .setInitialDelay(
+                oneTimeDelayMillis(
+                    anchorTimeMs = exitedAtMs,
+                    configuredDelayMs = currentConfig().abandonedSameDelayMs
+                ),
+                TimeUnit.MILLISECONDS
+            )
             .addTag(TAG_CREATION)
             .build()
         workManager.enqueueUniqueWork(
@@ -132,7 +154,13 @@ class NotificationScheduler(
                     .putString(KEY_ABANDON_MODE, ABANDON_MODE_COLD)
                     .build()
             )
-            .setInitialDelay(ABANDONED_COLD_SESSION_DELAY_MS, TimeUnit.MILLISECONDS)
+            .setInitialDelay(
+                oneTimeDelayMillis(
+                    anchorTimeMs = exitedAtMs,
+                    configuredDelayMs = currentConfig().abandonedColdDelayMs
+                ),
+                TimeUnit.MILLISECONDS
+            )
             .addTag(TAG_CREATION)
             .build()
         workManager.enqueueUniqueWork(
@@ -140,10 +168,14 @@ class NotificationScheduler(
             ExistingWorkPolicy.REPLACE,
             coldSessionRequest
         )
+        preferencesManager.addActiveDraftReminderId(draftId)
     }
 
     fun scheduleDraftCompletionNudge(draftId: String, exitedAtMs: Long) {
-        val delayMs = (exitedAtMs + DRAFT_COMPLETION_DELAY_MS) - System.currentTimeMillis()
+        val delayMs = oneTimeDelayMillis(
+            anchorTimeMs = exitedAtMs,
+            configuredDelayMs = currentConfig().draftCompletionDelayMs
+        )
         val request = OneTimeWorkRequestBuilder<DraftCompletionNudgeWorker>()
             .setInputData(
                 androidx.work.Data.Builder()
@@ -154,6 +186,7 @@ class NotificationScheduler(
             .setInitialDelay(delayMs.coerceAtLeast(0L), TimeUnit.MILLISECONDS)
             .addTag(TAG_CREATION)
             .build()
+        preferencesManager.addActiveDraftReminderId(draftId)
         workManager.enqueueUniqueWork(
             uniqueDraftNudge(sanitizeKey(draftId)),
             ExistingWorkPolicy.REPLACE,
@@ -166,6 +199,7 @@ class NotificationScheduler(
         workManager.cancelUniqueWork(uniqueAbandonedSame(sanitized))
         workManager.cancelUniqueWork(uniqueAbandonedCold(sanitized))
         workManager.cancelUniqueWork(uniqueDraftNudge(sanitized))
+        preferencesManager.removeActiveDraftReminderId(draftId)
     }
 
     private fun enqueueDailyTrendingSong(
@@ -177,7 +211,14 @@ class NotificationScheduler(
             .build()
 
         val request = OneTimeWorkRequestBuilder<TrendingSongWorker>()
-            .setInitialDelay(nextDelayMillis(now), TimeUnit.MILLISECONDS)
+            .setInitialDelay(
+                nextDelayMillis(
+                    now = now,
+                    hour = currentConfig().trendingHour,
+                    minute = currentConfig().trendingMinute
+                ),
+                TimeUnit.MILLISECONDS
+            )
             .setConstraints(constraints)
             .addTag(TAG_TRENDING_DAILY)
             .build()
@@ -198,7 +239,14 @@ class NotificationScheduler(
             .build()
 
         val request = OneTimeWorkRequestBuilder<ViralTemplateWorker>()
-            .setInitialDelay(nextDelayMillis(now, TARGET_VIRAL_HOUR, TARGET_VIRAL_MINUTE), TimeUnit.MILLISECONDS)
+            .setInitialDelay(
+                nextDelayMillis(
+                    now = now,
+                    hour = currentConfig().viralHour,
+                    minute = currentConfig().viralMinute
+                ),
+                TimeUnit.MILLISECONDS
+            )
             .setConstraints(constraints)
             .addTag(TAG_VIRAL_DAILY)
             .build()
@@ -210,8 +258,10 @@ class NotificationScheduler(
         )
     }
 
-    private fun nextDelayMillis(now: ZonedDateTime): Long {
-        return nextDelayMillis(now, TARGET_TRENDING_HOUR, TARGET_TRENDING_MINUTE)
+    private fun currentConfig(): NotificationScheduleConfig = scheduleConfigService.current()
+
+    private fun oneTimeDelayMillis(anchorTimeMs: Long, configuredDelayMs: Long): Long {
+        return ((anchorTimeMs + configuredDelayMs) - System.currentTimeMillis()).coerceAtLeast(0L)
     }
 
     private fun nextDelayMillis(now: ZonedDateTime, hour: Int, minute: Int): Long {
@@ -250,10 +300,6 @@ class NotificationScheduler(
         private const val TAG_CREATION = "notif_creation"
         private const val TAG_TRENDING_DAILY = "notif_trending_song_daily_tag"
         private const val TAG_VIRAL_DAILY = "notif_viral_template_daily_tag"
-        private const val TARGET_TRENDING_HOUR = 19
-        private const val TARGET_TRENDING_MINUTE = 2
-        private const val TARGET_VIRAL_HOUR = 20
-        private const val TARGET_VIRAL_MINUTE = 2
         const val QUICK_SAVE_DELAY_MS = 30L * 60_000L
         const val SHARE_ENCOURAGEMENT_DELAY_MS = 12L * 60L * 60_000L
         const val FORGOTTEN_MASTERPIECE_DELAY_MS = 24L * 60L * 60_000L

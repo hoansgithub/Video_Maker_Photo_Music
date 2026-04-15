@@ -8,7 +8,9 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.notification.NotificationCapPolicy
 import com.videomaker.aimusic.core.notification.NotificationChannels
+import com.videomaker.aimusic.core.notification.NotificationScheduleConfigService
 import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
+import com.videomaker.aimusic.core.notification.hasReachedDelay
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
@@ -26,6 +28,7 @@ class ShareEncouragementWorker(
     private val preferencesManager: PreferencesManager by inject()
     private val notificationCapPolicy: NotificationCapPolicy by inject()
     private val notificationRenderer: NotificationRenderer by inject()
+    private val notificationScheduleConfigService: NotificationScheduleConfigService by inject()
     private val projectRepository: ProjectRepository by inject()
 
     override suspend fun doWork(): Result {
@@ -35,9 +38,10 @@ class ShareEncouragementWorker(
         val state = preferencesManager.getVideoReminderState(projectId) ?: return Result.success()
         val project = projectRepository.getProject(projectId) ?: return Result.success()
         val nowMs = System.currentTimeMillis()
+        val delayMs = notificationScheduleConfigService.current().shareEncouragementDelayMs
 
         if (state.sharedAtMs != null) return Result.success()
-        if ((nowMs - state.generatedAtMs) < NotificationScheduler.SHARE_ENCOURAGEMENT_DELAY_MS) return Result.success()
+        if (!hasReachedDelay(nowMs - state.generatedAtMs, delayMs)) return Result.success()
 
         val gateDecision = notificationCapPolicy.evaluate(
             NotificationCapPolicy.Input(
@@ -66,7 +70,7 @@ class ShareEncouragementWorker(
             copyVariant = "likes_push_v1",
             imageType = if (!state.thumbnailUri.isNullOrBlank()) "video_cover" else "fallback_artwork",
             sessionType = "retention",
-            delayMinutes = 12L * 60L
+            delayMinutes = delayMs / 60_000L
         )
 
         val shown = notificationRenderer.show(

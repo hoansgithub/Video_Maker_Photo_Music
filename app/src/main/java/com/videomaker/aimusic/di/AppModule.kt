@@ -87,8 +87,14 @@ import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
 import com.videomaker.aimusic.core.notification.NotificationCapPolicy
 import com.videomaker.aimusic.core.notification.NotificationChannels
 import com.videomaker.aimusic.core.notification.NotificationConversionTracker
+import com.videomaker.aimusic.core.notification.NotificationReminderStore
+import com.videomaker.aimusic.core.notification.NotificationRescheduleController
 import com.videomaker.aimusic.core.notification.NotificationRenderer
+import com.videomaker.aimusic.core.notification.NotificationScheduleConfigService
+import com.videomaker.aimusic.core.notification.NotificationScheduleReconciler
 import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.PreferencesReminderStore
+import com.videomaker.aimusic.core.notification.SchedulerRescheduleController
 import com.videomaker.aimusic.core.notification.AppSessionTracker
 import com.videomaker.aimusic.core.rating.RatingTriggerManager
 import com.videomaker.aimusic.data.repository.FeedbackRepositoryImpl
@@ -106,6 +112,7 @@ import org.koin.android.ext.koin.androidApplication
 // import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 // import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
+import java.time.ZonedDateTime
 
 /**
  * ACCDI Dependency Injection Modules
@@ -147,7 +154,23 @@ val dataModule = module {
 
     // WorkManager
     single { WorkManager.getInstance(androidContext()) }
-    single { NotificationScheduler(get()) }
+    single {
+        NotificationScheduleConfigService(
+            onEffectiveConfigChanged = {
+                runCatching {
+                    val koin = org.koin.core.context.GlobalContext.getOrNull() ?: return@runCatching
+                    koin.getOrNull<NotificationScheduleReconciler>()
+                        ?.reconcileOnConfigChanged(ZonedDateTime.now())
+                }
+            }
+        ).also {
+            co.alcheclub.lib.acccore.di.koin.SingletonTracker.track(it)
+        }
+    }
+    single { NotificationScheduler(get(), get(), get()) }
+    single<NotificationReminderStore> { PreferencesReminderStore(get()) }
+    single<NotificationRescheduleController> { SchedulerRescheduleController(get()) }
+    single { NotificationScheduleReconciler(get(), get()) }
     single { NotificationCapPolicy() }
     single { NotificationChannels() }
     single { NotificationRenderer(androidContext(), get()) }

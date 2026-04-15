@@ -20,6 +20,7 @@ class PreferencesManager(context: Context) {
         PREFS_NAME,
         Context.MODE_PRIVATE
     )
+    private val stringSetLock = Any()
 
     companion object {
         private const val PREFS_NAME = "video_maker_prefs"
@@ -58,6 +59,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_VIDEO_REMINDER_SAVED_AT_PREFIX = "video_reminder_saved_at_"
         private const val KEY_VIDEO_REMINDER_SHARED_AT_PREFIX = "video_reminder_shared_at_"
         private const val KEY_VIDEO_REMINDER_LAST_OPENED_AT_PREFIX = "video_reminder_last_opened_at_"
+        private const val KEY_ACTIVE_VIDEO_REMINDER_IDS = "active_video_reminder_ids"
         private const val KEY_DRAFT_REMINDER_TEMPLATE_ID_PREFIX = "draft_reminder_template_id_"
         private const val KEY_DRAFT_REMINDER_SONG_ID_PREFIX = "draft_reminder_song_id_"
         private const val KEY_DRAFT_REMINDER_EXITED_AT_PREFIX = "draft_reminder_exited_at_"
@@ -65,6 +67,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_DRAFT_REMINDER_SELECTED_COUNT_PREFIX = "draft_reminder_selected_count_"
         private const val KEY_DRAFT_REMINDER_LAST_ABANDONED_SHOWN_PREFIX = "draft_reminder_last_abandoned_shown_"
         private const val KEY_DRAFT_REMINDER_LAST_DRAFT_NUDGE_SHOWN_PREFIX = "draft_reminder_last_draft_nudge_shown_"
+        private const val KEY_ACTIVE_DRAFT_REMINDER_IDS = "active_draft_reminder_ids"
         private const val KEY_MEDIA_FULL_PERMISSION_REQUEST_COUNT = "media_full_permission_request_count"
         private const val KEY_MEDIA_FULL_PERMISSION_BLOCKED = "media_full_permission_blocked"
         private const val RECENT_SEARCHES_DELIMITER = "\u001F" // Unit Separator
@@ -445,6 +448,29 @@ class PreferencesManager(context: Context) {
         }
     }
 
+    fun getActiveVideoReminderIds(): Set<String> {
+        return prefs.getStringSet(KEY_ACTIVE_VIDEO_REMINDER_IDS, emptySet())
+            ?.filterNot { it.isBlank() }
+            ?.toSet()
+            ?: emptySet()
+    }
+
+    fun addActiveVideoReminderId(projectId: String) {
+        val normalized = projectId.trim()
+        if (normalized.isBlank()) return
+        mutateStringSet(KEY_ACTIVE_VIDEO_REMINDER_IDS) { current ->
+            current.add(normalized)
+        }
+    }
+
+    fun removeActiveVideoReminderId(projectId: String) {
+        val normalized = projectId.trim()
+        if (normalized.isBlank()) return
+        mutateStringSet(KEY_ACTIVE_VIDEO_REMINDER_IDS) { current ->
+            current.remove(normalized)
+        }
+    }
+
     fun getVideoReminderState(projectId: String): VideoReminderState? {
         if (projectId.isBlank()) return null
         val generatedAt = prefs.getLong(videoGeneratedAtKey(projectId), -1L)
@@ -507,6 +533,29 @@ class PreferencesManager(context: Context) {
             putLong(draftExitedAtKey(normalized), exitedAtMs.coerceAtLeast(0L))
             putLong(draftExitSessionKey(normalized), exitSessionId.coerceAtLeast(0L))
             putInt(draftSelectedCountKey(normalized), selectedPhotoCount.coerceAtLeast(0))
+        }
+    }
+
+    fun getActiveDraftReminderIds(): Set<String> {
+        return prefs.getStringSet(KEY_ACTIVE_DRAFT_REMINDER_IDS, emptySet())
+            ?.filterNot { it.isBlank() }
+            ?.toSet()
+            ?: emptySet()
+    }
+
+    fun addActiveDraftReminderId(draftId: String) {
+        val normalized = draftId.trim()
+        if (normalized.isBlank()) return
+        mutateStringSet(KEY_ACTIVE_DRAFT_REMINDER_IDS) { current ->
+            current.add(normalized)
+        }
+    }
+
+    fun removeActiveDraftReminderId(draftId: String) {
+        val normalized = draftId.trim()
+        if (normalized.isBlank()) return
+        mutateStringSet(KEY_ACTIVE_DRAFT_REMINDER_IDS) { current ->
+            current.remove(normalized)
         }
     }
 
@@ -631,6 +680,19 @@ class PreferencesManager(context: Context) {
     private fun draftSelectedCountKey(draftId: String): String = "$KEY_DRAFT_REMINDER_SELECTED_COUNT_PREFIX$draftId"
     private fun draftLastAbandonedShownKey(draftId: String): String = "$KEY_DRAFT_REMINDER_LAST_ABANDONED_SHOWN_PREFIX$draftId"
     private fun draftLastDraftNudgeShownKey(draftId: String): String = "$KEY_DRAFT_REMINDER_LAST_DRAFT_NUDGE_SHOWN_PREFIX$draftId"
+
+    private fun mutateStringSet(
+        key: String,
+        mutator: (MutableSet<String>) -> Unit
+    ) {
+        synchronized(stringSetLock) {
+            val current = prefs.getStringSet(key, emptySet())?.toMutableSet() ?: mutableSetOf()
+            mutator(current)
+            prefs.edit(commit = true) {
+                putStringSet(key, current)
+            }
+        }
+    }
 
     private fun normalizeDraftId(draftId: String): String {
         return draftId

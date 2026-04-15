@@ -8,7 +8,9 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.notification.NotificationCapPolicy
 import com.videomaker.aimusic.core.notification.NotificationChannels
+import com.videomaker.aimusic.core.notification.NotificationScheduleConfigService
 import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
+import com.videomaker.aimusic.core.notification.hasReachedDelay
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
@@ -26,6 +28,7 @@ class ForgottenMasterpieceWorker(
     private val preferencesManager: PreferencesManager by inject()
     private val notificationCapPolicy: NotificationCapPolicy by inject()
     private val notificationRenderer: NotificationRenderer by inject()
+    private val notificationScheduleConfigService: NotificationScheduleConfigService by inject()
     private val projectRepository: ProjectRepository by inject()
 
     override suspend fun doWork(): Result {
@@ -35,9 +38,10 @@ class ForgottenMasterpieceWorker(
         val state = preferencesManager.getVideoReminderState(projectId) ?: return Result.success()
         val project = projectRepository.getProject(projectId) ?: return Result.success()
         val nowMs = System.currentTimeMillis()
+        val delayMs = notificationScheduleConfigService.current().forgottenMasterpieceDelayMs
 
         if (state.savedAtMs != null || state.sharedAtMs != null) return Result.success()
-        if ((nowMs - state.generatedAtMs) < NotificationScheduler.FORGOTTEN_MASTERPIECE_DELAY_MS) return Result.success()
+        if (!hasReachedDelay(nowMs - state.generatedAtMs, delayMs)) return Result.success()
 
         val gateDecision = notificationCapPolicy.evaluate(
             NotificationCapPolicy.Input(
@@ -73,7 +77,7 @@ class ForgottenMasterpieceWorker(
             copyVariant = "masterpiece_waiting_v1",
             imageType = if (!state.thumbnailUri.isNullOrBlank()) "video_cover" else "fallback_artwork",
             sessionType = "retention",
-            delayMinutes = 24L * 60L
+            delayMinutes = delayMs / 60_000L
         )
 
         val shown = notificationRenderer.show(

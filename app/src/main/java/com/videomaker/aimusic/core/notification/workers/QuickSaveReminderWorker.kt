@@ -8,7 +8,9 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.notification.NotificationCapPolicy
 import com.videomaker.aimusic.core.notification.NotificationChannels
+import com.videomaker.aimusic.core.notification.NotificationScheduleConfigService
 import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
+import com.videomaker.aimusic.core.notification.hasReachedDelay
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
@@ -26,6 +28,7 @@ class QuickSaveReminderWorker(
     private val preferencesManager: PreferencesManager by inject()
     private val notificationCapPolicy: NotificationCapPolicy by inject()
     private val notificationRenderer: NotificationRenderer by inject()
+    private val notificationScheduleConfigService: NotificationScheduleConfigService by inject()
     private val projectRepository: ProjectRepository by inject()
 
     override suspend fun doWork(): Result {
@@ -35,11 +38,12 @@ class QuickSaveReminderWorker(
         val state = preferencesManager.getVideoReminderState(projectId) ?: return Result.success()
         val project = projectRepository.getProject(projectId) ?: return Result.success()
         val nowMs = System.currentTimeMillis()
+        val delayMs = notificationScheduleConfigService.current().quickSaveDelayMs
 
         val appBackgroundAt = preferencesManager.getLastAppBackgroundAtMs() ?: return Result.success()
         if (appBackgroundAt <= state.generatedAtMs) return Result.success()
         if (state.savedAtMs != null || state.sharedAtMs != null) return Result.success()
-        if ((nowMs - state.generatedAtMs) < NotificationScheduler.QUICK_SAVE_DELAY_MS) return Result.success()
+        if (!hasReachedDelay(nowMs - state.generatedAtMs, delayMs)) return Result.success()
 
         val gateDecision = notificationCapPolicy.evaluate(
             NotificationCapPolicy.Input(
@@ -67,7 +71,7 @@ class QuickSaveReminderWorker(
             copyVariant = "quick_save_v1",
             imageType = if (!state.thumbnailUri.isNullOrBlank()) "video_cover" else "save_illustration",
             sessionType = "retention",
-            delayMinutes = 30
+            delayMinutes = delayMs / 60_000L
         )
 
         val shown = notificationRenderer.show(

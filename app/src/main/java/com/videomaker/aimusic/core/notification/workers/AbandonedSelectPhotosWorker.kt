@@ -8,7 +8,9 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.notification.NotificationCapPolicy
 import com.videomaker.aimusic.core.notification.NotificationChannels
+import com.videomaker.aimusic.core.notification.NotificationScheduleConfigService
 import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
+import com.videomaker.aimusic.core.notification.hasReachedDelay
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
@@ -25,6 +27,7 @@ class AbandonedSelectPhotosWorker(
     private val preferencesManager: PreferencesManager by inject()
     private val notificationCapPolicy: NotificationCapPolicy by inject()
     private val notificationRenderer: NotificationRenderer by inject()
+    private val notificationScheduleConfigService: NotificationScheduleConfigService by inject()
 
     override suspend fun doWork(): Result {
         if (!isNotificationAllowed(applicationContext)) return Result.success()
@@ -34,6 +37,7 @@ class AbandonedSelectPhotosWorker(
         val exitSessionId = inputData.getLong(NotificationScheduler.KEY_EXIT_SESSION_ID, -1L).coerceAtLeast(0L)
         val state = preferencesManager.getDraftReminderState(draftId) ?: return Result.success()
         val nowMs = System.currentTimeMillis()
+        val config = notificationScheduleConfigService.current()
 
         if (state.selectedPhotoCount > 0) return Result.success()
         if (state.templateId.isNullOrBlank() && state.songId == null) return Result.success()
@@ -47,11 +51,11 @@ class AbandonedSelectPhotosWorker(
         if (!sessionValid) return Result.success()
 
         val expectedDelayMs = if (mode == NotificationScheduler.ABANDON_MODE_SAME) {
-            NotificationScheduler.ABANDONED_SAME_SESSION_DELAY_MS
+            config.abandonedSameDelayMs
         } else {
-            NotificationScheduler.ABANDONED_COLD_SESSION_DELAY_MS
+            config.abandonedColdDelayMs
         }
-        if ((nowMs - state.exitedAtMs) < expectedDelayMs) return Result.success()
+        if (!hasReachedDelay(nowMs - state.exitedAtMs, expectedDelayMs)) return Result.success()
 
         val gateDecision = notificationCapPolicy.evaluate(
             NotificationCapPolicy.Input(
@@ -83,7 +87,7 @@ class AbandonedSelectPhotosWorker(
             copyVariant = "beat_hanging_v1",
             imageType = "template_key_art",
             sessionType = mode,
-            delayMinutes = if (mode == NotificationScheduler.ABANDON_MODE_SAME) 2 else 15
+            delayMinutes = expectedDelayMs / 60_000L
         )
 
         val shown = notificationRenderer.show(
