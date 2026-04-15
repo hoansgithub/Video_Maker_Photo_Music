@@ -91,6 +91,8 @@ fun HomeScreen(
     songsViewModel: SongsViewModel,
     projectsViewModel: ProjectsViewModel,
     initialTab: Int = 0,
+    highlightProjectId: String? = null,
+    projectHintMode: String? = null,
     onSettingsClick: (String) -> Unit = {},
     onCreateClick: () -> Unit = {},
     onProjectClick: (String) -> Unit = {},
@@ -207,6 +209,8 @@ fun HomeScreen(
                     )
                     2 -> ProjectsTabContent(
                         viewModel = projectsViewModel,
+                        highlightProjectId = highlightProjectId,
+                        hintMode = projectHintMode,
                         onCreateClick = {
                             Analytics.trackCreationStart(AnalyticsEvent.Value.Location.LIBRARY)
                             onNavigateToTemplateDetail("", AnalyticsEvent.Value.Location.LIBRARY_RCM)

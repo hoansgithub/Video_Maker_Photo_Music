@@ -33,6 +33,7 @@ import com.videomaker.aimusic.di.mediaModule
 import com.videomaker.aimusic.di.presentationModule
 import com.videomaker.aimusic.di.adsModule
 import com.videomaker.aimusic.core.ads.AdInitializer
+import com.videomaker.aimusic.core.notification.AppSessionTracker
 import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
 import com.videomaker.aimusic.media.library.MusicSongLibrary
 import com.videomaker.aimusic.media.library.TransitionSetLibrary
@@ -46,6 +47,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import androidx.lifecycle.ProcessLifecycleOwner
 
 /**
  * Application class for Video Maker App
@@ -349,6 +351,11 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                 domainModule,       // Use cases & business logic
                 presentationModule  // ViewModels
             )
+        }
+
+        runCatching {
+            val appSessionTracker = org.koin.core.context.GlobalContext.get().get<AppSessionTracker>()
+            ProcessLifecycleOwner.get().lifecycle.addObserver(appSessionTracker)
         }
 
         // ============================================

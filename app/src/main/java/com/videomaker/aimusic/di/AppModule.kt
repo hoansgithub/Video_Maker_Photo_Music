@@ -84,6 +84,12 @@ import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewMod
 import com.videomaker.aimusic.core.device.DeviceInfoProvider
 import com.videomaker.aimusic.core.permission.MediaPermissionCoordinator
 import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
+import com.videomaker.aimusic.core.notification.NotificationCapPolicy
+import com.videomaker.aimusic.core.notification.NotificationChannels
+import com.videomaker.aimusic.core.notification.NotificationConversionTracker
+import com.videomaker.aimusic.core.notification.NotificationRenderer
+import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.AppSessionTracker
 import com.videomaker.aimusic.core.rating.RatingTriggerManager
 import com.videomaker.aimusic.data.repository.FeedbackRepositoryImpl
 import com.videomaker.aimusic.domain.repository.FeedbackRepository
@@ -141,6 +147,12 @@ val dataModule = module {
 
     // WorkManager
     single { WorkManager.getInstance(androidContext()) }
+    single { NotificationScheduler(get()) }
+    single { NotificationCapPolicy() }
+    single { NotificationChannels() }
+    single { NotificationRenderer(androidContext(), get()) }
+    single { NotificationConversionTracker(get()) }
+    single { AppSessionTracker(get()) }
 
     // Project Database
     single { ProjectDatabase.getInstance(androidContext()) }
@@ -386,13 +398,16 @@ class AssetPickerViewModelFactory(
     private val addAssetsUseCase: AddAssetsUseCase,
     private val templateRepository: TemplateRepository,
     private val songRepository: SongRepository,
-    private val adsLoaderService: AdsLoaderService
+    private val adsLoaderService: AdsLoaderService,
+    private val notificationScheduler: NotificationScheduler,
+    private val preferencesManager: PreferencesManager
 ) {
     fun create(
         projectId: String? = null,
         templateId: String? = null,
         overrideSongId: Long = -1L,
-        aspectRatio: com.videomaker.aimusic.domain.model.AspectRatio? = null
+        aspectRatio: com.videomaker.aimusic.domain.model.AspectRatio? = null,
+        resumeDraftId: String? = null
     ): AssetPickerViewModel {
         return AssetPickerViewModel(
             context = application,
@@ -401,10 +416,13 @@ class AssetPickerViewModelFactory(
             templateRepository = templateRepository,
             songRepository = songRepository,
             adsLoaderService = adsLoaderService,
+            notificationScheduler = notificationScheduler,
+            preferencesManager = preferencesManager,
             projectId = projectId,
             templateId = templateId,
             overrideSongId = overrideSongId,
-            aspectRatio = aspectRatio
+            aspectRatio = aspectRatio,
+            resumeDraftId = resumeDraftId
         )
     }
 }
@@ -454,7 +472,10 @@ class ExportViewModelFactory(
     private val templateRepository: TemplateRepository,
     private val ratingTriggerManager: RatingTriggerManager,
     private val submitFeedbackUseCase: SubmitFeedbackUseCase,
-    private val adsLoaderService: AdsLoaderService
+    private val adsLoaderService: AdsLoaderService,
+    private val notificationScheduler: NotificationScheduler,
+    private val preferencesManager: PreferencesManager,
+    private val conversionTracker: NotificationConversionTracker
 ) {
     fun create(projectId: String, quality: com.videomaker.aimusic.domain.model.VideoQuality = com.videomaker.aimusic.domain.model.VideoQuality.DEFAULT): ExportViewModel {
         return ExportViewModel(
@@ -465,7 +486,10 @@ class ExportViewModelFactory(
             templateRepository = templateRepository,
             ratingTriggerManager = ratingTriggerManager,
             submitFeedbackUseCase = submitFeedbackUseCase,
-            adsLoaderService = adsLoaderService
+            adsLoaderService = adsLoaderService,
+            notificationScheduler = notificationScheduler,
+            preferencesManager = preferencesManager,
+            conversionTracker = conversionTracker
         )
     }
 }
@@ -483,7 +507,10 @@ class ProjectsViewModelFactory(
     private val likeSongUseCase: LikeSongUseCase,
     private val unlikeSongUseCase: UnlikeSongUseCase,
     private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
-    private val adsLoaderService: AdsLoaderService
+    private val adsLoaderService: AdsLoaderService,
+    private val notificationScheduler: NotificationScheduler,
+    private val preferencesManager: PreferencesManager,
+    private val conversionTracker: NotificationConversionTracker
 ) {
     fun create(): ProjectsViewModel {
         return ProjectsViewModel(
@@ -496,7 +523,10 @@ class ProjectsViewModelFactory(
             likeSongUseCase = likeSongUseCase,
             unlikeSongUseCase = unlikeSongUseCase,
             unlikeTemplateUseCase = unlikeTemplateUseCase,
-            adsLoaderService = adsLoaderService
+            adsLoaderService = adsLoaderService,
+            notificationScheduler = notificationScheduler,
+            preferencesManager = preferencesManager,
+            conversionTracker = conversionTracker
         )
     }
 }
@@ -756,7 +786,9 @@ val presentationModule = module {
             addAssetsUseCase = get(),
             templateRepository = get(),
             songRepository = get(),
-            adsLoaderService = get()
+            adsLoaderService = get(),
+            notificationScheduler = get(),
+            preferencesManager = get()
         )
     }
 
@@ -783,7 +815,10 @@ val presentationModule = module {
             templateRepository = get(),
             ratingTriggerManager = get(),
             submitFeedbackUseCase = get(),
-            adsLoaderService = get()
+            adsLoaderService = get(),
+            notificationScheduler = get(),
+            preferencesManager = get(),
+            conversionTracker = get()
         )
     }
 
@@ -799,7 +834,10 @@ val presentationModule = module {
             likeSongUseCase = get(),
             unlikeSongUseCase = get(),
             unlikeTemplateUseCase = get(),
-            adsLoaderService = get()
+            adsLoaderService = get(),
+            notificationScheduler = get(),
+            preferencesManager = get(),
+            conversionTracker = get()
         )
     }
 

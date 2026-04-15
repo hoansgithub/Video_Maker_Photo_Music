@@ -22,11 +22,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
+import com.videomaker.aimusic.core.notification.NotificationScheduler
 import com.videomaker.aimusic.navigation.AppNavigation
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.widget.appwidget.WidgetActions
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 
 /**
  * MainActivity — Main app content host
@@ -46,6 +49,8 @@ import kotlinx.coroutines.launch
  */
 class MainActivity : AppCompatActivity() {
 
+    private val notificationScheduler: NotificationScheduler by inject()
+
     // Observed by AppNavigation to trigger deep-link navigation.
     // Set only on first launch (not rotation) and on new widget intents.
     private var pendingDeepLink: Intent? by mutableStateOf(null)
@@ -62,6 +67,8 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         android.util.Log.d(TAG, "onCreate() called - savedInstanceState=${if (savedInstanceState == null) "null" else "exists"}, intent=$intent")
+
+        notificationScheduler.scheduleDailyBootstrap()
 
         if (savedInstanceState == null) {
             startupInitialTab = intent.getIntExtra(EXTRA_INITIAL_TAB, 0).coerceIn(0, 2)
@@ -167,6 +174,10 @@ class MainActivity : AppCompatActivity() {
         trackShortcutIfNeeded(intent)
         when {
             intent.action == ACTION_UNINSTALL_APP -> navigateToUninstall = true
+            intent.action == NotificationDeepLinkFactory.ACTION_NOTIF_TRENDING_SONG -> pendingDeepLink = intent
+            intent.action == NotificationDeepLinkFactory.ACTION_NOTIF_VIRAL_TEMPLATE -> pendingDeepLink = intent
+            intent.action == NotificationDeepLinkFactory.ACTION_NOTIF_MY_VIDEO -> pendingDeepLink = intent
+            intent.action == NotificationDeepLinkFactory.ACTION_NOTIF_RESUME_TEMPLATE -> pendingDeepLink = intent
             isWidgetIntent(intent) -> pendingDeepLink = intent
         }
     }

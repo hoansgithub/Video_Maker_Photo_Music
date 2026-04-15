@@ -52,9 +52,17 @@ sealed interface AppRoute : NavKey {
     /**
      * Home screen with optional initial tab
      * @param initialTab Tab index: 0=Gallery, 1=Songs, 2=My Videos
+     * @param initialSongId Optional song deep-link entry (widget/notification path)
+     * @param highlightProjectId Optional project id to focus in My Video tab
+     * @param hintMode Optional hint mode to guide save/share action
      */
     @Serializable
-    data class Home(val initialTab: Int = 0, val initialSongId: Long = -1L) : AppRoute
+    data class Home(
+        val initialTab: Int = 0,
+        val initialSongId: Long = -1L,
+        val highlightProjectId: String? = null,
+        val hintMode: String? = null
+    ) : AppRoute
 
     @Serializable
     data class UnifiedSearch(
@@ -90,7 +98,8 @@ sealed interface AppRoute : NavKey {
         val templateId: String? = null,
         val overrideSongId: Long = -1L,
         val aspectRatio: AspectRatio? = null,
-        val sourceLocation: String? = null
+        val sourceLocation: String? = null,
+        val resumeDraftId: String? = null
     ) : AppRoute
 
     /**
@@ -158,6 +167,9 @@ sealed interface AppRoute : NavKey {
 
     @Serializable
     data object WidgetScreen : AppRoute
+
+    @Serializable
+    data object NotificationTest : AppRoute
 
     @Serializable
     data object ConfirmUninstall : AppRoute

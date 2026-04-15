@@ -211,6 +211,17 @@ object AnalyticsEvent {
     const val UNINSTALL_CTA_CLICK = "uninstall_cta_click"
 
     // ============================================
+    // 21. NOTIFICATION
+    // ============================================
+    const val NOTIFICATION_ELIGIBLE = "notification_eligible"
+    const val NOTIFICATION_SCHEDULED = "notification_scheduled"
+    const val NOTIFICATION_SHOWN = "notification_shown"
+    const val NOTIFICATION_CLICK = "notification_click"
+    const val NOTIFICATION_DISMISS = "notification_dismiss"
+    const val NOTIFICATION_CANCELED = "notification_canceled"
+    const val NOTIFICATION_CONVERSION = "notification_conversion"
+
+    // ============================================
     // PARAMETER KEYS
     // ============================================
     object Param {
@@ -277,6 +288,20 @@ object AnalyticsEvent {
 
         const val CORRELATION_ID = "correlation_id"
         const val SCREEN_SESSION_ID = "screen_session_id"
+        const val NOTIFICATION_TYPE = "notification_type"
+        const val ITEM_ID = "item_id"
+        const val ITEM_TYPE = "item_type"
+        const val SOURCE_TRIGGER = "source_trigger"
+        const val DEEP_LINK_DESTINATION = "deep_link_destination"
+        const val COPY_VARIANT = "copy_variant"
+        const val IMAGE_TYPE = "image_type"
+        const val SESSION_TYPE = "session_type"
+        const val DELAY_MINUTES = "delay_minutes"
+        const val SHOWN_AT = "shown_at"
+        const val TAPPED_AT = "tapped_at"
+        const val CONVERSION_ACTION = "conversion_action"
+        const val CONVERSION_TIME_MINUTES = "conversion_time_minutes"
+        const val CTA = "cta"
     }
 
     // ============================================

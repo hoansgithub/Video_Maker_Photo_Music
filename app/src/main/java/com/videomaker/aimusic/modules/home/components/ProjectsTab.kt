@@ -108,6 +108,8 @@ import org.koin.compose.koinInject
 @Composable
 fun ProjectsTabContent(
     viewModel: ProjectsViewModel,
+    highlightProjectId: String? = null,
+    hintMode: String? = null,
     onCreateClick: () -> Unit,
     onProjectClick: (String) -> Unit,
     onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
@@ -178,6 +180,17 @@ fun ProjectsTabContent(
     var lastSettledPage by remember { mutableStateOf(pagerState.settledPage) }
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
+    var activeHighlightProjectId by remember(highlightProjectId) { mutableStateOf(highlightProjectId) }
+
+    LaunchedEffect(highlightProjectId) {
+        if (!highlightProjectId.isNullOrBlank()) {
+            viewModel.markProjectOpenedFromNotification(highlightProjectId)
+            kotlinx.coroutines.delay(8_000L)
+            if (activeHighlightProjectId == highlightProjectId) {
+                activeHighlightProjectId = null
+            }
+        }
+    }
 
     // Start loading projects only when this tab appears
     LaunchedEffect(Unit) {
@@ -258,6 +271,7 @@ fun ProjectsTabContent(
                             is ProjectsUiState.Success -> {
                                 ProjectsListContent(
                                     projects = state.projects,
+                                    highlightProjectId = activeHighlightProjectId,
                                     onProjectClick = { project ->
                                         Analytics.trackVideoClick(
                                             videoId = project.id,
@@ -652,6 +666,7 @@ private fun ProjectsEmptyState(
 @Composable
 private fun ProjectsListContent(
     projects: List<Project>,
+    highlightProjectId: String?,
     onProjectClick: (Project) -> Unit,
     onProjectOption: (Project) -> Unit,
     onDeleteProject: (Project) -> Unit,
@@ -675,6 +690,7 @@ private fun ProjectsListContent(
             item(key = "project_grid", contentType = "grid") {
                 ProjectsStaggeredGrid(
                     projects = projects,
+                    highlightProjectId = highlightProjectId,
                     onProjectClick = onProjectClick,
                     onProjectOption = onProjectOption,
                     onDeleteProject = onDeleteProject,
@@ -748,6 +764,7 @@ private fun calculateAspectRatio(
 @Composable
 private fun ProjectsStaggeredGrid(
     projects: List<Project>,
+    highlightProjectId: String?,
     onProjectClick: (Project) -> Unit,
     onProjectOption: (Project) -> Unit,
     onDeleteProject: (Project) -> Unit,
@@ -800,7 +817,9 @@ private fun ProjectsStaggeredGrid(
                     onOptionClick = { onProjectOption(item.project) },
                     onDelete = { onDeleteProject(item.project) },
                     onDownload = { onDownloadProject(item.project) },
-                    onShare = { onShareProject(item.project) }
+                    onShare = { onShareProject(item.project) },
+                    isHintHighlighted = !highlightProjectId.isNullOrBlank() &&
+                        highlightProjectId == item.project.id
                 )
             }
             is ProjectGridItem.AdItem -> {
@@ -858,12 +877,15 @@ private fun shareProjectVideo(
     project: Project,
     viewModel: ProjectsViewModel
 ) {
-    viewModel.onShareStarted()
+    viewModel.onShareStarted(project.id)
 
     try {
         val videoFile = viewModel.getShareVideoFile(context, project.id)
         if (videoFile == null || !videoFile.exists()) {
-            viewModel.onShareError(context.getString(R.string.export_error_file_not_found))
+            viewModel.onShareError(
+                projectId = project.id,
+                message = context.getString(R.string.export_error_file_not_found)
+            )
             return
         }
 
@@ -880,10 +902,13 @@ private fun shareProjectVideo(
         }
 
         context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.export_share_video)))
-        viewModel.onShareCompleted()
+        viewModel.onShareCompleted(project.id)
     } catch (e: Exception) {
         android.util.Log.e("ProjectsTab", "Share failed", e)
-        viewModel.onShareError(e.message ?: context.getString(R.string.export_error_share_failed))
+        viewModel.onShareError(
+            projectId = project.id,
+            message = e.message ?: context.getString(R.string.export_error_share_failed)
+        )
     }
 }
 

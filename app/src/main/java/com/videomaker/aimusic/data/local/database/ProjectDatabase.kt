@@ -25,7 +25,7 @@ import com.videomaker.aimusic.data.local.database.entity.ProjectEntity
         LikedSongEntity::class,
         LikedTemplateEntity::class
     ],
-    version = 10,  // Incremented for isWatermarkFree field
+    version = 10,  // Notification phase-1 state uses SharedPreferences; no Room schema change required.
     exportSchema = true
 )
 abstract class ProjectDatabase : RoomDatabase() {
