@@ -83,7 +83,8 @@ class QuickSaveReminderWorker(
                     state.thumbnailUri,
                     project.thumbnailUri?.toString()
                 ),
-                fallbackImageRes = R.drawable.img_template3
+                fallbackImageRes = R.drawable.img_template3,
+                ivCtaIcon = R.drawable.ic_video_generator_fill
             )
         )
         if (!shown) return Result.success()

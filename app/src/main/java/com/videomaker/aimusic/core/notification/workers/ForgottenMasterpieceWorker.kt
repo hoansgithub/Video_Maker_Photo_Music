@@ -89,7 +89,8 @@ class ForgottenMasterpieceWorker(
                     state.thumbnailUri,
                     project.thumbnailUri?.toString()
                 ),
-                fallbackImageRes = R.drawable.img_template2
+                fallbackImageRes = R.drawable.img_template2,
+                ivCtaIcon = R.drawable.ic_video_generator_fill
             )
         )
         if (!shown) return Result.success()

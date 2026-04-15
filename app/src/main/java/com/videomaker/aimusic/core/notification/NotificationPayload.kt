@@ -1,5 +1,7 @@
 package com.videomaker.aimusic.core.notification
 
+import com.videomaker.aimusic.R
+
 data class NotificationPayload(
     val type: NotificationType,
     val itemId: String,
@@ -10,6 +12,7 @@ data class NotificationPayload(
     val ctaText: String,
     val deepLink: NotificationDeepLink,
     val imageCandidates: List<String> = emptyList(),
-    val fallbackImageRes: Int
+    val fallbackImageRes: Int,
+    val ivCtaIcon: Int = R.drawable.ic_play,
 )
 

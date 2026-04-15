@@ -150,7 +150,8 @@ fun NotificationTestScreen(
                             ctaText = "Continue Editing",
                             deepLink = NotificationDeepLinkFactory.myVideo("debug_project_01", "hint_share"),
                             imageCandidates = emptyList(),
-                            fallbackImageRes = R.drawable.img_template2
+                            fallbackImageRes = R.drawable.img_template2,
+                            ivCtaIcon = R.drawable.ic_video_generator_fill
                         )
                     )
                 },
@@ -171,7 +172,8 @@ fun NotificationTestScreen(
                             ctaText = "Continue Editing",
                             deepLink = NotificationDeepLinkFactory.myVideo("debug_project_02", "hint_save"),
                             imageCandidates = emptyList(),
-                            fallbackImageRes = R.drawable.img_template3
+                            fallbackImageRes = R.drawable.img_template3,
+                            ivCtaIcon = R.drawable.ic_video_generator_fill
                         )
                     )
                 },
