@@ -93,6 +93,13 @@
     <string name="settings_uninstall">Uninstall</string>
     <string name="settings_share_subject">Check out this app!</string>
     <string name="settings_share_message">Hey! I\'m using this awesome app. Try it out:\n%s</string>
+    <string name="notification_permission_trending_title">Stay ahead of the trend!</string>
+    <string name="notification_permission_trending_message"> Enable notifications to get instant alerts when new viral templates are added.</string>
+    <string name="notification_permission_notify_me">Notify Me</string>
+    <string name="notification_permission_maybe_later">Maybe Later</string>
+    <string name="notification_permission_settings_title">Notifications are\ncurrently disabled.</string>
+    <string name="notification_permission_settings_message"> Please turn them on in your device settings to receive template updates</string>
+    <string name="notification_permission_open_settings">Go to Settings</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Give it another try</string>
@@ -251,6 +258,12 @@
     <string name="picker_permission_title">Allow access to photos</string>
     <string name="picker_permission_message">To continue, Rehancer need your permission to access your Photos</string>
     <string name="picker_allow_access">Allow Access</string>
+    <string name="picker_give_access">Give Access</string>
+    <string name="picker_give_access_settings">Access to your photos\nis turned off.</string>
+    <string name="picker_give_access_permission">Ready to create?</string>
+    <string name="picker_not_now">Not Now</string>
+    <string name="picker_full_access_custom_message">To browse your videos and photos, we need access to your gallery.</string>
+    <string name="picker_full_access_settings_message"> To start editing, please enable \'Photos\' or \'Storage\' in your device settings.</string>
     <string name="picker_limited_access_message">You\'ve given Video Make access to a select number of photo.</string>
     <string name="picker_add_more_photos">Add</string>
     <string name="picker_go_to_settings">Go to Settings</string>
@@ -504,5 +517,25 @@
     <!-- Song Watch Ad Dialog -->
     <string name="song_watch_ad_title">Watch an ad to unlock this song?</string>
     <string name="song_watch_ad_subtitle">After watching, you\'ll be able to use this song to create videos. Unlock is permanent.</string>
+
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">New Trend Song!</string>
+    <string name="notif_trending_song_body">%1$s\'s \'%2$s\' is going viral! Create your edit in 1-tap before the trend peaks.</string>
+    <string name="notif_viral_template_title">Trending templates for you. Try it now!</string>
+    <string name="notif_viral_template_body">1,000,000 people used this %1$s today. Don\'t miss out on the hype!</string>
+    <string name="notif_forgotten_masterpiece_title">Your masterpiece is waiting!</string>
+    <string name="notif_forgotten_masterpiece_body">You did the hard part, now let it shine. Your video is ready to be shared with the world!</string>
+    <string name="notif_quick_save_title">Don\'t lose your work!</string>
+    <string name="notif_quick_save_body">Your edit looks amazing! Save it to your gallery now so you don\'t lose those perfect beat-syncs.</string>
+    <string name="notif_share_encouragement_title">Ready for the \'Likes\'?</string>
+    <string name="notif_share_encouragement_body">Your \'%1$s\' edit is 100%% beat-synced and ready to go. Post it to TikTok now!</string>
+    <string name="notif_abandoned_select_photos_title">Don\'t leave the beat hanging!</string>
+    <string name="notif_abandoned_select_photos_body">Your \'Not Like Us\' edit is almost ready. Just pick a few photos to see the magic happen!</string>
+    <string name="notif_draft_completion_nudge_title">Finish what you started!</string>
+    <string name="notif_draft_completion_nudge_body">You are only one step away from a viral video. Come back and add your photos now!</string>
+    <string name="notif_cta_play_song">Play Song</string>
+    <string name="notif_cta_discover_templates">Discover Templates</string>
+    <string name="notif_cta_continue_editing">Continue Editing</string>
+    <string name="notif_cta_view_template">View Template</string>
 
 </resources>

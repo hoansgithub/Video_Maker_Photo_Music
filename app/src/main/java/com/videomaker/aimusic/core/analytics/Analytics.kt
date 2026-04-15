@@ -1868,6 +1868,193 @@ object Analytics {
         )
     }
 
+    fun trackNotificationEligible(
+        type: String,
+        itemId: String,
+        itemType: String,
+        sourceTrigger: String,
+        deepLinkDestination: String,
+        copyVariant: String = "default",
+        imageType: String = "fallback",
+        sessionType: String = "unknown",
+        delayMinutes: Long = 0L
+    ) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.NOTIFICATION_ELIGIBLE,
+            params = mapOf(
+                AnalyticsEvent.Param.NOTIFICATION_TYPE to type,
+                AnalyticsEvent.Param.ITEM_ID to itemId,
+                AnalyticsEvent.Param.ITEM_TYPE to itemType,
+                AnalyticsEvent.Param.SOURCE_TRIGGER to sourceTrigger,
+                AnalyticsEvent.Param.DEEP_LINK_DESTINATION to deepLinkDestination,
+                AnalyticsEvent.Param.COPY_VARIANT to copyVariant,
+                AnalyticsEvent.Param.IMAGE_TYPE to imageType,
+                AnalyticsEvent.Param.SESSION_TYPE to sessionType,
+                AnalyticsEvent.Param.DELAY_MINUTES to delayMinutes
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.NOTIFICATION_TYPE,
+                AnalyticsEvent.Param.ITEM_ID,
+                AnalyticsEvent.Param.ITEM_TYPE
+            ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackNotificationScheduled(
+        type: String,
+        itemId: String,
+        itemType: String,
+        sourceTrigger: String,
+        deepLinkDestination: String,
+        delayMinutes: Long,
+        copyVariant: String = "default",
+        imageType: String = "fallback",
+        sessionType: String = "unknown"
+    ) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.NOTIFICATION_SCHEDULED,
+            params = mapOf(
+                AnalyticsEvent.Param.NOTIFICATION_TYPE to type,
+                AnalyticsEvent.Param.ITEM_ID to itemId,
+                AnalyticsEvent.Param.ITEM_TYPE to itemType,
+                AnalyticsEvent.Param.SOURCE_TRIGGER to sourceTrigger,
+                AnalyticsEvent.Param.DEEP_LINK_DESTINATION to deepLinkDestination,
+                AnalyticsEvent.Param.DELAY_MINUTES to delayMinutes,
+                AnalyticsEvent.Param.COPY_VARIANT to copyVariant,
+                AnalyticsEvent.Param.IMAGE_TYPE to imageType,
+                AnalyticsEvent.Param.SESSION_TYPE to sessionType
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.NOTIFICATION_TYPE,
+                AnalyticsEvent.Param.ITEM_ID,
+                AnalyticsEvent.Param.ITEM_TYPE
+            ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackNotificationShown(
+        type: String,
+        itemId: String,
+        itemType: String,
+        sourceTrigger: String = "worker",
+        deepLinkDestination: String = "home",
+        copyVariant: String = "default",
+        imageType: String = "fallback",
+        shownAt: Long = System.currentTimeMillis()
+    ) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.NOTIFICATION_SHOWN,
+            params = mapOf(
+                AnalyticsEvent.Param.NOTIFICATION_TYPE to type,
+                AnalyticsEvent.Param.ITEM_ID to itemId,
+                AnalyticsEvent.Param.ITEM_TYPE to itemType,
+                AnalyticsEvent.Param.SOURCE_TRIGGER to sourceTrigger,
+                AnalyticsEvent.Param.DEEP_LINK_DESTINATION to deepLinkDestination,
+                AnalyticsEvent.Param.COPY_VARIANT to copyVariant,
+                AnalyticsEvent.Param.IMAGE_TYPE to imageType,
+                AnalyticsEvent.Param.SHOWN_AT to shownAt
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.NOTIFICATION_TYPE,
+                AnalyticsEvent.Param.ITEM_ID,
+                AnalyticsEvent.Param.ITEM_TYPE
+            ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackNotificationClick(
+        type: String,
+        itemId: String,
+        itemType: String,
+        cta: String,
+        deepLinkDestination: String,
+        tappedAt: Long = System.currentTimeMillis()
+    ) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.NOTIFICATION_CLICK,
+            params = mapOf(
+                AnalyticsEvent.Param.NOTIFICATION_TYPE to type,
+                AnalyticsEvent.Param.ITEM_ID to itemId,
+                AnalyticsEvent.Param.ITEM_TYPE to itemType,
+                AnalyticsEvent.Param.CTA to cta,
+                AnalyticsEvent.Param.DEEP_LINK_DESTINATION to deepLinkDestination,
+                AnalyticsEvent.Param.TAPPED_AT to tappedAt
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.NOTIFICATION_TYPE,
+                AnalyticsEvent.Param.ITEM_ID,
+                AnalyticsEvent.Param.ITEM_TYPE,
+                AnalyticsEvent.Param.CTA
+            ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackNotificationDismiss(type: String, itemId: String, itemType: String) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.NOTIFICATION_DISMISS,
+            params = mapOf(
+                AnalyticsEvent.Param.NOTIFICATION_TYPE to type,
+                AnalyticsEvent.Param.ITEM_ID to itemId,
+                AnalyticsEvent.Param.ITEM_TYPE to itemType
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.NOTIFICATION_TYPE,
+                AnalyticsEvent.Param.ITEM_ID,
+                AnalyticsEvent.Param.ITEM_TYPE
+            ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackNotificationCanceled(type: String, reason: String, itemId: String? = null, itemType: String? = null) {
+        val params = linkedMapOf<String, Any>(
+            AnalyticsEvent.Param.NOTIFICATION_TYPE to type,
+            AnalyticsEvent.Param.REASON to reason
+        ).apply {
+            if (!itemId.isNullOrBlank()) put(AnalyticsEvent.Param.ITEM_ID, itemId)
+            if (!itemType.isNullOrBlank()) put(AnalyticsEvent.Param.ITEM_TYPE, itemType)
+        }
+        trackWithPolicy(
+            eventName = AnalyticsEvent.NOTIFICATION_CANCELED,
+            params = params,
+            requiredParams = setOf(
+                AnalyticsEvent.Param.NOTIFICATION_TYPE,
+                AnalyticsEvent.Param.REASON
+            ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackNotificationConversion(
+        type: String,
+        itemId: String,
+        itemType: String,
+        conversionAction: String,
+        conversionTimeMinutes: Long
+    ) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.NOTIFICATION_CONVERSION,
+            params = mapOf(
+                AnalyticsEvent.Param.NOTIFICATION_TYPE to type,
+                AnalyticsEvent.Param.ITEM_ID to itemId,
+                AnalyticsEvent.Param.ITEM_TYPE to itemType,
+                AnalyticsEvent.Param.CONVERSION_ACTION to conversionAction,
+                AnalyticsEvent.Param.CONVERSION_TIME_MINUTES to conversionTimeMinutes
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.NOTIFICATION_TYPE,
+                AnalyticsEvent.Param.ITEM_ID,
+                AnalyticsEvent.Param.ITEM_TYPE,
+                AnalyticsEvent.Param.CONVERSION_ACTION
+            ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     // ============================================
     // INTERNALS
     // ============================================

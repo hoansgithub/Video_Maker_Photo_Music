@@ -14,6 +14,9 @@ import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.data.local.PreferencesManager
+import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.EditorInitialData
 import com.videomaker.aimusic.domain.repository.SongRepository
@@ -185,10 +188,13 @@ class AssetPickerViewModel(
     private val templateRepository: TemplateRepository,
     private val songRepository: SongRepository,
     private val adsLoaderService: AdsLoaderService,
+    private val notificationScheduler: NotificationScheduler,
+    private val preferencesManager: PreferencesManager,
     private val projectId: String? = null, // null = create new project, non-null = add to existing
     private val templateId: String? = null,  // non-null = template mode, bypasses project creation
     private val overrideSongId: Long = -1L,   // >= 0 = song-to-video mode, overrides template song
-    private val aspectRatio: AspectRatio? = null  // User's selected aspect ratio from template previewer
+    private val aspectRatio: AspectRatio? = null,  // User's selected aspect ratio from template previewer
+    private val resumeDraftId: String? = null
 ) : ViewModel() {
 
     // Use applicationContext to prevent Activity memory leak
@@ -263,6 +269,10 @@ class AssetPickerViewModel(
                     )
                 }
             }
+        }
+
+        resumeDraftId?.takeIf { it.isNotBlank() }?.let { resumed ->
+            notificationScheduler.cancelDraftReminders(resumed)
         }
 
         // NOTE: With the new flow (Template Browse → Select Template → Pick Images),
@@ -348,6 +358,56 @@ class AssetPickerViewModel(
      */
     fun onPickerClosed() {
         val currentState = _uiState.value as? AssetPickerUiState.WithAssets
+        val selectedCount = currentState?.selectedAssets?.size ?: 0
+        val draftId = buildDraftId()
+        if (!draftId.isNullOrBlank()) {
+            if (selectedCount <= 0) {
+                val now = System.currentTimeMillis()
+                val sessionId = preferencesManager.getAppSessionId()
+                preferencesManager.upsertDraftReminderState(
+                    draftId = draftId,
+                    templateId = templateId,
+                    songId = overrideSongId.takeIf { it >= 0L },
+                    exitedAtMs = now,
+                    exitSessionId = sessionId,
+                    selectedPhotoCount = selectedCount
+                )
+                notificationScheduler.scheduleAbandonedSelectPhotos(
+                    draftId = draftId,
+                    sessionId = sessionId,
+                    exitedAtMs = now
+                )
+                notificationScheduler.scheduleDraftCompletionNudge(
+                    draftId = draftId,
+                    exitedAtMs = now
+                )
+                Analytics.trackNotificationScheduled(
+                    type = NotificationType.ABANDONED_SELECT_PHOTOS.analyticsValue,
+                    itemId = draftId,
+                    itemType = "draft",
+                    sourceTrigger = "asset_picker_exit",
+                    deepLinkDestination = "select_photos",
+                    delayMinutes = 2,
+                    copyVariant = "beat_hanging_v1",
+                    imageType = "template_key_art",
+                    sessionType = "same_and_cold"
+                )
+                Analytics.trackNotificationScheduled(
+                    type = NotificationType.DRAFT_COMPLETION_NUDGE.analyticsValue,
+                    itemId = draftId,
+                    itemType = "draft",
+                    sourceTrigger = "asset_picker_exit",
+                    deepLinkDestination = "select_photos",
+                    delayMinutes = 15,
+                    copyVariant = "finish_what_started_v1",
+                    imageType = "template_key_art",
+                    sessionType = "exit_intent"
+                )
+            } else {
+                notificationScheduler.cancelDraftReminders(draftId)
+                preferencesManager.clearDraftReminderState(draftId)
+            }
+        }
         if (currentState != null) {
             val allAlbumId = AlbumFilterType.ALL
             val filteredAssets = filterAssetsByAlbum(
@@ -693,6 +753,10 @@ class AssetPickerViewModel(
     fun confirmSelection() {
         val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
         if (currentState.selectedAssets.size < minSelection) return
+        buildDraftId()?.let { draftId ->
+            notificationScheduler.cancelDraftReminders(draftId)
+            preferencesManager.clearDraftReminderState(draftId)
+        }
         Analytics.trackExitSave(
             videoId = projectId,
             location = AnalyticsEvent.Value.Location.MEDIA_SELECT
@@ -797,6 +861,15 @@ class AssetPickerViewModel(
 
     fun onMessageHandled() {
         _messageEvent.value = null
+    }
+
+    private fun buildDraftId(): String? {
+        val hasDraftContext = !templateId.isNullOrBlank() || overrideSongId >= 0L
+        if (!hasDraftContext) return null
+        val templatePart = templateId?.ifBlank { "none" } ?: "none"
+        val songPart = if (overrideSongId >= 0L) overrideSongId.toString() else "none"
+        val projectPart = projectId?.ifBlank { "new" } ?: "new"
+        return "draft_tpl_${templatePart}_song_${songPart}_project_${projectPart}"
     }
 
     // ============================================

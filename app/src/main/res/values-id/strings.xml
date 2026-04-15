@@ -80,6 +80,13 @@
     <string name="settings_uninstall">Hapus Instalan</string>
     <string name="settings_share_subject">Lihat aplikasi ini!</string>
     <string name="settings_share_message">Halo! Saya menggunakan aplikasi luar biasa ini. Coba yuk:\n%s</string>
+    <string name="notification_permission_trending_title">Jangan ketinggalan tren!</string>
+    <string name="notification_permission_trending_message">Aktifkan notifikasi untuk mendapatkan pemberitahuan instan saat template viral baru ditambahkan.</string>
+    <string name="notification_permission_notify_me">Beri tahu saya</string>
+    <string name="notification_permission_maybe_later">Mungkin nanti</string>
+    <string name="notification_permission_settings_title">Notifikasi\nsaat ini dinonaktifkan.</string>
+    <string name="notification_permission_settings_message">Silakan aktifkan di pengaturan perangkat Anda untuk menerima pembaruan template.</string>
+    <string name="notification_permission_open_settings">Buka Pengaturan</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Coba lagi</string>
@@ -246,6 +253,12 @@
     <string name="picker_permission_title">Akses Foto Diperlukan</string>
     <string name="picker_permission_message">Untuk membuat video dari foto Anda, kami memerlukan izin untuk mengakses perpustakaan foto Anda.</string>
     <string name="picker_allow_access">Izinkan Akses</string>
+    <string name="picker_give_access">Beri Akses</string>
+    <string name="picker_give_access_settings">Akses ke foto Anda\nsedang dinonaktifkan.</string>
+    <string name="picker_give_access_permission">Siap berkreasi?</string>
+    <string name="picker_not_now">Nanti Saja</string>
+    <string name="picker_full_access_custom_message">Untuk menelusuri video dan foto Anda, kami memerlukan akses ke galeri Anda.</string>
+    <string name="picker_full_access_settings_message">Untuk mulai mengedit, aktifkan \'Foto\' atau \'Penyimpanan\' di pengaturan perangkat Anda.</string>
     <string name="picker_limited_access_message">Anda telah memberikan akses Video Maker ke sejumlah foto terbatas.</string>
     <string name="picker_add_more_photos">Tambah</string>
     <string name="picker_go_to_settings">Ke Pengaturan</string>
@@ -498,5 +511,25 @@
     <!-- Song Watch Ad Dialog -->
     <string name="song_watch_ad_title">Tonton iklan untuk membuka lagu ini?</string>
     <string name="song_watch_ad_subtitle">Setelah menonton, Anda dapat menggunakan lagu ini untuk membuat video. Unlock permanen.</string>
+
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">Lagu Tren Baru!</string>
+    <string name="notif_trending_song_body">\'%2$s\' dari %1$s sedang viral! Buat edit kamu dengan 1 tap sebelum tren mencapai puncak.</string>
+    <string name="notif_viral_template_title">Template tren untuk kamu. Coba sekarang!</string>
+    <string name="notif_viral_template_body">1,000,000 orang menggunakan %1$s hari ini. Jangan lewatkan hype-nya!</string>
+    <string name="notif_forgotten_masterpiece_title">Karya kamu menunggu!</string>
+    <string name="notif_forgotten_masterpiece_body">Kamu sudah melakukan bagian sulitnya, sekarang waktunya bersinar. Video kamu siap dibagikan ke dunia!</string>
+    <string name="notif_quick_save_title">Jangan sampai karya kamu hilang!</string>
+    <string name="notif_quick_save_body">Edit kamu keren banget! Simpan ke galeri sekarang agar beat-sync sempurnamu tidak hilang.</string>
+    <string name="notif_share_encouragement_title">Siap untuk \'Likes\'?</string>
+    <string name="notif_share_encouragement_body">Edit \'%1$s\' kamu sudah 100%% beat-synced dan siap diposting. Posting ke TikTok sekarang!</string>
+    <string name="notif_abandoned_select_photos_title">Jangan tinggalkan beat-nya!</string>
+    <string name="notif_abandoned_select_photos_body">Edit \'Not Like Us\' kamu hampir siap. Tinggal pilih beberapa foto untuk melihat keajaibannya!</string>
+    <string name="notif_draft_completion_nudge_title">Selesaikan yang sudah kamu mulai!</string>
+    <string name="notif_draft_completion_nudge_body">Kamu tinggal selangkah lagi menuju video viral. Kembali dan tambahkan foto kamu sekarang.</string>
+    <string name="notif_cta_play_song">Putar Lagu</string>
+    <string name="notif_cta_discover_templates">Lihat Template</string>
+    <string name="notif_cta_continue_editing">Lanjutkan Edit</string>
+    <string name="notif_cta_view_template">Lihat Template</string>
 
 </resources>

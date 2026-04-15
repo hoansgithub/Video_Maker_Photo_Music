@@ -80,6 +80,13 @@
     <string name="settings_uninstall">إلغاء التثبيت</string>
     <string name="settings_share_subject">اطلع على هذا التطبيق!</string>
     <string name="settings_share_message">مرحباً! أستخدم هذا التطبيق الرائع. جربه:\n%s</string>
+    <string name="notification_permission_trending_title">ابقَ في صدارة الترند!</string>
+    <string name="notification_permission_trending_message">فعّل الإشعارات للحصول على تنبيهات فورية عند إضافة قوالب رائجة جديدة.</string>
+    <string name="notification_permission_notify_me">أبلغني</string>
+    <string name="notification_permission_maybe_later">ربما لاحقًا</string>
+    <string name="notification_permission_settings_title">الإشعارات\nمعطلة حاليًا.</string>
+    <string name="notification_permission_settings_message">يرجى تفعيلها من إعدادات جهازك لتلقي تحديثات القوالب.</string>
+    <string name="notification_permission_open_settings">الذهاب إلى الإعدادات</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">أعطها فرصة أخرى</string>
@@ -246,6 +253,12 @@
     <string name="picker_permission_title">مطلوب الوصول للصور</string>
     <string name="picker_permission_message">لإنشاء فيديوهات من صورك، نحتاج إذن الوصول إلى مكتبة الصور.</string>
     <string name="picker_allow_access">السماح بالوصول</string>
+    <string name="picker_give_access">منح الوصول</string>
+    <string name="picker_give_access_settings">تم إيقاف الوصول إلى صورك\nحاليًا.</string>
+    <string name="picker_give_access_permission">جاهز للإنشاء؟</string>
+    <string name="picker_not_now">ليس الآن</string>
+    <string name="picker_full_access_custom_message">لتصفح مقاطع الفيديو والصور، نحتاج إلى الوصول إلى معرضك.</string>
+    <string name="picker_full_access_settings_message">لبدء التعديل، يرجى تفعيل \'الصور\' أو \'التخزين\' في إعدادات جهازك.</string>
     <string name="picker_limited_access_message">لقد منحت صانع الفيديو حق الوصول إلى عدد محدود من الصور.</string>
     <string name="picker_add_more_photos">إضافة</string>
     <string name="picker_go_to_settings">الانتقال إلى الإعدادات</string>
@@ -498,5 +511,25 @@
     <!-- Song Watch Ad Dialog -->
     <string name="song_watch_ad_title">شاهد إعلانًا لفتح هذه الأغنية؟</string>
     <string name="song_watch_ad_subtitle">بعد المشاهدة، ستتمكن من استخدام هذه الأغنية لإنشاء مقاطع الفيديو. الفتح دائم.</string>
+
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">أغنية ترند جديدة!</string>
+    <string name="notif_trending_song_body">أغنية \'%2$s\' لـ %1$s تنتشر بسرعة! أنشئ فيديوك بضغطة واحدة قبل أن يصل الترند للذروة.</string>
+    <string name="notif_viral_template_title">قوالب رائجة لك. جرّبها الآن!</string>
+    <string name="notif_viral_template_body">استخدم 1,000,000 شخص قالب %1$s اليوم. لا تفوّت الحماس!</string>
+    <string name="notif_forgotten_masterpiece_title">تحفتك الفنية تنتظرك!</string>
+    <string name="notif_forgotten_masterpiece_body">أنجزت الجزء الأصعب، والآن حان وقت التألق. فيديوك جاهز للمشاركة مع العالم!</string>
+    <string name="notif_quick_save_title">لا تفقد عملك!</string>
+    <string name="notif_quick_save_body">تعديلك رائع! احفظه الآن في المعرض حتى لا تفقد مزامنة الإيقاع المثالية.</string>
+    <string name="notif_share_encouragement_title">جاهز لـ \'Likes\'؟</string>
+    <string name="notif_share_encouragement_body">تعديلك على \'%1$s\' متزامن 100%% مع الإيقاع وجاهز للنشر. انشره على TikTok الآن!</string>
+    <string name="notif_abandoned_select_photos_title">لا تترك الإيقاع معلّقًا!</string>
+    <string name="notif_abandoned_select_photos_body">تعديلك على \'Not Like Us\' شبه جاهز. فقط اختر بعض الصور لتشاهد السحر!</string>
+    <string name="notif_draft_completion_nudge_title">أكمل ما بدأت!</string>
+    <string name="notif_draft_completion_nudge_body">أنت على بُعد خطوة واحدة من فيديو فيرال. عُد الآن وأضف صورك.</string>
+    <string name="notif_cta_play_song">تشغيل الأغنية</string>
+    <string name="notif_cta_discover_templates">اكتشف القوالب</string>
+    <string name="notif_cta_continue_editing">متابعة التعديل</string>
+    <string name="notif_cta_view_template">عرض القالب</string>
 
 </resources>

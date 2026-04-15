@@ -11,10 +11,14 @@ import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.core.notification.NotificationConversionTracker
+import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.core.rating.RatingTriggerManager
 import com.videomaker.aimusic.domain.repository.ExportProgress
 import com.videomaker.aimusic.domain.repository.ExportRepository
@@ -141,7 +145,10 @@ class ExportViewModel(
     private val templateRepository: TemplateRepository,
     private val ratingTriggerManager: RatingTriggerManager,
     private val submitFeedbackUseCase: SubmitFeedbackUseCase,
-    private val adsLoaderService: AdsLoaderService
+    private val adsLoaderService: AdsLoaderService,
+    private val notificationScheduler: NotificationScheduler,
+    private val preferencesManager: PreferencesManager,
+    private val conversionTracker: NotificationConversionTracker
 ) : ViewModel() {
 
     // ============================================
@@ -307,6 +314,59 @@ class ExportViewModel(
                             ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
                             volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
                             mediaQuantity = project?.assets?.size
+                        )
+                        val generatedAt = System.currentTimeMillis()
+                        preferencesManager.upsertVideoReminderState(
+                            projectId = projectId,
+                            generatedAtMs = generatedAt,
+                            templateId = project?.settings?.effectSetId,
+                            songId = project?.settings?.musicSongId,
+                            thumbnailUri = _thumbnailUri.value?.toString()
+                        )
+                        notificationScheduler.scheduleQuickSaveReminder(
+                            projectId = projectId,
+                            generatedAtMs = generatedAt
+                        )
+                        notificationScheduler.scheduleShareEncouragement(
+                            projectId = projectId,
+                            generatedAtMs = generatedAt
+                        )
+                        notificationScheduler.scheduleForgottenMasterpiece(
+                            projectId = projectId,
+                            generatedAtMs = generatedAt
+                        )
+                        Analytics.trackNotificationScheduled(
+                            type = NotificationType.QUICK_SAVE_REMINDER.analyticsValue,
+                            itemId = projectId,
+                            itemType = "video",
+                            sourceTrigger = "export_success",
+                            deepLinkDestination = "my_video",
+                            delayMinutes = 30,
+                            copyVariant = "quick_save_v1",
+                            imageType = "video_cover",
+                            sessionType = "retention"
+                        )
+                        Analytics.trackNotificationScheduled(
+                            type = NotificationType.SHARE_ENCOURAGEMENT.analyticsValue,
+                            itemId = projectId,
+                            itemType = "video",
+                            sourceTrigger = "export_success",
+                            deepLinkDestination = "my_video",
+                            delayMinutes = 12L * 60L,
+                            copyVariant = "likes_push_v1",
+                            imageType = "video_cover",
+                            sessionType = "retention"
+                        )
+                        Analytics.trackNotificationScheduled(
+                            type = NotificationType.FORGOTTEN_MASTERPIECE.analyticsValue,
+                            itemId = projectId,
+                            itemType = "video",
+                            sourceTrigger = "export_success",
+                            deepLinkDestination = "my_video",
+                            delayMinutes = 24L * 60L,
+                            copyVariant = "masterpiece_waiting_v1",
+                            imageType = "video_cover",
+                            sessionType = "retention"
                         )
                         ratingTriggerManager.onVideoCreated()
                         ExportUiState.Success(progress.outputPath)
@@ -556,6 +616,23 @@ class ExportViewModel(
 
     fun trackShareAction() {
         val project = currentProjectSnapshot
+        val now = System.currentTimeMillis()
+        preferencesManager.markVideoShared(projectId, now)
+        notificationScheduler.cancelProjectReminders(projectId)
+        conversionTracker.trackConversionIfEligible(
+            type = NotificationType.SHARE_ENCOURAGEMENT,
+            itemId = projectId,
+            itemType = "video",
+            conversionAction = "share",
+            nowMs = now
+        )
+        conversionTracker.trackConversionIfEligible(
+            type = NotificationType.FORGOTTEN_MASTERPIECE,
+            itemId = projectId,
+            itemType = "video",
+            conversionAction = "share",
+            nowMs = now
+        )
         Analytics.trackVideoShare(
             videoId = projectId,
             templateId = project?.settings?.effectSetId,
@@ -769,6 +846,23 @@ class ExportViewModel(
                 is MediaStoreHelper.SaveResult.Success -> {
                     _uiState.value = currentState.copy(savedToGallery = true, saveError = null)
                     _saveToastState.value = ProcessToastState.Success(successMessage)
+                    val now = System.currentTimeMillis()
+                    preferencesManager.markVideoSaved(projectId, now)
+                    notificationScheduler.cancelProjectReminders(projectId)
+                    conversionTracker.trackConversionIfEligible(
+                        type = NotificationType.QUICK_SAVE_REMINDER,
+                        itemId = projectId,
+                        itemType = "video",
+                        conversionAction = "download",
+                        nowMs = now
+                    )
+                    conversionTracker.trackConversionIfEligible(
+                        type = NotificationType.FORGOTTEN_MASTERPIECE,
+                        itemId = projectId,
+                        itemType = "video",
+                        conversionAction = "download",
+                        nowMs = now
+                    )
                 }
                 is MediaStoreHelper.SaveResult.Error -> {
                     _uiState.value = currentState.copy(savedToGallery = false, saveError = result.message)
