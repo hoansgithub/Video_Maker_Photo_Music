@@ -1,6 +1,7 @@
 package com.videomaker.aimusic.core.notification
 
 class NotificationCapPolicy(
+    private val scheduleConfigService: NotificationScheduleConfigService? = null,
     private val dailyCap: Int = DAILY_CAP,
     private val perTypeDailyCap: Int = PER_TYPE_DAILY_CAP,
     private val cooldownMinutes: Int = COOLDOWN_MINUTES,
@@ -28,6 +29,10 @@ class NotificationCapPolicy(
     }
 
     fun evaluate(input: Input): Decision {
+        if (scheduleConfigService?.current()?.isFastScheduleMode() == true) {
+            return Decision(allowed = true)
+        }
+
         if (input.dailyShownCount >= dailyCap) {
             return Decision(
                 allowed = false,

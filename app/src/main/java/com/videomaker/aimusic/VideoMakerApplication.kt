@@ -10,6 +10,9 @@ import co.alcheclub.lib.acccore.appsflyer.appsFlyerModule
 import co.alcheclub.lib.acccore.coreModuleFromDI
 import co.alcheclub.lib.acccore.facebook.facebookModule
 import co.alcheclub.lib.acccore.firebase.firebaseModule
+import co.alcheclub.lib.acccore.monitoring.MessagingService
+import co.alcheclub.lib.acccore.monitoring.NotificationConfig
+import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfigCoordinator
 import com.google.android.ump.ConsentDebugSettings
 import org.koin.android.ext.android.get
@@ -33,7 +36,9 @@ import com.videomaker.aimusic.di.mediaModule
 import com.videomaker.aimusic.di.presentationModule
 import com.videomaker.aimusic.di.adsModule
 import com.videomaker.aimusic.core.ads.AdInitializer
+import com.videomaker.aimusic.core.constants.RemoteConfigKeys
 import com.videomaker.aimusic.core.notification.AppSessionTracker
+import com.videomaker.aimusic.core.notification.NotificationScheduleConfigService
 import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
 import com.videomaker.aimusic.media.library.MusicSongLibrary
 import com.videomaker.aimusic.media.library.TransitionSetLibrary
@@ -382,6 +387,9 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         appOpenAdManager.setDefaultPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_AOA)
         android.util.Log.d("VideoMakerApp", "✅ App open ad manager initialized")
 
+        configureNotifications()
+        primeNotificationScheduleConfigFromCache()
+
         // Auto-register services with coordinators
         applicationScope.launch {
             try {
@@ -419,6 +427,35 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
         // Initialize VideoTemplateLibrary to load templates from assets
         VideoTemplateLibrary.init(this)
+    }
+
+    private fun configureNotifications() {
+        runCatching {
+            val messaging = get<MessagingService>()
+            messaging.configureNotifications(
+                NotificationConfig(
+                    channelId = "video_maker_notifications",
+                    channelName = "Video Maker Notifications",
+                    channelDescription = "Trending, reminders, and personalized updates",
+                    smallIconResId = R.mipmap.ic_launcher,
+                    defaultTitle = getString(R.string.app_name),
+                    targetActivityClass = MainActivity::class.java
+                )
+            )
+        }.onFailure {
+            android.util.Log.e("VideoMakerApp", "Failed to configure push notifications", it)
+        }
+    }
+
+    private fun primeNotificationScheduleConfigFromCache() {
+        runCatching {
+            val remoteConfig = getKoin().get<RemoteConfig>()
+            val scheduleConfigService = getKoin().get<NotificationScheduleConfigService>()
+            val rawConfig = remoteConfig.getString(RemoteConfigKeys.NOTIFICATION_SCHEDULE_CONFIG)
+            scheduleConfigService.applyRawJsonForTesting(rawConfig)
+        }.onFailure {
+            android.util.Log.w("VideoMakerApp", "Failed to prime notification schedule config", it)
+        }
     }
 
     override fun onTerminate() {

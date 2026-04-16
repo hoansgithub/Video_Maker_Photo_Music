@@ -22,8 +22,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.notification.NotificationConversionTracker
 import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
+import com.videomaker.aimusic.core.notification.NotificationIntentExtras
 import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.navigation.AppNavigation
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.widget.appwidget.WidgetActions
@@ -50,6 +53,7 @@ import org.koin.android.ext.android.inject
 class MainActivity : AppCompatActivity() {
 
     private val notificationScheduler: NotificationScheduler by inject()
+    private val notificationConversionTracker: NotificationConversionTracker by inject()
 
     // Observed by AppNavigation to trigger deep-link navigation.
     // Set only on first launch (not rotation) and on new widget intents.
@@ -172,6 +176,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleEntryIntent(intent: Intent) {
         trackShortcutIfNeeded(intent)
+        trackNotificationClickIfNeeded(intent)
         when {
             intent.action == ACTION_UNINSTALL_APP -> navigateToUninstall = true
             intent.action == NotificationDeepLinkFactory.ACTION_NOTIF_TRENDING_SONG -> pendingDeepLink = intent
@@ -192,6 +197,35 @@ class MainActivity : AppCompatActivity() {
             else -> return
         }
         Analytics.trackShortcutClick(shortcutType)
+    }
+
+    private fun trackNotificationClickIfNeeded(intent: Intent) {
+        if (intent.action !in NOTIFICATION_ACTIONS) return
+        val type = intent.getStringExtra(NotificationIntentExtras.EXTRA_NOTIFICATION_TYPE)
+            ?.let { runCatching { NotificationType.valueOf(it) }.getOrNull() }
+            ?: return
+        val itemId = intent.getStringExtra(NotificationIntentExtras.EXTRA_NOTIFICATION_ITEM_ID)
+            ?.takeIf { it.isNotBlank() }
+            ?: return
+        val itemType = intent.getStringExtra(NotificationIntentExtras.EXTRA_NOTIFICATION_ITEM_TYPE)
+            ?.takeIf { it.isNotBlank() }
+            ?: return
+        val cta = intent.getStringExtra(NotificationIntentExtras.EXTRA_NOTIFICATION_CTA) ?: "open_notification"
+        val destination = intent.getStringExtra(
+            NotificationIntentExtras.EXTRA_NOTIFICATION_DEEP_LINK_DESTINATION
+        ) ?: "home"
+        val tappedAt = System.currentTimeMillis()
+        Analytics.trackNotificationClick(
+            type = type.analyticsValue,
+            itemId = itemId,
+            itemType = itemType,
+            cta = cta,
+            deepLinkDestination = destination,
+            tappedAt = tappedAt
+        )
+        runCatching {
+            notificationConversionTracker.recordTap(type = type, itemId = itemId, tappedAtMs = tappedAt)
+        }
     }
 
     companion object {
@@ -215,6 +249,13 @@ class MainActivity : AppCompatActivity() {
             WidgetActions.ACTION_OPEN_TEMPLATE_WITH_SONG,
             WidgetActions.ACTION_OPEN_SONG_PLAYER,
             WidgetActions.ACTION_CREATE_VIDEO
+        )
+
+        private val NOTIFICATION_ACTIONS = setOf(
+            NotificationDeepLinkFactory.ACTION_NOTIF_TRENDING_SONG,
+            NotificationDeepLinkFactory.ACTION_NOTIF_VIRAL_TEMPLATE,
+            NotificationDeepLinkFactory.ACTION_NOTIF_MY_VIDEO,
+            NotificationDeepLinkFactory.ACTION_NOTIF_RESUME_TEMPLATE
         )
     }
 }

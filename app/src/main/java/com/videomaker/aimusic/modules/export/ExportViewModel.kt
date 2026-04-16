@@ -345,7 +345,7 @@ class ExportViewModel(
                             itemType = "video",
                             sourceTrigger = "export_success",
                             deepLinkDestination = "my_video",
-                            delayMinutes = 30,
+                            delayMinutes = notificationScheduler.currentScheduleConfig().quickSaveDelayMs / 60_000L,
                             copyVariant = "quick_save_v1",
                             imageType = "video_cover",
                             sessionType = "retention"
@@ -356,7 +356,7 @@ class ExportViewModel(
                             itemType = "video",
                             sourceTrigger = "export_success",
                             deepLinkDestination = "my_video",
-                            delayMinutes = 12L * 60L,
+                            delayMinutes = notificationScheduler.currentScheduleConfig().shareEncouragementDelayMs / 60_000L,
                             copyVariant = "likes_push_v1",
                             imageType = "video_cover",
                             sessionType = "retention"
@@ -367,7 +367,7 @@ class ExportViewModel(
                             itemType = "video",
                             sourceTrigger = "export_success",
                             deepLinkDestination = "my_video",
-                            delayMinutes = 24L * 60L,
+                            delayMinutes = notificationScheduler.currentScheduleConfig().forgottenMasterpieceDelayMs / 60_000L,
                             copyVariant = "masterpiece_waiting_v1",
                             imageType = "video_cover",
                             sessionType = "retention"

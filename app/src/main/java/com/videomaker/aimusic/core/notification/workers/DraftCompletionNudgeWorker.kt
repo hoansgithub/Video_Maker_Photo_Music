@@ -11,6 +11,7 @@ import com.videomaker.aimusic.core.notification.NotificationChannels
 import com.videomaker.aimusic.core.notification.NotificationScheduleConfigService
 import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.core.notification.hasReachedDelay
+import com.videomaker.aimusic.core.notification.shouldSkipDraftNudgeDueToRecentAbandoned
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
@@ -35,13 +36,18 @@ class DraftCompletionNudgeWorker(
             ?: return Result.success()
         val state = preferencesManager.getDraftReminderState(draftId) ?: return Result.success()
         val nowMs = System.currentTimeMillis()
-        val delayMs = notificationScheduleConfigService.current().draftCompletionDelayMs
+        val scheduleConfig = notificationScheduleConfigService.current()
+        val delayMs = scheduleConfig.draftCompletionDelayMs
 
         if (state.selectedPhotoCount > 0) return Result.success()
         if (state.templateId.isNullOrBlank() && state.songId == null) return Result.success()
         if (!hasReachedDelay(nowMs - state.exitedAtMs, delayMs)) return Result.success()
-        if (state.lastAbandonedShownAtMs != null &&
-            (nowMs - state.lastAbandonedShownAtMs) < DEDUPE_WITH_ABANDONED_WINDOW_MS
+        if (shouldSkipDraftNudgeDueToRecentAbandoned(
+                nowMs = nowMs,
+                lastAbandonedShownAtMs = state.lastAbandonedShownAtMs,
+                dedupeWindowMs = DEDUPE_WITH_ABANDONED_WINDOW_MS,
+                fastScheduleMode = scheduleConfig.isFastScheduleMode()
+            )
         ) {
             return Result.success()
         }

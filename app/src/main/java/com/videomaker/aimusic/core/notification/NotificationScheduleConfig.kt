@@ -12,6 +12,18 @@ data class NotificationScheduleConfig(
     val abandonedColdDelayMs: Long = DEFAULT_ABANDONED_COLD_DELAY_MS,
     val draftCompletionDelayMs: Long = DEFAULT_DRAFT_COMPLETION_DELAY_MS
 ) {
+    fun isFastScheduleMode(): Boolean {
+        val maxDelayMs = maxOf(
+            quickSaveDelayMs,
+            shareEncouragementDelayMs,
+            forgottenMasterpieceDelayMs,
+            abandonedSameDelayMs,
+            abandonedColdDelayMs,
+            draftCompletionDelayMs
+        )
+        return maxDelayMs in 0L..FAST_SCHEDULE_MAX_DELAY_MS
+    }
+
     fun fingerprint(): String {
         return buildString {
             append(trendingHour)
@@ -37,6 +49,7 @@ data class NotificationScheduleConfig(
     }
 
     companion object {
+        private const val FAST_SCHEDULE_MAX_DELAY_MS = 10L * 60_000L
         const val DEFAULT_TRENDING_HOUR = 19
         const val DEFAULT_TRENDING_MINUTE = 2
         const val DEFAULT_VIRAL_HOUR = 20
