@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.widget.appwidget.WidgetActions
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
@@ -68,6 +69,7 @@ import com.videomaker.aimusic.modules.language.LanguageSelectionScreen
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
 import com.videomaker.aimusic.modules.settings.SettingsScreen
+import com.videomaker.aimusic.modules.settings.NotificationTestScreen
 import com.videomaker.aimusic.modules.settings.UninstallScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
@@ -202,6 +204,61 @@ fun AppNavigation(
             WidgetActions.ACTION_CREATE_VIDEO -> {
                 backStack.add(AppRoute.AssetPicker())
             }
+            NotificationDeepLinkFactory.ACTION_NOTIF_TRENDING_SONG -> {
+                val songId = intent.getLongExtra(NotificationDeepLinkFactory.EXTRA_SONG_ID, -1L)
+                if (songId != -1L) {
+                    backStack.apply {
+                        clear()
+                        add(AppRoute.Home(initialTab = 1, initialSongId = songId))
+                    }
+                }
+            }
+            NotificationDeepLinkFactory.ACTION_NOTIF_VIRAL_TEMPLATE -> {
+                val templateId = intent.getStringExtra(NotificationDeepLinkFactory.EXTRA_TEMPLATE_ID)
+                if (!templateId.isNullOrBlank()) {
+                    backStack.apply {
+                        clear()
+                        add(AppRoute.Home())
+                        add(
+                            AppRoute.TemplatePreviewer(
+                                templateId = templateId,
+                                imageUris = emptyList(),
+                                sourceLocation = AnalyticsEvent.Value.Location.HOME_TEMPLATE
+                            )
+                        )
+                    }
+                }
+            }
+            NotificationDeepLinkFactory.ACTION_NOTIF_MY_VIDEO -> {
+                val projectId = intent.getStringExtra(NotificationDeepLinkFactory.EXTRA_PROJECT_ID)
+                val hintMode = intent.getStringExtra(NotificationDeepLinkFactory.EXTRA_HINT_MODE)
+                backStack.apply {
+                    clear()
+                    add(
+                        AppRoute.Home(
+                            initialTab = 2,
+                            highlightProjectId = projectId,
+                            hintMode = hintMode
+                        )
+                    )
+                }
+            }
+            NotificationDeepLinkFactory.ACTION_NOTIF_RESUME_TEMPLATE -> {
+                val templateId = intent.getStringExtra(NotificationDeepLinkFactory.EXTRA_TEMPLATE_ID)
+                val songId = intent.getLongExtra(NotificationDeepLinkFactory.EXTRA_SONG_ID, -1L)
+                val draftId = intent.getStringExtra(NotificationDeepLinkFactory.EXTRA_DRAFT_ID)
+                backStack.apply {
+                    clear()
+                    add(AppRoute.Home())
+                    add(
+                        AppRoute.AssetPicker(
+                            templateId = templateId,
+                            overrideSongId = songId,
+                            resumeDraftId = draftId
+                        )
+                    )
+                }
+            }
         }
         onDeepLinkConsumed()
     }
@@ -270,6 +327,8 @@ fun AppNavigation(
                     songsViewModel = songsViewModel,
                     projectsViewModel = projectsViewModel,
                     initialTab = route.initialTab,
+                    highlightProjectId = route.highlightProjectId,
+                    projectHintMode = route.hintMode,
                     onCreateClick = { backStack.add(AppRoute.AssetPicker()) },
                     onSettingsClick = { location ->
                         backStack.add(AppRoute.Settings(settingLocation = location))
@@ -376,13 +435,14 @@ fun AppNavigation(
             entry<AppRoute.AssetPicker> { route ->
                 val factory: AssetPickerViewModelFactory = koinInject()
                 val pickerViewModel: AssetPickerViewModel = viewModel(
-                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}_${route.aspectRatio}_${route.sourceLocation}",
+                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}_${route.aspectRatio}_${route.sourceLocation}_${route.resumeDraftId}",
                     factory = createSafeViewModelFactory {
                         factory.create(
                             projectId = route.projectId,
                             templateId = route.templateId,
                             overrideSongId = route.overrideSongId,
-                            aspectRatio = route.aspectRatio
+                            aspectRatio = route.aspectRatio,
+                            resumeDraftId = route.resumeDraftId
                         )
                     }
                 )
@@ -549,6 +609,7 @@ fun AppNavigation(
                     onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToLanguageSettings = { backStack.add(AppRoute.LanguageSettings) },
                     onNavigateToWidgetScreen = { backStack.add(AppRoute.WidgetScreen) },
+                    onNavigateToNotificationTest = { backStack.add(AppRoute.NotificationTest) },
                     settingLocation = route.settingLocation
                 )
             }
@@ -628,6 +689,12 @@ fun AppNavigation(
                             overrideSongId = songId
                         ))
                     }
+                )
+            }
+
+            entry<AppRoute.NotificationTest> {
+                NotificationTestScreen(
+                    onNavigateBack = { backStack.safeRemoveLast() }
                 )
             }
         }

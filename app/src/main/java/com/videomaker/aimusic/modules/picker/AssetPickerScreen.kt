@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
-import android.provider.Settings
 import androidx.core.content.FileProvider
 import java.io.File
 import androidx.activity.compose.BackHandler
@@ -90,6 +89,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -98,15 +99,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.permission.MediaPermissionCoordinator
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import com.videomaker.aimusic.ui.theme.FoundationBlack
 import com.videomaker.aimusic.ui.theme.FoundationBlack_100
+import com.videomaker.aimusic.ui.theme.FoundationBlack_200
+import com.videomaker.aimusic.ui.theme.Neutral_N500
+import com.videomaker.aimusic.ui.theme.Neutral_N700
 import com.videomaker.aimusic.ui.theme.PlayerCardBackground
 import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextPrimaryDark
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -180,6 +187,7 @@ fun AssetPickerScreen(
     // Get dependencies for ad showing
     val activity = context as? Activity
     val adsLoaderService = koinInject<AdsLoaderService>()
+    val mediaPermissionCoordinator = koinInject<MediaPermissionCoordinator>()
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridScrollState by viewModel.gridScrollState.collectAsStateWithLifecycle()
@@ -187,6 +195,10 @@ fun AssetPickerScreen(
     var showExitConfirmDialog by remember { mutableStateOf(false) }
     var hasTrackedMediaRender by remember { mutableStateOf(false) }
     var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
+    var showPermissionPromoDialog by remember { mutableStateOf(false) }
+    var showPermissionSettingsDialog by remember { mutableStateOf(false) }
+    var hasHandledEntryDeniedPrompt by remember { mutableStateOf(false) }
+    var hasHandledEntryLimitedPrompt by remember { mutableStateOf(false) }
 
     // Permissions to request, based on Android version:
     // - API 34+: request both full and limited so the system dialog shows all 3 options
@@ -213,14 +225,23 @@ fun AssetPickerScreen(
         val fullGranted = result[Manifest.permission.READ_MEDIA_IMAGES] == true ||
             result[Manifest.permission.READ_EXTERNAL_STORAGE] == true
         val limitedGranted = result[Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED] == true
-        val allow = fullGranted || limitedGranted
         Analytics.trackPermissionClick(
-            button = if (allow) {
+            button = if (fullGranted) {
                 AnalyticsEvent.Value.Option.ALLOW
             } else {
                 AnalyticsEvent.Value.Option.NO_ALLOW
             }
         )
+        mediaPermissionCoordinator.onSystemPermissionResult(fullGranted = fullGranted)
+        val blockedAfterResult = !fullGranted &&
+            mediaPermissionCoordinator.isBlockedAfterSecondNonFull()
+        showPermissionPromoDialog = false
+        hasHandledEntryLimitedPrompt = true
+        hasHandledEntryDeniedPrompt = true
+        showPermissionSettingsDialog = false
+        if (!fullGranted && limitedGranted && !blockedAfterResult) {
+            mediaPermissionCoordinator.markLimitedUpsellShownInCurrentSession()
+        }
         viewModel.onPermissionSnapshot(
             snapshot = PermissionSnapshot(
                 fullGranted = fullGranted,
@@ -230,10 +251,25 @@ fun AssetPickerScreen(
         )
     }
 
-    LaunchedEffect(permissionLauncher) {
-        viewModel.permissionRequestEvent.collect {
-            Analytics.trackPermissionRender()
-            permissionLauncher.launch(permissionsToRequest)
+    val showPermissionGateForMode: (PermissionMode) -> Unit = { mode ->
+        val decision = resolveFullPermissionPromptDecision(
+            permissionMode = mode,
+            blockedAfterSecondAttempt = mediaPermissionCoordinator.isBlockedAfterSecondNonFull(),
+            limitedUpsellShownThisSession = mediaPermissionCoordinator.hasShownLimitedUpsellThisSession()
+        )
+        when (decision) {
+            FullPermissionPromptDecision.NONE -> Unit
+            FullPermissionPromptDecision.SHOW_PROMO -> {
+                if (mode == PermissionMode.LIMITED) {
+                    mediaPermissionCoordinator.markLimitedUpsellShownInCurrentSession()
+                }
+                showPermissionSettingsDialog = false
+                showPermissionPromoDialog = true
+            }
+            FullPermissionPromptDecision.SHOW_SETTINGS -> {
+                showPermissionPromoDialog = false
+                showPermissionSettingsDialog = true
+            }
         }
     }
 
@@ -307,7 +343,7 @@ fun AssetPickerScreen(
                 val snapshot = readPermissionSnapshot(context)
                 if (pendingPermissionCheckAfterSettings) {
                     Analytics.trackPermissionCheck(
-                        allow = snapshot.fullGranted || snapshot.limitedGranted
+                        allow = snapshot.fullGranted
                     )
                     pendingPermissionCheckAfterSettings = false
                 }
@@ -321,14 +357,58 @@ fun AssetPickerScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // Opens app's system settings page (used by DeniedPermission "Go to Settings" button)
-    val goToAppSettings = {
+    val openAppSettings = {
         Analytics.trackPermissionGotoSetting()
         pendingPermissionCheckAfterSettings = true
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = Uri.fromParts("package", context.packageName, null)
+        runCatching {
+            context.startActivity(
+                mediaPermissionCoordinator.buildOpenAppSettingsIntent(context)
+            )
+        }.onFailure {
+            pendingPermissionCheckAfterSettings = false
         }
-        context.startActivity(intent)
+        showPermissionSettingsDialog = false
+    }
+
+    val onGiveAccess = {
+        Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.ALLOW)
+        if (mediaPermissionCoordinator.canRequestSystemPermission(context)) {
+            showPermissionPromoDialog = false
+            Analytics.trackPermissionRender()
+            permissionLauncher.launch(permissionsToRequest)
+        } else {
+            showPermissionPromoDialog = false
+            showPermissionSettingsDialog = true
+        }
+    }
+
+    val onNotNow = {
+        Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.NO_ALLOW)
+        showPermissionPromoDialog = false
+    }
+
+    LaunchedEffect(uiState, hasInitializedPermissionCheck) {
+        if (!hasInitializedPermissionCheck) return@LaunchedEffect
+        when (uiState) {
+            AssetPickerUiState.DeniedPermission -> {
+                if (!hasHandledEntryDeniedPrompt) {
+                    hasHandledEntryDeniedPrompt = true
+                    showPermissionGateForMode(PermissionMode.DENIED)
+                }
+            }
+            is AssetPickerUiState.WithAssets.LimitPermission -> {
+                if (!hasHandledEntryLimitedPrompt) {
+                    hasHandledEntryLimitedPrompt = true
+                    showPermissionGateForMode(PermissionMode.LIMITED)
+                }
+            }
+            is AssetPickerUiState.WithAssets.AllPermission -> {
+                mediaPermissionCoordinator.onFullPermissionGranted()
+                showPermissionPromoDialog = false
+                showPermissionSettingsDialog = false
+            }
+            else -> Unit
+        }
     }
 
     // Photo picker launcher for "Add more photos" in LimitPermission state.
@@ -451,7 +531,9 @@ fun AssetPickerScreen(
             onCloseClick = {
                 requestExit()
             },
-            onGoToSettings = goToAppSettings,
+            onRequestFullPermission = {
+                showPermissionGateForMode(PermissionMode.DENIED)
+            },
             onAddMorePhotos = onAddMorePhotos,
             onCameraClick = onCameraClick
         )
@@ -495,6 +577,20 @@ fun AssetPickerScreen(
             }
         )
     }
+
+    if (showPermissionPromoDialog) {
+        AssetPickerFullAccessPromoDialog(
+            onGiveAccess = onGiveAccess,
+            onNotNow = onNotNow
+        )
+    }
+
+    if (showPermissionSettingsDialog) {
+        AssetPickerPermissionSettingsDialog(
+            onOpenSettings = openAppSettings,
+            onDismiss = { showPermissionSettingsDialog = false }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -509,7 +605,7 @@ private fun AssetPickerContent(
     onConfirmClick: () -> Unit,
     onClearSelection: () -> Unit,
     onCloseClick: () -> Unit,
-    onGoToSettings: () -> Unit,
+    onRequestFullPermission: () -> Unit,
     onAddMorePhotos: () -> Unit,
     onCameraClick: () -> Unit
 ) {
@@ -719,7 +815,7 @@ private fun AssetPickerContent(
 
             AssetPickerUiState.DeniedPermission -> {
                 PermissionDeniedContent(
-                    onGoToSettings = onGoToSettings
+                    onRequestPermission = onRequestFullPermission
                 )
             }
         }
@@ -993,8 +1089,194 @@ private fun EmptyGalleryContent(
 }
 
 @Composable
+private fun AssetPickerFullAccessPromoDialog(
+    onGiveAccess: () -> Unit,
+    onNotNow: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = {
+        },
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .clickableSingle {
+                }
+                .fillMaxSize()
+                .padding(top = 106.dp, start = 16.dp, end = 16.dp)
+        ) {
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xff373737), RoundedCornerShape(16.dp)),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Image(
+                    painter = painterResource(R.drawable.img_popup_asset_permission),
+                    contentDescription = null,
+                    contentScale = ContentScale.FillWidth,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+                Text(
+                    text = stringResource(R.string.picker_give_access_permission),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.W600,
+                    fontSize = 24.sp,
+                    color = TextPrimary,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.picker_full_access_custom_message),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.W500,
+                    fontSize = 15.sp,
+                    color = FoundationBlack_200,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth()
+                )
+                Spacer(Modifier.height(32.dp))
+
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth()
+                        .background(Primary, RoundedCornerShape(160.dp))
+                        .clickableSingle {
+                            onGiveAccess.invoke()
+                        }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.picker_give_access),
+                        fontWeight = FontWeight.W600,
+                        fontSize = 16.sp,
+                        color = FoundationBlack,
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.picker_not_now),
+                    fontWeight = FontWeight.W600,
+                    fontSize = 16.sp,
+                    color = Neutral_N500,
+                    modifier = Modifier
+                        .clickableSingle {
+                            onNotNow.invoke()
+                        }
+                        .padding(16.dp)
+                )
+                Spacer(Modifier.height(20.dp))
+            }
+
+        }
+    }
+}
+
+@Composable
+private fun AssetPickerPermissionSettingsDialog(
+    onOpenSettings: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = {
+        },
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .clickableSingle {
+                }
+                .fillMaxSize()
+                .padding(top = 106.dp, start = 16.dp, end = 16.dp)
+        ) {
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xff373737), RoundedCornerShape(16.dp)),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Image(
+                    painter = painterResource(R.drawable.img_popup_asset_denied),
+                    contentDescription = null,
+                    contentScale = ContentScale.FillWidth,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+                Text(
+                    text = stringResource(R.string.picker_give_access_settings),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.W600,
+                    fontSize = 24.sp,
+                    color = TextPrimary,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.picker_full_access_settings_message),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.W500,
+                    fontSize = 15.sp,
+                    color = FoundationBlack_200,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth()
+                )
+                Spacer(Modifier.height(32.dp))
+
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth()
+                        .background(Primary, RoundedCornerShape(160.dp))
+                        .clickableSingle {
+                            onOpenSettings.invoke()
+                        }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.notification_permission_open_settings),
+                        fontWeight = FontWeight.W600,
+                        fontSize = 16.sp,
+                        color = FoundationBlack,
+                    )
+                }
+                Spacer(Modifier.height(20.dp))
+            }
+
+            Icon(
+                painter = painterResource(R.drawable.ic_close_circle),
+                contentDescription = null,
+                tint = Neutral_N700,
+                modifier = Modifier
+                    .padding(12.dp)
+                    .size(28.dp)
+                    .background(Color.Black.copy(0.2f), CircleShape)
+                    .clickableSingle{
+                        onDismiss.invoke()
+                    }
+                    .padding(4.dp)
+                    .align(Alignment.TopStart)
+            )
+        }
+    }
+}
+
+@Composable
 private fun PermissionDeniedContent(
-    onGoToSettings: () -> Unit
+    onRequestPermission: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -1076,10 +1358,10 @@ private fun PermissionDeniedContent(
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = onGoToSettings,
+                onClick = onRequestPermission,
                 shape = RoundedCornerShape(120.dp)
             ) {
-                Text(stringResource(R.string.picker_go_to_settings), modifier = Modifier.padding(vertical = 8.dp))
+                Text(stringResource(R.string.picker_allow_access), modifier = Modifier.padding(vertical = 8.dp))
             }
 
         }

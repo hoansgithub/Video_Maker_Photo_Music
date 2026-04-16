@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.export
 
+import android.Manifest
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -7,11 +8,16 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 import androidx.compose.animation.AnimatedContent
@@ -113,6 +119,8 @@ import com.videomaker.aimusic.modules.rate.RatingStarsPopup
 import com.videomaker.aimusic.modules.rate.RatingStep
 import com.videomaker.aimusic.modules.rate.RatingStep.*
 import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
+import com.videomaker.aimusic.ui.components.NotificationPermissionPromoDialog
+import com.videomaker.aimusic.ui.components.NotificationPermissionSettingsGuideDialog
 import com.videomaker.aimusic.ui.components.ProcessToast
 import com.videomaker.aimusic.ui.components.ProcessToastState
 import com.videomaker.aimusic.ui.components.QualityPicker
@@ -193,10 +201,29 @@ fun ExportScreen(
     val shouldPresentWatermarkAd by viewModel.shouldPresentWatermarkAd.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
+    var showNotificationPromoDialog by remember { mutableStateOf(false) }
+    var showNotificationSettingsGuideDialog by remember { mutableStateOf(false) }
+    var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
 
     // Get dependencies for ad showing
     val activity = context as? Activity
     val adsLoaderService = koinInject<AdsLoaderService>()
+    val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        Analytics.trackPermissionClick(
+            button = if (granted) {
+                AnalyticsEvent.Value.Option.ALLOW
+            } else {
+                AnalyticsEvent.Value.Option.NO_ALLOW
+            }
+        )
+        notificationPermissionCoordinator.onSystemPermissionResult(granted)
+        Analytics.trackPermissionCheck(allow = granted)
+        showNotificationPromoDialog = false
+    }
 
     // Track ad loading state for Processing overlay
     var adReady by remember { mutableStateOf(false) }
@@ -253,6 +280,22 @@ fun ExportScreen(
     // Show Processing UI when either exporting or ad timing not complete
     val shouldShowProcessing = isProcessing || !processingAdComplete
 
+    LaunchedEffect(uiState, shouldShowProcessing) {
+        if (uiState is ExportUiState.Success &&
+            !shouldShowProcessing &&
+            notificationPermissionCoordinator.shouldShowExportContextualPopup(context)
+        ) {
+            if (notificationPermissionCoordinator.shouldShowSettingsGuide(context)) {
+                showNotificationSettingsGuideDialog = true
+                showNotificationPromoDialog = false
+            } else {
+                showNotificationPromoDialog = true
+                showNotificationSettingsGuideDialog = false
+            }
+            Analytics.trackPermissionRender()
+        }
+    }
+
     // Intercept system back gesture (swipe) in Success state - same ad logic as close button
     BackHandler(enabled = uiState is ExportUiState.Success) {
         viewModel.onResultExitClick()
@@ -260,9 +303,19 @@ fun ExportScreen(
 
     // Cancel export when app goes to background
     val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
+    DisposableEffect(lifecycleOwner, pendingPermissionCheckAfterSettings, uiState) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    if (pendingPermissionCheckAfterSettings) {
+                        val allow = notificationPermissionCoordinator.isNotificationGranted(context)
+                        if (allow) {
+                            notificationPermissionCoordinator.onSystemPermissionGranted()
+                        }
+                        Analytics.trackPermissionCheck(allow = allow)
+                        pendingPermissionCheckAfterSettings = false
+                    }
+                }
                 Lifecycle.Event.ON_STOP -> {
                     // Cancel export to free resources when app is not visible
                     if (uiState is ExportUiState.Processing || uiState is ExportUiState.Preparing) {
@@ -494,6 +547,46 @@ fun ExportScreen(
 
         // Ads loading overlay (shows when rewarded ad is loading)
         AdsLoadingOverlay()
+
+        if (showNotificationPromoDialog) {
+            NotificationPermissionPromoDialog(
+                onNotifyMe = {
+                    Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.ALLOW)
+                    if (notificationPermissionCoordinator.canRequestSystemPermission(context)) {
+                        Analytics.trackPermissionRender()
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        showNotificationPromoDialog = false
+                    } else {
+                        showNotificationPromoDialog = false
+                        showNotificationSettingsGuideDialog = true
+                    }
+                },
+                onMaybeLater = {
+                    Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.NO_ALLOW)
+                    showNotificationPromoDialog = false
+                }
+            )
+        }
+
+        if (showNotificationSettingsGuideDialog) {
+            NotificationPermissionSettingsGuideDialog(
+                onOpenSettings = {
+                    Analytics.trackPermissionGotoSetting()
+                    pendingPermissionCheckAfterSettings = true
+                    showNotificationSettingsGuideDialog = false
+                    runCatching {
+                        context.startActivity(
+                            notificationPermissionCoordinator.buildOpenAppSettingsIntent(context)
+                        )
+                    }.onFailure {
+                        pendingPermissionCheckAfterSettings = false
+                    }
+                },
+                onDismiss = {
+                    showNotificationSettingsGuideDialog = false
+                }
+            )
+        }
     }
 }
 

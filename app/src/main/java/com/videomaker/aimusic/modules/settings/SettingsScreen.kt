@@ -89,6 +89,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLanguageSettings: () -> Unit = {},
     onNavigateToWidgetScreen: () -> Unit = {},
+    onNavigateToNotificationTest: () -> Unit = {},
     settingLocation: String = AnalyticsEvent.Value.Location.UNKNOWN,
 ) {
     val context = LocalContext.current
@@ -174,6 +175,16 @@ fun SettingsScreen(
                         onNavigateToWidgetScreen.invoke()
                     }
                 )
+//                SettingsItem(
+//                    icon = R.drawable.ic_notification_outline,
+//                    title = "Test Notifications",
+//                    subtitle = "",
+//                    isShowLine = true,
+//                    onClick = {
+//                        Analytics.trackSettingOptionClick("notification_test", settingLocation)
+//                        onNavigateToNotificationTest()
+//                    }
+//                )
                 SettingsItem(
                     icon = R.drawable.ic_rate,
                     title = stringResource(R.string.settings_rate_us),

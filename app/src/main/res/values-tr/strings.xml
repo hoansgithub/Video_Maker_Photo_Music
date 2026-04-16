@@ -80,6 +80,13 @@
     <string name="settings_uninstall">Kaldır</string>
     <string name="settings_share_subject">Bu uygulamaya göz at!</string>
     <string name="settings_share_message">Merhaba! Bu harika uygulamayı kullanıyorum. Sen de dene:\n%s</string>
+    <string name="notification_permission_trending_title">Trendleri kaçırma!</string>
+    <string name="notification_permission_trending_message">Yeni viral şablonlar eklendiğinde anında bildirim almak için bildirimleri etkinleştirin.</string>
+    <string name="notification_permission_notify_me">Bana Bildir</string>
+    <string name="notification_permission_maybe_later">Belki Daha Sonra</string>
+    <string name="notification_permission_settings_title">Bildirimler\nşu anda kapalı.</string>
+    <string name="notification_permission_settings_message">Şablon güncellemelerini almak için lütfen cihaz ayarlarından bildirimleri açın.</string>
+    <string name="notification_permission_open_settings">Ayarlara Git</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Bir kez daha dene</string>
@@ -246,6 +253,12 @@
     <string name="picker_permission_title">Fotoğraf Erişimi Gerekli</string>
     <string name="picker_permission_message">Fotoğraflarınızdan video oluşturmak için fotoğraf kütüphanenize erişim iznine ihtiyacımız var.</string>
     <string name="picker_allow_access">Erişime İzin Ver</string>
+    <string name="picker_give_access">Erişim Ver</string>
+    <string name="picker_give_access_settings">Fotoğraflarınıza erişim\nkapalı.</string>
+    <string name="picker_give_access_permission">Oluşturmaya hazır mısın?</string>
+    <string name="picker_not_now">Şimdi Değil</string>
+    <string name="picker_full_access_custom_message">Videolarınıza ve fotoğraflarınıza göz atmak için galerinizde erişime ihtiyacımız var.</string>
+    <string name="picker_full_access_settings_message">Düzenlemeye başlamak için cihaz ayarlarınızda \'Fotoğraflar\' veya \'Depolama\'yı etkinleştirin.</string>
     <string name="picker_limited_access_message">Video Maker\'a sınırlı sayıda fotoğrafa erişim izni verdiniz.</string>
     <string name="picker_add_more_photos">Ekle</string>
     <string name="picker_go_to_settings">Ayarlara Git</string>
@@ -353,6 +366,8 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Yüklenemedi. Yeniden denemek için aşağı çekin.</string>
+    <string name="error_video_playback_failed">Video önizlemesi yüklenemedi. Lütfen bağlantınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="error_video_network">Video yüklenirken ağ hatası. Lütfen bağlantınızı kontrol edin ve tekrar deneyin.</string>
     <string name="error_network_title">Ağ Hatası</string>
     <string name="loading_building_feed">Akışınız Oluşturuluyor</string>
     <string name="error_network_message">Müzik yüklenemedi. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
@@ -459,11 +474,11 @@
     <string name="volume_title">Ses Seviyesi</string>
 
     <!-- Rating Popup -->
-    <string name="rating_satisfaction_title">Video Maker ile geçirdiğiniz zaman için teşekkürler</string>
+    <string name="rating_satisfaction_title">Video Generating\'de geçirdiğiniz zaman için minnettarız</string>
     <string name="rating_satisfaction_subtitle">Uygulamamızdan memnun musunuz?</string>
     <string name="rating_not_really">Pek değil</string>
     <string name="rating_good">İyi</string>
-    <string name="rating_experience_title">Bizimle deneyiminizi değerlendirin</string>
+    <string name="rating_experience_title">Bizimle deneyiminizi\nDeğerlendirin</string>
     <string name="rating_submit">Gönder</string>
     <string name="rating_feedback_title">Bunu duyduğumuza üzüldük 🥲</string>
     <string name="rating_feedback_subtitle">Deneyiminizi geliştirmek için daha çok çalışacağız</string>
@@ -498,5 +513,25 @@
     <!-- Song Watch Ad Dialog -->
     <string name="song_watch_ad_title">Bu şarkıyı açmak için reklam izle?</string>
     <string name="song_watch_ad_subtitle">İzledikten sonra bu şarkıyı video oluşturmak için kullanabilirsiniz. Kilit açma kalıcıdır.</string>
+
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">Yeni Trend Şarkı!</string>
+    <string name="notif_trending_song_body">%1$s\'in \'%2$s\' şarkısı viral oluyor! Trend zirveye çıkmadan düzenlemeni 1 dokunuşla oluştur.</string>
+    <string name="notif_viral_template_title">Senin için trend şablonlar. Hemen dene!</string>
+    <string name="notif_viral_template_body">Bugün 1,000,000 kişi %1$s kullandı. Bu heyecanı kaçırma!</string>
+    <string name="notif_forgotten_masterpiece_title">Başyapıtın seni bekliyor!</string>
+    <string name="notif_forgotten_masterpiece_body">Zor kısmı yaptın, şimdi parlasın. Videon dünyayla paylaşılmaya hazır!</string>
+    <string name="notif_quick_save_title">Emeğini kaybetme!</string>
+    <string name="notif_quick_save_body">Düzenlemen harika görünüyor! Mükemmel ritim senkronunu kaybetmemek için şimdi galerine kaydet.</string>
+    <string name="notif_share_encouragement_title">\'Likes\' için hazır mı?</string>
+    <string name="notif_share_encouragement_body">\'%1$s\' düzenlemen 100%% ritim senkronlu ve paylaşmaya hazır. Hemen TikTok\'ta paylaş!</string>
+    <string name="notif_abandoned_select_photos_title">Ritmi yarım bırakma!</string>
+    <string name="notif_abandoned_select_photos_body">\'Not Like Us\' düzenlemen neredeyse hazır. Sihri görmek için sadece birkaç fotoğraf seç.</string>
+    <string name="notif_draft_completion_nudge_title">Başladığını bitir!</string>
+    <string name="notif_draft_completion_nudge_body">Viral bir videoya sadece bir adım kaldı. Geri dön ve fotoğraflarını şimdi ekle.</string>
+    <string name="notif_cta_play_song">Şarkıyı Çal</string>
+    <string name="notif_cta_discover_templates">Şablonları Keşfet</string>
+    <string name="notif_cta_continue_editing">Düzenlemeye Devam Et</string>
+    <string name="notif_cta_view_template">Şablonu Gör</string>
 
 </resources>

@@ -20,6 +20,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Android 12 and below -->
     <uses-permission
@@ -106,7 +107,31 @@
                 <action android:name="com.videomaker.aimusic.action.UNINSTALL_APP" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="com.videomaker.aimusic.action.NOTIF_TRENDING_SONG" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.videomaker.aimusic.action.NOTIF_VIRAL_TEMPLATE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.videomaker.aimusic.action.NOTIF_MY_VIDEO" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.videomaker.aimusic.action.NOTIF_RESUME_TEMPLATE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".core.notification.NotificationActionReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".core.notification.NotificationDismissReceiver"
+            android:exported="false" />
 
         <!-- ============================================ -->
         <!-- WIDGET RECEIVERS (Glance AppWidgets) -->

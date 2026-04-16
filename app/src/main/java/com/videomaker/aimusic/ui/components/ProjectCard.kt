@@ -4,6 +4,11 @@ import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -86,12 +91,23 @@ fun ProjectCard(
     onDelete: () -> Unit,
     onDownload: () -> Unit,
     onShare: () -> Unit,
+    isHintHighlighted: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
     var showMenu by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var isVisible by remember { mutableStateOf(true) }
+    val pulseTransition = rememberInfiniteTransition(label = "project_hint_pulse")
+    val pulseAlpha by pulseTransition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.95f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "project_hint_alpha"
+    )
 
     AnimatedVisibility(
         visible = isVisible,
@@ -109,6 +125,17 @@ fun ProjectCard(
                     .fillMaxWidth()
                     .aspectRatio(project.settings.aspectRatio.ratio)
                     .clip(RoundedCornerShape(dimens.radiusMd))
+                    .then(
+                        if (isHintHighlighted) {
+                            Modifier.border(
+                                width = 2.dp,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha),
+                                shape = RoundedCornerShape(dimens.radiusMd)
+                            )
+                        } else {
+                            Modifier
+                        }
+                    )
                     .background(Color.Black.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {

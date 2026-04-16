@@ -80,6 +80,13 @@
     <string name="settings_uninstall">Desinstalar</string>
     <string name="settings_share_subject">¡Mira esta aplicación!</string>
     <string name="settings_share_message">¡Hola! Estoy usando esta increíble aplicación. Pruébala:\n%s</string>
+    <string name="notification_permission_trending_title">¡Mantente al día con las tendencias!</string>
+    <string name="notification_permission_trending_message">Activa las notificaciones para recibir alertas instantáneas cuando se agreguen nuevas plantillas virales.</string>
+    <string name="notification_permission_notify_me">Notificarme</string>
+    <string name="notification_permission_maybe_later">Quizás más tarde</string>
+    <string name="notification_permission_settings_title">Las notificaciones\nestán desactivadas.</string>
+    <string name="notification_permission_settings_message">Actívalas en la configuración de tu dispositivo para recibir actualizaciones de plantillas.</string>
+    <string name="notification_permission_open_settings">Ir a Configuración</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Dale otra oportunidad</string>
@@ -246,6 +253,12 @@
     <string name="picker_permission_title">Acceso a Fotos Requerido</string>
     <string name="picker_permission_message">Para crear vídeos con tus fotos, necesitamos permiso para acceder a tu biblioteca de fotos.</string>
     <string name="picker_allow_access">Permitir Acceso</string>
+    <string name="picker_give_access">Dar Acceso</string>
+    <string name="picker_give_access_settings">El acceso a tus fotos\nestá desactivado.</string>
+    <string name="picker_give_access_permission">¿Listo para crear?</string>
+    <string name="picker_not_now">Ahora no</string>
+    <string name="picker_full_access_custom_message">Para explorar tus videos y fotos, necesitamos acceso a tu galería.</string>
+    <string name="picker_full_access_settings_message">Para empezar a editar, habilita \'Fotos\' o \'Almacenamiento\' en la configuración de tu dispositivo.</string>
     <string name="picker_limited_access_message">Has dado acceso a Video Maker a un número limitado de fotos.</string>
     <string name="picker_add_more_photos">Agregar</string>
     <string name="picker_go_to_settings">Ir a Configuración</string>
@@ -353,6 +366,8 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Error al cargar. Desliza hacia abajo para reintentar.</string>
+    <string name="error_video_playback_failed">Error al cargar la vista previa del video. Verifica tu conexión e inténtalo de nuevo.</string>
+    <string name="error_video_network">Error de red al cargar el video. Verifica tu conexión e inténtalo de nuevo.</string>
     <string name="error_network_title">Error de Red</string>
     <string name="loading_building_feed">Construyendo tu Feed</string>
     <string name="error_network_message">No se pudo cargar la música. Verifica tu conexión e inténtalo de nuevo.</string>
@@ -459,11 +474,11 @@
     <string name="volume_title">Volumen</string>
 
     <!-- Rating Popup -->
-    <string name="rating_satisfaction_title">Gracias por tu tiempo con Video Maker</string>
+    <string name="rating_satisfaction_title">Agradecemos tu tiempo en Video Generating</string>
     <string name="rating_satisfaction_subtitle">¿Estás satisfecho con nuestra app?</string>
     <string name="rating_not_really">No mucho</string>
     <string name="rating_good">Bien</string>
-    <string name="rating_experience_title">Califica tu experiencia con nosotros</string>
+    <string name="rating_experience_title">Califica tu\nExperiencia con nosotros</string>
     <string name="rating_submit">Enviar</string>
     <string name="rating_feedback_title">Lamentamos escuchar eso 🥲</string>
     <string name="rating_feedback_subtitle">Trabajaremos más para mejorar tu experiencia</string>
@@ -498,5 +513,25 @@
     <!-- Song Watch Ad Dialog -->
     <string name="song_watch_ad_title">¿Ver un anuncio para desbloquear esta canción?</string>
     <string name="song_watch_ad_subtitle">Después de verlo, podrás usar esta canción para crear videos. El desbloqueo es permanente.</string>
+
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">¡Nueva canción en tendencia!</string>
+    <string name="notif_trending_song_body">\'%2$s\' de %1$s se está volviendo viral. ¡Crea tu edición en 1 toque antes de que pase la tendencia!</string>
+    <string name="notif_viral_template_title">Plantillas en tendencia para ti. ¡Pruébalo ahora!</string>
+    <string name="notif_viral_template_body">1,000,000 personas usaron %1$s hoy. ¡No te pierdas el hype!</string>
+    <string name="notif_forgotten_masterpiece_title">¡Tu obra maestra te espera!</string>
+    <string name="notif_forgotten_masterpiece_body">Ya hiciste la parte difícil, ahora hazla brillar. ¡Tu video está listo para compartir con el mundo!</string>
+    <string name="notif_quick_save_title">¡No pierdas tu trabajo!</string>
+    <string name="notif_quick_save_body">¡Tu edición se ve increíble! Guárdala ahora en tu galería para no perder esos sincronizados perfectos.</string>
+    <string name="notif_share_encouragement_title">¿Listo para los \'Likes\'?</string>
+    <string name="notif_share_encouragement_body">Tu edición de \'%1$s\' está 100%% sincronizada y lista. ¡Publícala en TikTok ahora!</string>
+    <string name="notif_abandoned_select_photos_title">¡No dejes el ritmo a medias!</string>
+    <string name="notif_abandoned_select_photos_body">Tu edición de \'Not Like Us\' casi está lista. Solo elige algunas fotos para ver la magia.</string>
+    <string name="notif_draft_completion_nudge_title">¡Termina lo que empezaste!</string>
+    <string name="notif_draft_completion_nudge_body">Estás a un paso de un video viral. Regresa y agrega tus fotos ahora.</string>
+    <string name="notif_cta_play_song">Reproducir canción</string>
+    <string name="notif_cta_discover_templates">Descubrir plantillas</string>
+    <string name="notif_cta_continue_editing">Seguir editando</string>
+    <string name="notif_cta_view_template">Ver plantilla</string>
 
 </resources>

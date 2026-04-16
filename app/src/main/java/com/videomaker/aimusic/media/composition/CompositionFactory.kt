@@ -12,6 +12,7 @@ import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.Effects
+import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
@@ -20,6 +21,7 @@ import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.media.audio.VolumeAudioProcessor
 import com.videomaker.aimusic.media.effects.FrameOverlayEffect
 import com.videomaker.aimusic.media.effects.TransitionEffect
+import com.videomaker.aimusic.media.effects.WatermarkOverlayEffect
 import com.videomaker.aimusic.media.library.FrameLibrary
 import com.videomaker.aimusic.media.library.TransitionSetLibrary
 import com.videomaker.aimusic.media.library.TransitionShaderLibrary
@@ -126,6 +128,10 @@ class CompositionFactory(
     suspend fun createComposition(project: Project, includeAudio: Boolean = true, forExport: Boolean = false): Composition {
         val settings = project.settings
         val textureSize = if (forExport) EXPORT_TEXTURE_SIZE else PREVIEW_TEXTURE_SIZE
+        val includeWatermark = shouldApplyWatermark(
+            forExport = forExport,
+            isWatermarkFree = project.isWatermarkFree
+        )
 
         // Clean up previous resources
         recycleBitmaps()
@@ -148,7 +154,13 @@ class CompositionFactory(
         lastTransitionBitmaps.set(transitionBitmaps)
 
         // STEP 3: Create video sequence using cache URIs
-        val videoSequence = createVideoSequence(project.assets, settings, processedImages, transitionBitmaps)
+        val videoSequence = createVideoSequence(
+            assets = project.assets,
+            settings = settings,
+            processedImages = processedImages,
+            transitionBitmaps = transitionBitmaps,
+            includeWatermark = includeWatermark
+        )
 
         val sequences = mutableListOf(videoSequence)
 
@@ -313,7 +325,8 @@ class CompositionFactory(
         assets: List<Asset>,
         settings: ProjectSettings,
         processedImages: Map<Int, ProcessedImage>,
-        transitionBitmaps: Map<Int, TransitionBitmapPair>
+        transitionBitmaps: Map<Int, TransitionBitmapPair>,
+        includeWatermark: Boolean
     ): EditedMediaItemSequence {
         // Get all transitions from the effect set - these will be cycled through
         val effectSetTransitions = getTransitionsFromEffectSet(settings)
@@ -359,7 +372,8 @@ class CompositionFactory(
                 toImageBitmap = bitmapPair?.toBitmap,
                 hasTransition = hasActualTransition,
                 isPassthroughMode = usePassthroughMode,
-                clipStartTimeUs = clipStartTimeUs
+                clipStartTimeUs = clipStartTimeUs,
+                includeWatermark = includeWatermark
             )
 
             cumulativeStartTimeUs += totalDurationMs * 1000L
@@ -394,6 +408,10 @@ class CompositionFactory(
         private const val DEFAULT_FRAME_RATE = 30
         private const val PREVIEW_TEXTURE_SIZE = 360
         private const val EXPORT_TEXTURE_SIZE = 720
+
+        internal fun shouldApplyWatermark(forExport: Boolean, isWatermarkFree: Boolean): Boolean {
+            return forExport && !isWatermarkFree
+        }
     }
 
     /**
@@ -409,7 +427,8 @@ class CompositionFactory(
         toImageBitmap: Bitmap?,
         hasTransition: Boolean,
         isPassthroughMode: Boolean,
-        clipStartTimeUs: Long
+        clipStartTimeUs: Long,
+        includeWatermark: Boolean
     ): EditedMediaItem {
         val imageDurationMs = settings.imageDurationMs
         val transitionDurationMs = settings.transitionOverlapMs
@@ -437,7 +456,8 @@ class CompositionFactory(
             transitionDurationUs = transitionDurationUs,
             clipDurationUs = totalDurationUs,
             clipStartTimeUs = clipStartTimeUs,
-            isPassthroughMode = isPassthroughMode
+            isPassthroughMode = isPassthroughMode,
+            includeWatermark = includeWatermark
         )
 
         return EditedMediaItem.Builder(mediaItem)
@@ -469,7 +489,8 @@ class CompositionFactory(
         transitionDurationUs: Long,
         clipDurationUs: Long,
         clipStartTimeUs: Long,
-        isPassthroughMode: Boolean = false
+        isPassthroughMode: Boolean = false,
+        includeWatermark: Boolean = false
     ): Effects {
         val aspectRatio = settings.aspectRatio.ratio
         val videoEffects = mutableListOf<Effect>()
@@ -499,6 +520,10 @@ class CompositionFactory(
             FrameLibrary.getById(frameId)?.let { frame ->
                 videoEffects.add(FrameOverlayEffect(context, frame.frameUrl))
             }
+        }
+
+        if (includeWatermark) {
+            videoEffects.add(WatermarkOverlayEffect(context, R.drawable.app_icon_loading))
         }
 
         return Effects(
@@ -603,17 +628,19 @@ class CompositionFactory(
                     totalVideoDurationMs
                 }
 
-                if (segmentDurationMs < totalVideoDurationMs) {
-                    // LOOP: Segment shorter than video - loop to fill duration exactly
-                    val fullLoops = (totalVideoDurationMs / segmentDurationMs).toInt()
-                    val remainingMs = totalVideoDurationMs % segmentDurationMs
+                val loopPlan = ExportAudioLoopPlanner.plan(
+                    segmentDurationMs = segmentDurationMs,
+                    totalVideoDurationMs = totalVideoDurationMs
+                )
 
-                    android.util.Log.d("CompositionFactory", "Export: Looping segment (segment=${segmentDurationMs}ms < video=${totalVideoDurationMs}ms) - fullLoops=$fullLoops, remainingMs=$remainingMs")
+                if (loopPlan.shouldLoop) {
+                    // LOOP: Segment shorter than video - loop to fill duration exactly
+                    android.util.Log.d("CompositionFactory", "Export: Looping segment (segment=${segmentDurationMs}ms < video=${totalVideoDurationMs}ms) - fullLoops=${loopPlan.fullLoops}, remainingMs=${loopPlan.remainingMs}")
 
                     val loopedItems = mutableListOf<EditedMediaItem>()
 
                     // Add full loops
-                    repeat(fullLoops) { index ->
+                    repeat(loopPlan.fullLoops) { index ->
                         val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
                             .setStartPositionMs(trimStartMs)
 
@@ -636,10 +663,10 @@ class CompositionFactory(
                     }
 
                     // Add partial loop if there's remaining time
-                    if (remainingMs > 0) {
+                    if (loopPlan.remainingMs > 0) {
                         val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
                             .setStartPositionMs(trimStartMs)
-                            .setEndPositionMs(trimStartMs + remainingMs) // Clip to exact remaining duration
+                            .setEndPositionMs(trimStartMs + loopPlan.remainingMs) // Clip to exact remaining duration
 
                         val mediaItem = MediaItem.Builder()
                             .setUri(audioUri)
@@ -712,17 +739,19 @@ class CompositionFactory(
 
                 if (forExport) {
                     // EXPORT: Apply smart looping/clipping based on actual duration
-                    if (actualAudioDurationMs < totalVideoDurationMs) {
-                        // LOOP: Audio shorter than video - loop to fill duration exactly
-                        val fullLoops = (totalVideoDurationMs / actualAudioDurationMs).toInt()
-                        val remainingMs = totalVideoDurationMs % actualAudioDurationMs
+                    val loopPlan = ExportAudioLoopPlanner.plan(
+                        segmentDurationMs = actualAudioDurationMs,
+                        totalVideoDurationMs = totalVideoDurationMs
+                    )
 
-                        android.util.Log.d("CompositionFactory", "Export (untrimmed): Looping (audio=${actualAudioDurationMs}ms < video=${totalVideoDurationMs}ms) - fullLoops=$fullLoops, remainingMs=$remainingMs")
+                    if (loopPlan.shouldLoop) {
+                        // LOOP: Audio shorter than video - loop to fill duration exactly
+                        android.util.Log.d("CompositionFactory", "Export (untrimmed): Looping (audio=${actualAudioDurationMs}ms < video=${totalVideoDurationMs}ms) - fullLoops=${loopPlan.fullLoops}, remainingMs=${loopPlan.remainingMs}")
 
                         val loopedItems = mutableListOf<EditedMediaItem>()
 
                         // Add full loops
-                        repeat(fullLoops) { index ->
+                        repeat(loopPlan.fullLoops) { index ->
                             val mediaItem = MediaItem.Builder()
                                 .setUri(audioUri)
                                 .setMediaId("loop_${index}_${audioUri.hashCode()}")
@@ -737,10 +766,10 @@ class CompositionFactory(
                         }
 
                         // Add partial loop if there's remaining time
-                        if (remainingMs > 0) {
+                        if (loopPlan.remainingMs > 0) {
                             val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
                                 .setStartPositionMs(0L)
-                                .setEndPositionMs(remainingMs) // Clip to exact remaining duration
+                                .setEndPositionMs(loopPlan.remainingMs) // Clip to exact remaining duration
 
                             val mediaItem = MediaItem.Builder()
                                 .setUri(audioUri)

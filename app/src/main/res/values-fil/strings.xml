@@ -80,6 +80,13 @@
     <string name="settings_uninstall">I-uninstall</string>
     <string name="settings_share_subject">Tingnan mo itong app!</string>
     <string name="settings_share_message">Hoy! Gumagamit ako ng magandang app na ito. Subukan mo:\n%s</string>
+    <string name="notification_permission_trending_title">Mauna sa uso!</string>
+    <string name="notification_permission_trending_message">I-enable ang notifications para makatanggap ng instant na alerto kapag may mga bagong viral template.</string>
+    <string name="notification_permission_notify_me">I-notify Ako</string>
+    <string name="notification_permission_maybe_later">Mamaya Na</string>
+    <string name="notification_permission_settings_title">Ang notifications ay\nkasalukuyang naka-disable.</string>
+    <string name="notification_permission_settings_message">Paki-on ang mga ito sa settings ng iyong device para makatanggap ng mga update sa template.</string>
+    <string name="notification_permission_open_settings">Pumunta sa Settings</string>
 
     <!-- Uninstall Screen -->
     <string name="uninstall_title">Subukan muli ito</string>
@@ -246,6 +253,12 @@
     <string name="picker_permission_title">Kailangan ang Access sa Larawan</string>
     <string name="picker_permission_message">Para gumawa ng mga video mula sa iyong mga larawan, kailangan namin ng pahintulot na ma-access ang iyong library ng larawan.</string>
     <string name="picker_allow_access">Payagan ang Access</string>
+    <string name="picker_give_access">Bigyan ng Access</string>
+    <string name="picker_give_access_settings">Naka-off ang access\nsa iyong mga larawan.</string>
+    <string name="picker_give_access_permission">Handa nang gumawa?</string>
+    <string name="picker_not_now">Huwag muna</string>
+    <string name="picker_full_access_custom_message">Para ma-browse ang iyong mga video at larawan, kailangan namin ng access sa iyong gallery.</string>
+    <string name="picker_full_access_settings_message">Para makapagsimulang mag-edit, i-enable ang \'Photos\' o \'Storage\' sa settings ng iyong device.</string>
     <string name="picker_limited_access_message">Binigyan mo ang Video Maker ng access sa ilang larawan lamang.</string>
     <string name="picker_add_more_photos">Magdagdag</string>
     <string name="picker_go_to_settings">Pumunta sa Settings</string>
@@ -353,6 +366,8 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Nabigo ang pag-load. Mag-swipe pababa para subukan muli.</string>
+    <string name="error_video_playback_failed">Nabigo ang pag-load ng video preview. Suriin ang koneksyon at subukan muli.</string>
+    <string name="error_video_network">Network error sa pag-load ng video. Suriin ang koneksyon at subukan muli.</string>
     <string name="error_network_title">Network Error</string>
     <string name="loading_building_feed">Binubuo ang Iyong Feed</string>
     <string name="error_network_message">Hindi ma-load ang musika. Pakisuri ang iyong koneksyon at subukang muli.</string>
@@ -459,11 +474,11 @@
     <string name="volume_title">Volume</string>
 
     <!-- Rating Popup -->
-    <string name="rating_satisfaction_title">Salamat sa oras mo sa Video Maker</string>
+    <string name="rating_satisfaction_title">Nagpapasalamat kami sa oras mo sa Video Generating</string>
     <string name="rating_satisfaction_subtitle">Nasiyahan ka ba sa aming app?</string>
     <string name="rating_not_really">Hindi gaano</string>
     <string name="rating_good">Maganda</string>
-    <string name="rating_experience_title">I-rate ang iyong karanasan sa amin</string>
+    <string name="rating_experience_title">I-rate ang iyong\nKaranasan sa amin</string>
     <string name="rating_submit">Isumite</string>
     <string name="rating_feedback_title">Ikinalulungkot naming marinig iyan 🥲</string>
     <string name="rating_feedback_subtitle">Magsisikap pa kami para mapabuti ang iyong karanasan</string>
@@ -498,5 +513,25 @@
     <!-- Song Watch Ad Dialog -->
     <string name="song_watch_ad_title">Manood ng ad para i-unlock ang kanta?</string>
     <string name="song_watch_ad_subtitle">Pagkatapos manood, magagamit mo ang kantang ito para gumawa ng mga video. Permanente ang pag-unlock.</string>
+
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">Bagong Trending Song!</string>
+    <string name="notif_trending_song_body">Nagva-viral ang \'%2$s\' ni %1$s! Gawin ang edit mo sa 1-tap bago humupa ang trend.</string>
+    <string name="notif_viral_template_title">Trending templates para sa iyo. Subukan na!</string>
+    <string name="notif_viral_template_body">1,000,000 tao ang gumamit ng %1$s ngayon. Huwag palampasin ang hype!</string>
+    <string name="notif_forgotten_masterpiece_title">Naghihintay ang obra mo!</string>
+    <string name="notif_forgotten_masterpiece_body">Nagawa mo na ang mahirap na parte, ngayon ipakislap mo na. Handa nang i-share sa mundo ang video mo!</string>
+    <string name="notif_quick_save_title">Huwag mawala ang gawa mo!</string>
+    <string name="notif_quick_save_body">Ang ganda ng edit mo! I-save mo na sa gallery para hindi mawala ang perfect beat-syncs mo.</string>
+    <string name="notif_share_encouragement_title">Handa na sa \'Likes\'?</string>
+    <string name="notif_share_encouragement_body">100%% beat-synced at ready na ang edit mong \'%1$s\'. I-post mo na sa TikTok!</string>
+    <string name="notif_abandoned_select_photos_title">Huwag iwanang bitin ang beat!</string>
+    <string name="notif_abandoned_select_photos_body">Halos ready na ang \'Not Like Us\' edit mo. Pumili ka lang ng ilang photos para makita ang magic!</string>
+    <string name="notif_draft_completion_nudge_title">Tapusin mo ang sinimulan mo!</string>
+    <string name="notif_draft_completion_nudge_body">Isang hakbang ka na lang para sa viral video. Bumalik ka at idagdag na ang photos mo ngayon.</string>
+    <string name="notif_cta_play_song">I-play ang Song</string>
+    <string name="notif_cta_discover_templates">Tuklasin ang Templates</string>
+    <string name="notif_cta_continue_editing">Ipagpatuloy ang Edit</string>
+    <string name="notif_cta_view_template">Tingnan ang Template</string>
 
 </resources>

@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.home
 
+import android.Manifest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -36,20 +37,23 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
 import com.videomaker.aimusic.modules.gallery.GalleryScreen
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
 import com.videomaker.aimusic.modules.home.components.ProjectsTabContent
@@ -66,6 +70,7 @@ import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import com.videomaker.aimusic.core.constants.AdPlacement
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.runtime.snapshotFlow
+import org.koin.compose.koinInject
 
 /**
  * HomeScreen - Main screen with tabbed navigation
@@ -86,6 +91,8 @@ fun HomeScreen(
     songsViewModel: SongsViewModel,
     projectsViewModel: ProjectsViewModel,
     initialTab: Int = 0,
+    highlightProjectId: String? = null,
+    projectHintMode: String? = null,
     onSettingsClick: (String) -> Unit = {},
     onCreateClick: () -> Unit = {},
     onProjectClick: (String) -> Unit = {},
@@ -98,6 +105,30 @@ fun HomeScreen(
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
     onNavigateToAllSongs: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        Analytics.trackPermissionClick(
+            button = if (granted) {
+                AnalyticsEvent.Value.Option.ALLOW
+            } else {
+                AnalyticsEvent.Value.Option.NO_ALLOW
+            }
+        )
+        notificationPermissionCoordinator.onSystemPermissionResult(granted)
+        Analytics.trackPermissionCheck(allow = granted)
+    }
+
+    LaunchedEffect(Unit) {
+        if (notificationPermissionCoordinator.shouldRequestHomeFirstTimePermission(context)) {
+            Analytics.trackPermissionRender()
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
     val tabs = listOf(
         stringResource(R.string.home_tab_gallery),
         stringResource(R.string.home_tab_songs),
@@ -178,6 +209,8 @@ fun HomeScreen(
                     )
                     2 -> ProjectsTabContent(
                         viewModel = projectsViewModel,
+                        highlightProjectId = highlightProjectId,
+                        hintMode = projectHintMode,
                         onCreateClick = {
                             Analytics.trackCreationStart(AnalyticsEvent.Value.Location.LIBRARY)
                             onNavigateToTemplateDetail("", AnalyticsEvent.Value.Location.LIBRARY_RCM)

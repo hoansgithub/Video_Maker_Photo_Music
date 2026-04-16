@@ -7,10 +7,14 @@ import androidx.lifecycle.viewModelScope
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.media.export.MediaStoreHelper
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.core.notification.NotificationConversionTracker
+import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.DeleteProjectUseCase
 import com.videomaker.aimusic.domain.usecase.GetAllProjectsUseCase
@@ -87,7 +91,10 @@ class ProjectsViewModel(
     private val likeSongUseCase: LikeSongUseCase,
     private val unlikeSongUseCase: UnlikeSongUseCase,
     private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
-    private val adsLoaderService: AdsLoaderService
+    private val adsLoaderService: AdsLoaderService,
+    private val notificationScheduler: NotificationScheduler,
+    private val preferencesManager: PreferencesManager,
+    private val conversionTracker: NotificationConversionTracker
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProjectsUiState>(ProjectsUiState.Loading)
@@ -361,6 +368,23 @@ class ProjectsViewModel(
 
             _toastState.value = when (result) {
                 is MediaStoreHelper.SaveResult.Success -> {
+                    val now = System.currentTimeMillis()
+                    preferencesManager.markVideoSaved(project.id, now)
+                    notificationScheduler.cancelProjectReminders(project.id)
+                    conversionTracker.trackConversionIfEligible(
+                        type = NotificationType.QUICK_SAVE_REMINDER,
+                        itemId = project.id,
+                        itemType = "video",
+                        conversionAction = "download",
+                        nowMs = now
+                    )
+                    conversionTracker.trackConversionIfEligible(
+                        type = NotificationType.FORGOTTEN_MASTERPIECE,
+                        itemId = project.id,
+                        itemType = "video",
+                        conversionAction = "download",
+                        nowMs = now
+                    )
                     ProcessToastState.Success("Downloaded to gallery")
                 }
                 is MediaStoreHelper.SaveResult.Error -> {
@@ -383,22 +407,51 @@ class ProjectsViewModel(
     /**
      * Show toast for share operation
      */
-    fun onShareStarted() {
+    fun onShareStarted(projectId: String) {
         _toastState.value = ProcessToastState.Loading("Preparing to share...")
+        if (projectId.isNotBlank()) {
+            preferencesManager.markVideoOpened(projectId, System.currentTimeMillis())
+        }
     }
 
     /**
      * Show toast for share success
      */
-    fun onShareCompleted() {
+    fun onShareCompleted(projectId: String) {
         _toastState.value = ProcessToastState.Success("Shared")
+        if (projectId.isBlank()) return
+        val now = System.currentTimeMillis()
+        preferencesManager.markVideoShared(projectId, now)
+        notificationScheduler.cancelProjectReminders(projectId)
+        conversionTracker.trackConversionIfEligible(
+            type = NotificationType.SHARE_ENCOURAGEMENT,
+            itemId = projectId,
+            itemType = "video",
+            conversionAction = "share",
+            nowMs = now
+        )
+        conversionTracker.trackConversionIfEligible(
+            type = NotificationType.FORGOTTEN_MASTERPIECE,
+            itemId = projectId,
+            itemType = "video",
+            conversionAction = "share",
+            nowMs = now
+        )
     }
 
     /**
      * Show toast for share error
      */
-    fun onShareError(message: String) {
+    fun onShareError(projectId: String, message: String) {
         _toastState.value = ProcessToastState.Error(message)
+        if (projectId.isNotBlank()) {
+            preferencesManager.markVideoOpened(projectId, System.currentTimeMillis())
+        }
+    }
+
+    fun markProjectOpenedFromNotification(projectId: String) {
+        if (projectId.isBlank()) return
+        preferencesManager.markVideoOpened(projectId, System.currentTimeMillis())
     }
 
     /**

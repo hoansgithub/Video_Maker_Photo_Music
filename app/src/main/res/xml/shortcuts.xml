@@ -5,7 +5,7 @@
     <shortcut
         android:shortcutId="trending_search"
         android:enabled="true"
-        android:icon="@drawable/ic_search_template"
+        android:icon="@drawable/img_shotcut_search"
         android:shortcutShortLabel="@string/shortcut_trending_search_long"
         android:shortcutLongLabel="@string/shortcut_trending_search_long">
         <intent
@@ -18,7 +18,7 @@
     <shortcut
         android:shortcutId="create_video"
         android:enabled="true"
-        android:icon="@drawable/ic_circle_plus_v2"
+        android:icon="@drawable/img_shortcut_create_video"
         android:shortcutShortLabel="@string/shortcut_create_video_long"
         android:shortcutLongLabel="@string/shortcut_create_video_long">
         <intent
@@ -31,7 +31,7 @@
     <shortcut
         android:shortcutId="choose_video_template"
         android:enabled="true"
-        android:icon="@drawable/ic_video_generator"
+        android:icon="@drawable/img_shortcut_template"
         android:shortcutShortLabel="@string/shortcut_choose_template_long"
         android:shortcutLongLabel="@string/shortcut_choose_template_long">
         <intent

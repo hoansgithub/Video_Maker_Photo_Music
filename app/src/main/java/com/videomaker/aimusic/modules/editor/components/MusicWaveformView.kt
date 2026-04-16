@@ -29,15 +29,12 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.theme.Gray500
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import kotlin.math.abs
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.sin
 
 /**
@@ -71,19 +68,22 @@ fun MusicWaveformView(
     minTrimDurationMs: Long = 5000L,
     modifier: Modifier = Modifier
 ) {
-    // Track which handle is being dragged
-    var draggingHandle by remember { mutableStateOf<DragHandle?>(null) }
+    // Track gesture state to avoid handle jumping when both handles are close.
+    var activeDragHandle by remember { mutableStateOf<DragHandle?>(null) }
+    var pendingDirectionSelection by remember { mutableStateOf(false) }
+    var accumulatedDragX by remember { mutableFloatStateOf(0f) }
     var localTrimStart by remember(trimStartMs) { mutableFloatStateOf(trimStartMs.toFloat()) }
     var localTrimEnd by remember(trimEndMs) { mutableFloatStateOf(trimEndMs.toFloat()) }
 
     // Use provided waveform data or empty list (will show loading indicator)
     val waveform = waveformData ?: emptyList()
-    val startLabelPrefix = stringResource(R.string.editor_music_trim_start)
-    val endLabelPrefix = stringResource(R.string.editor_music_trim_end)
     val density = LocalDensity.current
     val labelTextSizePx = with(density) { 11.sp.toPx() }
     val labelBaselinePx = with(density) { 16.dp.toPx() }
     val labelHorizontalPaddingPx = with(density) { 8.dp.toPx() }
+    val touchTargetPx = with(density) { 80.dp.toPx() }
+    val ambiguityThresholdPx = with(density) { 12.dp.toPx() }
+    val directionCommitThresholdPx = with(density) { 4.dp.toPx() }
 
     Box(
         modifier = modifier
@@ -91,52 +91,86 @@ fun MusicWaveformView(
             .height(120.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(Color.Black.copy(alpha = 0.3f))
-            .pointerInput(songDurationMs, minTrimDurationMs) {
+            .pointerInput(songDurationMs, minTrimDurationMs, touchTargetPx, ambiguityThresholdPx, directionCommitThresholdPx) {
                 detectDragGestures(
                     onDragStart = { offset ->
-                        // Determine which handle to drag based on tap position
                         val width = size.width.toFloat()
+                        if (width <= 0f || songDurationMs <= 0L) {
+                            activeDragHandle = null
+                            pendingDirectionSelection = false
+                            accumulatedDragX = 0f
+                            return@detectDragGestures
+                        }
                         val tapX = offset.x
                         val startHandleX = (localTrimStart / songDurationMs) * width
                         val endHandleX = (localTrimEnd / songDurationMs) * width
 
-                        // Calculate distances to both handles
-                        val distanceToStart = abs(tapX - startHandleX)
-                        val distanceToEnd = abs(tapX - endHandleX)
-
-                        // Larger touch target for easier dragging
-                        val touchTarget = 80.dp.toPx()
-
-                        // Select the closest handle within touch target
-                        // This ensures correct handle selection when handles are close together
-                        draggingHandle = when {
-                            distanceToStart < touchTarget && distanceToEnd < touchTarget -> {
-                                // Both handles are within touch target - select the closest one
-                                if (distanceToStart <= distanceToEnd) DragHandle.START else DragHandle.END
+                        accumulatedDragX = 0f
+                        when (
+                            resolveDragStartSelection(
+                                tapX = tapX,
+                                startHandleX = startHandleX,
+                                endHandleX = endHandleX,
+                                touchTargetPx = touchTargetPx,
+                                ambiguityThresholdPx = ambiguityThresholdPx
+                            )
+                        ) {
+                            is DragStartSelection.Start -> {
+                                activeDragHandle = DragHandle.START
+                                pendingDirectionSelection = false
+                                onDragStateChange(true)
                             }
-                            distanceToStart < touchTarget -> DragHandle.START
-                            distanceToEnd < touchTarget -> DragHandle.END
-                            else -> null
-                        }
-
-                        if (draggingHandle != null) {
-                            onDragStateChange(true)
+                            is DragStartSelection.End -> {
+                                activeDragHandle = DragHandle.END
+                                pendingDirectionSelection = false
+                                onDragStateChange(true)
+                            }
+                            DragStartSelection.Ambiguous -> {
+                                activeDragHandle = null
+                                pendingDirectionSelection = true
+                            }
+                            DragStartSelection.None -> {
+                                activeDragHandle = null
+                                pendingDirectionSelection = false
+                            }
                         }
                     },
                     onDrag = { change, dragAmount ->
                         val width = size.width.toFloat()
+                        if (width <= 0f || songDurationMs <= 0L) {
+                            change.consume()
+                            return@detectDragGestures
+                        }
+
+                        if (pendingDirectionSelection && activeDragHandle == null) {
+                            accumulatedDragX += dragAmount.x
+                            resolveHandleByDragDirection(
+                                accumulatedDx = accumulatedDragX,
+                                directionCommitThresholdPx = directionCommitThresholdPx
+                            )?.let { committedHandle ->
+                                activeDragHandle = committedHandle
+                                pendingDirectionSelection = false
+                                onDragStateChange(true)
+                            }
+                        }
+
+                        if (activeDragHandle == null) {
+                            change.consume()
+                            return@detectDragGestures
+                        }
+
                         val deltaMs = (dragAmount.x / width) * songDurationMs
 
-                        when (draggingHandle) {
+                        when (activeDragHandle) {
                             DragHandle.START -> {
                                 val newStart = (localTrimStart + deltaMs)
-                                    .coerceIn(0f, (localTrimEnd - minTrimDurationMs).toFloat())
+                                    .coerceIn(0f, localTrimEnd - minTrimDurationMs)
                                 localTrimStart = newStart
                                 onTrimChange(newStart.toLong(), localTrimEnd.toLong())
                             }
                             DragHandle.END -> {
                                 val newEnd = (localTrimEnd + deltaMs)
-                                    .coerceIn((localTrimStart + minTrimDurationMs).toFloat(), songDurationMs.toFloat())
+                                    .coerceIn(localTrimStart + minTrimDurationMs, songDurationMs.toFloat())
                                 localTrimEnd = newEnd
                                 onTrimChange(localTrimStart.toLong(), newEnd.toLong())
                             }
@@ -145,10 +179,20 @@ fun MusicWaveformView(
                         change.consume()
                     },
                     onDragEnd = {
-                        if (draggingHandle != null) {
+                        if (activeDragHandle != null) {
                             onDragStateChange(false) // Triggers auto-play
                         }
-                        draggingHandle = null
+                        activeDragHandle = null
+                        pendingDirectionSelection = false
+                        accumulatedDragX = 0f
+                    },
+                    onDragCancel = {
+                        if (activeDragHandle != null) {
+                            onDragStateChange(false)
+                        }
+                        activeDragHandle = null
+                        pendingDirectionSelection = false
+                        accumulatedDragX = 0f
                     }
                 )
             }
@@ -396,6 +440,51 @@ private fun generatePlaceholderWaveform(sampleCount: Int): List<Float> {
 /**
  * Enum for tracking which handle is being dragged
  */
-private enum class DragHandle {
+internal fun resolveDragStartSelection(
+    tapX: Float,
+    startHandleX: Float,
+    endHandleX: Float,
+    touchTargetPx: Float,
+    ambiguityThresholdPx: Float
+): DragStartSelection {
+    val distanceToStart = abs(tapX - startHandleX)
+    val distanceToEnd = abs(tapX - endHandleX)
+    val canDragStart = distanceToStart <= touchTargetPx
+    val canDragEnd = distanceToEnd <= touchTargetPx
+    if (!canDragStart && !canDragEnd) {
+        return DragStartSelection.None
+    }
+    if (canDragStart && canDragEnd) {
+        val isAmbiguous = abs(distanceToStart - distanceToEnd) <= ambiguityThresholdPx
+        if (isAmbiguous) {
+            return DragStartSelection.Ambiguous
+        }
+        return if (distanceToStart <= distanceToEnd) {
+            DragStartSelection.Start
+        } else {
+            DragStartSelection.End
+        }
+    }
+    return if (canDragStart) DragStartSelection.Start else DragStartSelection.End
+}
+
+internal fun resolveHandleByDragDirection(
+    accumulatedDx: Float,
+    directionCommitThresholdPx: Float
+): DragHandle? {
+    if (abs(accumulatedDx) < directionCommitThresholdPx) {
+        return null
+    }
+    return if (accumulatedDx < 0f) DragHandle.START else DragHandle.END
+}
+
+internal sealed interface DragStartSelection {
+    data object Start : DragStartSelection
+    data object End : DragStartSelection
+    data object Ambiguous : DragStartSelection
+    data object None : DragStartSelection
+}
+
+internal enum class DragHandle {
     START, END
 }

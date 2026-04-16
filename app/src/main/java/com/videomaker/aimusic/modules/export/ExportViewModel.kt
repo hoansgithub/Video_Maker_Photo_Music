@@ -11,10 +11,14 @@ import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.core.notification.NotificationConversionTracker
+import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.core.rating.RatingTriggerManager
 import com.videomaker.aimusic.domain.repository.ExportProgress
 import com.videomaker.aimusic.domain.repository.ExportRepository
@@ -26,6 +30,7 @@ import com.videomaker.aimusic.modules.rate.RatingStep
 import com.videomaker.aimusic.ui.components.ProcessToastState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -141,7 +146,10 @@ class ExportViewModel(
     private val templateRepository: TemplateRepository,
     private val ratingTriggerManager: RatingTriggerManager,
     private val submitFeedbackUseCase: SubmitFeedbackUseCase,
-    private val adsLoaderService: AdsLoaderService
+    private val adsLoaderService: AdsLoaderService,
+    private val notificationScheduler: NotificationScheduler,
+    private val preferencesManager: PreferencesManager,
+    private val conversionTracker: NotificationConversionTracker
 ) : ViewModel() {
 
     // ============================================
@@ -228,6 +236,8 @@ class ExportViewModel(
 
     private var workId: UUID? = null
     private var currentProjectSnapshot: Project? = null
+    private var currentOutputWatermarkFree: Boolean = false
+    private var watermarkStatusUpdateJob: kotlinx.coroutines.Job? = null
     // Single job for export + progress observation — cancelled on retry to prevent
     // parallel observers watching different work items simultaneously.
     private var exportJob: kotlinx.coroutines.Job? = null
@@ -288,6 +298,7 @@ class ExportViewModel(
                     is ExportProgress.Preparing -> ExportUiState.Preparing
                     is ExportProgress.Processing -> ExportUiState.Processing(progress.percent)
                     is ExportProgress.Success -> {
+                        currentOutputWatermarkFree = project?.isWatermarkFree == true
                         Analytics.trackVideoGenerateComplete(
                             videoId = projectId,
                             templateId = project?.settings?.effectSetId,
@@ -307,6 +318,59 @@ class ExportViewModel(
                             ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
                             volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
                             mediaQuantity = project?.assets?.size
+                        )
+                        val generatedAt = System.currentTimeMillis()
+                        preferencesManager.upsertVideoReminderState(
+                            projectId = projectId,
+                            generatedAtMs = generatedAt,
+                            templateId = project?.settings?.effectSetId,
+                            songId = project?.settings?.musicSongId,
+                            thumbnailUri = _thumbnailUri.value?.toString()
+                        )
+                        notificationScheduler.scheduleQuickSaveReminder(
+                            projectId = projectId,
+                            generatedAtMs = generatedAt
+                        )
+                        notificationScheduler.scheduleShareEncouragement(
+                            projectId = projectId,
+                            generatedAtMs = generatedAt
+                        )
+                        notificationScheduler.scheduleForgottenMasterpiece(
+                            projectId = projectId,
+                            generatedAtMs = generatedAt
+                        )
+                        Analytics.trackNotificationScheduled(
+                            type = NotificationType.QUICK_SAVE_REMINDER.analyticsValue,
+                            itemId = projectId,
+                            itemType = "video",
+                            sourceTrigger = "export_success",
+                            deepLinkDestination = "my_video",
+                            delayMinutes = 30,
+                            copyVariant = "quick_save_v1",
+                            imageType = "video_cover",
+                            sessionType = "retention"
+                        )
+                        Analytics.trackNotificationScheduled(
+                            type = NotificationType.SHARE_ENCOURAGEMENT.analyticsValue,
+                            itemId = projectId,
+                            itemType = "video",
+                            sourceTrigger = "export_success",
+                            deepLinkDestination = "my_video",
+                            delayMinutes = 12L * 60L,
+                            copyVariant = "likes_push_v1",
+                            imageType = "video_cover",
+                            sessionType = "retention"
+                        )
+                        Analytics.trackNotificationScheduled(
+                            type = NotificationType.FORGOTTEN_MASTERPIECE.analyticsValue,
+                            itemId = projectId,
+                            itemType = "video",
+                            sourceTrigger = "export_success",
+                            deepLinkDestination = "my_video",
+                            delayMinutes = 24L * 60L,
+                            copyVariant = "masterpiece_waiting_v1",
+                            imageType = "video_cover",
+                            sessionType = "retention"
                         )
                         ratingTriggerManager.onVideoCreated()
                         ExportUiState.Success(progress.outputPath)
@@ -556,6 +620,23 @@ class ExportViewModel(
 
     fun trackShareAction() {
         val project = currentProjectSnapshot
+        val now = System.currentTimeMillis()
+        preferencesManager.markVideoShared(projectId, now)
+        notificationScheduler.cancelProjectReminders(projectId)
+        conversionTracker.trackConversionIfEligible(
+            type = NotificationType.SHARE_ENCOURAGEMENT,
+            itemId = projectId,
+            itemType = "video",
+            conversionAction = "share",
+            nowMs = now
+        )
+        conversionTracker.trackConversionIfEligible(
+            type = NotificationType.FORGOTTEN_MASTERPIECE,
+            itemId = projectId,
+            itemType = "video",
+            conversionAction = "share",
+            nowMs = now
+        )
         Analytics.trackVideoShare(
             videoId = projectId,
             templateId = project?.settings?.effectSetId,
@@ -654,6 +735,7 @@ class ExportViewModel(
             onReward = {
                 // Remove watermark and save status
                 _showWatermark.value = false
+                currentProjectSnapshot = currentProjectSnapshot?.copy(isWatermarkFree = true)
                 saveWatermarkFreeStatus()
                 android.util.Log.d("ExportViewModel", "✅ Watermark removed after ad")
             },
@@ -661,6 +743,7 @@ class ExportViewModel(
                 // Ad disabled - remove watermark immediately
                 android.util.Log.d("ExportViewModel", "⏭️ Ad disabled - removing watermark")
                 _showWatermark.value = false
+                currentProjectSnapshot = currentProjectSnapshot?.copy(isWatermarkFree = true)
                 saveWatermarkFreeStatus()
             },
             checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_REMOVE_WATERMARK) }
@@ -712,7 +795,8 @@ class ExportViewModel(
      * Called when user successfully watches ad to remove watermark
      */
     private fun saveWatermarkFreeStatus() {
-        viewModelScope.launch {
+        watermarkStatusUpdateJob?.cancel()
+        watermarkStatusUpdateJob = viewModelScope.launch {
             try {
                 projectRepository.updateWatermarkFreeStatus(projectId, isWatermarkFree = true)
                 android.util.Log.d("ExportViewModel", "✅ Project marked as watermark-free in database")
@@ -757,10 +841,16 @@ class ExportViewModel(
             // Show loading toast
             _saveToastState.value = ProcessToastState.Loading(loadingMessage)
 
+            val outputPath = resolveOutputPathForDownload(currentState).getOrElse { e ->
+                android.util.Log.e("ExportViewModel", "Failed to prepare output for download", e)
+                _saveToastState.value = ProcessToastState.Error(errorMessage)
+                return@launch
+            }
+
             val result = withContext(Dispatchers.IO) {
                 MediaStoreHelper.saveVideoToGallery(
                     context = applicationContext,
-                    videoFile = File(currentState.outputPath),
+                    videoFile = File(outputPath),
                     displayName = MediaStoreHelper.generateDisplayName(projectId)
                 )
             }
@@ -769,12 +859,72 @@ class ExportViewModel(
                 is MediaStoreHelper.SaveResult.Success -> {
                     _uiState.value = currentState.copy(savedToGallery = true, saveError = null)
                     _saveToastState.value = ProcessToastState.Success(successMessage)
+                    val now = System.currentTimeMillis()
+                    preferencesManager.markVideoSaved(projectId, now)
+                    notificationScheduler.cancelProjectReminders(projectId)
+                    conversionTracker.trackConversionIfEligible(
+                        type = NotificationType.QUICK_SAVE_REMINDER,
+                        itemId = projectId,
+                        itemType = "video",
+                        conversionAction = "download",
+                        nowMs = now
+                    )
+                    conversionTracker.trackConversionIfEligible(
+                        type = NotificationType.FORGOTTEN_MASTERPIECE,
+                        itemId = projectId,
+                        itemType = "video",
+                        conversionAction = "download",
+                        nowMs = now
+                    )
                 }
                 is MediaStoreHelper.SaveResult.Error -> {
                     _uiState.value = currentState.copy(savedToGallery = false, saveError = result.message)
                     _saveToastState.value = ProcessToastState.Error(errorMessage)
                 }
             }
+        }
+    }
+
+    private suspend fun resolveOutputPathForDownload(currentState: ExportUiState.Success): Result<String> {
+        val projectIsWatermarkFree = currentProjectSnapshot?.isWatermarkFree == true
+        if (!shouldPrepareWatermarkFreeOutputForDownload(projectIsWatermarkFree, currentOutputWatermarkFree)) {
+            return Result.success(currentState.outputPath)
+        }
+
+        // Ensure persisted status is updated before triggering a new export worker read.
+        watermarkStatusUpdateJob?.join()
+
+        val downloadWorkId = exportRepository.startExport(projectId)
+        val terminalProgress = exportRepository.observeExportProgress(downloadWorkId).first { progress ->
+            progress is ExportProgress.Success ||
+                progress is ExportProgress.Error ||
+                progress is ExportProgress.Cancelled
+        }
+
+        return when (terminalProgress) {
+            is ExportProgress.Success -> {
+                currentOutputWatermarkFree = true
+                val outputPath = terminalProgress.outputPath
+                _uiState.value = currentState.copy(
+                    outputPath = outputPath,
+                    savedToGallery = false,
+                    saveError = null
+                )
+                Result.success(outputPath)
+            }
+
+            is ExportProgress.Error -> Result.failure(IllegalStateException(terminalProgress.message))
+            is ExportProgress.Cancelled -> Result.failure(IllegalStateException("Export cancelled"))
+            else -> Result.failure(IllegalStateException("Unexpected export terminal state"))
+        }
+    }
+
+    companion object {
+        internal fun shouldPrepareWatermarkFreeOutputForDownload(
+            projectIsWatermarkFree: Boolean,
+            outputIsWatermarkFree: Boolean
+        ): Boolean {
+            return projectIsWatermarkFree && !outputIsWatermarkFree
         }
     }
 
