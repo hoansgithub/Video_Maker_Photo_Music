@@ -1,10 +1,12 @@
 package com.videomaker.aimusic.modules.templatepreviewer.components
 
 import android.net.Uri
+import android.os.Build
 import android.view.ViewGroup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -21,12 +23,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
@@ -148,12 +152,50 @@ fun TemplateVideoPlayer(
                 }
             }
 
-            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+            override fun onPlayerError(error: PlaybackException) {
                 hasError = true
                 isLoading = false
                 isPrepared = false
-                errorMessage = error.message ?: "Failed to load video"
-                android.util.Log.e("TemplateVideoPlayer", "Player error: ${error.message}")
+
+                // Enhanced logging with device info and error categorization
+                android.util.Log.e("TemplateVideoPlayer", "============ PLAYBACK ERROR ============")
+                android.util.Log.e("TemplateVideoPlayer", "Video URL: $videoUrl")
+                android.util.Log.e("TemplateVideoPlayer", "Error code: ${error.errorCode}")
+                android.util.Log.e("TemplateVideoPlayer", "Error message: ${error.message}")
+                android.util.Log.e("TemplateVideoPlayer", "Error cause: ${error.cause?.message}")
+                android.util.Log.e("TemplateVideoPlayer", "Device: ${Build.MANUFACTURER} ${Build.MODEL}")
+                android.util.Log.e("TemplateVideoPlayer", "Android: ${Build.VERSION.SDK_INT}")
+                android.util.Log.e("TemplateVideoPlayer", "Full stack trace:", error)
+
+                // Check for network-specific errors (like VideoPreviewPlayer.kt does)
+                val isNetworkError = error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
+                                     error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ||
+                                     error.errorCode == PlaybackException.ERROR_CODE_IO_UNSPECIFIED ||
+                                     error.errorCode == PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS
+
+                // Categorize error type for debugging
+                when {
+                    isNetworkError -> {
+                        android.util.Log.w("TemplateVideoPlayer", "⚠️ NETWORK ERROR - Poor connection or download failed")
+                    }
+                    error.errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED -> {
+                        android.util.Log.e("TemplateVideoPlayer", "⚠️ DECODER INIT FAILED - Device codec issue")
+                    }
+                    error.errorCode == PlaybackException.ERROR_CODE_DECODING_FAILED -> {
+                        android.util.Log.e("TemplateVideoPlayer", "⚠️ DECODING FAILED - Video format/codec incompatible or corrupted")
+                    }
+                    else -> {
+                        android.util.Log.e("TemplateVideoPlayer", "⚠️ OTHER ERROR - Unknown playback issue")
+                    }
+                }
+                android.util.Log.e("TemplateVideoPlayer", "=======================================")
+
+                // User-friendly message based on error type
+                errorMessage = when {
+                    isNetworkError -> context.getString(com.videomaker.aimusic.R.string.error_video_network)
+                    else -> context.getString(com.videomaker.aimusic.R.string.error_video_playback_failed)
+                }
+
                 onError?.invoke(errorMessage)
             }
         }
@@ -268,9 +310,11 @@ fun TemplateVideoPlayer(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Failed to load video\n$errorMessage",
+                    text = errorMessage,
                     color = Color.White,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp)
                 )
             }
         }
