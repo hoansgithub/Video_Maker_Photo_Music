@@ -12,9 +12,15 @@ import com.videomaker.aimusic.core.data.local.PreferencesManager
 class NotificationPermissionCoordinator(
     private val preferencesManager: PreferencesManager
 ) {
+    // In-memory process-lifetime flag:
+    // reset only when process is killed and recreated.
+    private var hasConsumedPermissionUiSlotInCurrentProcess = false
 
-    private var hasShownExportPopupInCurrentSession = false
-    private var hasShownTemplatePreviewerPopupInCurrentSession = false
+    private fun tryConsumePermissionUiSlotInCurrentProcess(): Boolean {
+        if (hasConsumedPermissionUiSlotInCurrentProcess) return false
+        hasConsumedPermissionUiSlotInCurrentProcess = true
+        return true
+    }
 
     fun isNotificationGranted(context: Context): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
@@ -30,7 +36,8 @@ class NotificationPermissionCoordinator(
             onSystemPermissionGranted()
             return false
         }
-        return preferencesManager.getNotificationPermissionRequestCount() == 0
+        if (preferencesManager.getNotificationPermissionRequestCount() != 0) return false
+        return tryConsumePermissionUiSlotInCurrentProcess()
     }
 
     fun shouldShowExportContextualPopup(context: Context): Boolean {
@@ -38,11 +45,7 @@ class NotificationPermissionCoordinator(
             onSystemPermissionGranted()
             return false
         }
-        return !hasShownExportPopupInCurrentSession
-    }
-
-    fun markExportContextualPopupShown() {
-        hasShownExportPopupInCurrentSession = true
+        return tryConsumePermissionUiSlotInCurrentProcess()
     }
 
     fun shouldShowTemplatePreviewerContextualPopup(context: Context): Boolean {
@@ -50,11 +53,7 @@ class NotificationPermissionCoordinator(
             onSystemPermissionGranted()
             return false
         }
-        return !hasShownTemplatePreviewerPopupInCurrentSession
-    }
-
-    fun markTemplatePreviewerContextualPopupShown() {
-        hasShownTemplatePreviewerPopupInCurrentSession = true
+        return tryConsumePermissionUiSlotInCurrentProcess()
     }
 
     fun canRequestSystemPermission(context: Context): Boolean {
@@ -71,8 +70,6 @@ class NotificationPermissionCoordinator(
 
     fun onSystemPermissionGranted() {
         preferencesManager.clearNotificationPermissionStateOnGrant()
-        hasShownExportPopupInCurrentSession = false
-        hasShownTemplatePreviewerPopupInCurrentSession = false
     }
 
     fun onSystemPermissionResult(granted: Boolean) {

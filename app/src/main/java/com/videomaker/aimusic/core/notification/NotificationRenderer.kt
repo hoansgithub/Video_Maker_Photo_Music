@@ -2,6 +2,7 @@ package com.videomaker.aimusic.core.notification
 
 import android.app.PendingIntent
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -131,12 +132,16 @@ class NotificationRenderer(
         resolvedBody: String,
         resolvedCtaText: String
     ): android.app.Notification {
+        val textColors = resolveNotificationTextColors(isDeviceInNightMode())
+
         val collapsedView = RemoteViews(
             context.packageName,
             R.layout.notification_trending_song_collapsed
         ).apply {
             setTextViewText(R.id.tvTitle, resolvedTitle)
             setTextViewText(R.id.tvBody, resolvedBody)
+            setTextColor(R.id.tvTitle, textColors.titleColor)
+            setTextColor(R.id.tvBody, textColors.bodyColor)
             setImageViewBitmap(R.id.ivThumb, scaleBitmapToFit(heroBitmap, dp(56), dp(56)))
             setOnClickPendingIntent(R.id.rootContainer, contentIntent)
             setOnClickPendingIntent(R.id.ivThumb, contentIntent)
@@ -148,6 +153,8 @@ class NotificationRenderer(
         ).apply {
             setTextViewText(R.id.tvTitle, resolvedTitle)
             setTextViewText(R.id.tvBody, resolvedBody)
+            setTextColor(R.id.tvTitle, textColors.titleColor)
+            setTextColor(R.id.tvBody, textColors.bodyColor)
             setTextViewText(R.id.tvCtaText, resolvedCtaText)
             setImageViewResource(R.id.ivCtaIcon, payload.ivCtaIcon)
             setImageViewBitmap(R.id.ivHero, scaleBitmapToFit(heroBitmap, dp(384), dp(216)))
@@ -169,6 +176,11 @@ class NotificationRenderer(
             .setContentIntent(contentIntent)
             .setDeleteIntent(deleteIntent)
             .build()
+    }
+
+    private fun isDeviceInNightMode(): Boolean {
+        val nightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        return nightMode == Configuration.UI_MODE_NIGHT_YES
     }
 
     private fun scaleBitmapToFit(source: Bitmap, maxWidthPx: Int, maxHeightPx: Int): Bitmap {
@@ -413,6 +425,11 @@ class NotificationRenderer(
         val gradientColor: Int
     )
 
+    data class NotificationTextColors(
+        val titleColor: Int,
+        val bodyColor: Int
+    )
+
     private fun buildNotificationId(typeOrdinal: Long, seed: Long): Int {
         return NOTIFICATION_ID_BASE + ((typeOrdinal * 10_000L) + (seed % 10_000L)).toInt()
     }
@@ -422,8 +439,25 @@ class NotificationRenderer(
     }
 
     companion object {
+        private const val COLOR_WHITE = 0xFFFFFFFF.toInt()
+        private const val COLOR_TITLE_LIGHT = 0xFF171D1B.toInt()
+        private const val COLOR_BODY_LIGHT = 0xFF3F4946.toInt()
         private const val NOTIFICATION_ID_BASE = 6_000
         private const val PENDING_INTENT_FLAGS =
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+
+        internal fun resolveNotificationTextColors(isNightMode: Boolean): NotificationTextColors {
+            return if (isNightMode) {
+                NotificationTextColors(
+                    titleColor = COLOR_WHITE,
+                    bodyColor = COLOR_WHITE
+                )
+            } else {
+                NotificationTextColors(
+                    titleColor = COLOR_TITLE_LIGHT,
+                    bodyColor = COLOR_BODY_LIGHT
+                )
+            }
+        }
     }
 }
