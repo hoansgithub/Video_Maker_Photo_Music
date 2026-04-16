@@ -362,7 +362,6 @@ fun TemplatePreviewerScreen(
             loadingAdComplete &&
             notificationPermissionCoordinator.shouldShowTemplatePreviewerContextualPopup(context)
         ) {
-            notificationPermissionCoordinator.markTemplatePreviewerContextualPopupShown()
             if (notificationPermissionCoordinator.shouldShowSettingsGuide(context)) {
                 showNotificationSettingsGuideDialog = true
                 showNotificationPromoDialog = false

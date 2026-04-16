@@ -285,7 +285,6 @@ fun ExportScreen(
             !shouldShowProcessing &&
             notificationPermissionCoordinator.shouldShowExportContextualPopup(context)
         ) {
-            notificationPermissionCoordinator.markExportContextualPopupShown()
             if (notificationPermissionCoordinator.shouldShowSettingsGuide(context)) {
                 showNotificationSettingsGuideDialog = true
                 showNotificationPromoDialog = false
