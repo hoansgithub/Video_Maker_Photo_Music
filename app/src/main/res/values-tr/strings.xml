@@ -366,6 +366,8 @@
 
     <!-- Error states -->
     <string name="error_load_failed">Yüklenemedi. Yeniden denemek için aşağı çekin.</string>
+    <string name="error_video_playback_failed">Video önizlemesi yüklenemedi. Lütfen bağlantınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="error_video_network">Video yüklenirken ağ hatası. Lütfen bağlantınızı kontrol edin ve tekrar deneyin.</string>
     <string name="error_network_title">Ağ Hatası</string>
     <string name="loading_building_feed">Akışınız Oluşturuluyor</string>
     <string name="error_network_message">Müzik yüklenemedi. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
