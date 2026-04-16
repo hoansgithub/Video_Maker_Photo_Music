@@ -2,6 +2,7 @@ package com.videomaker.aimusic.media.composition
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import android.opengl.EGL14
 import android.opengl.EGLConfig
@@ -10,6 +11,7 @@ import android.opengl.EGLDisplay
 import android.opengl.EGLSurface
 import android.opengl.GLES20
 import android.opengl.GLUtils
+import android.media.ExifInterface
 import android.content.Context
 import java.io.File
 import java.io.FileOutputStream
@@ -31,6 +33,17 @@ import java.nio.ByteOrder
  * - Both consumers load the same pre-rendered file
  */
 class GPUImagePreprocessor(private val context: Context) {
+
+    internal enum class OrientationTransform {
+        NONE,
+        FLIP_HORIZONTAL,
+        ROTATE_180,
+        FLIP_VERTICAL,
+        TRANSPOSE,
+        ROTATE_90,
+        TRANSVERSE,
+        ROTATE_270
+    }
 
     private var eglDisplay: EGLDisplay = EGL14.EGL_NO_DISPLAY
     private var eglContext: EGLContext = EGL14.EGL_NO_CONTEXT
@@ -255,12 +268,66 @@ class GPUImagePreprocessor(private val context: Context) {
                 inSampleSize = sampleSize
                 inPreferredConfig = Bitmap.Config.ARGB_8888
             }
-            context.contentResolver.openInputStream(uri)?.use { input ->
+            val decodedBitmap = context.contentResolver.openInputStream(uri)?.use { input ->
                 BitmapFactory.decodeStream(input, null, decodeOptions)
-            }
+            } ?: return null
+
+            val orientation = readExifOrientation(uri)
+            applyExifOrientation(decodedBitmap, orientation)
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Failed to load bitmap from $uri", e)
             null
+        }
+    }
+
+    private fun readExifOrientation(uri: Uri): Int {
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                ExifInterface(input).getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+                )
+            } ?: ExifInterface.ORIENTATION_NORMAL
+        } catch (_: Exception) {
+            ExifInterface.ORIENTATION_NORMAL
+        }
+    }
+
+    private fun applyExifOrientation(bitmap: Bitmap, orientation: Int): Bitmap {
+        val matrix = Matrix()
+        when (mapExifOrientation(orientation)) {
+            OrientationTransform.FLIP_HORIZONTAL -> matrix.setScale(-1f, 1f)
+            OrientationTransform.ROTATE_180 -> matrix.setRotate(180f)
+            OrientationTransform.FLIP_VERTICAL -> matrix.setScale(1f, -1f)
+            OrientationTransform.TRANSPOSE -> {
+                matrix.setRotate(90f)
+                matrix.postScale(-1f, 1f)
+            }
+            OrientationTransform.ROTATE_90 -> matrix.setRotate(90f)
+            OrientationTransform.TRANSVERSE -> {
+                matrix.setRotate(-90f)
+                matrix.postScale(-1f, 1f)
+            }
+            OrientationTransform.ROTATE_270 -> matrix.setRotate(-90f)
+            OrientationTransform.NONE -> return bitmap
+        }
+
+        return runCatching {
+            val transformed = Bitmap.createBitmap(
+                bitmap,
+                0,
+                0,
+                bitmap.width,
+                bitmap.height,
+                matrix,
+                true
+            )
+            if (transformed != bitmap) {
+                bitmap.recycle()
+            }
+            transformed
+        }.getOrElse {
+            bitmap
         }
     }
 
@@ -415,6 +482,19 @@ class GPUImagePreprocessor(private val context: Context) {
 
     companion object {
         private const val TAG = "GPUImagePreprocessor"
+
+        internal fun mapExifOrientation(orientation: Int): OrientationTransform {
+            return when (orientation) {
+                ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> OrientationTransform.FLIP_HORIZONTAL
+                ExifInterface.ORIENTATION_ROTATE_180 -> OrientationTransform.ROTATE_180
+                ExifInterface.ORIENTATION_FLIP_VERTICAL -> OrientationTransform.FLIP_VERTICAL
+                ExifInterface.ORIENTATION_TRANSPOSE -> OrientationTransform.TRANSPOSE
+                ExifInterface.ORIENTATION_ROTATE_90 -> OrientationTransform.ROTATE_90
+                ExifInterface.ORIENTATION_TRANSVERSE -> OrientationTransform.TRANSVERSE
+                ExifInterface.ORIENTATION_ROTATE_270 -> OrientationTransform.ROTATE_270
+                else -> OrientationTransform.NONE
+            }
+        }
 
         // Quad vertices (full screen)
         private val QUAD_VERTICES = ByteBuffer.allocateDirect(8 * 4).apply {
