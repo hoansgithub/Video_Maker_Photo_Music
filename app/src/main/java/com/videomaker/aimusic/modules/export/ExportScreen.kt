@@ -147,6 +147,17 @@ import kotlinx.coroutines.launch
  */
 private fun ExoPlayer.releaseAsync() {
     val playerToRelease = this
+
+    // Stop audio immediately on main thread before handing off heavyweight release work.
+    runCatching {
+        playerToRelease.playWhenReady = false
+        playerToRelease.pause()
+        playerToRelease.stop()
+        playerToRelease.clearMediaItems()
+    }.onFailure { e ->
+        android.util.Log.w("ExportScreen", "Failed to stop player before async release", e)
+    }
+
     ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
         runCatching {
             android.util.Log.d("ExportScreen", "Releasing player on background thread...")
@@ -894,6 +905,10 @@ private fun SuccessContent(
             val observer = LifecycleEventObserver { _, event ->
                 when (event) {
                     Lifecycle.Event.ON_PAUSE -> player.pause()
+                    Lifecycle.Event.ON_STOP -> {
+                        player.playWhenReady = false
+                        player.pause()
+                    }
                     Lifecycle.Event.ON_RESUME -> {
                         // Always auto-play when screen becomes visible and player is ready
                         if (player.playbackState == Player.STATE_READY && !player.isPlaying) {

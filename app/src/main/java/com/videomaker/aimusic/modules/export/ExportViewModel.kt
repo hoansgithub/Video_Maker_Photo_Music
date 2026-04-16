@@ -857,7 +857,12 @@ class ExportViewModel(
 
             when (result) {
                 is MediaStoreHelper.SaveResult.Success -> {
-                    _uiState.value = currentState.copy(savedToGallery = true, saveError = null)
+                    _uiState.value = mergeDownloadResultState(
+                        snapshotState = currentState,
+                        latestState = _uiState.value as? ExportUiState.Success,
+                        savedToGallery = true,
+                        saveError = null
+                    )
                     _saveToastState.value = ProcessToastState.Success(successMessage)
                     val now = System.currentTimeMillis()
                     preferencesManager.markVideoSaved(projectId, now)
@@ -878,7 +883,12 @@ class ExportViewModel(
                     )
                 }
                 is MediaStoreHelper.SaveResult.Error -> {
-                    _uiState.value = currentState.copy(savedToGallery = false, saveError = result.message)
+                    _uiState.value = mergeDownloadResultState(
+                        snapshotState = currentState,
+                        latestState = _uiState.value as? ExportUiState.Success,
+                        savedToGallery = false,
+                        saveError = result.message
+                    )
                     _saveToastState.value = ProcessToastState.Error(errorMessage)
                 }
             }
@@ -925,6 +935,19 @@ class ExportViewModel(
             outputIsWatermarkFree: Boolean
         ): Boolean {
             return projectIsWatermarkFree && !outputIsWatermarkFree
+        }
+
+        internal fun mergeDownloadResultState(
+            snapshotState: ExportUiState.Success,
+            latestState: ExportUiState.Success?,
+            savedToGallery: Boolean,
+            saveError: String?
+        ): ExportUiState.Success {
+            val baseState = latestState ?: snapshotState
+            return baseState.copy(
+                savedToGallery = savedToGallery,
+                saveError = saveError
+            )
         }
     }
 
