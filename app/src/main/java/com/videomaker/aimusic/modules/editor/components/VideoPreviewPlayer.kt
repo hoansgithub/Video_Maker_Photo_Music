@@ -86,6 +86,13 @@ sealed class PreviewState {
  */
 private fun CompositionPlayer.releaseAsync() {
     val playerToRelease = this
+    runCatching {
+        // Stop immediately on caller thread so old player cannot keep producing audio/video while waiting for async release.
+        playerToRelease.playWhenReady = false
+        playerToRelease.pause()
+        playerToRelease.stop()
+        playerToRelease.clearMediaItems()
+    }
     // Run release() on background thread using ProcessLifecycleOwner scope
     // This prevents blocking the main thread for 10+ seconds
     androidx.lifecycle.ProcessLifecycleOwner.get().lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
@@ -105,6 +112,13 @@ private fun CompositionPlayer.releaseAsync() {
  */
 private fun androidx.media3.exoplayer.ExoPlayer.releaseAsync() {
     val playerToRelease = this
+    runCatching {
+        // Stop immediately on caller thread so old audio cannot overlap with newly created player.
+        playerToRelease.playWhenReady = false
+        playerToRelease.pause()
+        playerToRelease.stop()
+        playerToRelease.clearMediaItems()
+    }
     androidx.lifecycle.ProcessLifecycleOwner.get().lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
         runCatching {
             android.util.Log.d("VideoPreviewPlayer", "Releasing ExoPlayer on background thread...")
@@ -427,6 +441,10 @@ fun VideoPreviewPlayer(
         // Store old players to release AFTER new ones are ready
         val oldVideoPlayer = videoPlayer
         val oldAudioPlayer = audioPlayer
+        oldVideoPlayer?.playWhenReady = false
+        oldVideoPlayer?.pause()
+        oldAudioPlayer?.playWhenReady = false
+        oldAudioPlayer?.pause()
 
         try {
             // Check if project has assets

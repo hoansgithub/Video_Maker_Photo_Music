@@ -2,6 +2,9 @@ package com.videomaker.aimusic.modules.editor.components
 
 object PreviewLoopPolicy {
 
+    // Ignore tiny duration deltas caused by timing/decoder jitter to avoid accidental loop toggles.
+    private const val LOOP_COMPARISON_TOLERANCE_MS = 50L
+
     fun resolveSegmentDurationMs(
         trimStartMs: Long,
         trimEndMs: Long,
@@ -20,7 +23,9 @@ object PreviewLoopPolicy {
     }
 
     fun shouldLoopAudio(segmentDurationMs: Long, videoDurationMs: Long): Boolean {
-        return segmentDurationMs > 0L && videoDurationMs > 0L && segmentDurationMs < videoDurationMs
+        return segmentDurationMs > 0L &&
+            videoDurationMs > 0L &&
+            segmentDurationMs + LOOP_COMPARISON_TOLERANCE_MS < videoDurationMs
     }
 
     fun mapVideoToAudioPosition(
