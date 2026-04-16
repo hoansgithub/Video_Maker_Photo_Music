@@ -12,6 +12,7 @@ import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.Effects
+import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
@@ -20,6 +21,7 @@ import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.media.audio.VolumeAudioProcessor
 import com.videomaker.aimusic.media.effects.FrameOverlayEffect
 import com.videomaker.aimusic.media.effects.TransitionEffect
+import com.videomaker.aimusic.media.effects.WatermarkOverlayEffect
 import com.videomaker.aimusic.media.library.FrameLibrary
 import com.videomaker.aimusic.media.library.TransitionSetLibrary
 import com.videomaker.aimusic.media.library.TransitionShaderLibrary
@@ -126,6 +128,10 @@ class CompositionFactory(
     suspend fun createComposition(project: Project, includeAudio: Boolean = true, forExport: Boolean = false): Composition {
         val settings = project.settings
         val textureSize = if (forExport) EXPORT_TEXTURE_SIZE else PREVIEW_TEXTURE_SIZE
+        val includeWatermark = shouldApplyWatermark(
+            forExport = forExport,
+            isWatermarkFree = project.isWatermarkFree
+        )
 
         // Clean up previous resources
         recycleBitmaps()
@@ -148,7 +154,13 @@ class CompositionFactory(
         lastTransitionBitmaps.set(transitionBitmaps)
 
         // STEP 3: Create video sequence using cache URIs
-        val videoSequence = createVideoSequence(project.assets, settings, processedImages, transitionBitmaps)
+        val videoSequence = createVideoSequence(
+            assets = project.assets,
+            settings = settings,
+            processedImages = processedImages,
+            transitionBitmaps = transitionBitmaps,
+            includeWatermark = includeWatermark
+        )
 
         val sequences = mutableListOf(videoSequence)
 
@@ -313,7 +325,8 @@ class CompositionFactory(
         assets: List<Asset>,
         settings: ProjectSettings,
         processedImages: Map<Int, ProcessedImage>,
-        transitionBitmaps: Map<Int, TransitionBitmapPair>
+        transitionBitmaps: Map<Int, TransitionBitmapPair>,
+        includeWatermark: Boolean
     ): EditedMediaItemSequence {
         // Get all transitions from the effect set - these will be cycled through
         val effectSetTransitions = getTransitionsFromEffectSet(settings)
@@ -359,7 +372,8 @@ class CompositionFactory(
                 toImageBitmap = bitmapPair?.toBitmap,
                 hasTransition = hasActualTransition,
                 isPassthroughMode = usePassthroughMode,
-                clipStartTimeUs = clipStartTimeUs
+                clipStartTimeUs = clipStartTimeUs,
+                includeWatermark = includeWatermark
             )
 
             cumulativeStartTimeUs += totalDurationMs * 1000L
@@ -394,6 +408,10 @@ class CompositionFactory(
         private const val DEFAULT_FRAME_RATE = 30
         private const val PREVIEW_TEXTURE_SIZE = 360
         private const val EXPORT_TEXTURE_SIZE = 720
+
+        internal fun shouldApplyWatermark(forExport: Boolean, isWatermarkFree: Boolean): Boolean {
+            return forExport && !isWatermarkFree
+        }
     }
 
     /**
@@ -409,7 +427,8 @@ class CompositionFactory(
         toImageBitmap: Bitmap?,
         hasTransition: Boolean,
         isPassthroughMode: Boolean,
-        clipStartTimeUs: Long
+        clipStartTimeUs: Long,
+        includeWatermark: Boolean
     ): EditedMediaItem {
         val imageDurationMs = settings.imageDurationMs
         val transitionDurationMs = settings.transitionOverlapMs
@@ -437,7 +456,8 @@ class CompositionFactory(
             transitionDurationUs = transitionDurationUs,
             clipDurationUs = totalDurationUs,
             clipStartTimeUs = clipStartTimeUs,
-            isPassthroughMode = isPassthroughMode
+            isPassthroughMode = isPassthroughMode,
+            includeWatermark = includeWatermark
         )
 
         return EditedMediaItem.Builder(mediaItem)
@@ -469,7 +489,8 @@ class CompositionFactory(
         transitionDurationUs: Long,
         clipDurationUs: Long,
         clipStartTimeUs: Long,
-        isPassthroughMode: Boolean = false
+        isPassthroughMode: Boolean = false,
+        includeWatermark: Boolean = false
     ): Effects {
         val aspectRatio = settings.aspectRatio.ratio
         val videoEffects = mutableListOf<Effect>()
@@ -499,6 +520,10 @@ class CompositionFactory(
             FrameLibrary.getById(frameId)?.let { frame ->
                 videoEffects.add(FrameOverlayEffect(context, frame.frameUrl))
             }
+        }
+
+        if (includeWatermark) {
+            videoEffects.add(WatermarkOverlayEffect(context, R.drawable.app_icon_loading))
         }
 
         return Effects(

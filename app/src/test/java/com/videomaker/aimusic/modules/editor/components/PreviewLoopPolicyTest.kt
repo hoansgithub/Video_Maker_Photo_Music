@@ -105,9 +105,16 @@ class PreviewLoopPolicyTest {
                 isPlaying = true
             )
         )
-        assertTrue(
+        assertFalse(
             PreviewLoopPolicy.shouldLoopPreviewAtEnd(
                 currentVideoPositionMs = 60_000L,
+                videoDurationMs = 60_000L,
+                isPlaying = true
+            )
+        )
+        assertTrue(
+            PreviewLoopPolicy.shouldLoopPreviewAtEnd(
+                currentVideoPositionMs = 60_001L,
                 videoDurationMs = 60_000L,
                 isPlaying = true
             )
