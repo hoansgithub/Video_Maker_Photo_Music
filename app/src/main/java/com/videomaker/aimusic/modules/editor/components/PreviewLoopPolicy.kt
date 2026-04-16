@@ -42,6 +42,8 @@ object PreviewLoopPolicy {
         videoDurationMs: Long,
         isPlaying: Boolean
     ): Boolean {
-        return isPlaying && videoDurationMs > 0L && currentVideoPositionMs >= videoDurationMs
+        // Loop only after crossing the end boundary.
+        // Exact-boundary handling is owned by Player.STATE_ENDED callback to avoid double-restart races.
+        return isPlaying && videoDurationMs > 0L && currentVideoPositionMs > videoDurationMs
     }
 }
