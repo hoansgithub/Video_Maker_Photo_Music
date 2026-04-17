@@ -25,6 +25,7 @@ class NotificationScheduler(
     private val scheduleConfigService: NotificationScheduleConfigService,
     private val preferencesManager: PreferencesManager
 ) {
+    fun currentScheduleConfig(): NotificationScheduleConfig = currentConfig()
 
     fun scheduleDailyBootstrap(now: ZonedDateTime = ZonedDateTime.now()) {
         scheduleTrendingSongDailyBootstrap(now)

@@ -11,6 +11,7 @@ import com.videomaker.aimusic.core.notification.NotificationChannels
 import com.videomaker.aimusic.core.notification.NotificationScheduleConfigService
 import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.core.notification.hasReachedDelay
+import com.videomaker.aimusic.core.notification.shouldRetryQuickSaveWhileForeground
 import com.videomaker.aimusic.core.notification.NotificationPayload
 import com.videomaker.aimusic.core.notification.NotificationRenderer
 import com.videomaker.aimusic.core.notification.NotificationScheduler
@@ -36,12 +37,24 @@ class QuickSaveReminderWorker(
         val projectId = inputData.getString(NotificationScheduler.KEY_PROJECT_ID)?.takeIf { it.isNotBlank() }
             ?: return Result.success()
         val state = preferencesManager.getVideoReminderState(projectId) ?: return Result.success()
-        val project = projectRepository.getProject(projectId) ?: return Result.success()
+        val project = projectRepository.getProject(projectId)
         val nowMs = System.currentTimeMillis()
-        val delayMs = notificationScheduleConfigService.current().quickSaveDelayMs
+        val scheduleConfig = notificationScheduleConfigService.current()
+        val delayMs = scheduleConfig.quickSaveDelayMs
 
-        val appBackgroundAt = preferencesManager.getLastAppBackgroundAtMs() ?: return Result.success()
-        if (appBackgroundAt <= state.generatedAtMs) return Result.success()
+        if (!scheduleConfig.isFastScheduleMode()) {
+            val appBackgroundAt = preferencesManager.getLastAppBackgroundAtMs()
+            if (shouldRetryQuickSaveWhileForeground(
+                    appBackgroundAtMs = appBackgroundAt,
+                    generatedAtMs = state.generatedAtMs,
+                    runAttemptCount = runAttemptCount,
+                    maxRetryCount = MAX_BACKGROUND_WAIT_RETRIES
+                )
+            ) {
+                return Result.retry()
+            }
+            if (appBackgroundAt == null || appBackgroundAt <= state.generatedAtMs) return Result.success()
+        }
         if (state.savedAtMs != null || state.sharedAtMs != null) return Result.success()
         if (!hasReachedDelay(nowMs - state.generatedAtMs, delayMs)) return Result.success()
 
@@ -86,7 +99,7 @@ class QuickSaveReminderWorker(
                 deepLink = NotificationDeepLinkFactory.myVideo(projectId, hintMode = "hint_save"),
                 imageCandidates = listOfNotNull(
                     state.thumbnailUri,
-                    project.thumbnailUri?.toString()
+                    project?.thumbnailUri?.toString()
                 ),
                 fallbackImageRes = R.drawable.img_template3,
                 ivCtaIcon = R.drawable.ic_video_generator_fill
@@ -110,5 +123,9 @@ class QuickSaveReminderWorker(
             shownAt = nowMs
         )
         return Result.success()
+    }
+
+    companion object {
+        private const val MAX_BACKGROUND_WAIT_RETRIES = 6
     }
 }

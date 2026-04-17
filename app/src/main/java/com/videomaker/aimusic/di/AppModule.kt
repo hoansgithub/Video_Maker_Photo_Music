@@ -171,7 +171,7 @@ val dataModule = module {
     single<NotificationReminderStore> { PreferencesReminderStore(get()) }
     single<NotificationRescheduleController> { SchedulerRescheduleController(get()) }
     single { NotificationScheduleReconciler(get(), get()) }
-    single { NotificationCapPolicy() }
+    single { NotificationCapPolicy(scheduleConfigService = get()) }
     single { NotificationChannels() }
     single { NotificationRenderer(androidContext(), get()) }
     single { NotificationConversionTracker(get()) }

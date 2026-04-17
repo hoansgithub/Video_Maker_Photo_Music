@@ -54,6 +54,11 @@ class PreviewLoopPolicyTest {
     }
 
     @Test
+    fun `shouldLoopAudio returns false for tiny duration delta to avoid jitter loop`() {
+        assertFalse(PreviewLoopPolicy.shouldLoopAudio(segmentDurationMs = 5_000L, videoDurationMs = 5_020L))
+    }
+
+    @Test
     fun `shouldLoopAudio returns false when segment duration is invalid`() {
         assertFalse(PreviewLoopPolicy.shouldLoopAudio(segmentDurationMs = 0L, videoDurationMs = 60_000L))
     }
@@ -137,6 +142,17 @@ class PreviewLoopPolicyTest {
         )
 
         assertEquals(125L, mappedPosition)
+    }
+
+    @Test
+    fun `near equal durations should not modulo map`() {
+        val mappedPosition = PreviewLoopPolicy.mapVideoToAudioPosition(
+            videoPositionMs = 5_015L,
+            segmentDurationMs = 5_000L,
+            videoDurationMs = 5_020L
+        )
+
+        assertEquals(5_015L, mappedPosition)
     }
 
     @Test

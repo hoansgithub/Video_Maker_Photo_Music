@@ -13,17 +13,27 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
     private val conversionTracker: NotificationConversionTracker by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
-        val type = intent.getStringExtra(EXTRA_NOTIFICATION_TYPE)
-            ?.let { runCatching { NotificationType.valueOf(it) }.getOrNull() }
-            ?: return
-        val itemId = intent.getStringExtra(EXTRA_ITEM_ID)?.takeIf { it.isNotBlank() } ?: return
-        val itemType = intent.getStringExtra(EXTRA_ITEM_TYPE)?.takeIf { it.isNotBlank() } ?: return
-
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, DEFAULT_NOTIFICATION_ID)
         if (notificationId != DEFAULT_NOTIFICATION_ID) {
             NotificationInteractionTracker.markClicked(notificationId.toString())
         }
         NotificationManagerCompat.from(context).cancel(notificationId)
+
+        val deepLink = buildDeepLink(intent)
+        val activityIntent = deepLink?.let {
+            NotificationDeepLinkFactory.toMainActivityIntent(context, it)
+        } ?: context.packageManager.getLaunchIntentForPackage(context.packageName)
+            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
+        runCatching {
+            activityIntent?.let { context.startActivity(it) }
+        }
+
+        val type = intent.getStringExtra(EXTRA_NOTIFICATION_TYPE)
+            ?.let { runCatching { NotificationType.valueOf(it) }.getOrNull() }
+        val itemId = intent.getStringExtra(EXTRA_ITEM_ID)?.takeIf { it.isNotBlank() }
+        val itemType = intent.getStringExtra(EXTRA_ITEM_TYPE)?.takeIf { it.isNotBlank() }
+        if (type == null || itemId == null || itemType == null) return
 
         val cta = intent.getStringExtra(EXTRA_CTA) ?: "open_notification"
         val deepLinkDestination = intent.getStringExtra(EXTRA_DEEP_LINK_DESTINATION) ?: "home"
@@ -36,15 +46,9 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
             deepLinkDestination = deepLinkDestination,
             tappedAt = tappedAt
         )
-        conversionTracker.recordTap(type = type, itemId = itemId, tappedAtMs = tappedAt)
-
-        val activityIntent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableExtra(EXTRA_DEEP_LINK_INTENT, Intent::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getParcelableExtra(EXTRA_DEEP_LINK_INTENT)
-        } ?: return
-        context.startActivity(activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        runCatching {
+            conversionTracker.recordTap(type = type, itemId = itemId, tappedAtMs = tappedAt)
+        }
     }
 
     companion object {
@@ -55,7 +59,12 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
         private const val EXTRA_NOTIFICATION_ID = "extra_notification_id"
         private const val EXTRA_CTA = "extra_cta"
         private const val EXTRA_DEEP_LINK_DESTINATION = "extra_deep_link_destination"
-        private const val EXTRA_DEEP_LINK_INTENT = "extra_deep_link_intent"
+        private const val EXTRA_DEEP_LINK_ACTION = "extra_deep_link_action"
+        private const val EXTRA_SONG_ID = "extra_song_id"
+        private const val EXTRA_TEMPLATE_ID = "extra_template_id"
+        private const val EXTRA_PROJECT_ID = "extra_project_id"
+        private const val EXTRA_DRAFT_ID = "extra_draft_id"
+        private const val EXTRA_HINT_MODE = "extra_hint_mode"
 
         fun buildIntent(
             context: Context,
@@ -65,7 +74,7 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
             notificationId: Int,
             cta: String,
             deepLinkDestination: String,
-            deepLinkIntent: Intent
+            deepLink: NotificationDeepLink
         ): Intent {
             return Intent(context, NotificationActionReceiver::class.java).apply {
                 putExtra(EXTRA_NOTIFICATION_TYPE, type.name)
@@ -74,8 +83,27 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
                 putExtra(EXTRA_NOTIFICATION_ID, notificationId)
                 putExtra(EXTRA_CTA, cta)
                 putExtra(EXTRA_DEEP_LINK_DESTINATION, deepLinkDestination)
-                putExtra(EXTRA_DEEP_LINK_INTENT, deepLinkIntent)
+                putExtra(EXTRA_DEEP_LINK_ACTION, deepLink.action)
+                putExtra(EXTRA_SONG_ID, deepLink.songId)
+                putExtra(EXTRA_TEMPLATE_ID, deepLink.templateId)
+                putExtra(EXTRA_PROJECT_ID, deepLink.projectId)
+                putExtra(EXTRA_DRAFT_ID, deepLink.draftId)
+                putExtra(EXTRA_HINT_MODE, deepLink.hintMode)
             }
+        }
+
+        private fun buildDeepLink(intent: Intent): NotificationDeepLink? {
+            val action = intent.getStringExtra(EXTRA_DEEP_LINK_ACTION)?.takeIf { it.isNotBlank() } ?: return null
+            val destination = intent.getStringExtra(EXTRA_DEEP_LINK_DESTINATION) ?: "home"
+            return NotificationDeepLink(
+                action = action,
+                deepLinkDestination = destination,
+                songId = intent.getLongExtra(EXTRA_SONG_ID, -1L),
+                templateId = intent.getStringExtra(EXTRA_TEMPLATE_ID),
+                projectId = intent.getStringExtra(EXTRA_PROJECT_ID),
+                draftId = intent.getStringExtra(EXTRA_DRAFT_ID),
+                hintMode = intent.getStringExtra(EXTRA_HINT_MODE)
+            )
         }
     }
 }

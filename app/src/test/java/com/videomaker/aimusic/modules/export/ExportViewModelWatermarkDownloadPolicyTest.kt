@@ -1,6 +1,7 @@
 package com.videomaker.aimusic.modules.export
 
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -34,5 +35,56 @@ class ExportViewModelWatermarkDownloadPolicyTest {
                 outputIsWatermarkFree = true
             )
         )
+    }
+
+    @Test
+    fun `download result keeps latest output path when success state changed during save`() {
+        val staleSnapshot = ExportUiState.Success(
+            outputPath = "/tmp/with_watermark.mp4",
+            savedToGallery = false,
+            saveError = null
+        )
+        val latestState = ExportUiState.Success(
+            outputPath = "/tmp/watermark_free.mp4",
+            savedToGallery = false,
+            saveError = null
+        )
+
+        val merged = ExportViewModel.mergeDownloadResultState(
+            snapshotState = staleSnapshot,
+            latestState = latestState,
+            savedToGallery = true,
+            saveError = null
+        )
+
+        assertEquals("/tmp/watermark_free.mp4", merged.outputPath)
+        assertTrue(merged.savedToGallery)
+        assertEquals(null, merged.saveError)
+    }
+
+    @Test
+    fun `download error also keeps latest output path when state changed during save`() {
+        val staleSnapshot = ExportUiState.Success(
+            outputPath = "/tmp/with_watermark.mp4",
+            savedToGallery = false,
+            saveError = null
+        )
+        val latestState = ExportUiState.Success(
+            outputPath = "/tmp/watermark_free.mp4",
+            savedToGallery = false,
+            saveError = null
+        )
+        val expectedError = "save failed"
+
+        val merged = ExportViewModel.mergeDownloadResultState(
+            snapshotState = staleSnapshot,
+            latestState = latestState,
+            savedToGallery = false,
+            saveError = expectedError
+        )
+
+        assertEquals("/tmp/watermark_free.mp4", merged.outputPath)
+        assertFalse(merged.savedToGallery)
+        assertEquals(expectedError, merged.saveError)
     }
 }
