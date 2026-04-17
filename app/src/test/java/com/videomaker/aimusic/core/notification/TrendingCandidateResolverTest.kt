@@ -3,13 +3,12 @@ package com.videomaker.aimusic.core.notification
 import com.videomaker.aimusic.domain.model.MusicSong
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 class TrendingCandidateResolverTest {
 
     @Test
-    fun `trending resolver picks top song when usage at least 100k and changed from snapshot`() {
+    fun `trending resolver picks top song when changed from snapshot`() {
         val songs = listOf(
             MusicSong(
                 id = 11L,
@@ -40,7 +39,34 @@ class TrendingCandidateResolverTest {
     }
 
     @Test
-    fun `same song is only suppressed for the same local day`() {
+    fun `trending resolver still picks top song when usage counts are low`() {
+        val songs = listOf(
+            MusicSong(
+                id = 31L,
+                name = "Low Usage Top",
+                artist = "Artist D",
+                usageCount = 8_500
+            ),
+            MusicSong(
+                id = 32L,
+                name = "Low Usage Second",
+                artist = "Artist E",
+                usageCount = 7_200
+            )
+        )
+
+        val result = TrendingCandidateResolver.resolve(
+            featuredSongs = songs,
+            snapshot = null,
+            currentLocalDate = "2026-04-15"
+        )
+
+        assertNotNull(result)
+        assertEquals(31L, result?.id)
+    }
+
+    @Test
+    fun `same top song can still be selected and daily cap handles duplicate prevention`() {
         val songs = listOf(
             MusicSong(
                 id = 21L,
@@ -51,7 +77,7 @@ class TrendingCandidateResolverTest {
         )
 
         val today = "2026-04-15"
-        val blockedToday = TrendingCandidateResolver.resolve(
+        val selectedToday = TrendingCandidateResolver.resolve(
             featuredSongs = songs,
             snapshot = TrendingCandidateResolver.DailySnapshot(
                 localDate = today,
@@ -60,7 +86,7 @@ class TrendingCandidateResolverTest {
             ),
             currentLocalDate = today
         )
-        val allowedNextDay = TrendingCandidateResolver.resolve(
+        val selectedNextDay = TrendingCandidateResolver.resolve(
             featuredSongs = songs,
             snapshot = TrendingCandidateResolver.DailySnapshot(
                 localDate = "2026-04-14",
@@ -70,8 +96,9 @@ class TrendingCandidateResolverTest {
             currentLocalDate = today
         )
 
-        assertNull(blockedToday)
-        assertNotNull(allowedNextDay)
-        assertEquals(21L, allowedNextDay?.id)
+        assertNotNull(selectedToday)
+        assertEquals(21L, selectedToday?.id)
+        assertNotNull(selectedNextDay)
+        assertEquals(21L, selectedNextDay?.id)
     }
 }

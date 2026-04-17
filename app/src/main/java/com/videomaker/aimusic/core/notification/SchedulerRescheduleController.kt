@@ -7,8 +7,14 @@ class SchedulerRescheduleController(
 ) : NotificationRescheduleController {
 
     override fun rescheduleDaily(now: ZonedDateTime) {
-        scheduler.rescheduleTrendingSongDaily(now)
-        scheduler.rescheduleViralTemplateDaily(now)
+        scheduler.rescheduleTrendingSongDaily(
+            now = now,
+            allowImmediateIfMissed = true
+        )
+        scheduler.rescheduleViralTemplateDaily(
+            now = now,
+            allowImmediateIfMissed = true
+        )
     }
 
     override fun rescheduleVideoReminders(projectId: String, generatedAtMs: Long) {

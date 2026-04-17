@@ -62,7 +62,14 @@ class TrendingSongWorker(
                     )
                 },
                 currentLocalDate = localDate
-            ) ?: return Result.success()
+            )
+            if (candidate == null) {
+                Analytics.trackNotificationCanceled(
+                    type = NotificationType.TRENDING_SONG.analyticsValue,
+                    reason = "no_candidate"
+                )
+                return Result.success()
+            }
 
             val nowMs = System.currentTimeMillis()
             val gateDecision = notificationCapPolicy.evaluate(
@@ -77,7 +84,8 @@ class TrendingSongWorker(
                     sameItemLastShownAtMs = preferencesManager.getNotificationItemLastShownAtMs(
                         notificationType = NotificationType.TRENDING_SONG.name,
                         itemId = candidate.id
-                    )
+                    ),
+                    ignorePerItemCooldown = true
                 )
             )
             if (!gateDecision.allowed) {

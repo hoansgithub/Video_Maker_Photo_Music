@@ -32,31 +32,47 @@ class NotificationScheduler(
         scheduleViralTemplateDailyBootstrap(now)
     }
 
-    fun scheduleTrendingSongDailyBootstrap(now: ZonedDateTime = ZonedDateTime.now()) {
+    fun scheduleTrendingSongDailyBootstrap(
+        now: ZonedDateTime = ZonedDateTime.now(),
+        allowImmediateIfMissed: Boolean = true
+    ) {
         enqueueDailyTrendingSong(
             now = now,
-            policy = ExistingWorkPolicy.KEEP
+            policy = ExistingWorkPolicy.KEEP,
+            allowImmediateIfMissed = allowImmediateIfMissed
         )
     }
 
-    fun rescheduleTrendingSongDaily(now: ZonedDateTime = ZonedDateTime.now()) {
+    fun rescheduleTrendingSongDaily(
+        now: ZonedDateTime = ZonedDateTime.now(),
+        allowImmediateIfMissed: Boolean = false
+    ) {
         enqueueDailyTrendingSong(
             now = now,
-            policy = ExistingWorkPolicy.REPLACE
+            policy = ExistingWorkPolicy.REPLACE,
+            allowImmediateIfMissed = allowImmediateIfMissed
         )
     }
 
-    fun scheduleViralTemplateDailyBootstrap(now: ZonedDateTime = ZonedDateTime.now()) {
+    fun scheduleViralTemplateDailyBootstrap(
+        now: ZonedDateTime = ZonedDateTime.now(),
+        allowImmediateIfMissed: Boolean = true
+    ) {
         enqueueDailyViralTemplate(
             now = now,
-            policy = ExistingWorkPolicy.KEEP
+            policy = ExistingWorkPolicy.KEEP,
+            allowImmediateIfMissed = allowImmediateIfMissed
         )
     }
 
-    fun rescheduleViralTemplateDaily(now: ZonedDateTime = ZonedDateTime.now()) {
+    fun rescheduleViralTemplateDaily(
+        now: ZonedDateTime = ZonedDateTime.now(),
+        allowImmediateIfMissed: Boolean = false
+    ) {
         enqueueDailyViralTemplate(
             now = now,
-            policy = ExistingWorkPolicy.REPLACE
+            policy = ExistingWorkPolicy.REPLACE,
+            allowImmediateIfMissed = allowImmediateIfMissed
         )
     }
 
@@ -205,18 +221,25 @@ class NotificationScheduler(
 
     private fun enqueueDailyTrendingSong(
         now: ZonedDateTime,
-        policy: ExistingWorkPolicy
+        policy: ExistingWorkPolicy,
+        allowImmediateIfMissed: Boolean
     ) {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
+        val nowMs = now.toInstant().toEpochMilli()
         val request = OneTimeWorkRequestBuilder<TrendingSongWorker>()
             .setInitialDelay(
                 nextDelayMillis(
                     now = now,
                     hour = currentConfig().trendingHour,
-                    minute = currentConfig().trendingMinute
+                    minute = currentConfig().trendingMinute,
+                    allowImmediateIfMissed = allowImmediateIfMissed,
+                    alreadyShownToday = preferencesManager.getNotificationTypeDailyShownCount(
+                        notificationType = NotificationType.TRENDING_SONG.name,
+                        nowMs = nowMs
+                    ) > 0
                 ),
                 TimeUnit.MILLISECONDS
             )
@@ -233,18 +256,25 @@ class NotificationScheduler(
 
     private fun enqueueDailyViralTemplate(
         now: ZonedDateTime,
-        policy: ExistingWorkPolicy
+        policy: ExistingWorkPolicy,
+        allowImmediateIfMissed: Boolean
     ) {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
+        val nowMs = now.toInstant().toEpochMilli()
         val request = OneTimeWorkRequestBuilder<ViralTemplateWorker>()
             .setInitialDelay(
                 nextDelayMillis(
                     now = now,
                     hour = currentConfig().viralHour,
-                    minute = currentConfig().viralMinute
+                    minute = currentConfig().viralMinute,
+                    allowImmediateIfMissed = allowImmediateIfMissed,
+                    alreadyShownToday = preferencesManager.getNotificationTypeDailyShownCount(
+                        notificationType = NotificationType.VIRAL_TEMPLATE.name,
+                        nowMs = nowMs
+                    ) > 0
                 ),
                 TimeUnit.MILLISECONDS
             )
@@ -265,12 +295,22 @@ class NotificationScheduler(
         return ((anchorTimeMs + configuredDelayMs) - System.currentTimeMillis()).coerceAtLeast(0L)
     }
 
-    private fun nextDelayMillis(now: ZonedDateTime, hour: Int, minute: Int): Long {
-        var target = now.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
-        if (!target.isAfter(now)) {
-            target = target.plusDays(1)
+    private fun nextDelayMillis(
+        now: ZonedDateTime,
+        hour: Int,
+        minute: Int,
+        allowImmediateIfMissed: Boolean,
+        alreadyShownToday: Boolean
+    ): Long {
+        val targetToday = now.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
+        if (targetToday.isAfter(now)) {
+            return Duration.between(now, targetToday).toMillis().coerceAtLeast(0L)
         }
-        return Duration.between(now, target).toMillis().coerceAtLeast(0L)
+        if (allowImmediateIfMissed && !alreadyShownToday) {
+            return 0L
+        }
+        val tomorrowTarget = targetToday.plusDays(1)
+        return Duration.between(now, tomorrowTarget).toMillis().coerceAtLeast(0L)
     }
 
     private fun uniqueQuickSave(projectId: String): String = "notif_quick_save_${sanitizeKey(projectId)}"
