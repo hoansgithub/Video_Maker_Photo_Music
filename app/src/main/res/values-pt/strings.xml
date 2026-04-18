@@ -368,6 +368,7 @@
     <string name="error_load_failed">Falha ao carregar. Puxe para baixo para tentar novamente.</string>
     <string name="error_video_playback_failed">Falha ao carregar visualização do vídeo. Verifique sua conexão e tente novamente.</string>
     <string name="error_video_network">Erro de rede ao carregar vídeo. Verifique sua conexão e tente novamente.</string>
+    <string name="video_retrying">Loading preview…</string>
     <string name="error_network_title">Erro de Rede</string>
     <string name="loading_building_feed">Construindo seu Feed</string>
     <string name="error_network_message">Falha ao carregar música. Verifique sua conexão e tente novamente.</string>

@@ -4,7 +4,9 @@ import android.net.Uri
 import android.os.Build
 import android.view.ViewGroup
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +45,7 @@ import org.koin.compose.koinInject
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // ============================================
@@ -93,11 +97,17 @@ fun TemplateVideoPlayer(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val coroutineScope = rememberCoroutineScope()
 
     var isLoading by remember { mutableStateOf(true) }
     var hasError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var isPrepared by remember { mutableStateOf(false) }
+
+    // Retry mechanism state
+    var retryCount by remember(videoUrl) { mutableStateOf(0) }
+    var isRetrying by remember { mutableStateOf(false) }
+    var maxRetries by remember { mutableStateOf(5) }
 
     val player = remember(videoUrl) {
         // Configure instant playback with minimal buffer
@@ -136,9 +146,14 @@ fun TemplateVideoPlayer(
                         isLoading = false
                         hasError = false
                         isPrepared = true
+                        isRetrying = false
+                        retryCount = 0  // Reset retry count on successful load
                         // Log buffered duration to verify lazy loading
                         val bufferedMs = player.bufferedPosition - player.currentPosition
                         android.util.Log.d("TemplateVideoPlayer", "STATE_READY - Buffered: ${bufferedMs}ms, playing=${player.isPlaying}, autoPlay=$autoPlay")
+                        if (retryCount > 0) {
+                            android.util.Log.d("TemplateVideoPlayer", "✅ Retry successful after $retryCount attempts")
+                        }
                     }
                     Player.STATE_IDLE -> {
                         isLoading = false
@@ -153,8 +168,6 @@ fun TemplateVideoPlayer(
             }
 
             override fun onPlayerError(error: PlaybackException) {
-                hasError = true
-                isLoading = false
                 isPrepared = false
 
                 // Enhanced logging with device info and error categorization
@@ -165,6 +178,7 @@ fun TemplateVideoPlayer(
                 android.util.Log.e("TemplateVideoPlayer", "Error cause: ${error.cause?.message}")
                 android.util.Log.e("TemplateVideoPlayer", "Device: ${Build.MANUFACTURER} ${Build.MODEL}")
                 android.util.Log.e("TemplateVideoPlayer", "Android: ${Build.VERSION.SDK_INT}")
+                android.util.Log.e("TemplateVideoPlayer", "Retry count: $retryCount")
                 android.util.Log.e("TemplateVideoPlayer", "Full stack trace:", error)
 
                 // Check for network-specific errors (like VideoPreviewPlayer.kt does)
@@ -173,30 +187,99 @@ fun TemplateVideoPlayer(
                                      error.errorCode == PlaybackException.ERROR_CODE_IO_UNSPECIFIED ||
                                      error.errorCode == PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS
 
-                // Categorize error type for debugging
+                val isDecoderError = error.errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED
+
+                // Smart retry strategy based on error type
+                val shouldRetry: Boolean
+                val retryLimit: Int
+
                 when {
                     isNetworkError -> {
                         android.util.Log.w("TemplateVideoPlayer", "⚠️ NETWORK ERROR - Poor connection or download failed")
+                        shouldRetry = true
+                        retryLimit = 5  // Network errors: retry 5 times
                     }
-                    error.errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED -> {
-                        android.util.Log.e("TemplateVideoPlayer", "⚠️ DECODER INIT FAILED - Device codec issue")
+                    isDecoderError -> {
+                        android.util.Log.e("TemplateVideoPlayer", "⚠️ DECODER INIT FAILED - Device codec issue (might be temporary)")
+                        shouldRetry = true
+                        retryLimit = 3  // Decoder errors: retry 3 times (might be temporary resource issue)
                     }
                     error.errorCode == PlaybackException.ERROR_CODE_DECODING_FAILED -> {
                         android.util.Log.e("TemplateVideoPlayer", "⚠️ DECODING FAILED - Video format/codec incompatible or corrupted")
+                        shouldRetry = true
+                        retryLimit = 2  // Decoding errors: retry 2 times
                     }
                     else -> {
                         android.util.Log.e("TemplateVideoPlayer", "⚠️ OTHER ERROR - Unknown playback issue")
+                        shouldRetry = true
+                        retryLimit = 3  // Other errors: retry 3 times
                     }
                 }
-                android.util.Log.e("TemplateVideoPlayer", "=======================================")
 
-                // User-friendly message based on error type
-                errorMessage = when {
-                    isNetworkError -> context.getString(com.videomaker.aimusic.R.string.error_video_network)
-                    else -> context.getString(com.videomaker.aimusic.R.string.error_video_playback_failed)
+                maxRetries = retryLimit
+
+                // Attempt auto-retry if within limits
+                if (shouldRetry && retryCount < retryLimit) {
+                    retryCount++
+                    isRetrying = true
+                    hasError = false
+                    isLoading = true
+
+                    // Exponential backoff: 1s, 2s, 4s
+                    val delayMs = (1000L * (1 shl (retryCount - 1))).coerceAtMost(4000L)
+
+                    android.util.Log.w(
+                        "TemplateVideoPlayer",
+                        "🔄 Auto-retry attempt $retryCount/$retryLimit in ${delayMs}ms (exponential backoff)"
+                    )
+
+                    coroutineScope.launch {
+                        try {
+                            delay(delayMs)
+
+                            // Stop and release current player state
+                            player.stop()
+                            player.clearMediaItems()
+
+                            // Small delay to ensure cleanup
+                            delay(100)
+
+                            // Reload video
+                            android.util.Log.d("TemplateVideoPlayer", "🔄 Retrying video load...")
+                            val mediaItem = MediaItem.Builder()
+                                .setUri(Uri.parse(videoUrl))
+                                .build()
+
+                            player.setMediaItem(mediaItem)
+                            player.prepare()
+                        } catch (e: Exception) {
+                            android.util.Log.e("TemplateVideoPlayer", "Retry failed with exception", e)
+                            hasError = true
+                            isLoading = false
+                            isRetrying = false
+                            errorMessage = context.getString(com.videomaker.aimusic.R.string.error_video_playback_failed)
+                        }
+                    }
+                } else {
+                    // Max retries exhausted or non-retryable error
+                    hasError = true
+                    isLoading = false
+                    isRetrying = false
+
+                    if (retryCount >= retryLimit) {
+                        android.util.Log.e("TemplateVideoPlayer", "❌ Max retries ($retryLimit) exhausted - giving up")
+                    }
+
+                    android.util.Log.e("TemplateVideoPlayer", "=======================================")
+
+                    // User-friendly message based on error type
+                    errorMessage = when {
+                        isNetworkError -> context.getString(com.videomaker.aimusic.R.string.error_video_network)
+                        else -> context.getString(com.videomaker.aimusic.R.string.error_video_playback_failed)
+                    }
+
+                    onError?.invoke(errorMessage)
                 }
-
-                onError?.invoke(errorMessage)
             }
         }
     }
@@ -286,7 +369,7 @@ fun TemplateVideoPlayer(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Loading indicator
+        // Loading indicator with retry status
         if (isLoading && !hasError) {
             Box(
                 modifier = Modifier
@@ -294,10 +377,24 @@ fun TemplateVideoPlayer(
                     .background(Color.Black.copy(alpha = 0.3f)),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp)
-                )
+                androidx.compose.foundation.layout.Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                ) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(48.dp)
+                    )
+
+                    // Show retry status if retrying
+                    if (isRetrying && retryCount > 0) {
+                        Text(
+                            text = context.getString(com.videomaker.aimusic.R.string.video_retrying),
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
             }
         }
 
