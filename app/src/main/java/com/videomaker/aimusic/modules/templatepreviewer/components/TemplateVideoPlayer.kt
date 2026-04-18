@@ -107,7 +107,7 @@ fun TemplateVideoPlayer(
     // Retry mechanism state
     var retryCount by remember(videoUrl) { mutableStateOf(0) }
     var isRetrying by remember { mutableStateOf(false) }
-    var maxRetries by remember { mutableStateOf(5) }
+    var maxRetries = 5  // Not state - used only for logic, not UI rendering
 
     val player = remember(videoUrl) {
         // Configure instant playback with minimal buffer
@@ -377,9 +377,9 @@ fun TemplateVideoPlayer(
                     .background(Color.Black.copy(alpha = 0.3f)),
                 contentAlignment = Alignment.Center
             ) {
-                androidx.compose.foundation.layout.Column(
+                Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.primary,
