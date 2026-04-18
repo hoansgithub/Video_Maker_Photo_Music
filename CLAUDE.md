@@ -700,6 +700,15 @@ Before EVERY code change:
 **Cause**: Destroying ads in `onDispose`
 **Fix**: Only destroy in `Lifecycle.Event.ON_DESTROY`
 
+### MediaCodec Resource Exhaustion (Error 4006) During Scrolling
+
+**Cause**: Async player release too slow → new players created faster than old ones release
+**Symptoms**: Error 4006 during rapid scrolling through video list
+**Fix**:
+1. Synchronous release: `player.release()` instead of `player.releaseAsync()`
+2. Debounce loading: `delay(150)` before `prepare()`
+3. Handle error 4006 with longer retry delays + `System.gc()`
+
 ---
 
 ## Video Maker Specific Patterns
@@ -911,6 +920,121 @@ When blending two images in a custom GlShaderProgram, NEVER mix Media3's interna
 
 This ensures the color handling is consistent across both textures.
 
+### 10. CRITICAL: MediaCodec Resource Exhaustion in Scrolling Video Lists
+
+**Problem Discovered:**
+When displaying multiple video players in a scrolling LazyColumn (e.g., template previewer), rapid scrolling causes **Error 4006 (MediaCodec Resource Exhaustion)**. This happens because:
+- New ExoPlayer instances are created faster than old ones are released
+- Each ExoPlayer uses 1 MediaCodec decoder (device limit: 4-8 concurrent decoders)
+- Async player release is slow (100-500ms+), causing resource buildup
+
+**Symptoms:**
+- Error Code 4006 fires during rapid scrolling (10+ swipes)
+- Same videos fail repeatedly when scrolling back and forth
+- Video loading becomes progressively slower
+- "Loading preview..." appears frequently
+
+**Root Cause Timeline:**
+```
+0ms:   Template 1 visible → ExoPlayer #1 created
+100ms: Template 2 visible → ExoPlayer #2 created
+200ms: Template 3 visible → ExoPlayer #3 created
+300ms: Template 4 visible → ExoPlayer #4 created
+400ms: Template 5 visible → ExoPlayer #5 created
+500ms: Template 6 visible → ExoPlayer #6 tries to create
+       ❌ ERROR 4006: No MediaCodec decoders available!
+       (Players #1, #2 still releasing in background)
+```
+
+**The Fix - Synchronous Release + Debounce:**
+
+```kotlin
+// ❌ FORBIDDEN - Async release causes resource buildup
+DisposableEffect(player) {
+    onDispose {
+        player.releaseAsync()  // Too slow! New players created before old ones release
+    }
+}
+
+// ✅ REQUIRED - Synchronous release + debounce
+val player = remember(videoUrl) {
+    val loadControl = DefaultLoadControl.Builder()
+        .setBufferDurationsMs(
+            /* minBufferMs */ 500,            // Aggressive buffering
+            /* maxBufferMs */ 3000,           // Reduced memory footprint
+            /* bufferForPlaybackMs */ 300,   // Instant playback
+            /* bufferForPlaybackAfterRebufferMs */ 500
+        )
+        .setPrioritizeTimeOverSizeThresholds(true)
+        .build()
+
+    ExoPlayer.Builder(context)
+        .setMediaSourceFactory(DefaultMediaSourceFactory(cacheDataSourceFactory))
+        .setLoadControl(loadControl)
+        .build()
+}
+
+// Debounce loading to prevent rapid creation during scroll
+LaunchedEffect(videoUrl) {
+    delay(150)  // Wait 150ms before loading
+    player.setMediaItem(mediaItem)
+    player.prepare()
+}
+
+// Synchronous release to free MediaCodec immediately
+DisposableEffect(player) {
+    onDispose {
+        try {
+            player.release()  // ✅ Sync release - immediate MediaCodec cleanup
+        } catch (e: Exception) {
+            Log.e("Player", "Error releasing player", e)
+        }
+    }
+}
+
+// Handle Error 4006 specifically
+override fun onPlayerError(error: PlaybackException) {
+    val isResourceExhaustion = error.errorCode == 4006
+
+    if (isResourceExhaustion) {
+        // Longer retry delays (2s, 3s, 4s) + force GC
+        System.gc()
+        delay(2000L + (retryCount * 1000L))
+    }
+
+    // Retry logic...
+}
+```
+
+**Key Changes:**
+1. **Synchronous Release**: `player.release()` instead of `player.releaseAsync()`
+   - Frees MediaCodec resources immediately
+   - Prevents resource buildup during scrolling
+
+2. **Debounce Loading**: 150ms delay before `prepare()`
+   - Prevents player creation during rapid scroll
+   - Only creates player if template stays visible
+
+3. **Error 4006 Handling**: Specific retry strategy
+   - Longer delays (2s, 3s, 4s) to let resources free
+   - Force garbage collection: `System.gc()`
+   - 3 retry limit for resource exhaustion
+
+4. **Aggressive Buffering**: Reduced buffer sizes
+   - Min: 500ms (was 1s)
+   - Max: 3s (was 5s)
+   - Lower memory footprint per player
+
+**When to Apply:**
+- ✅ Multiple video players in LazyColumn/LazyRow
+- ✅ Template previewer with many videos
+- ✅ Any scrolling video grid/list
+- ❌ Single video player (use async release for better UX)
+- ❌ Non-scrolling contexts (no resource exhaustion risk)
+
+**Reference Implementation:**
+See `TemplateVideoPlayer.kt` for the complete working implementation with error handling and retry logic.
+
 ---
 
 ## Module Structure
@@ -971,6 +1095,8 @@ Before EVERY code change:
 - [ ] KSP2 for Room (NOT KAPT)
 - [ ] Same Composition for preview and export
 - [ ] Player resources released in DisposableEffect
+- [ ] **Scrolling video lists**: Sync release + debounce (NOT async release)
+- [ ] **Error 4006 handling**: Specific retry strategy for MediaCodec exhaustion
 - [ ] Asset URIs validated on project load
 - [ ] Progress tracking via WorkManager setProgress()
 

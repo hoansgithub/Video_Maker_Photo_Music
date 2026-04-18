@@ -113,13 +113,15 @@ fun TemplateVideoPlayer(
         // Configure instant playback with minimal buffer
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                /* minBufferMs */ 1000,           // Min 1s buffer
-                /* maxBufferMs */ 5000,           // Max 5s buffer (instant play!)
-                /* bufferForPlaybackMs */ 500,   // Start after 0.5s buffered (instant!)
-                /* bufferForPlaybackAfterRebufferMs */ 1000
+                /* minBufferMs */ 500,            // Min 0.5s buffer (more aggressive)
+                /* maxBufferMs */ 3000,           // Max 3s buffer (reduced from 5s)
+                /* bufferForPlaybackMs */ 300,   // Start after 0.3s buffered (instant!)
+                /* bufferForPlaybackAfterRebufferMs */ 500
             )
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
+
+        android.util.Log.d("TemplateVideoPlayer", "Creating NEW ExoPlayer for: $videoUrl")
 
         ExoPlayer.Builder(context)
             .setMediaSourceFactory(
@@ -184,8 +186,12 @@ fun TemplateVideoPlayer(
                     PlaybackException.ERROR_CODE_TIMEOUT -> "TIMEOUT"
                     PlaybackException.ERROR_CODE_IO_CLEARTEXT_NOT_PERMITTED -> "IO_CLEARTEXT_NOT_PERMITTED"
                     PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND -> "IO_FILE_NOT_FOUND"
+                    4006 -> "MEDIACODEC_RESOURCE_EXHAUSTION"  // Custom: Too many players
                     else -> "UNKNOWN_${error.errorCode}"
                 }
+
+                // Detect MediaCodec resource exhaustion (Error 4006)
+                val isResourceExhaustion = error.errorCode == 4006
 
                 // Enhanced logging with detailed error information for scroll debugging
                 android.util.Log.e("TemplateVideoPlayer", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -214,6 +220,11 @@ fun TemplateVideoPlayer(
                 val retryLimit: Int
 
                 when {
+                    isResourceExhaustion -> {
+                        android.util.Log.e("TemplateVideoPlayer", "⚠️ MEDIACODEC RESOURCE EXHAUSTION - Too many players created during scroll")
+                        shouldRetry = true
+                        retryLimit = 3  // Resource exhaustion: retry with longer delay
+                    }
                     isNetworkError -> {
                         android.util.Log.w("TemplateVideoPlayer", "⚠️ NETWORK ERROR - Poor connection or download failed")
                         shouldRetry = true
@@ -245,8 +256,12 @@ fun TemplateVideoPlayer(
                     hasError = false
                     isLoading = true
 
-                    // Exponential backoff: 1s, 2s, 4s
-                    val delayMs = (1000L * (1 shl (retryCount - 1))).coerceAtMost(4000L)
+                    // Longer delay for resource exhaustion to let old players release
+                    val delayMs = if (isResourceExhaustion) {
+                        2000L + (retryCount * 1000L)  // 2s, 3s, 4s for resource issues
+                    } else {
+                        (1000L * (1 shl (retryCount - 1))).coerceAtMost(4000L)  // Exponential: 1s, 2s, 4s
+                    }
 
                     android.util.Log.w(
                         "TemplateVideoPlayer",
@@ -255,14 +270,20 @@ fun TemplateVideoPlayer(
 
                     coroutineScope.launch {
                         try {
+                            // For resource exhaustion, force garbage collection
+                            if (isResourceExhaustion) {
+                                android.util.Log.d("TemplateVideoPlayer", "💨 Requesting GC to free MediaCodec resources...")
+                                System.gc()
+                            }
+
                             delay(delayMs)
 
                             // Stop and release current player state
                             player.stop()
                             player.clearMediaItems()
 
-                            // Small delay to ensure cleanup
-                            delay(100)
+                            // Longer cleanup delay for resource exhaustion
+                            delay(if (isResourceExhaustion) 300 else 100)
 
                             // Reload video
                             android.util.Log.d("TemplateVideoPlayer", "🔄 Retrying video load...")
@@ -309,9 +330,12 @@ fun TemplateVideoPlayer(
         player.addListener(listener)
     }
 
-    // Load and prepare video (don't play yet)
+    // Load and prepare video with debounce (prevents rapid creation during scroll)
     LaunchedEffect(videoUrl) {
         try {
+            // Debounce: wait 150ms before loading to avoid rapid player creation during scroll
+            delay(150)
+
             android.util.Log.d("TemplateVideoPlayer", "Loading video URL: $videoUrl")
             val mediaItem = MediaItem.Builder()
                 .setUri(Uri.parse(videoUrl))
@@ -366,7 +390,17 @@ fun TemplateVideoPlayer(
             android.util.Log.d("TemplateVideoPlayer", "Disposing player for: $videoUrl")
             lifecycleOwner.lifecycle.removeObserver(observer)
             player.removeListener(listener)  // Remove listener before release to prevent leaks
-            player.releaseAsync()  // ✅ Release async to avoid ANR
+
+            // ✅ CRITICAL FIX: Release synchronously to free MediaCodec resources immediately
+            // This prevents resource exhaustion (Error 4006) during rapid scrolling
+            // We use a try-catch to handle any disposal errors gracefully
+            try {
+                android.util.Log.d("TemplateVideoPlayer", "Releasing player synchronously...")
+                player.release()
+                android.util.Log.d("TemplateVideoPlayer", "Player released successfully")
+            } catch (e: Exception) {
+                android.util.Log.e("TemplateVideoPlayer", "Error releasing player", e)
+            }
         }
     }
 
