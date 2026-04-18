@@ -152,7 +152,9 @@ fun TemplateVideoPlayer(
                         val bufferedMs = player.bufferedPosition - player.currentPosition
                         android.util.Log.d("TemplateVideoPlayer", "STATE_READY - Buffered: ${bufferedMs}ms, playing=${player.isPlaying}, autoPlay=$autoPlay")
                         if (retryCount > 0) {
-                            android.util.Log.d("TemplateVideoPlayer", "✅ Retry successful after $retryCount attempts")
+                            android.util.Log.i("TemplateVideoPlayer", "✅ RETRY SUCCESS after $retryCount attempts - URL: $videoUrl")
+                        } else {
+                            android.util.Log.d("TemplateVideoPlayer", "✅ Video loaded successfully on first try - URL: $videoUrl")
                         }
                     }
                     Player.STATE_IDLE -> {
@@ -170,15 +172,33 @@ fun TemplateVideoPlayer(
             override fun onPlayerError(error: PlaybackException) {
                 isPrepared = false
 
-                // Enhanced logging with device info and error categorization
-                android.util.Log.e("TemplateVideoPlayer", "============ PLAYBACK ERROR ============")
-                android.util.Log.e("TemplateVideoPlayer", "Video URL: $videoUrl")
-                android.util.Log.e("TemplateVideoPlayer", "Error code: ${error.errorCode}")
-                android.util.Log.e("TemplateVideoPlayer", "Error message: ${error.message}")
-                android.util.Log.e("TemplateVideoPlayer", "Error cause: ${error.cause?.message}")
-                android.util.Log.e("TemplateVideoPlayer", "Device: ${Build.MANUFACTURER} ${Build.MODEL}")
-                android.util.Log.e("TemplateVideoPlayer", "Android: ${Build.VERSION.SDK_INT}")
-                android.util.Log.e("TemplateVideoPlayer", "Retry count: $retryCount")
+                // Map error code to readable name for debugging
+                val errorCodeName = when (error.errorCode) {
+                    PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED -> "IO_NETWORK_CONNECTION_FAILED"
+                    PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT -> "IO_NETWORK_CONNECTION_TIMEOUT"
+                    PlaybackException.ERROR_CODE_IO_UNSPECIFIED -> "IO_UNSPECIFIED"
+                    PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS -> "IO_BAD_HTTP_STATUS"
+                    PlaybackException.ERROR_CODE_DECODER_INIT_FAILED -> "DECODER_INIT_FAILED"
+                    PlaybackException.ERROR_CODE_DECODING_FAILED -> "DECODING_FAILED"
+                    PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> "BEHIND_LIVE_WINDOW"
+                    PlaybackException.ERROR_CODE_TIMEOUT -> "TIMEOUT"
+                    PlaybackException.ERROR_CODE_IO_CLEARTEXT_NOT_PERMITTED -> "IO_CLEARTEXT_NOT_PERMITTED"
+                    PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND -> "IO_FILE_NOT_FOUND"
+                    else -> "UNKNOWN_${error.errorCode}"
+                }
+
+                // Enhanced logging with detailed error information for scroll debugging
+                android.util.Log.e("TemplateVideoPlayer", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                android.util.Log.e("TemplateVideoPlayer", "❌ PLAYBACK ERROR (Scroll Retry Debugging)")
+                android.util.Log.e("TemplateVideoPlayer", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                android.util.Log.e("TemplateVideoPlayer", "📹 Video URL: $videoUrl")
+                android.util.Log.e("TemplateVideoPlayer", "🔢 Error Code: ${error.errorCode} ($errorCodeName)")
+                android.util.Log.e("TemplateVideoPlayer", "💬 Error Message: ${error.message}")
+                android.util.Log.e("TemplateVideoPlayer", "🔍 Error Cause: ${error.cause?.javaClass?.simpleName} - ${error.cause?.message}")
+                android.util.Log.e("TemplateVideoPlayer", "📱 Device: ${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})")
+                android.util.Log.e("TemplateVideoPlayer", "🔄 Retry Count: $retryCount / $maxRetries")
+                android.util.Log.e("TemplateVideoPlayer", "⏱️  Timestamp: ${System.currentTimeMillis()}")
+                android.util.Log.e("TemplateVideoPlayer", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                 android.util.Log.e("TemplateVideoPlayer", "Full stack trace:", error)
 
                 // Check for network-specific errors (like VideoPreviewPlayer.kt does)
@@ -230,7 +250,7 @@ fun TemplateVideoPlayer(
 
                     android.util.Log.w(
                         "TemplateVideoPlayer",
-                        "🔄 Auto-retry attempt $retryCount/$retryLimit in ${delayMs}ms (exponential backoff)"
+                        "🔄 RETRY #$retryCount/$retryLimit TRIGGERED - Delay: ${delayMs}ms - Error: $errorCodeName - URL: $videoUrl"
                     )
 
                     coroutineScope.launch {
