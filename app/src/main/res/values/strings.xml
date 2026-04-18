@@ -381,6 +381,7 @@
     <string name="error_template_music_failed">Failed to load song. Please check your connection and try again.</string>
     <string name="error_video_playback_failed">Failed to load video preview. Please check your connection and try again.</string>
     <string name="error_video_network">Network error loading video. Please check your connection and try again.</string>
+    <string name="video_retrying">Loading preview…</string>
     <string name="dialog_ok">OK</string>
 
     <!-- Songs -->

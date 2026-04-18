@@ -368,6 +368,7 @@
     <string name="error_load_failed">فشل التحميل. اسحب للأسفل للمحاولة مجدداً.</string>
     <string name="error_video_playback_failed">فشل تحميل معاينة الفيديو. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
     <string name="error_video_network">خطأ في الشبكة أثناء تحميل الفيديو. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
+    <string name="video_retrying">Loading preview…</string>
     <string name="error_network_title">خطأ في الشبكة</string>
     <string name="loading_building_feed">جارٍ بناء موجزك</string>
     <string name="error_network_message">فشل تحميل الموسيقى. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
