@@ -25,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -241,6 +242,7 @@ fun VideoPreviewPlayer(
     // Actual music segment duration (updated when audio player is ready with actual duration)
     var actualMusicSegmentDurationMs by remember { mutableStateOf<Long?>(null) }
     var lastBoundaryLoopRestartAtMs by remember { mutableStateOf(0L) }
+    val latestUserWantsPlayback by rememberUpdatedState(isPlaying)
 
     // Notify parent of preview state changes
     LaunchedEffect(previewState) {
@@ -310,18 +312,30 @@ fun VideoPreviewPlayer(
         }
     }
 
-    fun restartPreviewAtBeginning(video: CompositionPlayer, audio: ExoPlayer?) {
+    fun restartPreviewAtBeginning(
+        video: CompositionPlayer,
+        audio: ExoPlayer?,
+        userWantsPlayback: Boolean
+    ) {
         val now = SystemClock.elapsedRealtime()
         if (now - lastBoundaryLoopRestartAtMs < 250L) return
 
         lastBoundaryLoopRestartAtMs = now
-        video.playWhenReady = true
-        audio?.playWhenReady = true
+        val shouldContinuePlayback = PreviewLoopPolicy.shouldRestartLoopPlayback(
+            userWantsPlayback = userWantsPlayback,
+            playerPlayWhenReady = video.playWhenReady
+        )
         video.seekTo(0)
         audio?.seekTo(0) // Audio timeline is relative to clipped range
-        video.play()
-        audio?.play()
-        onPlaybackStateChange(true)
+        if (shouldContinuePlayback) {
+            video.play()
+            audio?.play()
+            onPlaybackStateChange(true)
+        } else {
+            video.pause()
+            audio?.pause()
+            onPlaybackStateChange(false)
+        }
     }
 
     // Handler for periodic position updates
@@ -337,16 +351,6 @@ fun VideoPreviewPlayer(
 
                         // DON'T sync continuously - causes glitching!
                         // Only sync on user actions (seek, play, pause)
-
-                        if (PreviewLoopPolicy.shouldLoopPreviewAtEnd(
-                                currentVideoPositionMs = currentPos,
-                                videoDurationMs = videoDurationMs,
-                                isPlaying = vp.isPlaying
-                            )
-                        ) {
-                            android.util.Log.d("VideoPreviewPlayer", "Video duration reached, looping both players")
-                            restartPreviewAtBeginning(vp, audioPlayer)
-                        }
                     }
                 }
                 // Re-schedule while players exist
@@ -625,6 +629,14 @@ fun VideoPreviewPlayer(
             // Add listener for video playback state changes
             newVideoPlayer.addListener(object : Player.Listener {
                 override fun onIsPlayingChanged(playing: Boolean) {
+                    if (!PreviewLoopPolicy.shouldPropagatePlaybackStateToUi(
+                            isPlaying = playing,
+                            isPlayWhenReady = newVideoPlayer.playWhenReady
+                        )
+                    ) {
+                        return
+                    }
+
                     // Sync audio player play/pause with video
                     if (playing) {
                         newAudioPlayer?.play()
@@ -641,7 +653,11 @@ fun VideoPreviewPlayer(
                             playerReadyFlow.value = true
                         }
                         Player.STATE_ENDED -> {
-                            restartPreviewAtBeginning(newVideoPlayer, newAudioPlayer)
+                            restartPreviewAtBeginning(
+                                video = newVideoPlayer,
+                                audio = newAudioPlayer,
+                                userWantsPlayback = latestUserWantsPlayback
+                            )
                         }
                     }
                 }
