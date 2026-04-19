@@ -199,7 +199,7 @@ object AnalyticsEvent {
     // ============================================
     // 19. SHORTCUT
     // ============================================
-    const val SHORTCUT_MENU_IMPRESSION = "shortcut_menu_impression"
+    const val SHORTCUT_MENU_IMPRESSION = "shortcut_menu_impress"
     const val SHORTCUT_CLICK = "shortcut_click"
 
     // ============================================

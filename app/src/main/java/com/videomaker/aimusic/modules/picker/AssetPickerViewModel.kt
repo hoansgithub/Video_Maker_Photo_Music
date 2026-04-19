@@ -757,10 +757,6 @@ class AssetPickerViewModel(
             notificationScheduler.cancelDraftReminders(draftId)
             preferencesManager.clearDraftReminderState(draftId)
         }
-        Analytics.trackExitSave(
-            videoId = projectId,
-            location = AnalyticsEvent.Value.Location.MEDIA_SELECT
-        )
         Analytics.trackMediaComplete(currentState.selectedAssets.size)
 
         viewModelScope.launch {
