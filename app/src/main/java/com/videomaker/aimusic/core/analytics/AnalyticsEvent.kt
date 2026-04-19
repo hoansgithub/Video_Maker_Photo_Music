@@ -28,7 +28,7 @@ object AnalyticsEvent {
     // ============================================
     // 4. TEMPLATE CONTEXT
     // ============================================
-    const val TEMPLATE_IMPRESSION = "template_impression"
+    const val TEMPLATE_IMPRESSION = "template_impress"
     const val TEMPLATE_CLICK = "template_click"
     const val TEMPLATE_PREVIEW = "template_preview"
     const val TEMPLATE_OPTION = "template_option"
