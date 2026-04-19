@@ -178,9 +178,6 @@ fun EditorScreen(
         currentState()?.displaySettings?.aspectRatio?.toAnalyticsRatioSize()
             ?: AspectRatio.RATIO_9_16.toAnalyticsRatioSize()
 
-    fun currentVolumePercent(): Int =
-        ((currentState()?.displaySettings?.audioVolume ?: 1f) * 100f).roundToInt()
-
     fun requestExitFromEditor() {
         Analytics.trackExitClick(AnalyticsEvent.Value.Location.VIDEO_PREVIEW)
         hasTrackedExitPopupShow = false
@@ -671,11 +668,15 @@ fun EditorScreen(
                         )
                     }
                 },
-                onDismiss = {
+                onDismiss = { selectedVolume, didSelect ->
                     val videoId = currentVideoId()
                     if (videoId != null) {
-                        val volumeNumber = currentVolumePercent()
-                        Analytics.trackVolumeSelect(videoId, volumeNumber)
+                        val volumeNumber = (selectedVolume * 100f).roundToInt()
+                        if (didSelect) {
+                            Analytics.trackVolumeSelect(videoId, volumeNumber)
+                        } else {
+                            Analytics.trackVolumeClose(videoId, volumeNumber)
+                        }
                     }
                     showVolumeSheet = false
                 }

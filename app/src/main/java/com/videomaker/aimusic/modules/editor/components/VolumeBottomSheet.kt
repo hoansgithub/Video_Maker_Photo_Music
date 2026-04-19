@@ -16,6 +16,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,6 +36,7 @@ import com.videomaker.aimusic.ui.theme.TextSecondary
  *
  * @param currentVolume Current volume level (0.0 to 1.0)
  * @param onVolumeChange Callback when volume changes (live updates)
+ * @param onVolumeClick Callback when user releases slider thumb
  * @param onDismiss Callback when bottom sheet is dismissed
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,13 +45,14 @@ fun VolumeBottomSheet(
     currentVolume: Float,
     onVolumeChange: (Float) -> Unit,
     onVolumeClick: (Float) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: (selectedVolume: Float, didSelect: Boolean) -> Unit
 ) {
     var volumeValue by remember { mutableFloatStateOf(currentVolume) }
+    var didSelect by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { onDismiss(volumeValue, didSelect) },
         sheetState = sheetState,
         containerColor = SplashBackground,
         dragHandle = null,
@@ -88,6 +91,7 @@ fun VolumeBottomSheet(
                     value = volumeValue,
                     onValueChange = { newValue ->
                         volumeValue = newValue
+                        didSelect = kotlin.math.abs(newValue - currentVolume) >= 0.01f
                         onVolumeChange(newValue) // Live update
                     },
                     onValueChangeFinished = {

@@ -1058,7 +1058,10 @@ object Analytics {
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.VOLUME_NUMBER to volumeNumber
             ),
-            requiredParams = setOf(AnalyticsEvent.Param.VIDEO_ID),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.VIDEO_ID,
+                AnalyticsEvent.Param.VOLUME_NUMBER
+            ),
             policy = TrackingPolicy.NORMAL
         )
     }
@@ -1070,7 +1073,10 @@ object Analytics {
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.VOLUME_NUMBER to volumeNumber
             ),
-            requiredParams = setOf(AnalyticsEvent.Param.VIDEO_ID),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.VIDEO_ID,
+                AnalyticsEvent.Param.VOLUME_NUMBER
+            ),
             policy = TrackingPolicy.NORMAL
         )
     }
@@ -1082,7 +1088,10 @@ object Analytics {
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.VOLUME_NUMBER to volumeNumber
             ),
-            requiredParams = setOf(AnalyticsEvent.Param.VIDEO_ID),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.VIDEO_ID,
+                AnalyticsEvent.Param.VOLUME_NUMBER
+            ),
             policy = TrackingPolicy.NORMAL
         )
     }
@@ -1094,7 +1103,10 @@ object Analytics {
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.VOLUME_NUMBER to volumeNumber
             ),
-            requiredParams = setOf(AnalyticsEvent.Param.VIDEO_ID),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.VIDEO_ID,
+                AnalyticsEvent.Param.VOLUME_NUMBER
+            ),
             policy = TrackingPolicy.NORMAL
         )
     }
