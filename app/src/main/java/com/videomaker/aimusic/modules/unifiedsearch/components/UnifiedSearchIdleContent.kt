@@ -175,7 +175,14 @@ fun UnifiedSearchIdleContent(
                             Spacer(modifier = Modifier.height(dimens.spaceSm))
                             UnifiedTemplateGrid(
                                 templates = featuredTemplates,
-                                onTemplateClick = onTemplateClick,
+                                onTemplateClick = { template ->
+                                    Analytics.trackTemplateClick(
+                                        templateId = template.id,
+                                        templateName = template.name,
+                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                    )
+                                    onTemplateClick.invoke(template.id)
+                                },
                                 modifier = Modifier.padding(horizontal = dimens.spaceLg)
                             )
                             Spacer(modifier = Modifier.height(dimens.spaceXl))
