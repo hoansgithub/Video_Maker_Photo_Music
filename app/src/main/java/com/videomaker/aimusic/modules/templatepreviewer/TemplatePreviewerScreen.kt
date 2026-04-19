@@ -656,6 +656,7 @@ private fun TemplatePreviewerReadyContent(
 ) {
     val templates = state.templates
     val screenSessionId = remember { Analytics.newScreenSessionId() }
+    var hasSwipedTemplate by remember { mutableStateOf(false) }
     val pagerState = rememberPagerState(
         initialPage = initialVirtualPage(state.initialPage, templates.size),
         pageCount = { VIRTUAL_PAGE_COUNT }
@@ -682,27 +683,41 @@ private fun TemplatePreviewerReadyContent(
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .drop(1)
-            .collect { onPageChanged(it) }
+            .collect {
+                hasSwipedTemplate = true
+                onPageChanged(it)
+            }
     }
 
     LaunchedEffect(pagerState, templates, screenSessionId) {
+        var isFirstSettledEmission = true
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { settledPage ->
                 val template = templates[settledPage % templates.size]
+                val trackingLocation =
+                    if (isFirstSettledEmission) {
+                        eventLocation
+                    } else {
+                        AnalyticsEvent.Value.Location.PREVIEW_SWIPE
+                    }
                 Analytics.trackTemplatePreview(
                     templateId = template.id,
                     templateName = template.name,
-                    location = eventLocation
+                    location = trackingLocation
                 )
                 Analytics.trackTemplateImpression(
                     templateId = template.id,
                     templateName = template.name,
-                    location = eventLocation,
+                    location = trackingLocation,
                     screenSessionId = screenSessionId
                 )
+                isFirstSettledEmission = false
             }
     }
+
+    val templateEventLocation =
+        if (hasSwipedTemplate) AnalyticsEvent.Value.Location.PREVIEW_SWIPE else eventLocation
 
     // Priority-based image preloading: current page first, then adjacent pages
     // Use singleton ImageLoader to avoid memory leaks from creating new instances
@@ -868,7 +883,7 @@ private fun TemplatePreviewerReadyContent(
                                             Analytics.trackTemplateUnfavorite(
                                                 templateId = template.id,
                                                 templateName = template.name,
-                                                location = eventLocation
+                                                location = templateEventLocation
                                             )
                                             onLikeTemplate(template)
                                         }
@@ -886,7 +901,7 @@ private fun TemplatePreviewerReadyContent(
                                             Analytics.trackTemplateFavorite(
                                                 templateId = template.id,
                                                 templateName = template.name,
-                                                location = eventLocation
+                                                location = templateEventLocation
                                             )
                                             onLikeTemplate(template)
                                         }
@@ -918,7 +933,7 @@ private fun TemplatePreviewerReadyContent(
                         Analytics.trackTemplateClick(
                             templateId = template.id,
                             templateName = template.name,
-                            location = eventLocation
+                            location = templateEventLocation
                         )
                         // Always show ratio selection bottom sheet
                         pendingTemplate = template
@@ -963,7 +978,7 @@ private fun TemplatePreviewerReadyContent(
                     Analytics.trackTemplateSelect(
                         templateId = template.id,
                         templateName = template.name,
-                        location = eventLocation
+                        location = templateEventLocation
                     )
 
                     if (isLocked) {
