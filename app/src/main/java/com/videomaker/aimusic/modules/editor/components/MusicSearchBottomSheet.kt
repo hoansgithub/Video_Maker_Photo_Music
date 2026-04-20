@@ -52,6 +52,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -158,6 +160,9 @@ internal fun MusicSearchBottomSheet(
     var showWatchAdDialog by remember { mutableStateOf(false) }
     var shouldPresentAd by remember { mutableStateOf(false) }
     var pendingSongToUnlock by remember { mutableStateOf<MusicSong?>(null) }
+    var selectedSongLocation by rememberSaveable {
+        mutableStateOf(AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM)
+    }
 
     // Helper function to check if song is locked
     fun isSongLocked(song: MusicSong): Boolean {
@@ -180,6 +185,11 @@ internal fun MusicSearchBottomSheet(
             // Song is unlocked or free - directly select
             MusicPreviewManager.clearPreviewState()
             onSongSelected(song)
+            Analytics.trackSongSelect(
+                songId = song.id.toString(),
+                songName = song.name,
+                location = selectedSongLocation
+            )
         }
     }
 
@@ -518,7 +528,19 @@ internal fun MusicSearchBottomSheet(
                                 isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                 onSongClick = {
                                     onSongClick(song)
+                                    selectedSongLocation = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
                                     Analytics.trackSongClick(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
+                                    )
+                                    Analytics.trackSongImpression(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH,
+                                        screenSessionId = screenSessionId
+                                    )
+                                    Analytics.trackSongPreview(
                                         songId = song.id.toString(),
                                         songName = song.name,
                                         location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
@@ -633,7 +655,19 @@ internal fun MusicSearchBottomSheet(
                                     isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                     onSongClick = {
                                         onSongClick(song)
+                                        selectedSongLocation = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
                                         Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                        )
+                                        Analytics.trackSongImpression(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                            screenSessionId = screenSessionId
+                                        )
+                                        Analytics.trackSongPreview(
                                             songId = song.id.toString(),
                                             songName = song.name,
                                             location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
@@ -733,7 +767,19 @@ internal fun MusicSearchBottomSheet(
                                     isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                     onSongClick = {
                                         onSongClick(song)
+                                        selectedSongLocation = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
                                         Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                        )
+                                        Analytics.trackSongImpression(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                            screenSessionId = screenSessionId
+                                        )
+                                        Analytics.trackSongPreview(
                                             songId = song.id.toString(),
                                             songName = song.name,
                                             location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM

@@ -58,6 +58,23 @@ class NotificationCapPolicyTest {
     }
 
     @Test
+    fun `per-item cooldown can be bypassed for daily catch-up notifications`() {
+        val now = 3_500_000L
+        val decision = policy.evaluate(
+            NotificationCapPolicy.Input(
+                nowMs = now,
+                dailyShownCount = 0,
+                lastShownAtMs = now - (10 * 60_000L),
+                sameItemLastShownAtMs = now - (2 * 60 * 60_000L),
+                ignorePerItemCooldown = true
+            )
+        )
+
+        assertTrue(decision.allowed)
+        assertNull(decision.reason)
+    }
+
+    @Test
     fun `per-type cap blocks second notification of same type in one day`() {
         val now = 4_000_000L
         val decision = policy.evaluate(

@@ -69,6 +69,7 @@ import com.videomaker.aimusic.ui.theme.White40
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.modules.featureselection.EVENT_GENRE_SHOW
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 
@@ -88,10 +89,7 @@ fun LanguageSelectionScreen(
     onBackClick: () -> Unit = {},
     languageConfigService: LanguageConfigService = koinInject()
 ) {
-    Analytics.trackScreenView(
-        screenName = "language_show",
-        screenClass = "LanguageSelectionScreen"
-    )
+    Analytics.track(name = "language_show")
     val density = LocalDensity.current
     var selectedLanguage by remember { mutableStateOf<String?>(null) }
 

@@ -61,7 +61,14 @@ class ViralTemplateWorker(
                     )
                 },
                 currentLocalDate = localDate
-            ) ?: return Result.success()
+            )
+            if (candidate == null) {
+                Analytics.trackNotificationCanceled(
+                    type = NotificationType.VIRAL_TEMPLATE.analyticsValue,
+                    reason = "no_candidate"
+                )
+                return Result.success()
+            }
 
             val nowMs = System.currentTimeMillis()
             val gateDecision = notificationCapPolicy.evaluate(
@@ -76,7 +83,8 @@ class ViralTemplateWorker(
                     sameItemLastShownAtMs = preferencesManager.getNotificationItemLastShownAtMs(
                         notificationType = NotificationType.VIRAL_TEMPLATE.name,
                         itemId = candidate.template.id
-                    )
+                    ),
+                    ignorePerItemCooldown = true
                 )
             )
             if (!gateDecision.allowed) {

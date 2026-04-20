@@ -165,4 +165,52 @@ class PreviewLoopPolicyTest {
             )
         )
     }
+
+    @Test
+    fun `propagate playback state for normal pause resume signals`() {
+        assertTrue(
+            PreviewLoopPolicy.shouldPropagatePlaybackStateToUi(
+                isPlaying = true,
+                isPlayWhenReady = true
+            )
+        )
+        assertTrue(
+            PreviewLoopPolicy.shouldPropagatePlaybackStateToUi(
+                isPlaying = false,
+                isPlayWhenReady = false
+            )
+        )
+    }
+
+    @Test
+    fun `suppress transient pause when playWhenReady remains true`() {
+        assertFalse(
+            PreviewLoopPolicy.shouldPropagatePlaybackStateToUi(
+                isPlaying = false,
+                isPlayWhenReady = true
+            )
+        )
+    }
+
+    @Test
+    fun `restart loop playback only when user still wants play and player was playWhenReady`() {
+        assertTrue(
+            PreviewLoopPolicy.shouldRestartLoopPlayback(
+                userWantsPlayback = true,
+                playerPlayWhenReady = true
+            )
+        )
+        assertFalse(
+            PreviewLoopPolicy.shouldRestartLoopPlayback(
+                userWantsPlayback = false,
+                playerPlayWhenReady = true
+            )
+        )
+        assertFalse(
+            PreviewLoopPolicy.shouldRestartLoopPlayback(
+                userWantsPlayback = true,
+                playerPlayWhenReady = false
+            )
+        )
+    }
 }

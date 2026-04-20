@@ -188,14 +188,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun trackShortcutIfNeeded(intent: Intent) {
-        val shortcutId = intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID) ?: return
-        val shortcutType = when (shortcutId) {
-            "trending_search" -> "trending_search"
-            "create_video" -> "create_new_video"
-            "choose_video_template" -> "choose_template"
-            "uninstall_app" -> "uninstall"
-            else -> return
+        val shortcutTypeFromId = intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID)?.let { shortcutId ->
+            when (shortcutId) {
+                "trending_search" -> "trending_search"
+                "create_video" -> "create_new_video"
+                "choose_video_template" -> "choose_template"
+                "uninstall_app" -> "uninstall"
+                else -> null
+            }
         }
+        val shortcutTypeFromAction = when (intent.action) {
+            "com.videomaker.aimusic.action.OPEN_SEARCH" -> "trending_search"
+            "com.videomaker.aimusic.action.CREATE_VIDEO" -> "create_new_video"
+            "com.videomaker.aimusic.action.OPEN_TRENDING_TEMPLATE" -> "choose_template"
+            ACTION_UNINSTALL_APP -> "uninstall"
+            else -> null
+        }
+
+        val shortcutType = shortcutTypeFromId ?: shortcutTypeFromAction ?: return
+        // Best-effort shortcut-menu exposure marker (Android doesn't expose direct callback for long-press menu shown).
+        Analytics.trackShortcutMenuImpression()
         Analytics.trackShortcutClick(shortcutType)
     }
 
