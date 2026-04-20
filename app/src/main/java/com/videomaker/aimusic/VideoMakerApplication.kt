@@ -51,6 +51,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import androidx.lifecycle.ProcessLifecycleOwner
 
@@ -211,10 +212,14 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
             android.util.Log.d("VideoMakerApp", "✅ AdMobMediator obtained, launching coroutine...")
 
-            scope.launch(Dispatchers.Main) {
+            // ✅ CRITICAL ANR FIX: Use Dispatchers.IO instead of Dispatchers.Main
+            // MobileAds.initialize() internally loads DEX files which blocks threads
+            // Running on IO thread prevents main thread ANR during DEX loading
+            scope.launch(Dispatchers.IO) {
                 try {
                     // Step 1: Wait for Remote Config to fetch/activate BEFORE UMP
                     // This ensures all Remote Config values are available when RootViewModel reads them
+                    // Remote Config network fetch should run on IO thread (already correct)
                     android.util.Log.d("VideoMakerApp", "⏳ Waiting for Remote Config to be ready...")
                     try {
                         withTimeout(60_000L) {  // 1 minute timeout for Remote Config
@@ -231,23 +236,27 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
                     android.util.Log.d("VideoMakerApp", "🔄 Starting UMP consent flow...")
 
-                    // Step 2 & 3: Initialize UMP + Present consent form (1 minute timeout for BOTH)
+                    // Step 2 & 3: Initialize UMP + Present consent form
+                    // ⚠️ MUST run on Main thread - requires Activity context for UI operations
                     // Wraps entire consent flow to prevent infinite loading if network hangs
-                    try {
-                        withTimeout(60_000L) {  // 1 minute for entire consent flow
-                            android.util.Log.d("VideoMakerApp", "🔄 Initializing UMP consent...")
-                            adMobMediator.initializeUMP(activity)
+                    withContext(Dispatchers.Main) {
+                        try {
+                            withTimeout(60_000L) {  // 1 minute for entire consent flow
+                                android.util.Log.d("VideoMakerApp", "🔄 Initializing UMP consent...")
+                                adMobMediator.initializeUMP(activity)
 
-                            android.util.Log.d("VideoMakerApp", "🔄 Presenting consent form if required...")
-                            adMobMediator.presentConsentFormIfRequired(activity)
+                                android.util.Log.d("VideoMakerApp", "🔄 Presenting consent form if required...")
+                                adMobMediator.presentConsentFormIfRequired(activity)
+                            }
+                        } catch (e: TimeoutCancellationException) {
+                            android.util.Log.w("VideoMakerApp", "⏱️ UMP consent flow timed out after 1 minute")
                         }
-                    } catch (e: TimeoutCancellationException) {
-                        android.util.Log.w("VideoMakerApp", "⏱️ UMP consent flow timed out after 1 minute")
                     }
 
                     android.util.Log.d("VideoMakerApp", "🔄 Initializing AdMob SDK...")
 
                     // Step 4: Initialize AdMob SDK - PRODUCTION MODE (no test devices)
+                    // ✅ Runs on IO thread - this is where DEX loading happens (ANR fix)
                     val config: Map<String, Any> = emptyMap()
                     // val config: Map<String, Any> = if (BuildConfig.DEBUG) {
                     //     mapOf("testDeviceIds" to UMP_TEST_DEVICE_IDS)
@@ -266,10 +275,12 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                     adsInitialized.set(true)
                 }
 
-                // Call completion callback
-                android.util.Log.d("VideoMakerApp", "📤 Calling onComplete() callback")
-                onComplete()
-                android.util.Log.d("VideoMakerApp", "✅ onComplete() callback executed")
+                // Call completion callback on Main thread
+                withContext(Dispatchers.Main) {
+                    android.util.Log.d("VideoMakerApp", "📤 Calling onComplete() callback")
+                    onComplete()
+                    android.util.Log.d("VideoMakerApp", "✅ onComplete() callback executed")
+                }
             }
         }
     }
