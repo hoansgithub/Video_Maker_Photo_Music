@@ -28,7 +28,7 @@ object AnalyticsEvent {
     // ============================================
     // 4. TEMPLATE CONTEXT
     // ============================================
-    const val TEMPLATE_IMPRESSION = "template_impression"
+    const val TEMPLATE_IMPRESSION = "template_impress"
     const val TEMPLATE_CLICK = "template_click"
     const val TEMPLATE_PREVIEW = "template_preview"
     const val TEMPLATE_OPTION = "template_option"
@@ -97,10 +97,10 @@ object AnalyticsEvent {
     const val RATIO_EDIT = "ratio_edit"
     const val RATIO_CLOSE = "ratio_close"
 
-    const val VOLUME_EDIT = "volume_edit"
-    const val VOLUME_CLICK = "volume_click"
-    const val VOLUME_SELECT = "volume_select"
-    const val VOLUME_CLOSE = "volume_close"
+    const val VOLUME_EDIT = "volumn_edit"
+    const val VOLUME_CLICK = "volumn_click"
+    const val VOLUME_SELECT = "volumn_select"
+    const val VOLUME_CLOSE = "volumn_close"
 
     const val SONG_EDIT = "song_edit"
     const val SONG_CLOSE = "song_close"
@@ -199,7 +199,7 @@ object AnalyticsEvent {
     // ============================================
     // 19. SHORTCUT
     // ============================================
-    const val SHORTCUT_MENU_IMPRESSION = "shortcut_menu_impression"
+    const val SHORTCUT_MENU_IMPRESSION = "shortcut_menu_impress"
     const val SHORTCUT_CLICK = "shortcut_click"
 
     // ============================================
@@ -257,7 +257,7 @@ object AnalyticsEvent {
         const val MEDIA_QUANTITY = "media_quantity"
 
         const val DURATION_NUMBER = "duration_number"
-        const val VOLUME_NUMBER = "volume_number"
+        const val VOLUME_NUMBER = "volumn_number"
         const val QUALITY_NUMBER = "quality_number"
 
         const val EFFECT_ID = "effect_id"

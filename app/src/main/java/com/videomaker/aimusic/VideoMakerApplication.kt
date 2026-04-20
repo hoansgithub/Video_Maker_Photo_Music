@@ -51,6 +51,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -401,28 +402,27 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         configureNotifications()
         primeNotificationScheduleConfigFromCache()
 
-        // Auto-register services with coordinators
-        applicationScope.launch {
-            try {
-                // ============================================
-                // AUTO-DISCOVER ALL SERVICES FROM DI CONTAINER
-                // ============================================
-                val analyticsCoordinator = get<AnalyticsCoordinator>()
-                val remoteConfigCoordinator = get<RemoteConfigCoordinator>()
+        // Auto-register services with coordinators (synchronous to avoid missing early startup events).
+        try {
+            // ============================================
+            // AUTO-DISCOVER ALL SERVICES FROM DI CONTAINER
+            // ============================================
+            val analyticsCoordinator = get<AnalyticsCoordinator>()
+            val remoteConfigCoordinator = get<RemoteConfigCoordinator>()
 
-                // Get all singleton instances for automatic discovery
-                val singletons = getKoin().getAllSingletons()
+            // Get all singleton instances for automatic discovery
+            val singletons = getKoin().getAllSingletons()
 
-                // Automatic discovery: searches ALL singletons for service implementations
-                // - AnalyticsCoordinator finds: TrackableService implementations
-                // - RemoteConfigCoordinator finds: ConfigurableObject implementations
-                // Safe: Uses WeakReference (no retain cycles), no memory leaks
+            // Automatic discovery: searches ALL singletons for service implementations
+            // - AnalyticsCoordinator finds: TrackableService implementations
+            // - RemoteConfigCoordinator finds: ConfigurableObject implementations
+            // Safe: Uses WeakReference (no retain cycles), no memory leaks
+            runBlocking {
                 analyticsCoordinator.registerAll(singletons)
                 remoteConfigCoordinator.registerAll(singletons)
-
-            } catch (e: Exception) {
-                android.util.Log.e("VideoMakerApplication", "Failed to register services: ${e.message}", e)
             }
+        } catch (e: Exception) {
+            android.util.Log.e("VideoMakerApplication", "Failed to register services: ${e.message}", e)
         }
 
         // Initialize TransitionShaderLibrary to load shaders from assets

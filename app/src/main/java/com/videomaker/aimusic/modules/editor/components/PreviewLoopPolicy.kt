@@ -51,4 +51,20 @@ object PreviewLoopPolicy {
         // Exact-boundary handling is owned by Player.STATE_ENDED callback to avoid double-restart races.
         return isPlaying && videoDurationMs > 0L && currentVideoPositionMs > videoDurationMs
     }
+
+    fun shouldPropagatePlaybackStateToUi(
+        isPlaying: Boolean,
+        isPlayWhenReady: Boolean
+    ): Boolean {
+        // When playWhenReady is still true, a false isPlaying often means transient buffering/end-boundary.
+        // UI intent should stay "playing" and loop handling will resume playback immediately.
+        return isPlaying || !isPlayWhenReady
+    }
+
+    fun shouldRestartLoopPlayback(
+        userWantsPlayback: Boolean,
+        playerPlayWhenReady: Boolean
+    ): Boolean {
+        return userWantsPlayback && playerPlayWhenReady
+    }
 }

@@ -107,7 +107,7 @@ class FeatureSelectionActivity : AppCompatActivity() {
                             onboardingViewModel.selectedFeatures.firstOrNull()?.let { genre ->
                                 Analytics.track(
                                     name = EVENT_GENRE_SELECT,
-                                    params = mapOf(PARAM_GENRE_SELECT to genre)
+                                    params = mapOf(PARAM_GENRE_SELECT to if (genre == "music_video_instant") "music" else "photo")
                                 )
                             }
                         },
