@@ -3,7 +3,11 @@ package com.videomaker.aimusic.domain.model
 import android.net.Uri
 
 /**
- * Project - Domain model for a video project
+ * Project - Domain model for a video project.
+ *
+ * During the duration migration, `totalDurationMs` prefers the migrated value in
+ * settings when present and falls back to the legacy asset-based calculation
+ * until all callers are updated.
  */
 data class Project(
     val id: String,
@@ -16,19 +20,16 @@ data class Project(
     val isWatermarkFree: Boolean = false  // True if user watched ad to remove watermark
 ) {
     /**
-     * Calculate total video duration based on assets and transitions
+     * Total project duration in milliseconds.
      *
-     * Architecture:
-     * - Each image (except last) plays for: imageDurationMs + transitionOverlapMs
-     * - Last image plays for: imageDurationMs only
-     *
-     * Total = N × imageDurationMs + (N-1) × transitionOverlapMs
-     *
-     * Example with 5 photos at 3s each with 500ms transitions:
-     * = 5 × 3000 + 4 × 500 = 15000 + 2000 = 17000ms (17 seconds)
+     * Uses migrated settings when available, otherwise falls back to the legacy
+     * per-asset duration formula during the transition.
      */
     val totalDurationMs: Long
         get() {
+            val configuredTotalDurationMs = settings.totalDurationMs
+            if (configuredTotalDurationMs > 0L) return configuredTotalDurationMs
+
             if (assets.isEmpty()) return 0L
             val n = assets.size
             return n * settings.imageDurationMs + (n - 1) * settings.transitionOverlapMs

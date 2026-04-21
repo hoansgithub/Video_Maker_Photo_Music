@@ -17,8 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ContentCut
-import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -38,7 +36,7 @@ import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 
 /**
- * Settings Tab Bar - Effect, Music Clip, Duration, Ratio, Volume
+ * Settings Tab Bar - Effect, Music Clip, Ratio, Volume
  * Each tab opens its own bottom sheet
  * Horizontally scrollable with equal-width tabs
  */
@@ -46,11 +44,9 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
 internal fun SettingsTabBar(
     currentEffectSetName: String,
     currentRatio: AspectRatio,
-    currentDurationMs: Long,
     showMusicControls: Boolean, // Show volume/clip tabs if music is selected
     currentVolume: Float, // 0.0 to 1.0
     onEffectClick: () -> Unit,
-    onImageDurationClick: () -> Unit,
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit,
     onClipClick: () -> Unit,
@@ -101,13 +97,6 @@ internal fun SettingsTabBar(
             )
         }
 
-        // Image Duration button - moved to last position
-        SettingsTabButton(
-            icon = Icons.Default.Schedule,
-            label = "${currentDurationMs / 1000f}s",
-            onClick = onImageDurationClick,
-            modifier = Modifier.width(70.dp)
-        )
     }
 }
 

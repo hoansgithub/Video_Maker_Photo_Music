@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
 data class EditorInitialData(
     val imageUris: List<String>,
     val effectSetId: String?,
-    val imageDurationMs: Long,
+    val totalDurationMs: Long,
     val transitionPercentage: Int,
     val musicSongId: Long?,
     val musicSongName: String? = null, // Pass song name to avoid extra network request

@@ -19,6 +19,7 @@ data class ProjectEntity(
     val thumbnailUri: String?,
 
     // Settings (embedded for simplicity)
+    val totalDurationMs: Long = 0L,
     val imageDurationMs: Long = 3000L,
     val transitionPercentage: Int = 30, // Percentage of image duration for transition (10-50%)
     val effectSetId: String? = "dreamy_vibes",

@@ -48,6 +48,7 @@ interface ProjectDao {
 
     @Query("""
         UPDATE projects SET
+            totalDurationMs = :totalDurationMs,
             imageDurationMs = :imageDurationMs,
             transitionPercentage = :transitionPercentage,
             effectSetId = :effectSetId,
@@ -67,6 +68,7 @@ interface ProjectDao {
     """)
     suspend fun updateSettings(
         id: String,
+        totalDurationMs: Long,
         imageDurationMs: Long,
         transitionPercentage: Int,
         effectSetId: String?,

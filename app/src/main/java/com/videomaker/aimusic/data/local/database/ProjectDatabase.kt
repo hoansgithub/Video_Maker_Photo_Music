@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.videomaker.aimusic.data.local.database.dao.AssetDao
 import com.videomaker.aimusic.data.local.database.dao.LikedSongDao
 import com.videomaker.aimusic.data.local.database.dao.LikedTemplateDao
@@ -25,7 +27,7 @@ import com.videomaker.aimusic.data.local.database.entity.ProjectEntity
         LikedSongEntity::class,
         LikedTemplateEntity::class
     ],
-    version = 10,  // Notification phase-1 state uses SharedPreferences; no Room schema change required.
+    version = 11,
     exportSchema = true
 )
 abstract class ProjectDatabase : RoomDatabase() {
@@ -37,6 +39,24 @@ abstract class ProjectDatabase : RoomDatabase() {
 
     companion object {
         private const val DATABASE_NAME = "video_maker_database"
+
+        internal val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE projects ADD COLUMN totalDurationMs INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    """
+                    UPDATE projects
+                    SET totalDurationMs = imageDurationMs * (
+                        SELECT COUNT(*)
+                        FROM assets
+                        WHERE assets.projectId = projects.id
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
 
         @Volatile
         private var INSTANCE: ProjectDatabase? = null
@@ -53,9 +73,7 @@ abstract class ProjectDatabase : RoomDatabase() {
                 ProjectDatabase::class.java,
                 DATABASE_NAME
             )
-                // IMPORTANT: Add proper migrations before production release.
-                // fallbackToDestructiveMigration without dropAllTables only drops
-                // tables with schema changes, preserving unaffected user data.
+                .addMigrations(MIGRATION_10_11)
                 .fallbackToDestructiveMigration(dropAllTables = false)
                 .build()
         }
