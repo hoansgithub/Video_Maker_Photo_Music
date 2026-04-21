@@ -23,7 +23,7 @@ object DurationPlanner {
     fun plan(imageCount: Int, totalDurationMs: Long): DurationPlan {
         if (imageCount <= 0 || totalDurationMs <= 0L) {
             return DurationPlan(
-                totalDurationMs = totalDurationMs.coerceAtLeast(0L),
+                totalDurationMs = 0L,
                 imageDurationMs = 0L,
                 transitionOverlapMs = 0L,
                 transitionPercentage = 10,
@@ -31,11 +31,12 @@ object DurationPlanner {
             )
         }
 
-        val imageDurationMs = totalDurationMs / imageCount
         val transitionPercentage = snapTransitionPercentage(imageCount)
-        val transitionOverlapMs = imageDurationMs * transitionPercentage / 100
+        val contractWeight = 100L * imageCount + 2L * transitionPercentage * (imageCount - 1)
+        val imageDurationMs = totalDurationMs * 100L / contractWeight
+        val transitionOverlapMs = imageDurationMs * 2L * transitionPercentage / 100L
         val transitionPointsMs = List(imageCount - 1) { index ->
-            (index + 1L) * imageDurationMs
+            (index + 1L) * (imageDurationMs + transitionOverlapMs)
         }
 
         return DurationPlan(
