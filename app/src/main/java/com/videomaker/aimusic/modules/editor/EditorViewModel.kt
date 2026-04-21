@@ -7,6 +7,7 @@ import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.DurationPlanner
 import com.videomaker.aimusic.domain.model.EditorInitialData
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
@@ -260,10 +261,15 @@ class EditorViewModel(
                 val song = data.musicSongId?.let { songId ->
                     songRepository.getSongById(songId).getOrNull()
                 }
+                val durationPlan = DurationPlanner.plan(
+                    imageCount = assets.size,
+                    totalDurationMs = data.totalDurationMs
+                )
 
                 val settings = ProjectSettings(
-                    imageDurationMs = data.imageDurationMs,
-                    transitionPercentage = data.transitionPercentage,
+                    totalDurationMs = data.totalDurationMs,
+                    imageDurationMs = durationPlan.imageDurationMs,
+                    transitionPercentage = durationPlan.transitionPercentage,
                     effectSetId = data.effectSetId,
                     musicSongId = data.musicSongId,
                     musicSongName = song?.name, // For display in UI
@@ -464,10 +470,6 @@ class EditorViewModel(
         }
     }
 
-    fun updateImageDuration(durationMs: Long) {
-        updatePendingSettings { it.copy(imageDurationMs = durationMs) }
-    }
-
     fun updateMusicSong(songId: Long?, songUrl: String? = null) {
         // Fetch song data to get both name and URL
         viewModelScope.launch {
@@ -644,9 +646,17 @@ class EditorViewModel(
                     // For now using placeholder - will be set when music player loads
                     val songDurationMs = 180_000L // 3 minutes placeholder
 
-                    // Initialize trimmer with current trim positions or defaults (0 → end)
-                    val trimStartMs = settings.musicTrimStartMs
-                    val trimEndMs = settings.musicTrimEndMs ?: songDurationMs // Default to full song
+                    // Open trimmer with a window aligned to current video duration.
+                    // This keeps music editing tied to the current timeline length.
+                    val currentVideoDurationMs = currentState.displayProject.totalDurationMs
+                        .coerceAtLeast(MusicTrimmerState.Open.MIN_TRIM_DURATION_MS)
+                    val preferredStartMs = settings.musicTrimStartMs.coerceAtLeast(0L)
+                    val preferredEndMs = preferredStartMs + currentVideoDurationMs
+                    val (trimStartMs, trimEndMs) = normalizeTrimWindow(
+                        preferredStartMs = preferredStartMs,
+                        preferredEndMs = preferredEndMs,
+                        songDurationMs = songDurationMs
+                    )
 
                     _musicTrimmerState.value = MusicTrimmerState.Open(
                         songName = songName,
@@ -743,15 +753,15 @@ class EditorViewModel(
         if (currentTrimState is MusicTrimmerState.Open) {
             viewModelScope.launch {
                 trimStateMutex.withLock {
-                    // If trimEnd was using placeholder, update to actual duration
-                    val trimEndMs = if (currentTrimState.trimEndMs >= currentTrimState.songDurationMs) {
-                        durationMs
-                    } else {
-                        currentTrimState.trimEndMs
-                    }
+                    val (trimStartMs, trimEndMs) = normalizeTrimWindow(
+                        preferredStartMs = currentTrimState.trimStartMs,
+                        preferredEndMs = currentTrimState.trimEndMs,
+                        songDurationMs = durationMs
+                    )
 
                     _musicTrimmerState.value = currentTrimState.copy(
                         songDurationMs = durationMs,
+                        trimStartMs = trimStartMs,
                         trimEndMs = trimEndMs
                     )
                 }
@@ -788,7 +798,7 @@ class EditorViewModel(
                     }
 
                     // Get audio URI (handles both custom audio and music songs)
-                    val audioUri = getAudioUriSync(currentState.project.settings)
+                    val audioUri = getAudioUriSync(currentState.displaySettings)
                     if (audioUri == null) {
                         android.util.Log.w("EditorViewModel", "applyMusicTrim: No audio selected")
                         return@withLock
@@ -796,10 +806,19 @@ class EditorViewModel(
 
                     android.util.Log.d("EditorViewModel", "applyMusicTrim: Saving trim positions start=$startMs, end=$endMs (instant)")
 
-                    // MEDIA3-ONLY APPROACH: Just save trim positions, no processing
-                    // CompositionFactory will create looped sequence with ClippingConfiguration
+                    val trimmedDurationMs = (endMs - startMs)
+                        .coerceAtLeast(MusicTrimmerState.Open.MIN_TRIM_DURATION_MS)
+                    val durationPlan = DurationPlanner.plan(
+                        imageCount = currentState.project.assets.size,
+                        totalDurationMs = trimmedDurationMs
+                    )
+
+                    // Save trim and propagate duration master to project settings.
                     updatePendingSettings {
                         it.copy(
+                            totalDurationMs = trimmedDurationMs,
+                            imageDurationMs = durationPlan.imageDurationMs,
+                            transitionPercentage = durationPlan.transitionPercentage,
                             musicTrimStartMs = startMs,
                             musicTrimEndMs = endMs,
                             processedAudioUri = null // No preprocessing needed!
@@ -1100,6 +1119,29 @@ class EditorViewModel(
         val currentTrimState = _musicTrimmerState.value
         if (currentTrimState is MusicTrimmerState.Open) {
             _musicTrimmerState.value = MusicTrimmerState.Closed
+        }
+    }
+
+    private fun normalizeTrimWindow(
+        preferredStartMs: Long,
+        preferredEndMs: Long,
+        songDurationMs: Long
+    ): Pair<Long, Long> {
+        val minDurationMs = MusicTrimmerState.Open.MIN_TRIM_DURATION_MS
+        val safeSongDurationMs = songDurationMs.coerceAtLeast(minDurationMs)
+        val maxStartMs = (safeSongDurationMs - minDurationMs).coerceAtLeast(0L)
+
+        val startMs = preferredStartMs.coerceIn(0L, maxStartMs)
+        val minEndMs = startMs + minDurationMs
+        val endMs = preferredEndMs
+            .coerceAtLeast(minEndMs)
+            .coerceAtMost(safeSongDurationMs)
+
+        return if (endMs - startMs >= minDurationMs) {
+            startMs to endMs
+        } else {
+            val fallbackStartMs = (safeSongDurationMs - minDurationMs).coerceAtLeast(0L)
+            fallbackStartMs to safeSongDurationMs
         }
     }
 }

@@ -7,6 +7,10 @@ import android.net.Uri
  *
  * Users can individually select each setting - mix and match as they like.
  *
+ * DURATION MODEL:
+ * - totalDurationMs: Target source-of-truth for project duration when present
+ * - imageDurationMs: Legacy per-image duration retained temporarily for compatibility
+ *
  * EFFECT SET:
  * - effectSetId: ID of selected effect set (collection of transitions)
  * - Each effect set contains multiple transitions that cycle through images
@@ -24,7 +28,8 @@ import android.net.Uri
  * - Music will loop if video duration exceeds trimmed music duration
  * - Minimum trim duration: 5 seconds (enforced in validation)
  *
- * @param imageDurationMs Duration each image is displayed (2-12 seconds)
+ * @param totalDurationMs Total project duration in milliseconds
+ * @param imageDurationMs Legacy per-image duration retained for compatibility only
  * @param transitionPercentage Percentage of image duration for transition (10-50%)
  * @param effectSetId ID of selected effect set (null = no transitions)
  * @param overlayFrameId ID of selected overlay frame (null = none)
@@ -40,6 +45,7 @@ import android.net.Uri
  * @param aspectRatio Output video aspect ratio
  */
 data class ProjectSettings(
+    val totalDurationMs: Long = 0L,
     val imageDurationMs: Long = 3000L,
     val transitionPercentage: Int = 30, // 30% of image duration for transition
     val effectSetId: String? = "dreamy_vibes", // Default effect set
@@ -58,7 +64,7 @@ data class ProjectSettings(
     /**
      * Calculate actual transition duration in milliseconds
      *
-     * Based on percentage of TOTAL time for an image pair:
+     * Based on percentage of the legacy per-image duration:
      * - 2 images at 5s each = 10s total
      * - 30% transition = 3s (starts at ~3.5s, ends at ~6.5s)
      *
@@ -131,6 +137,8 @@ data class ProjectSettings(
         val stepMs = (IMAGE_DURATION_STEP * 1000).toLong()
 
         return copy(
+            // Keep total duration as provided for now; it is the source of truth.
+            totalDurationMs = totalDurationMs.coerceAtLeast(0L),
             // Ensure image duration is within valid range and rounded to nearest 0.1s step
             imageDurationMs = imageDurationMs.coerceIn(minDurationMs, maxDurationMs).let { duration ->
                 // Round to nearest step (100ms for 0.1s)

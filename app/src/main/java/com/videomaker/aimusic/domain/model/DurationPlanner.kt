@@ -9,7 +9,7 @@ data class DurationPlan(
 )
 
 object DurationPlanner {
-    private val supportedTransitionPercentages = listOf(10, 20, 30, 40, 50)
+    private val supportedTransitionPercentages = ProjectSettings.TRANSITION_PERCENTAGE_OPTIONS
 
     fun suggestTotalDurationMs(imageCount: Int): Long {
         return when (imageCount) {
@@ -23,7 +23,7 @@ object DurationPlanner {
     fun plan(imageCount: Int, totalDurationMs: Long): DurationPlan {
         if (imageCount <= 0 || totalDurationMs <= 0L) {
             return DurationPlan(
-                totalDurationMs = 0L,
+                totalDurationMs = totalDurationMs,
                 imageDurationMs = 0L,
                 transitionOverlapMs = 0L,
                 transitionPercentage = 10,
@@ -54,14 +54,9 @@ object DurationPlanner {
         val transitionPointsMs = List(imageCount - 1) { index ->
             (index + 1L) * (imageDurationMs + transitionOverlapMs)
         }
-        val recomposedTotalDurationMs = recomposedTotalDurationMs(
-            imageCount = imageCount,
-            imageDurationMs = imageDurationMs,
-            transitionOverlapMs = transitionOverlapMs
-        )
 
         return DurationPlan(
-            totalDurationMs = recomposedTotalDurationMs,
+            totalDurationMs = totalDurationMs,
             imageDurationMs = imageDurationMs,
             transitionOverlapMs = transitionOverlapMs,
             transitionPercentage = transitionPercentage,
