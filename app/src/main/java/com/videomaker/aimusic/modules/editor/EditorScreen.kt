@@ -70,7 +70,6 @@ import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
-import com.videomaker.aimusic.modules.editor.components.DurationBottomSheet
 import com.videomaker.aimusic.modules.editor.components.EffectSetBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSection
@@ -131,7 +130,6 @@ fun EditorScreen(
     var showExitConfirmation by remember { mutableStateOf(false) }
     // var showMusicPicker by remember { mutableStateOf(false) } // Commented out - using Supabase only
     var showRatioSheet by remember { mutableStateOf(false) }
-    var showDurationSheet by remember { mutableStateOf(false) }
     var showEffectSetSheet by remember { mutableStateOf(false) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
@@ -171,8 +169,6 @@ fun EditorScreen(
 
     fun currentSongName(): String =
         currentState()?.displaySettings?.musicSongName ?: "unknown"
-
-    fun currentDurationMs(): Long = currentState()?.displayProject?.totalDurationMs ?: 0L
 
     fun currentRatioLabel(): String =
         currentState()?.displaySettings?.aspectRatio?.toAnalyticsRatioSize()
@@ -350,13 +346,6 @@ fun EditorScreen(
                             )
                             showEffectSetSheet = true
                         },
-                        onImageDurationClick = {
-                            Analytics.trackDurationEdit(
-                                videoId = state.project.id,
-                                durationNumber = state.displaySettings.imageDurationMs
-                            )
-                            showDurationSheet = true
-                        },
                         onRatioClick = {
                             Analytics.trackRatioEdit(
                                 videoId = state.project.id,
@@ -514,37 +503,6 @@ fun EditorScreen(
                         ratioConfirmed = true
                         viewModel.updateAspectRatio(selectedRatio)
                         showRatioSheet = false
-                    }
-                )
-            }
-        }
-
-        // Duration Bottom Sheet
-        if (showDurationSheet) {
-            val successState = uiState as? EditorUiState.Success
-            if (successState != null) {
-                DurationBottomSheet(
-                    currentDurationMs = successState.displaySettings.imageDurationMs,
-                    onDismiss = {
-                        Analytics.trackDurationClose(
-                            videoId = successState.project.id,
-                            durationNumber = successState.displaySettings.imageDurationMs
-                        )
-                        showDurationSheet = false
-                    },
-                    onDurationClick = { selectedDurationMs ->
-                        Analytics.trackDurationClick(
-                            videoId = successState.project.id,
-                            durationNumber = selectedDurationMs
-                        )
-                    },
-                    onConfirm = { selectedDurationMs ->
-                        Analytics.trackDurationSelect(
-                            videoId = successState.project.id,
-                            durationNumber = selectedDurationMs
-                        )
-                        viewModel.updateImageDuration(selectedDurationMs)
-                        showDurationSheet = false
                     }
                 )
             }
@@ -932,7 +890,6 @@ internal fun EditorMainContent(
     onScrubComplete: () -> Unit,
     onPreviewStateChange: (com.videomaker.aimusic.modules.editor.components.PreviewState) -> Unit,
     onEffectClick: () -> Unit,
-    onImageDurationClick: () -> Unit,
     onRatioClick: () -> Unit,
     onMusicClick: () -> Unit,
     onVolumeClick: () -> Unit = {},
@@ -1007,11 +964,9 @@ internal fun EditorMainContent(
         SettingsTabBar(
             currentEffectSetName = effectSetName,
             currentRatio = project.settings.aspectRatio,
-            currentDurationMs = project.settings.imageDurationMs,
             showMusicControls = hasMusic,
             currentVolume = project.settings.audioVolume,
             onEffectClick = onEffectClick,
-            onImageDurationClick = onImageDurationClick,
             onRatioClick = onRatioClick,
             onVolumeClick = onVolumeClick,
             onClipClick = onTrimClick,

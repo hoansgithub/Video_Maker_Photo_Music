@@ -34,7 +34,8 @@ class ProjectRepositoryImpl(
             name = "Project ${now.toString().takeLast(4)}",
             createdAt = now,
             updatedAt = now,
-            thumbnailUri = assets.firstOrNull()?.toString()
+            thumbnailUri = assets.firstOrNull()?.toString(),
+            totalDurationMs = ProjectSettings.DEFAULT.totalDurationMs
         )
 
         // Create asset entities
@@ -66,6 +67,7 @@ class ProjectRepositoryImpl(
             createdAt = now,
             updatedAt = now,
             thumbnailUri = assets.firstOrNull()?.toString(),
+            totalDurationMs = settings.totalDurationMs,
             imageDurationMs = settings.imageDurationMs,
             transitionPercentage = settings.transitionPercentage,
             effectSetId = settings.effectSetId,
@@ -124,6 +126,7 @@ class ProjectRepositoryImpl(
     override suspend fun updateSettings(projectId: String, settings: ProjectSettings) {
         projectDao.updateSettings(
             id = projectId,
+            totalDurationMs = settings.totalDurationMs,
             imageDurationMs = settings.imageDurationMs,
             transitionPercentage = settings.transitionPercentage,
             effectSetId = settings.effectSetId,

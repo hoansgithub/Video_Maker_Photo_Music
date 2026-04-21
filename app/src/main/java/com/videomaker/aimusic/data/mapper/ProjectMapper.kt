@@ -39,6 +39,7 @@ object ProjectMapper {
      */
     private fun toSettings(entity: ProjectEntity): ProjectSettings {
         return ProjectSettings(
+            totalDurationMs = entity.totalDurationMs,
             imageDurationMs = entity.imageDurationMs,
             transitionPercentage = entity.transitionPercentage,
             effectSetId = entity.effectSetId,
@@ -78,6 +79,7 @@ object ProjectMapper {
             createdAt = project.createdAt,
             updatedAt = project.updatedAt,
             thumbnailUri = project.thumbnailUri?.toString(),
+            totalDurationMs = project.settings.totalDurationMs,
             imageDurationMs = project.settings.imageDurationMs,
             transitionPercentage = project.settings.transitionPercentage,
             effectSetId = project.settings.effectSetId,
