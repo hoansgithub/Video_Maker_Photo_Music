@@ -31,16 +31,37 @@ object DurationPlanner {
             )
         }
 
+        if (imageCount == 1) {
+            return DurationPlan(
+                totalDurationMs = totalDurationMs,
+                imageDurationMs = totalDurationMs,
+                transitionOverlapMs = 0L,
+                transitionPercentage = 10,
+                transitionPointsMs = emptyList()
+            )
+        }
+
         val transitionPercentage = snapTransitionPercentage(imageCount)
         val contractWeight = 100L * imageCount + 2L * transitionPercentage * (imageCount - 1)
-        val imageDurationMs = totalDurationMs * 100L / contractWeight
+        val imageDurationEstimateMs = totalDurationMs * 100L / contractWeight
+        val imageDurationMs = solveImageDuration(
+            imageCount = imageCount,
+            targetTotalDurationMs = totalDurationMs,
+            transitionPercentage = transitionPercentage,
+            imageDurationEstimateMs = imageDurationEstimateMs
+        )
         val transitionOverlapMs = imageDurationMs * 2L * transitionPercentage / 100L
         val transitionPointsMs = List(imageCount - 1) { index ->
             (index + 1L) * (imageDurationMs + transitionOverlapMs)
         }
+        val recomposedTotalDurationMs = recomposedTotalDurationMs(
+            imageCount = imageCount,
+            imageDurationMs = imageDurationMs,
+            transitionOverlapMs = transitionOverlapMs
+        )
 
         return DurationPlan(
-            totalDurationMs = totalDurationMs,
+            totalDurationMs = recomposedTotalDurationMs,
             imageDurationMs = imageDurationMs,
             transitionOverlapMs = transitionOverlapMs,
             transitionPercentage = transitionPercentage,
@@ -60,5 +81,33 @@ object DurationPlanner {
         return supportedTransitionPercentages.minBy { percentage ->
             kotlin.math.abs(percentage - targetPercentage)
         }
+    }
+
+    private fun solveImageDuration(
+        imageCount: Int,
+        targetTotalDurationMs: Long,
+        transitionPercentage: Int,
+        imageDurationEstimateMs: Long
+    ): Long {
+        val start = (imageDurationEstimateMs - 5L).coerceAtLeast(1L)
+        val end = imageDurationEstimateMs + 5L
+
+        return (start..end).minWithOrNull(compareBy<Long> { candidate ->
+            kotlin.math.abs(
+                recomposedTotalDurationMs(
+                    imageCount = imageCount,
+                    imageDurationMs = candidate,
+                    transitionOverlapMs = candidate * 2L * transitionPercentage / 100L
+                ) - targetTotalDurationMs
+            )
+        }.thenBy { it }) ?: imageDurationEstimateMs.coerceAtLeast(1L)
+    }
+
+    private fun recomposedTotalDurationMs(
+        imageCount: Int,
+        imageDurationMs: Long,
+        transitionOverlapMs: Long
+    ): Long {
+        return imageCount * imageDurationMs + (imageCount - 1) * transitionOverlapMs
     }
 }

@@ -16,26 +16,37 @@ class DurationPlannerTest {
     }
 
     @Test
-    fun `plan recomposes requested total exactly for supported sample`() {
+    fun `plan handles one image without transitions`() {
         val plan = DurationPlanner.plan(
-            imageCount = 5,
-            totalDurationMs = 33_000L
+            imageCount = 1,
+            totalDurationMs = 12_000L
         )
 
-        assertEquals(33_000L, plan.totalDurationMs)
-        assertEquals(5_000L, plan.imageDurationMs)
-        assertEquals(20, plan.transitionPercentage)
-        assertEquals(2_000L, plan.transitionOverlapMs)
-        assertEquals(4, plan.transitionPointsMs.size)
-        assertEquals(listOf(7_000L, 14_000L, 21_000L, 28_000L), plan.transitionPointsMs)
-        assertTrue(plan.transitionPointsMs.zipWithNext().all { (left, right) -> left < right })
-        assertEquals(
-            plan.totalDurationMs,
-            5 * plan.imageDurationMs + 4 * plan.transitionOverlapMs
+        assertEquals(12_000L, plan.totalDurationMs)
+        assertEquals(12_000L, plan.imageDurationMs)
+        assertEquals(0L, plan.transitionOverlapMs)
+        assertEquals(0, plan.transitionPointsMs.size)
+    }
+
+    @Test
+    fun `plan recomposes suggested totals deterministically`() {
+        assertPlan(
+            imageCount = 3,
+            requestedTotalDurationMs = 15_000L,
+            expectedRecomposedTotalDurationMs = 14_999L,
+            expectedTransitionPointsMs = listOf(5_869L, 11_738L)
         )
-        assertEquals(
-            plan.transitionOverlapMs,
-            plan.imageDurationMs * 2 * plan.transitionPercentage / 100
+        assertPlan(
+            imageCount = 4,
+            requestedTotalDurationMs = 18_000L,
+            expectedRecomposedTotalDurationMs = 18_002L,
+            expectedTransitionPointsMs = listOf(4_966L, 9_932L, 14_898L)
+        )
+        assertPlan(
+            imageCount = 5,
+            requestedTotalDurationMs = 20_000L,
+            expectedRecomposedTotalDurationMs = 19_998L,
+            expectedTransitionPointsMs = listOf(5_454L, 10_908L, 16_362L, 21_816L)
         )
     }
 
@@ -59,5 +70,30 @@ class DurationPlannerTest {
         assertEquals(0L, zeroDuration.imageDurationMs)
         assertEquals(0L, zeroDuration.transitionOverlapMs)
         assertEquals(emptyList<Long>(), zeroDuration.transitionPointsMs)
+    }
+
+    private fun assertPlan(
+        imageCount: Int,
+        requestedTotalDurationMs: Long,
+        expectedRecomposedTotalDurationMs: Long,
+        expectedTransitionPointsMs: List<Long>
+    ) {
+        val plan = DurationPlanner.plan(
+            imageCount = imageCount,
+            totalDurationMs = requestedTotalDurationMs
+        )
+
+        assertEquals(expectedRecomposedTotalDurationMs, plan.totalDurationMs)
+        assertEquals(expectedTransitionPointsMs.size, plan.transitionPointsMs.size)
+        assertEquals(expectedTransitionPointsMs, plan.transitionPointsMs)
+        assertTrue(plan.transitionPointsMs.zipWithNext().all { (left, right) -> left < right })
+        assertEquals(
+            plan.totalDurationMs,
+            imageCount * plan.imageDurationMs + (imageCount - 1) * plan.transitionOverlapMs
+        )
+        assertEquals(
+            plan.transitionOverlapMs,
+            plan.imageDurationMs * 2 * plan.transitionPercentage / 100
+        )
     }
 }
