@@ -89,7 +89,9 @@ fun LanguageSelectionScreen(
     onBackClick: () -> Unit = {},
     languageConfigService: LanguageConfigService = koinInject()
 ) {
-    Analytics.track(name = "language_show")
+    LaunchedEffect(Unit) {
+        Analytics.track(name = "language_show")
+    }
     val density = LocalDensity.current
     var selectedLanguage by remember { mutableStateOf<String?>(null) }
 
