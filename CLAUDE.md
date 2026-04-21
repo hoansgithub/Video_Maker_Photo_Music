@@ -2,170 +2,68 @@
 
 ## Tech Stack
 
-- **Language**: Kotlin 2.0+
-- **UI**: Jetpack Compose (December 2025 BOM)
-- **Min SDK**: 28 (Android 9.0)
-- **Target SDK**: 36
-- **Architecture**: Clean Architecture (Data/Domain/Presentation)
+- **Language**: Kotlin 2.0+ | **UI**: Jetpack Compose (BOM 2025.10.01)
+- **Min SDK**: 28 | **Target SDK**: 36 | **Architecture**: Clean Architecture
 - **Navigation**: Navigation 3 (1.0.0-alpha03) - developer-owned back stack
-- **Concurrency**: Coroutines + Flow
-- **DI**: ACCDI (AlcheClub Custom DI) - see di/ module
-- **Build**: KSP2 (not KAPT)
+- **Concurrency**: Coroutines + Flow | **DI**: ACCDI | **Build**: KSP2 (not KAPT)
 
-### Future Considerations
-
-| Technology | Current | Future Option | Notes |
-|------------|---------|---------------|-------|
-| Navigation | Nav3 1.0.0-alpha03 | Latest stable | Update when stable |
-| Compose BOM | 2025.10.01 | Latest stable | Update quarterly |
-| Media3 | 1.6.1 | Latest stable | Update for new features/fixes |
-
-**Navigation 3 Architecture:**
+**Navigation 3 Key Concepts:**
 - You own the back stack (`SnapshotStateList<AppRoute>`)
-- Navigation = list manipulation (add/remove items)
-- Routes implement `NavKey` interface
-- `NavDisplay` replaces `NavHost`
-- `entry<T>` replaces `composable<T>`
+- Routes implement `NavKey` | `NavDisplay` replaces `NavHost`
 - Reference: https://developer.android.com/guide/navigation/navigation-3
 
 ---
 
 ## Project: Video Maker Photo Music
 
-### MVP Scope
-
-**Images Only** - The MVP supports only image/photo input. Video clip input will be added in a future version.
-
-- Input: Photos from gallery (via Photo Picker)
-- Output: MP4 slideshow video with transitions and music
+**MVP Scope**: Images Only (photos → MP4 slideshow with transitions and music)
 
 ### Core Libraries
 
 | Component | Library | Version |
 |-----------|---------|---------|
 | Video Editing | Media3 Transformer | 1.9.0 |
-| Preview | Media3 ExoPlayer + CompositionPlayer | 1.9.0 |
-| Effects | Media3 Effect API | 1.9.0 |
+| Preview | Media3 CompositionPlayer | 1.9.0 |
 | Media Picker | Android Photo Picker | System API |
 | Database | Room + KSP2 | 2.8.4 |
 | Background Work | WorkManager | 2.11.0 |
 
-### Key Documentation
-
-See `docs/RESEARCH.md` for full technical research including:
-- Media3 Transformer pipeline architecture
-- Audio composition and looping strategies
-- **Transition Sets** - Curated collections of 20+ transitions (2D & 3D)
-- Storage model with Room/KSP2
-- Preview vs Export architecture
-
 ### Settings Model
-
-Users can individually select each setting - mix and match as they like.
 
 | Setting | Options | Description |
 |---------|---------|-------------|
-| **Transition Set** | Classic, Geometric, Cinematic, Creative, Minimal, Dynamic | Collection of 20+ transition animations |
-| **Transition Duration** | 2, 3, 4, 5, 6, 8, 10, 12 seconds | How long each image is shown |
+| **Transition Set** | Classic, Geometric, Cinematic, Creative, Minimal, Dynamic | 20+ transition animations |
+| **Transition Duration** | 2-12 seconds | How long each image is shown |
 | **Overlay Frame** | None, frame1, frame2, ... | Decorative frame overlay |
 | **Background Music** | None, track1, track2, or custom | Audio track |
 | **Audio Volume** | 0-100% | Music volume level |
 | **Aspect Ratio** | 16:9, 9:16, 1:1, 4:3 | Output video dimensions |
 
-### Bundled Assets
-
-```
-app/src/main/assets/audio/
-├── track1.mp3    # Sample background music
-└── track2.mp3    # Sample background music
-
-app/src/main/res/drawable/
-├── frame1.webp   # Overlay frame 1
-└── frame2.webp   # Overlay frame 2
-```
-
-### Image Scaling Strategy
-
-Images are rendered with a **blurred background fill** to avoid black bars:
-
-```
-┌─────────────────────────────────────┐
-│▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│  ← Blurred scale-aspect-fill
-│▓▓▓┌─────────────────────────┐▓▓▓▓▓│
-│▓▓▓│                         │▓▓▓▓▓│
-│▓▓▓│   Original Image        │▓▓▓▓▓│  ← Sharp scale-aspect-fit
-│▓▓▓│   (aspect-fit)          │▓▓▓▓▓│
-│▓▓▓│                         │▓▓▓▓▓│
-│▓▓▓└─────────────────────────┘▓▓▓▓▓│
-│▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│
-└─────────────────────────────────────┘
-
-Layers (bottom to top):
-1. Background: Same image, scale-aspect-fill + Gaussian blur
-2. Foreground: Original image, scale-aspect-fit (sharp)
-3. Overlay: Decorative frame (optional)
-```
-
----
-
-## Agent Workflow
-
-```
-NEW FEATURE
-─────────────
-1. ultrathink-planner  → Design approach
-2. kotlin-architect    → Architecture decisions
-3. kotlin-developer    → Implementation
-4. navigation-guardian → Event-based navigation check
-5. kotlin-tester       → Unit tests
-
-BUG FIX
-───────
-1. kotlin-debugger     → Root cause
-2. kotlin-developer    → Fix
-3. navigation-guardian → Verify navigation patterns
-
-CODE REVIEW
-───────────
-1. navigation-guardian → Navigation anti-pattern scan
-2. kotlin-reviewer     → Quality check
-```
+**Image Rendering**: Blurred background fill (scale-aspect-fill + blur) + sharp foreground (scale-aspect-fit) + optional overlay frame
 
 ---
 
 ## Critical Rules
 
-### 1. Navigation Pattern - StateFlow-Based (GOLD STANDARD)
+### 1. Navigation - StateFlow Events (Google Recommended)
 
 ```kotlin
-// ❌ FORBIDDEN - State-based navigation (CAUSES BUGS!)
-LaunchedEffect(uiState) {
-    if (uiState is Success) navigate()  // Re-triggers on back/rotation!
-}
+// ❌ FORBIDDEN - State-based navigation
+LaunchedEffect(uiState) { if (uiState is Success) navigate() }
 
-// ❌ FORBIDDEN - Navigation flags in state
-data class Success(val shouldNavigate: Boolean)
+// ✅ REQUIRED - StateFlow events
+private val _navigationEvent = MutableStateFlow<Event?>(null)
+val navigationEvent: StateFlow<Event?> = _navigationEvent.asStateFlow()
 
-// ❌ FORBIDDEN - hasNavigated flags
-var hasNavigated = false
-if (!hasNavigated) { navigate(); hasNavigated = true }
-
-// ✅ REQUIRED - StateFlow for navigation events (Google recommended)
-private val _navigationEvent = MutableStateFlow<NavigationEvent?>(null)
-val navigationEvent: StateFlow<NavigationEvent?> = _navigationEvent.asStateFlow()
-
-// ✅ REQUIRED - Navigation method with direct assignment
 fun navigateToNext() {
     _navigationEvent.value = NavigationEvent.GoToNext
 }
 
-// ✅ REQUIRED - Callback to clear navigation event after handling
 fun onNavigationHandled() {
     _navigationEvent.value = null
 }
 
-// ✅ REQUIRED - LaunchedEffect(navigationEvent) for observation
-val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
+// In Composable
 LaunchedEffect(navigationEvent) {
     navigationEvent?.let { event ->
         when (event) {
@@ -176,125 +74,37 @@ LaunchedEffect(navigationEvent) {
 }
 ```
 
-**Why StateFlow-Based Navigation is Preferred:**
-- Google's officially recommended pattern for navigation events
-- Events become state with explicit consumed callback - clearer lifecycle
-- `collectAsStateWithLifecycle` automatically handles lifecycle transitions
-- `LaunchedEffect(navigationEvent)` only triggers when event changes
-- No risk of missing events during config changes
-- Consistent with Google's architecture samples (2024+)
+### 2. Navigation 3 Architecture
 
-### 1b. Navigation 3 Architecture
+| Aspect | Navigation 2.x | Navigation 3 |
+|--------|---------------|--------------|
+| Back stack | Library-managed | Developer-owned `SnapshotStateList` |
+| Navigate | `navController.navigate()` | `navigator.navigate()` (list.add) |
+| Go back | `navController.popBackStack()` | `navigator.goBack()` (list.remove) |
+| Host | `NavHost` | `NavDisplay` |
+| Destinations | `composable<T>` | `entry<T>` in entryProvider |
 
+**Key Patterns:**
 ```kotlin
-// ============================================
-// ROUTES - Must implement NavKey
-// ============================================
-sealed class AppRoute : NavKey, Parcelable {
-    @Parcelize @Serializable
-    data object Home : AppRoute()
-
-    @Parcelize @Serializable
-    data class Editor(val projectId: String) : AppRoute()
-}
-
-// ============================================
-// NAVIGATION STATE - You own the back stack
-// ============================================
-@Stable
-class NavigationState(
-    val backStack: SnapshotStateList<AppRoute>  // You own this!
-) {
-    val currentRoute: AppRoute? get() = backStack.lastOrNull()
-    val canGoBack: Boolean get() = backStack.size > 1
-}
-
-@Composable
-fun rememberNavigationState(startRoute: AppRoute): NavigationState {
-    val backStack = rememberSaveable(saver = backStackSaver()) {
-        mutableStateListOf(startRoute)
-    }
-    return NavigationState(backStack)
-}
-
-// ✅ REQUIRED - Safe cast in saver to prevent crashes
+// Safe saver - prevents crashes on corrupted state
 private fun backStackSaver(): Saver<SnapshotStateList<AppRoute>, Any> {
     return listSaver(
         save = { it.toList() },
         restore = { saved ->
-            // Safe cast - filters to only valid AppRoute instances
             val list = (saved as? List<*>)?.filterIsInstance<AppRoute>().orEmpty()
             mutableStateListOf<AppRoute>().apply { addAll(list) }
         }
     )
 }
 
-// ============================================
-// NAVIGATOR - Navigation actions
-// LIFECYCLE WARNING: Only instantiate in @Composable with remember()
-// ============================================
-@Stable
-class Navigator(private val state: NavigationState) {
-    fun navigate(route: AppRoute) {
-        state.backStack.add(route)
-    }
+// Parameterized routes - prevent wrong VM reuse
+val factory = remember(route.projectId) { ACCDI.get<EditorViewModelFactory>() }
+val viewModel: EditorViewModel = viewModel(
+    key = "editor_${route.projectId}",
+    factory = createSafeViewModelFactory { factory.create(route.projectId) }
+)
 
-    fun goBack(): Boolean {
-        return if (state.canGoBack) {
-            state.backStack.removeLastOrNull() != null  // Check result!
-        } else false
-    }
-
-    fun clearAndNavigate(route: AppRoute) {
-        state.backStack.apply {  // Atomic operation
-            clear()
-            add(route)
-        }
-    }
-}
-
-// ============================================
-// APP NAVIGATION - Using NavDisplay
-// ============================================
-@Composable
-fun AppNavigation(startWithOnboarding: Boolean) {
-    val startRoute = if (startWithOnboarding) AppRoute.Onboarding else AppRoute.Home
-    val navigationState = rememberNavigationState(startRoute)
-    val navigator = remember(navigationState) { Navigator(navigationState) }
-
-    NavDisplay(
-        backStack = navigationState.backStack,
-        onBack = { navigator.goBack() },
-        entryProvider = { route ->
-            NavEntry(route) {
-                RouteContent(route, navigator)
-            }
-        }
-    )
-}
-
-// ============================================
-// VIEWMODEL WITH PARAMETERIZED ROUTES
-// ============================================
-@Composable
-fun RouteContent(route: AppRoute, navigator: Navigator) {
-    when (route) {
-        is AppRoute.Editor -> {
-            // ✅ REQUIRED - Key factory AND viewModel to route parameter
-            val factory = remember(route.projectId) {
-                ACCDI.get<EditorViewModelFactory>()
-            }
-            val viewModel: EditorViewModel = viewModel(
-                key = "editor_${route.projectId}",  // Prevents wrong VM reuse
-                factory = createSafeViewModelFactory { factory.create(route.projectId) }
-            )
-            EditorScreen(viewModel = viewModel, ...)
-        }
-        // ...
-    }
-}
-
-// ✅ REQUIRED - Type-safe ViewModel factory (no unchecked casts!)
+// Type-safe factory (no unchecked casts)
 private inline fun <reified VM : ViewModel> createSafeViewModelFactory(
     crossinline creator: () -> VM
 ): ViewModelProvider.Factory {
@@ -305,92 +115,36 @@ private inline fun <reified VM : ViewModel> createSafeViewModelFactory(
                 @Suppress("UNCHECKED_CAST")
                 return viewModel as T
             } else {
-                throw IllegalArgumentException(
-                    "Unknown ViewModel: ${modelClass.name}, expected: ${viewModel::class.java.name}"
-                )
+                throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
             }
         }
     }
 }
 ```
 
-**Key Navigation 3 Differences from Nav2:**
-
-| Aspect | Navigation 2.x | Navigation 3 |
-|--------|---------------|--------------|
-| Back stack | Library-managed | Developer-owned `SnapshotStateList` |
-| Navigate | `navController.navigate()` | `navigator.navigate()` (list.add) |
-| Go back | `navController.popBackStack()` | `navigator.goBack()` (list.remove) |
-| Route access | `backStackEntry.toRoute<T>()` | Direct `key` parameter in entry |
-| Host | `NavHost` | `NavDisplay` |
-| Destinations | `composable<T>` | `entry<T>` in entryProvider |
-| State survival | Automatic | `rememberSaveable` with custom saver |
-
-**Navigation 3 Anti-Patterns to Avoid:**
-
-```kotlin
-// ❌ FORBIDDEN - Unsafe cast in ViewModel factory
-@Suppress("UNCHECKED_CAST")
-return factory.create(projectId) as T  // Can crash!
-
-// ❌ FORBIDDEN - No remember key for parameterized routes
-val factory = remember { ACCDI.get<EditorViewModelFactory>() }  // Wrong VM on route change!
-
-// ❌ FORBIDDEN - Navigator stored outside composition
-class MyViewModel(val navigator: Navigator)  // Memory leak!
-
-// ❌ FORBIDDEN - Unsafe saver cast
-val list = saved as List<AppRoute>  // Crashes on corrupted state!
-
-// ✅ REQUIRED - Safe patterns shown above
-```
-
-### 2. Never Embed Activities as Composables
-
-```kotlin
-// ❌ FORBIDDEN - Bypasses Activity lifecycle!
-composable<AppDestination.Feature> {
-    FeatureScreen()  // Activity's onBackPressed, ads, etc. NEVER called!
-}
-
-// ✅ REQUIRED - Launch Activity directly
-private fun navigateToFeature() {
-    startActivity(Intent(this, FeatureActivity::class.java))
-}
-```
-
-### 3. collectAsStateWithLifecycle (Not collectAsState)
+### 3. Essential Android Rules
 
 ```kotlin
 // ❌ FORBIDDEN
 val uiState by viewModel.uiState.collectAsState()
-
-// ✅ REQUIRED - Lifecycle-aware
-val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-```
-
-### 4. viewModelScope for Coroutines
-
-```kotlin
-// ❌ FORBIDDEN - Manual scope management
-private val scope = CoroutineScope(Dispatchers.Main)
-
-// ❌ FORBIDDEN - GlobalScope
 GlobalScope.launch { }
+val value = nullable!!
+startActivity(intent)  // Without finish()
+composable<AppDestination> { FeatureScreen() }  // Activity as composable
 
-// ✅ REQUIRED - Auto-cancelled with ViewModel
-viewModelScope.launch {
-    // Automatically cancelled when ViewModel cleared
-}
+// ✅ REQUIRED
+val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+viewModelScope.launch { }
+val value = nullable ?: defaultValue
+startActivity(intent); finish()  // Always finish() for forward nav
+// Launch Activity directly for screens with dedicated Activities
 ```
 
-### 5. Sealed Class State Machines
+### 4. Sealed Class State Machines
 
 ```kotlin
 // ❌ FORBIDDEN - Multiple boolean flags
-var isLoading = false
-var hasError = false
-var data: Data? = null
+var isLoading = false; var hasError = false
 
 // ✅ REQUIRED - Single state source
 sealed class FeatureUiState {
@@ -400,175 +154,126 @@ sealed class FeatureUiState {
 }
 ```
 
-### 6. NO CRASHES - No Force Unwrap
+### 5. Database Query Safety (CRITICAL)
+
+- **NEVER** fetch all records (assume billions of rows)
+- **ALL** queries MUST have LIMIT / pagination
+- **ALL** filtering in query (WHERE), NOT client-side
+- **ALL** sorting in query (ORDER BY), NOT client-side
+- Applies to: Room, Supabase, Firebase, SQL, MongoDB, etc.
 
 ```kotlin
 // ❌ FORBIDDEN
-val value = nullable!!
+@Query("SELECT * FROM users")
+suspend fun getAllUsers(): List<User>
 
-// ✅ REQUIRED - Safe handling
-val value = nullable ?: run {
-    Logger.e("Value was null")
-    return
-}
-
-// ✅ OR with default
-val value = nullable ?: defaultValue
-```
-
-### 7. Activity Navigation - Always finish()
-
-```kotlin
-// ❌ FORBIDDEN - Creates activity stack issues
-startActivity(intent)
-
-// ✅ REQUIRED - For forward navigation
-startActivity(intent)
-finish()
+// ✅ REQUIRED
+@Query("SELECT * FROM users WHERE is_active = 1 ORDER BY name LIMIT :limit OFFSET :offset")
+suspend fun getActiveUsers(limit: Int, offset: Int): List<User>
 ```
 
 ---
 
-## Architecture Patterns
+## Video Maker Specific Rules
 
-### ViewModel Pattern (GOLD STANDARD)
+### Media3 Patterns
 
 ```kotlin
-// ============================================
-// UI STATE
-// ============================================
-sealed class FeatureUiState {
-    data object Loading : FeatureUiState()
-    data class Success(val data: FeatureData) : FeatureUiState()
-    data class Error(val message: String) : FeatureUiState()
+// ✅ Media3 Transformer for export
+val transformer = Transformer.Builder(context)
+    .addListener(transformerListener)
+    .build()
+transformer.start(composition, outputPath)
+
+// ✅ Photo Picker (no permissions)
+val pickMedia = rememberLauncherForActivityResult(
+    ActivityResultContracts.PickMultipleVisualMedia()
+) { uris -> /* handle */ }
+pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+
+// ✅ WorkManager for background export
+@HiltWorker
+class VideoExportWorker @AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted params: WorkerParameters,
+) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result { /* survives process death */ }
 }
 
-// ============================================
-// NAVIGATION EVENTS
-// ============================================
-sealed class FeatureNavigationEvent {
-    data object NavigateBack : FeatureNavigationEvent()
-    data class NavigateToDetail(val id: String) : FeatureNavigationEvent()
-}
-
-// ============================================
-// VIEW MODEL
-// ============================================
-@HiltViewModel
-class FeatureViewModel @Inject constructor(
-    private val fetchDataUseCase: FetchDataUseCase
-) : ViewModel() {
-
-    // UI State - for displaying data
-    private val _uiState = MutableStateFlow<FeatureUiState>(FeatureUiState.Loading)
-    val uiState: StateFlow<FeatureUiState> = _uiState.asStateFlow()
-
-    // Navigation Events - StateFlow-based (Google recommended)
-    private val _navigationEvent = MutableStateFlow<FeatureNavigationEvent?>(null)
-    val navigationEvent: StateFlow<FeatureNavigationEvent?> = _navigationEvent.asStateFlow()
-
-    init {
-        loadData()
-    }
-
-    fun onItemClick(id: String) {
-        _navigationEvent.value = FeatureNavigationEvent.NavigateToDetail(id)
-    }
-
-    fun navigateBack() {
-        _navigationEvent.value = FeatureNavigationEvent.NavigateBack
-    }
-
-    /** Called by UI after navigation is handled - clears the event */
-    fun onNavigationHandled() {
-        _navigationEvent.value = null
-    }
-
-    private fun loadData() {
-        viewModelScope.launch {
-            _uiState.value = FeatureUiState.Loading
-
-            when (val result = fetchDataUseCase()) {
-                is Result.Success -> _uiState.value = FeatureUiState.Success(result.data)
-                is Result.Error -> _uiState.value = FeatureUiState.Error(result.message)
-            }
-        }
-    }
+// ✅ Player lifecycle
+DisposableEffect(composition) {
+    val player = CompositionPlayer.Builder(context)
+        .build()
+        .apply { setComposition(composition) }
+    onDispose { player.release() }
 }
 ```
 
-### Composable Screen Pattern
+### Critical Media Issues
 
-```kotlin
-@Composable
-fun FeatureScreen(
-    viewModel: FeatureViewModel = hiltViewModel(),
-    onNavigateToDetail: (String) -> Unit,
-    onNavigateBack: () -> Unit
-) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
+**1. Transition Texture Color Consistency**
+- **Problem**: Mixing Media3's texture with BitmapFactory texture causes color mismatch
+- **Solution**: Load BOTH textures using same method (BitmapFactory + GLUtils.texImage2D)
+- See docs/transition-texture-color-fix.md for details
 
-    // Handle navigation events - StateFlow-based (Google recommended pattern)
-    // Observe navigationEvent StateFlow and call onNavigationHandled() after navigating
-    LaunchedEffect(navigationEvent) {
-        navigationEvent?.let { event ->
-            when (event) {
-                is FeatureNavigationEvent.NavigateToDetail -> onNavigateToDetail(event.id)
-                is FeatureNavigationEvent.NavigateBack -> onNavigateBack()
-            }
-            viewModel.onNavigationHandled()
-        }
-    }
+**2. MediaCodec Resource Exhaustion (Error 4006)**
+- **Problem**: Async release in scrolling lists → resource buildup
+- **Solution**:
+  - Sync release: `player.release()` (NOT `releaseAsync()`)
+  - Debounce: `delay(150)` before `prepare()`
+  - Error 4006: Longer retry delays + `System.gc()`
+- **When**: LazyColumn/LazyRow with video players
+- See docs/mediacodec-exhaustion-fix.md for details
 
-    // UI based on state
-    when (val state = uiState) {
-        is FeatureUiState.Loading -> LoadingContent()
-        is FeatureUiState.Success -> SuccessContent(data = state.data)
-        is FeatureUiState.Error -> ErrorContent(message = state.message)
-    }
-}
-```
+---
 
-### Repository Pattern
+## Emergency Checklist
 
-```kotlin
-// Interface in Domain layer
-interface FeatureRepository {
-    suspend fun getData(): Result<FeatureData>
-    suspend fun saveData(data: FeatureData): Result<Unit>
-}
+**Navigation 3:**
+- [ ] Routes implement `NavKey`
+- [ ] `SnapshotStateList` for back stack
+- [ ] `rememberSaveable` with safe saver (filterIsInstance)
+- [ ] `remember(route.param)` for parameterized factories
+- [ ] `viewModel(key = "...")` for parameterized ViewModels
+- [ ] `createSafeViewModelFactory` (no unchecked cast)
+- [ ] Navigator only in @Composable (NOT in ViewModel)
 
-// Implementation in Data layer
-class FeatureRepositoryImpl @Inject constructor(
-    private val remoteDataSource: FeatureRemoteDataSource,
-    private val localDataSource: FeatureLocalDataSource
-) : FeatureRepository {
+**ViewModel Navigation:**
+- [ ] `StateFlow<Event?>` (NOT state-based)
+- [ ] `LaunchedEffect(navigationEvent)` observation
+- [ ] `onNavigationHandled()` callback
 
-    override suspend fun getData(): Result<FeatureData> {
-        return try {
-            val data = remoteDataSource.fetchData()
-            localDataSource.cache(data)
-            Result.Success(data)
-        } catch (e: Exception) {
-            Logger.e("FeatureRepository", "Failed to fetch: ${e.message}")
-            Result.Error(e.message ?: "Unknown error")
-        }
-    }
-}
-```
+**General:**
+- [ ] `collectAsStateWithLifecycle()`
+- [ ] `viewModelScope` for coroutines
+- [ ] `finish()` after `startActivity()` for forward nav
+- [ ] Sealed class for UI state
+- [ ] No `!!` force unwrap
+- [ ] No Activities as composables
 
-### Use Case Pattern
+**Media:**
+- [ ] Media3 Transformer (NOT raw MediaCodec)
+- [ ] Photo Picker (NOT MediaStore permissions)
+- [ ] WorkManager for export (NOT viewModelScope)
+- [ ] Player released in DisposableEffect
+- [ ] Scrolling lists: Sync release + debounce
 
-```kotlin
-class FetchFeatureUseCase @Inject constructor(
-    private val repository: FeatureRepository
-) {
-    suspend operator fun invoke(): Result<FeatureData> {
-        return repository.getData()
-    }
-}
-```
+**Database:**
+- [ ] Every query has LIMIT
+- [ ] Filtering in query (WHERE)
+- [ ] Sorting in query (ORDER BY)
+
+---
+
+## Common Gotchas
+
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| Navigation breaks on back | `LaunchedEffect(uiState)` | Use StateFlow events |
+| State not updating | `collectAsState()` | Use `collectAsStateWithLifecycle()` |
+| onBackPressed not called | Activity as composable | Launch Activity directly |
+| Memory leaks | GlobalScope | Use `viewModelScope` |
+| Error 4006 (scrolling) | Async player release | Sync release + debounce |
 
 ---
 
@@ -580,705 +285,8 @@ class FetchFeatureUseCase @Inject constructor(
 | ViewModel | `*ViewModel` | `ProfileViewModel` |
 | UI State | `*UiState` | `ProfileUiState` |
 | Navigation Event | `*NavigationEvent` | `ProfileNavigationEvent` |
-| Repository Interface | No suffix | `UserRepository` |
-| Repository Impl | `*Impl` | `UserRepositoryImpl` |
+| Repository | No suffix / `*Impl` | `UserRepository` / `UserRepositoryImpl` |
 | Use Case | `*UseCase` | `FetchUserUseCase` |
-| Composable | `*Screen`, `*Content` | `ProfileScreen`, `ProfileContent` |
-
----
-
-## File Organization
-
-```kotlin
-// ============================================
-// UI STATE
-// ============================================
-sealed class FeatureUiState { ... }
-
-// ============================================
-// NAVIGATION EVENTS
-// ============================================
-sealed class FeatureNavigationEvent { ... }
-
-// ============================================
-// VIEW MODEL
-// ============================================
-@HiltViewModel
-class FeatureViewModel @Inject constructor(...) : ViewModel() { ... }
-
-// ============================================
-// ACTIVITY
-// ============================================
-class FeatureActivity : ComponentActivity() { ... }
-
-// ============================================
-// COMPOSABLE SCREEN
-// ============================================
-@Composable
-fun FeatureScreen(...) { ... }
-
-// ============================================
-// PREVIEW
-// ============================================
-@Preview
-@Composable
-private fun FeatureScreenPreview() { ... }
-```
-
----
-
-### Database Query Safety (CRITICAL) @.claude/rules/database-safety.md
-- NEVER fetch all records from a database (assume billions of rows)
-- ALL queries MUST have LIMIT / pagination
-- ALL filtering MUST be in the query (WHERE clauses), NOT client-side
-- ALL sorting MUST be in the query (ORDER BY), NOT client-side
-- Applies to: Room, Supabase, Firebase, SQL, MongoDB, etc.
-
----
-
-## Emergency Checklist
-
-Before EVERY code change:
-
-**Navigation 3:**
-- [ ] Routes implement `NavKey` interface
-- [ ] `SnapshotStateList` for back stack (NOT NavBackStack)
-- [ ] `rememberSaveable` with safe saver for back stack persistence
-- [ ] `remember(route.param)` key for parameterized route factories
-- [ ] `viewModel(key = "...")` for parameterized ViewModels
-- [ ] `createSafeViewModelFactory` (NOT unchecked cast)
-- [ ] Navigator only in `@Composable` with `remember()` (NOT in ViewModel)
-- [ ] Safe cast with `filterIsInstance` in saver restore
-
-**ViewModel Navigation Events:**
-- [ ] `StateFlow<Event?>` for navigation events (NOT state-based)
-- [ ] `LaunchedEffect(navigationEvent)` for event observation
-- [ ] `onNavigationHandled()` callback to clear event after navigating
-
-**General:**
-- [ ] `collectAsStateWithLifecycle()` for StateFlow
-- [ ] `viewModelScope` for coroutines
-- [ ] `finish()` after `startActivity()` for forward nav
-- [ ] Sealed class for UI state
-- [ ] No `!!` force unwrap
-- [ ] No Activities embedded as composables
-- [ ] Ads destroyed only on `ON_DESTROY`
-- [ ] Protocol dependencies (not concrete)
-
-### Database Queries
-- [ ] Every query has LIMIT / pagination
-- [ ] Filtering done in query (WHERE), NOT client-side
-- [ ] Sorting done in query (ORDER BY), NOT client-side
-- [ ] No unbounded fetches (SELECT * without LIMIT)
-
----
-
-## Common Gotchas
-
-### Navigation Breaks on Back Button
-
-**Cause**: Using `LaunchedEffect(uiState)` for navigation
-**Fix**: Use `Channel<NavigationEvent>` + `LaunchedEffect(Unit)`
-
-### State Not Updating
-
-**Cause**: Using `collectAsState()` instead of `collectAsStateWithLifecycle()`
-**Fix**: Always use `collectAsStateWithLifecycle()`
-
-### Activity's onBackPressed Not Called
-
-**Cause**: Screen embedded as composable instead of Activity
-**Fix**: Use `startActivity()` for screens with dedicated Activities
-
-### Memory Leaks
-
-**Cause**: Using `GlobalScope` or manual `CoroutineScope`
-**Fix**: Always use `viewModelScope`
-
-### Ad Caching Not Working
-
-**Cause**: Destroying ads in `onDispose`
-**Fix**: Only destroy in `Lifecycle.Event.ON_DESTROY`
-
-### MediaCodec Resource Exhaustion (Error 4006) During Scrolling
-
-**Cause**: Async player release too slow → new players created faster than old ones release
-**Symptoms**: Error 4006 during rapid scrolling through video list
-**Fix**:
-1. Synchronous release: `player.release()` instead of `player.releaseAsync()`
-2. Debounce loading: `delay(150)` before `prepare()`
-3. Handle error 4006 with longer retry delays + `System.gc()`
-
----
-
-## Video Maker Specific Patterns
-
-### 1. Media3 Transformer Usage
-
-```kotlin
-// ❌ FORBIDDEN - Using raw MediaCodec for composition
-MediaCodec.createEncoderByType("video/avc")
-
-// ✅ REQUIRED - Use Media3 Transformer
-val transformer = Transformer.Builder(context)
-    .addListener(transformerListener)
-    .build()
-
-transformer.start(composition, outputPath)
-```
-
-### 2. Composition Creation Pattern
-
-```kotlin
-// ✅ REQUIRED - Single composition factory for preview + export
-class CompositionFactory @Inject constructor(
-    private val context: Context
-) {
-    fun createComposition(project: ProjectWithAssets): Composition {
-        val videoSequence = EditedMediaItemSequence(
-            project.assets.map { createEditedMediaItem(it, project.settings) }
-        )
-
-        return Composition.Builder(listOf(videoSequence))
-            .setVideoCompositorSettings(aspectRatioSettings)
-            .build()
-    }
-}
-
-// ❌ FORBIDDEN - Separate composition logic for preview vs export
-// Both must use the same CompositionFactory
-```
-
-### 3. Photo Picker (No Permissions Required)
-
-```kotlin
-// ❌ FORBIDDEN - Requesting media permissions for picking
-Manifest.permission.READ_MEDIA_IMAGES
-Manifest.permission.READ_MEDIA_VIDEO
-
-// ✅ REQUIRED - Use Photo Picker API
-val pickMedia = rememberLauncherForActivityResult(
-    ActivityResultContracts.PickMultipleVisualMedia()
-) { uris -> /* handle selection */ }
-
-// MVP: Images only
-pickMedia.launch(
-    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-)
-
-// Future: When video input is supported
-// pickMedia.launch(
-//     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-// )
-```
-
-### 4. Room with KSP2
-
-```kotlin
-// ❌ FORBIDDEN - Using KAPT for Room
-kapt("androidx.room:room-compiler:2.8.4")
-
-// ✅ REQUIRED - Use KSP only
-ksp("androidx.room:room-compiler:2.8.4")
-
-// gradle.properties
-ksp.useKSP2=true
-```
-
-### 5. Background Export with WorkManager
-
-```kotlin
-// ❌ FORBIDDEN - Export in ViewModel coroutine
-viewModelScope.launch {
-    transformer.start(composition, outputPath)  // Won't survive process death!
-}
-
-// ✅ REQUIRED - Use WorkManager + CoroutineWorker
-@HiltWorker
-class VideoExportWorker @AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted params: WorkerParameters,
-) : CoroutineWorker(context, params) {
-
-    override suspend fun doWork(): Result {
-        // Export logic here - survives process death
-    }
-}
-```
-
-### 6. Preview Player Lifecycle
-
-```kotlin
-// ❌ FORBIDDEN - Not releasing player resources
-val player = CompositionPlayer.Builder(context).build()
-// No cleanup!
-
-// ✅ REQUIRED - Proper lifecycle management
-DisposableEffect(composition) {
-    val player = CompositionPlayer.Builder(context)
-        .build()
-        .apply { setComposition(composition) }
-
-    onDispose {
-        player.release()  // Always release!
-    }
-}
-```
-
-### 7. Asset URI Handling
-
-```kotlin
-// ❌ FORBIDDEN - Assuming URIs persist across sessions
-val uri = savedUri  // May be invalid after app restart!
-
-// ✅ REQUIRED - Validate URIs on project load
-suspend fun validateAssets(project: Project): List<AssetValidation> {
-    return project.assets.map { asset ->
-        try {
-            context.contentResolver.openInputStream(asset.uri)?.close()
-            AssetValidation.Valid(asset)
-        } catch (e: Exception) {
-            AssetValidation.Invalid(asset, "Asset no longer accessible")
-        }
-    }
-}
-```
-
-### 8. Effects Pipeline
-
-```kotlin
-// ✅ REQUIRED - Use Media3 Effect API for transformations
-val effects = Effects(
-    /* audioProcessors */ listOf(volumeProcessor),
-    /* videoEffects */ listOf(
-        Presentation.createForAspectRatio(
-            aspectRatio,
-            Presentation.LAYOUT_SCALE_TO_FIT_WITH_CROP
-        ),
-        overlayEffect
-    )
-)
-
-val editedItem = EditedMediaItem.Builder(mediaItem)
-    .setEffects(effects)
-    .build()
-```
-
-### 9. CRITICAL: Transition Texture Color Consistency
-
-**Problem Discovered (3-day investigation):**
-When using Media3 Transformer with custom `GlEffect`/`GlShaderProgram` for transitions between images, there was a visible color difference:
-- During transition: TO image appeared brighter
-- After transition ended: Same image appeared darker (visible "jump")
-
-**Root Cause:**
-Media3's internal image-to-texture pipeline uses different color space handling than `BitmapFactory.decodeFile` + `GLUtils.texImage2D`. Even loading the same PNG file, the resulting GPU textures had different RGB values.
-
-**The Fix - Single Source of Truth Architecture:**
-
-```kotlin
-// ❌ FORBIDDEN - Mixing Media3's texture with our own loaded texture
-// This causes color mismatch!
-class TransitionShaderProgram : BaseGlShaderProgram {
-    override fun drawFrame(inputTexId: Int, presentationTimeUs: Long) {
-        // inputTexId = FROM image (loaded by Media3)
-        // toTextureId = TO image (loaded by us via GLUtils.texImage2D)
-        // PROBLEM: These have DIFFERENT colors for the same image!
-        program.setSamplerTexIdUniform("uFromSampler", inputTexId, 0)  // Media3's texture
-        program.setSamplerTexIdUniform("uToSampler", toTextureId, 1)   // Our texture
-    }
-}
-
-// ✅ REQUIRED - Load BOTH textures ourselves, IGNORE Media3's inputTexId
-class TransitionShaderProgram : BaseGlShaderProgram {
-    private var fromTextureId: Int = -1  // WE load this
-    private var toTextureId: Int = -1    // WE load this
-
-    override fun configure(inputWidth: Int, inputHeight: Int): Size {
-        // Load BOTH from same source (BitmapFactory + GLUtils.texImage2D)
-        fromTextureId = createTextureFromBitmap(fromImageBitmap)
-        toTextureId = createTextureFromBitmap(toImageBitmap)
-        return Size(inputWidth, inputHeight)
-    }
-
-    override fun drawFrame(inputTexId: Int, presentationTimeUs: Long) {
-        // IGNORE inputTexId - use OUR textures for BOTH
-        val fromTexId = if (fromTextureId != -1) fromTextureId else inputTexId
-        val toTexId = if (toTextureId != -1) toTextureId else inputTexId
-
-        program.setSamplerTexIdUniform("uFromSampler", fromTexId, 0)  // Our texture
-        program.setSamplerTexIdUniform("uToSampler", toTexId, 1)      // Our texture
-        // Now BOTH use identical loading path → identical colors!
-    }
-}
-```
-
-**Key Takeaway:**
-When blending two images in a custom GlShaderProgram, NEVER mix Media3's internally-loaded texture with your own BitmapFactory-loaded texture. Either:
-1. Use Media3 for both (if possible)
-2. Load BOTH yourself using identical methods (recommended for transitions)
-
-This ensures the color handling is consistent across both textures.
-
-### 10. CRITICAL: MediaCodec Resource Exhaustion in Scrolling Video Lists
-
-**Problem Discovered:**
-When displaying multiple video players in a scrolling LazyColumn (e.g., template previewer), rapid scrolling causes **Error 4006 (MediaCodec Resource Exhaustion)**. This happens because:
-- New ExoPlayer instances are created faster than old ones are released
-- Each ExoPlayer uses 1 MediaCodec decoder (device limit: 4-8 concurrent decoders)
-- Async player release is slow (100-500ms+), causing resource buildup
-
-**Symptoms:**
-- Error Code 4006 fires during rapid scrolling (10+ swipes)
-- Same videos fail repeatedly when scrolling back and forth
-- Video loading becomes progressively slower
-- "Loading preview..." appears frequently
-
-**Root Cause Timeline:**
-```
-0ms:   Template 1 visible → ExoPlayer #1 created
-100ms: Template 2 visible → ExoPlayer #2 created
-200ms: Template 3 visible → ExoPlayer #3 created
-300ms: Template 4 visible → ExoPlayer #4 created
-400ms: Template 5 visible → ExoPlayer #5 created
-500ms: Template 6 visible → ExoPlayer #6 tries to create
-       ❌ ERROR 4006: No MediaCodec decoders available!
-       (Players #1, #2 still releasing in background)
-```
-
-**The Fix - Synchronous Release + Debounce:**
-
-```kotlin
-// ❌ FORBIDDEN - Async release causes resource buildup
-DisposableEffect(player) {
-    onDispose {
-        player.releaseAsync()  // Too slow! New players created before old ones release
-    }
-}
-
-// ✅ REQUIRED - Synchronous release + debounce
-val player = remember(videoUrl) {
-    val loadControl = DefaultLoadControl.Builder()
-        .setBufferDurationsMs(
-            /* minBufferMs */ 500,            // Aggressive buffering
-            /* maxBufferMs */ 3000,           // Reduced memory footprint
-            /* bufferForPlaybackMs */ 300,   // Instant playback
-            /* bufferForPlaybackAfterRebufferMs */ 500
-        )
-        .setPrioritizeTimeOverSizeThresholds(true)
-        .build()
-
-    ExoPlayer.Builder(context)
-        .setMediaSourceFactory(DefaultMediaSourceFactory(cacheDataSourceFactory))
-        .setLoadControl(loadControl)
-        .build()
-}
-
-// Debounce loading to prevent rapid creation during scroll
-LaunchedEffect(videoUrl) {
-    delay(150)  // Wait 150ms before loading
-    player.setMediaItem(mediaItem)
-    player.prepare()
-}
-
-// Synchronous release to free MediaCodec immediately
-DisposableEffect(player) {
-    onDispose {
-        try {
-            player.release()  // ✅ Sync release - immediate MediaCodec cleanup
-        } catch (e: Exception) {
-            Log.e("Player", "Error releasing player", e)
-        }
-    }
-}
-
-// Handle Error 4006 specifically
-override fun onPlayerError(error: PlaybackException) {
-    val isResourceExhaustion = error.errorCode == 4006
-
-    if (isResourceExhaustion) {
-        // Longer retry delays (2s, 3s, 4s) + force GC
-        System.gc()
-        delay(2000L + (retryCount * 1000L))
-    }
-
-    // Retry logic...
-}
-```
-
-**Key Changes:**
-1. **Synchronous Release**: `player.release()` instead of `player.releaseAsync()`
-   - Frees MediaCodec resources immediately
-   - Prevents resource buildup during scrolling
-
-2. **Debounce Loading**: 150ms delay before `prepare()`
-   - Prevents player creation during rapid scroll
-   - Only creates player if template stays visible
-
-3. **Error 4006 Handling**: Specific retry strategy
-   - Longer delays (2s, 3s, 4s) to let resources free
-   - Force garbage collection: `System.gc()`
-   - 3 retry limit for resource exhaustion
-
-4. **Aggressive Buffering**: Reduced buffer sizes
-   - Min: 500ms (was 1s)
-   - Max: 3s (was 5s)
-   - Lower memory footprint per player
-
-**When to Apply:**
-- ✅ Multiple video players in LazyColumn/LazyRow
-- ✅ Template previewer with many videos
-- ✅ Any scrolling video grid/list
-- ❌ Single video player (use async release for better UX)
-- ❌ Non-scrolling contexts (no resource exhaustion risk)
-
-**Reference Implementation:**
-See `TemplateVideoPlayer.kt` for the complete working implementation with error handling and retry logic.
-
----
-
-## Module Structure
-
-```
-app/src/main/java/co/alcheclub/video/maker/photo/music/
-├── di/                    # Hilt modules
-├── presentation/          # UI (Compose screens + ViewModels)
-│   ├── home/
-│   ├── picker/
-│   ├── editor/
-│   ├── preview/
-│   ├── export/
-│   └── projects/
-├── domain/                # Business logic
-│   ├── model/
-│   ├── repository/
-│   └── usecase/
-├── data/                  # Data layer
-│   ├── local/database/
-│   ├── repository/
-│   └── media/
-├── media/                 # Media processing
-│   ├── composition/
-│   ├── effects/
-│   ├── audio/
-│   └── export/
-└── MainActivity.kt
-```
-
----
-
-## Git Workflow
-
-⚠️ **NEVER commit automatically. Always wait for the user's explicit instruction before running git commit.**
-
-- Commit format: `<type>: <description>`
-  - `feat:` new feature | `fix:` bug fix | `refactor:` code restructure | `ui:` UI/UX improvements
-
----
-
-## Emergency Checklist for Video Maker
-
-Before EVERY code change:
-
-**Navigation 3 (this project uses Nav3):**
-- [ ] `createSafeViewModelFactory` for all ViewModel creation
-- [ ] `remember(route.projectId)` for Editor/Export/AssetPicker factories
-- [ ] `viewModel(key = "screen_${projectId}")` for parameterized screens
-- [ ] Safe cast in `backStackSaver()` restore
-
-**Media:**
-- [ ] Media3 Transformer for video export (NOT raw MediaCodec)
-- [ ] CompositionPlayer for preview (NOT custom player)
-- [ ] Photo Picker for media selection (NOT MediaStore with permissions)
-- [ ] **MVP: ImageOnly** for picker (NOT ImageAndVideo)
-- [ ] WorkManager for export (NOT viewModelScope)
-- [ ] KSP2 for Room (NOT KAPT)
-- [ ] Same Composition for preview and export
-- [ ] Player resources released in DisposableEffect
-- [ ] **Scrolling video lists**: Sync release + debounce (NOT async release)
-- [ ] **Error 4006 handling**: Specific retry strategy for MediaCodec exhaustion
-- [ ] Asset URIs validated on project load
-- [ ] Progress tracking via WorkManager setProgress()
-
----
-
-## Library Decision: Custom vs Media3
-
-### Evaluation Summary
-
-| Approach | Pros | Cons | Effort |
-|----------|------|------|--------|
-| **Custom MediaCodec** | Full control, no dependencies | Very complex, device fragmentation, months of work | 6+ months |
-| **Media3 Transformer** | Google-maintained, tested, optimized | Limited transition support (coming soon) | 2-4 weeks |
-| **Hybrid: Media3 + Custom Effects** | Best of both worlds | Moderate complexity | 4-6 weeks |
-
-### Decision: Hybrid Approach (Recommended)
-
-Use **Media3 Transformer** as the core engine with custom thin wrappers:
-
-1. **Media3 Transformer** → Core video composition & export
-2. **Custom TransitionEffect** → Thin wrapper for GL Transitions shaders
-3. **Custom AudioLooper** → Simple PCM looping logic (optional, Media3 handles basic cases)
-
-### Why NOT Full Custom?
-
-Building from scratch with raw MediaCodec requires:
-- ~3000+ lines of OpenGL/EGL boilerplate
-- ~2000+ lines of MediaCodec encoder/decoder management
-- Handling 100+ device-specific codec quirks
-- Memory management for frame buffers
-- Audio-video sync logic
-- Container format (MP4) muxing
-
-Media3 Transformer handles all of this and is maintained by Google.
-
-### What We CAN Customize
-
-```kotlin
-// ============================================
-// CUSTOM TRANSITION EFFECT (Thin wrapper)
-// ============================================
-class GlTransitionEffect(
-    private val shaderSource: String,
-    private val durationMs: Long
-) : GlEffect {
-    override fun toGlShaderProgram(
-        context: Context,
-        useHdr: Boolean
-    ): GlShaderProgram {
-        return GlTransitionShaderProgram(context, shaderSource, durationMs, useHdr)
-    }
-}
-
-// ============================================
-// CUSTOM OVERLAY EFFECT (Static frame)
-// ============================================
-class FrameOverlayEffect(
-    private val overlayUri: Uri,
-    private val opacity: Float
-) : GlEffect {
-    // Renders PNG overlay on top of video frames
-}
-
-// ============================================
-// AUDIO PROCESSOR (Volume control)
-// ============================================
-class VolumeAudioProcessor(
-    private val volume: Float
-) : BaseAudioProcessor() {
-    // Adjusts PCM sample values
-}
-```
-
-### Files to Create in `media/` Package
-
-```
-media/
-├── composition/
-│   ├── CompositionFactory.kt       # Builds Media3 Composition
-│   └── CompositionPreviewManager.kt # Manages preview player
-├── effects/
-│   ├── GlTransitionEffect.kt       # Custom transition wrapper
-│   ├── FrameOverlayEffect.kt       # Overlay frame effect
-│   └── shaders/
-│       └── transitions.kt          # GLSL shader sources
-├── audio/
-│   ├── VolumeAudioProcessor.kt     # Volume control
-│   └── AudioLoopHelper.kt          # Looping logic
-└── export/
-    └── VideoExportWorker.kt        # WorkManager worker
-```
-
----
-
-## ACCDI Dependency Injection Pattern
-
-### Module Structure (Following ac-remote-android)
-
-```kotlin
-// ============================================
-// DATA MODULE
-// ============================================
-val dataModule = module {
-    // Database
-    single { ProjectDatabase.getInstance(androidContext()) }
-    single { get<ProjectDatabase>().projectDao() }
-    single { get<ProjectDatabase>().assetDao() }
-
-    // Preferences
-    single { PreferencesManager(androidContext()) }
-
-    // Repositories
-    single<ProjectRepository> { ProjectRepositoryImpl(get(), get()) }
-    single<AssetRepository> { AssetRepositoryImpl(get()) }
-}
-
-// ============================================
-// DOMAIN MODULE
-// ============================================
-val domainModule = module {
-    // Use Cases (Factory scope - stateless)
-    factory { CreateProjectUseCase(get()) }
-    factory { GetProjectsUseCase(get()) }
-    factory { AddAssetsUseCase(get()) }
-    factory { UpdateProjectSettingsUseCase(get()) }
-    factory { ExportVideoUseCase(get(), get()) }
-    factory { DeleteProjectUseCase(get()) }
-}
-
-// ============================================
-// MEDIA MODULE
-// ============================================
-val mediaModule = module {
-    // Composition (Singleton - expensive to create)
-    single { CompositionFactory(androidContext()) }
-    single { TransitionLibrary() }
-}
-
-// ============================================
-// PRESENTATION MODULE
-// ============================================
-val presentationModule = module {
-    // ViewModels
-    viewModel { HomeViewModel(get()) }
-    viewModel { params -> AssetPickerViewModel(get(), params.get()) }
-    viewModel { params -> EditorViewModel(params.get(), get(), get()) }
-    viewModel { params -> PreviewViewModel(params.get(), get()) }
-    viewModel { params -> ExportViewModel(params.get(), get()) }
-}
-```
-
-### Application Setup
-
-```kotlin
-class VideoMakerApplication : Application() {
-    override fun onCreate() {
-        super.onCreate()
-
-        // Initialize ACCDI
-        ACCDI.init(this) {
-            modules(
-                dataModule,
-                domainModule,
-                mediaModule,
-                presentationModule
-            )
-        }
-    }
-}
-```
-
-### ViewModel Injection in Compose
-
-```kotlin
-@Composable
-fun EditorScreen(
-    projectId: String,
-    viewModel: EditorViewModel = ACCDI.getViewModel { parametersOf(projectId) }
-) {
-    // Screen content
-}
-```
 
 ---
 
@@ -1287,12 +295,19 @@ fun EditorScreen(
 | Component | Version | Notes |
 |-----------|---------|-------|
 | Kotlin | 2.1.0 | Stable |
-| Compose BOM | 2025.10.01 | December 2025 release |
+| Compose BOM | 2025.10.01 | December 2025 |
 | Navigation 3 | 1.0.0-alpha03 | Developer-owned back stack |
-| Media3 | 1.6.1 | Stable with Transformer |
-| Room | 2.8.4 | KSP2 + Kotlin 2.0 support |
-| WorkManager | 2.11.0 | Coroutines support |
-| KSP | 2.1.0-1.0.29 | Matches Kotlin version |
-| AGP | 8.13.2 | For Pangle SDK compatibility |
+| Media3 | 1.6.1 | Transformer stable |
+| Room | 2.8.4 | KSP2 support |
+| AGP | 8.13.2 | Pangle SDK compatible |
 | Target SDK | 36 | Android 15 |
 | Min SDK | 28 | Android 9 (2018+) |
+
+---
+
+## Git Workflow
+
+⚠️ **NEVER commit automatically. Always wait for explicit instruction.**
+
+Commit format: `<type>: <description>`
+- `feat:` new feature | `fix:` bug fix | `refactor:` code restructure | `ui:` UI/UX improvements
