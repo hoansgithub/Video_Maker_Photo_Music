@@ -102,6 +102,7 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
+import com.videomaker.aimusic.media.audio.HookStartTimePolicy
 import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.ui.components.AdBadge
 import com.videomaker.aimusic.ui.components.AdBadgeStyle
@@ -134,7 +135,6 @@ import com.videomaker.aimusic.ui.theme.FoundationBlack
 import com.videomaker.aimusic.ui.theme.SecondaryLight
 import com.videomaker.aimusic.ui.theme.SurfaceLight
 import com.videomaker.aimusic.ui.theme.TextSecondary
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -176,6 +176,18 @@ private fun initialVirtualPage(initialPage: Int, templateCount: Int): Int {
     return (mid / templateCount) * templateCount + initialPage
 }
 
+private fun resolveTemplateSongFlowHookStartPositionMs(
+    hookStartTimeMs: Long,
+    playerDurationMs: Long?,
+    songDurationMs: Int?
+): Long {
+    val resolvedDurationMs = playerDurationMs?.takeIf { it > 0L } ?: songDurationMs?.toLong()
+    return HookStartTimePolicy.resolve(
+        hookStartTimeMs = hookStartTimeMs,
+        durationMs = resolvedDurationMs
+    )
+}
+
 // ============================================
 // SCREEN
 // ============================================
@@ -187,6 +199,7 @@ fun TemplatePreviewerScreen(
     sourceLocation: String? = null,
     audioDataSourceFactory: CacheDataSource.Factory,
     onNavigateToAssetPicker: (template: com.videomaker.aimusic.domain.model.VideoTemplate, overrideSongId: Long, aspectRatio: AspectRatio) -> Unit,
+    applyHookStartFromSongFlow: Boolean = false,
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -451,8 +464,18 @@ fun TemplatePreviewerScreen(
                 player.prepare()
                 player.play()
                 if (awaitPlayerReady(player)) {
-                    val dur = player.duration
-                    playerDurationMs = if (dur != C.TIME_UNSET && dur > 0) dur else null
+                    val actualDurationMs = player.duration.takeIf { it != C.TIME_UNSET && it > 0L }
+                    playerDurationMs = actualDurationMs
+                    if (applyHookStartFromSongFlow) {
+                        val hookStartPositionMs = resolveTemplateSongFlowHookStartPositionMs(
+                            hookStartTimeMs = state.song.hookStartTimeMs,
+                            playerDurationMs = actualDurationMs,
+                            songDurationMs = state.song.durationMs
+                        )
+                        if (hookStartPositionMs > 0L) {
+                            player.seekTo(hookStartPositionMs)
+                        }
+                    }
                     fadeVolume(player, to = 1f)
                 } else {
                     player.volume = 1f

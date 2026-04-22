@@ -26,7 +26,8 @@ data class MusicSong(
     val isPremium: Boolean = false,
     val isActive: Boolean = true,
     val sortOrder: Int = 0,
-    val usageCount: Int = 0
+    val usageCount: Int = 0,
+    val hookStartTimeMs: Long = 0L
 ) {
     /** Formatted duration string (e.g., "3:45") */
     val formattedDuration: String

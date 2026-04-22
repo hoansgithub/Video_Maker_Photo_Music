@@ -93,9 +93,42 @@ class LegacyDurationMigrationTest {
         assertNull(emptyProject["musicTrimEndMs"])
     }
 
+    @Test
+    fun migrate11To12_addsHookStartTimeToLikedSongs_withDefaultValueAndPreservesOtherFields() {
+        val database = FakeSupportSQLiteDatabase(
+            projects = mutableListOf(),
+            assetCountsByProjectId = emptyMap(),
+            likedSongs = mutableListOf(
+                mutableMapOf<String, Any?>(
+                    "songId" to 77L,
+                    "name" to "Legacy Hook",
+                    "artist" to "Migration Artist",
+                    "coverUrl" to "https://example.com/cover.jpg",
+                    "mp3Url" to "https://example.com/song.mp3",
+                    "previewUrl" to "https://example.com/preview.mp3",
+                    "durationMs" to 123_000,
+                    "likedAt" to 456_789L
+                )
+            )
+        )
+
+        ProjectDatabase.MIGRATION_11_12.migrate(database.asRoomDatabase())
+
+        val migratedSong = database.requireLikedSong(77L)
+        assertEquals(0L, migratedSong["hookStartTimeMs"])
+        assertEquals("Legacy Hook", migratedSong["name"])
+        assertEquals("Migration Artist", migratedSong["artist"])
+        assertEquals("https://example.com/cover.jpg", migratedSong["coverUrl"])
+        assertEquals("https://example.com/song.mp3", migratedSong["mp3Url"])
+        assertEquals("https://example.com/preview.mp3", migratedSong["previewUrl"])
+        assertEquals(123_000, migratedSong["durationMs"])
+        assertEquals(456_789L, migratedSong["likedAt"])
+    }
+
     private class FakeSupportSQLiteDatabase(
-        private val projects: MutableList<MutableMap<String, Any?>>, 
-        private val assetCountsByProjectId: Map<String, Int>
+        private val projects: MutableList<MutableMap<String, Any?>>,
+        private val assetCountsByProjectId: Map<String, Int>,
+        private val likedSongs: MutableList<MutableMap<String, Any?>> = mutableListOf()
     ) {
         fun asRoomDatabase(): SupportSQLiteDatabase {
             return Proxy.newProxyInstance(
@@ -120,6 +153,11 @@ class LegacyDurationMigrationTest {
                 ?: error("Missing project $projectId")
         }
 
+        fun requireLikedSong(songId: Long): Map<String, Any?> {
+            return likedSongs.firstOrNull { it["songId"] == songId }
+                ?: error("Missing liked song $songId")
+        }
+
         private fun applySql(sql: String) {
             val normalizedSql = sql.replace(Regex("\\s+"), " ").trim()
             when {
@@ -133,6 +171,9 @@ class LegacyDurationMigrationTest {
                         val imageCount = assetCountsByProjectId[projectId] ?: 0
                         project["totalDurationMs"] = imageDurationMs * imageCount
                     }
+                }
+                normalizedSql.startsWith("ALTER TABLE liked_songs ADD COLUMN hookStartTimeMs") -> {
+                    likedSongs.forEach { it["hookStartTimeMs"] = 0L }
                 }
                 else -> error("Unexpected SQL: $normalizedSql")
             }

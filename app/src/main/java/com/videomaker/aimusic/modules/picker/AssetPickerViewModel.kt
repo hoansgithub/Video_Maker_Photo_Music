@@ -796,7 +796,8 @@ class AssetPickerViewModel(
                                     transitionPercentage = durationPlan.transitionPercentage,
                                     musicSongId = songId,
                                     musicSongName = songName,
-                                    aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio)
+                                    aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio),
+                                    applyHookStartDefaults = overrideSongId >= 0L
                                 )
 
                                 _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditorWithData(initialData)

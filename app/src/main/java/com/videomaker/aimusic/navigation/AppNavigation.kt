@@ -586,6 +586,7 @@ fun AppNavigation(
                     viewModel = viewModel,
                     sourceLocation = route.sourceLocation,
                     audioDataSourceFactory = audioCache.cacheDataSourceFactory,
+                    applyHookStartFromSongFlow = route.overrideSongId >= 0L,
                     onNavigateToAssetPicker = { template, overrideSongId, aspectRatio ->
                         // User selected a template with aspect ratio, now pick images
                         // Pass templateId, overrideSongId (if song-to-video mode), and selected aspectRatio

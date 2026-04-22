@@ -261,6 +261,11 @@ class EditorViewModel(
                 val song = data.musicSongId?.let { songId ->
                     songRepository.getSongById(songId).getOrNull()
                 }
+                val defaultMusicTrimStartMs = if (data.applyHookStartDefaults) {
+                    resolveDefaultMusicTrimStartMs(song)
+                } else {
+                    0L
+                }
                 val durationPlan = DurationPlanner.plan(
                     imageCount = assets.size,
                     totalDurationMs = data.totalDurationMs
@@ -274,11 +279,9 @@ class EditorViewModel(
                     musicSongId = data.musicSongId,
                     musicSongName = song?.name, // For display in UI
                     musicSongUrl = song?.mp3Url, // For playback (same URL as previewer)
+                    musicTrimStartMs = defaultMusicTrimStartMs,
+                    musicTrimEndMs = null,
                     aspectRatio = data.aspectRatio
-                    // Note: musicTrimStartMs and musicTrimEndMs use defaults from ProjectSettings:
-                    // - musicTrimStartMs = 0L (start at beginning)
-                    // - musicTrimEndMs = null (use full song, no end trim)
-                    // These will be set to actual values when user trims in the trimmer
                 )
 
                 val project = Project(

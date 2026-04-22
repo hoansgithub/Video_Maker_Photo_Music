@@ -35,7 +35,8 @@ class LikedSongRepositoryImpl(
         coverUrl = coverUrl,
         mp3Url = mp3Url,
         previewUrl = previewUrl,
-        durationMs = durationMs ?: 0
+        durationMs = durationMs ?: 0,
+        hookStartTimeMs = hookStartTimeMs
     )
 
     private fun LikedSongEntity.toModel() = MusicSong(
@@ -45,6 +46,7 @@ class LikedSongRepositoryImpl(
         coverUrl = coverUrl,
         mp3Url = mp3Url,
         previewUrl = previewUrl,
-        durationMs = durationMs
+        durationMs = durationMs,
+        hookStartTimeMs = hookStartTimeMs
     )
 }
