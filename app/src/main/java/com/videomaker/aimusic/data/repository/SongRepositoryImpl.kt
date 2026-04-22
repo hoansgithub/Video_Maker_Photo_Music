@@ -43,6 +43,25 @@ class SongRepositoryImpl(
         private const val FN_SONGS_BY_GENRES_SORTED = "get_songs_by_genres_sorted"
         private const val ERROR_LOAD_FAILED = "Failed to load songs"
         private const val ERROR_NOT_FOUND = "Song not found"
+        private const val MEMORY_SONG_CACHE_LIMIT = 500
+    }
+
+    // Reuse list-loaded songs for subsequent getSongById calls.
+    private val songsByIdMemoryCache = java.util.concurrent.ConcurrentHashMap<Long, MusicSong>()
+
+    private fun cacheSongsInMemory(songs: List<MusicSong>) {
+        if (songs.isEmpty()) return
+        if (songsByIdMemoryCache.size > MEMORY_SONG_CACHE_LIMIT) {
+            songsByIdMemoryCache.clear()
+        }
+        songs.forEach { song -> songsByIdMemoryCache[song.id] = song }
+    }
+
+    private fun cacheSongInMemory(song: MusicSong) {
+        if (songsByIdMemoryCache.size > MEMORY_SONG_CACHE_LIMIT) {
+            songsByIdMemoryCache.clear()
+        }
+        songsByIdMemoryCache[song.id] = song
     }
 
 
@@ -54,7 +73,10 @@ class SongRepositoryImpl(
         // Only cache first page (offset = 0)
         if (offset == 0) {
             apiCacheManager.get<List<MusicSong>>(cacheKey)
-                ?.let { return@withContext Result.success(it) }
+                ?.let {
+                    cacheSongsInMemory(it)
+                    return@withContext Result.success(it)
+                }
         }
 
         try {
@@ -67,6 +89,7 @@ class SongRepositoryImpl(
                 .decodeList<SongDto>()
                 .toMusicSongs()
 
+            cacheSongsInMemory(songs)
 
             // Only cache first page
             if (offset == 0) {
@@ -78,13 +101,24 @@ class SongRepositoryImpl(
             // Only return stale cache for first page
             if (offset == 0) {
                 apiCacheManager.getStale<List<MusicSong>>(cacheKey)
-                    ?.let { return@withContext Result.success(it) }
+                    ?.let {
+                        cacheSongsInMemory(it)
+                        return@withContext Result.success(it)
+                    }
             }
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
     }
 
     override suspend fun getSongById(id: Long): Result<MusicSong> = withContext(Dispatchers.IO) {
+        songsByIdMemoryCache[id]?.let { cachedSong ->
+            // Trust in-memory cache only when hook is present; otherwise refetch to self-heal
+            // from legacy cached list payloads that may not contain hook_start_time yet.
+            if (cachedSong.hookStartTimeMs > 0L) {
+                return@withContext Result.success(cachedSong)
+            }
+        }
+
         try {
             val song = supabaseClient.from(TABLE_SONGS)
                 .select {
@@ -96,7 +130,9 @@ class SongRepositoryImpl(
                 .decodeSingleOrNull<SongDto>()
 
             if (song != null) {
-                Result.success(song.toMusicSong())
+                val mappedSong = song.toMusicSong()
+                cacheSongInMemory(mappedSong)
+                Result.success(mappedSong)
             } else {
                 Result.failure(Exception(ERROR_NOT_FOUND))
             }
@@ -122,7 +158,9 @@ class SongRepositoryImpl(
                     put("result_limit", 30)
                 })
                 .decodeList<SongDto>()
-            Result.success(songs.toMusicSongs())
+            val mappedSongs = songs.toMusicSongs()
+            cacheSongsInMemory(mappedSongs)
+            Result.success(mappedSongs)
         } catch (e: Exception) {
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
@@ -175,6 +213,7 @@ class SongRepositoryImpl(
         val cacheKey = ApiCacheManager.keySongsGenre(genre)
         apiCacheManager.get<List<MusicSong>>(cacheKey)
             ?.let {
+                cacheSongsInMemory(it)
                 return@withContext Result.success(it)
             }
 
@@ -191,12 +230,16 @@ class SongRepositoryImpl(
                 .decodeList<SongDto>()
                 .toMusicSongs()
 
+            cacheSongsInMemory(songs)
             apiCacheManager.put(cacheKey, songs)
             Result.success(songs)
         } catch (e: Exception) {
             android.util.Log.e("SongRepository", "getSongsByGenre failed for genre=$genre: ${e.message}")
             apiCacheManager.getStale<List<MusicSong>>(cacheKey)
-                ?.let { return@withContext Result.success(it) }
+                ?.let {
+                    cacheSongsInMemory(it)
+                    return@withContext Result.success(it)
+                }
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
     }
@@ -212,7 +255,9 @@ class SongRepositoryImpl(
                 })
                 .decodeList<SongDto>()
 
-            Result.success(songs.toMusicSongs())
+            val mappedSongs = songs.toMusicSongs()
+            cacheSongsInMemory(mappedSongs)
+            Result.success(mappedSongs)
         } catch (e: Exception) {
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
@@ -252,12 +297,15 @@ class SongRepositoryImpl(
         // Cache key includes limit and genres to avoid conflicts between
         // Home screen preview (limit=10) and full list (limit=20)
         val genresKey = preferredGenres.sorted().joinToString(",").ifEmpty { "all" }
-        val cacheKey = "songs_suggested_${region}_${genresKey}_${limit}"
+        val cacheKey = "songs_suggested_v2_${region}_${genresKey}_${limit}"
 
         // Only cache first page (offset = 0)
         if (offset == 0) {
             apiCacheManager.get<List<MusicSong>>(cacheKey)
-                ?.let { return@withContext Result.success(it) }
+                ?.let {
+                    cacheSongsInMemory(it)
+                    return@withContext Result.success(it)
+                }
         }
 
         try {
@@ -279,6 +327,7 @@ class SongRepositoryImpl(
                 .decodeList<SongDto>()
                 .toMusicSongs()
 
+            cacheSongsInMemory(songs)
 
             // Only cache first page
             if (offset == 0) {
@@ -290,7 +339,10 @@ class SongRepositoryImpl(
             // Only return stale cache for first page
             if (offset == 0) {
                 apiCacheManager.getStale<List<MusicSong>>(cacheKey)
-                    ?.let { return@withContext Result.success(it) }
+                    ?.let {
+                        cacheSongsInMemory(it)
+                        return@withContext Result.success(it)
+                    }
             }
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
@@ -318,7 +370,9 @@ class SongRepositoryImpl(
                 }
                 .decodeList<SongDto>()
 
-            Result.success(songs.shuffled().take(limit).toMusicSongs())
+            val mappedSongs = songs.shuffled().take(limit).toMusicSongs()
+            cacheSongsInMemory(mappedSongs)
+            Result.success(mappedSongs)
         } catch (e: Exception) {
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }

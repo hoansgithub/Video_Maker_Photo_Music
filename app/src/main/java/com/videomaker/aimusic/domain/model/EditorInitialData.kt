@@ -20,5 +20,6 @@ data class EditorInitialData(
     val transitionPercentage: Int,
     val musicSongId: Long?,
     val musicSongName: String? = null, // Pass song name to avoid extra network request
-    val aspectRatio: AspectRatio
+    val aspectRatio: AspectRatio,
+    val applyHookStartDefaults: Boolean = false
 ) : Parcelable

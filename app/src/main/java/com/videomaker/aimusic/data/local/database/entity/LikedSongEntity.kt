@@ -12,5 +12,6 @@ data class LikedSongEntity(
     val mp3Url: String,
     val previewUrl: String,
     val durationMs: Int,
+    val hookStartTimeMs: Long = 0L,
     val likedAt: Long = System.currentTimeMillis()
 )

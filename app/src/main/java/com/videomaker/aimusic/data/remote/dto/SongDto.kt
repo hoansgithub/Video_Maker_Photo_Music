@@ -47,6 +47,8 @@ data class SongDto(
     val sortOrder: Int = 0,
     @SerialName("usage_count")
     val usageCount: Int = 0,
+    @SerialName("hook_start_time")
+    val hookStartTimeMs: Long? = null,
     @SerialName("created_at")
     val createdAt: String? = null,
     @SerialName("updated_at")

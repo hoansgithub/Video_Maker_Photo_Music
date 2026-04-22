@@ -124,16 +124,17 @@ class ApiCacheManager(context: Context) {
     companion object {
         /** Default TTL: 24 hours */
         const val DEFAULT_TTL = 24L * 60 * 60 * 1000
+        private const val SONGS_CACHE_SCHEMA_VERSION = 2
 
         // ── Song cache keys ──────────────────────────────────────────────────
         /** Dynamic key per locale — genre names will use label_i18n in future */
-        fun keySongsGenres(locale: String): String = "songs_genres_${locale}"
+        fun keySongsGenres(locale: String): String = "songs_genres_v${SONGS_CACHE_SCHEMA_VERSION}_${locale}"
         const val KEY_SONGS_SUGGESTED      = "songs_suggested"
-        fun keySongsWeeklyRanking(region: String): String = "songs_weekly_ranking_${region}"
+        fun keySongsWeeklyRanking(region: String): String = "songs_weekly_ranking_v${SONGS_CACHE_SCHEMA_VERSION}_${region}"
 
         /** Dynamic key per genre — safe for use as a filename. */
         fun keySongsGenre(genre: String): String =
-            "songs_genre_${genre.lowercase().replace(' ', '_')}"
+            "songs_genre_v${SONGS_CACHE_SCHEMA_VERSION}_${genre.lowercase().replace(' ', '_')}"
 
         // ── Template cache keys ──────────────────────────────────────────────
         /** Dynamic key per locale — vibe tag names are localized from Supabase */
