@@ -4,52 +4,27 @@ import com.videomaker.aimusic.navigation.AppRoute
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+/**
+ * Tests for simplified onboarding flow.
+ *
+ * Simplified logic:
+ * - Onboarding incomplete → start from LanguageSelection
+ * - Onboarding complete → go to Home
+ */
 class LaunchGateTest {
 
     @Test
-    fun `when language incomplete then language route wins`() {
+    fun `when onboarding incomplete then language selection route`() {
         val route = resolveStartupRoute(
-            SetupProgress(
-                needsLanguageSelection = true,
-                needsOnboarding = false,
-                needsFeatureSelection = false
-            )
+            SetupProgress(onboardingComplete = false)
         )
         assertEquals(AppRoute.LanguageSelection, route)
     }
 
     @Test
-    fun `when onboarding incomplete then onboarding route`() {
+    fun `when onboarding complete then home route`() {
         val route = resolveStartupRoute(
-            SetupProgress(
-                needsLanguageSelection = false,
-                needsOnboarding = true,
-                needsFeatureSelection = false
-            )
-        )
-        assertEquals(AppRoute.Onboarding, route)
-    }
-
-    @Test
-    fun `when feature incomplete then feature route`() {
-        val route = resolveStartupRoute(
-            SetupProgress(
-                needsLanguageSelection = false,
-                needsOnboarding = false,
-                needsFeatureSelection = true
-            )
-        )
-        assertEquals(AppRoute.FeatureSelection, route)
-    }
-
-    @Test
-    fun `when all complete then home route`() {
-        val route = resolveStartupRoute(
-            SetupProgress(
-                needsLanguageSelection = false,
-                needsOnboarding = false,
-                needsFeatureSelection = false
-            )
+            SetupProgress(onboardingComplete = true)
         )
         assertEquals(AppRoute.Home(), route)
     }

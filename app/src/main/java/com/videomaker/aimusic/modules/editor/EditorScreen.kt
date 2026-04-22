@@ -73,7 +73,6 @@ import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.modules.editor.components.EffectSetBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSection
-import com.videomaker.aimusic.modules.editor.components.MusicSettingsBottomSheet
 import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 // import com.videomaker.aimusic.modules.editor.components.SettingsPanel // Removed - using individual bottom sheets
@@ -133,9 +132,7 @@ fun EditorScreen(
     var showEffectSetSheet by remember { mutableStateOf(false) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
-    var showMusicTrimSheet by remember { mutableStateOf(false) }
     var wasPlayingBeforeMusicSheet by remember { mutableStateOf(false) }
-    var musicLoadError by remember { mutableStateOf<String?>(null) }
     var hasTrackedVideoPreview by remember { mutableStateOf(false) }
     var hasTrackedVideoPreviewComplete by remember { mutableStateOf(false) }
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
@@ -354,15 +351,6 @@ fun EditorScreen(
                             ratioConfirmed = false
                             showRatioSheet = true
                         },
-                        onMusicClick = {
-                            Analytics.trackSongEdit(
-                                videoId = state.project.id,
-                                songId = state.displaySettings.musicSongId?.toString() ?: "unknown",
-                                songName = state.displaySettings.musicSongName ?: "unknown"
-                            )
-                            Analytics.trackSearchOpen(AnalyticsEvent.Value.Location.EDIT)
-                            showMusicSearchSheet = true
-                        },
                         onVolumeClick = {
                             Analytics.trackVolumeEdit(
                                 videoId = state.project.id,
@@ -370,7 +358,6 @@ fun EditorScreen(
                             )
                             showVolumeSheet = true
                         },
-                        onTrimClick = { showMusicTrimSheet = true },
                         modifier = Modifier.padding(paddingValues)
                     )
                 }
@@ -641,51 +628,6 @@ fun EditorScreen(
             )
         }
 
-        // Music Trimmer Bottom Sheet
-        if (showMusicTrimSheet) {
-            val successState = uiState as? EditorUiState.Success
-            val musicTrimState by viewModel.musicTrimmerState.collectAsStateWithLifecycle()
-
-            // Open trimmer when sheet is shown
-            LaunchedEffect(Unit) {
-                viewModel.openMusicTrimmer()
-            }
-
-            // Show bottom sheet when music settings is open
-            if (musicTrimState is MusicTrimmerState.Open) {
-                val trimState = musicTrimState as MusicTrimmerState.Open
-
-                MusicSettingsBottomSheet(
-                    songName = trimState.songName,
-                    songUrl = successState?.displaySettings?.musicSongUrl ?: "",
-                    songDurationMs = trimState.songDurationMs,
-                    trimStartMs = trimState.trimStartMs,
-                    trimEndMs = trimState.trimEndMs,
-                    currentVolume = successState?.displaySettings?.audioVolume ?: 1f,
-                    onTrimChange = { startMs, endMs ->
-                        viewModel.updateMusicTrimPreview(startMs, endMs)
-                    },
-                    onVolumeChange = { volume ->
-                        viewModel.updateAudioVolume(volume)
-                    },
-                    onDurationReady = { durationMs ->
-                        viewModel.updateMusicTrimDuration(durationMs)
-                    },
-                    onError = { errorMessage ->
-                        musicLoadError = errorMessage
-                    },
-                    onApply = {
-                        viewModel.applyMusicTrim()
-                        showMusicTrimSheet = false
-                    },
-                    onDismiss = {
-                        viewModel.closeMusicTrimmer(applyChanges = false)
-                        showMusicTrimSheet = false
-                    }
-                )
-            }
-        }
-
         // Fullscreen Processing Overlay - blocks all interactions, content is blurred
         if (isPreviewBuilding) {
             Box(
@@ -714,35 +656,21 @@ fun EditorScreen(
             }
         }
 
-        // Error overlay - shows both preview errors and music trimmer errors
-        // Preview errors (PreviewState.Error)
+        // Error overlay - shows preview errors
         val previewErrorMessage = (previewState as? com.videomaker.aimusic.modules.editor.components.PreviewState.Error)?.message
 
-        // Music trimmer errors
-        val trimmerErrorMessage = musicLoadError
-
-        // Show error overlay if any error exists
-        val errorMessage = previewErrorMessage ?: trimmerErrorMessage
-        if (errorMessage != null) {
+        if (previewErrorMessage != null) {
             ErrorOverlay(
                 errorType = ErrorType.MusicLoading,
                 title = stringResource(R.string.error_preview_title),
-                message = errorMessage,
+                message = previewErrorMessage,
                 onRetry = {
                     // Clear error and trigger rebuild
-                    if (previewErrorMessage != null) {
-                        previewState = com.videomaker.aimusic.modules.editor.components.PreviewState.Building
-                    } else {
-                        musicLoadError = null
-                    }
+                    previewState = com.videomaker.aimusic.modules.editor.components.PreviewState.Building
                 },
                 onDismiss = {
                     // Clear error state
-                    if (previewErrorMessage != null) {
-                        previewState = com.videomaker.aimusic.modules.editor.components.PreviewState.Building
-                    } else {
-                        musicLoadError = null
-                    }
+                    previewState = com.videomaker.aimusic.modules.editor.components.PreviewState.Building
                 }
             )
         }
@@ -891,9 +819,7 @@ internal fun EditorMainContent(
     onPreviewStateChange: (com.videomaker.aimusic.modules.editor.components.PreviewState) -> Unit,
     onEffectClick: () -> Unit,
     onRatioClick: () -> Unit,
-    onMusicClick: () -> Unit,
     onVolumeClick: () -> Unit = {},
-    onTrimClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -943,8 +869,7 @@ internal fun EditorMainContent(
             },
             onSeekStart = onSeekStart,
             onSeekEnd = onSeekEnd,
-            onPlayPauseClick = onPlayPauseClick,
-            onMusicClick = onMusicClick
+            onPlayPauseClick = onPlayPauseClick
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -969,7 +894,6 @@ internal fun EditorMainContent(
             onEffectClick = onEffectClick,
             onRatioClick = onRatioClick,
             onVolumeClick = onVolumeClick,
-            onClipClick = onTrimClick,
             modifier = Modifier.fillMaxWidth()
         )
     }

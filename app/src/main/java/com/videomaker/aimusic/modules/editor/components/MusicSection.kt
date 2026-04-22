@@ -1,7 +1,6 @@
 package com.videomaker.aimusic.modules.editor.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.AppAsyncImage
-import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import com.videomaker.aimusic.ui.components.PlayingAnimationBars
 import com.videomaker.aimusic.ui.theme.Gray500
 import com.videomaker.aimusic.ui.theme.PlayerCardBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
@@ -62,7 +60,6 @@ internal fun MusicSection(
     onSeekStart: () -> Unit = {},
     onSeekEnd: () -> Unit = {},
     onPlayPauseClick: () -> Unit,
-    onMusicClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Hoist interaction source to prevent recreation on every recomposition
@@ -182,12 +179,10 @@ internal fun MusicSection(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Song info row - BOTTOM (clickable)
+        // Song info row - BOTTOM (display-only)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .clickableSingle(onClick = onMusicClick)
                 .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -214,15 +209,11 @@ internal fun MusicSection(
                 modifier = Modifier.weight(1f)
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Expand icon - indicates clickable
-            Icon(
-                imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = stringResource(R.string.editor_change_music),
-                tint = TextSecondary,
-                modifier = Modifier.size(24.dp)
-            )
+            // Playing animation indicator
+            if (isPlaying) {
+                Spacer(modifier = Modifier.width(8.dp))
+                PlayingAnimationBars()
+            }
         }
     }
 }

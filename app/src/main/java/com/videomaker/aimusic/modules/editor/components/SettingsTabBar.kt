@@ -16,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -36,7 +35,7 @@ import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 
 /**
- * Settings Tab Bar - Effect, Music Clip, Ratio, Volume
+ * Settings Tab Bar - Effect, Ratio, Volume
  * Each tab opens its own bottom sheet
  * Horizontally scrollable with equal-width tabs
  */
@@ -44,12 +43,11 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
 internal fun SettingsTabBar(
     currentEffectSetName: String,
     currentRatio: AspectRatio,
-    showMusicControls: Boolean, // Show volume/clip tabs if music is selected
+    showMusicControls: Boolean, // Show volume tab if music is selected
     currentVolume: Float, // 0.0 to 1.0
     onEffectClick: () -> Unit,
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit,
-    onClipClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -67,16 +65,6 @@ internal fun SettingsTabBar(
             onClick = onEffectClick,
             modifier = Modifier.width(70.dp)
         )
-
-        // Music Clip button (2nd position)
-        if (showMusicControls) {
-            SettingsTabButton(
-                icon = Icons.Default.ContentCut,
-                label = stringResource(R.string.tab_music_clip),
-                onClick = onClipClick,
-                modifier = Modifier.width(70.dp)
-            )
-        }
 
         // Ratio button - shows current ratio
         SettingsTabButton(
