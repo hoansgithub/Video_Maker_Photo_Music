@@ -279,16 +279,6 @@ class ExportViewModel(
         exportJob = viewModelScope.launch {
             val project = currentProjectSnapshot ?: projectRepository.getProject(projectId)
             currentProjectSnapshot = project
-            Analytics.trackVideoGenerate(
-                videoId = projectId,
-                templateId = project?.settings?.effectSetId,
-                songId = project?.settings?.musicSongId?.toString(),
-                quality = _currentQuality.value.displayName,
-                duration = project?.totalDurationMs,
-                ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
-                volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
-                mediaQuantity = project?.assets?.size
-            )
             // startExport and observeProgress run sequentially in one coroutine —
             // workId is guaranteed to be set before observeProgress reads it.
             val id = exportRepository.startExport(projectId)
@@ -299,16 +289,6 @@ class ExportViewModel(
                     is ExportProgress.Processing -> ExportUiState.Processing(progress.percent)
                     is ExportProgress.Success -> {
                         currentOutputWatermarkFree = project?.isWatermarkFree == true
-                        Analytics.trackVideoGenerateComplete(
-                            videoId = projectId,
-                            templateId = project?.settings?.effectSetId,
-                            songId = project?.settings?.musicSongId?.toString(),
-                            quality = _currentQuality.value.displayName,
-                            duration = project?.totalDurationMs,
-                            ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
-                            volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
-                            mediaQuantity = project?.assets?.size
-                        )
                         Analytics.trackVideoExportComplete(
                             videoId = projectId,
                             templateId = project?.settings?.effectSetId,

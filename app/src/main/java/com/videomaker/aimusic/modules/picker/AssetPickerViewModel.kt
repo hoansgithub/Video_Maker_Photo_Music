@@ -763,6 +763,17 @@ class AssetPickerViewModel(
         viewModelScope.launch {
             val uris = currentState.selectedAssets.map { it.uri }
             // Beat-sync mode only - duration calculated from beat-sync data later
+            val analyticsVideoId = buildDraftId() ?: "picker_generate_${System.currentTimeMillis()}"
+
+            if (!templateId.isNullOrBlank()) {
+                Analytics.trackVideoGenerate(
+                    videoId = analyticsVideoId,
+                    templateId = templateId,
+                    songId = overrideSongId.takeIf { it >= 0L }?.toString(),
+                    duration = null, // Duration will be calculated from beat-sync data
+                    mediaQuantity = uris.size
+                )
+            }
 
             when {
                 // PRIORITY 1: Template already selected - go directly to Editor
@@ -790,7 +801,8 @@ class AssetPickerViewModel(
                                     musicSongId = songId,
                                     musicSongName = songName,
                                     aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio),
-                                    applyHookStartDefaults = overrideSongId >= 0L
+                                    applyHookStartDefaults = overrideSongId >= 0L,
+                                    analyticsVideoId = analyticsVideoId
                                 )
 
                                 _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditorWithData(initialData)
@@ -812,7 +824,8 @@ class AssetPickerViewModel(
                             musicSongId = overrideSongId,
                             musicSongName = null,  // Will be loaded by editor
                             aspectRatio = AspectRatio.RATIO_9_16,
-                            applyHookStartDefaults = true  // Apply hook start for song-to-video mode
+                            applyHookStartDefaults = true,  // Apply hook start for song-to-video mode
+                            analyticsVideoId = analyticsVideoId
                         )
                     )
                 }

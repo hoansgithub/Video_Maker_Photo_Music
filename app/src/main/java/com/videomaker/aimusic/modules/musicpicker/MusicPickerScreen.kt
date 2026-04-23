@@ -69,6 +69,8 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.DeviceAudioTrack
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -195,11 +197,28 @@ fun MusicPickerScreen(
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
+        Analytics.trackPermissionClick(
+            button = if (isGranted) {
+                AnalyticsEvent.Value.Option.ALLOW
+            } else {
+                AnalyticsEvent.Value.Option.NO_ALLOW
+            },
+            perType = AnalyticsEvent.Value.PerType.AUDIO,
+            popType = AnalyticsEvent.Value.PopType.SYSTEM
+        )
         if (isGranted) {
             viewModel.onPermissionGranted()
         } else {
             viewModel.onPermissionDenied()
         }
+    }
+
+    val requestAudioPermission = {
+        Analytics.trackPermissionRender(
+            perType = AnalyticsEvent.Value.PerType.AUDIO,
+            popType = AnalyticsEvent.Value.PopType.SYSTEM
+        )
+        permissionLauncher.launch(permission)
     }
 
     // Handle navigation events
@@ -227,7 +246,7 @@ fun MusicPickerScreen(
         if (hasPermission) {
             viewModel.onPermissionGranted()
         } else {
-            permissionLauncher.launch(permission)
+            requestAudioPermission()
         }
     }
 
@@ -252,7 +271,7 @@ fun MusicPickerScreen(
                     showBottomSheet = false
                     viewModel.navigateBack()
                 },
-                onRetryPermission = { permissionLauncher.launch(permission) }
+                onRetryPermission = requestAudioPermission
             )
         }
     }

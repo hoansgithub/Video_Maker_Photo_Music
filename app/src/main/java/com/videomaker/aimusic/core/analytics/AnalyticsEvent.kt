@@ -171,6 +171,7 @@ object AnalyticsEvent {
     const val PERMISSION_CLICK = "permission_click"
     const val PERMISSION_GOTO_SETTING = "permission_goto_setting"
     const val PERMISSION_CHECK = "permission_check"
+    const val PERMISSION_ADD_IMAGE = "permission_add_image"
 
     // ============================================
     // 17. REPORT FLOW
@@ -277,6 +278,8 @@ object AnalyticsEvent {
 
         const val BUTTON = "button"
         const val ALLOW = "allow"
+        const val PER_TYPE = "per_type"
+        const val POP_TYPE = "pop_type"
 
         const val KEYWORD = "keyword"
         const val KEYWORD_1 = "keyword_1"
@@ -376,6 +379,19 @@ object AnalyticsEvent {
             const val BAD = "bad"
             const val ALLOW = "allow"
             const val NO_ALLOW = "no_allow"
+            const val LIMIT_ACCESS = "limit_access"
+        }
+
+        object PerType {
+            const val NOTI = "noti"
+            const val MEDIA = "media"
+            const val CAMERA = "camera"
+            const val AUDIO = "audio"
+        }
+
+        object PopType {
+            const val SYSTEM = "system"
+            const val CUSTOM = "custom"
         }
     }
 
