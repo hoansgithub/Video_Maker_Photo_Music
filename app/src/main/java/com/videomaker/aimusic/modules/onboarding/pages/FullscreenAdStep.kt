@@ -1,16 +1,23 @@
 package com.videomaker.aimusic.modules.onboarding.pages
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,8 +29,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.ui.components.ShimmerBox
+import com.videomaker.aimusic.ui.theme.TextSecondary
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -126,6 +137,7 @@ fun FullscreenAdStep(
 
     // Ad loading logic - runs once when composed (can start early)
     LaunchedEffect(Unit) {
+        android.util.Log.d("FullscreenAdStep", "🎬 Ad loading LaunchedEffect started")
 
         // Check ad status (runs in parallel with close button delay)
         isAdLoaded = adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
@@ -133,7 +145,7 @@ fun FullscreenAdStep(
         if (isAdLoaded) {
             android.util.Log.d("FullscreenAdStep", "✅ Ad already loaded (preload successful)")
         } else {
-            android.util.Log.d("FullscreenAdStep", "⏳ Ad not ready, polling...")
+            android.util.Log.d("FullscreenAdStep", "⏳ Ad not ready, starting polling (timeout: ${AD_LOADING_TIMEOUT_SECONDS}s)...")
 
             // Poll for up to 30 seconds (60 × 500ms)
             var pollAttempts = 0
@@ -142,6 +154,11 @@ fun FullscreenAdStep(
             while (pollAttempts < maxPolls && !isAdLoaded && isActive) {
                 delay(500)
                 pollAttempts++
+
+                // Log every 5 seconds
+                if (pollAttempts % 10 == 0) {
+                    android.util.Log.d("FullscreenAdStep", "⏳ Still polling... ${pollAttempts * 0.5}s elapsed")
+                }
 
                 if (adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)) {
                     isAdLoaded = true
@@ -152,8 +169,13 @@ fun FullscreenAdStep(
             // Auto-advance if ad failed to load within timeout (only if still on current page)
             if (!isAdLoaded && isActive && isCurrentPage) {
                 android.util.Log.w("FullscreenAdStep", "⚠️ Fullscreen ad not loaded after ${AD_LOADING_TIMEOUT_SECONDS}s, auto-advancing")
+                android.util.Log.w("FullscreenAdStep", "⚠️ Ad network info: $adNetworkInfo")
                 Analytics.track("fullscreen_ad_timeout")
                 onClose()
+            } else if (!isAdLoaded && !isActive) {
+                android.util.Log.w("FullscreenAdStep", "⚠️ LaunchedEffect cancelled before ad loaded")
+            } else if (!isAdLoaded && !isCurrentPage) {
+                android.util.Log.w("FullscreenAdStep", "⚠️ User navigated away before ad loaded")
             }
         }
     }
@@ -168,7 +190,12 @@ fun FullscreenAdStep(
             .fillMaxSize()
             .background(Color.Black)  // Black background for fullscreen
     ) {
-        // Fullscreen native ad
+        // Show shimmer placeholder while ad is loading
+        if (!isAdLoaded) {
+            ShimmerLoadingPlaceholder()
+        }
+
+        // Fullscreen native ad (always rendered, but hidden behind shimmer until loaded)
         NativeAdView(
             placement = AdPlacement.NATIVE_ONBOARDING_FULLSCREEN,
             modifier = Modifier.fillMaxSize()
@@ -206,5 +233,68 @@ fun FullscreenAdStep(
                 }
             }
         }
+    }
+}
+
+/**
+ * Shimmer loading placeholder for fullscreen ad
+ * Shows a centered message with shimmer elements while ad is loading
+ */
+@Composable
+private fun ShimmerLoadingPlaceholder() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Large shimmer rectangle (simulates ad image)
+        ShimmerBox(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(400.dp),
+            cornerRadius = 16.dp
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Shimmer rectangles (simulate ad text)
+        ShimmerBox(
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .height(24.dp),
+            cornerRadius = 8.dp
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        ShimmerBox(
+            modifier = Modifier
+                .fillMaxWidth(0.6f)
+                .height(20.dp),
+            cornerRadius = 8.dp
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Shimmer button
+        ShimmerBox(
+            modifier = Modifier
+                .fillMaxWidth(0.5f)
+                .height(48.dp),
+            cornerRadius = 24.dp
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Loading message
+        Text(
+            text = "Loading ad...",
+            color = TextSecondary,
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center
+        )
     }
 }
