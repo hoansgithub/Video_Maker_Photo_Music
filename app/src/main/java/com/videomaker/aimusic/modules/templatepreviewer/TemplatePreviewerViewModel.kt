@@ -4,11 +4,9 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.domain.model.AspectRatio
-import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.VideoTemplate
 
-import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import com.videomaker.aimusic.domain.usecase.LikeTemplateUseCase
@@ -20,7 +18,6 @@ import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.storage.UnlockedTemplatesManager
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -43,23 +40,10 @@ sealed class TemplatePreviewerUiState {
 }
 
 // ============================================
-// SONG LOAD STATE
+// SONG LOAD STATE - REMOVED
+// Videos now have built-in music (template-preview-videos-v2 bucket)
+// No separate music player needed
 // ============================================
-
-sealed class SongLoadState {
-    data object None : SongLoadState()
-    data object Loading : SongLoadState()
-    /**
-     * @param nonce Increments on every page change so StateFlow always emits a new value,
-     *   even when the same song plays across consecutive templates. This guarantees the
-     *   player restarts from the beginning on each swipe.
-     */
-    data class Ready(val song: MusicSong, val nonce: Int) : SongLoadState()
-    /**
-     * Error state when song fails to load (network error, API failure, etc.)
-     */
-    data class Error(val message: String) : SongLoadState()
-}
 
 // ============================================
 // NAVIGATION EVENTS
@@ -96,7 +80,6 @@ class TemplatePreviewerViewModel(
      *  overriding each template's embedded song. -1 = use template's own song. */
     private val overrideSongId: Long = -1L,
     private val templateRepository: TemplateRepository,
-    private val songRepository: SongRepository,
     private val createProjectUseCase: CreateProjectUseCase,
     private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase,
     private val likeTemplateUseCase: LikeTemplateUseCase,
@@ -120,10 +103,6 @@ class TemplatePreviewerViewModel(
     // Navigation Events — StateFlow-based (Gold standard per CLAUDE.md)
     private val _navigationEvent = MutableStateFlow<TemplatePreviewerNavigationEvent?>(null)
     val navigationEvent: StateFlow<TemplatePreviewerNavigationEvent?> = _navigationEvent.asStateFlow()
-
-    // Current song for the visible page
-    private val _currentSong = MutableStateFlow<SongLoadState>(SongLoadState.None)
-    val currentSong: StateFlow<SongLoadState> = _currentSong.asStateFlow()
 
     // Liked template IDs — observed from Room
     val likedTemplateIds: StateFlow<Set<String>> = observeLikedTemplatesUseCase.ids()
@@ -164,13 +143,6 @@ class TemplatePreviewerViewModel(
     private var isLoadingMore = false
     private var hasMorePages = true
 
-    // Cancels the in-flight song fetch when the page changes before it resolves
-    private var songLoadJob: Job? = null
-
-    // Incremented on every page change so SongLoadState.Ready always differs between pages,
-    // even when consecutive templates share the same song — guaranteeing player restart.
-    private var songNonce = 0
-
     init {
         loadInitialTemplates()
 
@@ -210,7 +182,7 @@ class TemplatePreviewerViewModel(
         if (remaining <= LOAD_MORE_THRESHOLD && hasMorePages && !isLoadingMore) {
             loadMoreTemplates()
         }
-        loadSongForTemplate(state.templates[realIndex])
+        // No music loading needed - videos have built-in music
     }
 
     fun onUseThisTemplate(template: VideoTemplate, aspectRatio: AspectRatio) {
@@ -348,8 +320,6 @@ class TemplatePreviewerViewModel(
                         templates = finalTemplates,
                         initialPage = initialPage
                     )
-                    // Kick off song load for the initial page
-                    loadSongForTemplate(finalTemplates[initialPage])
                 }
                 .onFailure { error ->
                     // Even if templates list fails, try to show the initial template
@@ -358,7 +328,6 @@ class TemplatePreviewerViewModel(
                             templates = listOf(initialTemplate),
                             initialPage = 0
                         )
-                        loadSongForTemplate(initialTemplate)
                     } else {
                         _uiState.value = TemplatePreviewerUiState.Error(
                             error.message ?: "Failed to load templates"
@@ -394,33 +363,6 @@ class TemplatePreviewerViewModel(
             } finally {
                 isLoadingMore = false
             }
-        }
-    }
-
-    private fun loadSongForTemplate(template: VideoTemplate) {
-        // If the caller supplied an override song, use it on every page.
-        val songId = if (overrideSongId >= 0L) overrideSongId else template.songId
-
-        // Always increment nonce — even for the same song — so Ready(song, nonce) differs
-        // from the previous emission and LaunchedEffect(currentSong) re-runs, restarting playback.
-        val nonce = ++songNonce
-
-        if (songId <= 0L) {
-            songLoadJob?.cancel()
-            _currentSong.value = SongLoadState.None
-            return
-        }
-
-        songLoadJob?.cancel()
-        _currentSong.value = SongLoadState.Loading
-        songLoadJob = viewModelScope.launch {
-            songRepository.getSongById(songId)
-                .onSuccess { song -> _currentSong.value = SongLoadState.Ready(song, nonce) }
-                .onFailure { error ->
-                    android.util.Log.e("TemplatePreviewerVM", "Failed to load song $songId", error)
-                    // Use generic error message - will be localized in UI layer
-                    _currentSong.value = SongLoadState.Error("SONG_LOAD_FAILED")
-                }
         }
     }
 

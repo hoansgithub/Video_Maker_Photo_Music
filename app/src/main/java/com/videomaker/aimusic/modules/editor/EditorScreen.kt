@@ -686,15 +686,15 @@ fun EditorScreen(
             )
         }
 
-        // Beat-sync network error dialog
+        // Network error dialog (beat-sync or effect set loading failure)
         if (showBeatSyncErrorDialog) {
             androidx.compose.material3.AlertDialog(
                 onDismissRequest = viewModel::onBeatSyncErrorDismissed,
-                title = { androidx.compose.material3.Text("Network Error") },
-                text = { androidx.compose.material3.Text("Failed to load beat-sync data. Please check your internet connection and try again.") },
+                title = { androidx.compose.material3.Text(stringResource(R.string.error_network_title)) },
+                text = { androidx.compose.material3.Text(stringResource(R.string.error_data_load_failed)) },
                 confirmButton = {
                     androidx.compose.material3.TextButton(onClick = viewModel::onBeatSyncErrorDismissed) {
-                        androidx.compose.material3.Text("OK")
+                        androidx.compose.material3.Text(stringResource(R.string.dialog_ok))
                     }
                 }
             )

@@ -58,7 +58,7 @@ koin = "4.2.0"  # Matches ACCCoreAndroid
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.31"  # Updated SDKs: Google Ads 25.0.0, Firebase 34.12.0, AppsFlyer 6.17.6
+acccore = "0.0.32"  # Fix: Native ad loading race condition with CompletableDeferred
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)

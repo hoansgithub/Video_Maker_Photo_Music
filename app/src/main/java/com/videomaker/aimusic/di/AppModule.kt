@@ -644,7 +644,6 @@ class TemplatePreviewerViewModelFactory(
             imageUrisStr = imageUris,
             overrideSongId = overrideSongId,
             templateRepository = templateRepository,
-            songRepository = songRepository,
             createProjectUseCase = createProjectUseCase,
             updateProjectSettingsUseCase = updateProjectSettingsUseCase,
             likeTemplateUseCase = likeTemplateUseCase,

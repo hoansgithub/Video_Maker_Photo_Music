@@ -55,7 +55,7 @@ include(":app")
 
 // ============================================
 // LOCAL COMPOSITE BUILD - ACCCoreAndroid
-// DISABLED - Using GitHub Packages (v0.0.31 with updated SDKs)
+// DISABLED - Using GitHub Packages (v0.0.32 with native ad race condition fix)
 // ============================================
 // includeBuild("../ACCCoreAndroid") {
 //     dependencySubstitution {

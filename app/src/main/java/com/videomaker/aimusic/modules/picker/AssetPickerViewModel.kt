@@ -803,12 +803,17 @@ class AssetPickerViewModel(
                         }
                 }
                 // PRIORITY 2: Song-to-video mode WITHOUT template selected
-                // Navigate to template selector with the chosen song
+                // Navigate directly to Editor - effect set will be fetched from Supabase
                 isSongToVideoMode -> {
-                    _navigationEvent.value = AssetPickerNavigationEvent.NavigateToTemplatePreviewer(
-                        templateId = "",
-                        imageUris = uris.map { it.toString() },
-                        overrideSongId = overrideSongId
+                    _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditorWithData(
+                        initialData = EditorInitialData(
+                            imageUris = uris.map { it.toString() },
+                            effectSetId = null,  // Editor will fetch first effect set from Supabase
+                            musicSongId = overrideSongId,
+                            musicSongName = null,  // Will be loaded by editor
+                            aspectRatio = AspectRatio.RATIO_9_16,
+                            applyHookStartDefaults = true  // Apply hook start for song-to-video mode
+                        )
                     )
                 }
                 projectId != null -> {

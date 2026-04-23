@@ -322,6 +322,33 @@ class EditorViewModel(
                     return@launch
                 }
 
+                // Fetch first effect set from Supabase if not provided
+                val effectSetId = if (data.effectSetId == null) {
+                    android.util.Log.d("EditorViewModel", "Effect set not provided, fetching first from Supabase...")
+                    val result = effectSetRepository.getEffectSetsPaged(offset = 0, limit = 1)
+
+                    result.fold(
+                        onSuccess = { effectSets ->
+                            if (effectSets.isNotEmpty()) {
+                                val firstEffectSet = effectSets.first()
+                                android.util.Log.d("EditorViewModel", "✅ Fetched first effect set: ${firstEffectSet.id} (${firstEffectSet.name})")
+                                firstEffectSet.id
+                            } else {
+                                android.util.Log.e("EditorViewModel", "No effect sets found in Supabase")
+                                _showBeatSyncErrorDialog.value = true
+                                return@launch
+                            }
+                        },
+                        onFailure = { error ->
+                            android.util.Log.e("EditorViewModel", "Failed to fetch first effect set: ${error.message}", error)
+                            _showBeatSyncErrorDialog.value = true
+                            return@launch
+                        }
+                    )
+                } else {
+                    data.effectSetId
+                }
+
                 // Calculate hook start time (use song's default or 0)
                 val hookStartTimeMs = if (data.applyHookStartDefaults) {
                     song?.hookStartTimeMs ?: 0L
@@ -369,7 +396,7 @@ class EditorViewModel(
                     beatSyncData = beatSyncData,
                     hookStartTimeMs = hookStartTimeMs,
                     totalDurationMs = totalDurationMs,
-                    effectSetId = data.effectSetId,
+                    effectSetId = effectSetId,  // Use fetched effect set (or provided one)
                     musicSongId = data.musicSongId,
                     musicSongName = song?.name, // For display in UI
                     musicSongUrl = song?.mp3Url, // For playback (same URL as previewer)

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,9 +34,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.ShimmerBox
+import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
 import kotlinx.coroutines.delay
@@ -185,23 +189,35 @@ fun FullscreenAdStep(
         android.util.Log.d("FullscreenAdStep", "🎨 UI recomposed - isCloseButtonVisible: $isCloseButtonVisible")
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)  // Black background for fullscreen
-    ) {
-        // Show shimmer placeholder while ad is loading
-        if (!isAdLoaded) {
-            ShimmerLoadingPlaceholder()
-        }
+    // Track when ad loaded state changes
+    LaunchedEffect(isAdLoaded) {
+        android.util.Log.d("FullscreenAdStep", "📊 Ad loaded state changed: isAdLoaded=$isAdLoaded")
+        if (isAdLoaded) {
+            android.util.Log.d("FullscreenAdStep", "✅ Ad marked as loaded - shimmer should hide, NativeAdView should show")
 
-        // Fullscreen native ad (always rendered, but hidden behind shimmer until loaded)
+            // DEBUG: Check if ad is actually retrievable
+            val ad = adsLoaderService.getNativeAd(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
+            android.util.Log.d("FullscreenAdStep", "🔍 getNativeAd() returned: ${if (ad != null) "AD OBJECT" else "NULL"}")
+        } else {
+            android.util.Log.d("FullscreenAdStep", "⏳ Ad not loaded yet - showing shimmer")
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Fullscreen native ad (rendered first, at bottom of Z-order)
         NativeAdView(
             placement = AdPlacement.NATIVE_ONBOARDING_FULLSCREEN,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            isDebug = BuildConfig.DEBUG,  // Show debug label only in debug builds
+            fullscreenPlacements = listOf(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
         )
 
-        // Close button (top-right) - our custom overlay button
+        // Shimmer loading overlay (rendered second, covers ad until loaded)
+        if (!isAdLoaded) {
+            FullscreenAdShimmerLayout()
+        }
+
+        // Close button (top-right) - our custom overlay button (rendered last, always on top)
         if (isCloseButtonVisible) {
             android.util.Log.d("FullscreenAdStep", "🔘 Custom close button VISIBLE in composition")
             Surface(
@@ -237,64 +253,126 @@ fun FullscreenAdStep(
 }
 
 /**
- * Shimmer loading placeholder for fullscreen ad
- * Shows a centered message with shimmer elements while ad is loading
+ * Shimmer loading layout for fullscreen ad
+ * Mimics native_full_screen_bait.xml structure
+ * Shows while native ad is loading (based on drama app pattern)
  */
 @Composable
-private fun ShimmerLoadingPlaceholder() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        // Large shimmer rectangle (simulates ad image)
-        ShimmerBox(
+private fun FullscreenAdShimmerLayout() {
+    ProvideShimmerEffect {
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(400.dp),
-            cornerRadius = 16.dp
-        )
+                .fillMaxSize()
+                .background(SurfaceDark)
+        ) {
+            // Media view shimmer (fullscreen background)
+            ShimmerBox(
+                modifier = Modifier.fillMaxSize()
+            )
 
-        Spacer(modifier = Modifier.height(24.dp))
+            // Centered loading message
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(horizontal = 32.dp, vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Animated shimmer layer
+                    ShimmerBox(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                    )
 
-        // Shimmer rectangles (simulate ad text)
-        ShimmerBox(
-            modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .height(24.dp),
-            cornerRadius = 8.dp
-        )
+                    // Text overlay with reduced brightness
+                    Text(
+                        text = "Loading ad...",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
 
-        Spacer(modifier = Modifier.height(12.dp))
+            // Top overlay card (headline + body)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 72.dp, start = 16.dp, end = 16.dp)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.6f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(16.dp)
+            ) {
+                // Headline shimmer (2 lines)
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .height(24.dp),
+                    cornerRadius = 4.dp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .height(24.dp),
+                    cornerRadius = 4.dp
+                )
 
-        ShimmerBox(
-            modifier = Modifier
-                .fillMaxWidth(0.6f)
-                .height(20.dp),
-            cornerRadius = 8.dp
-        )
+                Spacer(modifier = Modifier.height(12.dp))
 
-        Spacer(modifier = Modifier.height(24.dp))
+                // Body text shimmer (3 lines)
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp),
+                    cornerRadius = 4.dp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.95f)
+                        .height(16.dp),
+                    cornerRadius = 4.dp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .height(16.dp),
+                    cornerRadius = 4.dp
+                )
+            }
 
-        // Shimmer button
-        ShimmerBox(
-            modifier = Modifier
-                .fillMaxWidth(0.5f)
-                .height(48.dp),
-            cornerRadius = 24.dp
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Loading message
-        Text(
-            text = "Loading ad...",
-            color = TextSecondary,
-            fontSize = 14.sp,
-            textAlign = TextAlign.Center
-        )
+            // Bottom CTA button shimmer
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 80.dp, start = 16.dp, end = 16.dp)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.7f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.5f)
+                        .height(48.dp),
+                    cornerRadius = 24.dp
+                )
+            }
+        }
     }
 }

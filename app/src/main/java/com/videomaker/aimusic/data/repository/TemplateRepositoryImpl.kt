@@ -264,9 +264,9 @@ private const val THUMBNAIL_BASE_URL =
 private const val PREVIEW_IMAGE_BASE_URL =
     "https://zdydtiwglotssklnkwjh.supabase.co/storage/v1/object/public/template-previews/"
 
-// Video previews for full-screen template previewer (optional, falls back to preview image)
+// Video previews for full-screen template previewer (v2: with built-in music, no separate audio player needed)
 private const val VIDEO_BASE_URL =
-    "https://zdydtiwglotssklnkwjh.supabase.co/storage/v1/object/public/template-preview-videos/"
+    "https://zdydtiwglotssklnkwjh.supabase.co/storage/v1/object/public/template-preview-videos-v2/"
 
 @Serializable
 private data class TemplateDto(

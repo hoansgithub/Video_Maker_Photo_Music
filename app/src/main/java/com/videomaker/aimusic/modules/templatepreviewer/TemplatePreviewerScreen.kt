@@ -13,7 +13,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -30,7 +29,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -62,19 +60,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.C
-import androidx.media3.common.MediaItem
-import androidx.media3.common.PlaybackException
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.exoplayer.DefaultLoadControl
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -90,19 +79,14 @@ import androidx.compose.ui.unit.sp
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
-import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.R
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withTimeout
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
-import com.videomaker.aimusic.media.audio.HookStartTimePolicy
 import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.ui.components.AdBadge
 import com.videomaker.aimusic.ui.components.AdBadgeStyle
@@ -112,10 +96,7 @@ import com.videomaker.aimusic.ui.components.NotificationPermissionSettingsGuideD
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
 import org.koin.compose.koinInject
-import com.videomaker.aimusic.ui.components.ErrorOverlay
-import com.videomaker.aimusic.ui.components.ErrorType
 import com.videomaker.aimusic.ui.components.PrimaryButton
-import com.videomaker.aimusic.ui.theme.Black60
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.SurfaceDarkVariant
@@ -128,44 +109,12 @@ import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Scale
 import com.videomaker.aimusic.domain.model.VideoTemplate
-import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
-import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
-import com.videomaker.aimusic.ui.theme.CtaText
 import com.videomaker.aimusic.ui.theme.FoundationBlack
-import com.videomaker.aimusic.ui.theme.SecondaryLight
 import com.videomaker.aimusic.ui.theme.SurfaceLight
-import com.videomaker.aimusic.ui.theme.TextSecondary
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
 import androidx.core.content.edit
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
-import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-
-// ============================================
-// HELPER - Release player async to avoid ANR
-// ============================================
-
-/**
- * Release ExoPlayer asynchronously on background thread to avoid ANR.
- * ExoPlayer.release() can block for 10+ seconds when releasing resources.
- */
-private fun ExoPlayer.releaseAsync() {
-    val playerToRelease = this
-    ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
-        runCatching {
-            android.util.Log.d("TemplatePreviewerScreen", "Releasing player on background thread...")
-            playerToRelease.release()
-            android.util.Log.d("TemplatePreviewerScreen", "Player released successfully")
-        }.onFailure { e ->
-            android.util.Log.e("TemplatePreviewerScreen", "Failed to release player", e)
-        }
-    }
-}
 
 // Virtual page count for infinite-scroll illusion.
 private const val VIRTUAL_PAGE_COUNT = 10_000
@@ -174,18 +123,6 @@ private fun initialVirtualPage(initialPage: Int, templateCount: Int): Int {
     if (templateCount == 0) return VIRTUAL_PAGE_COUNT / 2
     val mid = VIRTUAL_PAGE_COUNT / 2
     return (mid / templateCount) * templateCount + initialPage
-}
-
-private fun resolveTemplateSongFlowHookStartPositionMs(
-    hookStartTimeMs: Long,
-    playerDurationMs: Long?,
-    songDurationMs: Int?
-): Long {
-    val resolvedDurationMs = playerDurationMs?.takeIf { it > 0L } ?: songDurationMs?.toLong()
-    return HookStartTimePolicy.resolve(
-        hookStartTimeMs = hookStartTimeMs,
-        durationMs = resolvedDurationMs
-    )
 }
 
 // ============================================
@@ -197,14 +134,11 @@ private fun resolveTemplateSongFlowHookStartPositionMs(
 fun TemplatePreviewerScreen(
     viewModel: TemplatePreviewerViewModel,
     sourceLocation: String? = null,
-    audioDataSourceFactory: CacheDataSource.Factory,
     onNavigateToAssetPicker: (template: com.videomaker.aimusic.domain.model.VideoTemplate, overrideSongId: Long, aspectRatio: AspectRatio) -> Unit,
-    applyHookStartFromSongFlow: Boolean = false,
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
-    val currentSong by viewModel.currentSong.collectAsStateWithLifecycle()
     val likedTemplateIds by viewModel.likedTemplateIds.collectAsStateWithLifecycle()
     val unlockedTemplateIds by viewModel.unlockedTemplateIds.collectAsStateWithLifecycle()
     val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
@@ -216,9 +150,6 @@ fun TemplatePreviewerScreen(
     val eventLocation = remember(sourceLocation) {
         sourceLocation?.takeIf { it.isNotBlank() } ?: AnalyticsEvent.Value.Location.PREVIEW_SWIPE
     }
-
-    // Track song loading error
-    var songError by remember { mutableStateOf<String?>(null) }
 
     // Get dependencies for ad showing
     val activity = context as? Activity
@@ -253,12 +184,7 @@ fun TemplatePreviewerScreen(
         navigationEvent?.let { event ->
             when (event) {
                 is TemplatePreviewerNavigationEvent.NavigateToAssetPicker -> {
-                    // Block navigation if music failed to load
-                    if (songError == null) {
-                        onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
-                    } else {
-                        android.util.Log.w("TemplatePreviewerScreen", "Navigation blocked due to music loading error")
-                    }
+                    onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
                 }
 
                 is TemplatePreviewerNavigationEvent.RequestBackWithAd -> {
@@ -305,28 +231,6 @@ fun TemplatePreviewerScreen(
         onRewardEarned = viewModel::onRewardEarned,
         onAdFailed = viewModel::onAdFailed
     )
-
-    // Single ExoPlayer for the entire screen — crossfaded on page change
-    val player = remember {
-        // Optimized LoadControl for faster music streaming
-        val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(
-                /* minBufferMs */ 2500,      // Balanced: faster than default, stable on slow networks
-                /* maxBufferMs */ 15000,     // Max buffer 15s (reduced from default 50s)
-                /* bufferForPlaybackMs */ 1500,      // Start playback after 1.5s buffered (safer than 500ms)
-                /* bufferForPlaybackAfterRebufferMs */ 2500  // ExoPlayer default for stability
-            )
-            .setPrioritizeTimeOverSizeThresholds(true)  // Favor low latency over size
-            .build()
-
-        ExoPlayer.Builder(context)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(audioDataSourceFactory))
-            .setLoadControl(loadControl)
-            .build()
-    }
-
-    // Real duration read from ExoPlayer after playback is ready — not from DB
-    var playerDurationMs by remember { mutableStateOf<Long?>(null) }
 
     // Track ad loading state (declared early so it can be used in lifecycle observers)
     var adReady by remember { mutableStateOf(false) }
@@ -386,10 +290,6 @@ fun TemplatePreviewerScreen(
         }
     }
 
-    DisposableEffect(Unit) {
-        onDispose { player.releaseAsync() }  // ✅ Release async to avoid ANR
-    }
-
     // Pause/resume on app background
     DisposableEffect(lifecycleOwner, loadingAdComplete, pendingPermissionCheckAfterSettings) {
         val observer = LifecycleEventObserver { _, event ->
@@ -404,84 +304,11 @@ fun TemplatePreviewerScreen(
                         pendingPermissionCheckAfterSettings = false
                     }
                 }
-                Lifecycle.Event.ON_STOP -> player.pause()
-                Lifecycle.Event.ON_START -> {
-                    // Only resume playback after loading ad timing is complete
-                    if (loadingAdComplete && player.playbackState == Player.STATE_READY) {
-                        player.play()
-                    }
-                }
                 else -> Unit
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-
-    // Crossfade audio on song change.
-    // Loading state: keep current track playing while the next song is being fetched.
-    // Ready: fade out → swap track → fade in (ONLY after loading ad timing completes).
-    // None: fade out and stop.
-    // Error: show error overlay.
-    LaunchedEffect(currentSong, loadingAdComplete) {
-        when (val state = currentSong) {
-            is SongLoadState.Loading -> {
-                songError = null // Clear any previous error
-            }
-
-            is SongLoadState.None -> {
-                playerDurationMs = null
-                fadeVolume(player, to = 0f)
-                player.stop()
-                songError = null
-            }
-
-            is SongLoadState.Error -> {
-                // Show error overlay with localized message
-                songError = context.getString(R.string.error_template_music_failed)
-                playerDurationMs = null
-                fadeVolume(player, to = 0f)
-                player.stop()
-            }
-
-            is SongLoadState.Ready -> {
-                // Only start playing music after loading ad timing is complete
-                if (!loadingAdComplete) {
-                    android.util.Log.d("TemplatePreviewerMusic", "🎵 Song ready but waiting for ad timing to complete")
-                    return@LaunchedEffect
-                }
-
-                android.util.Log.d("TemplatePreviewerMusic", "🎵 Starting music playback (ad timing complete)")
-                songError = null // Clear any previous error
-                playerDurationMs = null  // clear stale duration until new track is ready
-                // Use full track (mp3Url) for consistency with Editor, not short preview clip
-                val url = state.song.mp3Url.ifEmpty { state.song.previewUrl }
-                if (url.isEmpty()) { player.stop(); return@LaunchedEffect }
-
-                fadeVolume(player, to = 0f)
-                player.setMediaItem(MediaItem.fromUri(url))
-                player.repeatMode = Player.REPEAT_MODE_ONE
-                player.prepare()
-                player.play()
-                if (awaitPlayerReady(player)) {
-                    val actualDurationMs = player.duration.takeIf { it != C.TIME_UNSET && it > 0L }
-                    playerDurationMs = actualDurationMs
-                    if (applyHookStartFromSongFlow) {
-                        val hookStartPositionMs = resolveTemplateSongFlowHookStartPositionMs(
-                            hookStartTimeMs = state.song.hookStartTimeMs,
-                            playerDurationMs = actualDurationMs,
-                            songDurationMs = state.song.durationMs
-                        )
-                        if (hookStartPositionMs > 0L) {
-                            player.seekTo(hookStartPositionMs)
-                        }
-                    }
-                    fadeVolume(player, to = 1f)
-                } else {
-                    player.volume = 1f
-                }
-            }
-        }
     }
 
     when (val state = uiState) {
@@ -493,8 +320,6 @@ fun TemplatePreviewerScreen(
             if (loadingAdComplete) {
                 TemplatePreviewerReadyContent(
                     state = state,
-                    currentSong = currentSong,
-                    playerDurationMs = playerDurationMs,
                     likedTemplateIds = likedTemplateIds,
                     unlockedTemplateIds = unlockedTemplateIds,
                     onPageChanged = viewModel::onPageChanged,
@@ -529,18 +354,6 @@ fun TemplatePreviewerScreen(
                 }
             }
         }
-    }
-
-    // Error overlay for song loading failures
-    songError?.let { errorMessage ->
-        ErrorOverlay(
-            errorType = ErrorType.MusicLoading,
-            title = context.getString(R.string.error_network_title),
-            message = errorMessage,
-            onDismiss = {
-                songError = null
-            }
-        )
     }
 
     // Watch ad dialog
@@ -666,8 +479,6 @@ private fun LoadingStateWithAd() {
 @Composable
 private fun TemplatePreviewerReadyContent(
     state: TemplatePreviewerUiState.Ready,
-    currentSong: SongLoadState,
-    playerDurationMs: Long?,
     likedTemplateIds: Set<String>,
     unlockedTemplateIds: Set<String>,
     onPageChanged: (Int) -> Unit,
@@ -796,13 +607,9 @@ private fun TemplatePreviewerReadyContent(
             modifier = Modifier.fillMaxSize(),
             key = { pageIndex -> templates[pageIndex % templates.size].id }
         ) { pageIndex ->
-            // Only animate thumbnail once music is loaded — thumbnail + audio start together.
-            // While SongLoadState.Loading: static first frame shown (shimmer in music row).
-            // SongLoadState.None means this template has no song — animate immediately.
-            val musicReady = currentSong !is SongLoadState.Loading
+            // Videos now have built-in music, so always animate immediately when page is current
             val isCurrentPage = pageIndex == pagerState.settledPage
                 && !pagerState.isScrollInProgress
-                && musicReady
             TemplateThumbnailPage(
                 template = templates[pageIndex % templates.size],
                 isCurrentPage = isCurrentPage,
@@ -872,110 +679,103 @@ private fun TemplatePreviewerReadyContent(
             }
         }
 
-        // Bottom bar — music info + template name + CTA
-        ProvideShimmerEffect {
-            Column(
+        // Bottom bar — like button + CTA
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .padding(bottom = 60.dp),  // Space for banner ad (50dp + 10dp spacing)
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            val currentTemplate = templates.getOrNull(pagerState.settledPage % templates.size)
+            val isLiked = currentTemplate?.id in likedTemplateIds
+            Row(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
-                    .padding(bottom = 60.dp),  // Space for banner ad (50dp + 10dp spacing)
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
             ) {
-                val currentTemplate = templates.getOrNull(pagerState.settledPage % templates.size)
-                val isLiked = currentTemplate?.id in likedTemplateIds
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        if (isLiked) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_heart_liked),
-                                tint = Primary,
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp)
-                                    .clickableSingle {
-                                        currentTemplate?.let { template ->
-                                            Analytics.trackTemplateUnfavorite(
-                                                templateId = template.id,
-                                                templateName = template.name,
-                                                location = templateEventLocation
-                                            )
-                                            onLikeTemplate(template)
-                                        }
+                    if (isLiked) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_heart_liked),
+                            tint = Primary,
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp)
+                                .clickableSingle {
+                                    currentTemplate?.let { template ->
+                                        Analytics.trackTemplateUnfavorite(
+                                            templateId = template.id,
+                                            templateName = template.name,
+                                            location = templateEventLocation
+                                        )
+                                        onLikeTemplate(template)
                                     }
-                            )
-                        } else {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_heart),
-                                tint = SurfaceLight,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clickableSingle {
-                                        currentTemplate?.let { template ->
-                                            Analytics.trackTemplateFavorite(
-                                                templateId = template.id,
-                                                templateName = template.name,
-                                                location = templateEventLocation
-                                            )
-                                            onLikeTemplate(template)
-                                        }
+                                }
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_heart),
+                            tint = SurfaceLight,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clickableSingle {
+                                    currentTemplate?.let { template ->
+                                        Analytics.trackTemplateFavorite(
+                                            templateId = template.id,
+                                            templateName = template.name,
+                                            location = templateEventLocation
+                                        )
+                                        onLikeTemplate(template)
                                     }
-                            )
-                        }
-
-                        Text(
-                            text = stringResource(R.string.template_add_to_favorites),
-                            color = SurfaceLight,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 12.sp
+                                }
                         )
                     }
+
+                    Text(
+                        text = stringResource(R.string.template_add_to_favorites),
+                        color = SurfaceLight,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp
+                    )
                 }
-
-                // Music info capsule
-                MusicInfoCapsule(currentSong = currentSong, playerDurationMs = playerDurationMs)
-
-                // CTA button — spinner while music loads or project is being created.
-                // Enabled once music is ready (or template has no music) and not yet creating.
-                // Always shows ratio selector (lock check moved to ratio sheet)
-                val ctaLoading = state.isCreatingProject || currentSong is SongLoadState.Loading
-                val ctaEnabled = currentSong !is SongLoadState.Loading && !state.isCreatingProject
-                PrimaryButton(
-                    text = stringResource(R.string.template_use_button),
-                    onClick = {
-                        val template = templates.getOrNull(pagerState.settledPage % templates.size) ?: return@PrimaryButton
-                        Analytics.trackTemplateClick(
-                            templateId = template.id,
-                            templateName = template.name,
-                            location = templateEventLocation
-                        )
-                        // Always show ratio selection bottom sheet
-                        pendingTemplate = template
-                    },
-                    enabled = ctaEnabled,
-                    isLoading = ctaLoading,
-                    leadingIcon = {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_circle_plus),
-                            contentDescription = null,
-                            tint = Color.Unspecified,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    },
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .height(52.dp)
-                )
             }
+
+            // CTA button — spinner while project is being created
+            val ctaLoading = state.isCreatingProject
+            val ctaEnabled = !state.isCreatingProject
+            PrimaryButton(
+                text = stringResource(R.string.template_use_button),
+                onClick = {
+                    val template = templates.getOrNull(pagerState.settledPage % templates.size) ?: return@PrimaryButton
+                    Analytics.trackTemplateClick(
+                        templateId = template.id,
+                        templateName = template.name,
+                        location = templateEventLocation
+                    )
+                    // Always show ratio selection bottom sheet
+                    pendingTemplate = template
+                },
+                enabled = ctaEnabled,
+                isLoading = ctaLoading,
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_circle_plus),
+                        contentDescription = null,
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .height(52.dp)
+            )
         }
 
         // Banner ad - positioned at bottom, above safe area (like HomeScreen)
@@ -1274,82 +1074,6 @@ private fun AspectRatioIcon(ratio: AspectRatio, isSelected: Boolean) {
 }
 
 // ============================================
-// MUSIC INFO CAPSULE — vertical layout, shimmer while loading
-// ============================================
-
-/** Formats duration millis as "00:12" (zero-padded minutes and seconds). */
-private fun formatDurationMmSs(durationMs: Long): String {
-    val totalSec = durationMs / 1000
-    val minutes = totalSec / 60
-    val seconds = totalSec % 60
-    return "%02d:%02d".format(minutes, seconds)
-}
-
-@Composable
-private fun MusicInfoCapsule(currentSong: SongLoadState, playerDurationMs: Long?) {
-    if (currentSong is SongLoadState.None) return
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(color = Black60, shape = RoundedCornerShape(999.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Icon(
-            painter = painterResource(id = R.drawable.ic_double_notes),
-            contentDescription = null,
-            tint = Color.White.copy(alpha = 0.8f),
-            modifier = Modifier.size(16.dp)
-        )
-
-        when (currentSong) {
-            is SongLoadState.Loading -> {
-                ShimmerPlaceholder(
-                    modifier = Modifier.width(100.dp).height(10.dp),
-                    cornerRadius = 4.dp
-                )
-                ShimmerPlaceholder(
-                    modifier = Modifier.width(36.dp).height(10.dp),
-                    cornerRadius = 4.dp
-                )
-            }
-            is SongLoadState.Ready -> {
-                Text(
-                    text = currentSong.song.name,
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    modifier = Modifier
-                        .weight(1f)
-                        .basicMarquee()
-                )
-                Text(
-                    text = if (playerDurationMs != null && playerDurationMs > 0)
-                        formatDurationMmSs(playerDurationMs)
-                    else "--:--",
-                    color = Color.White.copy(alpha = 0.6f),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal
-                )
-            }
-            is SongLoadState.Error -> {
-                Text(
-                    text = stringResource(R.string.error_template_music_failed),
-                    color = com.videomaker.aimusic.ui.theme.Error,
-                    style = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            is SongLoadState.None -> Unit
-        }
-    }
-}
-
-// ============================================
 // SINGLE PAGE — thumbnail image
 // ============================================
 
@@ -1421,47 +1145,6 @@ private fun TemplateThumbnailPage(
 }
 
 // ============================================
-// AUDIO HELPERS
-// ============================================
-
-/** Smoothly animate player volume to [to] over [durationMs]. */
-private suspend fun fadeVolume(player: ExoPlayer, to: Float, durationMs: Long = 250) {
-    val from = player.volume
-    if (from == to) return
-    val steps = 10
-    val stepMs = durationMs / steps
-    repeat(steps) { i ->
-        player.volume = from + (to - from) * ((i + 1).toFloat() / steps)
-        delay(stepMs)
-    }
-    player.volume = to
-}
-
-/** Suspend until the player reaches STATE_READY or fails. Returns true on ready. */
-@androidx.annotation.OptIn(UnstableApi::class)
-private suspend fun awaitPlayerReady(player: ExoPlayer): Boolean {
-    if (player.playbackState == Player.STATE_READY) return true
-    return suspendCancellableCoroutine { cont ->
-        val listener = object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                // STATE_IDLE excluded: it fires spuriously right after prepare() before
-                // buffering begins. Errors are handled exclusively by onPlayerError.
-                if (state == Player.STATE_READY || state == Player.STATE_ENDED) {
-                    player.removeListener(this)
-                    if (cont.isActive) cont.resume(state == Player.STATE_READY)
-                }
-            }
-            override fun onPlayerError(error: PlaybackException) {
-                player.removeListener(this)
-                if (cont.isActive) cont.resume(false)
-            }
-        }
-        player.addListener(listener)
-        cont.invokeOnCancellation { player.removeListener(listener) }
-    }
-}
-
-// ============================================
 // PREVIEWS
 // ============================================
 
@@ -1471,18 +1154,8 @@ private val previewTemplates = listOf(
     VideoTemplate(id = "t3", name = "City Lights", songId = 0L, effectSetId = "minimal"),
 )
 
-private val previewSongReady = SongLoadState.Ready(
-    song = com.videomaker.aimusic.domain.model.MusicSong(
-        id = 1L,
-        name = "Golden Hour",
-        artist = "Loving Caliber",
-        durationMs = 182000
-    ),
-    nonce = 0
-)
-
 @androidx.compose.ui.tooling.preview.Preview(
-    name = "Ready — music loaded",
+    name = "Ready",
     showBackground = true,
     backgroundColor = 0xFF000000,
     device = "spec:width=390dp,height=844dp,dpi=460"
@@ -1490,81 +1163,19 @@ private val previewSongReady = SongLoadState.Ready(
 @Composable
 private fun PreviewTemplatePreviewerReady() {
     com.videomaker.aimusic.ui.theme.VideoMakerTheme {
-        ProvideShimmerEffect {
-            TemplatePreviewerReadyContent(
-                state = TemplatePreviewerUiState.Ready(
-                    templates = previewTemplates,
-                    initialPage = 0
-                ),
-                currentSong = previewSongReady,
-                playerDurationMs = 182000L,
-                likedTemplateIds = emptySet(),
-                unlockedTemplateIds = emptySet(),
-                onPageChanged = {},
-                onUseThisTemplate = { _, _ -> },
-                onRatioSelected = { _, _ -> },
-                onLikeTemplate = {},
-                onNavigateBack = {}
-            )
-        }
-    }
-}
-
-@androidx.compose.ui.tooling.preview.Preview(
-    name = "Ready — music loading (shimmer)",
-    showBackground = true,
-    backgroundColor = 0xFF000000,
-    device = "spec:width=390dp,height=844dp,dpi=460"
-)
-@Composable
-private fun PreviewTemplatePreviewerMusicLoading() {
-    com.videomaker.aimusic.ui.theme.VideoMakerTheme {
-        ProvideShimmerEffect {
-            TemplatePreviewerReadyContent(
-                state = TemplatePreviewerUiState.Ready(
-                    templates = previewTemplates,
-                    initialPage = 0
-                ),
-                currentSong = SongLoadState.Loading,
-                playerDurationMs = null,
-                likedTemplateIds = emptySet(),
-                unlockedTemplateIds = emptySet(),
-                onPageChanged = {},
-                onUseThisTemplate = { _, _ -> },
-                onRatioSelected = { _, _ -> },
-                onLikeTemplate = {},
-                onNavigateBack = {}
-            )
-        }
-    }
-}
-
-@androidx.compose.ui.tooling.preview.Preview(
-    name = "Ready — no music",
-    showBackground = true,
-    backgroundColor = 0xFF000000,
-    device = "spec:width=390dp,height=844dp,dpi=460"
-)
-@Composable
-private fun PreviewTemplatePreviewerNoMusic() {
-    com.videomaker.aimusic.ui.theme.VideoMakerTheme {
-        ProvideShimmerEffect {
-            TemplatePreviewerReadyContent(
-                state = TemplatePreviewerUiState.Ready(
-                    templates = previewTemplates,
-                    initialPage = 2  // "City Lights" has songId=0
-                ),
-                currentSong = SongLoadState.None,
-                playerDurationMs = null,
-                likedTemplateIds = emptySet(),
-                unlockedTemplateIds = emptySet(),
-                onPageChanged = {},
-                onUseThisTemplate = { _, _ -> },
-                onRatioSelected = { _, _ -> },
-                onLikeTemplate = {},
-                onNavigateBack = {}
-            )
-        }
+        TemplatePreviewerReadyContent(
+            state = TemplatePreviewerUiState.Ready(
+                templates = previewTemplates,
+                initialPage = 0
+            ),
+            likedTemplateIds = emptySet(),
+            unlockedTemplateIds = emptySet(),
+            onPageChanged = {},
+            onUseThisTemplate = { _, _ -> },
+            onRatioSelected = { _, _ -> },
+            onLikeTemplate = {},
+            onNavigateBack = {}
+        )
     }
 }
 
@@ -1577,24 +1188,20 @@ private fun PreviewTemplatePreviewerNoMusic() {
 @Composable
 private fun PreviewTemplatePreviewerCreating() {
     com.videomaker.aimusic.ui.theme.VideoMakerTheme {
-        ProvideShimmerEffect {
-            TemplatePreviewerReadyContent(
-                state = TemplatePreviewerUiState.Ready(
-                    templates = previewTemplates,
-                    initialPage = 0,
-                    isCreatingProject = true
-                ),
-                currentSong = previewSongReady,
-                playerDurationMs = 182000L,
-                likedTemplateIds = setOf("t1"),
-                unlockedTemplateIds = emptySet(),
-                onPageChanged = {},
-                onUseThisTemplate = { _, _ -> },
-                onRatioSelected = { _, _ -> },
-                onLikeTemplate = {},
-                onNavigateBack = {}
-            )
-        }
+        TemplatePreviewerReadyContent(
+            state = TemplatePreviewerUiState.Ready(
+                templates = previewTemplates,
+                initialPage = 0,
+                isCreatingProject = true
+            ),
+            likedTemplateIds = setOf("t1"),
+            unlockedTemplateIds = emptySet(),
+            onPageChanged = {},
+            onUseThisTemplate = { _, _ -> },
+            onRatioSelected = { _, _ -> },
+            onLikeTemplate = {},
+            onNavigateBack = {}
+        )
     }
 }
 
