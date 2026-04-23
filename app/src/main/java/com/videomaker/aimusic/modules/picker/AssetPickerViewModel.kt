@@ -18,7 +18,6 @@ import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.notification.NotificationScheduler
 import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.domain.model.AspectRatio
-import com.videomaker.aimusic.domain.model.DurationPlanner
 import com.videomaker.aimusic.domain.model.EditorInitialData
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.repository.SongRepository
@@ -763,11 +762,7 @@ class AssetPickerViewModel(
 
         viewModelScope.launch {
             val uris = currentState.selectedAssets.map { it.uri }
-            val suggestedTotalDurationMs = DurationPlanner.suggestTotalDurationMs(uris.size)
-            val durationPlan = DurationPlanner.plan(
-                imageCount = uris.size,
-                totalDurationMs = suggestedTotalDurationMs
-            )
+            // Beat-sync mode only - duration calculated from beat-sync data later
 
             when {
                 // PRIORITY 1: Template already selected - go directly to Editor
@@ -792,8 +787,6 @@ class AssetPickerViewModel(
                                 val initialData = EditorInitialData(
                                     imageUris = uris.map { it.toString() },
                                     effectSetId = template.effectSetId,
-                                    totalDurationMs = suggestedTotalDurationMs,
-                                    transitionPercentage = durationPlan.transitionPercentage,
                                     musicSongId = songId,
                                     musicSongName = songName,
                                     aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio),
@@ -829,11 +822,10 @@ class AssetPickerViewModel(
                         }
                 }
                 else -> {
-                    // Create mode - create new project
+                    // Create mode - create new project (beat-sync only)
+                    // Duration will be calculated from beat-sync data in Editor
                     val settings = ProjectSettings(
-                        totalDurationMs = suggestedTotalDurationMs,
-                        imageDurationMs = durationPlan.imageDurationMs,
-                        transitionPercentage = durationPlan.transitionPercentage
+                        totalDurationMs = 0L
                     )
 
                     createProjectUseCase(uris, settings)

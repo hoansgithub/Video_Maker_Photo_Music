@@ -49,8 +49,6 @@ interface ProjectDao {
     @Query("""
         UPDATE projects SET
             totalDurationMs = :totalDurationMs,
-            imageDurationMs = :imageDurationMs,
-            transitionPercentage = :transitionPercentage,
             effectSetId = :effectSetId,
             overlayFrameId = :overlayFrameId,
             musicSongId = :musicSongId,
@@ -60,8 +58,6 @@ interface ProjectDao {
             customAudioUri = :customAudioUri,
             processedAudioUri = :processedAudioUri,
             audioVolume = :audioVolume,
-            musicTrimStartMs = :musicTrimStartMs,
-            musicTrimEndMs = :musicTrimEndMs,
             aspectRatio = :aspectRatio,
             updatedAt = :updatedAt
         WHERE id = :id
@@ -69,8 +65,6 @@ interface ProjectDao {
     suspend fun updateSettings(
         id: String,
         totalDurationMs: Long,
-        imageDurationMs: Long,
-        transitionPercentage: Int,
         effectSetId: String?,
         overlayFrameId: String?,
         musicSongId: Long?,
@@ -80,8 +74,6 @@ interface ProjectDao {
         customAudioUri: String?,
         processedAudioUri: String?,
         audioVolume: Float,
-        musicTrimStartMs: Long,
-        musicTrimEndMs: Long?,
         aspectRatio: String,
         updatedAt: Long
     )

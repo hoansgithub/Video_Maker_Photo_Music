@@ -426,8 +426,6 @@ class TemplatePreviewerViewModel(
 
     private fun buildSettingsFromTemplate(template: VideoTemplate, aspectRatio: AspectRatio): ProjectSettings {
         return ProjectSettings(
-            imageDurationMs = template.imageDurationMs.toLong(),
-            transitionPercentage = template.transitionPct,
             effectSetId = template.effectSetId,
             musicSongId = if (overrideSongId >= 0L) overrideSongId
                           else template.songId.takeIf { it > 0L },

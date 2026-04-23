@@ -231,6 +231,7 @@ dependencies {
     // ============================================
     implementation(platform(libs.supabase.bom))
     implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.storage)  // For beat-sync data downloads
     // implementation(libs.supabase.auth)  // Uncomment when auth needed
 
     // ============================================

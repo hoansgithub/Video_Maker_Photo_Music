@@ -125,6 +125,7 @@ fun EditorScreen(
     val shouldPresentQualityAd by viewModel.shouldPresentQualityAd.collectAsStateWithLifecycle()
     val qualityAdError by viewModel.qualityAdError.collectAsStateWithLifecycle()
     val isQualityUnlocked by viewModel.isQualityUnlocked.collectAsStateWithLifecycle()
+    val showBeatSyncErrorDialog by viewModel.showBeatSyncErrorDialog.collectAsStateWithLifecycle()
 
     var showExitConfirmation by remember { mutableStateOf(false) }
     // var showMusicPicker by remember { mutableStateOf(false) } // Commented out - using Supabase only
@@ -682,6 +683,20 @@ fun EditorScreen(
                 subtitle = stringResource(com.videomaker.aimusic.R.string.quality_watch_ad_subtitle),
                 onDismiss = viewModel::onQualityAdDialogDismiss,
                 onWatchAd = viewModel::onQualityAdConfirmed
+            )
+        }
+
+        // Beat-sync network error dialog
+        if (showBeatSyncErrorDialog) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = viewModel::onBeatSyncErrorDismissed,
+                title = { androidx.compose.material3.Text("Network Error") },
+                text = { androidx.compose.material3.Text("Failed to load beat-sync data. Please check your internet connection and try again.") },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = viewModel::onBeatSyncErrorDismissed) {
+                        androidx.compose.material3.Text("OK")
+                    }
+                }
             )
         }
 

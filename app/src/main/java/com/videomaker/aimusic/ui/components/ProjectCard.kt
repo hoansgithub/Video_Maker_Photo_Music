@@ -378,7 +378,6 @@ private fun ProjectCardPreview() {
                     updatedAt = System.currentTimeMillis(),
                     thumbnailUri = null,
                     settings = ProjectSettings(
-                        imageDurationMs = 3000L,
                         aspectRatio = AspectRatio.RATIO_9_16
                     ),
                     assets = listOf(

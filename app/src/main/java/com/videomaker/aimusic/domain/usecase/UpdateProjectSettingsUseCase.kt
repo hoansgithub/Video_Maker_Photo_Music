@@ -4,18 +4,15 @@ import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 
 /**
- * UpdateProjectSettingsUseCase - Updates project settings
- *
- * Validates settings using ProjectSettings.validate() to ensure
- * all values are within acceptable ranges and options.
+ * UpdateProjectSettingsUseCase - Updates project settings (BEAT-SYNC ONLY)
  */
 class UpdateProjectSettingsUseCase(
     private val repository: ProjectRepository
 ) {
     /**
-     * Update project settings with validation
+     * Update project settings
      * @param projectId Project ID to update
-     * @param settings New settings (will be validated)
+     * @param settings New settings
      * @return Result indicating success or failure
      */
     suspend operator fun invoke(
@@ -23,10 +20,7 @@ class UpdateProjectSettingsUseCase(
         settings: ProjectSettings
     ): Result<Unit> {
         return try {
-            // Validate settings (done in domain model)
-            val validatedSettings = settings.validate()
-
-            repository.updateSettings(projectId, validatedSettings)
+            repository.updateSettings(projectId, settings)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
