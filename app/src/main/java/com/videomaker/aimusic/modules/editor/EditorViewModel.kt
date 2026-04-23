@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.net.Uri
 import com.videomaker.aimusic.core.ads.RewardedAdController
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.AspectRatio
@@ -136,6 +137,7 @@ class EditorViewModel(
 
     // Track the actual project ID (might be generated for new projects)
     private var currentProjectId: String? = projectId
+    private var hasTrackedReadyToEditGenerateComplete = false
 
     // Observer job for existing projects
     private var projectObserverJob: Job? = null
@@ -185,6 +187,23 @@ class EditorViewModel(
         }
 
         return null
+    }
+
+    private fun trackVideoGenerateCompleteReadyToEdit(
+        data: EditorInitialData,
+        mediaQuantity: Int
+    ) {
+        if (hasTrackedReadyToEditGenerateComplete) return
+
+        val videoId = data.analyticsVideoId ?: currentProjectId ?: "editor_ready_${System.currentTimeMillis()}"
+        Analytics.trackVideoGenerateComplete(
+            videoId = videoId,
+            songId = data.musicSongId?.toString(),
+            duration = data.totalDurationMs,
+            ratioSize = data.aspectRatio.toAnalyticsRatioSize(),
+            mediaQuantity = mediaQuantity
+        )
+        hasTrackedReadyToEditGenerateComplete = true
     }
 
     private fun loadOrInitializeProject() {
@@ -301,6 +320,10 @@ class EditorViewModel(
                     project = project,
                     isUnsavedProject = true,
                     effectSetName = effectSetName
+                )
+                trackVideoGenerateCompleteReadyToEdit(
+                    data = data,
+                    mediaQuantity = assets.size
                 )
             } catch (e: Exception) {
                 _uiState.value = EditorUiState.Error(e.message ?: "Failed to initialize project")
@@ -1147,4 +1170,11 @@ class EditorViewModel(
             fallbackStartMs to safeSongDurationMs
         }
     }
+}
+
+private fun AspectRatio.toAnalyticsRatioSize(): String = when (this) {
+    AspectRatio.RATIO_16_9 -> "16:9"
+    AspectRatio.RATIO_9_16 -> "9:16"
+    AspectRatio.RATIO_4_5 -> "4:5"
+    AspectRatio.RATIO_1_1 -> "1:1"
 }

@@ -21,5 +21,6 @@ data class EditorInitialData(
     val musicSongId: Long?,
     val musicSongName: String? = null, // Pass song name to avoid extra network request
     val aspectRatio: AspectRatio,
-    val applyHookStartDefaults: Boolean = false
+    val applyHookStartDefaults: Boolean = false,
+    val analyticsVideoId: String? = null
 ) : Parcelable

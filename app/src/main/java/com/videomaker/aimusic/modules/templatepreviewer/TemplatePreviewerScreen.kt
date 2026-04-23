@@ -236,7 +236,9 @@ fun TemplatePreviewerScreen(
                 AnalyticsEvent.Value.Option.ALLOW
             } else {
                 AnalyticsEvent.Value.Option.NO_ALLOW
-            }
+            },
+            perType = AnalyticsEvent.Value.PerType.NOTI,
+            popType = AnalyticsEvent.Value.PopType.SYSTEM
         )
         notificationPermissionCoordinator.onSystemPermissionResult(granted)
         Analytics.trackPermissionCheck(allow = granted)
@@ -382,7 +384,15 @@ fun TemplatePreviewerScreen(
                 showNotificationPromoDialog = true
                 showNotificationSettingsGuideDialog = false
             }
-            Analytics.trackPermissionRender()
+        }
+    }
+
+    LaunchedEffect(showNotificationPromoDialog) {
+        if (showNotificationPromoDialog) {
+            Analytics.trackPermissionRender(
+                perType = AnalyticsEvent.Value.PerType.NOTI,
+                popType = AnalyticsEvent.Value.PopType.CUSTOM
+            )
         }
     }
 
@@ -559,9 +569,16 @@ fun TemplatePreviewerScreen(
     if (showNotificationPromoDialog) {
         NotificationPermissionPromoDialog(
             onNotifyMe = {
-                Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.ALLOW)
+                Analytics.trackPermissionClick(
+                    button = AnalyticsEvent.Value.Option.ALLOW,
+                    perType = AnalyticsEvent.Value.PerType.NOTI,
+                    popType = AnalyticsEvent.Value.PopType.CUSTOM
+                )
                 if (notificationPermissionCoordinator.canRequestSystemPermission(context)) {
-                    Analytics.trackPermissionRender()
+                    Analytics.trackPermissionRender(
+                        perType = AnalyticsEvent.Value.PerType.NOTI,
+                        popType = AnalyticsEvent.Value.PopType.SYSTEM
+                    )
                     notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     showNotificationPromoDialog = false
                 } else {
@@ -570,7 +587,11 @@ fun TemplatePreviewerScreen(
                 }
             },
             onMaybeLater = {
-                Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.NO_ALLOW)
+                Analytics.trackPermissionClick(
+                    button = AnalyticsEvent.Value.Option.NO_ALLOW,
+                    perType = AnalyticsEvent.Value.PerType.NOTI,
+                    popType = AnalyticsEvent.Value.PopType.CUSTOM
+                )
                 showNotificationPromoDialog = false
             }
         )

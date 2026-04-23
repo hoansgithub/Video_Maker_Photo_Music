@@ -116,7 +116,9 @@ fun HomeScreen(
                 AnalyticsEvent.Value.Option.ALLOW
             } else {
                 AnalyticsEvent.Value.Option.NO_ALLOW
-            }
+            },
+            perType = AnalyticsEvent.Value.PerType.NOTI,
+            popType = AnalyticsEvent.Value.PopType.SYSTEM
         )
         notificationPermissionCoordinator.onSystemPermissionResult(granted)
         Analytics.trackPermissionCheck(allow = granted)
@@ -124,7 +126,10 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) {
         if (notificationPermissionCoordinator.shouldRequestHomeFirstTimePermission(context)) {
-            Analytics.trackPermissionRender()
+            Analytics.trackPermissionRender(
+                perType = AnalyticsEvent.Value.PerType.NOTI,
+                popType = AnalyticsEvent.Value.PopType.SYSTEM
+            )
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }

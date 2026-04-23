@@ -1668,20 +1668,34 @@ object Analytics {
         )
     }
 
-    fun trackPermissionRender() {
+    fun trackPermissionRender(perType: String, popType: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.PERMISSION_RENDER,
-            params = emptyMap(),
-            requiredParams = emptySet(),
+            params = mapOf(
+                AnalyticsEvent.Param.PER_TYPE to perType,
+                AnalyticsEvent.Param.POP_TYPE to popType
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.PER_TYPE,
+                AnalyticsEvent.Param.POP_TYPE
+            ),
             policy = TrackingPolicy.NORMAL
         )
     }
 
-    fun trackPermissionClick(button: String) {
+    fun trackPermissionClick(button: String, perType: String, popType: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.PERMISSION_CLICK,
-            params = mapOf(AnalyticsEvent.Param.BUTTON to button),
-            requiredParams = setOf(AnalyticsEvent.Param.BUTTON),
+            params = mapOf(
+                AnalyticsEvent.Param.BUTTON to button,
+                AnalyticsEvent.Param.PER_TYPE to perType,
+                AnalyticsEvent.Param.POP_TYPE to popType
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.BUTTON,
+                AnalyticsEvent.Param.PER_TYPE,
+                AnalyticsEvent.Param.POP_TYPE
+            ),
             policy = TrackingPolicy.NORMAL
         )
     }
@@ -1689,6 +1703,15 @@ object Analytics {
     fun trackPermissionGotoSetting() {
         trackWithPolicy(
             eventName = AnalyticsEvent.PERMISSION_GOTO_SETTING,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackPermissionAddImage() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PERMISSION_ADD_IMAGE,
             params = emptyMap(),
             requiredParams = emptySet(),
             policy = TrackingPolicy.NORMAL
