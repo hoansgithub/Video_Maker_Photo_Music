@@ -208,8 +208,7 @@ fun FullscreenAdStep(
         NativeAdView(
             placement = AdPlacement.NATIVE_ONBOARDING_FULLSCREEN,
             modifier = Modifier.fillMaxSize(),
-            isDebug = BuildConfig.DEBUG,  // Show debug label only in debug builds
-            fullscreenPlacements = listOf(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
+            isDebug = BuildConfig.DEBUG,  // Show debug label only in debug build
         )
 
         // Shimmer loading overlay (rendered second, covers ad until loaded)

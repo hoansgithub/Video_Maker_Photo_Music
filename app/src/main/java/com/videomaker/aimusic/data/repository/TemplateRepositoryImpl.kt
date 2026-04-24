@@ -36,7 +36,7 @@ class TemplateRepositoryImpl(
         private const val FN_FEATURED_TEMPLATES = "get_featured_templates"
         private val COLUMNS_TEMPLATE = Columns.raw(
             "id,name,name_i18n,thumbnail_path,preview_path,song_id,effect_set_id,aspect_ratio," +
-            "image_duration_ms,transition_pct,is_premium,is_active,sort_order,use_count," +
+            "image_duration_ms,transition_pct,is_premium,is_featured,is_active,sort_order,use_count," +
             "template_vibe_tags(vibe_tag_id,sort_order)"
         )
     }
@@ -281,6 +281,7 @@ private data class TemplateDto(
     @SerialName("image_duration_ms") val imageDurationMs: Int = 3000,
     @SerialName("transition_pct") val transitionPct: Int = 30,
     @SerialName("is_premium") val isPremium: Boolean = false,
+    @SerialName("is_featured") val isFeatured: Boolean = false,
     @SerialName("is_active") val isActive: Boolean = true,
     @SerialName("sort_order") val sortOrder: Int = 0,
     @SerialName("use_count") val useCount: Long = 0,
@@ -309,6 +310,7 @@ private data class TemplateDto(
             // Sort server-returned tags by sort_order (small list per template, ~1-3 items)
             vibeTags = vibeTags.sortedBy { it.sortOrder }.map { it.vibeTagId },
             isPremium = isPremium,
+            isFeatured = isFeatured,
             isActive = isActive,
             useCount = useCount
         )

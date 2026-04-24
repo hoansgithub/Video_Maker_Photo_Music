@@ -58,7 +58,7 @@ koin = "4.2.0"  # Matches ACCCoreAndroid
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.32"  # Fix: Native ad loading race condition with CompletableDeferred
+acccore = "0.0.33"  # Latest: Merge branch 'develop' - v0.0.33 release
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)

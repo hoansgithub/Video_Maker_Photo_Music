@@ -29,6 +29,7 @@ data class VideoTemplate(
     val transitionPct: Int = 30,
     val vibeTags: List<String> = emptyList(),
     val isPremium: Boolean = false,
+    val isFeatured: Boolean = false,
     val isActive: Boolean = true,
     val useCount: Long = 0
 )
