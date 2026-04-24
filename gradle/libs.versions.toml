@@ -58,7 +58,7 @@ koin = "4.2.0"  # Matches ACCCoreAndroid
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.33"  # Latest: Merge branch 'develop' - v0.0.33 release
+acccore = "0.0.34"  # Latest: v0.0.34 release
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)
