@@ -215,7 +215,7 @@ fun SongItemMore(
  * 3 bouncing bars animation for playing state
  */
 @Composable
-private fun PlayingAnimationBars() {
+internal fun PlayingAnimationBars() {
     Row(
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically,

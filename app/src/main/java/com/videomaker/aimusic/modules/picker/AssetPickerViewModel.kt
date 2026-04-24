@@ -18,7 +18,6 @@ import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.notification.NotificationScheduler
 import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.domain.model.AspectRatio
-import com.videomaker.aimusic.domain.model.DurationPlanner
 import com.videomaker.aimusic.domain.model.EditorInitialData
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.repository.SongRepository
@@ -763,11 +762,7 @@ class AssetPickerViewModel(
 
         viewModelScope.launch {
             val uris = currentState.selectedAssets.map { it.uri }
-            val suggestedTotalDurationMs = DurationPlanner.suggestTotalDurationMs(uris.size)
-            val durationPlan = DurationPlanner.plan(
-                imageCount = uris.size,
-                totalDurationMs = suggestedTotalDurationMs
-            )
+            // Beat-sync mode only - duration calculated from beat-sync data later
             val analyticsVideoId = buildDraftId() ?: "picker_generate_${System.currentTimeMillis()}"
 
             if (!templateId.isNullOrBlank()) {
@@ -775,7 +770,7 @@ class AssetPickerViewModel(
                     videoId = analyticsVideoId,
                     templateId = templateId,
                     songId = overrideSongId.takeIf { it >= 0L }?.toString(),
-                    duration = suggestedTotalDurationMs,
+                    duration = null, // Duration will be calculated from beat-sync data
                     mediaQuantity = uris.size
                 )
             }
@@ -803,8 +798,6 @@ class AssetPickerViewModel(
                                 val initialData = EditorInitialData(
                                     imageUris = uris.map { it.toString() },
                                     effectSetId = template.effectSetId,
-                                    totalDurationMs = suggestedTotalDurationMs,
-                                    transitionPercentage = durationPlan.transitionPercentage,
                                     musicSongId = songId,
                                     musicSongName = songName,
                                     aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio),
@@ -822,12 +815,18 @@ class AssetPickerViewModel(
                         }
                 }
                 // PRIORITY 2: Song-to-video mode WITHOUT template selected
-                // Navigate to template selector with the chosen song
+                // Navigate directly to Editor - effect set will be fetched from Supabase
                 isSongToVideoMode -> {
-                    _navigationEvent.value = AssetPickerNavigationEvent.NavigateToTemplatePreviewer(
-                        templateId = "",
-                        imageUris = uris.map { it.toString() },
-                        overrideSongId = overrideSongId
+                    _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditorWithData(
+                        initialData = EditorInitialData(
+                            imageUris = uris.map { it.toString() },
+                            effectSetId = null,  // Editor will fetch first effect set from Supabase
+                            musicSongId = overrideSongId,
+                            musicSongName = null,  // Will be loaded by editor
+                            aspectRatio = AspectRatio.RATIO_9_16,
+                            applyHookStartDefaults = true,  // Apply hook start for song-to-video mode
+                            analyticsVideoId = analyticsVideoId
+                        )
                     )
                 }
                 projectId != null -> {
@@ -841,11 +840,10 @@ class AssetPickerViewModel(
                         }
                 }
                 else -> {
-                    // Create mode - create new project
+                    // Create mode - create new project (beat-sync only)
+                    // Duration will be calculated from beat-sync data in Editor
                     val settings = ProjectSettings(
-                        totalDurationMs = suggestedTotalDurationMs,
-                        imageDurationMs = durationPlan.imageDurationMs,
-                        transitionPercentage = durationPlan.transitionPercentage
+                        totalDurationMs = 0L
                     )
 
                     createProjectUseCase(uris, settings)

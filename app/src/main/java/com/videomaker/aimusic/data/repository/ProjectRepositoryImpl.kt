@@ -68,8 +68,6 @@ class ProjectRepositoryImpl(
             updatedAt = now,
             thumbnailUri = assets.firstOrNull()?.toString(),
             totalDurationMs = settings.totalDurationMs,
-            imageDurationMs = settings.imageDurationMs,
-            transitionPercentage = settings.transitionPercentage,
             effectSetId = settings.effectSetId,
             overlayFrameId = settings.overlayFrameId,
             musicSongId = settings.musicSongId,
@@ -78,8 +76,6 @@ class ProjectRepositoryImpl(
             musicSongCoverUrl = settings.musicSongCoverUrl,
             customAudioUri = settings.customAudioUri?.toString(),
             audioVolume = settings.audioVolume,
-            musicTrimStartMs = settings.musicTrimStartMs,  // CRITICAL: Save trim settings!
-            musicTrimEndMs = settings.musicTrimEndMs,      // CRITICAL: Save trim settings!
             aspectRatio = settings.aspectRatio.name
         )
 
@@ -127,8 +123,6 @@ class ProjectRepositoryImpl(
         projectDao.updateSettings(
             id = projectId,
             totalDurationMs = settings.totalDurationMs,
-            imageDurationMs = settings.imageDurationMs,
-            transitionPercentage = settings.transitionPercentage,
             effectSetId = settings.effectSetId,
             overlayFrameId = settings.overlayFrameId,
             musicSongId = settings.musicSongId,
@@ -138,8 +132,6 @@ class ProjectRepositoryImpl(
             customAudioUri = settings.customAudioUri?.toString(),
             processedAudioUri = settings.processedAudioUri?.toString(),
             audioVolume = settings.audioVolume,
-            musicTrimStartMs = settings.musicTrimStartMs,  // CRITICAL: Save trim settings!
-            musicTrimEndMs = settings.musicTrimEndMs,      // CRITICAL: Save trim settings!
             aspectRatio = settings.aspectRatio.name,
             updatedAt = System.currentTimeMillis()
         )

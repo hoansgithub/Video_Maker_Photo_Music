@@ -16,6 +16,7 @@ fun SongDto.toMusicSong(): MusicSong = MusicSong(
     genres = genres,
     durationMs = durationMs,
     isPremium = isPremium,
+    isFeatured = isFeatured,
     isActive = isActive,
     sortOrder = sortOrder,
     usageCount = usageCount,

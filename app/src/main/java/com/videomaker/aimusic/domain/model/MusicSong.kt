@@ -24,6 +24,7 @@ data class MusicSong(
     val genres: List<String> = emptyList(),
     val durationMs: Int? = null,
     val isPremium: Boolean = false,
+    val isFeatured: Boolean = false,
     val isActive: Boolean = true,
     val sortOrder: Int = 0,
     val usageCount: Int = 0,

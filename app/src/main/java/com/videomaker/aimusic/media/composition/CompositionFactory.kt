@@ -14,11 +14,13 @@ import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.Effects
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.Asset
+import com.videomaker.aimusic.domain.model.BeatSyncData
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.Transition
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.media.audio.VolumeAudioProcessor
+import com.videomaker.aimusic.media.audio.FadeoutAudioProcessor
 import com.videomaker.aimusic.media.effects.FrameOverlayEffect
 import com.videomaker.aimusic.media.effects.TransitionEffect
 import com.videomaker.aimusic.media.effects.WatermarkOverlayEffect
@@ -82,12 +84,19 @@ class CompositionFactory(
     private val lastCacheFiles = AtomicReference<List<File>?>(null)
 
     /**
+     * Track beat-sync bitmaps loaded dynamically in createBeatSyncVideoSequence().
+     * These are separate from lastTransitionBitmaps and need separate cleanup.
+     * Thread-safe using AtomicReference for concurrent access.
+     */
+    private val beatSyncLoadedBitmaps = AtomicReference<MutableList<Bitmap>?>(null)
+
+    /**
      * Recycle all tracked transition bitmaps (both FROM and TO).
      * Thread-safe - can be called from any thread.
      */
     fun recycleBitmaps() {
+        // Recycle legacy transition bitmaps
         val bitmapPairs = lastTransitionBitmaps.getAndSet(null)
-
         if (bitmapPairs != null) {
             bitmapPairs.values.forEach { pair ->
                 if (!pair.fromBitmap.isRecycled) {
@@ -95,6 +104,16 @@ class CompositionFactory(
                 }
                 if (!pair.toBitmap.isRecycled) {
                     pair.toBitmap.recycle()
+                }
+            }
+        }
+
+        // Recycle beat-sync dynamically loaded bitmaps
+        val beatSyncBitmaps = beatSyncLoadedBitmaps.getAndSet(null)
+        if (beatSyncBitmaps != null) {
+            beatSyncBitmaps.forEach { bitmap ->
+                if (!bitmap.isRecycled) {
+                    bitmap.recycle()
                 }
             }
         }
@@ -153,10 +172,17 @@ class CompositionFactory(
         val transitionBitmaps = loadTransitionBitmapsFromCache(processedImages, settings)
         lastTransitionBitmaps.set(transitionBitmaps)
 
-        // STEP 3: Create video sequence using cache URIs
-        val videoSequence = createVideoSequence(
+        // STEP 3: Create video sequence - BEAT-SYNC ONLY
+        val beatData = settings.beatSyncData
+        if (beatData == null) {
+            throw IllegalStateException("Please select music to preview your video")
+        }
+
+        android.util.Log.i("CompositionFactory", "Using BEAT-SYNC mode")
+        val videoSequence = createBeatSyncVideoSequence(
             assets = project.assets,
             settings = settings,
+            beatData = beatData,
             processedImages = processedImages,
             transitionBitmaps = transitionBitmaps,
             includeWatermark = includeWatermark
@@ -166,7 +192,12 @@ class CompositionFactory(
 
         // Add audio sequence if enabled
         if (includeAudio) {
-            val audioSequence = createAudioSequence(settings, project.totalDurationMs, forExport)
+            val audioSequence = createAudioSequence(
+                settings = settings,
+                totalVideoDurationMs = project.totalDurationMs,
+                forExport = forExport,
+                beatSyncData = settings.beatSyncData
+            )
             if (audioSequence != null) {
                 sequences.add(audioSequence)
             }
@@ -278,15 +309,26 @@ class CompositionFactory(
             if (currentProcessedImage != null) {
                 try {
                     // Load FROM bitmap (current clip's image) - needed for ALL clips
-                    val fromBitmap = BitmapFactory.decodeFile(currentProcessedImage.cacheFile.absolutePath)
+                    // Verify file exists before loading
+                    val fromBitmap = if (currentProcessedImage.cacheFile.exists() && currentProcessedImage.cacheFile.length() > 0) {
+                        BitmapFactory.decodeFile(currentProcessedImage.cacheFile.absolutePath)
+                    } else {
+                        android.util.Log.w("CompositionFactory", "Cache file missing: ${currentProcessedImage.cacheFile.name}")
+                        null
+                    }
 
                     if (fromBitmap != null) {
                         if (hasTransition) {
                             // For clips with transition: also load TO bitmap (next clip)
                             val nextIndex = index + 1
                             val nextProcessedImage = processedImages[nextIndex]
-                            val toBitmap = nextProcessedImage?.let {
-                                BitmapFactory.decodeFile(it.cacheFile.absolutePath)
+                            val toBitmap = nextProcessedImage?.let { nextImg ->
+                                if (nextImg.cacheFile.exists() && nextImg.cacheFile.length() > 0) {
+                                    BitmapFactory.decodeFile(nextImg.cacheFile.absolutePath)
+                                } else {
+                                    android.util.Log.w("CompositionFactory", "Next cache file missing: ${nextImg.cacheFile.name}")
+                                    null
+                                }
                             }
 
                             if (toBitmap != null) {
@@ -312,74 +354,122 @@ class CompositionFactory(
     // This ensures single source of truth for color handling
 
     /**
-     * Create video sequence using pre-processed cache URIs
+     * Create video sequence using beat-sync timing (variable clip durations).
      *
-     * IMPORTANT: ALL clips use TransitionEffect for consistent rendering:
-     * - Clips with transition: TransitionEffect with actual transition (cycles through effect set)
-     * - Last clip (no transition): TransitionEffect in passthrough mode (shows FROM image)
+     * Beat-sync mode:
+     * - Transitions land on every 4th beat
+     * - Transition duration = min(60000/BPM, 1000)ms (same for all)
+     * - Transition STARTS at beat time (not centered)
+     * - Last image holds for 6 beats with audio fadeout
      *
-     * This ensures all images go through our consistent texture loading pipeline,
-     * avoiding orientation/color issues from Media3's internal image handling.
+     * Uses BeatSyncTimingCalculator to convert beat positions into clip timings.
      */
-    private fun createVideoSequence(
+    private fun createBeatSyncVideoSequence(
         assets: List<Asset>,
         settings: ProjectSettings,
+        beatData: BeatSyncData,
         processedImages: Map<Int, ProcessedImage>,
         transitionBitmaps: Map<Int, TransitionBitmapPair>,
         includeWatermark: Boolean
     ): EditedMediaItemSequence {
-        // Get all transitions from the effect set - these will be cycled through
+        // Track all bitmaps loaded in this method for cleanup
+        val loadedBitmaps = mutableListOf<Bitmap>()
+
+        // Get all transitions from the effect set
         val effectSetTransitions = getTransitionsFromEffectSet(settings)
-        // For passthrough mode on last clip, use crossfade (simplest transition)
         val passthroughTransition = TransitionShaderLibrary.getDefault()
+
+        // Calculate clip timings from beat positions
+        val calculator = BeatSyncTimingCalculator()
+        val imageSequence = assets.indices.toList()  // [0, 1, 2, 3, ...]
+
+        val clips = calculator.calculateClips(
+            beatData = beatData,
+            imageSequence = imageSequence,
+            trimStartMs = settings.hookStartTimeMs,
+            trimEndMs = null,  // Auto from image count
+            numShaders = effectSetTransitions.size.coerceAtLeast(1)
+        )
+
+        if (clips.isEmpty()) {
+            throw IllegalStateException("No clips generated from beat-sync. Check beat data and image count.")
+        }
+
+        android.util.Log.d("CompositionFactory", "Beat-sync generated ${clips.size} clips, BPM: ${beatData.bpm}")
 
         var cumulativeStartTimeUs = 0L
 
-        val editedItems = assets.mapIndexed { index, asset ->
-            val bitmapPair = transitionBitmaps[index]
-            val isLastClip = index == assets.size - 1
+        val editedItems = clips.mapIndexed { clipIdx, clip ->
+            val imageIdx = clip.imageIndex
+            val asset = assets[imageIdx]
+            val bitmapPair = transitionBitmaps[imageIdx]
+            val isLast = !clip.hasTransition
 
-            // Get the transition for this specific image (cycles through effect set)
-            val selectedTransition = getTransitionForIndex(effectSetTransitions, index)
-
-            // Determine transition mode:
-            // - Regular clips: use transition from effect set (cycling)
-            // - Last clip: use passthrough mode (TransitionEffect with 0 duration)
-            val hasActualTransition = !isLastClip && bitmapPair != null && selectedTransition != null
-            val usePassthroughMode = isLastClip && bitmapPair != null
+            // Get transition for this clip (cycles through effect set)
+            val selectedTransition = if (clip.hasTransition && clipIdx < effectSetTransitions.size) {
+                effectSetTransitions[clip.transitionShaderIndex]
+            } else if (clip.hasTransition) {
+                effectSetTransitions.getOrNull(clip.transitionShaderIndex % effectSetTransitions.size)
+            } else {
+                null
+            }
 
             val transition = when {
-                hasActualTransition -> selectedTransition
-                usePassthroughMode -> passthroughTransition  // Passthrough uses crossfade at progress=0
+                clip.hasTransition && selectedTransition != null -> selectedTransition
+                isLast && bitmapPair != null -> passthroughTransition  // Last clip: passthrough mode
                 else -> null
             }
 
-            val imageDurationMs = settings.imageDurationMs
-            // Last clip has no transition overlap
-            val transitionDurationMs = if (hasActualTransition) settings.transitionOverlapMs else 0L
-            val totalDurationMs = imageDurationMs + transitionDurationMs
-
+            val totalDurationMs = clip.totalDurationMs
+            val transitionDurationMs = clip.transitionDurationMs
             val clipStartTimeUs = cumulativeStartTimeUs
 
             // Use CACHE URI instead of original asset URI
-            val imageUri = processedImages[index]?.cacheUri ?: asset.uri
+            val imageUri = processedImages[imageIdx]?.cacheUri ?: asset.uri
+
+            // Load TO bitmap for transition with size limit (prevents OOM)
+            val toBitmap = if (clip.hasTransition && clipIdx + 1 < clips.size) {
+                val nextImgIdx = clips[clipIdx + 1].imageIndex
+                processedImages[nextImgIdx]?.cacheFile?.let { cacheFile ->
+                    // Verify file exists before loading
+                    if (cacheFile.exists() && cacheFile.length() > 0) {
+                        // Load with options to limit size (max 720px as per EXPORT_TEXTURE_SIZE)
+                        val options = BitmapFactory.Options().apply {
+                            inSampleSize = 2  // Reduce memory by 4x
+                        }
+                        BitmapFactory.decodeFile(cacheFile.absolutePath, options)?.also { bitmap ->
+                            loadedBitmaps.add(bitmap)  // Track for cleanup
+                        }
+                    } else {
+                        android.util.Log.w("CompositionFactory", "Beat-sync cache file missing: ${cacheFile.name}")
+                        null
+                    }
+                }
+            } else {
+                bitmapPair?.toBitmap
+            }
 
             val editedItem = createEditedMediaItem(
                 imageUri = imageUri,
                 settings = settings,
                 transition = transition,
                 fromImageBitmap = bitmapPair?.fromBitmap,
-                toImageBitmap = bitmapPair?.toBitmap,
-                hasTransition = hasActualTransition,
-                isPassthroughMode = usePassthroughMode,
+                toImageBitmap = toBitmap,
+                hasTransition = clip.hasTransition,
+                isPassthroughMode = isLast,
                 clipStartTimeUs = clipStartTimeUs,
-                includeWatermark = includeWatermark
+                includeWatermark = includeWatermark,
+                totalDurationMs = totalDurationMs,
+                transitionDurationMs = transitionDurationMs
             )
 
             cumulativeStartTimeUs += totalDurationMs * 1000L
-
             editedItem
         }
+
+        // Store loaded bitmaps for cleanup
+        beatSyncLoadedBitmaps.set(loadedBitmaps)
+
         return EditedMediaItemSequence.Builder(editedItems).build()
     }
 
@@ -415,7 +505,7 @@ class CompositionFactory(
     }
 
     /**
-     * Create EditedMediaItem using cache URI
+     * Create EditedMediaItem using cache URI (BEAT-SYNC ONLY)
      *
      * NO BlurBackgroundEffect needed - images are already pre-processed
      */
@@ -428,16 +518,10 @@ class CompositionFactory(
         hasTransition: Boolean,
         isPassthroughMode: Boolean,
         clipStartTimeUs: Long,
-        includeWatermark: Boolean
+        includeWatermark: Boolean,
+        totalDurationMs: Long,          // Beat-sync calculated duration (REQUIRED)
+        transitionDurationMs: Long      // Beat-sync calculated transition (REQUIRED)
     ): EditedMediaItem {
-        val imageDurationMs = settings.imageDurationMs
-        val transitionDurationMs = settings.transitionOverlapMs
-
-        val totalDurationMs = if (hasTransition) {
-            imageDurationMs + transitionDurationMs
-        } else {
-            imageDurationMs
-        }
         val totalDurationUs = totalDurationMs * 1000L
         // Passthrough mode: 0 transition duration (just show FROM image)
         val transitionDurationUs = if (isPassthroughMode) 0L else transitionDurationMs * 1000L
@@ -535,313 +619,37 @@ class CompositionFactory(
     private suspend fun createAudioSequence(
         settings: ProjectSettings,
         totalVideoDurationMs: Long,
-        forExport: Boolean
+        forExport: Boolean,
+        beatSyncData: BeatSyncData?
     ): EditedMediaItemSequence? {
-        val volume = settings.audioVolume.coerceIn(0f, 1f)
-
-        // Volume effects (preview uses player.volume, export bakes it in)
-        val audioEffects = if (forExport && volume != 1.0f) {
-            Effects(listOf(VolumeAudioProcessor(volume)), emptyList())
-        } else {
-            Effects(emptyList(), emptyList())
+        // BEAT-SYNC MODE: preprocessed audio is REQUIRED
+        if (beatSyncData == null) {
+            throw IllegalStateException("Please select music to preview your video")
         }
 
-        // Priority 1: Use processed audio if available
-        // This can be either:
-        // - Transcoded AAC from MP3 (already looped to video duration)
-        // - Extracted segment from AAC (needs manual looping)
-        if (settings.processedAudioUri != null) {
-            val processedFilename = settings.processedAudioUri.lastPathSegment ?: ""
-
-            // Check if this is a transcoded file (contains "looped_aac") or extracted segment
-            val isTranscodedLooped = processedFilename.contains("looped_aac")
-
-            if (isTranscodedLooped) {
-                // Transcoded file - already looped to match video duration
-                android.util.Log.d("CompositionFactory", "Using transcoded looped audio: ${settings.processedAudioUri}")
-
-                val mediaItem = MediaItem.Builder()
-                    .setUri(settings.processedAudioUri)
-                    .build()
-
-                val editedAudioItem = EditedMediaItem.Builder(mediaItem)
-                    .setRemoveVideo(true)
-                    .setEffects(audioEffects)
-                    .setDurationUs(totalVideoDurationMs * 1000L)
-                    .build()
-
-                return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
-            } else {
-                // Extracted segment - needs manual looping
-                android.util.Log.d("CompositionFactory", "Using extracted segment with manual looping: ${settings.processedAudioUri}")
-
-                // Calculate segment duration from trim positions
-                val segmentDurationMs = if (settings.musicTrimEndMs != null && settings.musicTrimStartMs > 0) {
-                    settings.musicTrimEndMs - settings.musicTrimStartMs
-                } else {
-                    totalVideoDurationMs // Fallback
-                }
-
-                // Calculate how many times to loop
-                val loopCount = if (segmentDurationMs > 0) {
-                    kotlin.math.ceil(totalVideoDurationMs.toDouble() / segmentDurationMs.toDouble()).toInt()
-                } else {
-                    1
-                }
-
-                android.util.Log.d("CompositionFactory", "Looping segment: segmentDuration=${segmentDurationMs}ms, videoDuration=${totalVideoDurationMs}ms, loops=$loopCount")
-
-                // Create multiple MediaItem instances for looping
-                val loopedItems = List(loopCount) {
-                    val mediaItem = MediaItem.Builder()
-                        .setUri(settings.processedAudioUri)
-                        .build()
-
-                    EditedMediaItem.Builder(mediaItem)
-                        .setRemoveVideo(true)
-                        .setEffects(audioEffects)
-                        .build()
-                }
-
-                return EditedMediaItemSequence.Builder(loopedItems).build()
-            }
+        // Preprocessed audio with fadeout baked in
+        val preprocessedUri = settings.processedAudioUri
+        if (preprocessedUri == null) {
+            android.util.Log.w("CompositionFactory", "No preprocessed audio available")
+            return null
         }
 
-        // Priority 2: Get source audio URI (song or custom)
-        val audioUri = getAudioUri(settings) ?: return null
-        val trimStartMs = settings.musicTrimStartMs
-        val trimEndMs = settings.musicTrimEndMs
+        android.util.Log.d("CompositionFactory", "Using preprocessed audio with baked-in fadeout: $preprocessedUri")
 
-        // Check if trimming is applied
-        val hasTrim = trimStartMs > 0 || trimEndMs != null
+        // No audio effects needed - fadeout already baked in
+        val audioEffects = Effects(emptyList(), emptyList())
 
-        android.util.Log.d("CompositionFactory", "Audio sequence: trimStart=$trimStartMs, trimEnd=$trimEndMs, hasTrim=$hasTrim, forExport=$forExport, videoLength=${totalVideoDurationMs}ms")
+        val mediaItem = MediaItem.Builder()
+            .setUri(preprocessedUri)
+            .build()
 
-        if (hasTrim) {
-            android.util.Log.d("CompositionFactory", "Using trimmed audio: start=$trimStartMs, end=$trimEndMs (${if (forExport) "export" else "preview"})")
+        val editedAudioItem = EditedMediaItem.Builder(mediaItem)
+            .setRemoveVideo(true)
+            .setEffects(audioEffects)
+            .setDurationUs(totalVideoDurationMs * 1000L)
+            .build()
 
-            if (forExport) {
-                // EXPORT: Smart looping based on segment vs video duration
-                val segmentDurationMs = if (trimEndMs != null) {
-                    trimEndMs - trimStartMs
-                } else {
-                    totalVideoDurationMs
-                }
-
-                val loopPlan = ExportAudioLoopPlanner.plan(
-                    segmentDurationMs = segmentDurationMs,
-                    totalVideoDurationMs = totalVideoDurationMs
-                )
-
-                if (loopPlan.shouldLoop) {
-                    // LOOP: Segment shorter than video - loop to fill duration exactly
-                    android.util.Log.d("CompositionFactory", "Export: Looping segment (segment=${segmentDurationMs}ms < video=${totalVideoDurationMs}ms) - fullLoops=${loopPlan.fullLoops}, remainingMs=${loopPlan.remainingMs}")
-
-                    val loopedItems = mutableListOf<EditedMediaItem>()
-
-                    // Add full loops
-                    repeat(loopPlan.fullLoops) { index ->
-                        val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
-                            .setStartPositionMs(trimStartMs)
-
-                        if (trimEndMs != null) {
-                            clippingBuilder.setEndPositionMs(trimEndMs)
-                        }
-
-                        val mediaItem = MediaItem.Builder()
-                            .setUri(audioUri)
-                            .setMediaId("loop_${index}_${audioUri.hashCode()}")
-                            .setClippingConfiguration(clippingBuilder.build())
-                            .build()
-
-                        loopedItems.add(
-                            EditedMediaItem.Builder(mediaItem)
-                                .setRemoveVideo(true)
-                                .setEffects(audioEffects)
-                                .build()
-                        )
-                    }
-
-                    // Add partial loop if there's remaining time
-                    if (loopPlan.remainingMs > 0) {
-                        val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
-                            .setStartPositionMs(trimStartMs)
-                            .setEndPositionMs(trimStartMs + loopPlan.remainingMs) // Clip to exact remaining duration
-
-                        val mediaItem = MediaItem.Builder()
-                            .setUri(audioUri)
-                            .setMediaId("loop_partial_${audioUri.hashCode()}")
-                            .setClippingConfiguration(clippingBuilder.build())
-                            .build()
-
-                        loopedItems.add(
-                            EditedMediaItem.Builder(mediaItem)
-                                .setRemoveVideo(true)
-                                .setEffects(audioEffects)
-                                .build()
-                        )
-                    }
-
-                    return EditedMediaItemSequence.Builder(loopedItems).build()
-                } else {
-                    // NO LOOP: Segment equal or longer - clip to video duration
-                    android.util.Log.d("CompositionFactory", "Export: No loop (segment=${segmentDurationMs}ms >= video=${totalVideoDurationMs}ms), clipping to video duration")
-
-                    // Clip audio to match video duration exactly
-                    val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
-                        .setStartPositionMs(trimStartMs)
-                        .setEndPositionMs(trimStartMs + totalVideoDurationMs) // Stop at video end
-
-                    val mediaItem = MediaItem.Builder()
-                        .setUri(audioUri)
-                        .setClippingConfiguration(clippingBuilder.build())
-                        .build()
-
-                    val editedAudioItem = EditedMediaItem.Builder(mediaItem)
-                        .setRemoveVideo(true)
-                        .setEffects(audioEffects)
-                        .build()
-
-                    return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
-                }
-            } else {
-                // PREVIEW: Single trimmed item, preview player handles stopping at video end
-                android.util.Log.d("CompositionFactory", "Preview: Single trimmed audio (player stops at video end)")
-
-                val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
-                    .setStartPositionMs(trimStartMs)
-
-                if (trimEndMs != null) {
-                    clippingBuilder.setEndPositionMs(trimEndMs)
-                }
-
-                val mediaItem = MediaItem.Builder()
-                    .setUri(audioUri)
-                    .setClippingConfiguration(clippingBuilder.build())
-                    .build()
-
-                val editedAudioItem = EditedMediaItem.Builder(mediaItem)
-                    .setRemoveVideo(true)
-                    .setEffects(audioEffects)
-                    .build()
-
-                return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
-            }
-        } else {
-            // No manual trim - get actual audio duration and apply smart logic
-            android.util.Log.d("CompositionFactory", "No manual trim detected - detecting actual audio duration for smart logic")
-
-            // Get actual audio duration
-            val actualAudioDurationMs = getAudioDuration(audioUri)
-
-            if (actualAudioDurationMs != null && actualAudioDurationMs > 0) {
-                android.util.Log.d("CompositionFactory", "Actual audio duration: ${actualAudioDurationMs}ms, video: ${totalVideoDurationMs}ms")
-
-                if (forExport) {
-                    // EXPORT: Apply smart looping/clipping based on actual duration
-                    val loopPlan = ExportAudioLoopPlanner.plan(
-                        segmentDurationMs = actualAudioDurationMs,
-                        totalVideoDurationMs = totalVideoDurationMs
-                    )
-
-                    if (loopPlan.shouldLoop) {
-                        // LOOP: Audio shorter than video - loop to fill duration exactly
-                        android.util.Log.d("CompositionFactory", "Export (untrimmed): Looping (audio=${actualAudioDurationMs}ms < video=${totalVideoDurationMs}ms) - fullLoops=${loopPlan.fullLoops}, remainingMs=${loopPlan.remainingMs}")
-
-                        val loopedItems = mutableListOf<EditedMediaItem>()
-
-                        // Add full loops
-                        repeat(loopPlan.fullLoops) { index ->
-                            val mediaItem = MediaItem.Builder()
-                                .setUri(audioUri)
-                                .setMediaId("loop_${index}_${audioUri.hashCode()}")
-                                .build()
-
-                            loopedItems.add(
-                                EditedMediaItem.Builder(mediaItem)
-                                    .setRemoveVideo(true)
-                                    .setEffects(audioEffects)
-                                    .build()
-                            )
-                        }
-
-                        // Add partial loop if there's remaining time
-                        if (loopPlan.remainingMs > 0) {
-                            val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
-                                .setStartPositionMs(0L)
-                                .setEndPositionMs(loopPlan.remainingMs) // Clip to exact remaining duration
-
-                            val mediaItem = MediaItem.Builder()
-                                .setUri(audioUri)
-                                .setMediaId("loop_partial_${audioUri.hashCode()}")
-                                .setClippingConfiguration(clippingBuilder.build())
-                                .build()
-
-                            loopedItems.add(
-                                EditedMediaItem.Builder(mediaItem)
-                                    .setRemoveVideo(true)
-                                    .setEffects(audioEffects)
-                                    .build()
-                            )
-                        }
-
-                        return EditedMediaItemSequence.Builder(loopedItems).build()
-                    } else {
-                        // NO LOOP: Audio equal or longer - clip to video duration
-                        android.util.Log.d("CompositionFactory", "Export (untrimmed): Clipping to video duration (audio=${actualAudioDurationMs}ms >= video=${totalVideoDurationMs}ms)")
-
-                        val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
-                            .setStartPositionMs(0L)
-                            .setEndPositionMs(totalVideoDurationMs) // Clip to exact video duration
-
-                        val mediaItem = MediaItem.Builder()
-                            .setUri(audioUri)
-                            .setClippingConfiguration(clippingBuilder.build())
-                            .build()
-
-                        val editedAudioItem = EditedMediaItem.Builder(mediaItem)
-                            .setRemoveVideo(true)
-                            .setEffects(audioEffects)
-                            .build()
-
-                        return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
-                    }
-                } else {
-                    // PREVIEW: Single item (preview player handles looping/stopping)
-                    android.util.Log.d("CompositionFactory", "Preview (untrimmed): Single audio item (player handles looping)")
-
-                    val mediaItem = MediaItem.Builder()
-                        .setUri(audioUri)
-                        .build()
-
-                    val editedAudioItem = EditedMediaItem.Builder(mediaItem)
-                        .setRemoveVideo(true)
-                        .setEffects(audioEffects)
-                        .build()
-
-                    return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
-                }
-            } else {
-                // Fallback: Could not determine duration - clip to video duration for safety
-                android.util.Log.w("CompositionFactory", "Could not determine audio duration - clipping to video duration: ${totalVideoDurationMs}ms")
-
-                val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
-                    .setStartPositionMs(0L)
-                    .setEndPositionMs(totalVideoDurationMs) // Hard clip to exact video duration
-
-                val mediaItem = MediaItem.Builder()
-                    .setUri(audioUri)
-                    .setClippingConfiguration(clippingBuilder.build())
-                    .build()
-
-                val editedAudioItem = EditedMediaItem.Builder(mediaItem)
-                    .setRemoveVideo(true)
-                    .setEffects(audioEffects)
-                    .build()
-
-                return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
-            }
-        }
+        return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
     }
 
     /**

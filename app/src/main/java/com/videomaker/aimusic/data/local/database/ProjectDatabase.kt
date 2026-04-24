@@ -27,7 +27,7 @@ import com.videomaker.aimusic.data.local.database.entity.ProjectEntity
         LikedSongEntity::class,
         LikedTemplateEntity::class
     ],
-    version = 12,
+    version = 13,
     exportSchema = true
 )
 abstract class ProjectDatabase : RoomDatabase() {
@@ -66,6 +66,62 @@ abstract class ProjectDatabase : RoomDatabase() {
             }
         }
 
+        internal val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Remove legacy columns - beat-sync mode only
+                // SQLite doesn't support DROP COLUMN directly, so we recreate the table
+
+                // Create new table with beat-sync schema
+                db.execSQL(
+                    """
+                    CREATE TABLE projects_new (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL,
+                        thumbnailUri TEXT,
+                        totalDurationMs INTEGER NOT NULL DEFAULT 0,
+                        effectSetId TEXT DEFAULT 'dreamy_vibes',
+                        overlayFrameId TEXT,
+                        musicSongId INTEGER,
+                        musicSongName TEXT,
+                        musicSongUrl TEXT,
+                        musicSongCoverUrl TEXT,
+                        customAudioUri TEXT,
+                        processedAudioUri TEXT,
+                        audioVolume REAL NOT NULL DEFAULT 1.0,
+                        aspectRatio TEXT NOT NULL DEFAULT 'RATIO_9_16',
+                        isWatermarkFree INTEGER NOT NULL DEFAULT 0
+                    )
+                    """.trimIndent()
+                )
+
+                // Copy data from old table (excluding removed columns)
+                db.execSQL(
+                    """
+                    INSERT INTO projects_new (
+                        id, name, createdAt, updatedAt, thumbnailUri, totalDurationMs,
+                        effectSetId, overlayFrameId, musicSongId, musicSongName,
+                        musicSongUrl, musicSongCoverUrl, customAudioUri, processedAudioUri,
+                        audioVolume, aspectRatio, isWatermarkFree
+                    )
+                    SELECT
+                        id, name, createdAt, updatedAt, thumbnailUri, totalDurationMs,
+                        effectSetId, overlayFrameId, musicSongId, musicSongName,
+                        musicSongUrl, musicSongCoverUrl, customAudioUri, processedAudioUri,
+                        audioVolume, aspectRatio, isWatermarkFree
+                    FROM projects
+                    """.trimIndent()
+                )
+
+                // Drop old table
+                db.execSQL("DROP TABLE projects")
+
+                // Rename new table to original name
+                db.execSQL("ALTER TABLE projects_new RENAME TO projects")
+            }
+        }
+
         @Volatile
         private var INSTANCE: ProjectDatabase? = null
 
@@ -81,7 +137,7 @@ abstract class ProjectDatabase : RoomDatabase() {
                 ProjectDatabase::class.java,
                 DATABASE_NAME
             )
-                .addMigrations(MIGRATION_10_11, MIGRATION_11_12)
+                .addMigrations(MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
                 .fallbackToDestructiveMigration(dropAllTables = false)
                 .build()
         }

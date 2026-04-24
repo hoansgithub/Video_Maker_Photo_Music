@@ -8,7 +8,7 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.AspectRatio
-import com.videomaker.aimusic.domain.model.DurationPlanner
+// DurationPlanner removed - beat-sync only mode
 import com.videomaker.aimusic.domain.model.EditorInitialData
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
@@ -21,6 +21,7 @@ import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 // ============================================
@@ -98,7 +100,9 @@ class EditorViewModel(
     private val removeAssetUseCase: RemoveAssetUseCase,
     private val songRepository: SongRepository,
     private val effectSetRepository: EffectSetRepository,
-    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+    private val beatSyncRepository: com.videomaker.aimusic.domain.repository.BeatSyncRepository,
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
+    private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<EditorUiState>(EditorUiState.Loading)
@@ -131,6 +135,10 @@ class EditorViewModel(
     // Error message for ad failures
     private val _qualityAdError = MutableStateFlow<String?>(null)
     val qualityAdError: StateFlow<String?> = _qualityAdError.asStateFlow()
+
+    // Beat-sync error dialog state
+    private val _showBeatSyncErrorDialog = MutableStateFlow(false)
+    val showBeatSyncErrorDialog: StateFlow<Boolean> = _showBeatSyncErrorDialog.asStateFlow()
 
     // Mutex for thread-safe trimmer operations (prevents race conditions)
     private val trimStateMutex = Mutex()
@@ -191,6 +199,7 @@ class EditorViewModel(
 
     private fun trackVideoGenerateCompleteReadyToEdit(
         data: EditorInitialData,
+        totalDurationMs: Long,
         mediaQuantity: Int
     ) {
         if (hasTrackedReadyToEditGenerateComplete) return
@@ -199,7 +208,7 @@ class EditorViewModel(
         Analytics.trackVideoGenerateComplete(
             videoId = videoId,
             songId = data.musicSongId?.toString(),
-            duration = data.totalDurationMs,
+            duration = totalDurationMs,
             ratioSize = data.aspectRatio.toAnalyticsRatioSize(),
             mediaQuantity = mediaQuantity
         )
@@ -221,12 +230,49 @@ class EditorViewModel(
         projectObserverJob = viewModelScope.launch {
             _uiState.value = EditorUiState.Loading
             try {
-                getProjectUseCase.observe(id).collect { project ->
-                    if (project != null) {
+                getProjectUseCase.observe(id).collect { loadedProject ->
+                    if (loadedProject != null) {
                         val currentState = _uiState.value
                         val prev = currentState as? EditorUiState.Success
                         val selectedIndex = prev?.selectedAssetIndex
-                            ?.coerceIn(0, project.assets.lastIndex.coerceAtLeast(0)) ?: 0
+                            ?.coerceIn(0, loadedProject.assets.lastIndex.coerceAtLeast(0)) ?: 0
+
+                        // Load beat-sync data if music is selected but beatSyncData is null
+                        // (beatSyncData is not persisted in database, must be loaded from Supabase)
+                        var project = loadedProject
+                        if (project.settings.musicSongId != null && project.settings.beatSyncData == null) {
+                            android.util.Log.d("EditorViewModel", "Loading beat-sync data for saved project: ${project.settings.musicSongId}")
+
+                            val beatSyncData = try {
+                                loadBeatSyncWithRetry(project.settings.musicSongId)
+                            } catch (e: Exception) {
+                                android.util.Log.e("EditorViewModel", "Failed to load beat-sync data", e)
+                                null
+                            }
+
+                            if (beatSyncData != null) {
+                                // Calculate total duration with beat-sync data
+                                val totalDurationMs = Project.calculateBeatSyncDuration(
+                                    beatData = beatSyncData,
+                                    assetCount = project.assets.size,
+                                    trimStartMs = 0L
+                                ) ?: 0L
+
+                                // Update project with beat-sync data
+                                project = project.copy(
+                                    settings = project.settings.copy(
+                                        beatSyncData = beatSyncData,
+                                        totalDurationMs = totalDurationMs
+                                    )
+                                )
+
+                                android.util.Log.d("EditorViewModel", "Beat-sync data loaded for saved project: BPM=${beatSyncData.bpm}")
+                            } else {
+                                // Beat-sync data load failed - error dialog already shown
+                                android.util.Log.e("EditorViewModel", "Beat-sync data required but failed to load")
+                                return@collect
+                            }
+                        }
 
                         // Load effect set name
                         val effectSetName = getEffectSetName(project.settings.effectSetId)
@@ -280,26 +326,98 @@ class EditorViewModel(
                 val song = data.musicSongId?.let { songId ->
                     songRepository.getSongById(songId).getOrNull()
                 }
-                val defaultMusicTrimStartMs = if (data.applyHookStartDefaults) {
-                    resolveDefaultMusicTrimStartMs(song)
+
+                // Load beat-sync data if music is selected
+                val beatSyncData = data.musicSongId?.let { songId ->
+                    loadBeatSyncWithRetry(songId)
+                }
+
+                // CRITICAL: If music is selected but beat-sync data failed to load, return early
+                // Error dialog is already shown by loadBeatSyncWithRetry, user will be navigated back
+                if (data.musicSongId != null && beatSyncData == null) {
+                    android.util.Log.e("EditorViewModel", "Beat-sync data required but failed to load - aborting initialization")
+                    return@launch
+                }
+
+                // Fetch first effect set from Supabase if not provided
+                val effectSetId = if (data.effectSetId == null) {
+                    android.util.Log.d("EditorViewModel", "Effect set not provided, fetching first from Supabase...")
+                    val result = effectSetRepository.getEffectSetsPaged(offset = 0, limit = 1)
+
+                    result.fold(
+                        onSuccess = { effectSets ->
+                            if (effectSets.isNotEmpty()) {
+                                val firstEffectSet = effectSets.first()
+                                android.util.Log.d("EditorViewModel", "✅ Fetched first effect set: ${firstEffectSet.id} (${firstEffectSet.name})")
+                                firstEffectSet.id
+                            } else {
+                                android.util.Log.e("EditorViewModel", "No effect sets found in Supabase")
+                                _showBeatSyncErrorDialog.value = true
+                                return@launch
+                            }
+                        },
+                        onFailure = { error ->
+                            android.util.Log.e("EditorViewModel", "Failed to fetch first effect set: ${error.message}", error)
+                            _showBeatSyncErrorDialog.value = true
+                            return@launch
+                        }
+                    )
+                } else {
+                    data.effectSetId
+                }
+
+                // Calculate hook start time (use song's default or 0)
+                val hookStartTimeMs = if (data.applyHookStartDefaults) {
+                    song?.hookStartTimeMs ?: 0L
                 } else {
                     0L
                 }
-                val durationPlan = DurationPlanner.plan(
-                    imageCount = assets.size,
-                    totalDurationMs = data.totalDurationMs
-                )
 
+                // Calculate total duration from beat-sync data
+                val totalDurationMs = if (beatSyncData != null) {
+                    Project.calculateBeatSyncDuration(
+                        beatData = beatSyncData,
+                        assetCount = imageUris.size,
+                        trimStartMs = 0L
+                    ) ?: 0L
+                } else {
+                    0L
+                }
+
+                // Preprocess audio BEFORE setting UI state (wait for all assets ready)
+                // This prevents double "Preparing video" by ensuring everything is ready before first preview
+                val preprocessedUri = if (beatSyncData != null && data.musicSongId != null && song?.mp3Url != null && totalDurationMs > 0) {
+                    try {
+                        withContext(Dispatchers.IO) {
+                            preprocessBeatSyncAudio(
+                                songId = data.musicSongId,
+                                songUrl = song.mp3Url,
+                                beatSyncData = beatSyncData,
+                                totalDurationMs = totalDurationMs,
+                                baseVolume = 1.0f,  // Default volume
+                                trimStartMs = hookStartTimeMs
+                            )
+                        }.also {
+                            android.util.Log.d("EditorViewModel", "✅ Template audio preprocessed with fadeout")
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("EditorViewModel", "Failed to preprocess template audio", e)
+                        null // Non-fatal: user can still preview without preprocessed audio
+                    }
+                } else {
+                    null
+                }
+
+                // Beat-sync only: settings with loaded beat-sync data AND preprocessed audio
                 val settings = ProjectSettings(
-                    totalDurationMs = data.totalDurationMs,
-                    imageDurationMs = durationPlan.imageDurationMs,
-                    transitionPercentage = durationPlan.transitionPercentage,
-                    effectSetId = data.effectSetId,
+                    beatSyncData = beatSyncData,
+                    hookStartTimeMs = hookStartTimeMs,
+                    totalDurationMs = totalDurationMs,
+                    effectSetId = effectSetId,  // Use fetched effect set (or provided one)
                     musicSongId = data.musicSongId,
                     musicSongName = song?.name, // For display in UI
                     musicSongUrl = song?.mp3Url, // For playback (same URL as previewer)
-                    musicTrimStartMs = defaultMusicTrimStartMs,
-                    musicTrimEndMs = null,
+                    processedAudioUri = preprocessedUri, // Already preprocessed - ready for preview
                     aspectRatio = data.aspectRatio
                 )
 
@@ -323,6 +441,7 @@ class EditorViewModel(
                 )
                 trackVideoGenerateCompleteReadyToEdit(
                     data = data,
+                    totalDurationMs = settings.totalDurationMs,
                     mediaQuantity = assets.size
                 )
             } catch (e: Exception) {
@@ -356,7 +475,7 @@ class EditorViewModel(
         val updatedState = _uiState.value
         if (updatedState !is EditorUiState.Success) return false
 
-        android.util.Log.d("EditorViewModel", "saveProject: About to save with trimStart=${updatedState.displaySettings.musicTrimStartMs}, trimEnd=${updatedState.displaySettings.musicTrimEndMs}")
+        android.util.Log.d("EditorViewModel", "saveProject: About to save project")
 
         // Step 2: Save new project if unsaved
         if (updatedState.isUnsavedProject) {
@@ -365,7 +484,7 @@ class EditorViewModel(
                 val assetUris = project.assets.map { it.uri }
                 val settings = updatedState.displaySettings  // Use UPDATED state!
 
-                android.util.Log.d("EditorViewModel", "saveProject: Creating new project with trimStart=${settings.musicTrimStartMs}, trimEnd=${settings.musicTrimEndMs}")
+                android.util.Log.d("EditorViewModel", "saveProject: Creating new project")
 
                 // Create project in DB with settings
                 val result = createProjectUseCase(assetUris, settings)
@@ -499,44 +618,240 @@ class EditorViewModel(
     fun updateMusicSong(songId: Long?, songUrl: String? = null) {
         // Fetch song data to get both name and URL
         viewModelScope.launch {
-            val song = songId?.let { songRepository.getSongById(it).getOrNull() }
-            updatePendingSettings {
-                it.copy(
-                    musicSongId = songId,
-                    musicSongName = song?.name,
-                    musicSongUrl = song?.mp3Url,
-                    musicSongCoverUrl = song?.coverUrl,
-                    customAudioUri = null,
-                    // Reset trim to defaults when new music is selected (0 → null = full song)
-                    musicTrimStartMs = 0L,
-                    musicTrimEndMs = null,
-                    processedAudioUri = null // Clear any processed audio from previous trim
-                )
+            try {
+                val song = songId?.let { songRepository.getSongById(it).getOrNull() }
+
+                // Load beat-sync data with retry if song is selected
+                val beatSyncData = songId?.let { loadBeatSyncWithRetry(it) }
+
+                // Beat-sync load failure already shows error dialog and returns null
+                if (beatSyncData == null && songId != null) {
+                    // Error dialog already shown by loadBeatSyncWithRetry
+                    return@launch
+                }
+
+                if (beatSyncData != null) {
+                    android.util.Log.i("EditorViewModel", "Beat-sync loaded: BPM=${beatSyncData.bpm}, beats=${beatSyncData.beats.size}")
+                }
+
+                // Pre-calculate beat-sync duration (avoid ANR in getter)
+                val currentState = _uiState.value as? EditorUiState.Success
+                val totalDurationMs = if (beatSyncData != null && currentState != null) {
+                    Project.calculateBeatSyncDuration(
+                        beatData = beatSyncData,
+                        assetCount = currentState.project.assets.size,
+                        trimStartMs = 0L
+                    ) ?: 0L
+                } else {
+                    0L
+                }
+
+                // Preprocess audio BEFORE updating settings (wait for all assets ready)
+                // This prevents double "Preparing video" by ensuring everything is ready before update
+                val preprocessedUri = if (beatSyncData != null && songId != null && song?.mp3Url != null && totalDurationMs > 0) {
+                    val currentVolume = currentState?.displaySettings?.audioVolume ?: 1.0f
+                    val trimStartMs = song.hookStartTimeMs ?: 0L
+                    withContext(Dispatchers.IO) {
+                        preprocessBeatSyncAudio(
+                            songId = songId,
+                            songUrl = song.mp3Url,
+                            beatSyncData = beatSyncData,
+                            totalDurationMs = totalDurationMs,
+                            baseVolume = currentVolume,
+                            trimStartMs = trimStartMs
+                        )
+                    }.also {
+                        android.util.Log.d("EditorViewModel", "✅ Preprocessed audio ready")
+                    }
+                } else {
+                    null
+                }
+
+                // Update settings once with all assets ready (including preprocessed audio)
+                updatePendingSettings {
+                    it.copy(
+                        musicSongId = songId,
+                        musicSongName = song?.name,
+                        musicSongUrl = song?.mp3Url,
+                        musicSongCoverUrl = song?.coverUrl,
+                        customAudioUri = null,
+                        processedAudioUri = preprocessedUri, // Already preprocessed - ready for preview
+                        // Beat-sync integration
+                        beatSyncData = beatSyncData,
+                        hookStartTimeMs = song?.hookStartTimeMs ?: 0L,
+                        totalDurationMs = totalDurationMs // Pre-calculated (prevents ANR)
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e // Don't catch cancellation
+            } catch (e: Exception) {
+                // ANY failure (beat-sync load, preprocessing, etc.) → show error dialog
+                android.util.Log.e("EditorViewModel", "Music update failed: ${e.message}", e)
+                _showBeatSyncErrorDialog.value = true
             }
         }
     }
 
     fun updateMusicTrack(songId: Long, songName: String, songUrl: String, songCoverUrl: String) {
-        // Direct update with all song details (no fetch needed)
-        updatePendingSettings {
-            it.copy(
-                musicSongId = songId,
-                musicSongName = songName,
-                musicSongUrl = songUrl,
-                musicSongCoverUrl = songCoverUrl,
-                customAudioUri = null,
-                // IMPORTANT: Reset trim to defaults when new music is selected
-                // This ensures each new song starts with full duration (0 → null)
-                // Saved projects will resume their saved trim settings from database
-                musicTrimStartMs = 0L,
-                musicTrimEndMs = null,
-                processedAudioUri = null // Clear any processed audio from previous trim
-            )
+        viewModelScope.launch {
+            try {
+                // Fetch song to get hookStartTimeMs
+                val song = songRepository.getSongById(songId).getOrNull()
+
+                // Load beat-sync data with retry logic
+                val beatSyncData = loadBeatSyncWithRetry(songId)
+
+                // Beat-sync load failure already shows error dialog and returns null
+                if (beatSyncData == null) {
+                    // Error dialog already shown by loadBeatSyncWithRetry
+                    return@launch
+                }
+
+                android.util.Log.i("EditorViewModel", "Beat-sync loaded: BPM=${beatSyncData.bpm}, beats=${beatSyncData.beats.size}")
+
+                // Pre-calculate beat-sync duration (avoid ANR in getter)
+                val currentState = _uiState.value as? EditorUiState.Success
+                val totalDurationMs = if (currentState != null) {
+                    Project.calculateBeatSyncDuration(
+                        beatData = beatSyncData,
+                        assetCount = currentState.project.assets.size,
+                        trimStartMs = 0L
+                    ) ?: 0L
+                } else {
+                    0L
+                }
+
+                if (totalDurationMs <= 0) {
+                    throw Exception("Invalid duration for beat-sync preprocessing")
+                }
+
+                // Preprocess audio BEFORE updating settings (wait for all assets ready)
+                // This prevents double "Preparing video" by ensuring everything is ready before update
+                val currentVolume = currentState?.displaySettings?.audioVolume ?: 1.0f
+                val trimStartMs = song?.hookStartTimeMs ?: 0L
+                val preprocessedUri = withContext(Dispatchers.IO) {
+                    preprocessBeatSyncAudio(
+                        songId = songId,
+                        songUrl = songUrl,
+                        beatSyncData = beatSyncData,
+                        totalDurationMs = totalDurationMs,
+                        baseVolume = currentVolume,
+                        trimStartMs = trimStartMs
+                    )
+                }.also {
+                    android.util.Log.d("EditorViewModel", "✅ Preprocessed audio ready")
+                }
+
+                // Update settings once with all assets ready (including preprocessed audio)
+                updatePendingSettings {
+                    it.copy(
+                        musicSongId = songId,
+                        musicSongName = songName,
+                        musicSongUrl = songUrl,
+                        musicSongCoverUrl = songCoverUrl,
+                        customAudioUri = null,
+                        processedAudioUri = preprocessedUri, // Already preprocessed - ready for preview
+                        // Beat-sync integration
+                        beatSyncData = beatSyncData,
+                        hookStartTimeMs = song?.hookStartTimeMs ?: 0L,
+                        totalDurationMs = totalDurationMs // Pre-calculated (prevents ANR)
+                    )
+                }
+
+                // Auto-processing disabled temporarily due to player freeze issues
+                // User must manually trim music to match video duration
+                // autoProcessAudioForVideoDuration(songUrl)
+            } catch (e: CancellationException) {
+                throw e // Don't catch cancellation
+            } catch (e: Exception) {
+                // ANY failure (beat-sync load, preprocessing, etc.) → show error dialog
+                android.util.Log.e("EditorViewModel", "Music update failed: ${e.message}", e)
+                _showBeatSyncErrorDialog.value = true
+            }
+        }
+    }
+
+    /**
+     * Load beat-sync data with 3 retry attempts
+     * If all retries fail, show error dialog and navigate back to home
+     */
+    private suspend fun loadBeatSyncWithRetry(songId: Long): com.videomaker.aimusic.domain.model.BeatSyncData? {
+        val maxRetries = 3
+        repeat(maxRetries) { attempt ->
+            try {
+                android.util.Log.i("EditorViewModel", "Loading beat-sync data (attempt ${attempt + 1}/$maxRetries)")
+                val result = beatSyncRepository.getBeatData(songId)
+
+                if (result.isSuccess) {
+                    val data = result.getOrNull()
+                    if (data != null) {
+                        return data // Success - return the data
+                    } else {
+                        // Data is null (file doesn't exist) - this is OK, use legacy mode
+                        return null
+                    }
+                } else {
+                    // Network or parsing error - retry
+                    android.util.Log.w("EditorViewModel", "Beat-sync load failed (attempt ${attempt + 1}): ${result.exceptionOrNull()?.message}")
+                    if (attempt < maxRetries - 1) {
+                        delay(1000L * (attempt + 1)) // Exponential backoff
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e // Don't catch cancellation
+            } catch (e: Exception) {
+                android.util.Log.e("EditorViewModel", "Beat-sync load exception (attempt ${attempt + 1})", e)
+                if (attempt < maxRetries - 1) {
+                    delay(1000L * (attempt + 1)) // Exponential backoff
+                }
+            }
         }
 
-        // Auto-processing disabled temporarily due to player freeze issues
-        // User must manually trim music to match video duration
-        // autoProcessAudioForVideoDuration(songUrl)
+        // All retries failed - show error dialog and navigate back
+        android.util.Log.e("EditorViewModel", "Beat-sync load failed after $maxRetries attempts")
+        _showBeatSyncErrorDialog.value = true
+        return null
+    }
+
+    /**
+     * Preprocess audio with beat-sync fadeout.
+     *
+     * Creates a preprocessed audio file with fadeout over last 6 beats.
+     * Throws exception on failure (triggers error dialog + navigation back).
+     *
+     * @param songId Song ID for cache key
+     * @param songUrl Original song URL
+     * @param beatSyncData Beat-sync data (for calculating fadeout duration)
+     * @param totalDurationMs Total video duration
+     * @param baseVolume Base volume multiplier
+     * @return Preprocessed audio URI
+     * @throws Exception if preprocessing fails
+     */
+    private suspend fun preprocessBeatSyncAudio(
+        songId: Long,
+        songUrl: String,
+        beatSyncData: com.videomaker.aimusic.domain.model.BeatSyncData,
+        totalDurationMs: Long,
+        baseVolume: Float,
+        trimStartMs: Long = 0L
+    ): Uri {
+        android.util.Log.d("EditorViewModel", "Preprocessing audio with fadeout: songId=$songId, trimStart=${trimStartMs}ms, duration=${totalDurationMs}ms")
+
+        val sourceUri = Uri.parse(songUrl)
+        val beatMs = 60000.0 / beatSyncData.bpm
+        val fadeoutDurationMs = (beatMs * com.videomaker.aimusic.media.composition.BeatSyncTimingCalculator.FADEOUT_BEATS).toLong()
+
+        val preprocessedUri = audioPreprocessingService.preprocessAudioWithFadeout(
+            sourceUri = sourceUri,
+            songId = songId,
+            trimStartMs = trimStartMs,
+            totalDurationMs = totalDurationMs,
+            fadeoutDurationMs = fadeoutDurationMs,
+            baseVolume = baseVolume
+        ) ?: throw Exception("Audio preprocessing failed: service returned null")
+
+        android.util.Log.d("EditorViewModel", "✅ Audio preprocessing successful: $preprocessedUri")
+        return preprocessedUri
     }
 
     /**
@@ -609,7 +924,7 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success && currentState.pendingSettings != null) {
             val newSettings = currentState.pendingSettings
-            android.util.Log.d("EditorViewModel", "applySettings: Applying settings - trimStart=${newSettings.musicTrimStartMs}, trimEnd=${newSettings.musicTrimEndMs}")
+            android.util.Log.d("EditorViewModel", "applySettings: Applying settings")
 
             val updatedProject = currentState.project.copy(
                 settings = newSettings,
@@ -676,7 +991,7 @@ class EditorViewModel(
                     // This keeps music editing tied to the current timeline length.
                     val currentVideoDurationMs = currentState.displayProject.totalDurationMs
                         .coerceAtLeast(MusicTrimmerState.Open.MIN_TRIM_DURATION_MS)
-                    val preferredStartMs = settings.musicTrimStartMs.coerceAtLeast(0L)
+                    val preferredStartMs = 0L  // Beat-sync mode: always start from beginning
                     val preferredEndMs = preferredStartMs + currentVideoDurationMs
                     val (trimStartMs, trimEndMs) = normalizeTrimWindow(
                         preferredStartMs = preferredStartMs,
@@ -832,22 +1147,11 @@ class EditorViewModel(
 
                     android.util.Log.d("EditorViewModel", "applyMusicTrim: Saving trim positions start=$startMs, end=$endMs (instant)")
 
-                    val trimmedDurationMs = (endMs - startMs)
-                        .coerceAtLeast(MusicTrimmerState.Open.MIN_TRIM_DURATION_MS)
-                    val durationPlan = DurationPlanner.plan(
-                        imageCount = currentState.project.assets.size,
-                        totalDurationMs = trimmedDurationMs
-                    )
-
-                    // Save trim and propagate duration master to project settings.
+                    // Beat-sync mode: Music trimming is handled via hookStartTimeMs in beat-sync data
+                    // No need to update totalDurationMs here - it's calculated from beats
                     updatePendingSettings {
                         it.copy(
-                            totalDurationMs = trimmedDurationMs,
-                            imageDurationMs = durationPlan.imageDurationMs,
-                            transitionPercentage = durationPlan.transitionPercentage,
-                            musicTrimStartMs = startMs,
-                            musicTrimEndMs = endMs,
-                            processedAudioUri = null // No preprocessing needed!
+                            processedAudioUri = null // Clear preprocessed audio
                         )
                     }
 
@@ -885,8 +1189,6 @@ class EditorViewModel(
 
                         updatePendingSettings {
                             it.copy(
-                                musicTrimStartMs = startMs,
-                                musicTrimEndMs = endMs
                             )
                         }
 
@@ -933,8 +1235,6 @@ class EditorViewModel(
                     // null means "use entire song, no trimming"
                     updatePendingSettings {
                         it.copy(
-                            musicTrimStartMs = 0L,
-                            musicTrimEndMs = null,
                             processedAudioUri = null // Clear processed audio
                         )
                     }
@@ -1132,6 +1432,12 @@ class EditorViewModel(
     /** Called by UI after navigation is handled — clears the event. */
     fun onNavigationHandled() {
         _navigationEvent.value = null
+    }
+
+    fun onBeatSyncErrorDismissed() {
+        _showBeatSyncErrorDialog.value = false
+        // Navigate back to home
+        _navigationEvent.value = EditorNavigationEvent.NavigateBack
     }
 
     override fun onCleared() {

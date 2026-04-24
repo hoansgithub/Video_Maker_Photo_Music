@@ -259,23 +259,21 @@ fun VideoPreviewPlayer(
     val audioCache: com.videomaker.aimusic.media.audio.AudioPreviewCache = koinInject()
 
     // Calculate actual video duration (not composition duration which includes long audio)
-    val videoDurationMs = remember(project.id, project.assets.size, project.settings.imageDurationMs, project.settings.transitionOverlapMs) {
+    val videoDurationMs = remember(project.id, project.assets.size, project.settings.totalDurationMs) {
         project.totalDurationMs
     }
 
     // Calculate music segment duration for sync logic
-    // Priority 1: Use trim range when valid
-    // Priority 2: Use actual duration from player when available
-    // Priority 3: Fallback to video duration
+    // Beat-sync mode: Use video duration directly (no trim ranges in legacy sense)
+    // Priority 1: Use actual duration from player when available
+    // Priority 2: Fallback to video duration
     val musicSegmentDurationMs = remember(
         actualMusicSegmentDurationMs,
-        project.settings.musicTrimStartMs,
-        project.settings.musicTrimEndMs,
         videoDurationMs
     ) {
         PreviewLoopPolicy.resolveSegmentDurationMs(
-            trimStartMs = project.settings.musicTrimStartMs,
-            trimEndMs = project.settings.musicTrimEndMs ?: 0L,
+            trimStartMs = 0L,  // Beat-sync mode: no trim start
+            trimEndMs = 0L,     // Beat-sync mode: no trim end
             detectedDurationMs = actualMusicSegmentDurationMs ?: 0L,
             videoDurationMs = videoDurationMs
         )
@@ -404,29 +402,28 @@ fun VideoPreviewPlayer(
 
     // Key that changes when project or settings change (EXCEPT volume)
     // Volume changes are handled separately via player.setVolume() for instant feedback
-    // Trim positions included - triggers rebuild when trim changes
+    // Beat-sync mode: Composition key for triggering rebuilds
     val compositionKey = remember(
         project.id,
         project.assets.joinToString(",") { it.id },
         project.settings.effectSetId,
-        project.settings.imageDurationMs,
-        project.settings.transitionPercentage,
         project.settings.overlayFrameId,
         project.settings.musicSongId,
         project.settings.customAudioUri,
         project.settings.aspectRatio,
-        project.settings.musicTrimStartMs,
-        project.settings.musicTrimEndMs,
+        project.settings.beatSyncData?.bpm,  // Beat-sync: rebuild when BPM changes
+        project.settings.hookStartTimeMs,     // Beat-sync: rebuild when hook start changes
+        project.settings.processedAudioUri,   // Beat-sync: rebuild when preprocessed audio ready
         rebuildTrigger
         // audioVolume intentionally excluded - handled separately
     ) {
-        "${project.id}_${project.assets.joinToString(",") { it.id }}_${project.settings.effectSetId}_${project.settings.imageDurationMs}_${project.settings.transitionPercentage}_${project.settings.overlayFrameId}_${project.settings.musicSongId}_${project.settings.customAudioUri}_${project.settings.aspectRatio}_${project.settings.musicTrimStartMs}_${project.settings.musicTrimEndMs}_${rebuildTrigger}"
+        "${project.id}_${project.assets.joinToString(",") { it.id }}_${project.settings.effectSetId}_${project.settings.overlayFrameId}_${project.settings.musicSongId}_${project.settings.customAudioUri}_${project.settings.aspectRatio}_${project.settings.beatSyncData?.bpm}_${project.settings.hookStartTimeMs}_${project.settings.processedAudioUri}_${rebuildTrigger}"
     }
 
     // Build composition when key changes
     LaunchedEffect(compositionKey) {
         android.util.Log.d("VideoPreviewPlayer", "Composition rebuild triggered. Key: $compositionKey")
-        android.util.Log.d("VideoPreviewPlayer", "Trim settings: start=${project.settings.musicTrimStartMs}, end=${project.settings.musicTrimEndMs}")
+        android.util.Log.d("VideoPreviewPlayer", "Beat-sync mode: BPM=${project.settings.beatSyncData?.bpm}, hook=${project.settings.hookStartTimeMs}ms")
 
         // Cancel any previous composition building
         compositionBuildJob?.cancel()
@@ -463,8 +460,8 @@ fun VideoPreviewPlayer(
 
             android.util.Log.d("VideoPreviewPlayer", "TWO-PLAYER MODE: Building video composition (no audio)")
 
-            // Create VIDEO ONLY composition on background thread
-            val composition = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            // Create VIDEO ONLY composition on IO thread (involves file I/O for bitmap loading)
+            val composition = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 compositionFactory.createComposition(project, includeAudio = false) // NO AUDIO in composition!
             }
 
@@ -481,10 +478,14 @@ fun VideoPreviewPlayer(
                                      project.settings.musicSongUrl != null ||
                                      project.settings.customAudioUri != null) {
                 android.util.Log.d("VideoPreviewPlayer", "TWO-PLAYER MODE: Creating audio player")
-                android.util.Log.d("VideoPreviewPlayer", "Music settings: songId=${project.settings.musicSongId}, songUrl=${project.settings.musicSongUrl}, customUri=${project.settings.customAudioUri}")
+                android.util.Log.d("VideoPreviewPlayer", "Music settings: songId=${project.settings.musicSongId}, songUrl=${project.settings.musicSongUrl}, customUri=${project.settings.customAudioUri}, processedUri=${project.settings.processedAudioUri}")
 
-                // Get audio URI
+                // Get audio URI - prioritize preprocessed audio (has fadeout baked in)
                 val audioUri = when {
+                    project.settings.processedAudioUri != null -> {
+                        android.util.Log.d("VideoPreviewPlayer", "Using preprocessed audio with fadeout")
+                        project.settings.processedAudioUri
+                    }
                     project.settings.customAudioUri != null -> project.settings.customAudioUri
                     project.settings.musicSongUrl != null -> Uri.parse(project.settings.musicSongUrl)
                     else -> null
@@ -493,21 +494,25 @@ fun VideoPreviewPlayer(
                 android.util.Log.d("VideoPreviewPlayer", "Audio URI resolved to: $audioUri")
 
                 if (audioUri != null) {
-                    val trimStart = project.settings.musicTrimStartMs
-                    val trimEnd = project.settings.musicTrimEndMs
+                    val isPreprocessedAudio = audioUri == project.settings.processedAudioUri
 
-                    // Build MediaItem with ClippingConfiguration
-                    val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
-                        .setStartPositionMs(trimStart)
+                    // Build MediaItem - Beat-sync mode uses preprocessed audio
+                    val mediaItem = if (isPreprocessedAudio) {
+                        android.util.Log.d("VideoPreviewPlayer", "Preprocessed audio: using as-is (no clipping, fadeout baked in)")
+                        MediaItem.Builder()
+                            .setUri(audioUri)
+                            .build()
+                    } else {
+                        // Source audio: Use hookStartTimeMs for clipping start
+                        val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
+                            .setStartPositionMs(project.settings.hookStartTimeMs)
 
-                    if (trimEnd != null) {
-                        clippingBuilder.setEndPositionMs(trimEnd)
+                        android.util.Log.d("VideoPreviewPlayer", "Source audio: applying hook start (start=${project.settings.hookStartTimeMs}ms)")
+                        MediaItem.Builder()
+                            .setUri(audioUri)
+                            .setClippingConfiguration(clippingBuilder.build())
+                            .build()
                     }
-
-                    val mediaItem = MediaItem.Builder()
-                        .setUri(audioUri)
-                        .setClippingConfiguration(clippingBuilder.build())
-                        .build()
 
                     // Create ExoPlayer for audio with cache support
                     // CRITICAL: Use CacheDataSource to automatically cache remote music URLs
@@ -522,24 +527,14 @@ fun VideoPreviewPlayer(
                     audio.setMediaItem(mediaItem)
 
                     // Set looping based on duration comparison
-                    if (trimEnd != null) {
-                        val segmentDuration = PreviewLoopPolicy.resolveSegmentDurationMs(
-                            trimStartMs = trimStart,
-                            trimEndMs = trimEnd,
-                            detectedDurationMs = 0L,
-                            videoDurationMs = videoDurationMs
-                        )
-                        if (PreviewLoopPolicy.shouldLoopAudio(segmentDuration, videoDurationMs)) {
-                            audio.repeatMode = Player.REPEAT_MODE_ALL
-                            android.util.Log.d("VideoPreviewPlayer", "Music looping enabled (trimmed): segment=${segmentDuration}ms < video=${videoDurationMs}ms")
-                        } else {
-                            audio.repeatMode = Player.REPEAT_MODE_OFF
-                            android.util.Log.d("VideoPreviewPlayer", "Music no loop (trimmed): segment=${segmentDuration}ms >= video=${videoDurationMs}ms")
-                        }
-                        // Store actual segment duration
-                        actualMusicSegmentDurationMs = segmentDuration
+                    if (isPreprocessedAudio) {
+                        // Preprocessed audio: already looped to exact video duration with fadeout
+                        // NO looping needed (would restart and break fadeout)
+                        audio.repeatMode = Player.REPEAT_MODE_OFF
+                        actualMusicSegmentDurationMs = videoDurationMs
+                        android.util.Log.d("VideoPreviewPlayer", "Preprocessed audio: no looping (already exact duration with fadeout)")
                     } else {
-                        // No trim: wait for player to be ready to get actual duration
+                        // Source audio: wait for player to be ready to get actual duration
                         // OPTIMISTIC default: assume loop (safer - ensures all images are shown)
                         // Will update to REPEAT_MODE_OFF if actual duration >= video duration
                         audio.repeatMode = Player.REPEAT_MODE_ALL
@@ -559,7 +554,7 @@ fun VideoPreviewPlayer(
                                         android.util.Log.d("VideoPreviewPlayer", "Audio ready: actual duration=${actualDuration}ms, video=${videoDurationMs}ms")
 
                                         val resolvedSegmentDuration = PreviewLoopPolicy.resolveSegmentDurationMs(
-                                            trimStartMs = trimStart,
+                                            trimStartMs = 0L,  // Beat-sync mode: no trim
                                             trimEndMs = 0L,
                                             detectedDurationMs = actualDuration,
                                             videoDurationMs = videoDurationMs

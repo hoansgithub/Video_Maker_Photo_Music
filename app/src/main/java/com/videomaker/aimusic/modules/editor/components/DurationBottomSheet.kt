@@ -47,10 +47,11 @@ internal fun DurationBottomSheet(
     onDurationClick: (Long) -> Unit,
     onConfirm: (Long) -> Unit
 ) {
-    // Duration range: 1.0s to 10.0s with 0.1s steps
-    val minSeconds = ProjectSettings.MIN_IMAGE_DURATION_SECONDS
-    val maxSeconds = ProjectSettings.MAX_IMAGE_DURATION_SECONDS
-    val step = ProjectSettings.IMAGE_DURATION_STEP
+    // LEGACY COMPONENT - Beat-sync mode doesn't use fixed durations
+    // These constants are defined locally for backward compatibility only
+    val minSeconds = 1.0f
+    val maxSeconds = 10.0f
+    val step = 0.1f
 
     // Convert current duration to seconds (with 1 decimal precision)
     val currentSeconds = (currentDurationMs / 100f).let { (it / 10f) }

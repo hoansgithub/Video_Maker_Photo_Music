@@ -58,7 +58,7 @@ koin = "4.2.0"  # Matches ACCCoreAndroid
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.28"  # From GitHub Packages - Latest version
+acccore = "0.0.33"  # Latest: Merge branch 'develop' - v0.0.33 release
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)
@@ -223,6 +223,7 @@ koin-test-junit4 = { group = "io.insert-koin", name = "koin-test-junit4", versio
 supabase-bom = { group = "io.github.jan-tennert.supabase", name = "bom", version.ref = "supabase" }
 supabase-postgrest = { group = "io.github.jan-tennert.supabase", name = "postgrest-kt" }
 supabase-auth = { group = "io.github.jan-tennert.supabase", name = "auth-kt" }
+supabase-storage = { group = "io.github.jan-tennert.supabase", name = "storage-kt" }
 
 # ============================================
 # KTOR (HTTP Client for Supabase)

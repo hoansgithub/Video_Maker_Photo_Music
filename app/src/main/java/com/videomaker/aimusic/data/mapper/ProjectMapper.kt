@@ -34,14 +34,11 @@ object ProjectMapper {
     }
 
     /**
-     * Map ProjectEntity to ProjectSettings
-     * Applies defaults for null values from legacy projects
+     * Map ProjectEntity to ProjectSettings (BEAT-SYNC ONLY)
      */
     private fun toSettings(entity: ProjectEntity): ProjectSettings {
         return ProjectSettings(
             totalDurationMs = entity.totalDurationMs,
-            imageDurationMs = entity.imageDurationMs,
-            transitionPercentage = entity.transitionPercentage,
             effectSetId = entity.effectSetId,
             overlayFrameId = entity.overlayFrameId,
             musicSongId = entity.musicSongId,
@@ -51,8 +48,6 @@ object ProjectMapper {
             customAudioUri = entity.customAudioUri?.let { Uri.parse(it) },
             processedAudioUri = entity.processedAudioUri?.let { Uri.parse(it) },
             audioVolume = entity.audioVolume,
-            musicTrimStartMs = entity.musicTrimStartMs,
-            musicTrimEndMs = entity.musicTrimEndMs,
             aspectRatio = AspectRatio.fromString(entity.aspectRatio)
         )
     }
@@ -70,7 +65,7 @@ object ProjectMapper {
     }
 
     /**
-     * Map Project domain model to ProjectEntity
+     * Map Project domain model to ProjectEntity (BEAT-SYNC ONLY)
      */
     fun toEntity(project: Project): ProjectEntity {
         return ProjectEntity(
@@ -80,8 +75,6 @@ object ProjectMapper {
             updatedAt = project.updatedAt,
             thumbnailUri = project.thumbnailUri?.toString(),
             totalDurationMs = project.settings.totalDurationMs,
-            imageDurationMs = project.settings.imageDurationMs,
-            transitionPercentage = project.settings.transitionPercentage,
             effectSetId = project.settings.effectSetId,
             overlayFrameId = project.settings.overlayFrameId,
             musicSongId = project.settings.musicSongId,
@@ -91,8 +84,6 @@ object ProjectMapper {
             customAudioUri = project.settings.customAudioUri?.toString(),
             processedAudioUri = project.settings.processedAudioUri?.toString(),
             audioVolume = project.settings.audioVolume,
-            musicTrimStartMs = project.settings.musicTrimStartMs,
-            musicTrimEndMs = project.settings.musicTrimEndMs,
             aspectRatio = project.settings.aspectRatio.name,
             isWatermarkFree = project.isWatermarkFree
         )

@@ -41,6 +41,8 @@ data class SongDto(
     val durationMs: Int? = null,
     @SerialName("is_premium")
     val isPremium: Boolean = false,
+    @SerialName("is_featured")
+    val isFeatured: Boolean = false,
     @SerialName("is_active")
     val isActive: Boolean = true,
     @SerialName("sort_order")
