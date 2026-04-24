@@ -148,14 +148,17 @@ val dataModule = module {
     single { com.videomaker.aimusic.core.storage.UnlockedSongsManager(androidContext()) }
 
     // Language config service (singleton - ConfigurableObject for Remote Config)
+    // Centralized registration: Explicitly registered in VideoMakerApplication.kt
     single {
-        com.videomaker.aimusic.core.language.LanguageConfigService(androidContext()).also {
-            co.alcheclub.lib.acccore.di.koin.SingletonTracker.track(it)  // Track for RemoteConfigCoordinator
-        }
+        com.videomaker.aimusic.core.language.LanguageConfigService(
+            context = androidContext()
+        )
     }
 
     // WorkManager
     single { WorkManager.getInstance(androidContext()) }
+    // Notification Schedule Config Service (ConfigurableObject for Remote Config)
+    // Centralized registration: Explicitly registered in VideoMakerApplication.kt
     single {
         NotificationScheduleConfigService(
             onEffectiveConfigChanged = {
@@ -165,9 +168,7 @@ val dataModule = module {
                         ?.reconcileOnConfigChanged(ZonedDateTime.now())
                 }
             }
-        ).also {
-            co.alcheclub.lib.acccore.di.koin.SingletonTracker.track(it)
-        }
+        )
     }
     single { NotificationScheduler(get(), get(), get()) }
     single<NotificationReminderStore> { PreferencesReminderStore(get()) }
@@ -291,17 +292,16 @@ val adsModule = module {
     single { VideoMakerNativeAdLayoutProvider() }
 
     // Placement Config Service (ACCCore service for per-placement configs)
-    // CRITICAL: Must track for RemoteConfigCoordinator auto-discovery
+    // Centralized registration: Explicitly registered in VideoMakerApplication.kt
     single {
-        co.alcheclub.lib.acccore.ads.loader.PlacementConfigService().also {
-            co.alcheclub.lib.acccore.di.koin.SingletonTracker.track(it)
-        }
+        co.alcheclub.lib.acccore.ads.loader.PlacementConfigService()
     }
 
     // Ad Placement Config Service (singleton - registers all placements with PlacementConfigService)
+    // Centralized registration: Explicitly registered in VideoMakerApplication.kt
     single {
         com.videomaker.aimusic.core.ads.AdPlacementConfigService(
-            placementConfigService = get()  // From adMobModule in VideoMakerApplication
+            placementConfigService = get()
         )
     }
 

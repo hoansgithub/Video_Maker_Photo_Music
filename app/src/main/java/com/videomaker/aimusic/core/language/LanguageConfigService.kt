@@ -35,6 +35,9 @@ import kotlinx.serialization.json.jsonPrimitive
  * ```
  *
  * Implements ConfigurableObject for automatic Remote Config updates.
+ * Registration happens centrally in VideoMakerApplication.kt.
+ *
+ * @param context Application context for country detection
  */
 class LanguageConfigService(
     private val context: Context

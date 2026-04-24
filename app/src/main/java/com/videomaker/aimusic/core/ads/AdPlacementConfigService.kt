@@ -15,15 +15,25 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * Manages ad placement registration for Video Maker app.
  * Implements ConfigurableObject for automatic Remote Config updates.
+ * Registration happens centrally in VideoMakerApplication.kt.
  *
  * ## Architecture:
  * - **Placement Registration**: Registers all placements with PlacementConfigService
- * - **Remote Config Integration**: Auto-discovered by RemoteConfigCoordinator
+ * - **Remote Config Integration**: Explicitly registered in VideoMakerApplication
  *
  * ## Initialization:
  * - Created as singleton in DI (adsModule)
+ * - Explicitly registered in VideoMakerApplication.onCreate()
  * - init{} block runs on first access
  * - Registers all placements with local fallback configs
+ *
+ * ## Registration Strategy:
+ * - **Centralized**: Explicit list in VideoMakerApplication.kt
+ * - **Clear**: Makes dependencies visible and prevents forgetting services
+ * - **Monitored**: Analytics events track registration success/failure
+ *
+ * ## Remote Config Keys:
+ * - `ad_interstitial_interval_seconds`: Global interstitial frequency cap (default 60s)
  *
  * ## Usage:
  * ```kotlin
@@ -36,6 +46,21 @@ class AdPlacementConfigService(
     private val placementConfigService: PlacementConfigService
 ) : ConfigurableObject {
 
+    companion object {
+        private const val TAG = "AdPlacementConfig"
+
+        /**
+         * Default interstitial interval in seconds
+         * Used when Remote Config key is not available
+         */
+        private const val DEFAULT_INTERSTITIAL_INTERVAL = 60
+
+        /**
+         * Remote Config key for global interstitial interval
+         */
+        private const val KEY_INTERSTITIAL_INTERVAL = "ad_interstitial_interval_seconds"
+    }
+
     /**
      * Track number of successfully registered placements
      * Thread-safe counter that gets incremented each time registerPlacement() succeeds
@@ -47,7 +72,7 @@ class AdPlacementConfigService(
      * Thread-safe property that can be updated from Remote Config
      * Default: 60 seconds between interstitial ads
      */
-    var interstitialIntervalSeconds: Int = 60
+    var interstitialIntervalSeconds: Int = DEFAULT_INTERSTITIAL_INTERVAL
         private set  // Only update() can modify
 
     init {
@@ -605,12 +630,16 @@ class AdPlacementConfigService(
      * @param config Remote Config container with latest values
      */
     override suspend fun update(config: ConfigContainer) {
-        // Update interstitial interval from Remote Config
-        val remoteInterval = config.getLong("ad_interstitial_interval_seconds", 60L)
+        // Update interstitial interval from Remote Config (no validation - Remote Config decides)
+        val remoteInterval = config.getLong(KEY_INTERSTITIAL_INTERVAL, DEFAULT_INTERSTITIAL_INTERVAL.toLong())
         interstitialIntervalSeconds = remoteInterval.toInt()
 
-        Log.d(TAG, "📊 Remote Config updated")
-        Log.d(TAG, "   - Interstitial interval: ${interstitialIntervalSeconds}s")
+        // Log whether using remote or default value
+        if (remoteInterval != DEFAULT_INTERSTITIAL_INTERVAL.toLong()) {
+            Log.d(TAG, "📊 Remote Config updated - Interstitial interval: ${interstitialIntervalSeconds}s (from Remote Config)")
+        } else {
+            Log.d(TAG, "📊 Remote Config updated - Interstitial interval: ${interstitialIntervalSeconds}s (using local default)")
+        }
     }
 
     /**
@@ -633,9 +662,5 @@ class AdPlacementConfigService(
      */
     fun isPlacementEnabled(placementId: String): Boolean {
         return placementConfigService.getConfig(placementId)?.enabled == true
-    }
-
-    companion object {
-        private const val TAG = "AdPlacementConfig"
     }
 }
