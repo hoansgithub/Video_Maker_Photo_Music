@@ -45,34 +45,42 @@
 
 ## Critical Rules
 
-### 1. Navigation - StateFlow Events (Google Recommended)
+### 1. Navigation Events - Channel Pattern (Google Official)
+
+**Source**: [Now in Android](https://github.com/android/nowinandroid), [Architecture Samples](https://github.com/android/architecture-samples)
 
 ```kotlin
 // ❌ FORBIDDEN - State-based navigation
 LaunchedEffect(uiState) { if (uiState is Success) navigate() }
 
-// ✅ REQUIRED - StateFlow events
+// ❌ FORBIDDEN - StateFlow for events (causes replay on config change)
 private val _navigationEvent = MutableStateFlow<Event?>(null)
-val navigationEvent: StateFlow<Event?> = _navigationEvent.asStateFlow()
+
+// ✅ REQUIRED - Channel for one-time events (Google pattern)
+private val _navigationEvent = Channel<NavigationEvent>()
+val navigationEvent = _navigationEvent.receiveAsFlow()
 
 fun navigateToNext() {
-    _navigationEvent.value = NavigationEvent.GoToNext
+    viewModelScope.launch {
+        _navigationEvent.send(NavigationEvent.GoToNext)
+    }
 }
-
-fun onNavigationHandled() {
-    _navigationEvent.value = null
-}
+// No onNavigationHandled() needed - Channel auto-consumes!
 
 // In Composable
-LaunchedEffect(navigationEvent) {
-    navigationEvent?.let { event ->
+LaunchedEffect(Unit) {  // Key = Unit (not event!)
+    viewModel.navigationEvent.collect { event ->
         when (event) {
             is NavigationEvent.GoToNext -> navigateNext()
         }
-        viewModel.onNavigationHandled()
+        // Auto-consumed - no manual cleanup
     }
 }
 ```
+
+**Why Channel over StateFlow?**
+- StateFlow = state (replays last value) → ❌ causes duplicate navigation
+- Channel = events (consumed once) → ✅ correct for one-time actions
 
 ### 2. Navigation 3 Architecture
 
