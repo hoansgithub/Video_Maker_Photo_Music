@@ -234,9 +234,11 @@ fun TemplatePreviewerScreen(
         onAdFailed = viewModel::onAdFailed
     )
 
-    // Track ad loading state (declared early so it can be used in lifecycle observers)
+    // Track ad and video loading state (declared early so it can be used in lifecycle observers)
     var adReady by remember { mutableStateOf(false) }
     var loadingAdComplete by remember { mutableStateOf(false) }
+    var firstVideoReady by remember { mutableStateOf(false) }
+    var loadingVideoComplete by remember { mutableStateOf(false) }
 
     // Ad loading with timeout:
     // - Wait up to 10s for ad to load
@@ -276,9 +278,33 @@ fun TemplatePreviewerScreen(
         loadingAdComplete = true
     }
 
-    LaunchedEffect(uiState, loadingAdComplete) {
+    // First video loading with timeout:
+    // - Wait up to 10s for first video to be ready
+    // - If timeout: proceed anyway (video will load in background)
+    LaunchedEffect(Unit) {
+        val startTime = System.currentTimeMillis()
+        android.util.Log.d("TemplatePreviewerLoading", "⏳ Waiting for first video to load...")
+
+        // Wait for video ready callback or timeout (10s)
+        while (!firstVideoReady && (System.currentTimeMillis() - startTime) < 10_000) {
+            delay(500) // Check every 500ms
+        }
+
+        if (firstVideoReady) {
+            val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000.0
+            android.util.Log.d("TemplatePreviewerLoading", "✅ First video ready after ${elapsedSeconds}s")
+        } else {
+            android.util.Log.d("TemplatePreviewerLoading", "⏱️ Video timeout (10s) - proceeding (video will load in background)")
+        }
+
+        loadingVideoComplete = true
+    }
+
+    // Show notification permission dialog only after BOTH ad and video loading complete
+    LaunchedEffect(uiState, loadingAdComplete, loadingVideoComplete) {
         if (uiState is TemplatePreviewerUiState.Ready &&
             loadingAdComplete &&
+            loadingVideoComplete &&
             notificationPermissionCoordinator.shouldShowTemplatePreviewerContextualPopup(context)
         ) {
             if (notificationPermissionCoordinator.shouldShowSettingsGuide(context)) {
@@ -326,8 +352,8 @@ fun TemplatePreviewerScreen(
             LoadingStateWithAd()
         }
         is TemplatePreviewerUiState.Ready -> {
-            // Only show Ready content after ad timing is complete
-            if (loadingAdComplete) {
+            // Only show Ready content after BOTH ad and video loading complete
+            if (loadingAdComplete && loadingVideoComplete) {
                 TemplatePreviewerReadyContent(
                     state = state,
                     likedTemplateIds = likedTemplateIds,
@@ -337,10 +363,11 @@ fun TemplatePreviewerScreen(
                     onRatioSelected = viewModel::onRatioSelected,
                     onLikeTemplate = viewModel::onLikeTemplate,
                     eventLocation = eventLocation,
-                    onNavigateBack = viewModel::onNavigateBack
+                    onNavigateBack = viewModel::onNavigateBack,
+                    onFirstVideoReady = { firstVideoReady = true }
                 )
             } else {
-                // Keep showing loading state with ad until timing is complete
+                // Keep showing loading state with ad until BOTH complete
                 LoadingStateWithAd()
             }
         }
@@ -435,7 +462,7 @@ fun TemplatePreviewerScreen(
 }
 
 // ============================================
-// LOADING STATE WITH AD — 10s timeout + 2s display
+// LOADING STATE WITH AD — Waits for both ad and video
 // ============================================
 
 /**
@@ -444,12 +471,14 @@ fun TemplatePreviewerScreen(
  * Behavior:
  * - Shows CircularProgressIndicator at center
  * - Shows native ad at bottom
- * - Waits 10 seconds for ad to load
- * - After 10s, shows ad for 2 more seconds
- * - Total: 12 seconds before transitioning to Ready state
+ * - Waits for BOTH:
+ *   1. Ad loading: 10s timeout + 2s display (12s total)
+ *   2. First video loading: 10s timeout
+ * - Transitions to Ready state only when BOTH complete (or timeout)
+ * - Maximum wait time: ~12s (both timeouts run in parallel)
  *
- * Note: The actual transition to Ready state is controlled by ViewModel's
- * data loading. This just ensures the ad gets adequate display time.
+ * Note: This ensures users see a fully-loaded experience with both
+ * ad impression and first video ready to play.
  */
 @Composable
 private fun LoadingStateWithAd() {
@@ -507,7 +536,8 @@ private fun TemplatePreviewerReadyContent(
     onRatioSelected: (VideoTemplate, AspectRatio) -> Unit,
     onLikeTemplate: (VideoTemplate) -> Unit,
     eventLocation: String = AnalyticsEvent.Value.Location.PREVIEW_SWIPE,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onFirstVideoReady: () -> Unit
 ) {
     val templates = state.templates
     val screenSessionId = remember { Analytics.newScreenSessionId() }
@@ -631,10 +661,15 @@ private fun TemplatePreviewerReadyContent(
             // Videos now have built-in music, so always animate immediately when page is current
             val isCurrentPage = pageIndex == pagerState.settledPage
                 && !pagerState.isScrollInProgress
+
+            // Only pass onFirstVideoReady callback to the initial page
+            val isInitialPage = pageIndex == initialVirtualPage(state.initialPage, templates.size)
+
             TemplateThumbnailPage(
                 template = templates[pageIndex % templates.size],
                 isCurrentPage = isCurrentPage,
-                isPriorityPage = pageIndex == pagerState.settledPage  // High priority for visible page
+                isPriorityPage = pageIndex == pagerState.settledPage,  // High priority for visible page
+                onVideoReady = if (isInitialPage) onFirstVideoReady else null  // Only track first video
             )
         }
 
@@ -1102,7 +1137,8 @@ private fun AspectRatioIcon(ratio: AspectRatio, isSelected: Boolean) {
 private fun TemplateThumbnailPage(
     template: VideoTemplate,
     isCurrentPage: Boolean,
-    isPriorityPage: Boolean = false  // True for visible/settled page (kept for future use)
+    isPriorityPage: Boolean = false,  // True for visible/settled page (kept for future use)
+    onVideoReady: (() -> Unit)? = null  // Callback when video is ready (for first video only)
 ) {
     val context = LocalContext.current
 
@@ -1120,7 +1156,8 @@ private fun TemplateThumbnailPage(
                 modifier = Modifier.fillMaxSize(),
                 autoPlay = isCurrentPage,  // Only play when visible
                 loop = true,
-                showControls = false
+                showControls = false,
+                onVideoReady = onVideoReady  // Notify when video is ready (for first video tracking)
             )
         } else {
             // Fallback to image preview
@@ -1195,7 +1232,8 @@ private fun PreviewTemplatePreviewerReady() {
             onUseThisTemplate = { _, _ -> },
             onRatioSelected = { _, _ -> },
             onLikeTemplate = {},
-            onNavigateBack = {}
+            onNavigateBack = {},
+            onFirstVideoReady = {}
         )
     }
 }
@@ -1221,7 +1259,8 @@ private fun PreviewTemplatePreviewerCreating() {
             onUseThisTemplate = { _, _ -> },
             onRatioSelected = { _, _ -> },
             onLikeTemplate = {},
-            onNavigateBack = {}
+            onNavigateBack = {},
+            onFirstVideoReady = {}
         )
     }
 }

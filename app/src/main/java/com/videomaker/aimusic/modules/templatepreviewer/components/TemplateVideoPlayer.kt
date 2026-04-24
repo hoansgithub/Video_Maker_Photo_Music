@@ -84,6 +84,7 @@ private fun ExoPlayer.releaseAsync() {
  * @param autoPlay Whether to auto-play when loaded (default: true)
  * @param loop Whether to loop the video (default: true)
  * @param onError Callback when video loading fails
+ * @param onVideoReady Callback when video is ready to play (STATE_READY reached)
  */
 @Composable
 fun TemplateVideoPlayer(
@@ -93,6 +94,7 @@ fun TemplateVideoPlayer(
     loop: Boolean = true,
     showControls: Boolean = false,
     onError: ((String) -> Unit)? = null,
+    onVideoReady: (() -> Unit)? = null,
     cacheDataSourceFactory: CacheDataSource.Factory = koinInject()
 ) {
     val context = LocalContext.current
@@ -158,6 +160,9 @@ fun TemplateVideoPlayer(
                         } else {
                             android.util.Log.d("TemplateVideoPlayer", "✅ Video loaded successfully on first try - URL: $videoUrl")
                         }
+
+                        // Notify parent that video is ready
+                        onVideoReady?.invoke()
                     }
                     Player.STATE_IDLE -> {
                         isLoading = false
