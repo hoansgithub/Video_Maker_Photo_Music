@@ -494,6 +494,7 @@ fun ProjectsTabContent(
     // Watch ad dialog for download
     if (showWatchAdDialog) {
         WatchAdDialog(
+            type = AnalyticsEvent.Value.PreviousAction.DOWNLOAD_CLICK,
             onDismiss = viewModel::onWatchAdDialogDismiss,
             onWatchAd = viewModel::onWatchAdConfirmed
         )

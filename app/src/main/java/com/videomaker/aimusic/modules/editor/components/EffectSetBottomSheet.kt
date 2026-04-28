@@ -63,6 +63,8 @@ import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import org.koin.compose.koinInject
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.EffectSet
@@ -222,6 +224,7 @@ fun EffectSetBottomSheet(
         // Watch ad dialog
         if (showWatchAdDialog) {
             WatchAdDialog(
+                type = AnalyticsEvent.Value.PreviousAction.UNLOCK_EFFECT_CLICK,
                 onDismiss = viewModel::onWatchAdDialogDismiss,
                 onWatchAd = {
                     // Set pending effect set - LaunchedEffect will handle ad presentation

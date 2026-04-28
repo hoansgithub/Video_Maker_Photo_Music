@@ -535,6 +535,7 @@ fun ExportScreen(
         // Watch ad dialog for download
         if (showWatchAdDialog) {
             WatchAdDialog(
+                type = AnalyticsEvent.Value.PreviousAction.DOWNLOAD_CLICK,
                 onDismiss = viewModel::onWatchAdDialogDismiss,
                 onWatchAd = viewModel::onWatchAdConfirmed
             )
@@ -551,7 +552,8 @@ fun ExportScreen(
 
         // Watermark ad dialog
         if (showWatermarkAdDialog) {
-            WatermarkAdDialog(
+            WatchAdDialog(
+                type = AnalyticsEvent.Value.PreviousAction.REMOVE_WATERMARK_CLICK,
                 onDismiss = viewModel::onWatermarkAdDialogDismiss,
                 onWatchAd = viewModel::onWatermarkAdConfirmed
             )

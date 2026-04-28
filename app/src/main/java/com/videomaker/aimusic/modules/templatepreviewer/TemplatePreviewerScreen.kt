@@ -396,6 +396,7 @@ fun TemplatePreviewerScreen(
     // Watch ad dialog
     if (showWatchAdDialog) {
         WatchAdDialog(
+            type = AnalyticsEvent.Value.PreviousAction.UNLOCK_TEMPLATE_CLICK,
             onDismiss = viewModel::onWatchAdDialogDismiss,
             onWatchAd = {
                 // Set pending template - LaunchedEffect will handle ad presentation

@@ -679,6 +679,7 @@ fun EditorScreen(
         // Quality unlock watch ad dialog
         if (showQualityAdDialog) {
             com.videomaker.aimusic.modules.export.WatchAdDialog(
+                type = AnalyticsEvent.Value.PreviousAction.UNLOCK_QUALITY_CLICK,
                 onDismiss = viewModel::onQualityAdDialogDismiss,
                 onWatchAd = viewModel::onQualityAdConfirmed
             )

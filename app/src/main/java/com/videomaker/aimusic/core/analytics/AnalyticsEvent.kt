@@ -223,6 +223,12 @@ object AnalyticsEvent {
     const val NOTIFICATION_CONVERSION = "notification_conversion"
 
     // ============================================
+    // 22. REWARD POPUP
+    // ============================================
+    const val REWARD_POPUP_RENDER = "reward_popup_render"
+    const val REWARD_POPUP_BTN = "reward_popup_btn"
+
+    // ============================================
     // PARAMETER KEYS
     // ============================================
     object Param {
@@ -280,6 +286,7 @@ object AnalyticsEvent {
         const val ALLOW = "allow"
         const val PER_TYPE = "per_type"
         const val POP_TYPE = "pop_type"
+        const val PREVIOUS_ACTION = "previous_action"
 
         const val KEYWORD = "keyword"
         const val KEYWORD_1 = "keyword_1"
@@ -392,6 +399,22 @@ object AnalyticsEvent {
         object PopType {
             const val SYSTEM = "system"
             const val CUSTOM = "custom"
+        }
+
+        object RewardPopupType {
+            const val YES = "yes"
+            const val NO = "no"
+            const val EXIT = "exit"
+        }
+
+        object PreviousAction {
+            const val USE_TO_CREATE = "use_to_create"
+            const val DOWNLOAD_CLICK = "download_click"
+            const val REMOVE_WATERMARK_CLICK = "remove_watermark_click"
+            const val UNLOCK_TEMPLATE_CLICK = "unlock_template_click"
+            const val UNLOCK_EFFECT_CLICK = "unlock_effect_click"
+            const val UNLOCK_QUALITY_CLICK = "unlock_quality_click"
+            const val EDITOR_SONG_CONFIRM = "editor_song_confirm"
         }
     }
 

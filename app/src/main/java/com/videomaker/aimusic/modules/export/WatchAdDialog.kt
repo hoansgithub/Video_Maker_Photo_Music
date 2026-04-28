@@ -2,7 +2,6 @@ package com.videomaker.aimusic.modules.export
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,40 +14,30 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.room.util.copy
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.ui.components.AdBadge
-import com.videomaker.aimusic.ui.components.AdBadgeStyle
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
-import com.videomaker.aimusic.ui.theme.BackgroundLight
 import com.videomaker.aimusic.ui.theme.FoundationBlack
 import com.videomaker.aimusic.ui.theme.Neutral_Black
 import com.videomaker.aimusic.ui.theme.Neutral_N500
 import com.videomaker.aimusic.ui.theme.Neutral_N700
 import com.videomaker.aimusic.ui.theme.Primary
-import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
 /**
@@ -67,9 +56,14 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
  */
 @Composable
 fun WatchAdDialog(
+    type: String,
     onDismiss: () -> Unit,
     onWatchAd: () -> Unit
 ) {
+    LaunchedEffect(Unit) {
+        Analytics.trackRewardPopupRender(type)
+    }
+
     Dialog(
         onDismissRequest = { /* Prevent tap-to-dismiss */ }
     ) {
@@ -126,6 +120,7 @@ fun WatchAdDialog(
                         .background(Primary, RoundedCornerShape(160.dp))
                         .fillMaxWidth()
                         .clickableSingle{
+                            Analytics.trackRewardPopupBtn(AnalyticsEvent.Value.RewardPopupType.YES)
                             onWatchAd.invoke()
                         }
                         .padding(12.dp),
@@ -154,6 +149,7 @@ fun WatchAdDialog(
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier
                         .clickableSingle{
+                            Analytics.trackRewardPopupBtn(AnalyticsEvent.Value.RewardPopupType.NO)
                             onDismiss.invoke()
                         }
                         .padding(vertical = 14.dp, horizontal = 24.dp)
@@ -169,6 +165,7 @@ fun WatchAdDialog(
                     .size(28.dp)
                     .background(Color.Black.copy(0.2f), CircleShape)
                     .clickableSingle{
+                        Analytics.trackRewardPopupBtn(AnalyticsEvent.Value.RewardPopupType.EXIT)
                         onDismiss.invoke()
                     }
                     .align(Alignment.TopEnd)
@@ -187,6 +184,7 @@ fun WatchAdDialog(
 private fun WatchAdDialogPreview() {
     VideoMakerTheme {
         WatchAdDialog(
+            type = "",
             onDismiss = {},
             onWatchAd = {}
         )

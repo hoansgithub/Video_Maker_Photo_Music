@@ -804,6 +804,7 @@ internal fun MusicSearchBottomSheet(
     // Watch ad dialog for song unlock
     if (showWatchAdDialog) {
         WatchAdDialog(
+            type = AnalyticsEvent.Value.PreviousAction.EDITOR_SONG_CONFIRM,
             onDismiss = ::onWatchAdDialogDismiss,
             onWatchAd = ::onWatchAdConfirmed
         )
