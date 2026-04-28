@@ -413,7 +413,7 @@ object AnalyticsEvent {
             const val REMOVE_WATERMARK_CLICK = "remove_watermark_click"
             const val UNLOCK_TEMPLATE_CLICK = "unlock_template_click"
             const val UNLOCK_EFFECT_CLICK = "unlock_effect_click"
-            const val UNLOCK_QUALITY_CLICK = "unlock_quality_click"
+            const val UNLOCK_QUALITY_CLICK = "done_edit_click"
             const val EDITOR_SONG_CONFIRM = "editor_song_confirm"
         }
     }
