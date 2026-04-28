@@ -56,7 +56,7 @@ internal fun SettingsTabBar(
             .background(SplashBackground)
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         // Effect button - displays effect set name
         SettingsTabButton(
