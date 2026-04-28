@@ -804,8 +804,6 @@ internal fun MusicSearchBottomSheet(
     // Watch ad dialog for song unlock
     if (showWatchAdDialog) {
         WatchAdDialog(
-            title = stringResource(R.string.song_watch_ad_title),
-            subtitle = stringResource(R.string.song_watch_ad_subtitle),
             onDismiss = ::onWatchAdDialogDismiss,
             onWatchAd = ::onWatchAdConfirmed
         )

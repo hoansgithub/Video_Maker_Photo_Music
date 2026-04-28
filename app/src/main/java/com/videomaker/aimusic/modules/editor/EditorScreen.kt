@@ -679,8 +679,6 @@ fun EditorScreen(
         // Quality unlock watch ad dialog
         if (showQualityAdDialog) {
             com.videomaker.aimusic.modules.export.WatchAdDialog(
-                title = stringResource(com.videomaker.aimusic.R.string.quality_watch_ad_title),
-                subtitle = stringResource(com.videomaker.aimusic.R.string.quality_watch_ad_subtitle),
                 onDismiss = viewModel::onQualityAdDialogDismiss,
                 onWatchAd = viewModel::onQualityAdConfirmed
             )

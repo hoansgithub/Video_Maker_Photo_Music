@@ -396,8 +396,6 @@ fun TemplatePreviewerScreen(
     // Watch ad dialog
     if (showWatchAdDialog) {
         WatchAdDialog(
-            title = stringResource(R.string.template_watch_ad_title),
-            subtitle = stringResource(R.string.template_watch_ad_subtitle),
             onDismiss = viewModel::onWatchAdDialogDismiss,
             onWatchAd = {
                 // Set pending template - LaunchedEffect will handle ad presentation

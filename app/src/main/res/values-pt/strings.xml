@@ -236,7 +236,9 @@
     <string name="export_templates_load_failed">Falha ao carregar modelos</string>
     <string name="export_watch_ad_title">Assistir a um anúncio para baixar?</string>
     <string name="export_watch_ad_subtitle">Ajude-nos a manter este aplicativo gratuito assistindo a um breve anúncio. Seu vídeo será baixado logo em seguida!</string>
-    <string name="export_watch_ad_button">Assistir Anúncio</string>
+    <string name="watch_ad_dialog_title">Desbloqueie um Recurso Exclusivo! ✨</string>
+    <string name="watch_ad_dialog_subtitle">Assista a um anúncio curto para desbloquear este recurso e continuar editando seu vídeo incrível!</string>
+    <string name="export_watch_ad_button">Assistir Anúncio (1/1)</string>
     <string name="export_watch_ad_close">Fechar</string>
     <string name="export_watermark_remove_title">Remover marca d\'água?</string>
     <string name="export_watermark_remove_subtitle">Assista a um breve anúncio para remover a marca d\'água da sua prévia de vídeo.</string>

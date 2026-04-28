@@ -494,8 +494,6 @@ fun ProjectsTabContent(
     // Watch ad dialog for download
     if (showWatchAdDialog) {
         WatchAdDialog(
-            title = stringResource(R.string.export_watch_ad_title),
-            subtitle = stringResource(R.string.export_watch_ad_subtitle),
             onDismiss = viewModel::onWatchAdDialogDismiss,
             onWatchAd = viewModel::onWatchAdConfirmed
         )

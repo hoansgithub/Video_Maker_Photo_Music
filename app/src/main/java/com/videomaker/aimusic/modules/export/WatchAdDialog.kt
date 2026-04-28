@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.export
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
@@ -23,7 +26,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -32,10 +37,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.room.util.copy
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.AdBadge
 import com.videomaker.aimusic.ui.components.AdBadgeStyle
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.BackgroundLight
+import com.videomaker.aimusic.ui.theme.FoundationBlack
+import com.videomaker.aimusic.ui.theme.Neutral_Black
+import com.videomaker.aimusic.ui.theme.Neutral_N500
+import com.videomaker.aimusic.ui.theme.Neutral_N700
+import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
@@ -55,105 +67,113 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
  */
 @Composable
 fun WatchAdDialog(
-    title: String = stringResource(R.string.export_watch_ad_title),
-    subtitle: String = stringResource(R.string.export_watch_ad_subtitle),
     onDismiss: () -> Unit,
     onWatchAd: () -> Unit
 ) {
     Dialog(
         onDismissRequest = { /* Prevent tap-to-dismiss */ }
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    color = SurfaceDark,
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // [AD] label badge
-            AdBadge(style = AdBadgeStyle.Large())
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Title
-            Text(
-                text = title,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                lineHeight = 24.sp
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Subtitle
-            Text(
-                text = subtitle,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                color = Color.White.copy(alpha = 0.8f),
-                textAlign = TextAlign.Center,
-                lineHeight = 20.sp
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Buttons row - Close + Watch Ad
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ){
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = Neutral_Black,
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Close button (secondary)
-                OutlinedButton(
-                    onClick = onDismiss,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text(
-                        text = stringResource(R.string.export_watch_ad_close),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                // [AD] label badge
+                Image(
+                    painter = painterResource(R.drawable.img_ad_content_popup),
+                    contentDescription = null,
+                    modifier = Modifier.size(140.dp)
+                )
 
-                // Watch Ad button (primary, with icon)
-                Button(
-                    onClick = onWatchAd,
+                Spacer(modifier = Modifier.height(30.dp))
+
+                // Title
+                Text(
+                    text = stringResource(R.string.watch_ad_dialog_title),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 24.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Subtitle
+                Text(
+                    text = stringResource(R.string.watch_ad_dialog_subtitle),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.White.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp
+                )
+
+                Spacer(modifier = Modifier.height(40.dp))
+
+                // Buttons row - Close + Watch Ad
+                Row(
                     modifier = Modifier
-                        .weight(2f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = BackgroundLight,
-                        contentColor = SurfaceDark
-                    )
+                        .background(Primary, RoundedCornerShape(160.dp))
+                        .fillMaxWidth()
+                        .clickableSingle{
+                            onWatchAd.invoke()
+                        }
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.PlayArrow,
+                        painter = painterResource(R.drawable.ic_fluent_movies),
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(20.dp),
+                        tint = FoundationBlack
                     )
-                    Spacer(modifier = Modifier.size(6.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = stringResource(R.string.export_watch_ad_button),
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        fontWeight = FontWeight.W500,
+                        color = FoundationBlack
                     )
                 }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.notification_permission_maybe_later),
+                    fontSize = 16.sp,
+                    color = Neutral_N500,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .clickableSingle{
+                            onDismiss.invoke()
+                        }
+                        .padding(vertical = 14.dp, horizontal = 24.dp)
+                )
             }
+
+            Icon(
+                painter = painterResource(R.drawable.ic_close_circle),
+                contentDescription = null,
+                tint = Neutral_N700,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .size(28.dp)
+                    .background(Color.Black.copy(0.2f), CircleShape)
+                    .clickableSingle{
+                        onDismiss.invoke()
+                    }
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp)
+            )
         }
     }
 }

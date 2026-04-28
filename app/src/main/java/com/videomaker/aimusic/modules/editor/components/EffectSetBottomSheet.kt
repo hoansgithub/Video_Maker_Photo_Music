@@ -222,8 +222,6 @@ fun EffectSetBottomSheet(
         // Watch ad dialog
         if (showWatchAdDialog) {
             WatchAdDialog(
-                title = stringResource(R.string.effect_set_watch_ad_title),
-                subtitle = stringResource(R.string.effect_set_watch_ad_subtitle),
                 onDismiss = viewModel::onWatchAdDialogDismiss,
                 onWatchAd = {
                     // Set pending effect set - LaunchedEffect will handle ad presentation

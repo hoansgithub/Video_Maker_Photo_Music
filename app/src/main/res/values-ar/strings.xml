@@ -236,7 +236,9 @@
     <string name="export_templates_load_failed">فشل تحميل القوالب</string>
     <string name="export_watch_ad_title">شاهد إعلان للتنزيل؟</string>
     <string name="export_watch_ad_subtitle">ساعدنا في الحفاظ على هذا التطبيق مجانيًا بمشاهدة إعلان قصير. سيتم تنزيل الفيديو الخاص بك مباشرة بعد ذلك!</string>
-    <string name="export_watch_ad_button">شاهد الإعلان</string>
+    <string name="watch_ad_dialog_title">افتح ميزة حصرية! ✨</string>
+    <string name="watch_ad_dialog_subtitle">شاهد إعلانًا قصيرًا لفتح هذه الميزة ومتابعة تعديل الفيديو الرائع الخاص بك!</string>
+    <string name="export_watch_ad_button">شاهد الإعلان (1/1)</string>
     <string name="export_watch_ad_close">إغلاق</string>
     <string name="export_watermark_remove_title">إزالة العلامة المائية؟</string>
     <string name="export_watermark_remove_subtitle">شاهد إعلانًا قصيرًا لإزالة العلامة المائية من معاينة الفيديو.</string>

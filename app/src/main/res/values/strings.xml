@@ -241,7 +241,9 @@
     <string name="export_templates_load_failed">Failed to load templates</string>
     <string name="export_watch_ad_title">Watch an ad to download?</string>
     <string name="export_watch_ad_subtitle">Help us keep this app free by watching a short ad. Your video will download right after!</string>
-    <string name="export_watch_ad_button">Watch Ad</string>
+    <string name="watch_ad_dialog_title">Unlock Exclusive Feature! ✨</string>
+    <string name="watch_ad_dialog_subtitle">Watch a short ad to unlock this feature and continue editing your awesome video!</string>
+    <string name="export_watch_ad_button">Watch Ad (1/1)</string>
     <string name="export_watch_ad_close">Close</string>
     <string name="export_watermark_remove_title">Remove watermark?</string>
     <string name="export_watermark_remove_subtitle">Watch a short ad to remove the watermark from your video preview.</string>
