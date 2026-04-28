@@ -134,6 +134,7 @@ fun EditorScreen(
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
     var wasPlayingBeforeMusicSheet by remember { mutableStateOf(false) }
+    var wasPlayingBeforeQualityAd by remember { mutableStateOf(false) }
     var hasTrackedVideoPreview by remember { mutableStateOf(false) }
     var hasTrackedVideoPreviewComplete by remember { mutableStateOf(false) }
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
@@ -220,7 +221,22 @@ fun EditorScreen(
         placement = AdPlacement.REWARD_UNLOCK_QUALITY,
         adsLoaderService = adsLoaderService,
         onRewardEarned = viewModel::onQualityRewardEarned,
-        onAdFailed = viewModel::onQualityAdFailed
+        onAdFailed = viewModel::onQualityAdFailed,
+        onAdShown = {
+            val state = currentState()
+            if (state != null) {
+                wasPlayingBeforeQualityAd = state.isPlaying
+                if (state.isPlaying) {
+                    viewModel.setPlaybackState(false)
+                }
+            }
+        },
+        onAdClosed = {
+            if (wasPlayingBeforeQualityAd) {
+                viewModel.setPlaybackState(true)
+            }
+            wasPlayingBeforeQualityAd = false
+        }
     )
 
     // Show error message for quality ad failures
@@ -679,8 +695,7 @@ fun EditorScreen(
         // Quality unlock watch ad dialog
         if (showQualityAdDialog) {
             com.videomaker.aimusic.modules.export.WatchAdDialog(
-                title = stringResource(com.videomaker.aimusic.R.string.quality_watch_ad_title),
-                subtitle = stringResource(com.videomaker.aimusic.R.string.quality_watch_ad_subtitle),
+                type = AnalyticsEvent.Value.PreviousAction.UNLOCK_QUALITY_CLICK,
                 onDismiss = viewModel::onQualityAdDialogDismiss,
                 onWatchAd = viewModel::onQualityAdConfirmed
             )

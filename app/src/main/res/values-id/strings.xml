@@ -236,7 +236,9 @@
     <string name="export_templates_load_failed">Gagal memuat template</string>
     <string name="export_watch_ad_title">Tonton iklan untuk mengunduh?</string>
     <string name="export_watch_ad_subtitle">Bantu kami menjaga aplikasi ini gratis dengan menonton iklan singkat. Video Anda akan diunduh segera setelahnya!</string>
-    <string name="export_watch_ad_button">Tonton Iklan</string>
+    <string name="watch_ad_dialog_title">Buka Fitur Eksklusif! ✨</string>
+    <string name="watch_ad_dialog_subtitle">Tonton iklan singkat untuk membuka fitur ini dan lanjutkan mengedit video keren Anda!</string>
+    <string name="export_watch_ad_button">Tonton Iklan (1/1)</string>
     <string name="export_watch_ad_close">Tutup</string>
     <string name="export_watermark_remove_title">Hapus watermark?</string>
     <string name="export_watermark_remove_subtitle">Tonton iklan singkat untuk menghapus watermark dari pratinjau video Anda.</string>

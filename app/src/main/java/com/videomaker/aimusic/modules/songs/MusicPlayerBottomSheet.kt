@@ -629,8 +629,7 @@ fun MusicPlayerBottomSheet(
     // Watch ad dialog for song unlock
     if (showWatchAdDialog) {
         WatchAdDialog(
-            title = stringResource(R.string.song_watch_ad_title),
-            subtitle = stringResource(R.string.song_watch_ad_subtitle),
+            type = AnalyticsEvent.Value.PreviousAction.USE_TO_CREATE,
             onDismiss = viewModel::onWatchAdDialogDismiss,
             onWatchAd = viewModel::onWatchAdConfirmed
         )

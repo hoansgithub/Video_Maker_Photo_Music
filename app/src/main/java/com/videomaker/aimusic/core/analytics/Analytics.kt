@@ -1803,6 +1803,29 @@ object Analytics {
         )
     }
 
+    fun trackRewardPopupRender(previousAction: String) {
+        val normalizedAction = RewardPopupAnalyticsContract.normalizePreviousAction(previousAction)
+        if (normalizedAction.isBlank()) return
+
+        trackWithPolicy(
+            eventName = AnalyticsEvent.REWARD_POPUP_RENDER,
+            params = mapOf(AnalyticsEvent.Param.PREVIOUS_ACTION to normalizedAction),
+            requiredParams = setOf(AnalyticsEvent.Param.PREVIOUS_ACTION),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackRewardPopupBtn(type: String) {
+        val normalizedType = RewardPopupAnalyticsContract.normalizeBtnType(type) ?: return
+
+        trackWithPolicy(
+            eventName = AnalyticsEvent.REWARD_POPUP_BTN,
+            params = mapOf(AnalyticsEvent.Param.TYPE to normalizedType),
+            requiredParams = setOf(AnalyticsEvent.Param.TYPE),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackSearchRecentView(keywords: List<String>) {
         val params = linkedMapOf<String, Any>().apply {
             keywords.getOrNull(0)?.let { put(AnalyticsEvent.Param.KEYWORD_1, it) }
