@@ -215,6 +215,7 @@ fun ExportScreen(
     var showNotificationPromoDialog by remember { mutableStateOf(false) }
     var showNotificationSettingsGuideDialog by remember { mutableStateOf(false) }
     var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
+    var pauseSuccessPreviewForAd by remember { mutableStateOf(false) }
 
     // Get dependencies for ad showing
     val activity = context as? Activity
@@ -485,6 +486,7 @@ fun ExportScreen(
                     onQualityChange = { quality ->
                         viewModel.changeQuality(quality)
                     },
+                    forcePausePlayback = pauseSuccessPreviewForAd,
                     onDoneClick = viewModel::onResultExitClick,
                     onTemplateClick = viewModel::onTemplateClick,
                     onSaveToastDismissed = viewModel::onSaveToastDismissed
@@ -547,7 +549,9 @@ fun ExportScreen(
             placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
             adsLoaderService = adsLoaderService,
             onRewardEarned = viewModel::onDownloadRewardEarned,
-            onAdFailed = viewModel::onDownloadAdFailed
+            onAdFailed = viewModel::onDownloadAdFailed,
+            onAdShown = { pauseSuccessPreviewForAd = true },
+            onAdClosed = { pauseSuccessPreviewForAd = false }
         )
 
         // Watermark ad dialog
@@ -565,7 +569,9 @@ fun ExportScreen(
             placement = AdPlacement.REWARD_REMOVE_WATERMARK,
             adsLoaderService = adsLoaderService,
             onRewardEarned = viewModel::onWatermarkRewardEarned,
-            onAdFailed = viewModel::onWatermarkAdFailed
+            onAdFailed = viewModel::onWatermarkAdFailed,
+            onAdShown = { pauseSuccessPreviewForAd = true },
+            onAdClosed = { pauseSuccessPreviewForAd = false }
         )
 
         // Ads loading overlay (shows when rewarded ad is loading)
@@ -857,6 +863,7 @@ private fun SuccessContent(
     featuredTemplatesState: FeaturedTemplatesState = FeaturedTemplatesState.Loading,
     saveToastState: ProcessToastState? = null,
     showWatermark: Boolean = true,
+    forcePausePlayback: Boolean = false,
     onWatermarkClick: () -> Unit = {},
     onWatermarkDismiss: () -> Unit = {},
     onSaveToGalleryClick: () -> Unit,
@@ -897,6 +904,22 @@ private fun SuccessContent(
 
     // Track playing state from ExoPlayer
     var isPlaying by remember { mutableStateOf(false) }
+    var shouldResumeAfterForcedPause by remember { mutableStateOf(false) }
+
+    LaunchedEffect(forcePausePlayback, exoPlayer) {
+        val player = exoPlayer ?: return@LaunchedEffect
+        if (forcePausePlayback) {
+            if (player.isPlaying) {
+                shouldResumeAfterForcedPause = true
+            }
+            player.pause()
+        } else if (shouldResumeAfterForcedPause) {
+            if (player.playbackState == Player.STATE_READY && !player.isPlaying) {
+                player.play()
+            }
+            shouldResumeAfterForcedPause = false
+        }
+    }
 
     // Update isPlaying state and handle auto-play when player is ready
     // Skip in preview mode

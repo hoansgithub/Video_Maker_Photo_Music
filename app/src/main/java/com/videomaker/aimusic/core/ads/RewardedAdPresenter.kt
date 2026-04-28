@@ -47,6 +47,8 @@ fun RewardedAdPresenter(
     adsLoaderService: AdsLoaderService,
     onRewardEarned: () -> Unit,
     onAdFailed: () -> Unit,
+    onAdShown: (() -> Unit)? = null,
+    onAdClosed: (() -> Unit)? = null,
     loadTimeoutMs: Long = 60_000L
 ) {
     val context = LocalContext.current
@@ -54,6 +56,7 @@ fun RewardedAdPresenter(
 
     LaunchedEffect(shouldPresent) {
         if (!shouldPresent) return@LaunchedEffect
+        var adShown = false
 
         // Check if Activity is available
         if (activity == null) {
@@ -78,6 +81,8 @@ fun RewardedAdPresenter(
             }
 
             // 5. Present ad and wait for result (blocking)
+            onAdShown?.invoke()
+            adShown = true
             val result = adsLoaderService.presentRewarded(
                 placement = placement,
                 activity = activity
@@ -103,6 +108,10 @@ fun RewardedAdPresenter(
             android.util.Log.e("RewardedAdPresenter", "Unexpected error for $placement: ${e.message}", e)
             AdsLoadingState.hide()
             onAdFailed()
+        } finally {
+            if (adShown) {
+                onAdClosed?.invoke()
+            }
         }
     }
 }
