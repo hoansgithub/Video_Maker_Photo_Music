@@ -118,12 +118,10 @@ class ProjectsViewModel(
     // Rewarded ad controller for video download
     private val rewardedAdController = RewardedAdController(
         placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
-        adsLoaderService = adsLoaderService,
         viewModelScope = viewModelScope
     )
 
-    // Expose rewarded ad states
-    val showWatchAdDialog: StateFlow<Boolean> = rewardedAdController.showWatchAdDialog
+    // Expose rewarded ad state
     val shouldPresentAd: StateFlow<Boolean> = rewardedAdController.shouldPresentAd
 
     // Pending download project (stored for callback after ad)
@@ -310,22 +308,6 @@ class ProjectsViewModel(
             },
             checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_DOWNLOAD_VIDEO) }
         )
-    }
-
-    /**
-     * User dismissed watch ad dialog (clicked "Close")
-     */
-    fun onWatchAdDialogDismiss() {
-        rewardedAdController.onDialogDismiss()
-        _pendingDownloadProject.value = null
-        downloadContext = null
-    }
-
-    /**
-     * User confirmed watching ad (clicked "Watch Ad")
-     */
-    fun onWatchAdConfirmed() {
-        rewardedAdController.onDialogConfirm()
     }
 
     /**

@@ -121,7 +121,6 @@ fun EditorScreen(
     onNavigateToAddAssets: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val showQualityAdDialog by viewModel.showQualityAdDialog.collectAsStateWithLifecycle()
     val shouldPresentQualityAd by viewModel.shouldPresentQualityAd.collectAsStateWithLifecycle()
     val qualityAdError by viewModel.qualityAdError.collectAsStateWithLifecycle()
     val isQualityUnlocked by viewModel.isQualityUnlocked.collectAsStateWithLifecycle()
@@ -689,15 +688,6 @@ fun EditorScreen(
                     // Clear error state
                     previewState = com.videomaker.aimusic.modules.editor.components.PreviewState.Building
                 }
-            )
-        }
-
-        // Quality unlock watch ad dialog
-        if (showQualityAdDialog) {
-            com.videomaker.aimusic.modules.export.WatchAdDialog(
-                type = AnalyticsEvent.Value.PreviousAction.UNLOCK_QUALITY_CLICK,
-                onDismiss = viewModel::onQualityAdDialogDismiss,
-                onWatchAd = viewModel::onQualityAdConfirmed
             )
         }
 

@@ -41,12 +41,10 @@ class MusicPlayerViewModel(
     // Rewarded ad controller for song unlock
     private val rewardedAdController = RewardedAdController(
         placement = AdPlacement.REWARD_UNLOCK_SONG,
-        adsLoaderService = adsLoaderService,
         viewModelScope = viewModelScope
     )
 
-    // Expose rewarded ad states
-    val showWatchAdDialog: StateFlow<Boolean> = rewardedAdController.showWatchAdDialog
+    // Expose rewarded ad state
     val shouldPresentAd: StateFlow<Boolean> = rewardedAdController.shouldPresentAd
 
     // Check if song is unlocked
@@ -95,15 +93,6 @@ class MusicPlayerViewModel(
             // Song is unlocked or free - proceed
             onProceed()
         }
-    }
-
-    fun onWatchAdDialogDismiss() {
-        rewardedAdController.onDialogDismiss()
-        onSongUnlockedCallback = null
-    }
-
-    fun onWatchAdConfirmed() {
-        rewardedAdController.onDialogConfirm()
     }
 
     fun onRewardEarned() {

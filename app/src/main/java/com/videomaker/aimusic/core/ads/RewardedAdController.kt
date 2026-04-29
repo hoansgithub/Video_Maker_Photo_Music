@@ -1,6 +1,5 @@
 package com.videomaker.aimusic.core.ads
 
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +11,6 @@ import kotlinx.coroutines.launch
  *
  * Eliminates duplicated code across all rewarded ad placements by providing
  * a common state management and flow control for:
- * - Watch ad dialog state
  * - Ad presentation triggers
  * - Reward callback handling
  * - Error states
@@ -20,16 +18,13 @@ import kotlinx.coroutines.launch
  * Usage in ViewModel:
  * ```kotlin
  * class MyViewModel(
- *     private val adsLoaderService: AdsLoaderService,
  *     private val unlockedManager: UnlockedItemsManager
  * ) : ViewModel() {
  *     private val rewardedAdController = RewardedAdController(
  *         placement = AdPlacement.REWARD_UNLOCK_ITEM,
- *         adsLoaderService = adsLoaderService,
  *         viewModelScope = viewModelScope
  *     )
  *
- *     val showWatchAdDialog = rewardedAdController.showWatchAdDialog
  *     val shouldPresentAd = rewardedAdController.shouldPresentAd
  *
  *     fun onItemClick(item: Item) {
@@ -43,14 +38,9 @@ import kotlinx.coroutines.launch
  */
 class RewardedAdController(
     private val placement: String,
-    private val adsLoaderService: AdsLoaderService,
     private val viewModelScope: CoroutineScope
 ) {
-    // Watch ad dialog state
-    private val _showWatchAdDialog = MutableStateFlow(false)
-    val showWatchAdDialog: StateFlow<Boolean> = _showWatchAdDialog.asStateFlow()
-
-    // Trigger to present ad (set when user clicks "Watch Ad" in dialog)
+    // Trigger to present ad.
     private val _shouldPresentAd = MutableStateFlow(false)
     val shouldPresentAd: StateFlow<Boolean> = _shouldPresentAd.asStateFlow()
 
@@ -79,25 +69,8 @@ class RewardedAdController(
             return
         }
 
-        // Ad enabled - store reward action and show dialog
+        // Ad enabled - store reward action and present immediately.
         pendingRewardAction = onReward
-        _showWatchAdDialog.value = true
-    }
-
-    /**
-     * User dismissed watch ad dialog without watching
-     */
-    fun onDialogDismiss() {
-        _showWatchAdDialog.value = false
-        _shouldPresentAd.value = false
-        pendingRewardAction = null
-    }
-
-    /**
-     * User confirmed they want to watch ad - triggers ad presentation
-     */
-    fun onDialogConfirm() {
-        _showWatchAdDialog.value = false
         _shouldPresentAd.value = true
     }
 

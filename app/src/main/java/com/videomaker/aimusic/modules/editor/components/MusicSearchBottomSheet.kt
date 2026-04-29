@@ -74,7 +74,6 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.storage.UnlockedSongsManager
-import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
@@ -156,8 +155,7 @@ internal fun MusicSearchBottomSheet(
     val adsLoaderService: AdsLoaderService = koinInject()
     val screenSessionId = remember { Analytics.newScreenSessionId() }
 
-    // State for watch ad flow
-    var showWatchAdDialog by remember { mutableStateOf(false) }
+    // State for rewarded ad flow
     var shouldPresentAd by remember { mutableStateOf(false) }
     var pendingSongToUnlock by remember { mutableStateOf<MusicSong?>(null) }
     var selectedSongLocation by rememberSaveable {
@@ -178,9 +176,9 @@ internal fun MusicSearchBottomSheet(
         } ?: return
 
         if (isSongLocked(song)) {
-            // Song is locked - show watch ad dialog
+            // Song is locked - present rewarded ad directly
             pendingSongToUnlock = song
-            showWatchAdDialog = true
+            shouldPresentAd = true
         } else {
             // Song is unlocked or free - directly select
             MusicPreviewManager.clearPreviewState()
@@ -191,17 +189,6 @@ internal fun MusicSearchBottomSheet(
                 location = selectedSongLocation
             )
         }
-    }
-
-    // Watch ad dialog handlers
-    fun onWatchAdDialogDismiss() {
-        showWatchAdDialog = false
-        pendingSongToUnlock = null
-    }
-
-    fun onWatchAdConfirmed() {
-        showWatchAdDialog = false
-        shouldPresentAd = true
     }
 
     fun onRewardEarned() {
@@ -800,15 +787,6 @@ internal fun MusicSearchBottomSheet(
             AdsLoadingOverlay()
         }  // End Box
     }  // End ModalBottomSheet
-
-    // Watch ad dialog for song unlock
-    if (showWatchAdDialog) {
-        WatchAdDialog(
-            type = AnalyticsEvent.Value.PreviousAction.EDITOR_SONG_CONFIRM,
-            onDismiss = ::onWatchAdDialogDismiss,
-            onWatchAd = ::onWatchAdConfirmed
-        )
-    }
 
     // Handle rewarded ad presentation
     RewardedAdPresenter(

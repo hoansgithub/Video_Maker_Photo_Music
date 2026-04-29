@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.Slideshow
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
-import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.ui.components.AdBadge
 import com.videomaker.aimusic.ui.components.AdBadgeStyle
 import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
@@ -171,7 +170,6 @@ fun MusicPlayerBottomSheet(
     )
     val isLiked by viewModel.isLiked.collectAsStateWithLifecycle()
     val isSongUnlocked by viewModel.isSongUnlocked.collectAsStateWithLifecycle()
-    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
     val adsLoaderService = koinInject<AdsLoaderService>()
     var isPlaying  by remember { mutableStateOf(false) }
@@ -625,15 +623,6 @@ fun MusicPlayerBottomSheet(
             AdsLoadingOverlay()
         }  // End Box
     }  // End ModalBottomSheet
-
-    // Watch ad dialog for song unlock
-    if (showWatchAdDialog) {
-        WatchAdDialog(
-            type = AnalyticsEvent.Value.PreviousAction.USE_TO_CREATE,
-            onDismiss = viewModel::onWatchAdDialogDismiss,
-            onWatchAd = viewModel::onWatchAdConfirmed
-        )
-    }
 
     // Handle rewarded ad presentation
     RewardedAdPresenter(
