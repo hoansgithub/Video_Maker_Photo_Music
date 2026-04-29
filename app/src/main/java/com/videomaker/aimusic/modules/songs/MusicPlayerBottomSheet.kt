@@ -181,6 +181,7 @@ fun MusicPlayerBottomSheet(
     var hasTrackedAutoPreview by remember(song.id) { mutableStateOf(false) }
     var hasTrackedImpression by remember(song.id) { mutableStateOf(false) }
     var hasAppliedHookSeek by remember(song.id) { mutableStateOf(false) }
+    var wasPlayingBeforeAd by remember(song.id) { mutableStateOf(false) }
     val playerSessionId = remember(song.id) { Analytics.newScreenSessionId() }
 
     val context = LocalContext.current
@@ -284,15 +285,6 @@ fun MusicPlayerBottomSheet(
     }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    // Pause music when ad is about to show
-    LaunchedEffect(shouldPresentAd) {
-        if (shouldPresentAd && player.isPlaying) {
-            player.pause()
-            isPlaying = false
-            android.util.Log.d("MusicPlayerBottomSheet", "Paused music for ad presentation")
-        }
-    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -630,7 +622,21 @@ fun MusicPlayerBottomSheet(
         placement = AdPlacement.REWARD_UNLOCK_SONG,
         adsLoaderService = adsLoaderService,
         onRewardEarned = viewModel::onRewardEarned,
-        onAdFailed = viewModel::onAdFailed
+        onAdFailed = viewModel::onAdFailed,
+        onAdShown = {
+            wasPlayingBeforeAd = player.isPlaying
+            if (player.isPlaying) {
+                player.pause()
+                isPlaying = false
+                android.util.Log.d("MusicPlayerBottomSheet", "Paused music for ad presentation")
+            }
+        },
+        onAdClosed = {
+            if (wasPlayingBeforeAd) {
+                player.play()
+            }
+            wasPlayingBeforeAd = false
+        }
     )
 }
 
