@@ -343,7 +343,7 @@ private fun GalleryContent(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = topBarHeight + dimens.spaceLg,
+                    top = topBarHeight + dimens.spaceSm,  // Reduced from spaceLg to spaceSm
                     bottom = dimens.space3Xl + dimens.space2Xl
                 )
             ) {
@@ -353,7 +353,7 @@ private fun GalleryContent(
                     onClick = onSearchClick,
                     modifier = Modifier.padding(
                         horizontal = dimens.spaceLg,
-                        vertical = dimens.spaceMd
+                        vertical = dimens.spaceXs  // Reduced from spaceMd to spaceXs
                     )
                 )
             }
