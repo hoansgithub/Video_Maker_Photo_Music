@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Video Maker</string>
+    <string name="app_name">Video Maker - AI Music</string>
 
     <!-- Facebook SDK (Analytics only) -->
     <string name="facebook_app_id">2394935491027358</string>

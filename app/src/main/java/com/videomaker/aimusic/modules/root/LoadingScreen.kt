@@ -9,6 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,22 +22,31 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.theme.Black40
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+import com.videomaker.aimusic.ui.theme.WarmGradient
 
 /**
  * LoadingScreen - Initial loading screen for app startup
@@ -58,6 +68,11 @@ fun LoadingScreen(
     loadingStep: LoadingStep,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val appName = remember {
+        context.applicationInfo.loadLabel(context.packageManager).toString()
+    }
+
     val message = when (loadingStep) {
         LoadingStep.INITIALIZING -> stringResource(R.string.root_loading_initializing)
         LoadingStep.FETCHING_CONFIG -> stringResource(R.string.root_loading_fetching_config)
@@ -85,12 +100,24 @@ fun LoadingScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // App Name
-            Text(
-                text = stringResource(R.string.app_name),
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
+            // App Name with decoration - auto-scaled to fit one line
+            AutoSizeText(
+                text = appName,  // Real app name from manifest
+                maxFontSize = 32.sp,
+                minFontSize = 16.sp,
+                style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    brush = Brush.linearGradient(
+                        colors = WarmGradient  // Orange to pink gradient
+                    ),
+                    shadow = Shadow(
+                        color = Black40,  // 40% black shadow
+                        offset = Offset(3f, 3f),
+                        blurRadius = 6f
+                    ),
+                    letterSpacing = 1.5.sp
+                ),
+                modifier = Modifier.padding(horizontal = 24.dp)
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -119,6 +146,42 @@ fun LoadingScreen(
                 }
             }
         }
+    }
+}
+
+/**
+ * Auto-sizing text that scales font size to fit available width in one line
+ * Uses remember(text) to reset font size when text changes
+ */
+@Composable
+private fun AutoSizeText(
+    text: String,
+    maxFontSize: androidx.compose.ui.unit.TextUnit,
+    minFontSize: androidx.compose.ui.unit.TextUnit,
+    style: TextStyle,
+    modifier: Modifier = Modifier
+) {
+    BoxWithConstraints(modifier = modifier) {
+        var fontSize by remember(text) { mutableStateOf(maxFontSize) }
+        var readyToDraw by remember(text) { mutableStateOf(false) }
+
+        Text(
+            text = text,
+            style = style.copy(fontSize = fontSize),
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.alpha(if (readyToDraw) 1f else 0f),
+            onTextLayout = { textLayoutResult ->
+                if (textLayoutResult.hasVisualOverflow && fontSize > minFontSize) {
+                    // Reduce font size by 10% until it fits
+                    val newSize = (fontSize.value * 0.9f).sp
+                    fontSize = if (newSize >= minFontSize) newSize else minFontSize
+                } else {
+                    // Text fits or reached minimum - ready to show
+                    readyToDraw = true
+                }
+            }
+        )
     }
 }
 

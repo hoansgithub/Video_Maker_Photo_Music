@@ -67,6 +67,7 @@ import com.videomaker.aimusic.ui.theme.TextInactive
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.launch
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.constants.AdPlacement
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -133,16 +134,6 @@ fun HomeScreen(
                 popType = AnalyticsEvent.Value.PopType.SYSTEM
             )
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
-
-    // Preload template previewer native ad for faster loading
-    LaunchedEffect(Unit) {
-        try {
-            android.util.Log.d("HomeScreen", "🔄 Preloading template previewer native ad...")
-            adsLoaderService.loadNativeAd(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)
-        } catch (e: Exception) {
-            android.util.Log.e("HomeScreen", "❌ Failed to preload template previewer ad", e)
         }
     }
 

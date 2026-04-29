@@ -24,6 +24,7 @@ import org.koin.core.parameter.parametersOf
 import co.alcheclub.lib.acccore.di.koin.getAllSingletons
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.TimeoutCancellationException
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.ImageDecoderDecoder
@@ -138,8 +139,10 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                         .get<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
                     adsLoaderService.loadNative(placement)
                     android.util.Log.d("VideoMakerApp", "✅ Native ad preloaded: $placement")
+                } catch (e: AdsLoaderException) {
+                    android.util.Log.w("VideoMakerApp", "⚠️ Failed to preload native ad: $placement - ${e.message}")
                 } catch (e: Exception) {
-                    android.util.Log.w("VideoMakerApp", "⚠️ Failed to preload native ad: $placement", e)
+                    android.util.Log.e("VideoMakerApp", "⚠️ Unexpected error preloading native ad: $placement", e)
                 }
             }
         }
@@ -158,8 +161,11 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                 adsLoaderService.loadNative(placement)
                 android.util.Log.d("VideoMakerApp", "✅ Native ad preloaded: $placement")
                 true
+            } catch (e: AdsLoaderException) {
+                android.util.Log.w("VideoMakerApp", "⚠️ Failed to preload native ad: $placement - ${e.message}")
+                false
             } catch (e: Exception) {
-                android.util.Log.w("VideoMakerApp", "⚠️ Failed to preload native ad: $placement", e)
+                android.util.Log.e("VideoMakerApp", "⚠️ Unexpected error preloading native ad: $placement", e)
                 false
             }
         }

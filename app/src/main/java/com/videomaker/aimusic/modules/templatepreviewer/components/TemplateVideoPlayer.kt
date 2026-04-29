@@ -83,6 +83,7 @@ private fun ExoPlayer.releaseAsync() {
  * @param modifier Modifier for the player container
  * @param autoPlay Whether to auto-play when loaded (default: true)
  * @param loop Whether to loop the video (default: true)
+ * @param skipDebounce Skip 150ms debounce delay (use for first video on loading screen)
  * @param onError Callback when video loading fails
  * @param onVideoReady Callback when video is ready to play (STATE_READY reached)
  */
@@ -93,6 +94,7 @@ fun TemplateVideoPlayer(
     autoPlay: Boolean = true,
     loop: Boolean = true,
     showControls: Boolean = false,
+    skipDebounce: Boolean = false,
     onError: ((String) -> Unit)? = null,
     onVideoReady: (() -> Unit)? = null,
     cacheDataSourceFactory: CacheDataSource.Factory = koinInject()
@@ -335,11 +337,17 @@ fun TemplateVideoPlayer(
         player.addListener(listener)
     }
 
-    // Load and prepare video with debounce (prevents rapid creation during scroll)
-    LaunchedEffect(videoUrl) {
+    // Load and prepare video with optional debounce (prevents rapid creation during scroll)
+    LaunchedEffect(videoUrl, skipDebounce) {
         try {
             // Debounce: wait 150ms before loading to avoid rapid player creation during scroll
-            delay(150)
+            // Skip debounce for first video on loading screen (instant loading)
+            if (!skipDebounce) {
+                delay(150)
+                android.util.Log.d("TemplateVideoPlayer", "⏱️ Debounce delay (150ms) - preventing rapid scroll creation")
+            } else {
+                android.util.Log.d("TemplateVideoPlayer", "⚡ Skip debounce - instant loading for first video")
+            }
 
             android.util.Log.d("TemplateVideoPlayer", "Loading video URL: $videoUrl")
             val mediaItem = MediaItem.Builder()

@@ -716,13 +716,15 @@ private fun FeaturedTemplateCard(
                     .align(Alignment.BottomCenter)
             )
 
-            // Content tags — top-left
-            ContentTags(
-                tags = listOf(ContentTag.HOT, ContentTag.TRENDING),
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(dimens.spaceMd)
-            )
+            // Content tags — top-left (only for premium templates)
+            if (template.isPremium) {
+                ContentTags(
+                    tags = listOf(ContentTag.HOT, ContentTag.TRENDING),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(dimens.spaceMd)
+                )
+            }
 
             // Use count badge — top-right
             if (template.useCount > 0) {
@@ -901,7 +903,7 @@ private fun StaggeredTemplateGrid(
                     thumbnailPath = template.thumbnailPath,
                     aspectRatio = aspectRatio,
                     isPremium = template.isPremium,
-                    showHotTag = true,  // Show Hot tag in Gallery tab only
+                    showHotTag = template.isPremium,  // Show Hot tag only for premium templates
                     useCount = template.useCount,
                     modifier = Modifier,
                     onClick = {

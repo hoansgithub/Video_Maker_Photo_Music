@@ -6,20 +6,39 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.platform.LocalContext
+import com.videomaker.aimusic.ui.theme.BackgroundDark
+import com.videomaker.aimusic.ui.theme.Black40
+import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.SplashBackground
+import com.videomaker.aimusic.ui.theme.WarmGradient
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.notification.NotificationConversionTracker
@@ -139,16 +158,56 @@ class MainActivity : AppCompatActivity() {
                 // ✅ FIX: Show loading indicator instead of blank screen
                 // This only happens on cold start via widget/shortcut (takes ~3-5 seconds)
                 VideoMakerTheme {
-                    Surface(modifier = Modifier.fillMaxSize()) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
                         Box(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            SplashBackground,
+                                            BackgroundDark
+                                        )
+                                    )
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator()
-                            Text(
-                                text = stringResource(R.string.loading),
-                                modifier = Modifier.padding(top = 80.dp)
-                            )
+                            val context = LocalContext.current
+                            val appName = remember {
+                                context.applicationInfo.loadLabel(context.packageManager).toString()
+                            }
+
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                // Decorated app name with gradient and shadow - auto-scaled to fit one line
+                                AutoSizeText(
+                                    text = appName,  // Get real app name from ApplicationInfo
+                                    maxFontSize = 48.sp,
+                                    minFontSize = 24.sp,
+                                    style = TextStyle(
+                                        fontWeight = FontWeight.Bold,
+                                        brush = Brush.linearGradient(
+                                            colors = WarmGradient  // Orange to pink gradient from theme
+                                        ),
+                                        shadow = Shadow(
+                                            color = Black40,  // 40% black shadow from theme
+                                            offset = Offset(4f, 4f),
+                                            blurRadius = 8f
+                                        ),
+                                        letterSpacing = 2.sp
+                                    ),
+                                    modifier = Modifier.padding(horizontal = 24.dp)
+                                )
+
+                                Spacer(modifier = Modifier.height(32.dp))
+
+                                CircularProgressIndicator(
+                                    color = Primary  // App tint color from theme
+                                )
+                            }
                         }
                     }
                 }
@@ -237,6 +296,42 @@ class MainActivity : AppCompatActivity() {
         )
         runCatching {
             notificationConversionTracker.recordTap(type = type, itemId = itemId, tappedAtMs = tappedAt)
+        }
+    }
+
+    /**
+     * Auto-sizing text that scales font size to fit available width in one line
+     * Uses remember(text) to reset font size when text changes
+     */
+    @Composable
+    private fun AutoSizeText(
+        text: String,
+        maxFontSize: androidx.compose.ui.unit.TextUnit,
+        minFontSize: androidx.compose.ui.unit.TextUnit,
+        style: TextStyle,
+        modifier: Modifier = Modifier
+    ) {
+        BoxWithConstraints(modifier = modifier) {
+            var fontSize by remember(text) { mutableStateOf(maxFontSize) }
+            var readyToDraw by remember(text) { mutableStateOf(false) }
+
+            Text(
+                text = text,
+                style = style.copy(fontSize = fontSize),
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.alpha(if (readyToDraw) 1f else 0f),
+                onTextLayout = { textLayoutResult ->
+                    if (textLayoutResult.hasVisualOverflow && fontSize > minFontSize) {
+                        // Reduce font size by 10% until it fits
+                        val newSize = (fontSize.value * 0.9f).sp
+                        fontSize = if (newSize >= minFontSize) newSize else minFontSize
+                    } else {
+                        // Text fits or reached minimum - ready to show
+                        readyToDraw = true
+                    }
+                }
+            )
         }
     }
 

@@ -232,25 +232,24 @@ fun TemplatePreviewerScreen(
         onAdFailed = viewModel::onAdFailed
     )
 
-    // Track ad and video loading state (declared early so it can be used in lifecycle observers)
-    var adReady by remember { mutableStateOf(false) }
-    var loadingAdComplete by remember { mutableStateOf(false) }
+    // Track loading state
+    var showLoadingOverlay by remember { mutableStateOf(true) }
     var firstVideoReady by remember { mutableStateOf(false) }
-    var loadingVideoComplete by remember { mutableStateOf(false) }
 
-    // Ad loading with timeout:
-    // - Wait up to 10s for ad to load
-    // - When ad loads: wait 1s for impression, then proceed
-    // - If timeout (10s): proceed immediately
-    // - Maximum total: 10s (timeout) + 1s (display) = 11s
+    // Loading overlay timing:
+    // - Video starts buffering immediately (in TemplatePreviewerReadyContent below)
+    // - Wait for ad to be ready (up to 10s timeout)
+    // - Show ad for 2 seconds (impression + user sees it)
+    // - Video will be ready by then (loads in ~1s in background)
     LaunchedEffect(Unit) {
         val startTime = System.currentTimeMillis()
+        var adReady = false
 
-        // Check if ad is already loaded
+        // Check if ad is already loaded (cached from preload)
         adReady = adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)
 
         if (adReady) {
-            android.util.Log.d("TemplatePreviewerLoading", "✅ Ad already loaded (preload successful)")
+            android.util.Log.d("TemplatePreviewerLoading", "✅ Ad already cached - showing for 2s")
         } else {
             android.util.Log.d("TemplatePreviewerLoading", "⏳ Ad not ready, polling...")
 
@@ -267,43 +266,31 @@ fun TemplatePreviewerScreen(
             }
         }
 
+        // Show ad for 2 seconds when ready (impression + visibility)
         if (adReady) {
-            android.util.Log.d("TemplatePreviewerLoading", "📊 Ad ready - showing for 1 more second")
-            delay(1_000) // Show ad for 1 second after ready
+            android.util.Log.d("TemplatePreviewerLoading", "📊 Ad ready - showing for 2s (impression + display)")
+            delay(2_000) // Show for 2 seconds
         } else {
             android.util.Log.d("TemplatePreviewerLoading", "⏱️ Ad timeout (10s) - proceeding immediately")
         }
 
-        loadingAdComplete = true
-    }
+        val totalTime = System.currentTimeMillis() - startTime
+        android.util.Log.d("TemplatePreviewerLoading", "✅ LOADING COMPLETE (${totalTime}ms)")
 
-    // First video loading with timeout:
-    // - Wait up to 10s for first video to be ready
-    // - If timeout: proceed anyway (video will load in background)
-    LaunchedEffect(Unit) {
-        val startTime = System.currentTimeMillis()
-        android.util.Log.d("TemplatePreviewerLoading", "⏳ Waiting for first video to load...")
-
-        // Wait for video ready callback or timeout (10s)
-        while (!firstVideoReady && (System.currentTimeMillis() - startTime) < 10_000) {
-            delay(500) // Check every 500ms
-        }
-
+        // Log video status
         if (firstVideoReady) {
-            val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000.0
-            android.util.Log.d("TemplatePreviewerLoading", "✅ First video ready after ${elapsedSeconds}s")
+            android.util.Log.d("TemplatePreviewerLoading", "✅ First video is ready")
         } else {
-            android.util.Log.d("TemplatePreviewerLoading", "⏱️ Video timeout (10s) - proceeding (video will load in background)")
+            android.util.Log.d("TemplatePreviewerLoading", "⏳ First video still loading (will continue in background)")
         }
 
-        loadingVideoComplete = true
+        showLoadingOverlay = false
     }
 
-    // Show notification permission dialog only after BOTH ad and video loading complete
-    LaunchedEffect(uiState, loadingAdComplete, loadingVideoComplete) {
+    // Show notification permission dialog only after loading complete
+    LaunchedEffect(uiState, showLoadingOverlay) {
         if (uiState is TemplatePreviewerUiState.Ready &&
-            loadingAdComplete &&
-            loadingVideoComplete &&
+            !showLoadingOverlay &&
             notificationPermissionCoordinator.shouldShowTemplatePreviewerContextualPopup(context)
         ) {
             if (notificationPermissionCoordinator.shouldShowSettingsGuide(context)) {
@@ -326,7 +313,7 @@ fun TemplatePreviewerScreen(
     }
 
     // Pause/resume on app background
-    DisposableEffect(lifecycleOwner, loadingAdComplete, pendingPermissionCheckAfterSettings) {
+    DisposableEffect(lifecycleOwner, showLoadingOverlay, pendingPermissionCheckAfterSettings) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
@@ -351,8 +338,9 @@ fun TemplatePreviewerScreen(
             LoadingStateWithAd()
         }
         is TemplatePreviewerUiState.Ready -> {
-            // Only show Ready content after BOTH ad and video loading complete
-            if (loadingAdComplete && loadingVideoComplete) {
+            // Show content immediately so video starts buffering
+            // Loading overlay will be shown on top until ad display completes
+            Box(modifier = Modifier.fillMaxSize()) {
                 TemplatePreviewerReadyContent(
                     state = state,
                     likedTemplateIds = likedTemplateIds,
@@ -365,9 +353,11 @@ fun TemplatePreviewerScreen(
                     onNavigateBack = viewModel::onNavigateBack,
                     onFirstVideoReady = { firstVideoReady = true }
                 )
-            } else {
-                // Keep showing loading state with ad until BOTH complete
-                LoadingStateWithAd()
+
+                // Show loading overlay on top until ad display completes
+                if (showLoadingOverlay) {
+                    LoadingStateWithAd()
+                }
             }
         }
         is TemplatePreviewerUiState.Error -> {
@@ -1144,6 +1134,7 @@ private fun TemplateThumbnailPage(
                 autoPlay = isCurrentPage,  // Only play when visible
                 loop = true,
                 showControls = false,
+                skipDebounce = onVideoReady != null,  // Skip 150ms delay for first video only
                 onVideoReady = onVideoReady  // Notify when video is ready (for first video tracking)
             )
         } else {
