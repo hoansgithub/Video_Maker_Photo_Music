@@ -124,12 +124,10 @@ class EditorViewModel(
     // Rewarded ad controller for quality unlock
     private val qualityAdController = RewardedAdController(
         placement = AdPlacement.REWARD_UNLOCK_QUALITY,
-        adsLoaderService = adsLoaderService,
         viewModelScope = viewModelScope
     )
 
-    // Expose quality ad states
-    val showQualityAdDialog: StateFlow<Boolean> = qualityAdController.showWatchAdDialog
+    // Expose quality ad state
     val shouldPresentQualityAd: StateFlow<Boolean> = qualityAdController.shouldPresentAd
 
     // Error message for ad failures
@@ -1341,7 +1339,7 @@ class EditorViewModel(
 
     /**
      * Handle Done button click.
-     * If quality is locked, show watch ad dialog.
+     * If quality is locked, present rewarded ad.
      * If unlocked, proceed to export.
      */
     fun onDoneClick() {
@@ -1369,20 +1367,6 @@ class EditorViewModel(
             // Quality unlocked or free - proceed to export
             navigateToExport()
         }
-    }
-
-    /**
-     * User dismissed quality ad dialog (clicked "Close")
-     */
-    fun onQualityAdDialogDismiss() {
-        qualityAdController.onDialogDismiss()
-    }
-
-    /**
-     * User confirmed watching ad (clicked "Watch Ad")
-     */
-    fun onQualityAdConfirmed() {
-        qualityAdController.onDialogConfirm()
     }
 
     /**

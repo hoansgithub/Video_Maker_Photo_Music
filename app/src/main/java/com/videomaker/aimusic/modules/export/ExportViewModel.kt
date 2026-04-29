@@ -182,12 +182,10 @@ class ExportViewModel(
     // Rewarded ad controller for video download
     private val downloadAdController = RewardedAdController(
         placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
-        adsLoaderService = adsLoaderService,
         viewModelScope = viewModelScope
     )
 
-    // Expose download ad states
-    val showWatchAdDialog: StateFlow<Boolean> = downloadAdController.showWatchAdDialog
+    // Expose download ad state
     val shouldPresentDownloadAd: StateFlow<Boolean> = downloadAdController.shouldPresentAd
 
     // Pending download request - stored when user initiates download
@@ -200,12 +198,10 @@ class ExportViewModel(
     // Rewarded ad controller for watermark removal
     private val watermarkAdController = RewardedAdController(
         placement = AdPlacement.REWARD_REMOVE_WATERMARK,
-        adsLoaderService = adsLoaderService,
         viewModelScope = viewModelScope
     )
 
-    // Expose watermark ad states
-    val showWatermarkAdDialog: StateFlow<Boolean> = watermarkAdController.showWatchAdDialog
+    // Expose watermark ad state
     val shouldPresentWatermarkAd: StateFlow<Boolean> = watermarkAdController.shouldPresentAd
 
     // ============================================
@@ -632,7 +628,7 @@ class ExportViewModel(
 
     /**
      * Called when user initiates download (clicks download button)
-     * Shows watch ad dialog or proceeds directly if ad disabled
+     * Presents rewarded ad or proceeds directly if ad disabled
      *
      * @param applicationContext Application context for download
      * @param loadingMessage Localized message for loading state
@@ -673,21 +669,6 @@ class ExportViewModel(
     }
 
     /**
-     * Called when user dismisses watch ad dialog (clicks "Close")
-     */
-    fun onWatchAdDialogDismiss() {
-        downloadAdController.onDialogDismiss()
-        pendingDownloadRequest = null
-    }
-
-    /**
-     * Called when user confirms watching ad (clicks "Watch Ad")
-     */
-    fun onWatchAdConfirmed() {
-        downloadAdController.onDialogConfirm()
-    }
-
-    /**
      * Called by UI after user earns reward from watching download ad
      */
     fun onDownloadRewardEarned() {
@@ -708,7 +689,7 @@ class ExportViewModel(
 
     /**
      * Called when user clicks watermark overlay
-     * Shows watermark ad dialog or removes watermark immediately if ad disabled
+     * Presents rewarded ad or removes watermark immediately if ad disabled
      */
     fun onWatermarkClick() {
         watermarkAdController.requestAd(
@@ -738,20 +719,6 @@ class ExportViewModel(
         android.util.Log.d("ExportViewModel", "❌ User dismissed watermark without watching ad")
         // Watermark stays visible, just closes the overlay
         // User can click it again later to watch ad
-    }
-
-    /**
-     * Called when user dismisses watermark ad dialog (clicks "Close")
-     */
-    fun onWatermarkAdDialogDismiss() {
-        watermarkAdController.onDialogDismiss()
-    }
-
-    /**
-     * Called when user confirms watching watermark ad (clicks "Watch Ad")
-     */
-    fun onWatermarkAdConfirmed() {
-        watermarkAdController.onDialogConfirm()
     }
 
     /**

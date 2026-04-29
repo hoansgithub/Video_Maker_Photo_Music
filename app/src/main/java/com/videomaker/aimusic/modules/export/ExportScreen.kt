@@ -205,10 +205,8 @@ fun ExportScreen(
     val featuredTemplatesState by viewModel.featuredTemplatesState.collectAsStateWithLifecycle()
     val saveToastState by viewModel.saveToastState.collectAsStateWithLifecycle()
     val ratingStep by viewModel.ratingStep.collectAsStateWithLifecycle()
-    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
     val shouldPresentDownloadAd by viewModel.shouldPresentDownloadAd.collectAsStateWithLifecycle()
     val showWatermark by viewModel.showWatermark.collectAsStateWithLifecycle()
-    val showWatermarkAdDialog by viewModel.showWatermarkAdDialog.collectAsStateWithLifecycle()
     val shouldPresentWatermarkAd by viewModel.shouldPresentWatermarkAd.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
@@ -534,15 +532,6 @@ fun ExportScreen(
             }
         }
 
-        // Watch ad dialog for download
-        if (showWatchAdDialog) {
-            WatchAdDialog(
-                type = AnalyticsEvent.Value.PreviousAction.DOWNLOAD_CLICK,
-                onDismiss = viewModel::onWatchAdDialogDismiss,
-                onWatchAd = viewModel::onWatchAdConfirmed
-            )
-        }
-
         // Handle download ad presentation using reusable presenter
         RewardedAdPresenter(
             shouldPresent = shouldPresentDownloadAd,
@@ -553,15 +542,6 @@ fun ExportScreen(
             onAdShown = { pauseSuccessPreviewForAd = true },
             onAdClosed = { pauseSuccessPreviewForAd = false }
         )
-
-        // Watermark ad dialog
-        if (showWatermarkAdDialog) {
-            WatchAdDialog(
-                type = AnalyticsEvent.Value.PreviousAction.REMOVE_WATERMARK_CLICK,
-                onDismiss = viewModel::onWatermarkAdDialogDismiss,
-                onWatchAd = viewModel::onWatermarkAdConfirmed
-            )
-        }
 
         // Handle watermark ad presentation using reusable presenter
         RewardedAdPresenter(

@@ -118,12 +118,10 @@ class TemplatePreviewerViewModel(
     // Rewarded ad controller for template unlock
     private val rewardedAdController = RewardedAdController(
         placement = AdPlacement.REWARD_UNLOCK_TEMPLATE,
-        adsLoaderService = adsLoaderService,
         viewModelScope = viewModelScope
     )
 
-    // Expose rewarded ad states
-    val showWatchAdDialog: StateFlow<Boolean> = rewardedAdController.showWatchAdDialog
+    // Expose rewarded ad state
     val shouldPresentAd: StateFlow<Boolean> = rewardedAdController.shouldPresentAd
 
     // Pending template to unlock (set when dialog shows)
@@ -225,7 +223,7 @@ class TemplatePreviewerViewModel(
 
     /**
      * Called when user selects a ratio for a locked template
-     * - If ad is enabled: show WatchAdDialog
+     * - If ad is enabled: present rewarded ad
      * - If ad is disabled: unlock directly and navigate
      */
     fun onRatioSelected(template: VideoTemplate, selectedRatio: AspectRatio) {
@@ -254,18 +252,6 @@ class TemplatePreviewerViewModel(
             },
             checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_TEMPLATE) }
         )
-    }
-
-    /** User dismissed watch ad dialog without watching */
-    fun onWatchAdDialogDismiss() {
-        rewardedAdController.onDialogDismiss()
-        _pendingUnlockTemplate.value = null
-        _pendingSelectedRatio.value = null
-    }
-
-    /** User confirmed they want to watch ad - triggers ad presentation */
-    fun onWatchAdConfirmed() {
-        rewardedAdController.onDialogConfirm()
     }
 
     /** Rewarded ad completed successfully - unlock template and navigate */

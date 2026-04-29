@@ -77,7 +77,6 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
-import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
@@ -134,7 +133,6 @@ fun ProjectsTabContent(
     val activity = context as? Activity
 
     // Ad states
-    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
 
     LaunchedEffect(showRemovedMessage) {
@@ -489,15 +487,6 @@ fun ProjectsTabContent(
         // Z-ordering: Last declared composable in Box appears on top layer
         // This ensures loading overlay blocks all interactions during ad loading
         com.videomaker.aimusic.ui.components.AdsLoadingOverlay()
-    }
-
-    // Watch ad dialog for download
-    if (showWatchAdDialog) {
-        WatchAdDialog(
-            type = AnalyticsEvent.Value.PreviousAction.DOWNLOAD_CLICK,
-            onDismiss = viewModel::onWatchAdDialogDismiss,
-            onWatchAd = viewModel::onWatchAdConfirmed
-        )
     }
 
     // Handle rewarded ad presentation using reusable presenter

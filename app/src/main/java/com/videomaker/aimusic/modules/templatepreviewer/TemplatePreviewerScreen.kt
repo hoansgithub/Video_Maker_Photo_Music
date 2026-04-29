@@ -87,7 +87,6 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
-import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.ui.components.AdBadge
 import com.videomaker.aimusic.ui.components.AdBadgeStyle
 import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
@@ -141,8 +140,6 @@ fun TemplatePreviewerScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val likedTemplateIds by viewModel.likedTemplateIds.collectAsStateWithLifecycle()
     val unlockedTemplateIds by viewModel.unlockedTemplateIds.collectAsStateWithLifecycle()
-    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
-    val pendingUnlockTemplate by viewModel.pendingUnlockTemplate.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -391,18 +388,6 @@ fun TemplatePreviewerScreen(
                 }
             }
         }
-    }
-
-    // Watch ad dialog
-    if (showWatchAdDialog) {
-        WatchAdDialog(
-            type = AnalyticsEvent.Value.PreviousAction.UNLOCK_TEMPLATE_CLICK,
-            onDismiss = viewModel::onWatchAdDialogDismiss,
-            onWatchAd = {
-                // Set pending template - LaunchedEffect will handle ad presentation
-                viewModel.onWatchAdConfirmed()
-            }
-        )
     }
 
     if (showNotificationPromoDialog) {
