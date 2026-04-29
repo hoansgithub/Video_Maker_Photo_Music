@@ -364,7 +364,7 @@ class AdPlacementConfigService(
 
         // Template previewer loading state native ad (shown during loading)
         // Displayed at bottom with "Building Your Feed" message
-        // 10s timeout + 2s display = 12s minimum loading time
+        // 10s timeout + 1s display = 11s maximum loading time
         // Layout: native_big_bait (large vertical layout with clickbait CTA)
         // Waterfall: Primary unit → Secondary unit
         registerNativePlacement(

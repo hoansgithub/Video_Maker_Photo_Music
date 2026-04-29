@@ -240,8 +240,9 @@ fun TemplatePreviewerScreen(
 
     // Ad loading with timeout:
     // - Wait up to 10s for ad to load
-    // - When ad loads: wait 2s for impression, then proceed
+    // - When ad loads: wait 1s for impression, then proceed
     // - If timeout (10s): proceed immediately
+    // - Maximum total: 10s (timeout) + 1s (display) = 11s
     LaunchedEffect(Unit) {
         val startTime = System.currentTimeMillis()
 
@@ -267,8 +268,8 @@ fun TemplatePreviewerScreen(
         }
 
         if (adReady) {
-            android.util.Log.d("TemplatePreviewerLoading", "📊 Ad ready - showing for 2 more seconds")
-            delay(2_000) // Show ad for 2 seconds after ready
+            android.util.Log.d("TemplatePreviewerLoading", "📊 Ad ready - showing for 1 more second")
+            delay(1_000) // Show ad for 1 second after ready
         } else {
             android.util.Log.d("TemplatePreviewerLoading", "⏱️ Ad timeout (10s) - proceeding immediately")
         }
@@ -492,7 +493,7 @@ private fun LoadingStateWithAd() {
         }
 
         // Native ad at bottom
-        // Loads during 10s + displays for 2s more = 12s total
+        // Loads during 10s + displays for 1s more = 11s maximum
         Column(
             modifier = Modifier
                 .fillMaxWidth()
