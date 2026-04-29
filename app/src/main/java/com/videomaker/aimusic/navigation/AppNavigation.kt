@@ -79,6 +79,12 @@ import com.videomaker.aimusic.widget.WidgetScreen
 
 private val slideAnimSpec = tween<IntOffset>(300)
 
+internal fun createVideoEntryRoute(): AppRoute.TemplatePreviewer = AppRoute.TemplatePreviewer(
+    templateId = "",
+    imageUris = emptyList(),
+    sourceLocation = AnalyticsEvent.Value.Location.SHORTCUT_CREATE_VIDEO
+)
+
 /**
  * Safe back navigation helper - prevents NavDisplay crash from empty backstack
  * CRITICAL: NavDisplay requires at least 1 route in backstack at all times
@@ -202,7 +208,7 @@ fun AppNavigation(
                 }
             }
             WidgetActions.ACTION_CREATE_VIDEO -> {
-                backStack.add(AppRoute.AssetPicker())
+                backStack.add(createVideoEntryRoute())
             }
             NotificationDeepLinkFactory.ACTION_NOTIF_TRENDING_SONG -> {
                 val songId = intent.getLongExtra(NotificationDeepLinkFactory.EXTRA_SONG_ID, -1L)
