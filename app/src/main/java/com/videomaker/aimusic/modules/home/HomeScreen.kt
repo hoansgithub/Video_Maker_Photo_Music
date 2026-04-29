@@ -127,13 +127,26 @@ fun HomeScreen(
         Analytics.trackPermissionCheck(allow = granted)
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect("notification_permission") {
         if (notificationPermissionCoordinator.shouldRequestHomeFirstTimePermission(context)) {
             Analytics.trackPermissionRender(
                 perType = AnalyticsEvent.Value.PerType.NOTI,
                 popType = AnalyticsEvent.Value.PopType.SYSTEM
             )
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    // Preload template previewer ad while user is on home screen
+    LaunchedEffect("ad_preload") {
+        try {
+            adsLoaderService.loadNative(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)
+        } catch (e: AdsLoaderException) {
+            // Ad failed to load - not critical, user can still use the app
+            android.util.Log.w("HomeScreen", "Failed to preload template previewer ad: ${e.message}")
+        } catch (e: Exception) {
+            // Unexpected error - log but don't crash
+            android.util.Log.e("HomeScreen", "Unexpected error preloading ad: ${e.message}", e)
         }
     }
 

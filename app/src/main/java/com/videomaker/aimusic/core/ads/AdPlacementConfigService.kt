@@ -364,7 +364,7 @@ class AdPlacementConfigService(
 
         // Template previewer loading state native ad (shown during loading)
         // Displayed at bottom with "Building Your Feed" message
-        // Timing: 2s display (no preload - loads on-demand, video buffers in parallel)
+        // Timing: 2s display (preloaded at home launch, video buffers in parallel)
         // Layout: native_big_bait (large vertical layout with clickbait CTA)
         // Waterfall: Primary unit → Secondary unit
         registerNativePlacement(
