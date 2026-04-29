@@ -98,6 +98,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.runtime.Immutable
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
 
 // ============================================
@@ -617,10 +618,8 @@ private fun StationSongsSection(
                             // Native ad item (horizontal row, matches song items)
                             NativeAdView(
                                 placement = AdPlacement.NATIVE_SONGS_STATION,
-                                modifier = Modifier.padding(
-                                    horizontal = dimens.spaceLg,
-                                    vertical = dimens.spaceXs
-                                )
+                                modifier = Modifier.fillMaxWidth(),
+                                isDebug = BuildConfig.DEBUG
                             )
                         }
                     }

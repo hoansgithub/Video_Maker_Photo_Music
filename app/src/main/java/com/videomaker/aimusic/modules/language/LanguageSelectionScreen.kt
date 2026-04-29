@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -68,6 +70,7 @@ import com.videomaker.aimusic.ui.theme.White20
 import com.videomaker.aimusic.ui.theme.White40
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.featureselection.EVENT_GENRE_SHOW
 import kotlinx.coroutines.delay
@@ -145,7 +148,11 @@ fun LanguageSelectionScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .windowInsetsPadding(
+                WindowInsets.safeDrawing.only(
+                    WindowInsetsSides.Horizontal + WindowInsetsSides.Top
+                )
+            )
     ) {
         // Scrollable content with dynamic bottom padding
         Column(
@@ -248,7 +255,6 @@ fun LanguageSelectionScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 24.dp, vertical = 16.dp)
                 .onSizeChanged { size ->
                     bottomSectionHeight = size.height  // Measure actual height dynamically!
                 }
@@ -256,7 +262,8 @@ fun LanguageSelectionScreen(
             // ALT ad - bottom layer, always at full opacity
             NativeAdView(
                 placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isDebug = BuildConfig.DEBUG
             )
 
             // PRIMARY ad - top layer, fades out when user selects
@@ -264,7 +271,8 @@ fun LanguageSelectionScreen(
                 placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .alpha(if (delayedHasSelection) 0f else 1f)
+                    .alpha(if (delayedHasSelection) 0f else 1f),
+                isDebug = BuildConfig.DEBUG
             )
         }
 

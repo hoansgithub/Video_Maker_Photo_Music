@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -314,7 +315,8 @@ fun WidgetScreen(
             // Native Ad at bottom (auto height - TOP PRIORITY)
             NativeAdView(
                 placement = AdPlacement.NATIVE_WIDGET_BOTTOM,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isDebug = BuildConfig.DEBUG
             )
         }
     }

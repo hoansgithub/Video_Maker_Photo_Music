@@ -14,6 +14,7 @@ import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -826,7 +827,8 @@ private fun ProcessingContent(
             // Native ad at bottom (edge-to-edge, no horizontal padding)
             NativeAdView(
                 placement = AdPlacement.NATIVE_EXPORT_GENERATING,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isDebug = BuildConfig.DEBUG
             )
         }
     }

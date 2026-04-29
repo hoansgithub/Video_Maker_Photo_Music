@@ -108,6 +108,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.Immutable
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
 
 // ============================================
@@ -917,7 +918,8 @@ private fun StaggeredTemplateGrid(
                 // Native ad card (9:16 portrait, matches template cards)
                 NativeAdView(
                     placement = AdPlacement.NATIVE_GALLERY_GRID,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
                 )
             }
         }

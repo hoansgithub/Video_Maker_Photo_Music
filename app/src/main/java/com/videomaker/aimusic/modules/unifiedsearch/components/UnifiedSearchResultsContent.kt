@@ -48,6 +48,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -130,7 +131,8 @@ fun UnifiedSearchResultsContent(
                 android.util.Log.d("UnifiedSearch", "🔵 Composing NativeAdView (Results)")
                 NativeAdView(
                     placement = AdPlacement.NATIVE_SEARCH_INFEED,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
                 )
             }
         }

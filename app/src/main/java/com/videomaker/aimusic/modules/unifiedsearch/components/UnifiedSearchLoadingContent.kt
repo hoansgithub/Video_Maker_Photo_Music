@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -62,7 +63,8 @@ fun UnifiedSearchLoadingContent(
                     android.util.Log.d("UnifiedSearch", "🔵 Composing NativeAdView (Loading)")
                     NativeAdView(
                         placement = AdPlacement.NATIVE_SEARCH_INFEED,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        isDebug = BuildConfig.DEBUG
                     )
                 }
             }

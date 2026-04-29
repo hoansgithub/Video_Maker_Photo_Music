@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
@@ -813,7 +814,8 @@ private fun ProjectsStaggeredGrid(
             is ProjectGridItem.AdItem -> {
                 NativeAdView(
                     placement = AdPlacement.NATIVE_PROJECTS_GRID,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
                 )
             }
         }

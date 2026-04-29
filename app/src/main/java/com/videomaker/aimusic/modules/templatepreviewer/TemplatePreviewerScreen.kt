@@ -79,6 +79,7 @@ import androidx.compose.ui.unit.sp
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.R
 import kotlinx.coroutines.delay
@@ -499,7 +500,8 @@ private fun LoadingStateWithAd() {
         ) {
             NativeAdView(
                 placement = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isDebug = BuildConfig.DEBUG
             )
         }
     }
