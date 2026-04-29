@@ -363,6 +363,7 @@ object AnalyticsEvent {
             const val LIBRARY_RCM = "library_rcm"
             const val RESULT_RCM = "result_rcm"
             const val SEARCH_RESULT = "search_result"
+            const val SHORTCUT_CREATE_VIDEO = "shortcut_create_video"
             const val SEARCH_RCM = "search_rcm"
             const val TEMPLATE_FAVORITE = "template_favorite"
             const val SONG_FAVORITE = "song_favorite"
