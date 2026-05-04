@@ -41,6 +41,7 @@ data class ProjectSettings(
     // COMMON SETTINGS
     // ============================================
     val effectSetId: String? = "dreamy_vibes", // Default effect set
+    val templateId: String? = null, // Null means no template selected
     val overlayFrameId: String? = null,
     val musicSongId: Long? = null,
     val musicSongName: String? = null, // Cached for display only

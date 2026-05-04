@@ -22,6 +22,7 @@ data class ProjectEntity(
     // Settings (embedded for simplicity)
     val totalDurationMs: Long = 0L,
     val effectSetId: String? = "dreamy_vibes",
+    val templateId: String? = null,
     val overlayFrameId: String? = null,
     val musicSongId: Long? = null,
     val musicSongName: String? = null, // Cached song name for display

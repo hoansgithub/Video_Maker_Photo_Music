@@ -412,6 +412,7 @@ class EditorViewModel(
                     hookStartTimeMs = hookStartTimeMs,
                     totalDurationMs = totalDurationMs,
                     effectSetId = effectSetId,  // Use fetched effect set (or provided one)
+                    templateId = data.templateId,
                     musicSongId = data.musicSongId,
                     musicSongName = song?.name, // For display in UI
                     musicSongUrl = song?.mp3Url, // For playback (same URL as previewer)

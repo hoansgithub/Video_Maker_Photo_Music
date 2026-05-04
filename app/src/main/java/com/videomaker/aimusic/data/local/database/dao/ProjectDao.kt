@@ -50,6 +50,7 @@ interface ProjectDao {
         UPDATE projects SET
             totalDurationMs = :totalDurationMs,
             effectSetId = :effectSetId,
+            templateId = :templateId,
             overlayFrameId = :overlayFrameId,
             musicSongId = :musicSongId,
             musicSongName = :musicSongName,
@@ -66,6 +67,7 @@ interface ProjectDao {
         id: String,
         totalDurationMs: Long,
         effectSetId: String?,
+        templateId: String?,
         overlayFrameId: String?,
         musicSongId: Long?,
         musicSongName: String?,

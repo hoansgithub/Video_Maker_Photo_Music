@@ -798,6 +798,7 @@ class AssetPickerViewModel(
                                 val initialData = EditorInitialData(
                                     imageUris = uris.map { it.toString() },
                                     effectSetId = template.effectSetId,
+                                    templateId = template.id,
                                     musicSongId = songId,
                                     musicSongName = songName,
                                     aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio),
@@ -821,6 +822,7 @@ class AssetPickerViewModel(
                         initialData = EditorInitialData(
                             imageUris = uris.map { it.toString() },
                             effectSetId = null,  // Editor will fetch first effect set from Supabase
+                            templateId = null,
                             musicSongId = overrideSongId,
                             musicSongName = null,  // Will be loaded by editor
                             aspectRatio = AspectRatio.RATIO_9_16,
@@ -843,7 +845,8 @@ class AssetPickerViewModel(
                     // Create mode - create new project (beat-sync only)
                     // Duration will be calculated from beat-sync data in Editor
                     val settings = ProjectSettings(
-                        totalDurationMs = 0L
+                        totalDurationMs = 0L,
+                        templateId = null
                     )
 
                     createProjectUseCase(uris, settings)
