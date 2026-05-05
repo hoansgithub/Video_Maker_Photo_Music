@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Video Maker - AI Music</string>
+
+    <!-- Facebook SDK (Analytics only) -->
+    <string name="facebook_app_id">2394935491027358</string>
+    <string name="facebook_client_token">59adbbae92079f20f43d002f331d8e9d</string>
+
+    <!-- Loading -->
+    <string name="loading">Na-ebugharị…</string>
+    <string name="ad_loading">Na-ebugharị mgbasa ozi…</string>
+
+    <!-- Language Selection -->
+    <string name="language_select_title">Họrọ Asụsụ</string>
+    <string name="language_select_subtitle">Biko họrọ asụsụ nke ngosipụta.</string>
+    <string name="language_continue">Gaa n\'ihu</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Ọzọ</string>
+    <string name="onboarding_get_started">Bido</string>
+    <!-- Page 1 -->
+    <string name="onboarding_page1_title">Mepụta Ihe Ọgụgọ N\'ime Sekọnd</string>
+    <string name="onboarding_page1_subtitle">Video dị mma n\'ọtụtụ tapụ. Dị mfe ma osiso</string>
+    <!-- Page 2 -->
+    <string name="onboarding_page2_title">Chọta Ọkọlọtọ Gị</string>
+    <string name="onboarding_page2_subtitle">Ụda ndị na-asọmpi maka ọ bụ ụdị uche</string>
+    <!-- Page 3 -->
+    <string name="onboarding_page3_title">Mma Ọ Bụ Ọnụ!</string>
+    <string name="onboarding_page3_subtitle">Mma ọ bụ ọnụ. Kpọọ ndị enyi ị bụrụ ọchị</string>
+    <string name="onboarding_swipe_next">Kụọ aka gaa n\'ihu</string>
+    <string name="onboarding_exit_title">Pụọ na Nchịkwa?</string>
+    <string name="onboarding_exit_message">Ị nwere ike ịgbanwe nhọrọ gị mgbe ọ bụla ka emeso n\'ime Ntọala.</string>
+    <string name="onboarding_exit_confirm">Pụọ</string>
+    <string name="onboarding_exit_dismiss">Gaa n\'ihu</string>
+    <string name="root_no_internet_title">Enweghị Njikọ Internet</string>
+    <string name="root_no_internet_message">Ngwaọrụ gị adịghị n\'ịntanetị ugbu a. Biko jikọọ ọzọ ị gagharị ịgagharị</string>
+    <string name="root_try_again">Nwaa Ọzọ</string>
+    <string name="root_loading_initializing">Na-ebido…</string>
+    <string name="root_loading_fetching_config">Na-ebugharị nhazi…</string>
+    <string name="root_loading_ad">Nke a nwere ike ịnweta mgbasa ozi</string>
+    <string name="root_loading_checking_status">Na-elele ọnọdụ…</string>
+    <string name="root_loading_preparing">Na-akwado…</string>
+
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">Ụlọ Ihe Ngosi</string>
+    <string name="home_tab_songs">Abụ</string>
+    <string name="home_tab_projects">Ọba Akwụkwọ</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_filter_for_you">Maka gị</string>
+    <string name="gallery_hot_songs">Abụ Ọkụ</string>
+    <string name="gallery_templates">Ụkpụrụ</string>
+    <string name="gallery_coming_soon">Ọ Na-abịa N\'oge</string>
+    <string name="gallery_search_hint">Chọọ ụdị gị</string>
+    <string name="gallery_create_new_video">Mepụta Video Ọhụrụ</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">Abụ</string>
+    <string name="songs_all">Abụ Niile</string>
+    <string name="songs_categories">Ụdị</string>
+    <string name="songs_search_hint">Chọọ abụ</string>
+    <string name="songs_suggest_for_you">Ndụmọdụ maka gị</string>
+    <string name="songs_weekly_ranking">Nhọrọ Izu</string>
+    <string name="songs_station">Ọdụ Ntị Ndị Atụnyere</string>
+
+    <!-- Common Actions -->
+    <string name="home_create">Mepụta</string>
+
+    <!-- Legacy Home -->
+    <string name="home_title">Onye Emeputa Video</string>
+    <string name="home_welcome">Gịnị ị chọrọ ime?</string>
+    <string name="home_create_description">Mepụta ihe ngosipụta site n\'ime foto gị</string>
+    <string name="home_my_projects">Ọrụ m</string>
+    <string name="home_my_projects_description">Hụ ọrụ ndị chekwara gị</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Ntọala</string>
+    <string name="settings_account">Akaụntụ</string>
+    <string name="settings_legal">Iwu</string>
+    <string name="settings_language">Asụsụ</string>
+    <string name="settings_app_widet">Tinye Widget</string>
+    <string name="settings_rate_us">Nye anyị ọnụ ọgụgụ</string>
+    <string name="settings_share_with_friends">Kesaa n\'ime ndị enyi</string>
+    <string name="settings_report">Akụkọ</string>
+    <string name="settings_term_of_service">Ọnọdụ ọrụ</string>
+    <string name="settings_privacy_policy">Iwu Nzuzo</string>
+    <string name="settings_language_description">Gbanwee asụsụ ngwa</string>
+    <string name="settings_about">Maka</string>
+    <string name="settings_version">Ụdị</string>
+    <string name="settings_uninstall">Wepụ</string>
+    <string name="settings_share_subject">Lelee ngwa a!</string>
+    <string name="settings_share_message">Hey! Ana m eji ngwa dị mma a. Nwaa ya:\n%s</string>
+    <string name="notification_permission_trending_title">Dị n\'ihu trend!</string>
+    <string name="notification_permission_trending_message"> Kwado ọkwa mkparita ụka iji nweta ọkwa ngwa ngwa mgbe ụkpụrụ viral ọhụrụ etinyere.</string>
+    <string name="notification_permission_notify_me">Mee m Ọkwa</string>
+    <string name="notification_permission_maybe_later">Eleghị Anya Ka Emeso</string>
+    <string name="notification_permission_settings_title">Ọkwa mkparita ụka\ndị adị ike ugbu a.</string>
+    <string name="notification_permission_settings_message"> Biko kpọghee ha n\'ime ntọala ngwaọrụ gị iji nweta mmelite ụkpụrụ</string>
+    <string name="notification_permission_open_settings">Gaa na Ntọala</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Nwaa ya ọzọ</string>
+    <string name="uninstall_description">Ị na-esi n\'eziokwu chọọ iwepụ?</string>
+    <string name="uninstall_confirm">Ka wepụ ngwa</string>
+    <string name="uninstall_cancel">Echegbula iwepụ. Chọpụta ihe ọzọ</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Dezie Ọrụ</string>
+    <string name="editor_add_photos">Tinye Foto</string>
+    <string name="editor_settings">Ntọala</string>
+    <string name="editor_preview">Nlele Tupu</string>
+    <string name="editor_export">Mepụta</string>
+    <string name="editor_transition">Mgbanwe</string>
+    <string name="editor_duration">Oge</string>
+    <string name="editor_music">Egwu</string>
+    <string name="editor_frame">Ọnụ</string>
+    <string name="editor_aspect_ratio">Ọkwa Nha</string>
+    <string name="editor_volume">Olu</string>
+    <string name="editor_effect">Mmetụta</string>
+    <string name="editor_select_video_ratio">Họrọ Ọkwa Video</string>
+    <string name="editor_apply">Tinye</string>
+    <string name="editor_image_duration">Oge Ihe Oyiyi</string>
+    <string name="editor_change_music">Gbanwee egwu</string>
+    <string name="editor_select_quality">Họrọ ọkwa</string>
+    <string name="editor_hd">HD</string>
+    <string name="editor_play">Graa</string>
+    <string name="editor_pause">Kwụsị</string>
+    <string name="editor_duration_format">Oge: %s</string>
+
+    <!-- Music Trim Feature (NOT video trim) -->
+    <string name="editor_music_trim">Gbue Egwu</string>
+    <string name="editor_music_trim_from_start">Gbue Site N\'ụzọ Mmalite</string>
+    <string name="editor_music_trim_from_end">Gbue Site N\'ọtụtụ</string>
+    <string name="editor_music_trim_edit">Dezie Gbue Egwu</string>
+    <string name="editor_music_trim_title">Gbue Egwu</string>
+    <string name="editor_music_trim_subtitle">Họrọ akụkụ nke abụ iji jiri</string>
+    <string name="editor_music_trim_start">Mmalite Egwu</string>
+    <string name="editor_music_trim_end">Ọtụtụ Egwu</string>
+    <string name="editor_music_trim_duration">Oge Egwu</string>
+    <string name="editor_music_trim_min_duration">Egwu kwesịrị ịdị opekata mpe sekọnd 5</string>
+    <string name="editor_music_trim_will_loop">Egwu ga-agbagharị ọ bụrụ na ọ dị maka video gị</string>
+    <string name="editor_music_trimmed_info">Egwu: %1$s</string>
+    <string name="editor_music_trim_play_selection">Graa Nhọrọ</string>
+    <string name="editor_music_trim_skip_to_start">Wefu gaa Mmalite</string>
+    <string name="editor_music_trim_skip_to_end">Wefu gaa Ọtụtụ</string>
+    <string name="editor_photos_count">foto %d</string>
+    <string name="editor_save_dialog_title">Chekwaa Ọrụ?</string>
+    <string name="editor_save_dialog_message">A ga-echekwa ọrụ gị ma ọ dị n\'ime Ọrụ m.</string>
+    <string name="editor_save_and_exit">Chekwaa &amp; Pụọ</string>
+    <string name="editor_discard_changes">Hichapụ Mgbanwe</string>
+    <string name="editor_processing">Na-arụ ọrụ…</string>
+    <string name="editor_preparing_video">Na-akwado video…</string>
+    <string name="editor_unsaved_project_title">Chekwaa Ọrụ Gị?</string>
+    <string name="editor_unsaved_project_message">A chekwabeghị ọrụ gị. Chekwaa ya ugbu a ma ọ bụ hichapụ ọrụ gị?</string>
+    <string name="editor_unsaved_changes_title">Mgbanwe A Chekwabeghị</string>
+    <string name="editor_unsaved_changes_message">Ọ bụrụ na ị pụọ ugbu a, a ga-efufụ mgbanwe gị. Ị na-esi n\'eziokwu chọọ ịpụ?</string>
+    <string name="editor_keep_editing">Gaa n\'ihu Idezi</string>
+    <string name="editor_discard">Hichapụ</string>
+    <string name="editor_effect_sets">Ndị Mmetụta</string>
+    <string name="editor_retry">Nwaa Ọzọ</string>
+    <string name="editor_no_music_selected">Enweghị egwu a họrọ</string>
+
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Video Emepụtara</string>
+    <string name="projects_tab_liked_template">Ụkpụrụ Ị Hụrụ N\'anya</string>
+    <string name="projects_tab_liked_song">Abụ I Hụrụ N\'anya</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Abụ Dị Ofoo</string>
+    <string name="like_song_search_button">Chọọ Abụ</string>
+    <string name="like_song_section_header">Egwu Maka Gị</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Ụkpụrụ Dị Ofoo</string>
+    <string name="like_template_search_button">Chọọ Ụkpụrụ</string>
+    <string name="like_template_section_header">Ụkpụrụ Video</string>
+
+    <!-- Projects -->
+    <string name="projects_title">Ọrụ m</string>
+    <string name="projects_menu">Menụ Ọrụ</string>
+    <string name="projects_download">Budata</string>
+    <string name="projects_share">Kesaa</string>
+    <string name="projects_delete">Hichapụ</string>
+    <string name="projects_delete_confirmation_title">Hichapụ Video?</string>
+    <string name="projects_delete_confirmation_message">A ga-ehichapụ video a ruo mgbe niile. Emebee ọrụ a enweghị ike igbanwe.</string>
+    <string name="projects_delete_confirm">Hichapụ</string>
+    <string name="projects_delete_cancel">Kagbuo</string>
+    <string name="projects_empty">Enweghị ọrụ ka ugbu a</string>
+    <string name="projects_empty_description">Mepụta ọrụ gị nke mbụ iji hụ ya ebe a</string>
+    <string name="projects_empty_title">Bido nlọ ụzọ gị</string>
+    <string name="projects_empty_subtitle">Ọ dị obere ofoo ebe a. Ka anyị mepụta ihe ọzọ gị nke mbụ taa.</string>
+    <string name="projects_create_new_video">Mepụta Video Ọhụrụ</string>
+    <string name="projects_create_description">Bido ọrụ ihe ngosipụta ọhụrụ</string>
+    <string name="projects_item_info">foto %1$d • %2$s</string>
+    <string name="projects_delete_title">Hichapụ Ọrụ?</string>
+    <string name="projects_delete_message">\"%s\" a ga-ehichapụ ruo mgbe niile. Emebee ọrụ a enweghị ike igbanwe.</string>
+    <string name="projects_removed_from_list">Ewepụtara n\'ndepụta</string>
+
+    <!-- Export -->
+    <string name="export_title">Mepụta Video</string>
+    <string name="export_processing">Na-arụ ọrụ…</string>
+    <string name="export_complete">Emepụta Gụchara!</string>
+    <string name="export_share">Kesaa</string>
+    <string name="export_save">Chekwaa na Ụlọ Ihe Ngosi</string>
+    <string name="export_preparing">Na-akwado mepụta…</string>
+    <string name="export_generating">Na-emepụta</string>
+    <string name="export_please_wait">Chere obere, na-akwado video gị!\nBiko ekpuchịghị ngwa</string>
+    <string name="export_exporting">Na-ewepụta video…</string>
+    <string name="export_dont_close">Biko ekpuchịghị ngwa</string>
+    <string name="export_tip_1">Na-emepụta ihe ọzọ gị…</string>
+    <string name="export_tip_2">Na-etinye ihe ọgụgọ ihe nkiri…</string>
+    <string name="export_tip_3">Na-ebuga ihe ndekọ uche gị n\'ndụ…</string>
+    <string name="export_tip_4">Na-edozi ọnụ ọ bụla…</string>
+    <string name="export_tip_5">Na-eme ya ka ọ zuru oke…</string>
+    <string name="export_tip_6">Na-ejikọ akụkọ ifo gị ọnụ…</string>
+    <string name="export_tip_7">Na-emepụta ihe pụrụ iche…</string>
+    <string name="export_tip_8">Fọdụrụ nta! Dị mma…</string>
+    <string name="export_tip_9">Na-edozi nkọwa…</string>
+    <string name="export_tip_10">Na-etinye nkọcha ikpeazụ…</string>
+    <string name="export_video_saved">A chekwara video gị</string>
+    <string name="export_saved_to_gallery">Echekwara na Ụlọ Ihe Ngosi</string>
+    <string name="export_saving_to_gallery">Na-echekwa na ụlọ ihe ngosi…</string>
+    <string name="export_error_save_failed">Ọ dara n\'ike echekwa na ụlọ ihe ngosi</string>
+    <string name="export_share_video">Kesaa Video</string>
+    <string name="export_failed">Emepụta Dara</string>
+    <string name="export_try_again">Nwaa Ọzọ</string>
+    <string name="export_go_back">Laghachi</string>
+    <string name="export_cancelled">Emepụta Agbanyụọla</string>
+    <string name="export_cancelled_message">Emepụta video agbanyụọla</string>
+    <string name="export_back_to_editor">Laghachi na Ndezi</string>
+    <string name="export_cancel_title">Kagbuo Emepụta?</string>
+    <string name="export_cancel_message">Ị na-esi n\'eziokwu chọọ ikagbuo emepụta? A ga-efufụ ihe niile.</string>
+    <string name="export_continue">Gaa n\'ihu</string>
+    <string name="export_cancel_export">Kagbuo Emepụta</string>
+    <string name="export_error_file_not_found">A chọghị faịlụ video</string>
+    <string name="export_error_share_failed">Ọ dara n\'ike ikesaa video</string>
+    <string name="export_try_another_templates">Nwaa Ụkpụrụ Ndị Ọzọ</string>
+    <string name="export_templates_load_failed">Ọ dara n\'ike ibugharị ụkpụrụ</string>
+    <string name="export_watch_ad_title">Lelee mgbasa ozi iji budata?</string>
+    <string name="export_watch_ad_subtitle">Nyere anyị aka ikegide ngwa a n\'efu site n\'ilelee mgbasa ozi dị mkpụmkpụ. A ga-abudata video gị ozugbo!</string>
+    <string name="watch_ad_dialog_title">Emeghe Atụmatụ Pụrụ Iche! ✨</string>
+    <string name="watch_ad_dialog_subtitle">Lelee mgbasa ozi dị mkpụmkpụ iji emeghe atụmatụ a na ịgaa n\'ihu idezi video dị mma gị!</string>
+    <string name="export_watch_ad_button">Lelee Mgbasa Ozi (1/1)</string>
+    <string name="export_watch_ad_close">Mechie</string>
+    <string name="export_watermark_remove_title">Wepụ akara?</string>
+    <string name="export_watermark_remove_subtitle">Lelee mgbasa ozi dị mkpụmkpụ iji wepụ akara n\'ime nlele tupu video gị.</string>
+    <string name="export_watermark_remove_button">Lelee Mgbasa Ozi</string>
+    <string name="export_watermark_remove_close">Mechie</string>
+
+    <!-- Asset Picker -->
+    <string name="picker_title">Họrọ ihe oyiyi gị</string>
+    <string name="picker_done">Emechara (%1$d/%2$d)</string>
+    <string name="picker_close">Mechie</string>
+    <string name="picker_selected">Ahọpụtara</string>
+    <string name="picker_no_photos">Enweghị foto a chọtara</string>
+    <string name="picker_no_photos_hint">Weere foto ụfọdụ iji bido</string>
+    <string name="picker_permission_title">Kwe ka ọ bata na foto</string>
+    <string name="picker_permission_message">Iji gaa n\'ihu, Rehancer chọrọ ikike gị iji nweta Foto gị</string>
+    <string name="picker_allow_access">Kwe Ka Ọ Bata</string>
+    <string name="picker_give_access">Nye Ikike</string>
+    <string name="picker_give_access_settings">Nnweta foto gị\naghachiri.</string>
+    <string name="picker_give_access_permission">Dị njikere imepụta?</string>
+    <string name="picker_not_now">Ọ Bụghị Ugbu A</string>
+    <string name="picker_full_access_custom_message">Iji gwa-gwa video na foto gị, anyị chọrọ nnweta ụlọ ihe ngosi gị.</string>
+    <string name="picker_full_access_settings_message"> Iji bido idezi, biko kwado \'Foto\' ma ọ bụ \'Nchekwa\' n\'ime ntọala ngwaọrụ gị.</string>
+    <string name="picker_limited_access_message">I nyeela Video Make nnweta ọnụọgụgụ foto ụfọdụ.</string>
+    <string name="picker_add_more_photos">Tinye</string>
+    <string name="picker_go_to_settings">Gaa na Ntọala</string>
+    <string name="picker_min_selection">Biko họrọ opekata mpe ihe oyiyi %d.</string>
+    <string name="picker_current_selection">Ahọpụtara ihe oyiyi %d</string>
+    <string name="picker_exit_confirm_title">Pụọ n\'nhọrọ ihe oyiyi?</string>
+    <string name="picker_exit_confirm_message">I họrọla ihe oyiyi. Ọ bụrụ na ị pụọ ugbu a, a ga-ehichapụ ihe oyiyi ndị ahọpụtara gị.</string>
+    <string name="picker_exit_confirm">Pụọ</string>
+    <string name="picker_exit_stay">Nọrọ</string>
+
+    <!-- Music Player Bottom Sheet -->
+    <string name="music_player_title">Onye Egwu</string>
+    <string name="music_player_use_to_create">Jiri Mepụta Video</string>
+
+    <!-- Music Picker -->
+    <string name="music_picker_title">Họrọ Egwu</string>
+    <string name="music_picker_loading">Na-ebugharị egwu…</string>
+    <string name="music_picker_no_music">Enweghị egwu a chọtara</string>
+    <string name="music_picker_no_music_hint">Tinye faịlụ egwu na ngwaọrụ gị iji jiri ha ebe a</string>
+    <string name="music_picker_permission_title">Ikike Ịnụ Ụda Dị Mkpa</string>
+    <string name="music_picker_permission_message">Iji jiri egwu gị dị ka ụda n\'azụ, anyị chọrọ ikike iji nweta faịlụ ụda gị.</string>
+    <string name="music_picker_allow_access">Kwe Ka Ọ Bata</string>
+    <string name="music_picker_preview">Nlele Tupu</string>
+    <string name="music_picker_stop_preview">Kwụsị</string>
+    <string name="music_picker_select">Họrọ</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">Ntọala</string>
+    <string name="settings_panel_apply">Tinye</string>
+    <string name="settings_panel_close">Mechie</string>
+    <string name="settings_apply">Tinye</string>
+    <string name="settings_effect_set">Ndị Mmetụta</string>
+    <string name="settings_all">Niile</string>
+    <string name="settings_off">GBANYỤỌ</string>
+    <string name="settings_none">Ọ Dịghị</string>
+    <string name="settings_pro">PRO</string>
+    <string name="settings_duration_per_image">Oge Maka Ihe Oyiyi Ọ Bụla</string>
+    <string name="settings_seconds_format">%ds</string>
+    <string name="settings_duration_seconds">%ds</string>
+    <string name="settings_overlay_frame">Ọnụ Nke Ọ Bụ</string>
+    <string name="settings_background_music">Egwu N\'azụ</string>
+    <string name="settings_custom">Nhọrọ Onwe</string>
+    <string name="settings_add">+ Tinye</string>
+    <string name="settings_add_audio">+ Tinye</string>
+    <string name="settings_volume">Olu</string>
+    <string name="settings_clip_music">Gbue Egwu</string>
+    <string name="settings_aspect_ratio">Ọkwa Nha</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">Olu</string>
+    <string name="tab_music_clip">Gbue Egwu</string>
+    <string name="settings_transition_effect">Mmetụta Mgbanwe</string>
+    <string name="settings_transition_duration">Oge Mgbanwe</string>
+    <string name="settings_transition_duration_value">%.1fs</string>
+
+    <!-- Search -->
+    <string name="search_hint">Chọọ ụdị gị zuru oke…</string>
+    <string name="search_recent">Achọtara N\'oge a gara aga</string>
+    <string name="search_clear_all">Hichapụ Niile</string>
+    <string name="search_no_results">Enweghị ụdị a chọtara</string>
+    <string name="search_no_results_hint">Nwaa okwu ọzọ ma ọ bụ họrọ ọdịdị n\'okpuru</string>
+    <string name="search_suggestions">Ndụmọdụ</string>
+    <string name="search_browse_by_theme">Chụchụso site n\'ọdịdị</string>
+    <string name="search_trending_templates">Ndị Nsọpụrụ Ugbu A</string>
+    <string name="search_tag_aesthetic">Ịtọ Ụtọ</string>
+    <string name="search_tag_birthday">Ọchịchọ Ọmụmụ</string>
+    <string name="search_tag_travel">Njem</string>
+    <string name="search_tag_lofi">Lofi</string>
+    <string name="search_tag_cinematic">Ihe Nkiri</string>
+    <string name="search_tag_vintage">Oge Gboo</string>
+
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">Ihe Nrọ</string>
+    <string name="effect_dreamy_vibes_desc">Ìhè dị jụụ na agba ndị dị mfe</string>
+    <string name="effect_cyberpunk_title">Cyberpunk</string>
+    <string name="effect_cyberpunk_desc">Ọkụ neon na mmetụta glitch</string>
+    <string name="effect_vintage_film_title">Ihe Nkiri Oge Gboo</string>
+    <string name="effect_vintage_film_desc">Kpakpando oge ochie na agba dị ọkụ</string>
+    <string name="effect_ocean_breeze_title">Ifufe Osimiri Nno</string>
+    <string name="effect_ocean_breeze_desc">Agba ọcha na-esoro ibe ya</string>
+    <string name="effect_golden_hour_title">Ọnwa Ọlaedo</string>
+    <string name="effect_golden_hour_desc">Ọkụ mmụ anyanwụ dị ọkụ</string>
+    <string name="effect_noir_title">Noir</string>
+    <string name="effect_noir_desc">Ojii na ọcha nke dị oke</string>
+    <string name="effect_sakura_title">Sakura</string>
+    <string name="effect_sakura_desc">Agba ọbara ọbara Sakura</string>
+    <string name="effect_aurora_title">Aurora</string>
+    <string name="effect_aurora_desc">Ìhè ndị ugwu na-ìwè</string>
+
+    <!-- Common -->
+    <string name="cancel">Kagbuo</string>
+    <string name="confirm">Kwenye</string>
+    <string name="delete">Hichapụ</string>
+    <string name="save">Chekwaa</string>
+    <string name="back">Laghachi</string>
+    <string name="done">Emechara</string>
+    <string name="error">Njehie</string>
+    <string name="retry">Nwaa Ọzọ</string>
+    <string name="seconds">sekọnd %d</string>
+    <string name="none">Ọ Dịghị</string>
+    <string name="close">Mechie</string>
+    <string name="remove">Wepụ</string>
+    <string name="badge_pro">PRO</string>
+    <string name="settings">Ntọala</string>
+
+    <!-- Error states -->
+    <string name="error_load_failed">Ọ dara n\'ike ibugharị. Dọba n\'ụzọ ọ bụla iji nwaa ọzọ.</string>
+    <string name="error_network_title">Njehie Netwọk</string>
+    <string name="error_data_load_failed">Ọ dara n\'ike ibugharị data dị mkpa. Biko lelee njikọ ịntanetị gị ma nwaa ọzọ.</string>
+    <string name="loading_building_feed">Na-ewu Nke Gị</string>
+    <string name="error_network_message">Ọ dara n\'ike ibugharị egwu. Biko lelee njikọ gị ma nwaa ọzọ.</string>
+    <string name="error_network_timeout">Netwọk agafeela oge. Biko lelee njikọ gị ma nwaa ọzọ.</string>
+    <string name="error_preview_title">Njehie Nlele Tupu</string>
+    <string name="error_preview_music_network">Njehie netwọk n\'ibugharị egwu. Biko lelee njikọ gị ma nwaa ọzọ.</string>
+    <string name="error_preview_music_failed">Ọ dara n\'ike ibugharị egwu. Biko nwaa ọzọ.</string>
+    <string name="error_template_music_failed">Ọ dara n\'ike ibugharị abụ. Biko lelee njikọ gị ma nwaa ọzọ.</string>
+    <string name="error_video_playback_failed">Ọ dara n\'ike ibugharị nlele tupu video. Biko lelee njikọ gị ma nwaa ọzọ.</string>
+    <string name="error_video_network">Njehie netwọk n\'ibugharị video. Biko lelee njikọ gị ma nwaa ọzọ.</string>
+    <string name="video_retrying">Na-ebugharị nlele tupu…</string>
+    <string name="dialog_ok">OK</string>
+
+    <!-- Songs -->
+    <string name="start_project">Bido ọrụ</string>
+
+    <!-- Song Search -->
+    <string name="song_search_hint">Chọọ abụ…</string>
+    <string name="song_search_explore_by_genre">Chụchụso site n\'ụdị</string>
+    <string name="song_search_suggested">Ndụmọdụ Maka Gị</string>
+    <string name="song_search_no_results">Enweghị abụ a chọtara</string>
+    <string name="song_search_change_music">Gbanwee Egwu</string>
+    <string name="song_search_idle_hint">Bido itinye ihe iji chọọ abụ</string>
+
+    <!-- Onboarding Page 4 — Feature Survey -->
+    <string name="onboarding_page4_title">Kedụ ka ị chọọ ị bido?</string>
+    <string name="onboarding_page4_subtitle">Nke a nyeere anyị aka n\'atụmatụ ọdịnaya kachasị mma maka gị.</string>
+    <string name="feature_music_video_instant">Gwa-gwa Ụkpụrụ Video</string>
+    <string name="feature_photos_to_video">Bido na Abụ</string>
+    <string name="feature_trending_templates">Jiri ụkpụrụ ndị na-asọmpi</string>
+    <string name="feature_trending_music">Tinye egwu ndị na-asọmpi</string>
+
+    <!-- Music Genres -->
+    <string name="genre_pop">Pop</string>
+    <string name="genre_rock">Rock</string>
+    <string name="genre_hiphop">Hip-Hop</string>
+    <string name="genre_rnb">R&amp;B</string>
+    <string name="genre_electronic">Eletrọnik</string>
+    <string name="genre_jazz">Jazz</string>
+    <string name="genre_classical">Oge Ochie</string>
+    <string name="genre_country">Obodo</string>
+    <string name="genre_latin">Latin</string>
+    <string name="genre_kpop">K-Pop</string>
+    <string name="genre_dance">Egwu Ọsọ</string>
+    <string name="genre_edm">EDM</string>
+    <string name="genre_blues">Blues</string>
+    <string name="genre_metal">Metal</string>
+    <string name="genre_soul">Mkpụrụ Obi</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_trending_search_long">Ọchụchụso Na-asọmpi</string>
+    <string name="shortcut_create_video_long">Mepụta Video</string>
+    <string name="shortcut_choose_template_long">Họrọ Ụkpụrụ Video</string>
+    <string name="shortcut_uninstall_long">Wepụ Ngwa</string>
+
+    <!--  Widget  -->
+    <string name="widget_title">Widget</string>
+    <string name="widget_bts">Tinye Widget</string>
+    <string name="widget_smart_search">Ọchụchụso Ọgụgụ</string>
+    <string name="widget_smart_search_description">Na-achọ ụdị gị</string>
+    <string name="widget_smart_search_trending">Na-asọmpi ❤️‍🔥</string>
+    <string name="widget_trending_template">Ụkpụrụ na-asọmpi</string>
+    <string name="widget_recently">N\'oge a gara aga</string>
+    <string name="widget_trending_song">Abụ na-asọmpi</string>
+    <string name="widget_trending_song_hot">Ọkụ</string>
+    <string name="widget_search_hint">Chọọ ụkpụrụ...</string>
+    <string name="widget_pin_request_sent">Etinyela widget na ihuenyo ụlọ</string>
+    <string name="widget_pin_not_supported">Ijichie widget adịghị kwado na ngwaọrụ a</string>
+    <string name="widget_add_failed">Ọ dara n\'ike itinye widget: %s</string>
+
+    <!-- Unified search   -->
+    <string name="unified_search_templates">Ụkpụrụ</string>
+    <string name="unified_search_music">Egwu</string>
+    <string name="unified_search_see_more">Hụ ihe ọzọ</string>
+    <string name="unified_search_loading_more">Na-ebugharị…</string>
+    <string name="unified_search_explore_more">Chụchụso Ihe Ọzọ</string>
+    <string name="unified_search_explore_suggestions">Chụchụso Ndụmọdụ</string>
+    <string name="unified_search_no_results_title">Enweghị nsonaazụ a chọtara</string>
+    <string name="unified_search_keep_typing">Gaa n\'ihu itinye ihe iji kọwaazịa ọchụchụso gị</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">Ọkụ</string>
+    <string name="tag_trending">Na-asọmpi</string>
+    <string name="tag_new">Ọhụrụ</string>
+    <string name="tag_featured">Ndị Pụtara Ìhè</string>
+
+    <!-- Template Previewer -->
+    <string name="template_add_to_favorites">Tinye</string>
+    <string name="template_use_button">Jiri Ụkpụrụ A</string>
+    <string name="template_swipe_hint">Kụọ aka n\'elu</string>
+    <string name="template_swipe_subtitle">Iji nwee ihe ụtọ n\'ụkpụrụ gị</string>
+    <string name="template_select_ratio_title">Họrọ Ọkwa Video</string>
+    <string name="template_create_now">Mepụta ugbu a</string>
+    <string name="template_error_load_failed">Ọ dara n\'ike ibugharị ụkpụrụ. Biko nwaa ọzọ.</string>
+
+    <!-- Unified Search -->
+    <string name="search_templates_suggestions">Ndụmọdụ Ụkpụrụ</string>
+    <string name="search_music_suggestion">Ndụmọdụ Egwu</string>
+    <string name="search_empty_subtitle">Ka anyị nwaa ihe ọzọ ma ọ bụ chụchụso\nọdịdị ndị na-asọmpi</string>
+    <string name="search_typing_result_header">Nsonaazụ</string>
+    <string name="search_loading_title">Na-achọ nsonaazụ…</string>
+    <string name="search_loading_message">Anyị na-achọ n\'ọba data anyị iji webata\nnkọwa kachasị mma maka gị.\nBiko chere ọ ntakịrị.</string>
+    <string name="search_placeholder">Chọọ ihe ọ bụla</string>
+    <string name="search_pro_badge">PRO</string>
+
+    <!-- Editor Volume -->
+    <string name="volume_title">Olu</string>
+
+    <!-- Rating Popup -->
+    <string name="rating_satisfaction_title">Anyị na-ekele gị maka oge gị n\'ịmepụta Video</string>
+    <string name="rating_satisfaction_subtitle">Ị na-ekele ngwa anyị?</string>
+    <string name="rating_not_really">Ọ bụghị n\'eziokwu</string>
+    <string name="rating_good">Ọ dị mma</string>
+    <string name="rating_experience_title">Na-ele ọnụ ọgụgụ gị\nNnọọ n\'ime anyị</string>
+    <string name="rating_submit">Ziga</string>
+    <string name="rating_feedback_title">Ndo n\'ịnụ nke ahụ 🥲</string>
+    <string name="rating_feedback_subtitle">Anyị ga-arụ ọrụ siri ike iji kwalite ahụmahụ gị</string>
+    <string name="rating_feedback_type_hint">Tinye nzaghachi gị</string>
+    <string name="rating_feedback_reason_music_quality">Enweghị abụ ndị a hụrụ n\'anya / Ọkwa egwu adị mma</string>
+    <string name="rating_feedback_reason_translation">Ọkwa ntranslation dị ala nnukwu</string>
+    <string name="rating_feedback_reason_tools">Ngwaọrụ idezi adịghị zute mkpa m</string>
+    <string name="rating_feedback_reason_output_quality">Ọkwa video ọpụpụta dị ala nnukwu</string>
+    <string name="rating_feedback_reason_performance">Ngwa dị nwayọnwayọ ma ọ bụ na-ada mgbe niile</string>
+    <string name="rating_feedback_reason_templates">Ụkpụrụ / mmelite ọdịnaya adịghị ezuru</string>
+    <string name="rating_feedback_reason_other">Ihe Ọzọ</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">Mgbasa Ozi</string>
+    <string name="ad_icon">Ihe ngosi mgbasa ozi</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">Lelee mgbasa ozi iji emeghe mmetụta a?</string>
+    <string name="effect_set_watch_ad_subtitle">Emeghe ndị mmetụta a ruo mgbe niile site n\'ilelee mgbasa ozi dị mkpụmkpụ</string>
+    <string name="effect_set_ad_not_available">Mgbasa ozi adịghị ugbu a. Biko nwaa ọzọ n\'oge a ga-adị.</string>
+    <string name="effect_set_locked">Ndị mmetụta a machibidoro</string>
+    <string name="ad_not_available">Mgbasa ozi adịghị ugbu a. Biko nwaa ọzọ n\'oge a ga-adị.</string>
+
+    <!-- Quality Unlock Rewarded Ad -->
+    <string name="quality_watch_ad_title">Lelee mgbasa ozi iji mepụta n\'ọkwa dị elu?</string>
+    <string name="quality_watch_ad_subtitle">Emeghe mepụta 720p/1080p maka nnọọ a site n\'ilelee mgbasa ozi dị mkpụmkpụ</string>
+    <string name="quality_ad_not_available">Mgbasa ozi adịghị ugbu a. Biko nwaa ọzọ n\'oge a ga-adị ma ọ bụ họrọ ọkwa dị ala.</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">Lelee mgbasa ozi iji emeghe ụkpụrụ a?</string>
+    <string name="template_watch_ad_subtitle">Emeghe ụkpụrụ a ruo mgbe niile site n\'ilelee mgbasa ozi dị mkpụmkpụ</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Lelee mgbasa ozi iji emeghe abụ a?</string>
+    <string name="song_watch_ad_subtitle">Mgbe ilelee, ị ga-enwe ike ijiri abụ a imepụta video. Meghe ya ruo mgbe niile.</string>
+
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">Abụ Ọhụrụ Na-asọmpi!</string>
+    <string name="notif_trending_song_body">\'%2$s\' nke %1$s na-esọmpi! Mepụta ndezi gị n\'ọtụtụ nta 1 tupu ọkwa na-erupo.</string>
+    <string name="notif_viral_template_title">Ụkpụrụ ndị na-asọmpi maka gị. Nwaa ya ugbu a!</string>
+    <string name="notif_viral_template_body">Mmadụ 1,000,000 ji %1$s a taa. Echefula ihe ọ na-emepụta!</string>
+    <string name="notif_forgotten_masterpiece_title">Ihe ọzọ gị na-adiebe!</string>
+    <string name="notif_forgotten_masterpiece_body">Ị mere akụkụ siri ike, ugbu a kwe ka ọ ìhè. Video gị dị njikere ịkesaa n\'ime ụwa!</string>
+    <string name="notif_quick_save_title">Echefula ọrụ gị!</string>
+    <string name="notif_quick_save_body">Ndezi gị dị mma! Chekwaa ya na ụlọ ihe ngosi gị ugbu a ka ị ghara ịchefuo synchronization zuru oke.</string>
+    <string name="notif_share_encouragement_title">Dị njikere maka \'Likes\'?</string>
+    <string name="notif_share_encouragement_body">Ndezi gị nke \'%1$s\' synchronize 100%% na beat ma dị njikere. Posịa ya na TikTok ugbu a!</string>
+    <string name="notif_abandoned_select_photos_title">Echefula beat na-adebe!</string>
+    <string name="notif_abandoned_select_photos_body">Ndezi gị nke \'Not Like Us\' fọdụrụ ntakịrị. Họrọ foto ụfọdụ iji hụ ihe ọgụgọ mee!</string>
+    <string name="notif_draft_completion_nudge_title">Mechaa ihe ị bidoro!</string>
+    <string name="notif_draft_completion_nudge_body">Ọ naanị ọnụ ọgụgụ abụọ ka ị dị n\'ebe video viral. Laghachịa ma tinye foto gị ugbu a!</string>
+    <string name="notif_cta_play_song">Graa Abụ</string>
+    <string name="notif_cta_discover_templates">Chọpụta Ụkpụrụ</string>
+    <string name="notif_cta_continue_editing">Gaa n\'ihu Idezi</string>
+    <string name="notif_cta_view_template">Lelee Ụkpụrụ</string>
+
+</resources>

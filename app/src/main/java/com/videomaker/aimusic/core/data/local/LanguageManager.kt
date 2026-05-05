@@ -23,6 +23,14 @@ import androidx.core.os.LocaleListCompat
  * - Indonesian (id)
  * - Filipino (fil)
  * - Turkish (tr)
+ * - Bengali (bn)
+ * - Kannada (kn)
+ * - German (de)
+ * - Javanese (jv)
+ * - Sundanese (su)
+ * - Hausa (ha)
+ * - Yorùbá (yo)
+ * - Igbo (ig)
  */
 class LanguageManager(private val context: Context) {
 
@@ -46,6 +54,14 @@ class LanguageManager(private val context: Context) {
         const val LANGUAGE_INDONESIAN = "id"
         const val LANGUAGE_FILIPINO = "fil"
         const val LANGUAGE_TURKISH = "tr"
+        const val LANGUAGE_BENGALI = "bn"
+        const val LANGUAGE_KANNADA = "kn"
+        const val LANGUAGE_GERMAN = "de"
+        const val LANGUAGE_JAVANESE = "jv"
+        const val LANGUAGE_SUNDANESE = "su"
+        const val LANGUAGE_HAUSA = "ha"
+        const val LANGUAGE_YORUBA = "yo"
+        const val LANGUAGE_IGBO = "ig"
 
         val SUPPORTED_LANGUAGES = listOf(
             LANGUAGE_ENGLISH,
@@ -55,7 +71,15 @@ class LanguageManager(private val context: Context) {
             LANGUAGE_HINDI,
             LANGUAGE_INDONESIAN,
             LANGUAGE_FILIPINO,
-            LANGUAGE_TURKISH
+            LANGUAGE_TURKISH,
+            LANGUAGE_BENGALI,
+            LANGUAGE_KANNADA,
+            LANGUAGE_GERMAN,
+            LANGUAGE_JAVANESE,
+            LANGUAGE_SUNDANESE,
+            LANGUAGE_HAUSA,
+            LANGUAGE_YORUBA,
+            LANGUAGE_IGBO
         )
     }
 
@@ -132,7 +156,10 @@ class LanguageManager(private val context: Context) {
     /**
      * Check if current language is RTL (Right-to-Left).
      */
-    fun isRtl(): Boolean = getSelectedLanguage() == LANGUAGE_ARABIC
+    fun isRtl(): Boolean {
+        val lang = getSelectedLanguage()
+        return getAllLanguages().find { it.code == lang }?.isRtl ?: false
+    }
 }
 
 /**
@@ -157,6 +184,14 @@ fun LanguageManager.Companion.getAllLanguages(): List<SupportedLanguage> {
         SupportedLanguage(LANGUAGE_HINDI, "हिन्दी", "🇮🇳"),
         SupportedLanguage(LANGUAGE_INDONESIAN, "Bahasa Indonesia", "🇮🇩"),
         SupportedLanguage(LANGUAGE_FILIPINO, "Filipino", "🇵🇭"),
-        SupportedLanguage(LANGUAGE_TURKISH, "Türkçe", "🇹🇷")
+        SupportedLanguage(LANGUAGE_TURKISH, "Türkçe", "🇹🇷"),
+        SupportedLanguage(LANGUAGE_BENGALI, "বাংলা", "🇧🇩"),
+        SupportedLanguage(LANGUAGE_KANNADA, "ಕನ್ನಡ", "🇮🇳"),
+        SupportedLanguage(LANGUAGE_GERMAN, "Deutsch", "🇩🇪"),
+        SupportedLanguage(LANGUAGE_JAVANESE, "Basa Jawa", "🇮🇩"),
+        SupportedLanguage(LANGUAGE_SUNDANESE, "Basa Sunda", "🇮🇩"),
+        SupportedLanguage(LANGUAGE_HAUSA, "Hausa", "🇳🇬"),
+        SupportedLanguage(LANGUAGE_YORUBA, "Yorùbá", "🇳🇬"),
+        SupportedLanguage(LANGUAGE_IGBO, "Igbo", "🇳🇬")
     )
 }

@@ -1,0 +1,547 @@
+<resources>
+    <string name="app_name">Video Maker - AI Music</string>
+
+    <!-- Facebook SDK (Analytics only) -->
+    <string name="facebook_app_id">2394935491027358</string>
+    <string name="facebook_client_token">59adbbae92079f20f43d002f331d8e9d</string>
+
+    <!-- Loading -->
+    <string name="loading">Laden…</string>
+    <string name="ad_loading">Werbung laden…</string>
+
+    <!-- Language Selection -->
+    <string name="language_select_title">Sprache wählen</string>
+    <string name="language_select_subtitle">Bitte wähle eine Anzeigesprache.</string>
+    <string name="language_continue">Weiter</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Weiter</string>
+    <string name="onboarding_get_started">Loslegen</string>
+    <!-- Page 1 -->
+    <string name="onboarding_page1_title">Magie in Sekunden erschaffen</string>
+    <string name="onboarding_page1_subtitle">Atemberaubende Videos mit wenigen Tipps. Einfach und schnell</string>
+    <!-- Page 2 -->
+    <string name="onboarding_page2_title">Deinen Rhythmus finden</string>
+    <string name="onboarding_page2_subtitle">Trendige Sounds für jede Stimmung</string>
+    <!-- Page 3 -->
+    <string name="onboarding_page3_title">Gemeinsam besser!</string>
+    <string name="onboarding_page3_subtitle">Gemeinsam besser. Lade Freunde ein, den Spaß zu teilen</string>
+    <string name="onboarding_swipe_next">Weiter wischen</string>
+    <string name="onboarding_exit_title">Setup verlassen?</string>
+    <string name="onboarding_exit_message">Du kannst deine Einstellungen später in den Einstellungen ändern.</string>
+    <string name="onboarding_exit_confirm">Verlassen</string>
+    <string name="onboarding_exit_dismiss">Weiter</string>
+    <string name="root_no_internet_title">Keine Internetverbindung</string>
+    <string name="root_no_internet_message">Dein Gerät ist derzeit offline. Bitte stelle die Verbindung wieder her, um fortzufahren</string>
+    <string name="root_try_again">Erneut versuchen</string>
+    <string name="root_loading_initializing">Wird initialisiert...</string>
+    <string name="root_loading_fetching_config">Konfiguration laden...</string>
+    <string name="root_loading_ad">Dies kann Werbung enthalten</string>
+    <string name="root_loading_checking_status">Status wird überprüft...</string>
+    <string name="root_loading_preparing">Wird vorbereitet...</string>
+
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">Galerie</string>
+    <string name="home_tab_songs">Songs</string>
+    <string name="home_tab_projects">Bibliothek</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_filter_for_you">Für dich</string>
+    <string name="gallery_hot_songs">Beliebte Songs</string>
+    <string name="gallery_templates">Vorlagen</string>
+    <string name="gallery_coming_soon">Demnächst</string>
+    <string name="gallery_search_hint">Deinen Stil suchen</string>
+    <string name="gallery_create_new_video">Neues Video erstellen</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">Songs</string>
+    <string name="songs_all">Alle Songs</string>
+    <string name="songs_categories">Kategorien</string>
+    <string name="songs_search_hint">Songs suchen</string>
+    <string name="songs_suggest_for_you">Empfehlungen für dich</string>
+    <string name="songs_weekly_ranking">Wöchentliches Ranking</string>
+    <string name="songs_station">Empfohlene Stationen</string>
+
+    <!-- Common Actions -->
+    <string name="home_create">Erstellen</string>
+
+    <!-- Legacy Home -->
+    <string name="home_title">Video Maker</string>
+    <string name="home_welcome">Was möchtest du tun?</string>
+    <string name="home_create_description">Erstelle eine Diashow aus deinen Fotos</string>
+    <string name="home_my_projects">Meine Projekte</string>
+    <string name="home_my_projects_description">Deine gespeicherten Projekte anzeigen</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_account">Konto</string>
+    <string name="settings_legal">Rechtliches</string>
+    <string name="settings_language">Sprache</string>
+    <string name="settings_app_widet">Widget hinzufügen</string>
+    <string name="settings_rate_us">Bewerte uns</string>
+    <string name="settings_share_with_friends">Mit Freunden teilen</string>
+    <string name="settings_report">Melden</string>
+    <string name="settings_term_of_service">Nutzungsbedingungen</string>
+    <string name="settings_privacy_policy">Datenschutzrichtlinie</string>
+    <string name="settings_language_description">App-Sprache ändern</string>
+    <string name="settings_about">Über</string>
+    <string name="settings_version">Version</string>
+    <string name="settings_uninstall">Deinstallieren</string>
+    <string name="settings_share_subject">Schau dir diese App an!</string>
+    <string name="settings_share_message">Hey! Ich nutze diese tolle App. Probier sie aus:\n%s</string>
+    <string name="notification_permission_trending_title">Bleib immer aktuell!</string>
+    <string name="notification_permission_trending_message"> Aktiviere Benachrichtigungen, um sofortige Warnungen zu erhalten, wenn neue virale Vorlagen hinzugefügt werden.</string>
+    <string name="notification_permission_notify_me">Benachrichtigen</string>
+    <string name="notification_permission_maybe_later">Vielleicht später</string>
+    <string name="notification_permission_settings_title">Benachrichtigungen sind\nderzeit deaktiviert.</string>
+    <string name="notification_permission_settings_message"> Bitte aktiviere sie in deinen Geräteeinstellungen, um Vorlagen-Updates zu erhalten</string>
+    <string name="notification_permission_open_settings">Zu Einstellungen</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Nochmal versuchen</string>
+    <string name="uninstall_description">Möchtest du wirklich deinstallieren?</string>
+    <string name="uninstall_confirm">Trotzdem deinstallieren</string>
+    <string name="uninstall_cancel">Nicht deinstallieren. Mehr entdecken</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Projekt bearbeiten</string>
+    <string name="editor_add_photos">Fotos hinzufügen</string>
+    <string name="editor_settings">Einstellungen</string>
+    <string name="editor_preview">Vorschau</string>
+    <string name="editor_export">Exportieren</string>
+    <string name="editor_transition">Übergang</string>
+    <string name="editor_duration">Dauer</string>
+    <string name="editor_music">Musik</string>
+    <string name="editor_frame">Rahmen</string>
+    <string name="editor_aspect_ratio">Seitenverhältnis</string>
+    <string name="editor_volume">Lautstärke</string>
+    <string name="editor_effect">Effekt</string>
+    <string name="editor_select_video_ratio">Videoverhältnis wählen</string>
+    <string name="editor_apply">Anwenden</string>
+    <string name="editor_image_duration">Bilddauer</string>
+    <string name="editor_change_music">Musik ändern</string>
+    <string name="editor_select_quality">Qualität wählen</string>
+    <string name="editor_hd">HD</string>
+    <string name="editor_play">Abspielen</string>
+    <string name="editor_pause">Pause</string>
+    <string name="editor_duration_format">Dauer: %s</string>
+
+    <!-- Music Trim Feature -->
+    <string name="editor_music_trim">Musik kürzen</string>
+    <string name="editor_music_trim_from_start">Vom Anfang kürzen</string>
+    <string name="editor_music_trim_from_end">Vom Ende kürzen</string>
+    <string name="editor_music_trim_edit">Musikschnitt bearbeiten</string>
+    <string name="editor_music_trim_title">Musik kürzen</string>
+    <string name="editor_music_trim_subtitle">Wähle aus, welchen Teil des Songs du verwenden möchtest</string>
+    <string name="editor_music_trim_start">Musikanfang</string>
+    <string name="editor_music_trim_end">Musikende</string>
+    <string name="editor_music_trim_duration">Musikdauer</string>
+    <string name="editor_music_trim_min_duration">Musik muss mindestens 5 Sekunden lang sein</string>
+    <string name="editor_music_trim_will_loop">Musik wird bei Bedarf für dein Video wiederholt</string>
+    <string name="editor_music_trimmed_info">Musik: %1$s</string>
+    <string name="editor_music_trim_play_selection">Auswahl abspielen</string>
+    <string name="editor_music_trim_skip_to_start">Zum Anfang springen</string>
+    <string name="editor_music_trim_skip_to_end">Zum Ende springen</string>
+    <string name="editor_photos_count">%d Fotos</string>
+    <string name="editor_save_dialog_title">Projekt speichern?</string>
+    <string name="editor_save_dialog_message">Dein Projekt wird gespeichert und ist unter Meine Projekte verfügbar.</string>
+    <string name="editor_save_and_exit">Speichern &amp; Verlassen</string>
+    <string name="editor_discard_changes">Änderungen verwerfen</string>
+    <string name="editor_processing">Wird verarbeitet…</string>
+    <string name="editor_preparing_video">Video wird vorbereitet…</string>
+    <string name="editor_unsaved_project_title">Projekt speichern?</string>
+    <string name="editor_unsaved_project_message">Dein Projekt wurde noch nicht gespeichert. Jetzt speichern oder Arbeit verwerfen?</string>
+    <string name="editor_unsaved_changes_title">Nicht gespeicherte Änderungen</string>
+    <string name="editor_unsaved_changes_message">Wenn du jetzt gehst, gehen deine Änderungen verloren. Bist du sicher, dass du gehen möchtest?</string>
+    <string name="editor_keep_editing">Weiter bearbeiten</string>
+    <string name="editor_discard">Verwerfen</string>
+    <string name="editor_effect_sets">Effektsets</string>
+    <string name="editor_retry">Erneut versuchen</string>
+    <string name="editor_no_music_selected">Keine Musik ausgewählt</string>
+
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Erstellte Videos</string>
+    <string name="projects_tab_liked_template">Gemochte Vorlagen</string>
+    <string name="projects_tab_liked_song">Gemochte Songs</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Song-Liste ist leer</string>
+    <string name="like_song_search_button">Songs suchen</string>
+    <string name="like_song_section_header">Musik für dich</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Vorlagenliste ist leer</string>
+    <string name="like_template_search_button">Vorlagen suchen</string>
+    <string name="like_template_section_header">Video-Vorlagen</string>
+
+    <!-- Projects -->
+    <string name="projects_title">Meine Projekte</string>
+    <string name="projects_menu">Projektmenü</string>
+    <string name="projects_download">Herunterladen</string>
+    <string name="projects_share">Teilen</string>
+    <string name="projects_delete">Löschen</string>
+    <string name="projects_delete_confirmation_title">Video löschen?</string>
+    <string name="projects_delete_confirmation_message">Dieses Video wird dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="projects_delete_confirm">Löschen</string>
+    <string name="projects_delete_cancel">Abbrechen</string>
+    <string name="projects_empty">Noch keine Projekte</string>
+    <string name="projects_empty_description">Erstelle dein erstes Projekt, um es hier zu sehen</string>
+    <string name="projects_empty_title">Starte deine Reise</string>
+    <string name="projects_empty_subtitle">Hier sieht es noch etwas leer aus. Lass uns heute dein erstes Meisterwerk erstellen.</string>
+    <string name="projects_create_new_video">Neues Video erstellen</string>
+    <string name="projects_create_description">Starte ein neues Diashow-Projekt</string>
+    <string name="projects_item_info">%1$d Fotos • %2$s</string>
+    <string name="projects_delete_title">Projekt löschen?</string>
+    <string name="projects_delete_message">\"%s\" wird dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="projects_removed_from_list">Aus der Liste entfernt</string>
+
+    <!-- Export -->
+    <string name="export_title">Video exportieren</string>
+    <string name="export_processing">Wird verarbeitet…</string>
+    <string name="export_complete">Export abgeschlossen!</string>
+    <string name="export_share">Teilen</string>
+    <string name="export_save">In Galerie speichern</string>
+    <string name="export_preparing">Export wird vorbereitet…</string>
+    <string name="export_generating">Wird generiert</string>
+    <string name="export_please_wait">Moment mal, dein Video wird vorbereitet!\nBitte schließe die App nicht</string>
+    <string name="export_exporting">Video wird exportiert…</string>
+    <string name="export_dont_close">Bitte schließe die App nicht</string>
+    <string name="export_tip_1">Dein Meisterwerk wird erstellt…</string>
+    <string name="export_tip_2">Etwas Filmmagie wird hinzugefügt…</string>
+    <string name="export_tip_3">Deine Erinnerungen werden zum Leben erweckt…</string>
+    <string name="export_tip_4">Jedes Bild wird poliert…</string>
+    <string name="export_tip_5">Wird perfektioniert…</string>
+    <string name="export_tip_6">Deine Geschichte wird gewoben…</string>
+    <string name="export_tip_7">Etwas Besonderes wird erstellt…</string>
+    <string name="export_tip_8">Fast fertig! Sieht großartig aus…</string>
+    <string name="export_tip_9">Details werden verfeinert…</string>
+    <string name="export_tip_10">Letzte Hand wird angelegt…</string>
+    <string name="export_video_saved">Dein Video wurde gespeichert</string>
+    <string name="export_saved_to_gallery">In Galerie gespeichert</string>
+    <string name="export_saving_to_gallery">In Galerie speichern…</string>
+    <string name="export_error_save_failed">Speichern in Galerie fehlgeschlagen</string>
+    <string name="export_share_video">Video teilen</string>
+    <string name="export_failed">Export fehlgeschlagen</string>
+    <string name="export_try_again">Erneut versuchen</string>
+    <string name="export_go_back">Zurück</string>
+    <string name="export_cancelled">Export abgebrochen</string>
+    <string name="export_cancelled_message">Der Videoexport wurde abgebrochen</string>
+    <string name="export_back_to_editor">Zurück zum Editor</string>
+    <string name="export_cancel_title">Export abbrechen?</string>
+    <string name="export_cancel_message">Möchtest du den Export wirklich abbrechen? Alle Fortschritte gehen verloren.</string>
+    <string name="export_continue">Weiter</string>
+    <string name="export_cancel_export">Export abbrechen</string>
+    <string name="export_error_file_not_found">Videodatei nicht gefunden</string>
+    <string name="export_error_share_failed">Video teilen fehlgeschlagen</string>
+    <string name="export_try_another_templates">Andere Vorlagen ausprobieren</string>
+    <string name="export_templates_load_failed">Vorlagen konnten nicht geladen werden</string>
+    <string name="export_watch_ad_title">Werbung ansehen zum Herunterladen?</string>
+    <string name="export_watch_ad_subtitle">Hilf uns, diese App kostenlos zu halten, indem du eine kurze Werbung anschaust. Dein Video wird danach sofort heruntergeladen!</string>
+    <string name="watch_ad_dialog_title">Exklusives Feature freischalten! ✨</string>
+    <string name="watch_ad_dialog_subtitle">Schau eine kurze Werbung an, um dieses Feature freizuschalten und mit der Bearbeitung fortzufahren!</string>
+    <string name="export_watch_ad_button">Werbung ansehen (1/1)</string>
+    <string name="export_watch_ad_close">Schließen</string>
+    <string name="export_watermark_remove_title">Wasserzeichen entfernen?</string>
+    <string name="export_watermark_remove_subtitle">Schau eine kurze Werbung an, um das Wasserzeichen aus der Videovorschau zu entfernen.</string>
+    <string name="export_watermark_remove_button">Werbung ansehen</string>
+    <string name="export_watermark_remove_close">Schließen</string>
+
+    <!-- Asset Picker -->
+    <string name="picker_title">Bild auswählen</string>
+    <string name="picker_done">Fertig (%1$d/%2$d)</string>
+    <string name="picker_close">Schließen</string>
+    <string name="picker_selected">Ausgewählt</string>
+    <string name="picker_no_photos">Keine Fotos gefunden</string>
+    <string name="picker_no_photos_hint">Mache Fotos, um loszulegen</string>
+    <string name="picker_permission_title">Zugriff auf Fotos erlauben</string>
+    <string name="picker_permission_message">Um fortzufahren, benötigt Rehancer die Erlaubnis, auf deine Fotos zuzugreifen</string>
+    <string name="picker_allow_access">Zugriff erlauben</string>
+    <string name="picker_give_access">Zugriff gewähren</string>
+    <string name="picker_give_access_settings">Zugriff auf deine Fotos\nist deaktiviert.</string>
+    <string name="picker_give_access_permission">Bereit zum Erstellen?</string>
+    <string name="picker_not_now">Nicht jetzt</string>
+    <string name="picker_full_access_custom_message">Um deine Videos und Fotos zu durchsuchen, benötigen wir Zugriff auf deine Galerie.</string>
+    <string name="picker_full_access_settings_message"> Um mit der Bearbeitung zu beginnen, aktiviere \'Fotos\' oder \'Speicher\' in deinen Geräteeinstellungen.</string>
+    <string name="picker_limited_access_message">Du hast Video Maker Zugriff auf eine begrenzte Anzahl von Fotos gegeben.</string>
+    <string name="picker_add_more_photos">Hinzufügen</string>
+    <string name="picker_go_to_settings">Zu Einstellungen</string>
+    <string name="picker_min_selection">Bitte wähle mindestens %d Bilder aus.</string>
+    <string name="picker_current_selection">%d Bild(er) ausgewählt</string>
+    <string name="picker_exit_confirm_title">Bildauswahl verlassen?</string>
+    <string name="picker_exit_confirm_message">Du hast Bilder ausgewählt. Wenn du jetzt gehst, werden deine ausgewählten Bilder verworfen.</string>
+    <string name="picker_exit_confirm">Verlassen</string>
+    <string name="picker_exit_stay">Bleiben</string>
+
+    <!-- Music Player Bottom Sheet -->
+    <string name="music_player_title">Musik-Player</string>
+    <string name="music_player_use_to_create">Zur Videoerstellung verwenden</string>
+
+    <!-- Music Picker -->
+    <string name="music_picker_title">Musik auswählen</string>
+    <string name="music_picker_loading">Musik wird geladen…</string>
+    <string name="music_picker_no_music">Keine Musik gefunden</string>
+    <string name="music_picker_no_music_hint">Füge Musikdateien zu deinem Gerät hinzu, um sie hier zu verwenden</string>
+    <string name="music_picker_permission_title">Audio-Zugriff erforderlich</string>
+    <string name="music_picker_permission_message">Um deine Musik als Hintergrundaudio zu verwenden, benötigen wir die Erlaubnis, auf deine Audiodateien zuzugreifen.</string>
+    <string name="music_picker_allow_access">Zugriff erlauben</string>
+    <string name="music_picker_preview">Vorschau</string>
+    <string name="music_picker_stop_preview">Stopp</string>
+    <string name="music_picker_select">Auswählen</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">Einstellungen</string>
+    <string name="settings_panel_apply">Anwenden</string>
+    <string name="settings_panel_close">Schließen</string>
+    <string name="settings_apply">Anwenden</string>
+    <string name="settings_effect_set">Effektset</string>
+    <string name="settings_all">Alle</string>
+    <string name="settings_off">AUS</string>
+    <string name="settings_none">Keine</string>
+    <string name="settings_pro">PRO</string>
+    <string name="settings_duration_per_image">Dauer pro Bild</string>
+    <string name="settings_seconds_format">%ds</string>
+    <string name="settings_duration_seconds">%ds</string>
+    <string name="settings_overlay_frame">Overlay-Rahmen</string>
+    <string name="settings_background_music">Hintergrundmusik</string>
+    <string name="settings_custom">Benutzerdefiniert</string>
+    <string name="settings_add">+ Hinzufügen</string>
+    <string name="settings_add_audio">+ Hinzufügen</string>
+    <string name="settings_volume">Lautstärke</string>
+    <string name="settings_clip_music">Musikclip</string>
+    <string name="settings_aspect_ratio">Seitenverhältnis</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">Lautstärke</string>
+    <string name="tab_music_clip">Musikclip</string>
+    <string name="settings_transition_effect">Übergangseffekt</string>
+    <string name="settings_transition_duration">Übergangsdauer</string>
+    <string name="settings_transition_duration_value">%.1fs</string>
+
+    <!-- Search -->
+    <string name="search_hint">Deinen perfekten Stil finden…</string>
+    <string name="search_recent">Zuletzt gesucht</string>
+    <string name="search_clear_all">Alles löschen</string>
+    <string name="search_no_results">Keine Stile gefunden</string>
+    <string name="search_no_results_hint">Versuche ein anderes Wort oder wähle unten eine Stimmung</string>
+    <string name="search_suggestions">Vorschläge</string>
+    <string name="search_browse_by_theme">Nach Stimmung erkunden</string>
+    <string name="search_trending_templates">Gerade beliebt</string>
+    <string name="search_tag_aesthetic">Ästhetisch</string>
+    <string name="search_tag_birthday">Geburtstag</string>
+    <string name="search_tag_travel">Reisen</string>
+    <string name="search_tag_lofi">Lofi</string>
+    <string name="search_tag_cinematic">Cineastisch</string>
+    <string name="search_tag_vintage">Vintage</string>
+
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">Traumhafte Stimmung</string>
+    <string name="effect_dreamy_vibes_desc">Sanftes Leuchten und Pastellfarben</string>
+    <string name="effect_cyberpunk_title">Cyberpunk</string>
+    <string name="effect_cyberpunk_desc">Neonlichter und Glitch-Effekte</string>
+    <string name="effect_vintage_film_title">Vintage Film</string>
+    <string name="effect_vintage_film_desc">Retro-Korn und warme Farben</string>
+    <string name="effect_ocean_breeze_title">Meeresbrise</string>
+    <string name="effect_ocean_breeze_desc">Kühle blaue Verläufe</string>
+    <string name="effect_golden_hour_title">Goldene Stunde</string>
+    <string name="effect_golden_hour_desc">Warmes Sonnenuntergangs-Overlay</string>
+    <string name="effect_noir_title">Noir</string>
+    <string name="effect_noir_desc">Hoher Kontrast in Schwarz-Weiß</string>
+    <string name="effect_sakura_title">Sakura</string>
+    <string name="effect_sakura_desc">Kirschblütenrosa</string>
+    <string name="effect_aurora_title">Aurora</string>
+    <string name="effect_aurora_desc">Nordlichter-Leuchten</string>
+
+    <!-- Common -->
+    <string name="cancel">Abbrechen</string>
+    <string name="confirm">Bestätigen</string>
+    <string name="delete">Löschen</string>
+    <string name="save">Speichern</string>
+    <string name="back">Zurück</string>
+    <string name="done">Fertig</string>
+    <string name="error">Fehler</string>
+    <string name="retry">Erneut versuchen</string>
+    <string name="seconds">%d Sekunden</string>
+    <string name="none">Keine</string>
+    <string name="close">Schließen</string>
+    <string name="remove">Entfernen</string>
+    <string name="badge_pro">PRO</string>
+    <string name="settings">Einstellungen</string>
+
+    <!-- Error states -->
+    <string name="error_load_failed">Laden fehlgeschlagen. Zum Wiederholen nach unten ziehen.</string>
+    <string name="error_network_title">Netzwerkfehler</string>
+    <string name="error_data_load_failed">Erforderliche Daten konnten nicht geladen werden. Bitte überprüfe deine Internetverbindung und versuche es erneut.</string>
+    <string name="loading_building_feed">Dein Feed wird erstellt</string>
+    <string name="error_network_message">Musik konnte nicht geladen werden. Bitte überprüfe deine Verbindung und versuche es erneut.</string>
+    <string name="error_network_timeout">Netzwerk-Timeout. Bitte überprüfe deine Verbindung und versuche es erneut.</string>
+    <string name="error_preview_title">Vorschau-Fehler</string>
+    <string name="error_preview_music_network">Netzwerkfehler beim Laden der Musik. Bitte überprüfe deine Verbindung und versuche es erneut.</string>
+    <string name="error_preview_music_failed">Musik konnte nicht geladen werden. Bitte versuche es erneut.</string>
+    <string name="error_template_music_failed">Song konnte nicht geladen werden. Bitte überprüfe deine Verbindung und versuche es erneut.</string>
+    <string name="error_video_playback_failed">Videovorschau konnte nicht geladen werden. Bitte überprüfe deine Verbindung und versuche es erneut.</string>
+    <string name="error_video_network">Netzwerkfehler beim Laden des Videos. Bitte überprüfe deine Verbindung und versuche es erneut.</string>
+    <string name="video_retrying">Vorschau wird geladen…</string>
+    <string name="dialog_ok">OK</string>
+
+    <!-- Songs -->
+    <string name="start_project">Projekt starten</string>
+
+    <!-- Song Search -->
+    <string name="song_search_hint">Songs suchen…</string>
+    <string name="song_search_explore_by_genre">Nach Genre erkunden</string>
+    <string name="song_search_suggested">Empfehlungen für dich</string>
+    <string name="song_search_no_results">Keine Songs gefunden</string>
+    <string name="song_search_change_music">Musik ändern</string>
+    <string name="song_search_idle_hint">Tippe, um Songs zu suchen</string>
+
+    <!-- Onboarding Page 4 -->
+    <string name="onboarding_page4_title">Wie möchtest du starten?</string>
+    <string name="onboarding_page4_subtitle">Dies hilft uns, die relevantesten Inhalte für dich zu empfehlen.</string>
+    <string name="feature_music_video_instant">Video-Vorlagen durchsuchen</string>
+    <string name="feature_photos_to_video">Mit einem Song starten</string>
+    <string name="feature_trending_templates">Trendige Vorlagen verwenden</string>
+    <string name="feature_trending_music">Trendige Musik hinzufügen</string>
+
+    <!-- Music Genres -->
+    <string name="genre_pop">Pop</string>
+    <string name="genre_rock">Rock</string>
+    <string name="genre_hiphop">Hip-Hop</string>
+    <string name="genre_rnb">R&amp;B</string>
+    <string name="genre_electronic">Elektronisch</string>
+    <string name="genre_jazz">Jazz</string>
+    <string name="genre_classical">Klassik</string>
+    <string name="genre_country">Country</string>
+    <string name="genre_latin">Latin</string>
+    <string name="genre_kpop">K-Pop</string>
+    <string name="genre_dance">Dance</string>
+    <string name="genre_edm">EDM</string>
+    <string name="genre_blues">Blues</string>
+    <string name="genre_metal">Metal</string>
+    <string name="genre_soul">Soul</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_trending_search_long">Trend-Suche</string>
+    <string name="shortcut_create_video_long">Video erstellen</string>
+    <string name="shortcut_choose_template_long">Video-Vorlage wählen</string>
+    <string name="shortcut_uninstall_long">App deinstallieren</string>
+
+    <!-- Widget -->
+    <string name="widget_title">Widget</string>
+    <string name="widget_bts">Widget hinzufügen</string>
+    <string name="widget_smart_search">Smart-Suche</string>
+    <string name="widget_smart_search_description">Deinen Stil suchen</string>
+    <string name="widget_smart_search_trending">Trending ❤️‍🔥</string>
+    <string name="widget_trending_template">Trendige Vorlage</string>
+    <string name="widget_recently">Kürzlich</string>
+    <string name="widget_trending_song">Trending Song</string>
+    <string name="widget_trending_song_hot">Heiß</string>
+    <string name="widget_search_hint">Vorlagen suchen...</string>
+    <string name="widget_pin_request_sent">Widget zum Startbildschirm hinzugefügt</string>
+    <string name="widget_pin_not_supported">Widget-Pinnen wird auf diesem Gerät nicht unterstützt</string>
+    <string name="widget_add_failed">Widget hinzufügen fehlgeschlagen: %s</string>
+
+    <!-- Unified search -->
+    <string name="unified_search_templates">Vorlagen</string>
+    <string name="unified_search_music">Musik</string>
+    <string name="unified_search_see_more">Mehr anzeigen</string>
+    <string name="unified_search_loading_more">Laden…</string>
+    <string name="unified_search_explore_more">Mehr erkunden</string>
+    <string name="unified_search_explore_suggestions">Vorschläge erkunden</string>
+    <string name="unified_search_no_results_title">Keine Ergebnisse gefunden</string>
+    <string name="unified_search_keep_typing">Tippe weiter, um deine Suche zu verfeinern</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">Heiß</string>
+    <string name="tag_trending">Trending</string>
+    <string name="tag_new">Neu</string>
+    <string name="tag_featured">Empfohlen</string>
+
+    <!-- Template Previewer -->
+    <string name="template_add_to_favorites">Hinzufügen</string>
+    <string name="template_use_button">Diese Vorlage verwenden</string>
+    <string name="template_swipe_hint">Nach oben wischen</string>
+    <string name="template_swipe_subtitle">Um deine Vorlagen zu genießen</string>
+    <string name="template_select_ratio_title">Videoverhältnis wählen</string>
+    <string name="template_create_now">Jetzt erstellen</string>
+    <string name="template_error_load_failed">Vorlagen konnten nicht geladen werden. Bitte versuche es erneut.</string>
+
+    <!-- Unified Search -->
+    <string name="search_templates_suggestions">Vorlagen-Vorschläge</string>
+    <string name="search_music_suggestion">Musik-Vorschlag</string>
+    <string name="search_empty_subtitle">Lass es uns mit etwas anderem versuchen oder\ntrending Vibes erkunden</string>
+    <string name="search_typing_result_header">Ergebnis</string>
+    <string name="search_loading_title">Suche nach Ergebnissen…</string>
+    <string name="search_loading_message">Wir durchsuchen unsere Datenbank, um dir\ndie genauesten Informationen zu bringen.\nBitte warte einen Moment.</string>
+    <string name="search_placeholder">Nach allem suchen</string>
+    <string name="search_pro_badge">PRO</string>
+
+    <!-- Editor Volume -->
+    <string name="volume_title">Lautstärke</string>
+
+    <!-- Rating Popup -->
+    <string name="rating_satisfaction_title">Wir sind dankbar für deine Zeit bei Video Generating</string>
+    <string name="rating_satisfaction_subtitle">Bist du mit unserer App zufrieden?</string>
+    <string name="rating_not_really">Nicht wirklich</string>
+    <string name="rating_good">Gut</string>
+    <string name="rating_experience_title">Bewerte deine\nErfahrung mit uns</string>
+    <string name="rating_submit">Absenden</string>
+    <string name="rating_feedback_title">Das tut uns leid 🥲</string>
+    <string name="rating_feedback_subtitle">Wir werden härter arbeiten, um deine Erfahrung zu verbessern</string>
+    <string name="rating_feedback_type_hint">Dein Feedback eingeben</string>
+    <string name="rating_feedback_reason_music_quality">Keine Lieblingssongs / Musikqualität ist schlecht</string>
+    <string name="rating_feedback_reason_translation">Die Übersetzungsqualität ist zu niedrig</string>
+    <string name="rating_feedback_reason_tools">Bearbeitungstools erfüllen meine Bedürfnisse nicht</string>
+    <string name="rating_feedback_reason_output_quality">Ausgabe-Videoqualität ist zu niedrig</string>
+    <string name="rating_feedback_reason_performance">App ist langsam oder stürzt häufig ab</string>
+    <string name="rating_feedback_reason_templates">Nicht genug Vorlagen / Inhaltsaktualisierungen</string>
+    <string name="rating_feedback_reason_other">Sonstiges</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">Anzeige</string>
+    <string name="ad_icon">Werbung-Symbol</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">Werbung ansehen, um diesen Effekt freizuschalten?</string>
+    <string name="effect_set_watch_ad_subtitle">Schalte dieses Effektset dauerhaft frei, indem du eine kurze Werbung anschaust</string>
+    <string name="effect_set_ad_not_available">Werbung ist derzeit nicht verfügbar. Bitte versuche es später erneut.</string>
+    <string name="effect_set_locked">Gesperrtes Effektset</string>
+    <string name="ad_not_available">Werbung ist derzeit nicht verfügbar. Bitte versuche es später erneut.</string>
+
+    <!-- Quality Unlock Rewarded Ad -->
+    <string name="quality_watch_ad_title">Werbung ansehen, um in hoher Qualität zu exportieren?</string>
+    <string name="quality_watch_ad_subtitle">Schalte den 720p/1080p-Export für diese Sitzung frei, indem du eine kurze Werbung anschaust</string>
+    <string name="quality_ad_not_available">Werbung ist derzeit nicht verfügbar. Bitte versuche es später oder wähle eine niedrigere Qualität.</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">Werbung ansehen, um diese Vorlage freizuschalten?</string>
+    <string name="template_watch_ad_subtitle">Schalte diese Vorlage dauerhaft frei, indem du eine kurze Werbung anschaust</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Werbung ansehen, um diesen Song freizuschalten?</string>
+    <string name="song_watch_ad_subtitle">Nach dem Ansehen kannst du diesen Song für die Videoerstellung verwenden. Freischaltung ist dauerhaft.</string>
+
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">Neuer Trend-Song!</string>
+    <string name="notif_trending_song_body">%1$s\'s \'%2$s\' wird viral! Erstelle dein Edit mit 1 Klick, bevor der Trend seinen Höhepunkt erreicht.</string>
+    <string name="notif_viral_template_title">Trendige Vorlagen für dich. Jetzt ausprobieren!</string>
+    <string name="notif_viral_template_body">1.000.000 Menschen haben heute dieses %1$s verwendet. Verpasse den Hype nicht!</string>
+    <string name="notif_forgotten_masterpiece_title">Dein Meisterwerk wartet!</string>
+    <string name="notif_forgotten_masterpiece_body">Du hast den schwierigen Teil erledigt, jetzt lass es glänzen. Dein Video ist bereit, mit der Welt geteilt zu werden!</string>
+    <string name="notif_quick_save_title">Verliere deine Arbeit nicht!</string>
+    <string name="notif_quick_save_body">Dein Edit sieht großartig aus! Speichere es jetzt in deiner Galerie, damit du diese perfekten Beat-Syncs nicht verlierst.</string>
+    <string name="notif_share_encouragement_title">Bereit für \'Likes\'?</string>
+    <string name="notif_share_encouragement_body">Dein \'%1$s\' Edit ist zu 100%% beat-synchron und bereit. Poste es jetzt auf TikTok!</string>
+    <string name="notif_abandoned_select_photos_title">Lass den Beat nicht hängen!</string>
+    <string name="notif_abandoned_select_photos_body">Dein \'Not Like Us\' Edit ist fast fertig. Wähle einfach ein paar Fotos aus, um die Magie zu sehen!</string>
+    <string name="notif_draft_completion_nudge_title">Beende, was du begonnen hast!</string>
+    <string name="notif_draft_completion_nudge_body">Du bist nur einen Schritt von einem viralen Video entfernt. Komm zurück und füge jetzt deine Fotos hinzu!</string>
+    <string name="notif_cta_play_song">Song abspielen</string>
+    <string name="notif_cta_discover_templates">Vorlagen entdecken</string>
+    <string name="notif_cta_continue_editing">Bearbeitung fortsetzen</string>
+    <string name="notif_cta_view_template">Vorlage anzeigen</string>
+
+</resources>

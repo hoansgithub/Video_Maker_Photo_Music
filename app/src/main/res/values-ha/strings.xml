@@ -1,0 +1,547 @@
+<resources>
+    <string name="app_name">Video Maker - AI Music</string>
+
+    <!-- Facebook SDK (Analytics only) -->
+    <string name="facebook_app_id">2394935491027358</string>
+    <string name="facebook_client_token">59adbbae92079f20f43d002f331d8e9d</string>
+
+    <!-- Loading -->
+    <string name="loading">Ana lodi…</string>
+    <string name="ad_loading">Ana lodi talla…</string>
+
+    <!-- Language Selection -->
+    <string name="language_select_title">Zaɓi Harshe</string>
+    <string name="language_select_subtitle">Da fatan za a zaɓi harshen nunawa.</string>
+    <string name="language_continue">Ci gaba</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Na gaba</string>
+    <string name="onboarding_get_started">Fara</string>
+    <!-- Page 1 -->
+    <string name="onboarding_page1_title">Ƙirƙira Al\'ajabi a Daƙiƙa Kaɗan</string>
+    <string name="onboarding_page1_subtitle">Bidiyo mai kyau da ɗan taɓawa kaɗan. Sauƙi kuma da sauri</string>
+    <!-- Page 2 -->
+    <string name="onboarding_page2_title">Nemo Rhythminka</string>
+    <string name="onboarding_page2_subtitle">Sauti masu trending ga kowane yanayi</string>
+    <!-- Page 3 -->
+    <string name="onboarding_page3_title">Tare Mafi Kyau!</string>
+    <string name="onboarding_page3_subtitle">Tare mafi kyau. Gayyaci abokai don raba jin daɗi</string>
+    <string name="onboarding_swipe_next">Murɗa zuwa na gaba</string>
+    <string name="onboarding_exit_title">Fita daga Saiti?</string>
+    <string name="onboarding_exit_message">Kuna iya canza fifikon ku daga baya a Saiti.</string>
+    <string name="onboarding_exit_confirm">Fita</string>
+    <string name="onboarding_exit_dismiss">Ci gaba</string>
+    <string name="root_no_internet_title">Babu Haɗin Intanet</string>
+    <string name="root_no_internet_message">Na\'urar ku tana offline yanzu. Da fatan a sake haɗa don ci gaba da ci gaban ku</string>
+    <string name="root_try_again">Sake gwadawa</string>
+    <string name="root_loading_initializing">Ana farawa...</string>
+    <string name="root_loading_fetching_config">Ana lodi tsari...</string>
+    <string name="root_loading_ad">Wannan na iya ƙunsar tallace-tallace</string>
+    <string name="root_loading_checking_status">Ana duba matsayi...</string>
+    <string name="root_loading_preparing">Ana shirya...</string>
+
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">Hotunan</string>
+    <string name="home_tab_songs">Waƙoƙi</string>
+    <string name="home_tab_projects">Laburare</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_filter_for_you">Dominka</string>
+    <string name="gallery_hot_songs">Waƙoƙi masu shahara</string>
+    <string name="gallery_templates">Templates</string>
+    <string name="gallery_coming_soon">Yana zuwa nan da nan</string>
+    <string name="gallery_search_hint">Nemo salon ku</string>
+    <string name="gallery_create_new_video">Ƙirƙiri Sabon Bidiyo</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">Waƙoƙi</string>
+    <string name="songs_all">Dukkan Waƙoƙi</string>
+    <string name="songs_categories">Nau\'oi</string>
+    <string name="songs_search_hint">Nemo waƙoƙi</string>
+    <string name="songs_suggest_for_you">Shawarar dominka</string>
+    <string name="songs_weekly_ranking">Matsayin Mako</string>
+    <string name="songs_station">Tashoshin da aka ba da shawarar</string>
+
+    <!-- Common Actions -->
+    <string name="home_create">Ƙirƙira</string>
+
+    <!-- Legacy Home -->
+    <string name="home_title">Video Maker</string>
+    <string name="home_welcome">Me kuke son yi?</string>
+    <string name="home_create_description">Ƙirƙiri slideshow daga hotunanka</string>
+    <string name="home_my_projects">Ayyukana</string>
+    <string name="home_my_projects_description">Duba ayyukan da aka adana</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Saiti</string>
+    <string name="settings_account">Asusun</string>
+    <string name="settings_legal">Doka</string>
+    <string name="settings_language">Harshe</string>
+    <string name="settings_app_widet">Ƙara Widget</string>
+    <string name="settings_rate_us">Daraja mu</string>
+    <string name="settings_share_with_friends">Raba da Abokai</string>
+    <string name="settings_report">Rahoto</string>
+    <string name="settings_term_of_service">Sharuɗɗan Sabis</string>
+    <string name="settings_privacy_policy">Manufar Sirri</string>
+    <string name="settings_language_description">Canza harshen app</string>
+    <string name="settings_about">Game da</string>
+    <string name="settings_version">Sigar</string>
+    <string name="settings_uninstall">Cirewa</string>
+    <string name="settings_share_subject">Duba wannan app!</string>
+    <string name="settings_share_message">Hey! Ina amfani da wannan kyakkyawan app. Gwada shi:\n%s</string>
+    <string name="notification_permission_trending_title">Ka kasance gaban trend!</string>
+    <string name="notification_permission_trending_message"> Kunna sanarwa don karɓar faɗakarwa nan da nan lokacin da aka ƙara sabbin templates na viral.</string>
+    <string name="notification_permission_notify_me">Sanar da ni</string>
+    <string name="notification_permission_maybe_later">Wataƙila daga baya</string>
+    <string name="notification_permission_settings_title">Sanarwa a yanzu\nba a kunna su ba.</string>
+    <string name="notification_permission_settings_message"> Da fatan a kunna su a saitunan na\'urar don karɓar sabuntawar template</string>
+    <string name="notification_permission_open_settings">Je zuwa Saiti</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Sake gwadawa</string>
+    <string name="uninstall_description">Shin kuna tabbata kuna son cirewa?</string>
+    <string name="uninstall_confirm">Har yanzu cirewa app</string>
+    <string name="uninstall_cancel">Kada a cirewa. Gano ƙari</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Gyara Aikin</string>
+    <string name="editor_add_photos">Ƙara Hotuna</string>
+    <string name="editor_settings">Saiti</string>
+    <string name="editor_preview">Duba Kafin</string>
+    <string name="editor_export">Fitar da</string>
+    <string name="editor_transition">Canjawa</string>
+    <string name="editor_duration">Tsawon lokaci</string>
+    <string name="editor_music">Kiɗa</string>
+    <string name="editor_frame">Firam</string>
+    <string name="editor_aspect_ratio">Rabo na Fuska</string>
+    <string name="editor_volume">Ƙara Murya</string>
+    <string name="editor_effect">Tasiri</string>
+    <string name="editor_select_video_ratio">Zaɓi Rabo na Bidiyo</string>
+    <string name="editor_apply">Aiwatar</string>
+    <string name="editor_image_duration">Tsawon lokacin Hoto</string>
+    <string name="editor_change_music">Canza kiɗa</string>
+    <string name="editor_select_quality">Zaɓi inganci</string>
+    <string name="editor_hd">HD</string>
+    <string name="editor_play">Kunna</string>
+    <string name="editor_pause">Dakatar</string>
+    <string name="editor_duration_format">Tsawon lokaci: %s</string>
+
+    <!-- Music Trim Feature -->
+    <string name="editor_music_trim">Yanke Kiɗa</string>
+    <string name="editor_music_trim_from_start">Yanke daga Farko</string>
+    <string name="editor_music_trim_from_end">Yanke daga Ƙarshe</string>
+    <string name="editor_music_trim_edit">Gyara Yanke Kiɗa</string>
+    <string name="editor_music_trim_title">Yanke Kiɗa</string>
+    <string name="editor_music_trim_subtitle">Zaɓi wane bangare na waƙar za a yi amfani da shi</string>
+    <string name="editor_music_trim_start">Farkon Kiɗa</string>
+    <string name="editor_music_trim_end">Ƙarshen Kiɗa</string>
+    <string name="editor_music_trim_duration">Tsawon lokacin Kiɗa</string>
+    <string name="editor_music_trim_min_duration">Kiɗa dole ne ya kasance aƙalla daƙiƙa 5</string>
+    <string name="editor_music_trim_will_loop">Ana maimaita kiɗa idan ya zama dole don bidiyon ku</string>
+    <string name="editor_music_trimmed_info">Kiɗa: %1$s</string>
+    <string name="editor_music_trim_play_selection">Kunna Zaɓi</string>
+    <string name="editor_music_trim_skip_to_start">Tsallake zuwa Farko</string>
+    <string name="editor_music_trim_skip_to_end">Tsallake zuwa Ƙarshe</string>
+    <string name="editor_photos_count">Hotuna %d</string>
+    <string name="editor_save_dialog_title">Adana Aiki?</string>
+    <string name="editor_save_dialog_message">Za a adana aikin ku kuma za a samu a Ayyukana.</string>
+    <string name="editor_save_and_exit">Adana &amp; Fita</string>
+    <string name="editor_discard_changes">Watsar da Canje-canje</string>
+    <string name="editor_processing">Ana sarrafa…</string>
+    <string name="editor_preparing_video">Ana shirya bidiyo…</string>
+    <string name="editor_unsaved_project_title">Adana Aikin ku?</string>
+    <string name="editor_unsaved_project_message">Ba a adana aikin ku tukuna. Adana yanzu ko ku watsar da aikin ku?</string>
+    <string name="editor_unsaved_changes_title">Canje-canjen da ba a adana ba</string>
+    <string name="editor_unsaved_changes_message">Idan kun tafi yanzu, za a rasa canje-canjeku. Shin kuna tabbata kuna son tafiya?</string>
+    <string name="editor_keep_editing">Ci gaba da Gyarawa</string>
+    <string name="editor_discard">Watsar</string>
+    <string name="editor_effect_sets">Saitunan Tasiri</string>
+    <string name="editor_retry">Sake gwadawa</string>
+    <string name="editor_no_music_selected">Ba a zaɓi kiɗa ba</string>
+
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Bidiyon da aka ƙirƙira</string>
+    <string name="projects_tab_liked_template">Template da aka so</string>
+    <string name="projects_tab_liked_song">Waƙa da aka so</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Waƙa ba ta nan</string>
+    <string name="like_song_search_button">Nemo Waƙoƙi</string>
+    <string name="like_song_section_header">Kiɗa Dominka</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Template ba ta nan</string>
+    <string name="like_template_search_button">Nemo Templates</string>
+    <string name="like_template_section_header">Templates na Bidiyo</string>
+
+    <!-- Projects -->
+    <string name="projects_title">Ayyukana</string>
+    <string name="projects_menu">Menu na aiki</string>
+    <string name="projects_download">Zazzage</string>
+    <string name="projects_share">Raba</string>
+    <string name="projects_delete">Goge</string>
+    <string name="projects_delete_confirmation_title">Goge Bidiyo?</string>
+    <string name="projects_delete_confirmation_message">Za a goge wannan bidiyo har abada. Ba za a iya mayar da wannan aikin ba.</string>
+    <string name="projects_delete_confirm">Goge</string>
+    <string name="projects_delete_cancel">Soke</string>
+    <string name="projects_empty">Babu ayyuka tukuna</string>
+    <string name="projects_empty_description">Ƙirƙiri aikin ku na farko don ganin shi a nan</string>
+    <string name="projects_empty_title">Fara tafiyarku</string>
+    <string name="projects_empty_subtitle">Yana kama kaɗan fanko a nan. Bari mu ƙirƙiri aikin ku na farko a yau.</string>
+    <string name="projects_create_new_video">Ƙirƙiri Sabon Bidiyo</string>
+    <string name="projects_create_description">Fara sabon aikin slideshow</string>
+    <string name="projects_item_info">Hotuna %1$d • %2$s</string>
+    <string name="projects_delete_title">Goge Aiki?</string>
+    <string name="projects_delete_message">\"%s\" za a goge har abada. Ba za a iya mayar da wannan aikin ba.</string>
+    <string name="projects_removed_from_list">An cire daga jerin</string>
+
+    <!-- Export -->
+    <string name="export_title">Fitar da Bidiyo</string>
+    <string name="export_processing">Ana sarrafa…</string>
+    <string name="export_complete">An gama fitar da!</string>
+    <string name="export_share">Raba</string>
+    <string name="export_save">Ajiye zuwa Gallery</string>
+    <string name="export_preparing">Ana shirya fitar da…</string>
+    <string name="export_generating">Ana ƙirƙira</string>
+    <string name="export_please_wait">Jira kaɗan, ana shirya bidiyon ku!\nDa fatan kada a rufe app</string>
+    <string name="export_exporting">Ana fitar da bidiyo…</string>
+    <string name="export_dont_close">Da fatan kada a rufe app</string>
+    <string name="export_tip_1">Ana ƙirƙiran aikin ku…</string>
+    <string name="export_tip_2">Ana ƙara sihirin fim…</string>
+    <string name="export_tip_3">Ana raya tunaninku…</string>
+    <string name="export_tip_4">Ana fasa kowane firam…</string>
+    <string name="export_tip_5">Ana cikakken kammala…</string>
+    <string name="export_tip_6">Ana saƙa labarinkku…</string>
+    <string name="export_tip_7">Ana ƙirƙiran wani abu na musamman…</string>
+    <string name="export_tip_8">Kusan an gama! Yana kama kyau…</string>
+    <string name="export_tip_9">Ana ninkawa dalla-dalla…</string>
+    <string name="export_tip_10">Ana ƙara taɓawar ƙarshe…</string>
+    <string name="export_video_saved">An adana bidiyon ku</string>
+    <string name="export_saved_to_gallery">An adana zuwa Gallery</string>
+    <string name="export_saving_to_gallery">Ana adanawa zuwa gallery…</string>
+    <string name="export_error_save_failed">Kasa adanawa zuwa gallery</string>
+    <string name="export_share_video">Raba Bidiyo</string>
+    <string name="export_failed">Fitar da ya Kasa</string>
+    <string name="export_try_again">Sake gwadawa</string>
+    <string name="export_go_back">Koma Baya</string>
+    <string name="export_cancelled">An soke fitar da</string>
+    <string name="export_cancelled_message">An soke fitar da bidiyo</string>
+    <string name="export_back_to_editor">Koma zuwa Editor</string>
+    <string name="export_cancel_title">Soke Fitar da?</string>
+    <string name="export_cancel_message">Shin kuna tabbata kuna son soke fitar da? Za a rasa duk ci gaban.</string>
+    <string name="export_continue">Ci gaba</string>
+    <string name="export_cancel_export">Soke Fitar da</string>
+    <string name="export_error_file_not_found">Ba a sami fayil na bidiyo ba</string>
+    <string name="export_error_share_failed">Kasa raba bidiyo</string>
+    <string name="export_try_another_templates">Gwada Wasu Templates</string>
+    <string name="export_templates_load_failed">Kasa lodi templates</string>
+    <string name="export_watch_ad_title">Kalli talla don zazzagewa?</string>
+    <string name="export_watch_ad_subtitle">Taimaka wajen kiyaye wannan app kyauta ta hanyar kallon ɗan gajeren talla. Bidiyon ku za a zazzage nan da nan!</string>
+    <string name="watch_ad_dialog_title">Buɗe Fasalin Musamman! ✨</string>
+    <string name="watch_ad_dialog_subtitle">Kalli ɗan gajeren talla don buɗe wannan fasali kuma ci gaba da gyaran bidiyon ku!</string>
+    <string name="export_watch_ad_button">Kalli Talla (1/1)</string>
+    <string name="export_watch_ad_close">Rufe</string>
+    <string name="export_watermark_remove_title">Cire alamar ruwa?</string>
+    <string name="export_watermark_remove_subtitle">Kalli ɗan gajeren talla don cire alamar ruwa daga duban bidiyon ku.</string>
+    <string name="export_watermark_remove_button">Kalli Talla</string>
+    <string name="export_watermark_remove_close">Rufe</string>
+
+    <!-- Asset Picker -->
+    <string name="picker_title">Zaɓi hotonku</string>
+    <string name="picker_done">An gama (%1$d/%2$d)</string>
+    <string name="picker_close">Rufe</string>
+    <string name="picker_selected">An zaɓa</string>
+    <string name="picker_no_photos">Ba a sami hotuna ba</string>
+    <string name="picker_no_photos_hint">Ɗauki hotuna don farawa</string>
+    <string name="picker_permission_title">Yarda da shiga hotuna</string>
+    <string name="picker_permission_message">Don ci gaba, Rehancer yana buƙatar izinin ku don shiga Hotuna</string>
+    <string name="picker_allow_access">Yarda da Shiga</string>
+    <string name="picker_give_access">Ba da Shiga</string>
+    <string name="picker_give_access_settings">Shiga zuwa hotunanka\nba a kunna shi ba.</string>
+    <string name="picker_give_access_permission">Shirye don ƙirƙira?</string>
+    <string name="picker_not_now">Ba yanzu ba</string>
+    <string name="picker_full_access_custom_message">Don bincika bidiyoyi da hotuna, muna buƙatar shiga gallery ɗinku.</string>
+    <string name="picker_full_access_settings_message"> Don farawa gyarawa, kunna \'Hotuna\' ko \'Ajiya\' a saitunan na\'urar ku.</string>
+    <string name="picker_limited_access_message">Kun ba Video Maker damar shiga ƙarancin hotuna.</string>
+    <string name="picker_add_more_photos">Ƙara</string>
+    <string name="picker_go_to_settings">Je zuwa Saiti</string>
+    <string name="picker_min_selection">Da fatan a zaɓi aƙalla hotuna %d.</string>
+    <string name="picker_current_selection">An zaɓi hotuna %d</string>
+    <string name="picker_exit_confirm_title">Fita daga zaɓin hoto?</string>
+    <string name="picker_exit_confirm_message">Kun zaɓi hotuna. Idan kun fita yanzu, za a watsar da hotuna da aka zaɓa.</string>
+    <string name="picker_exit_confirm">Fita</string>
+    <string name="picker_exit_stay">Zauna</string>
+
+    <!-- Music Player Bottom Sheet -->
+    <string name="music_player_title">Mai Kunna Kiɗa</string>
+    <string name="music_player_use_to_create">Yi amfani don Ƙirƙiri Bidiyo</string>
+
+    <!-- Music Picker -->
+    <string name="music_picker_title">Zaɓi Kiɗa</string>
+    <string name="music_picker_loading">Ana lodi kiɗa…</string>
+    <string name="music_picker_no_music">Ba a sami kiɗa ba</string>
+    <string name="music_picker_no_music_hint">Ƙara fayilolin kiɗa zuwa na\'urar don amfani da su nan</string>
+    <string name="music_picker_permission_title">Ana Buƙatar Shiga Audio</string>
+    <string name="music_picker_permission_message">Don amfani da kiɗanku a matsayin audio na baya, muna buƙatar izini don shiga fayilolin audio.</string>
+    <string name="music_picker_allow_access">Yarda da Shiga</string>
+    <string name="music_picker_preview">Duba Kafin</string>
+    <string name="music_picker_stop_preview">Tsaya</string>
+    <string name="music_picker_select">Zaɓa</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">Saiti</string>
+    <string name="settings_panel_apply">Aiwatar</string>
+    <string name="settings_panel_close">Rufe</string>
+    <string name="settings_apply">Aiwatar</string>
+    <string name="settings_effect_set">Saitunan Tasiri</string>
+    <string name="settings_all">Duka</string>
+    <string name="settings_off">KASHE</string>
+    <string name="settings_none">Babu</string>
+    <string name="settings_pro">PRO</string>
+    <string name="settings_duration_per_image">Tsawon lokaci kowane Hoto</string>
+    <string name="settings_seconds_format">%ds</string>
+    <string name="settings_duration_seconds">%ds</string>
+    <string name="settings_overlay_frame">Firam na Overlay</string>
+    <string name="settings_background_music">Kiɗan Baya</string>
+    <string name="settings_custom">Kayan</string>
+    <string name="settings_add">+ Ƙara</string>
+    <string name="settings_add_audio">+ Ƙara</string>
+    <string name="settings_volume">Murya</string>
+    <string name="settings_clip_music">Yanke Kiɗa</string>
+    <string name="settings_aspect_ratio">Rabo na Fuska</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">Murya</string>
+    <string name="tab_music_clip">Yanke Kiɗa</string>
+    <string name="settings_transition_effect">Tasirin Canjawa</string>
+    <string name="settings_transition_duration">Tsawon lokacin Canjawa</string>
+    <string name="settings_transition_duration_value">%.1fs</string>
+
+    <!-- Search -->
+    <string name="search_hint">Nemo salon ku na cikakke…</string>
+    <string name="search_recent">An bincika kwanan nan</string>
+    <string name="search_clear_all">Share Duka</string>
+    <string name="search_no_results">Ba a sami salo ba</string>
+    <string name="search_no_results_hint">Gwada wata kalma ko zaɓi vibe a ƙasa</string>
+    <string name="search_suggestions">Shawarwari</string>
+    <string name="search_browse_by_theme">Bincika ta Vibe</string>
+    <string name="search_trending_templates">Sanannu Yanzu</string>
+    <string name="search_tag_aesthetic">Kyau</string>
+    <string name="search_tag_birthday">Ranar haihuwa</string>
+    <string name="search_tag_travel">Tafiya</string>
+    <string name="search_tag_lofi">Lofi</string>
+    <string name="search_tag_cinematic">Sinematik</string>
+    <string name="search_tag_vintage">Tsofaffin</string>
+
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">Vibe na Mafarki</string>
+    <string name="effect_dreamy_vibes_desc">Haske mai laushi da launuka masu taushin</string>
+    <string name="effect_cyberpunk_title">Cyberpunk</string>
+    <string name="effect_cyberpunk_desc">Neon da tasirin glitch</string>
+    <string name="effect_vintage_film_title">Fim na Tsohon Zamanin</string>
+    <string name="effect_vintage_film_desc">Hatsin retro da launuka masu zafi</string>
+    <string name="effect_ocean_breeze_title">Iska na Teku</string>
+    <string name="effect_ocean_breeze_desc">Launi shuɗi mai sanyi</string>
+    <string name="effect_golden_hour_title">Sa\'ar Zinariya</string>
+    <string name="effect_golden_hour_desc">Overlay mai zafi na faɗuwar rana</string>
+    <string name="effect_noir_title">Noir</string>
+    <string name="effect_noir_desc">Babban bambanci baki da fari</string>
+    <string name="effect_sakura_title">Sakura</string>
+    <string name="effect_sakura_desc">Fure furannin sakura</string>
+    <string name="effect_aurora_title">Aurora</string>
+    <string name="effect_aurora_desc">Haske na arewa</string>
+
+    <!-- Common -->
+    <string name="cancel">Soke</string>
+    <string name="confirm">Tabbatar</string>
+    <string name="delete">Goge</string>
+    <string name="save">Ajiye</string>
+    <string name="back">Koma</string>
+    <string name="done">An gama</string>
+    <string name="error">Kuskure</string>
+    <string name="retry">Sake gwadawa</string>
+    <string name="seconds">Daƙiƙa %d</string>
+    <string name="none">Babu</string>
+    <string name="close">Rufe</string>
+    <string name="remove">Cire</string>
+    <string name="badge_pro">PRO</string>
+    <string name="settings">Saiti</string>
+
+    <!-- Error states -->
+    <string name="error_load_failed">Kasa lodi. Ja zuwa ƙasa don sake gwadawa.</string>
+    <string name="error_network_title">Kuskuren Cibiyar sadarwa</string>
+    <string name="error_data_load_failed">Kasa lodi bayanan da ake buƙata. Da fatan a bincika haɗin intanet ɗin ku kuma sake gwadawa.</string>
+    <string name="loading_building_feed">Ana gina Feed ɗinku</string>
+    <string name="error_network_message">Kasa lodi kiɗa. Da fatan a bincika haɗin ku kuma sake gwadawa.</string>
+    <string name="error_network_timeout">Lokaci ya wuce. Da fatan a bincika haɗin ku kuma sake gwadawa.</string>
+    <string name="error_preview_title">Kuskuren Duba Kafin</string>
+    <string name="error_preview_music_network">Kuskuren cibiyar sadarwa wajen lodi kiɗa. Da fatan a bincika haɗin ku kuma sake gwadawa.</string>
+    <string name="error_preview_music_failed">Kasa lodi kiɗa. Sake gwadawa.</string>
+    <string name="error_template_music_failed">Kasa lodi waƙa. Da fatan a bincika haɗin ku kuma sake gwadawa.</string>
+    <string name="error_video_playback_failed">Kasa lodi duba kafin bidiyo. Da fatan a bincika haɗin ku kuma sake gwadawa.</string>
+    <string name="error_video_network">Kuskuren cibiyar sadarwa wajen lodi bidiyo. Da fatan a bincika haɗin ku kuma sake gwadawa.</string>
+    <string name="video_retrying">Ana lodi duba kafin…</string>
+    <string name="dialog_ok">OK</string>
+
+    <!-- Songs -->
+    <string name="start_project">Fara aikin</string>
+
+    <!-- Song Search -->
+    <string name="song_search_hint">Nemo waƙoƙi…</string>
+    <string name="song_search_explore_by_genre">Bincika ta Genre</string>
+    <string name="song_search_suggested">An ba da shawarar Dominka</string>
+    <string name="song_search_no_results">Ba a sami waƙoƙi ba</string>
+    <string name="song_search_change_music">Canza Kiɗa</string>
+    <string name="song_search_idle_hint">Fara rubuta don nemo waƙoƙi</string>
+
+    <!-- Onboarding Page 4 -->
+    <string name="onboarding_page4_title">Yaya kuke son fara?</string>
+    <string name="onboarding_page4_subtitle">Wannan yana taimaka mana ba da shawarar abubuwa mafi dacewa dominka.</string>
+    <string name="feature_music_video_instant">Binciki Templates na Bidiyo</string>
+    <string name="feature_photos_to_video">Fara da Waƙa</string>
+    <string name="feature_trending_templates">Yi amfani da templates masu trending</string>
+    <string name="feature_trending_music">Ƙara kiɗan trending</string>
+
+    <!-- Music Genres -->
+    <string name="genre_pop">Pop</string>
+    <string name="genre_rock">Rock</string>
+    <string name="genre_hiphop">Hip-Hop</string>
+    <string name="genre_rnb">R&amp;B</string>
+    <string name="genre_electronic">Lantarki</string>
+    <string name="genre_jazz">Jazz</string>
+    <string name="genre_classical">Gargajiya</string>
+    <string name="genre_country">Country</string>
+    <string name="genre_latin">Latin</string>
+    <string name="genre_kpop">K-Pop</string>
+    <string name="genre_dance">Rawa</string>
+    <string name="genre_edm">EDM</string>
+    <string name="genre_blues">Blues</string>
+    <string name="genre_metal">Metal</string>
+    <string name="genre_soul">Soul</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_trending_search_long">Binciken Trending</string>
+    <string name="shortcut_create_video_long">Ƙirƙiri Bidiyo</string>
+    <string name="shortcut_choose_template_long">Zaɓi Template na Bidiyo</string>
+    <string name="shortcut_uninstall_long">Cirewa App</string>
+
+    <!-- Widget -->
+    <string name="widget_title">Widget</string>
+    <string name="widget_bts">Ƙara Widget</string>
+    <string name="widget_smart_search">Bincike Mai Wayo</string>
+    <string name="widget_smart_search_description">Ana neman salon ku</string>
+    <string name="widget_smart_search_trending">Trending ❤️‍🔥</string>
+    <string name="widget_trending_template">Template mai trending</string>
+    <string name="widget_recently">Kwanan nan</string>
+    <string name="widget_trending_song">Waƙar Trending</string>
+    <string name="widget_trending_song_hot">Zafi</string>
+    <string name="widget_search_hint">Nemo templates...</string>
+    <string name="widget_pin_request_sent">An ƙara widget zuwa allon gida</string>
+    <string name="widget_pin_not_supported">Ba a goyi bayan pinning widget akan wannan na\'ura ba</string>
+    <string name="widget_add_failed">Kasa ƙara widget: %s</string>
+
+    <!-- Unified search -->
+    <string name="unified_search_templates">Templates</string>
+    <string name="unified_search_music">Kiɗa</string>
+    <string name="unified_search_see_more">Ga ƙari</string>
+    <string name="unified_search_loading_more">Ana lodi…</string>
+    <string name="unified_search_explore_more">Bincika Ƙari</string>
+    <string name="unified_search_explore_suggestions">Bincika Shawarwari</string>
+    <string name="unified_search_no_results_title">Ba a sami sakamakon ba</string>
+    <string name="unified_search_keep_typing">Ci gaba da rubuta don inganta binciken ku</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">Zafi</string>
+    <string name="tag_trending">Trending</string>
+    <string name="tag_new">Sabon</string>
+    <string name="tag_featured">An Zaɓa</string>
+
+    <!-- Template Previewer -->
+    <string name="template_add_to_favorites">Ƙara</string>
+    <string name="template_use_button">Yi amfani da wannan Template</string>
+    <string name="template_swipe_hint">Murɗa sama</string>
+    <string name="template_swipe_subtitle">Don jin daɗin templates ɗinku</string>
+    <string name="template_select_ratio_title">Zaɓi Rabo na Bidiyo</string>
+    <string name="template_create_now">Ƙirƙira yanzu</string>
+    <string name="template_error_load_failed">Kasa lodi templates. Sake gwadawa.</string>
+
+    <!-- Unified Search -->
+    <string name="search_templates_suggestions">Shawarwarin Templates</string>
+    <string name="search_music_suggestion">Shawarar Kiɗa</string>
+    <string name="search_empty_subtitle">Bari mu gwada wani abu ko bincika\nvibe masu trending</string>
+    <string name="search_typing_result_header">Sakamakon</string>
+    <string name="search_loading_title">Ana nemo sakamakon…</string>
+    <string name="search_loading_message">Muna duba bayanin mu don kawo\ninformation mafi daidai dominka.\nDa fatan jira ɗan lokaci.</string>
+    <string name="search_placeholder">Nemo komai</string>
+    <string name="search_pro_badge">PRO</string>
+
+    <!-- Editor Volume -->
+    <string name="volume_title">Murya</string>
+
+    <!-- Rating Popup -->
+    <string name="rating_satisfaction_title">Muna godiya ga lokacin ku akan Video Generating</string>
+    <string name="rating_satisfaction_subtitle">Shin kun gamsu da app ɗinmu?</string>
+    <string name="rating_not_really">Ba sosai ba</string>
+    <string name="rating_good">Kyau</string>
+    <string name="rating_experience_title">Darajar Kwarewar ku\nTare da mu</string>
+    <string name="rating_submit">Aika</string>
+    <string name="rating_feedback_title">Yi haƙuri don jin haka 🥲</string>
+    <string name="rating_feedback_subtitle">Za mu yi aiki tuƙuru don inganta kwarewar ku</string>
+    <string name="rating_feedback_type_hint">Rubuta ra\'ayinku</string>
+    <string name="rating_feedback_reason_music_quality">Babu waƙoƙin da nake so / Ingancin kiɗa mara kyau</string>
+    <string name="rating_feedback_reason_translation">Ingancin fassara yana da ƙasa sosai</string>
+    <string name="rating_feedback_reason_tools">Kayan aikin gyarawa bai cika buƙatuna ba</string>
+    <string name="rating_feedback_reason_output_quality">Ingancin bidiyo na fitarwa yana da ƙasa sosai</string>
+    <string name="rating_feedback_reason_performance">App yana jinkiri ko yakan fadi akai-akai</string>
+    <string name="rating_feedback_reason_templates">Ba templates da yawa ba / Sabuntawar abubuwa</string>
+    <string name="rating_feedback_reason_other">Sauran</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">Talla</string>
+    <string name="ad_icon">Alamar talla</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">Kalli talla don buɗe wannan tasiri?</string>
+    <string name="effect_set_watch_ad_subtitle">Buɗe wannan saitunan tasiri har abada ta hanyar kallon ɗan gajeren talla</string>
+    <string name="effect_set_ad_not_available">Talla ba ta nan yanzu. Sake gwadawa daga baya.</string>
+    <string name="effect_set_locked">Saitunan tasiri da aka kulle</string>
+    <string name="ad_not_available">Talla ba ta nan yanzu. Sake gwadawa daga baya.</string>
+
+    <!-- Quality Unlock Rewarded Ad -->
+    <string name="quality_watch_ad_title">Kalli talla don fitar da inganci mai girma?</string>
+    <string name="quality_watch_ad_subtitle">Buɗe fitarwa na 720p/1080p don wannan zaman ta hanyar kallon ɗan gajeren talla</string>
+    <string name="quality_ad_not_available">Talla ba ta nan yanzu. Sake gwadawa daga baya ko zaɓi inganci ƙasa.</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">Kalli talla don buɗe wannan template?</string>
+    <string name="template_watch_ad_subtitle">Buɗe wannan template har abada ta hanyar kallon ɗan gajeren talla</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Kalli talla don buɗe wannan waƙa?</string>
+    <string name="song_watch_ad_subtitle">Bayan kallo, za ku iya amfani da wannan waƙa don ƙirƙiran bidiyoyi. Buɗewa na har abada ne.</string>
+
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">Sabuwar Waƙar Trend!</string>
+    <string name="notif_trending_song_body">\'%2$s\' na %1$s yana yaduwa! Ƙirƙiri gyaranka na 1-tap kafin trend ya kai kololuwa.</string>
+    <string name="notif_viral_template_title">Templates masu trending dominka. Gwada yanzu!</string>
+    <string name="notif_viral_template_body">Mutane 1,000,000 sun yi amfani da wannan %1$s a yau. Kada ku rasa hype!</string>
+    <string name="notif_forgotten_masterpiece_title">Aikin ku yana jiran ku!</string>
+    <string name="notif_forgotten_masterpiece_body">Kun yi sashi mai wahala, yanzu bari ya haskaka. Bidiyon ku yana shirye don raba da duniya!</string>
+    <string name="notif_quick_save_title">Kada ku rasa aikin ku!</string>
+    <string name="notif_quick_save_body">Gyaranka yana kama kyau! Ajiye zuwa gallery ɗinku yanzu don kada ku rasa beat-syncs na cikakke.</string>
+    <string name="notif_share_encouragement_title">Shirye don \'Likes\'?</string>
+    <string name="notif_share_encouragement_body">Gyaranka na \'%1$s\' yana 100%% beat-synced kuma shirye. Aika zuwa TikTok yanzu!</string>
+    <string name="notif_abandoned_select_photos_title">Kada ku bar beat yana rataye!</string>
+    <string name="notif_abandoned_select_photos_body">Gyaranka na \'Not Like Us\' kusan ya gama. Kawai zaɓi hotuna kaɗan don ganin sihirin!</string>
+    <string name="notif_draft_completion_nudge_title">Gama abin da kuka fara!</string>
+    <string name="notif_draft_completion_nudge_body">Kuna kusa da bidiyo mai yaduwa da mataki ɗaya. Koma kuma ƙara hotunanka yanzu!</string>
+    <string name="notif_cta_play_song">Kunna Waƙa</string>
+    <string name="notif_cta_discover_templates">Gano Templates</string>
+    <string name="notif_cta_continue_editing">Ci gaba da Gyarawa</string>
+    <string name="notif_cta_view_template">Duba Template</string>
+
+</resources>
