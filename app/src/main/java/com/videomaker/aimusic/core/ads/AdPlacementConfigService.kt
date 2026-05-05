@@ -213,7 +213,7 @@ class AdPlacementConfigService(
         // Waterfall: Primary unit → Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
-            layoutName = "native_big_bait",
+            layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/4622910597",  // Primary
                 "ca-app-pub-7121075950716954/5002184541"   // Secondary
@@ -227,7 +227,7 @@ class AdPlacementConfigService(
         // Waterfall: Primary unit → Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
-            layoutName = "native_big_bait",
+            layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/7245204502",  // Primary
                 "ca-app-pub-7121075950716954/9871367841"   // Secondary
@@ -241,7 +241,7 @@ class AdPlacementConfigService(
         // Waterfall: Primary unit → Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION,
-            layoutName = "native_big_bait",
+            layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/9315495347",  // Primary
                 "ca-app-pub-7121075950716954/1976061375"   // Secondary
@@ -255,7 +255,7 @@ class AdPlacementConfigService(
         // Waterfall: Primary unit → Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
-            layoutName = "native_big_bait",
+            layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/1801306131",  // Primary
                 "ca-app-pub-7121075950716954/8645411507"   // Secondary
@@ -269,7 +269,7 @@ class AdPlacementConfigService(
         // Waterfall: Primary unit → Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_PAGE1,
-            layoutName = "native_big_bait",
+            layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/8425919653",  // Primary
                 "ca-app-pub-7121075950716954/8562155601"   // Secondary
@@ -283,7 +283,7 @@ class AdPlacementConfigService(
         // Waterfall: Primary unit → Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_PAGE2,
-            layoutName = "native_big_bait",
+            layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/2815004904",  // Primary
                 "ca-app-pub-7121075950716954/3373262316"   // Secondary
@@ -297,7 +297,7 @@ class AdPlacementConfigService(
         // Waterfall: Primary unit → Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_PAGE3,
-            layoutName = "native_big_bait",
+            layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/3417640133",  // Primary
                 "ca-app-pub-7121075950716954/6506837908"   // Secondary
