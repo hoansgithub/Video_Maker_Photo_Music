@@ -419,7 +419,7 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
         // Initialize app open ad manager (lifecycle-based)
         val appOpenAdManager = org.koin.core.context.GlobalContext.get().get<co.alcheclub.lib.acccore.ads.helpers.AppOpenAdManager>()
-        appOpenAdManager.setDefaultPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_AOA)
+        appOpenAdManager.setForegroundPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_AOA)
         android.util.Log.d("VideoMakerApp", "✅ App open ad manager initialized")
 
         configureNotifications()
