@@ -71,7 +71,7 @@ android {
     // Only include supported languages
     // This reduces APK size by ~5-10MB
     androidResources {
-        localeFilters += listOf("en", "zh-rCN", "de", "in", "ja", "pt-rBR", "es", "hi", "ms", "ar", "my", "vi", "fil", "tr")
+        localeFilters += listOf("en", "pt-rBR", "es", "ar", "hi", "in", "fil", "tr", "bn", "kn", "de", "jv", "su", "ha", "yo", "ig")
     }
 
     // ============================================

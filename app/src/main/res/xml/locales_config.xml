@@ -8,4 +8,12 @@
     <locale android:name="id" />
     <locale android:name="fil" />
     <locale android:name="tr" />
+    <locale android:name="bn" />
+    <locale android:name="kn" />
+    <locale android:name="de" />
+    <locale android:name="jv" />
+    <locale android:name="su" />
+    <locale android:name="ha" />
+    <locale android:name="yo" />
+    <locale android:name="ig" />
 </locale-config>

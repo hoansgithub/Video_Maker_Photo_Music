@@ -49,10 +49,19 @@ class RegionProvider(
     private fun deriveFromLanguage(): String =
         when (languageManager.getSelectedLanguage()) {
             "hi"  -> "in"   // Hindi        → India
+            "kn"  -> "in"   // Kannada      → India
             "id"  -> "id"   // Indonesian   → Indonesia
+            "jv"  -> "id"   // Javanese     → Indonesia
+            "su"  -> "id"   // Sundanese    → Indonesia
             "tr"  -> "tr"   // Turkish      → Turkey
             "fil" -> "ph"   // Filipino     → Philippines
             "pt"  -> "br"   // Portuguese   → Brazil (largest market)
+            "bn"  -> "bd"   // Bengali      → Bangladesh
+            "ha"  -> "ng"   // Hausa        → Nigeria
+            "yo"  -> "ng"   // Yorùbá       → Nigeria
+            "ig"  -> "ng"   // Igbo         → Nigeria
+            "de"  ->        // German       → use device locale (DE/AT/CH)
+                Locale.getDefault().country.lowercase().ifBlank { "de" }
             else  ->        // en, es, ar   → use device locale country
                 Locale.getDefault().country.lowercase().ifBlank { "us" }
         }
