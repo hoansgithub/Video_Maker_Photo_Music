@@ -287,7 +287,7 @@ class ExportViewModel(
                         currentOutputWatermarkFree = project?.isWatermarkFree == true
                         Analytics.trackVideoExportComplete(
                             videoId = projectId,
-                            templateId = project?.settings?.effectSetId,
+                            templateId = project?.settings?.templateId,
                             songId = project?.settings?.musicSongId?.toString(),
                             quality = _currentQuality.value.displayName,
                             duration = project?.totalDurationMs,
@@ -299,7 +299,7 @@ class ExportViewModel(
                         preferencesManager.upsertVideoReminderState(
                             projectId = projectId,
                             generatedAtMs = generatedAt,
-                            templateId = project?.settings?.effectSetId,
+                            templateId = project?.settings?.templateId,
                             songId = project?.settings?.musicSongId,
                             thumbnailUri = _thumbnailUri.value?.toString()
                         )
@@ -615,7 +615,7 @@ class ExportViewModel(
         )
         Analytics.trackVideoShare(
             videoId = projectId,
-            templateId = project?.settings?.effectSetId,
+            templateId = project?.settings?.templateId,
             songId = project?.settings?.musicSongId?.toString(),
             quality = _currentQuality.value.displayName,
             duration = project?.totalDurationMs,
@@ -776,7 +776,7 @@ class ExportViewModel(
             val project = currentProjectSnapshot
             Analytics.trackVideoDownload(
                 videoId = projectId,
-                templateId = project?.settings?.effectSetId,
+                templateId = project?.settings?.templateId,
                 songId = project?.settings?.musicSongId?.toString(),
                 quality = _currentQuality.value.displayName,
                 duration = project?.totalDurationMs,

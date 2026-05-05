@@ -274,7 +274,7 @@ fun ProjectsTabContent(
                                     onProjectClick = { project ->
                                         Analytics.trackVideoClick(
                                             videoId = project.id,
-                                            templateId = project.settings.effectSetId,
+                                            templateId = project.settings.templateId,
                                             songId = project.settings.musicSongId?.toString(),
                                             location = AnalyticsEvent.Value.Location.LIBRARY
                                         )
@@ -286,7 +286,7 @@ fun ProjectsTabContent(
                                     onDeleteProject = { project ->
                                         Analytics.trackVideoDelete(
                                             videoId = project.id,
-                                            templateId = project.settings.effectSetId,
+                                            templateId = project.settings.templateId,
                                             songId = project.settings.musicSongId?.toString(),
                                             duration = project.totalDurationMs,
                                             ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
@@ -298,7 +298,7 @@ fun ProjectsTabContent(
                                     onDownloadProject = { project ->
                                         Analytics.trackVideoDownload(
                                             videoId = project.id,
-                                            templateId = project.settings.effectSetId,
+                                            templateId = project.settings.templateId,
                                             songId = project.settings.musicSongId?.toString(),
                                             duration = project.totalDurationMs,
                                             ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
@@ -311,7 +311,7 @@ fun ProjectsTabContent(
                                     onShareProject = { project ->
                                         Analytics.trackVideoShare(
                                             videoId = project.id,
-                                            templateId = project.settings.effectSetId,
+                                            templateId = project.settings.templateId,
                                             songId = project.settings.musicSongId?.toString(),
                                             duration = project.totalDurationMs,
                                             ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),

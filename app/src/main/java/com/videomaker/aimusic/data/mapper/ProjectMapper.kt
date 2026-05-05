@@ -40,6 +40,7 @@ object ProjectMapper {
         return ProjectSettings(
             totalDurationMs = entity.totalDurationMs,
             effectSetId = entity.effectSetId,
+            templateId = entity.templateId?.takeIf { it.isNotBlank() },
             overlayFrameId = entity.overlayFrameId,
             musicSongId = entity.musicSongId,
             musicSongName = entity.musicSongName,
@@ -76,6 +77,7 @@ object ProjectMapper {
             thumbnailUri = project.thumbnailUri?.toString(),
             totalDurationMs = project.settings.totalDurationMs,
             effectSetId = project.settings.effectSetId,
+            templateId = project.settings.templateId?.takeIf { it.isNotBlank() },
             overlayFrameId = project.settings.overlayFrameId,
             musicSongId = project.settings.musicSongId,
             musicSongName = project.settings.musicSongName,

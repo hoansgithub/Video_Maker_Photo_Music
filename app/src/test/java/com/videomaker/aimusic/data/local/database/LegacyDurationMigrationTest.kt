@@ -125,6 +125,43 @@ class LegacyDurationMigrationTest {
         assertEquals(456_789L, migratedSong["likedAt"])
     }
 
+    @Test
+    fun migrate13To14_addsTemplateIdColumn_withNullDefaultAndPreservesFields() {
+        val database = FakeSupportSQLiteDatabase(
+            projects = mutableListOf(
+                mutableMapOf(
+                    "id" to "project-13",
+                    "name" to "Project V13",
+                    "createdAt" to 1_000L,
+                    "updatedAt" to 2_000L,
+                    "thumbnailUri" to "content://thumb/13",
+                    "totalDurationMs" to 20_000L,
+                    "effectSetId" to "dreamy_vibes",
+                    "overlayFrameId" to "frame_gold",
+                    "musicSongId" to 88L,
+                    "musicSongName" to "Song 88",
+                    "musicSongUrl" to "https://example.com/song88.mp3",
+                    "musicSongCoverUrl" to "https://example.com/song88.jpg",
+                    "customAudioUri" to null,
+                    "processedAudioUri" to null,
+                    "audioVolume" to 0.8f,
+                    "aspectRatio" to "RATIO_9_16",
+                    "isWatermarkFree" to 0
+                )
+            ),
+            assetCountsByProjectId = emptyMap()
+        )
+
+        ProjectDatabase.MIGRATION_13_14.migrate(database.asRoomDatabase())
+
+        val migratedProject = database.requireProject("project-13")
+        assertNull(migratedProject["templateId"])
+        assertEquals("dreamy_vibes", migratedProject["effectSetId"])
+        assertEquals("Project V13", migratedProject["name"])
+        assertEquals(20_000L, migratedProject["totalDurationMs"])
+        assertEquals("RATIO_9_16", migratedProject["aspectRatio"])
+    }
+
     private class FakeSupportSQLiteDatabase(
         private val projects: MutableList<MutableMap<String, Any?>>,
         private val assetCountsByProjectId: Map<String, Int>,
@@ -174,6 +211,9 @@ class LegacyDurationMigrationTest {
                 }
                 normalizedSql.startsWith("ALTER TABLE liked_songs ADD COLUMN hookStartTimeMs") -> {
                     likedSongs.forEach { it["hookStartTimeMs"] = 0L }
+                }
+                normalizedSql.startsWith("ALTER TABLE projects ADD COLUMN templateId TEXT") -> {
+                    projects.forEach { it["templateId"] = null }
                 }
                 else -> error("Unexpected SQL: $normalizedSql")
             }

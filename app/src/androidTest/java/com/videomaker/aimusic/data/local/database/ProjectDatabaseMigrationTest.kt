@@ -65,6 +65,74 @@ class ProjectDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun migrate13To14_addsTemplateIdColumn_withNullDefault_andValidatesSchema() {
+        migrationHelper.createDatabase(TEST_DB, 13).apply {
+            execSQL(
+                """
+                INSERT INTO projects (
+                    id,
+                    name,
+                    createdAt,
+                    updatedAt,
+                    thumbnailUri,
+                    totalDurationMs,
+                    effectSetId,
+                    overlayFrameId,
+                    musicSongId,
+                    musicSongName,
+                    musicSongUrl,
+                    musicSongCoverUrl,
+                    customAudioUri,
+                    processedAudioUri,
+                    audioVolume,
+                    aspectRatio,
+                    isWatermarkFree
+                ) VALUES (
+                    'project-13',
+                    'Legacy V13 Project',
+                    1000,
+                    2000,
+                    'content://thumb/13',
+                    45000,
+                    'dreamy_vibes',
+                    'frame_gold',
+                    77,
+                    'Legacy Song',
+                    'https://example.com/song.mp3',
+                    'https://example.com/cover.jpg',
+                    NULL,
+                    NULL,
+                    0.8,
+                    'RATIO_9_16',
+                    1
+                )
+                """.trimIndent()
+            )
+            close()
+        }
+
+        val migratedDb = migrationHelper.runMigrationsAndValidate(
+            TEST_DB,
+            14,
+            true,
+            ProjectDatabase.MIGRATION_13_14
+        )
+
+        migratedDb.query(
+            "SELECT templateId, effectSetId, totalDurationMs FROM projects WHERE id = 'project-13'"
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+
+            val templateIdIndex = cursor.getColumnIndex("templateId")
+            assertTrue("templateId column must exist after migration", templateIdIndex >= 0)
+            assertTrue(cursor.isNull(templateIdIndex))
+
+            assertEquals("dreamy_vibes", cursor.getString(cursor.getColumnIndexOrThrow("effectSetId")))
+            assertEquals(45_000L, cursor.getLong(cursor.getColumnIndexOrThrow("totalDurationMs")))
+        }
+    }
+
     companion object {
         private const val TEST_DB = "project-database-migration-test"
     }

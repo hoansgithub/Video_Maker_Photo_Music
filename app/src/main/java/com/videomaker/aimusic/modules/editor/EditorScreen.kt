@@ -160,7 +160,7 @@ fun EditorScreen(
 
     fun currentVideoId(): String? = currentState()?.project?.id
 
-    fun currentTemplateId(): String? = currentState()?.displaySettings?.effectSetId
+    fun currentTemplateId(): String? = currentState()?.displaySettings?.templateId
 
     fun currentSongId(): String =
         currentState()?.displaySettings?.musicSongId?.toString() ?: "unknown"
@@ -208,7 +208,7 @@ fun EditorScreen(
         if (!hasTrackedVideoPreviewComplete && state.currentPositionMs >= 3000L) {
             Analytics.trackVideoPreviewComplete(
                 videoId = videoId,
-                templateId = state.displaySettings.effectSetId
+                templateId = state.displaySettings.templateId
             )
             hasTrackedVideoPreviewComplete = true
         }
@@ -299,7 +299,7 @@ fun EditorScreen(
                         if (state != null) {
                             Analytics.trackVideoExport(
                                 videoId = state.project.id,
-                                templateId = state.displaySettings.effectSetId,
+                                templateId = state.displaySettings.templateId,
                                 songId = state.displaySettings.musicSongId?.toString(),
                                 quality = state.selectedQuality.displayName,
                                 duration = state.displayProject.totalDurationMs,
@@ -355,7 +355,7 @@ fun EditorScreen(
                         onEffectClick = {
                             Analytics.trackEffectEdit(
                                 videoId = state.project.id,
-                                templateId = state.displaySettings.effectSetId
+                                templateId = state.displaySettings.templateId
                             )
                             showEffectSetSheet = true
                         },
