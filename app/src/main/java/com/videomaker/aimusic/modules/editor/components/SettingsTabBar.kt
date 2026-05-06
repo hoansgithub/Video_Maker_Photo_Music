@@ -78,7 +78,7 @@ internal fun SettingsTabBar(
         if (showMusicControls) {
             // Volume button - shows current volume percentage
             SettingsTabButton(
-                icon = Icons.AutoMirrored.Filled.VolumeUp,
+                icon = Icons.Default.VolumeUp,
                 label = "${(currentVolume * 100).toInt()}%",
                 onClick = onVolumeClick,
                 modifier = Modifier.width(70.dp)
