@@ -236,7 +236,9 @@
     <string name="export_templates_load_failed">Şablonlar yüklenemedi</string>
     <string name="export_watch_ad_title">İndirmek için reklam izle?</string>
     <string name="export_watch_ad_subtitle">Kısa bir reklam izleyerek bu uygulamayı ücretsiz tutmamıza yardımcı olun. Videonuz hemen ardından indirilecek!</string>
-    <string name="export_watch_ad_button">Reklam İzle</string>
+    <string name="watch_ad_dialog_title">Özel Özelliğin Kilidini Aç! ✨</string>
+    <string name="watch_ad_dialog_subtitle">Bu özelliğin kilidini açmak ve harika videonu düzenlemeye devam etmek için kısa bir reklam izle!</string>
+    <string name="export_watch_ad_button">Reklam İzle (1/1)</string>
     <string name="export_watch_ad_close">Kapat</string>
     <string name="export_watermark_remove_title">Filigran kaldırılsın mı?</string>
     <string name="export_watermark_remove_subtitle">Video önizlemenizden filigranı kaldırmak için kısa bir reklam izleyin.</string>
@@ -368,6 +370,7 @@
     <string name="error_load_failed">Yüklenemedi. Yeniden denemek için aşağı çekin.</string>
     <string name="error_video_playback_failed">Video önizlemesi yüklenemedi. Lütfen bağlantınızı kontrol edin ve tekrar deneyin.</string>
     <string name="error_video_network">Video yüklenirken ağ hatası. Lütfen bağlantınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="video_retrying">Loading preview…</string>
     <string name="error_network_title">Ağ Hatası</string>
     <string name="loading_building_feed">Akışınız Oluşturuluyor</string>
     <string name="error_network_message">Müzik yüklenemedi. Bağlantınızı kontrol edin ve tekrar deneyin.</string>

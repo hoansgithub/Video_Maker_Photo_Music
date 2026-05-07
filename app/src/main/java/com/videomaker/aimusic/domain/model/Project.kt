@@ -3,7 +3,9 @@ package com.videomaker.aimusic.domain.model
 import android.net.Uri
 
 /**
- * Project - Domain model for a video project
+ * Project - Domain model for a video project.
+ *
+ * BEAT-SYNC ONLY: Duration calculated from beats + image count
  */
 data class Project(
     val id: String,
@@ -16,23 +18,42 @@ data class Project(
     val isWatermarkFree: Boolean = false  // True if user watched ad to remove watermark
 ) {
     /**
-     * Calculate total video duration based on assets and transitions
+     * Total project duration in milliseconds (BEAT-SYNC ONLY)
      *
-     * Architecture:
-     * - Each image (except last) plays for: imageDurationMs + transitionOverlapMs
-     * - Last image plays for: imageDurationMs only
-     *
-     * Total = N × imageDurationMs + (N-1) × transitionOverlapMs
-     *
-     * Example with 5 photos at 3s each with 500ms transitions:
-     * = 5 × 3000 + 4 × 500 = 15000 + 2000 = 17000ms (17 seconds)
+     * Uses pre-calculated value from settings.totalDurationMs
+     * Beat-sync duration is calculated in ViewModel and cached in settings
      */
     val totalDurationMs: Long
-        get() {
-            if (assets.isEmpty()) return 0L
-            val n = assets.size
-            return n * settings.imageDurationMs + (n - 1) * settings.transitionOverlapMs
+        get() = settings.totalDurationMs
+
+    companion object {
+        /**
+         * Calculate beat-sync duration (call in ViewModel, not in getter!)
+         * This is expensive - should only be called once and cached in settings.totalDurationMs
+         */
+        fun calculateBeatSyncDuration(
+            beatData: com.videomaker.aimusic.domain.model.BeatSyncData,
+            assetCount: Int,
+            trimStartMs: Long
+        ): Long? {
+            if (assetCount == 0) return null
+
+            return try {
+                val calculator = com.videomaker.aimusic.media.composition.BeatSyncTimingCalculator()
+                val clips = calculator.calculateClips(
+                    beatData = beatData,
+                    imageSequence = (0 until assetCount).toList(),
+                    trimStartMs = trimStartMs,
+                    trimEndMs = null,
+                    numShaders = 1
+                )
+                clips.sumOf { it.totalDurationMs }
+            } catch (e: Exception) {
+                android.util.Log.e("Project", "Beat-sync duration calculation failed", e)
+                null
+            }
         }
+    }
 
     /**
      * Format duration as MM:SS

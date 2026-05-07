@@ -63,12 +63,13 @@ import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import org.koin.compose.koinInject
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.EffectSet
 import com.videomaker.aimusic.modules.editor.EffectSetUiState
 import com.videomaker.aimusic.modules.editor.EffectSetViewModel
-import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.theme.Gray500
@@ -93,9 +94,7 @@ fun EffectSetBottomSheet(
     onEffectSetSelected: (EffectSet) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
-    val pendingUnlockEffectSet by viewModel.pendingUnlockEffectSet.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val unlockedIds by viewModel.unlockedEffectSetIds.collectAsStateWithLifecycle()
 
@@ -217,19 +216,6 @@ fun EffectSetBottomSheet(
                     modifier = Modifier.padding(16.dp)
                 )
             }
-        }
-
-        // Watch ad dialog
-        if (showWatchAdDialog) {
-            WatchAdDialog(
-                title = stringResource(R.string.effect_set_watch_ad_title),
-                subtitle = stringResource(R.string.effect_set_watch_ad_subtitle),
-                onDismiss = viewModel::onWatchAdDialogDismiss,
-                onWatchAd = {
-                    // Set pending effect set - LaunchedEffect will handle ad presentation
-                    viewModel.onWatchAdConfirmed()
-                }
-            )
         }
 
         // Ads loading overlay
@@ -439,4 +425,3 @@ private fun ErrorContent(
         }
     }
 }
-

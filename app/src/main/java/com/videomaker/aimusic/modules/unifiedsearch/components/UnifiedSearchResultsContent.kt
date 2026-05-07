@@ -48,6 +48,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -130,7 +131,8 @@ fun UnifiedSearchResultsContent(
                 android.util.Log.d("UnifiedSearch", "🔵 Composing NativeAdView (Results)")
                 NativeAdView(
                     placement = AdPlacement.NATIVE_SEARCH_INFEED,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
                 )
             }
         }
@@ -195,7 +197,6 @@ fun UnifiedSearchResultsContent(
                                                 isPremium = template.isPremium,
                                                 useCount = template.useCount,
                                                 onClick = {
-
                                                     Analytics.trackTemplateClick(
                                                         templateId = template.id,
                                                         templateName = template.name,
@@ -316,7 +317,14 @@ fun UnifiedSearchResultsContent(
                             item(key = "templates_grid") {
                                 UnifiedTemplateGrid(
                                     templates = state.templates.items,
-                                    onTemplateClick = onTemplateClick,
+                                    onTemplateClick = { template ->
+                                        Analytics.trackTemplateClick(
+                                            templateId = template.id,
+                                            templateName = template.name,
+                                            location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                        )
+                                        onTemplateClick.invoke(template.id)
+                                    },
                                     modifier = Modifier.padding(horizontal = dimens.spaceLg)
                                 )
                             }
@@ -424,7 +432,7 @@ internal fun UnifiedSeeMore(
 @Composable
 internal fun UnifiedTemplateGrid(
     templates: List<VideoTemplate>,
-    onTemplateClick: (String) -> Unit,
+    onTemplateClick: (template: VideoTemplate) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
@@ -445,12 +453,7 @@ internal fun UnifiedTemplateGrid(
         ScaledTemplateCard(
             template = template,
             onClick = {
-                Analytics.trackTemplateClick(
-                    templateId = template.id,
-                    templateName = template.name,
-                    location = AnalyticsEvent.Value.Location.SEARCH_RESULT
-                )
-                onTemplateClick(template.id)
+                onTemplateClick(template)
             }
         )
     }
@@ -536,7 +539,13 @@ private fun ScaledTemplateCard(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .bottomGradientOverlay(listOf(Color.Transparent, Color.Transparent, Black60))
+                        .bottomGradientOverlay(
+                            listOf(
+                                Color.Transparent,
+                                Color.Transparent,
+                                Black60
+                            )
+                        )
                 )
 
                 // PRO badge - top-end
@@ -545,8 +554,14 @@ private fun ScaledTemplateCard(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding((6 * scaleFactor).dp)
-                            .background(color = GoldAccent, shape = RoundedCornerShape((6 * scaleFactor).dp))
-                            .padding(horizontal = (6 * scaleFactor).dp, vertical = (3 * scaleFactor).dp)
+                            .background(
+                                color = GoldAccent,
+                                shape = RoundedCornerShape((6 * scaleFactor).dp)
+                            )
+                            .padding(
+                                horizontal = (6 * scaleFactor).dp,
+                                vertical = (3 * scaleFactor).dp
+                            )
                     ) {
                         Text(
                             text = stringResource(R.string.search_pro_badge),
@@ -580,9 +595,19 @@ private fun ScaledTemplateCard(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding((6 * scaleFactor).dp)
-                            .background(color = TemplateBadgeBackground, shape = RoundedCornerShape(999.dp))
-                            .border(width = 1.dp, color = White12, shape = RoundedCornerShape(999.dp))
-                            .padding(horizontal = (8 * scaleFactor).dp, vertical = (5 * scaleFactor).dp),
+                            .background(
+                                color = TemplateBadgeBackground,
+                                shape = RoundedCornerShape(999.dp)
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = White12,
+                                shape = RoundedCornerShape(999.dp)
+                            )
+                            .padding(
+                                horizontal = (8 * scaleFactor).dp,
+                                vertical = (5 * scaleFactor).dp
+                            ),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy((3 * scaleFactor).dp)
                     ) {

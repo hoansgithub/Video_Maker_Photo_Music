@@ -28,7 +28,7 @@ object AnalyticsEvent {
     // ============================================
     // 4. TEMPLATE CONTEXT
     // ============================================
-    const val TEMPLATE_IMPRESSION = "template_impression"
+    const val TEMPLATE_IMPRESSION = "template_impress"
     const val TEMPLATE_CLICK = "template_click"
     const val TEMPLATE_PREVIEW = "template_preview"
     const val TEMPLATE_OPTION = "template_option"
@@ -97,10 +97,10 @@ object AnalyticsEvent {
     const val RATIO_EDIT = "ratio_edit"
     const val RATIO_CLOSE = "ratio_close"
 
-    const val VOLUME_EDIT = "volume_edit"
-    const val VOLUME_CLICK = "volume_click"
-    const val VOLUME_SELECT = "volume_select"
-    const val VOLUME_CLOSE = "volume_close"
+    const val VOLUME_EDIT = "volumn_edit"
+    const val VOLUME_CLICK = "volumn_click"
+    const val VOLUME_SELECT = "volumn_select"
+    const val VOLUME_CLOSE = "volumn_close"
 
     const val SONG_EDIT = "song_edit"
     const val SONG_CLOSE = "song_close"
@@ -171,6 +171,7 @@ object AnalyticsEvent {
     const val PERMISSION_CLICK = "permission_click"
     const val PERMISSION_GOTO_SETTING = "permission_goto_setting"
     const val PERMISSION_CHECK = "permission_check"
+    const val PERMISSION_ADD_IMAGE = "permission_add_image"
 
     // ============================================
     // 17. REPORT FLOW
@@ -199,7 +200,7 @@ object AnalyticsEvent {
     // ============================================
     // 19. SHORTCUT
     // ============================================
-    const val SHORTCUT_MENU_IMPRESSION = "shortcut_menu_impression"
+    const val SHORTCUT_MENU_IMPRESSION = "shortcut_menu_impress"
     const val SHORTCUT_CLICK = "shortcut_click"
 
     // ============================================
@@ -220,6 +221,12 @@ object AnalyticsEvent {
     const val NOTIFICATION_DISMISS = "notification_dismiss"
     const val NOTIFICATION_CANCELED = "notification_canceled"
     const val NOTIFICATION_CONVERSION = "notification_conversion"
+
+    // ============================================
+    // 22. REWARD POPUP
+    // ============================================
+    const val REWARD_POPUP_RENDER = "reward_popup_render"
+    const val REWARD_POPUP_BTN = "reward_popup_btn"
 
     // ============================================
     // PARAMETER KEYS
@@ -257,7 +264,7 @@ object AnalyticsEvent {
         const val MEDIA_QUANTITY = "media_quantity"
 
         const val DURATION_NUMBER = "duration_number"
-        const val VOLUME_NUMBER = "volume_number"
+        const val VOLUME_NUMBER = "volumn_number"
         const val QUALITY_NUMBER = "quality_number"
 
         const val EFFECT_ID = "effect_id"
@@ -277,6 +284,9 @@ object AnalyticsEvent {
 
         const val BUTTON = "button"
         const val ALLOW = "allow"
+        const val PER_TYPE = "per_type"
+        const val POP_TYPE = "pop_type"
+        const val PREVIOUS_ACTION = "previous_action"
 
         const val KEYWORD = "keyword"
         const val KEYWORD_1 = "keyword_1"
@@ -353,6 +363,7 @@ object AnalyticsEvent {
             const val LIBRARY_RCM = "library_rcm"
             const val RESULT_RCM = "result_rcm"
             const val SEARCH_RESULT = "search_result"
+            const val SHORTCUT_CREATE_VIDEO = "shortcut_create_video"
             const val SEARCH_RCM = "search_rcm"
             const val TEMPLATE_FAVORITE = "template_favorite"
             const val SONG_FAVORITE = "song_favorite"
@@ -376,6 +387,35 @@ object AnalyticsEvent {
             const val BAD = "bad"
             const val ALLOW = "allow"
             const val NO_ALLOW = "no_allow"
+            const val LIMIT_ACCESS = "limit_access"
+        }
+
+        object PerType {
+            const val NOTI = "noti"
+            const val MEDIA = "media"
+            const val CAMERA = "camera"
+            const val AUDIO = "audio"
+        }
+
+        object PopType {
+            const val SYSTEM = "system"
+            const val CUSTOM = "custom"
+        }
+
+        object RewardPopupType {
+            const val YES = "yes"
+            const val NO = "no"
+            const val EXIT = "exit"
+        }
+
+        object PreviousAction {
+            const val USE_TO_CREATE = "use_to_create"
+            const val DOWNLOAD_CLICK = "download_click"
+            const val REMOVE_WATERMARK_CLICK = "remove_watermark_click"
+            const val UNLOCK_TEMPLATE_CLICK = "unlock_template_click"
+            const val UNLOCK_EFFECT_CLICK = "unlock_effect_click"
+            const val UNLOCK_QUALITY_CLICK = "done_edit_click"
+            const val EDITOR_SONG_CONFIRM = "editor_song_confirm"
         }
     }
 

@@ -36,7 +36,7 @@ class ForgottenMasterpieceWorker(
         val projectId = inputData.getString(NotificationScheduler.KEY_PROJECT_ID)?.takeIf { it.isNotBlank() }
             ?: return Result.success()
         val state = preferencesManager.getVideoReminderState(projectId) ?: return Result.success()
-        val project = projectRepository.getProject(projectId) ?: return Result.success()
+        val project = projectRepository.getProject(projectId)
         val nowMs = System.currentTimeMillis()
         val delayMs = notificationScheduleConfigService.current().forgottenMasterpieceDelayMs
 
@@ -92,7 +92,7 @@ class ForgottenMasterpieceWorker(
                 deepLink = NotificationDeepLinkFactory.myVideo(projectId, hintMode = "hint_share"),
                 imageCandidates = listOfNotNull(
                     state.thumbnailUri,
-                    project.thumbnailUri?.toString()
+                    project?.thumbnailUri?.toString()
                 ),
                 fallbackImageRes = R.drawable.img_template2,
                 ivCtaIcon = R.drawable.ic_video_generator_fill

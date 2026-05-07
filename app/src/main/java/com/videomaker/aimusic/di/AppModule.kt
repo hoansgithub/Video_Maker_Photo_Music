@@ -11,6 +11,7 @@ import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.data.local.RegionProvider
 import com.videomaker.aimusic.data.local.database.ProjectDatabase
 import com.videomaker.aimusic.data.remote.SupabaseClientProvider
+import com.videomaker.aimusic.data.repository.BeatSyncRepositoryImpl
 import com.videomaker.aimusic.data.repository.EffectSetRepositoryImpl
 import com.videomaker.aimusic.data.repository.ExportRepositoryImpl
 import com.videomaker.aimusic.data.repository.LikedSongRepositoryImpl
@@ -18,6 +19,7 @@ import com.videomaker.aimusic.data.repository.LikedTemplateRepositoryImpl
 import com.videomaker.aimusic.data.repository.ProjectRepositoryImpl
 import com.videomaker.aimusic.data.repository.SongRepositoryImpl
 import com.videomaker.aimusic.data.repository.TemplateRepositoryImpl
+import com.videomaker.aimusic.domain.repository.BeatSyncRepository
 import com.videomaker.aimusic.domain.repository.EffectSetRepository
 import com.videomaker.aimusic.domain.repository.ExportRepository
 import com.videomaker.aimusic.domain.repository.LikedSongRepository
@@ -146,14 +148,17 @@ val dataModule = module {
     single { com.videomaker.aimusic.core.storage.UnlockedSongsManager(androidContext()) }
 
     // Language config service (singleton - ConfigurableObject for Remote Config)
+    // Centralized registration: Explicitly registered in VideoMakerApplication.kt
     single {
-        com.videomaker.aimusic.core.language.LanguageConfigService(androidContext()).also {
-            co.alcheclub.lib.acccore.di.koin.SingletonTracker.track(it)  // Track for RemoteConfigCoordinator
-        }
+        com.videomaker.aimusic.core.language.LanguageConfigService(
+            context = androidContext()
+        )
     }
 
     // WorkManager
     single { WorkManager.getInstance(androidContext()) }
+    // Notification Schedule Config Service (ConfigurableObject for Remote Config)
+    // Centralized registration: Explicitly registered in VideoMakerApplication.kt
     single {
         NotificationScheduleConfigService(
             onEffectiveConfigChanged = {
@@ -163,19 +168,17 @@ val dataModule = module {
                         ?.reconcileOnConfigChanged(ZonedDateTime.now())
                 }
             }
-        ).also {
-            co.alcheclub.lib.acccore.di.koin.SingletonTracker.track(it)
-        }
+        )
     }
     single { NotificationScheduler(get(), get(), get()) }
     single<NotificationReminderStore> { PreferencesReminderStore(get()) }
     single<NotificationRescheduleController> { SchedulerRescheduleController(get()) }
     single { NotificationScheduleReconciler(get(), get()) }
-    single { NotificationCapPolicy() }
+    single { NotificationCapPolicy(scheduleConfigService = get()) }
     single { NotificationChannels() }
     single { NotificationRenderer(androidContext(), get()) }
     single { NotificationConversionTracker(get()) }
-    single { AppSessionTracker(get()) }
+    single { AppSessionTracker(get(), get()) }
 
     // Project Database
     single { ProjectDatabase.getInstance(androidContext()) }
@@ -187,10 +190,10 @@ val dataModule = module {
     // Supabase client (singleton)
     single { SupabaseClientProvider.instance }
 
-    // Region provider (singleton - derived from language + device locale)
+    // Region provider (singleton - auto-detected from system: SIM → Network → Locale)
     single {
         RegionProvider(
-            languageManager = get(),
+            context = androidContext(),
             preferencesManager = get()
         )
     }
@@ -200,6 +203,7 @@ val dataModule = module {
     single<ProjectRepository> { ProjectRepositoryImpl(get(), get()) }
     single<ExportRepository> { ExportRepositoryImpl(get()) }
     single<SongRepository> { SongRepositoryImpl(get(), get(), regionProvider = get(), languageManager = get()) }
+    single<BeatSyncRepository> { BeatSyncRepositoryImpl(androidContext(), get()) }
     single<TemplateRepository> { TemplateRepositoryImpl(get(), get(), regionProvider = get(), languageManager = get()) }
     single<EffectSetRepository> { EffectSetRepositoryImpl(get(), get(), get()) }
     single<LikedSongRepository> { LikedSongRepositoryImpl(get()) }
@@ -230,6 +234,7 @@ val dataModule = module {
 val mediaModule = module {
     single { CompositionFactory(androidContext(), get()) }
     single { AudioPreviewCache(androidContext()) }
+    single { com.videomaker.aimusic.media.audio.AudioPreprocessingService(androidContext()) }
 
     // ========== VIDEO CACHE ==========
     // Video cache manager for template previews
@@ -287,17 +292,16 @@ val adsModule = module {
     single { VideoMakerNativeAdLayoutProvider() }
 
     // Placement Config Service (ACCCore service for per-placement configs)
-    // CRITICAL: Must track for RemoteConfigCoordinator auto-discovery
+    // Centralized registration: Explicitly registered in VideoMakerApplication.kt
     single {
-        co.alcheclub.lib.acccore.ads.loader.PlacementConfigService().also {
-            co.alcheclub.lib.acccore.di.koin.SingletonTracker.track(it)
-        }
+        co.alcheclub.lib.acccore.ads.loader.PlacementConfigService()
     }
 
     // Ad Placement Config Service (singleton - registers all placements with PlacementConfigService)
+    // Centralized registration: Explicitly registered in VideoMakerApplication.kt
     single {
         com.videomaker.aimusic.core.ads.AdPlacementConfigService(
-            placementConfigService = get()  // From adMobModule in VideoMakerApplication
+            placementConfigService = get()
         )
     }
 
@@ -357,7 +361,7 @@ val domainModule = module {
     factory { CheckLanguageSelectedUseCase(get()) }
     factory { CompleteLanguageSelectionUseCase(get()) }
     factory { GetSelectedLanguageUseCase(get()) }
-    factory { SaveLanguagePreferenceUseCase(get(), get(), get()) }  // LanguageManager, RegionProvider, TemplateRepository
+    factory { SaveLanguagePreferenceUseCase(get(), get()) }  // LanguageManager, TemplateRepository
     factory { ApplyLanguageUseCase(get(), get()) }  // LanguageManager, ApiCacheManager
 
     // Feedback use case
@@ -464,7 +468,9 @@ class EditorViewModelFactory(
     private val removeAssetUseCase: RemoveAssetUseCase,
     private val songRepository: SongRepository,
     private val effectSetRepository: EffectSetRepository,
-    private val adsLoaderService: AdsLoaderService
+    private val beatSyncRepository: BeatSyncRepository,
+    private val adsLoaderService: AdsLoaderService,
+    private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService
 ) {
     fun create(
         projectId: String?,
@@ -481,7 +487,9 @@ class EditorViewModelFactory(
             removeAssetUseCase = removeAssetUseCase,
             songRepository = songRepository,
             effectSetRepository = effectSetRepository,
-            adsLoaderService = adsLoaderService
+            beatSyncRepository = beatSyncRepository,
+            adsLoaderService = adsLoaderService,
+            audioPreprocessingService = audioPreprocessingService
         )
     }
 }
@@ -636,7 +644,6 @@ class TemplatePreviewerViewModelFactory(
             imageUrisStr = imageUris,
             overrideSongId = overrideSongId,
             templateRepository = templateRepository,
-            songRepository = songRepository,
             createProjectUseCase = createProjectUseCase,
             updateProjectSettingsUseCase = updateProjectSettingsUseCase,
             likeTemplateUseCase = likeTemplateUseCase,
@@ -826,7 +833,9 @@ val presentationModule = module {
             removeAssetUseCase = get(),
             songRepository = get(),
             effectSetRepository = get(),
-            adsLoaderService = get()
+            beatSyncRepository = get(),
+            adsLoaderService = get(),
+            audioPreprocessingService = get()
         )
     }
 

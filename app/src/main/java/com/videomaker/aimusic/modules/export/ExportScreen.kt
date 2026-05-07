@@ -14,6 +14,7 @@ import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -147,6 +148,17 @@ import kotlinx.coroutines.launch
  */
 private fun ExoPlayer.releaseAsync() {
     val playerToRelease = this
+
+    // Stop audio immediately on main thread before handing off heavyweight release work.
+    runCatching {
+        playerToRelease.playWhenReady = false
+        playerToRelease.pause()
+        playerToRelease.stop()
+        playerToRelease.clearMediaItems()
+    }.onFailure { e ->
+        android.util.Log.w("ExportScreen", "Failed to stop player before async release", e)
+    }
+
     ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
         runCatching {
             android.util.Log.d("ExportScreen", "Releasing player on background thread...")
@@ -194,16 +206,15 @@ fun ExportScreen(
     val featuredTemplatesState by viewModel.featuredTemplatesState.collectAsStateWithLifecycle()
     val saveToastState by viewModel.saveToastState.collectAsStateWithLifecycle()
     val ratingStep by viewModel.ratingStep.collectAsStateWithLifecycle()
-    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
     val shouldPresentDownloadAd by viewModel.shouldPresentDownloadAd.collectAsStateWithLifecycle()
     val showWatermark by viewModel.showWatermark.collectAsStateWithLifecycle()
-    val showWatermarkAdDialog by viewModel.showWatermarkAdDialog.collectAsStateWithLifecycle()
     val shouldPresentWatermarkAd by viewModel.shouldPresentWatermarkAd.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
     var showNotificationPromoDialog by remember { mutableStateOf(false) }
     var showNotificationSettingsGuideDialog by remember { mutableStateOf(false) }
     var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
+    var pauseSuccessPreviewForAd by remember { mutableStateOf(false) }
 
     // Get dependencies for ad showing
     val activity = context as? Activity
@@ -218,7 +229,9 @@ fun ExportScreen(
                 AnalyticsEvent.Value.Option.ALLOW
             } else {
                 AnalyticsEvent.Value.Option.NO_ALLOW
-            }
+            },
+            perType = AnalyticsEvent.Value.PerType.NOTI,
+            popType = AnalyticsEvent.Value.PopType.SYSTEM
         )
         notificationPermissionCoordinator.onSystemPermissionResult(granted)
         Analytics.trackPermissionCheck(allow = granted)
@@ -292,7 +305,15 @@ fun ExportScreen(
                 showNotificationPromoDialog = true
                 showNotificationSettingsGuideDialog = false
             }
-            Analytics.trackPermissionRender()
+        }
+    }
+
+    LaunchedEffect(showNotificationPromoDialog) {
+        if (showNotificationPromoDialog) {
+            Analytics.trackPermissionRender(
+                perType = AnalyticsEvent.Value.PerType.NOTI,
+                popType = AnalyticsEvent.Value.PopType.CUSTOM
+            )
         }
     }
 
@@ -464,6 +485,7 @@ fun ExportScreen(
                     onQualityChange = { quality ->
                         viewModel.changeQuality(quality)
                     },
+                    forcePausePlayback = pauseSuccessPreviewForAd,
                     onDoneClick = viewModel::onResultExitClick,
                     onTemplateClick = viewModel::onTemplateClick,
                     onSaveToastDismissed = viewModel::onSaveToastDismissed
@@ -511,30 +533,16 @@ fun ExportScreen(
             }
         }
 
-        // Watch ad dialog for download
-        if (showWatchAdDialog) {
-            WatchAdDialog(
-                onDismiss = viewModel::onWatchAdDialogDismiss,
-                onWatchAd = viewModel::onWatchAdConfirmed
-            )
-        }
-
         // Handle download ad presentation using reusable presenter
         RewardedAdPresenter(
             shouldPresent = shouldPresentDownloadAd,
             placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
             adsLoaderService = adsLoaderService,
             onRewardEarned = viewModel::onDownloadRewardEarned,
-            onAdFailed = viewModel::onDownloadAdFailed
+            onAdFailed = viewModel::onDownloadAdFailed,
+            onAdShown = { pauseSuccessPreviewForAd = true },
+            onAdClosed = { pauseSuccessPreviewForAd = false }
         )
-
-        // Watermark ad dialog
-        if (showWatermarkAdDialog) {
-            WatermarkAdDialog(
-                onDismiss = viewModel::onWatermarkAdDialogDismiss,
-                onWatchAd = viewModel::onWatermarkAdConfirmed
-            )
-        }
 
         // Handle watermark ad presentation using reusable presenter
         RewardedAdPresenter(
@@ -542,7 +550,9 @@ fun ExportScreen(
             placement = AdPlacement.REWARD_REMOVE_WATERMARK,
             adsLoaderService = adsLoaderService,
             onRewardEarned = viewModel::onWatermarkRewardEarned,
-            onAdFailed = viewModel::onWatermarkAdFailed
+            onAdFailed = viewModel::onWatermarkAdFailed,
+            onAdShown = { pauseSuccessPreviewForAd = true },
+            onAdClosed = { pauseSuccessPreviewForAd = false }
         )
 
         // Ads loading overlay (shows when rewarded ad is loading)
@@ -551,9 +561,16 @@ fun ExportScreen(
         if (showNotificationPromoDialog) {
             NotificationPermissionPromoDialog(
                 onNotifyMe = {
-                    Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.ALLOW)
+                    Analytics.trackPermissionClick(
+                        button = AnalyticsEvent.Value.Option.ALLOW,
+                        perType = AnalyticsEvent.Value.PerType.NOTI,
+                        popType = AnalyticsEvent.Value.PopType.CUSTOM
+                    )
                     if (notificationPermissionCoordinator.canRequestSystemPermission(context)) {
-                        Analytics.trackPermissionRender()
+                        Analytics.trackPermissionRender(
+                            perType = AnalyticsEvent.Value.PerType.NOTI,
+                            popType = AnalyticsEvent.Value.PopType.SYSTEM
+                        )
                         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         showNotificationPromoDialog = false
                     } else {
@@ -562,7 +579,11 @@ fun ExportScreen(
                     }
                 },
                 onMaybeLater = {
-                    Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.NO_ALLOW)
+                    Analytics.trackPermissionClick(
+                        button = AnalyticsEvent.Value.Option.NO_ALLOW,
+                        perType = AnalyticsEvent.Value.PerType.NOTI,
+                        popType = AnalyticsEvent.Value.PopType.CUSTOM
+                    )
                     showNotificationPromoDialog = false
                 }
             )
@@ -806,7 +827,8 @@ private fun ProcessingContent(
             // Native ad at bottom (edge-to-edge, no horizontal padding)
             NativeAdView(
                 placement = AdPlacement.NATIVE_EXPORT_GENERATING,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isDebug = BuildConfig.DEBUG
             )
         }
     }
@@ -823,6 +845,7 @@ private fun SuccessContent(
     featuredTemplatesState: FeaturedTemplatesState = FeaturedTemplatesState.Loading,
     saveToastState: ProcessToastState? = null,
     showWatermark: Boolean = true,
+    forcePausePlayback: Boolean = false,
     onWatermarkClick: () -> Unit = {},
     onWatermarkDismiss: () -> Unit = {},
     onSaveToGalleryClick: () -> Unit,
@@ -863,6 +886,22 @@ private fun SuccessContent(
 
     // Track playing state from ExoPlayer
     var isPlaying by remember { mutableStateOf(false) }
+    var shouldResumeAfterForcedPause by remember { mutableStateOf(false) }
+
+    LaunchedEffect(forcePausePlayback, exoPlayer) {
+        val player = exoPlayer ?: return@LaunchedEffect
+        if (forcePausePlayback) {
+            if (player.isPlaying) {
+                shouldResumeAfterForcedPause = true
+            }
+            player.pause()
+        } else if (shouldResumeAfterForcedPause) {
+            if (player.playbackState == Player.STATE_READY && !player.isPlaying) {
+                player.play()
+            }
+            shouldResumeAfterForcedPause = false
+        }
+    }
 
     // Update isPlaying state and handle auto-play when player is ready
     // Skip in preview mode
@@ -894,6 +933,10 @@ private fun SuccessContent(
             val observer = LifecycleEventObserver { _, event ->
                 when (event) {
                     Lifecycle.Event.ON_PAUSE -> player.pause()
+                    Lifecycle.Event.ON_STOP -> {
+                        player.playWhenReady = false
+                        player.pause()
+                    }
                     Lifecycle.Event.ON_RESUME -> {
                         // Always auto-play when screen becomes visible and player is ready
                         if (player.playbackState == Player.STATE_READY && !player.isPlaying) {

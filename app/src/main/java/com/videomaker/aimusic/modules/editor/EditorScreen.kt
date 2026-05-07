@@ -70,11 +70,9 @@ import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
-import com.videomaker.aimusic.modules.editor.components.DurationBottomSheet
 import com.videomaker.aimusic.modules.editor.components.EffectSetBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSection
-import com.videomaker.aimusic.modules.editor.components.MusicSettingsBottomSheet
 import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 // import com.videomaker.aimusic.modules.editor.components.SettingsPanel // Removed - using individual bottom sheets
@@ -123,21 +121,19 @@ fun EditorScreen(
     onNavigateToAddAssets: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val showQualityAdDialog by viewModel.showQualityAdDialog.collectAsStateWithLifecycle()
     val shouldPresentQualityAd by viewModel.shouldPresentQualityAd.collectAsStateWithLifecycle()
     val qualityAdError by viewModel.qualityAdError.collectAsStateWithLifecycle()
     val isQualityUnlocked by viewModel.isQualityUnlocked.collectAsStateWithLifecycle()
+    val showBeatSyncErrorDialog by viewModel.showBeatSyncErrorDialog.collectAsStateWithLifecycle()
 
     var showExitConfirmation by remember { mutableStateOf(false) }
     // var showMusicPicker by remember { mutableStateOf(false) } // Commented out - using Supabase only
     var showRatioSheet by remember { mutableStateOf(false) }
-    var showDurationSheet by remember { mutableStateOf(false) }
     var showEffectSetSheet by remember { mutableStateOf(false) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
-    var showMusicTrimSheet by remember { mutableStateOf(false) }
     var wasPlayingBeforeMusicSheet by remember { mutableStateOf(false) }
-    var musicLoadError by remember { mutableStateOf<String?>(null) }
+    var wasPlayingBeforeQualityAd by remember { mutableStateOf(false) }
     var hasTrackedVideoPreview by remember { mutableStateOf(false) }
     var hasTrackedVideoPreviewComplete by remember { mutableStateOf(false) }
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
@@ -164,7 +160,7 @@ fun EditorScreen(
 
     fun currentVideoId(): String? = currentState()?.project?.id
 
-    fun currentTemplateId(): String? = currentState()?.displaySettings?.effectSetId
+    fun currentTemplateId(): String? = currentState()?.displaySettings?.templateId
 
     fun currentSongId(): String =
         currentState()?.displaySettings?.musicSongId?.toString() ?: "unknown"
@@ -172,14 +168,9 @@ fun EditorScreen(
     fun currentSongName(): String =
         currentState()?.displaySettings?.musicSongName ?: "unknown"
 
-    fun currentDurationMs(): Long = currentState()?.displayProject?.totalDurationMs ?: 0L
-
     fun currentRatioLabel(): String =
         currentState()?.displaySettings?.aspectRatio?.toAnalyticsRatioSize()
             ?: AspectRatio.RATIO_9_16.toAnalyticsRatioSize()
-
-    fun currentVolumePercent(): Int =
-        ((currentState()?.displaySettings?.audioVolume ?: 1f) * 100f).roundToInt()
 
     fun requestExitFromEditor() {
         Analytics.trackExitClick(AnalyticsEvent.Value.Location.VIDEO_PREVIEW)
@@ -217,7 +208,7 @@ fun EditorScreen(
         if (!hasTrackedVideoPreviewComplete && state.currentPositionMs >= 3000L) {
             Analytics.trackVideoPreviewComplete(
                 videoId = videoId,
-                templateId = state.displaySettings.effectSetId
+                templateId = state.displaySettings.templateId
             )
             hasTrackedVideoPreviewComplete = true
         }
@@ -229,7 +220,22 @@ fun EditorScreen(
         placement = AdPlacement.REWARD_UNLOCK_QUALITY,
         adsLoaderService = adsLoaderService,
         onRewardEarned = viewModel::onQualityRewardEarned,
-        onAdFailed = viewModel::onQualityAdFailed
+        onAdFailed = viewModel::onQualityAdFailed,
+        onAdShown = {
+            val state = currentState()
+            if (state != null) {
+                wasPlayingBeforeQualityAd = state.isPlaying
+                if (state.isPlaying) {
+                    viewModel.setPlaybackState(false)
+                }
+            }
+        },
+        onAdClosed = {
+            if (wasPlayingBeforeQualityAd) {
+                viewModel.setPlaybackState(true)
+            }
+            wasPlayingBeforeQualityAd = false
+        }
     )
 
     // Show error message for quality ad failures
@@ -293,7 +299,7 @@ fun EditorScreen(
                         if (state != null) {
                             Analytics.trackVideoExport(
                                 videoId = state.project.id,
-                                templateId = state.displaySettings.effectSetId,
+                                templateId = state.displaySettings.templateId,
                                 songId = state.displaySettings.musicSongId?.toString(),
                                 quality = state.selectedQuality.displayName,
                                 duration = state.displayProject.totalDurationMs,
@@ -349,16 +355,9 @@ fun EditorScreen(
                         onEffectClick = {
                             Analytics.trackEffectEdit(
                                 videoId = state.project.id,
-                                templateId = state.displaySettings.effectSetId
+                                templateId = state.displaySettings.templateId
                             )
                             showEffectSetSheet = true
-                        },
-                        onImageDurationClick = {
-                            Analytics.trackDurationEdit(
-                                videoId = state.project.id,
-                                durationNumber = state.displaySettings.imageDurationMs
-                            )
-                            showDurationSheet = true
                         },
                         onRatioClick = {
                             Analytics.trackRatioEdit(
@@ -368,15 +367,6 @@ fun EditorScreen(
                             ratioConfirmed = false
                             showRatioSheet = true
                         },
-                        onMusicClick = {
-                            Analytics.trackSongEdit(
-                                videoId = state.project.id,
-                                songId = state.displaySettings.musicSongId?.toString() ?: "unknown",
-                                songName = state.displaySettings.musicSongName ?: "unknown"
-                            )
-                            Analytics.trackSearchOpen(AnalyticsEvent.Value.Location.EDIT)
-                            showMusicSearchSheet = true
-                        },
                         onVolumeClick = {
                             Analytics.trackVolumeEdit(
                                 videoId = state.project.id,
@@ -384,7 +374,6 @@ fun EditorScreen(
                             )
                             showVolumeSheet = true
                         },
-                        onTrimClick = { showMusicTrimSheet = true },
                         modifier = Modifier.padding(paddingValues)
                     )
                 }
@@ -522,37 +511,6 @@ fun EditorScreen(
             }
         }
 
-        // Duration Bottom Sheet
-        if (showDurationSheet) {
-            val successState = uiState as? EditorUiState.Success
-            if (successState != null) {
-                DurationBottomSheet(
-                    currentDurationMs = successState.displaySettings.imageDurationMs,
-                    onDismiss = {
-                        Analytics.trackDurationClose(
-                            videoId = successState.project.id,
-                            durationNumber = successState.displaySettings.imageDurationMs
-                        )
-                        showDurationSheet = false
-                    },
-                    onDurationClick = { selectedDurationMs ->
-                        Analytics.trackDurationClick(
-                            videoId = successState.project.id,
-                            durationNumber = selectedDurationMs
-                        )
-                    },
-                    onConfirm = { selectedDurationMs ->
-                        Analytics.trackDurationSelect(
-                            videoId = successState.project.id,
-                            durationNumber = selectedDurationMs
-                        )
-                        viewModel.updateImageDuration(selectedDurationMs)
-                        showDurationSheet = false
-                    }
-                )
-            }
-        }
-
         // Effect Set Bottom Sheet
         if (showEffectSetSheet) {
             val selectedEffectSetId = (uiState as? EditorUiState.Success)?.displaySettings?.effectSetId
@@ -671,60 +629,19 @@ fun EditorScreen(
                         )
                     }
                 },
-                onDismiss = {
+                onDismiss = { selectedVolume, didSelect ->
                     val videoId = currentVideoId()
                     if (videoId != null) {
-                        val volumeNumber = currentVolumePercent()
-                        Analytics.trackVolumeSelect(videoId, volumeNumber)
+                        val volumeNumber = (selectedVolume * 100f).roundToInt()
+                        if (didSelect) {
+                            Analytics.trackVolumeSelect(videoId, volumeNumber)
+                        } else {
+                            Analytics.trackVolumeClose(videoId, volumeNumber)
+                        }
                     }
                     showVolumeSheet = false
                 }
             )
-        }
-
-        // Music Trimmer Bottom Sheet
-        if (showMusicTrimSheet) {
-            val successState = uiState as? EditorUiState.Success
-            val musicTrimState by viewModel.musicTrimmerState.collectAsStateWithLifecycle()
-
-            // Open trimmer when sheet is shown
-            LaunchedEffect(Unit) {
-                viewModel.openMusicTrimmer()
-            }
-
-            // Show bottom sheet when music settings is open
-            if (musicTrimState is MusicTrimmerState.Open) {
-                val trimState = musicTrimState as MusicTrimmerState.Open
-
-                MusicSettingsBottomSheet(
-                    songName = trimState.songName,
-                    songUrl = successState?.displaySettings?.musicSongUrl ?: "",
-                    songDurationMs = trimState.songDurationMs,
-                    trimStartMs = trimState.trimStartMs,
-                    trimEndMs = trimState.trimEndMs,
-                    currentVolume = successState?.displaySettings?.audioVolume ?: 1f,
-                    onTrimChange = { startMs, endMs ->
-                        viewModel.updateMusicTrimPreview(startMs, endMs)
-                    },
-                    onVolumeChange = { volume ->
-                        viewModel.updateAudioVolume(volume)
-                    },
-                    onDurationReady = { durationMs ->
-                        viewModel.updateMusicTrimDuration(durationMs)
-                    },
-                    onError = { errorMessage ->
-                        musicLoadError = errorMessage
-                    },
-                    onApply = {
-                        viewModel.applyMusicTrim()
-                        showMusicTrimSheet = false
-                    },
-                    onDismiss = {
-                        viewModel.closeMusicTrimmer(applyChanges = false)
-                        showMusicTrimSheet = false
-                    }
-                )
-            }
         }
 
         // Fullscreen Processing Overlay - blocks all interactions, content is blurred
@@ -755,46 +672,36 @@ fun EditorScreen(
             }
         }
 
-        // Error overlay - shows both preview errors and music trimmer errors
-        // Preview errors (PreviewState.Error)
+        // Error overlay - shows preview errors
         val previewErrorMessage = (previewState as? com.videomaker.aimusic.modules.editor.components.PreviewState.Error)?.message
 
-        // Music trimmer errors
-        val trimmerErrorMessage = musicLoadError
-
-        // Show error overlay if any error exists
-        val errorMessage = previewErrorMessage ?: trimmerErrorMessage
-        if (errorMessage != null) {
+        if (previewErrorMessage != null) {
             ErrorOverlay(
                 errorType = ErrorType.MusicLoading,
                 title = stringResource(R.string.error_preview_title),
-                message = errorMessage,
+                message = previewErrorMessage,
                 onRetry = {
                     // Clear error and trigger rebuild
-                    if (previewErrorMessage != null) {
-                        previewState = com.videomaker.aimusic.modules.editor.components.PreviewState.Building
-                    } else {
-                        musicLoadError = null
-                    }
+                    previewState = com.videomaker.aimusic.modules.editor.components.PreviewState.Building
                 },
                 onDismiss = {
                     // Clear error state
-                    if (previewErrorMessage != null) {
-                        previewState = com.videomaker.aimusic.modules.editor.components.PreviewState.Building
-                    } else {
-                        musicLoadError = null
-                    }
+                    previewState = com.videomaker.aimusic.modules.editor.components.PreviewState.Building
                 }
             )
         }
 
-        // Quality unlock watch ad dialog
-        if (showQualityAdDialog) {
-            com.videomaker.aimusic.modules.export.WatchAdDialog(
-                title = stringResource(com.videomaker.aimusic.R.string.quality_watch_ad_title),
-                subtitle = stringResource(com.videomaker.aimusic.R.string.quality_watch_ad_subtitle),
-                onDismiss = viewModel::onQualityAdDialogDismiss,
-                onWatchAd = viewModel::onQualityAdConfirmed
+        // Network error dialog (beat-sync or effect set loading failure)
+        if (showBeatSyncErrorDialog) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = viewModel::onBeatSyncErrorDismissed,
+                title = { androidx.compose.material3.Text(stringResource(R.string.error_network_title)) },
+                text = { androidx.compose.material3.Text(stringResource(R.string.error_data_load_failed)) },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = viewModel::onBeatSyncErrorDismissed) {
+                        androidx.compose.material3.Text(stringResource(R.string.dialog_ok))
+                    }
+                }
             )
         }
 
@@ -931,11 +838,8 @@ internal fun EditorMainContent(
     onScrubComplete: () -> Unit,
     onPreviewStateChange: (com.videomaker.aimusic.modules.editor.components.PreviewState) -> Unit,
     onEffectClick: () -> Unit,
-    onImageDurationClick: () -> Unit,
     onRatioClick: () -> Unit,
-    onMusicClick: () -> Unit,
     onVolumeClick: () -> Unit = {},
-    onTrimClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -985,8 +889,7 @@ internal fun EditorMainContent(
             },
             onSeekStart = onSeekStart,
             onSeekEnd = onSeekEnd,
-            onPlayPauseClick = onPlayPauseClick,
-            onMusicClick = onMusicClick
+            onPlayPauseClick = onPlayPauseClick
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -1006,14 +909,11 @@ internal fun EditorMainContent(
         SettingsTabBar(
             currentEffectSetName = effectSetName,
             currentRatio = project.settings.aspectRatio,
-            currentDurationMs = project.settings.imageDurationMs,
             showMusicControls = hasMusic,
             currentVolume = project.settings.audioVolume,
             onEffectClick = onEffectClick,
-            onImageDurationClick = onImageDurationClick,
             onRatioClick = onRatioClick,
             onVolumeClick = onVolumeClick,
-            onClipClick = onTrimClick,
             modifier = Modifier.fillMaxWidth()
         )
     }

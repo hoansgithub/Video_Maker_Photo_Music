@@ -34,7 +34,8 @@ class ProjectRepositoryImpl(
             name = "Project ${now.toString().takeLast(4)}",
             createdAt = now,
             updatedAt = now,
-            thumbnailUri = assets.firstOrNull()?.toString()
+            thumbnailUri = assets.firstOrNull()?.toString(),
+            totalDurationMs = ProjectSettings.DEFAULT.totalDurationMs
         )
 
         // Create asset entities
@@ -66,9 +67,9 @@ class ProjectRepositoryImpl(
             createdAt = now,
             updatedAt = now,
             thumbnailUri = assets.firstOrNull()?.toString(),
-            imageDurationMs = settings.imageDurationMs,
-            transitionPercentage = settings.transitionPercentage,
+            totalDurationMs = settings.totalDurationMs,
             effectSetId = settings.effectSetId,
+            templateId = settings.templateId?.takeIf { it.isNotBlank() },
             overlayFrameId = settings.overlayFrameId,
             musicSongId = settings.musicSongId,
             musicSongName = settings.musicSongName,
@@ -76,8 +77,6 @@ class ProjectRepositoryImpl(
             musicSongCoverUrl = settings.musicSongCoverUrl,
             customAudioUri = settings.customAudioUri?.toString(),
             audioVolume = settings.audioVolume,
-            musicTrimStartMs = settings.musicTrimStartMs,  // CRITICAL: Save trim settings!
-            musicTrimEndMs = settings.musicTrimEndMs,      // CRITICAL: Save trim settings!
             aspectRatio = settings.aspectRatio.name
         )
 
@@ -124,9 +123,9 @@ class ProjectRepositoryImpl(
     override suspend fun updateSettings(projectId: String, settings: ProjectSettings) {
         projectDao.updateSettings(
             id = projectId,
-            imageDurationMs = settings.imageDurationMs,
-            transitionPercentage = settings.transitionPercentage,
+            totalDurationMs = settings.totalDurationMs,
             effectSetId = settings.effectSetId,
+            templateId = settings.templateId?.takeIf { it.isNotBlank() },
             overlayFrameId = settings.overlayFrameId,
             musicSongId = settings.musicSongId,
             musicSongName = settings.musicSongName,
@@ -135,8 +134,6 @@ class ProjectRepositoryImpl(
             customAudioUri = settings.customAudioUri?.toString(),
             processedAudioUri = settings.processedAudioUri?.toString(),
             audioVolume = settings.audioVolume,
-            musicTrimStartMs = settings.musicTrimStartMs,  // CRITICAL: Save trim settings!
-            musicTrimEndMs = settings.musicTrimEndMs,      // CRITICAL: Save trim settings!
             aspectRatio = settings.aspectRatio.name,
             updatedAt = System.currentTimeMillis()
         )

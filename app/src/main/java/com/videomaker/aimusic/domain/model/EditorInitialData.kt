@@ -10,15 +10,18 @@ import kotlinx.serialization.Serializable
  *
  * This allows users to edit without committing to database until
  * they explicitly save via "Done" or "Save & Exit".
+ *
+ * Beat-sync mode only - no legacy fixed duration or transition percentage
  */
 @Parcelize
 @Serializable
 data class EditorInitialData(
     val imageUris: List<String>,
     val effectSetId: String?,
-    val imageDurationMs: Long,
-    val transitionPercentage: Int,
+    val templateId: String? = null,
     val musicSongId: Long?,
     val musicSongName: String? = null, // Pass song name to avoid extra network request
-    val aspectRatio: AspectRatio
+    val aspectRatio: AspectRatio,
+    val applyHookStartDefaults: Boolean = false,
+    val analyticsVideoId: String? = null
 ) : Parcelable

@@ -67,6 +67,8 @@ import com.videomaker.aimusic.ui.theme.TextInactive
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.launch
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.constants.AdPlacement
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.runtime.snapshotFlow
@@ -107,6 +109,7 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
+    val adsLoaderService = koinInject<AdsLoaderService>()
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -116,16 +119,34 @@ fun HomeScreen(
                 AnalyticsEvent.Value.Option.ALLOW
             } else {
                 AnalyticsEvent.Value.Option.NO_ALLOW
-            }
+            },
+            perType = AnalyticsEvent.Value.PerType.NOTI,
+            popType = AnalyticsEvent.Value.PopType.SYSTEM
         )
         notificationPermissionCoordinator.onSystemPermissionResult(granted)
         Analytics.trackPermissionCheck(allow = granted)
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect("notification_permission") {
         if (notificationPermissionCoordinator.shouldRequestHomeFirstTimePermission(context)) {
-            Analytics.trackPermissionRender()
+            Analytics.trackPermissionRender(
+                perType = AnalyticsEvent.Value.PerType.NOTI,
+                popType = AnalyticsEvent.Value.PopType.SYSTEM
+            )
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    // Preload template previewer ad while user is on home screen
+    LaunchedEffect("ad_preload") {
+        try {
+            adsLoaderService.loadNative(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)
+        } catch (e: AdsLoaderException) {
+            // Ad failed to load - not critical, user can still use the app
+            android.util.Log.w("HomeScreen", "Failed to preload template previewer ad: ${e.message}")
+        } catch (e: Exception) {
+            // Unexpected error - log but don't crash
+            android.util.Log.e("HomeScreen", "Unexpected error preloading ad: ${e.message}", e)
         }
     }
 

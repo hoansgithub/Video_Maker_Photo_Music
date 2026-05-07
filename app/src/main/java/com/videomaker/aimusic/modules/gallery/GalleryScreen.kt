@@ -108,6 +108,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.Immutable
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
 
 // ============================================
@@ -342,7 +343,7 @@ private fun GalleryContent(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = topBarHeight + dimens.spaceLg,
+                    top = topBarHeight + dimens.spaceSm,  // Reduced from spaceLg to spaceSm
                     bottom = dimens.space3Xl + dimens.space2Xl
                 )
             ) {
@@ -352,7 +353,7 @@ private fun GalleryContent(
                     onClick = onSearchClick,
                     modifier = Modifier.padding(
                         horizontal = dimens.spaceLg,
-                        vertical = dimens.spaceMd
+                        vertical = dimens.spaceXs  // Reduced from spaceMd to spaceXs
                     )
                 )
             }
@@ -715,13 +716,15 @@ private fun FeaturedTemplateCard(
                     .align(Alignment.BottomCenter)
             )
 
-            // Content tags — top-left
-            ContentTags(
-                tags = listOf(ContentTag.HOT, ContentTag.TRENDING),
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(dimens.spaceMd)
-            )
+            // Content tags — top-left (only for premium templates)
+            if (template.isPremium) {
+                ContentTags(
+                    tags = listOf(ContentTag.HOT, ContentTag.TRENDING),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(dimens.spaceMd)
+                )
+            }
 
             // Use count badge — top-right
             if (template.useCount > 0) {
@@ -900,7 +903,7 @@ private fun StaggeredTemplateGrid(
                     thumbnailPath = template.thumbnailPath,
                     aspectRatio = aspectRatio,
                     isPremium = template.isPremium,
-                    showHotTag = true,  // Show Hot tag in Gallery tab only
+                    showHotTag = template.isPremium,  // Show Hot tag only for premium templates
                     useCount = template.useCount,
                     modifier = Modifier,
                     onClick = {
@@ -917,7 +920,8 @@ private fun StaggeredTemplateGrid(
                 // Native ad card (9:16 portrait, matches template cards)
                 NativeAdView(
                     placement = AdPlacement.NATIVE_GALLERY_GRID,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
                 )
             }
         }

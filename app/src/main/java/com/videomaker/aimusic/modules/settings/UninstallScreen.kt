@@ -18,10 +18,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -65,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import coil.compose.AsyncImage
 import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
@@ -390,10 +389,11 @@ fun UninstallScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Native Ad at bottom (auto height - TOP PRIORITY)
-//            NativeAdView(
-//                placement = AdPlacement.NATIVE_UNINSTALL_BOTTOM,
-//                modifier = Modifier.fillMaxWidth()
-//            )
+            NativeAdView(
+                placement = AdPlacement.NATIVE_UNINSTALL_BOTTOM,
+                modifier = Modifier.fillMaxWidth(),
+                isDebug = BuildConfig.DEBUG
+            )
         }
     }
 }

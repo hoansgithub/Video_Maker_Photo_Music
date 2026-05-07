@@ -81,6 +81,7 @@ private data class VideoTemplateJson(
     @SerialName("transitionPct") val transitionPct: Int = 30,
     @SerialName("vibeTags") val vibeTags: List<String> = emptyList(),
     @SerialName("isPremium") val isPremium: Boolean = false,
+    @SerialName("isFeatured") val isFeatured: Boolean = false,
     @SerialName("isActive") val isActive: Boolean = true
 ) {
     fun toDomain() = VideoTemplate(
@@ -95,6 +96,7 @@ private data class VideoTemplateJson(
         transitionPct = transitionPct,
         vibeTags = vibeTags,
         isPremium = isPremium,
+        isFeatured = isFeatured,
         isActive = isActive
     )
 }

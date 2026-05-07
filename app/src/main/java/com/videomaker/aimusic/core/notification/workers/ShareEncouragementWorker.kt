@@ -36,7 +36,7 @@ class ShareEncouragementWorker(
         val projectId = inputData.getString(NotificationScheduler.KEY_PROJECT_ID)?.takeIf { it.isNotBlank() }
             ?: return Result.success()
         val state = preferencesManager.getVideoReminderState(projectId) ?: return Result.success()
-        val project = projectRepository.getProject(projectId) ?: return Result.success()
+        val project = projectRepository.getProject(projectId)
         val nowMs = System.currentTimeMillis()
         val delayMs = notificationScheduleConfigService.current().shareEncouragementDelayMs
 
@@ -60,7 +60,7 @@ class ShareEncouragementWorker(
         )
         if (!gateDecision.allowed) return Result.success()
 
-        val songName = project.settings.musicSongName?.takeIf { it.isNotBlank() } ?: "your"
+        val songName = project?.settings?.musicSongName?.takeIf { it.isNotBlank() } ?: "your"
         Analytics.trackNotificationEligible(
             type = NotificationType.SHARE_ENCOURAGEMENT.analyticsValue,
             itemId = projectId,
@@ -88,7 +88,7 @@ class ShareEncouragementWorker(
                 deepLink = NotificationDeepLinkFactory.myVideo(projectId, hintMode = "hint_share"),
                 imageCandidates = listOfNotNull(
                     state.thumbnailUri,
-                    project.thumbnailUri?.toString()
+                    project?.thumbnailUri?.toString()
                 ),
                 fallbackImageRes = R.drawable.img_song3
             )

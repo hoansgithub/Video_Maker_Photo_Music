@@ -1,0 +1,547 @@
+<resources>
+    <string name="app_name">Video Maker - AI Music</string>
+
+    <!-- Facebook SDK (Analytics only) -->
+    <string name="facebook_app_id">2394935491027358</string>
+    <string name="facebook_client_token">59adbbae92079f20f43d002f331d8e9d</string>
+
+    <!-- Loading -->
+    <string name="loading">লোড হচ্ছে…</string>
+    <string name="ad_loading">বিজ্ঞাপন লোড হচ্ছে…</string>
+
+    <!-- Language Selection -->
+    <string name="language_select_title">ভাষা বেছে নিন</string>
+    <string name="language_select_subtitle">একটি প্রদর্শন ভাষা নির্বাচন করুন।</string>
+    <string name="language_continue">চালিয়ে যান</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">পরবর্তী</string>
+    <string name="onboarding_get_started">শুরু করুন</string>
+    <!-- Page 1 -->
+    <string name="onboarding_page1_title">কয়েক সেকেন্ডে যাদু তৈরি করুন</string>
+    <string name="onboarding_page1_subtitle">কয়েকটি ট্যাপে চমৎকার ভিডিও। সহজ এবং দ্রুত</string>
+    <!-- Page 2 -->
+    <string name="onboarding_page2_title">আপনার তাল খুঁজুন</string>
+    <string name="onboarding_page2_subtitle">প্রতিটি মুডের জন্য ট্রেন্ডিং সাউন্ড</string>
+    <!-- Page 3 -->
+    <string name="onboarding_page3_title">একসাথে আরও ভালো!</string>
+    <string name="onboarding_page3_subtitle">একসাথে আরও ভালো। বন্ধুদের আমন্ত্রণ জানান মজা ভাগ করতে</string>
+    <string name="onboarding_swipe_next">পরবর্তীতে সোয়াইপ করুন</string>
+    <string name="onboarding_exit_title">সেটআপ থেকে বের হবেন?</string>
+    <string name="onboarding_exit_message">আপনি পরে সেটিংসে পছন্দ পরিবর্তন করতে পারবেন।</string>
+    <string name="onboarding_exit_confirm">বের হন</string>
+    <string name="onboarding_exit_dismiss">চালিয়ে যান</string>
+    <string name="root_no_internet_title">ইন্টারনেট সংযোগ নেই</string>
+    <string name="root_no_internet_message">আপনার ডিভাইস বর্তমানে অফলাইনে আছে। অগ্রগতি চালিয়ে যেতে পুনরায় সংযুক্ত হন</string>
+    <string name="root_try_again">আবার চেষ্টা করুন</string>
+    <string name="root_loading_initializing">শুরু হচ্ছে...</string>
+    <string name="root_loading_fetching_config">কনফিগারেশন লোড হচ্ছে...</string>
+    <string name="root_loading_ad">এটিতে বিজ্ঞাপন থাকতে পারে</string>
+    <string name="root_loading_checking_status">স্ট্যাটাস যাচাই হচ্ছে...</string>
+    <string name="root_loading_preparing">প্রস্তুত হচ্ছে...</string>
+
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">গ্যালারি</string>
+    <string name="home_tab_songs">গান</string>
+    <string name="home_tab_projects">লাইব্রেরি</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_filter_for_you">আপনার জন্য</string>
+    <string name="gallery_hot_songs">জনপ্রিয় গান</string>
+    <string name="gallery_templates">টেমপ্লেট</string>
+    <string name="gallery_coming_soon">শীঘ্রই আসছে</string>
+    <string name="gallery_search_hint">আপনার স্টাইল খুঁজুন</string>
+    <string name="gallery_create_new_video">নতুন ভিডিও তৈরি করুন</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">গান</string>
+    <string name="songs_all">সব গান</string>
+    <string name="songs_categories">বিভাগ</string>
+    <string name="songs_search_hint">গান খুঁজুন</string>
+    <string name="songs_suggest_for_you">আপনার জন্য সাজেশন</string>
+    <string name="songs_weekly_ranking">সাপ্তাহিক র‍্যাংকিং</string>
+    <string name="songs_station">প্রস্তাবিত স্টেশন</string>
+
+    <!-- Common Actions -->
+    <string name="home_create">তৈরি করুন</string>
+
+    <!-- Legacy Home -->
+    <string name="home_title">ভিডিও মেকার</string>
+    <string name="home_welcome">আপনি কী করতে চান?</string>
+    <string name="home_create_description">আপনার ছবি থেকে স্লাইডশো তৈরি করুন</string>
+    <string name="home_my_projects">আমার প্রজেক্ট</string>
+    <string name="home_my_projects_description">আপনার সংরক্ষিত প্রজেক্ট দেখুন</string>
+
+    <!-- Settings -->
+    <string name="settings_title">সেটিংস</string>
+    <string name="settings_account">অ্যাকাউন্ট</string>
+    <string name="settings_legal">আইনি</string>
+    <string name="settings_language">ভাষা</string>
+    <string name="settings_app_widet">উইজেট যোগ করুন</string>
+    <string name="settings_rate_us">আমাদের রেট করুন</string>
+    <string name="settings_share_with_friends">বন্ধুদের সাথে শেয়ার করুন</string>
+    <string name="settings_report">রিপোর্ট</string>
+    <string name="settings_term_of_service">সেবার শর্তাবলী</string>
+    <string name="settings_privacy_policy">গোপনীয়তা নীতি</string>
+    <string name="settings_language_description">অ্যাপের ভাষা পরিবর্তন করুন</string>
+    <string name="settings_about">সম্পর্কে</string>
+    <string name="settings_version">সংস্করণ</string>
+    <string name="settings_uninstall">আনইনস্টল</string>
+    <string name="settings_share_subject">এই অ্যাপটি দেখুন!</string>
+    <string name="settings_share_message">হেই! আমি এই দারুণ অ্যাপটি ব্যবহার করছি। চেষ্টা করে দেখুন:\n%s</string>
+    <string name="notification_permission_trending_title">ট্রেন্ডের আগে থাকুন!</string>
+    <string name="notification_permission_trending_message"> নতুন ভাইরাল টেমপ্লেট যোগ হলে তাৎক্ষণিক সতর্কতা পেতে নোটিফিকেশন সক্রিয় করুন।</string>
+    <string name="notification_permission_notify_me">আমাকে জানান</string>
+    <string name="notification_permission_maybe_later">হয়তো পরে</string>
+    <string name="notification_permission_settings_title">নোটিফিকেশন এখন\nবন্ধ আছে।</string>
+    <string name="notification_permission_settings_message"> টেমপ্লেট আপডেট পেতে আপনার ডিভাইস সেটিংসে এটি চালু করুন</string>
+    <string name="notification_permission_open_settings">সেটিংসে যান</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">আরেকবার চেষ্টা করুন</string>
+    <string name="uninstall_description">আপনি কি সত্যিই আনইনস্টল করতে চান?</string>
+    <string name="uninstall_confirm">তবুও আনইনস্টল করুন</string>
+    <string name="uninstall_cancel">আনইনস্টল করবেন না। আরও অন্বেষণ করুন</string>
+
+    <!-- Editor -->
+    <string name="editor_title">প্রজেক্ট সম্পাদনা</string>
+    <string name="editor_add_photos">ছবি যোগ করুন</string>
+    <string name="editor_settings">সেটিংস</string>
+    <string name="editor_preview">প্রিভিউ</string>
+    <string name="editor_export">এক্সপোর্ট</string>
+    <string name="editor_transition">ট্রানজিশন</string>
+    <string name="editor_duration">সময়কাল</string>
+    <string name="editor_music">সঙ্গীত</string>
+    <string name="editor_frame">ফ্রেম</string>
+    <string name="editor_aspect_ratio">অ্যাসপেক্ট রেশিও</string>
+    <string name="editor_volume">ভলিউম</string>
+    <string name="editor_effect">ইফেক্ট</string>
+    <string name="editor_select_video_ratio">ভিডিও রেশিও বেছে নিন</string>
+    <string name="editor_apply">প্রয়োগ করুন</string>
+    <string name="editor_image_duration">ছবির সময়কাল</string>
+    <string name="editor_change_music">সঙ্গীত পরিবর্তন করুন</string>
+    <string name="editor_select_quality">গুণমান বেছে নিন</string>
+    <string name="editor_hd">HD</string>
+    <string name="editor_play">চালান</string>
+    <string name="editor_pause">বিরতি</string>
+    <string name="editor_duration_format">সময়কাল: %s</string>
+
+    <!-- Music Trim Feature -->
+    <string name="editor_music_trim">সঙ্গীত ট্রিম</string>
+    <string name="editor_music_trim_from_start">শুরু থেকে ট্রিম</string>
+    <string name="editor_music_trim_from_end">শেষ থেকে ট্রিম</string>
+    <string name="editor_music_trim_edit">সঙ্গীত ট্রিম সম্পাদনা</string>
+    <string name="editor_music_trim_title">সঙ্গীত ট্রিম</string>
+    <string name="editor_music_trim_subtitle">গানের কোন অংশ ব্যবহার করবেন তা বেছে নিন</string>
+    <string name="editor_music_trim_start">সঙ্গীতের শুরু</string>
+    <string name="editor_music_trim_end">সঙ্গীতের শেষ</string>
+    <string name="editor_music_trim_duration">সঙ্গীতের সময়কাল</string>
+    <string name="editor_music_trim_min_duration">সঙ্গীত কমপক্ষে ৫ সেকেন্ড হতে হবে</string>
+    <string name="editor_music_trim_will_loop">প্রয়োজনে ভিডিওর জন্য সঙ্গীত লুপ হবে</string>
+    <string name="editor_music_trimmed_info">সঙ্গীত: %1$s</string>
+    <string name="editor_music_trim_play_selection">নির্বাচন চালান</string>
+    <string name="editor_music_trim_skip_to_start">শুরুতে যান</string>
+    <string name="editor_music_trim_skip_to_end">শেষে যান</string>
+    <string name="editor_photos_count">%d টি ছবি</string>
+    <string name="editor_save_dialog_title">প্রজেক্ট সংরক্ষণ করবেন?</string>
+    <string name="editor_save_dialog_message">আপনার প্রজেক্ট সংরক্ষিত হবে এবং আমার প্রজেক্টে পাওয়া যাবে।</string>
+    <string name="editor_save_and_exit">সংরক্ষণ করুন এবং বের হন</string>
+    <string name="editor_discard_changes">পরিবর্তন বাতিল করুন</string>
+    <string name="editor_processing">প্রক্রিয়াকরণ হচ্ছে…</string>
+    <string name="editor_preparing_video">ভিডিও প্রস্তুত হচ্ছে…</string>
+    <string name="editor_unsaved_project_title">প্রজেক্ট সংরক্ষণ করবেন?</string>
+    <string name="editor_unsaved_project_message">আপনার প্রজেক্ট এখনো সংরক্ষিত হয়নি। এখনই সংরক্ষণ করুন বা কাজ বাতিল করুন?</string>
+    <string name="editor_unsaved_changes_title">অসংরক্ষিত পরিবর্তন</string>
+    <string name="editor_unsaved_changes_message">এখন চলে গেলে আপনার পরিবর্তন হারিয়ে যাবে। আপনি কি সত্যিই চলে যেতে চান?</string>
+    <string name="editor_keep_editing">সম্পাদনা চালিয়ে যান</string>
+    <string name="editor_discard">বাতিল করুন</string>
+    <string name="editor_effect_sets">ইফেক্ট সেট</string>
+    <string name="editor_retry">আবার চেষ্টা করুন</string>
+    <string name="editor_no_music_selected">কোনো সঙ্গীত নির্বাচিত নেই</string>
+
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">তৈরি করা ভিডিও</string>
+    <string name="projects_tab_liked_template">পছন্দের টেমপ্লেট</string>
+    <string name="projects_tab_liked_song">পছন্দের গান</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">গান ফাঁকা</string>
+    <string name="like_song_search_button">গান খুঁজুন</string>
+    <string name="like_song_section_header">আপনার জন্য সঙ্গীত</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">টেমপ্লেট ফাঁকা</string>
+    <string name="like_template_search_button">টেমপ্লেট খুঁজুন</string>
+    <string name="like_template_section_header">ভিডিও টেমপ্লেট</string>
+
+    <!-- Projects -->
+    <string name="projects_title">আমার প্রজেক্ট</string>
+    <string name="projects_menu">প্রজেক্ট মেনু</string>
+    <string name="projects_download">ডাউনলোড</string>
+    <string name="projects_share">শেয়ার</string>
+    <string name="projects_delete">মুছুন</string>
+    <string name="projects_delete_confirmation_title">ভিডিও মুছবেন?</string>
+    <string name="projects_delete_confirmation_message">এই ভিডিওটি স্থায়ীভাবে মুছে যাবে। এই ক্রিয়া পূর্বাবস্থায় ফেরানো যাবে না।</string>
+    <string name="projects_delete_confirm">মুছুন</string>
+    <string name="projects_delete_cancel">বাতিল</string>
+    <string name="projects_empty">এখনো কোনো প্রজেক্ট নেই</string>
+    <string name="projects_empty_description">এখানে দেখতে আপনার প্রথম প্রজেক্ট তৈরি করুন</string>
+    <string name="projects_empty_title">আপনার যাত্রা শুরু করুন</string>
+    <string name="projects_empty_subtitle">এখানে একটু ফাঁকা মনে হচ্ছে। আজই আপনার প্রথম মাস্টারপিস তৈরি করুন।</string>
+    <string name="projects_create_new_video">নতুন ভিডিও তৈরি করুন</string>
+    <string name="projects_create_description">নতুন স্লাইডশো প্রজেক্ট শুরু করুন</string>
+    <string name="projects_item_info">%1$d টি ছবি • %2$s</string>
+    <string name="projects_delete_title">প্রজেক্ট মুছবেন?</string>
+    <string name="projects_delete_message">\"%s\" স্থায়ীভাবে মুছে যাবে। এই ক্রিয়া পূর্বাবস্থায় ফেরানো যাবে না।</string>
+    <string name="projects_removed_from_list">তালিকা থেকে সরানো হয়েছে</string>
+
+    <!-- Export -->
+    <string name="export_title">ভিডিও এক্সপোর্ট</string>
+    <string name="export_processing">প্রক্রিয়াকরণ হচ্ছে…</string>
+    <string name="export_complete">এক্সপোর্ট সম্পন্ন!</string>
+    <string name="export_share">শেয়ার</string>
+    <string name="export_save">গ্যালারিতে সংরক্ষণ করুন</string>
+    <string name="export_preparing">এক্সপোর্ট প্রস্তুত হচ্ছে…</string>
+    <string name="export_generating">তৈরি হচ্ছে</string>
+    <string name="export_please_wait">একটু অপেক্ষা করুন, আপনার ভিডিও প্রস্তুত হচ্ছে!\nঅ্যাপটি বন্ধ করবেন না</string>
+    <string name="export_exporting">ভিডিও এক্সপোর্ট হচ্ছে…</string>
+    <string name="export_dont_close">অ্যাপটি বন্ধ করবেন না</string>
+    <string name="export_tip_1">আপনার মাস্টারপিস তৈরি হচ্ছে…</string>
+    <string name="export_tip_2">কিছু সিনেমাটিক যাদু যোগ হচ্ছে…</string>
+    <string name="export_tip_3">আপনার স্মৃতি জীবন্ত হচ্ছে…</string>
+    <string name="export_tip_4">প্রতিটি ফ্রেম পালিশ হচ্ছে…</string>
+    <string name="export_tip_5">নিখুঁত করা হচ্ছে…</string>
+    <string name="export_tip_6">আপনার গল্প বোনা হচ্ছে…</string>
+    <string name="export_tip_7">কিছু বিশেষ তৈরি হচ্ছে…</string>
+    <string name="export_tip_8">প্রায় হয়ে গেছে! দারুণ দেখাচ্ছে…</string>
+    <string name="export_tip_9">বিবরণ সূক্ষ্মভাবে সাজানো হচ্ছে…</string>
+    <string name="export_tip_10">চূড়ান্ত স্পর্শ দেওয়া হচ্ছে…</string>
+    <string name="export_video_saved">আপনার ভিডিও সংরক্ষিত হয়েছে</string>
+    <string name="export_saved_to_gallery">গ্যালারিতে সংরক্ষিত</string>
+    <string name="export_saving_to_gallery">গ্যালারিতে সংরক্ষণ হচ্ছে…</string>
+    <string name="export_error_save_failed">গ্যালারিতে সংরক্ষণ ব্যর্থ হয়েছে</string>
+    <string name="export_share_video">ভিডিও শেয়ার করুন</string>
+    <string name="export_failed">এক্সপোর্ট ব্যর্থ</string>
+    <string name="export_try_again">আবার চেষ্টা করুন</string>
+    <string name="export_go_back">ফিরে যান</string>
+    <string name="export_cancelled">এক্সপোর্ট বাতিল হয়েছে</string>
+    <string name="export_cancelled_message">ভিডিও এক্সপোর্ট বাতিল করা হয়েছে</string>
+    <string name="export_back_to_editor">এডিটরে ফিরুন</string>
+    <string name="export_cancel_title">এক্সপোর্ট বাতিল করবেন?</string>
+    <string name="export_cancel_message">আপনি কি সত্যিই এক্সপোর্ট বাতিল করতে চান? সব অগ্রগতি হারিয়ে যাবে।</string>
+    <string name="export_continue">চালিয়ে যান</string>
+    <string name="export_cancel_export">এক্সপোর্ট বাতিল করুন</string>
+    <string name="export_error_file_not_found">ভিডিও ফাইল পাওয়া যায়নি</string>
+    <string name="export_error_share_failed">ভিডিও শেয়ার করতে ব্যর্থ হয়েছে</string>
+    <string name="export_try_another_templates">অন্য টেমপ্লেট চেষ্টা করুন</string>
+    <string name="export_templates_load_failed">টেমপ্লেট লোড করতে ব্যর্থ হয়েছে</string>
+    <string name="export_watch_ad_title">ডাউনলোড করতে বিজ্ঞাপন দেখবেন?</string>
+    <string name="export_watch_ad_subtitle">একটি ছোট বিজ্ঞাপন দেখে অ্যাপটিকে বিনামূল্যে রাখতে সাহায্য করুন। এরপরই আপনার ভিডিও ডাউনলোড হবে!</string>
+    <string name="watch_ad_dialog_title">এক্সক্লুসিভ ফিচার আনলক করুন! ✨</string>
+    <string name="watch_ad_dialog_subtitle">এই ফিচারটি আনলক করতে একটি ছোট বিজ্ঞাপন দেখুন এবং আপনার দারুণ ভিডিও সম্পাদনা চালিয়ে যান!</string>
+    <string name="export_watch_ad_button">বিজ্ঞাপন দেখুন (১/১)</string>
+    <string name="export_watch_ad_close">বন্ধ করুন</string>
+    <string name="export_watermark_remove_title">ওয়াটারমার্ক সরাবেন?</string>
+    <string name="export_watermark_remove_subtitle">আপনার ভিডিও প্রিভিউ থেকে ওয়াটারমার্ক সরাতে একটি ছোট বিজ্ঞাপন দেখুন।</string>
+    <string name="export_watermark_remove_button">বিজ্ঞাপন দেখুন</string>
+    <string name="export_watermark_remove_close">বন্ধ করুন</string>
+
+    <!-- Asset Picker -->
+    <string name="picker_title">আপনার ছবি নির্বাচন করুন</string>
+    <string name="picker_done">সম্পন্ন (%1$d/%2$d)</string>
+    <string name="picker_close">বন্ধ করুন</string>
+    <string name="picker_selected">নির্বাচিত</string>
+    <string name="picker_no_photos">কোনো ছবি পাওয়া যায়নি</string>
+    <string name="picker_no_photos_hint">শুরু করতে কিছু ছবি তুলুন</string>
+    <string name="picker_permission_title">ছবিতে অ্যাক্সেসের অনুমতি দিন</string>
+    <string name="picker_permission_message">চালিয়ে যেতে, Rehancer-এর আপনার ফটোতে অ্যাক্সেস করার অনুমতি প্রয়োজন</string>
+    <string name="picker_allow_access">অ্যাক্সেস দিন</string>
+    <string name="picker_give_access">অ্যাক্সেস দিন</string>
+    <string name="picker_give_access_settings">আপনার ছবিতে অ্যাক্সেস\nবন্ধ আছে।</string>
+    <string name="picker_give_access_permission">তৈরি করতে প্রস্তুত?</string>
+    <string name="picker_not_now">এখন না</string>
+    <string name="picker_full_access_custom_message">আপনার ভিডিও এবং ছবি ব্রাউজ করতে আমাদের গ্যালারিতে অ্যাক্সেস প্রয়োজন।</string>
+    <string name="picker_full_access_settings_message"> সম্পাদনা শুরু করতে আপনার ডিভাইস সেটিংসে \'ফটো\' বা \'স্টোরেজ\' সক্রিয় করুন।</string>
+    <string name="picker_limited_access_message">আপনি Video Maker-কে সীমিত সংখ্যক ছবিতে অ্যাক্সেস দিয়েছেন।</string>
+    <string name="picker_add_more_photos">যোগ করুন</string>
+    <string name="picker_go_to_settings">সেটিংসে যান</string>
+    <string name="picker_min_selection">কমপক্ষে %d টি ছবি নির্বাচন করুন।</string>
+    <string name="picker_current_selection">%d টি ছবি নির্বাচিত</string>
+    <string name="picker_exit_confirm_title">ছবি নির্বাচন থেকে বের হবেন?</string>
+    <string name="picker_exit_confirm_message">আপনি ছবি নির্বাচন করেছেন। এখন বের হলে নির্বাচিত ছবি বাতিল হয়ে যাবে।</string>
+    <string name="picker_exit_confirm">বের হন</string>
+    <string name="picker_exit_stay">থাকুন</string>
+
+    <!-- Music Player Bottom Sheet -->
+    <string name="music_player_title">মিউজিক প্লেয়ার</string>
+    <string name="music_player_use_to_create">ভিডিও তৈরিতে ব্যবহার করুন</string>
+
+    <!-- Music Picker -->
+    <string name="music_picker_title">সঙ্গীত নির্বাচন করুন</string>
+    <string name="music_picker_loading">সঙ্গীত লোড হচ্ছে…</string>
+    <string name="music_picker_no_music">কোনো সঙ্গীত পাওয়া যায়নি</string>
+    <string name="music_picker_no_music_hint">এখানে ব্যবহার করতে আপনার ডিভাইসে সঙ্গীত ফাইল যোগ করুন</string>
+    <string name="music_picker_permission_title">অডিও অ্যাক্সেস প্রয়োজন</string>
+    <string name="music_picker_permission_message">আপনার সঙ্গীতকে ব্যাকগ্রাউন্ড অডিও হিসেবে ব্যবহার করতে আমাদের অডিও ফাইলে অ্যাক্সেসের অনুমতি প্রয়োজন।</string>
+    <string name="music_picker_allow_access">অ্যাক্সেস দিন</string>
+    <string name="music_picker_preview">প্রিভিউ</string>
+    <string name="music_picker_stop_preview">বন্ধ করুন</string>
+    <string name="music_picker_select">নির্বাচন করুন</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">সেটিংস</string>
+    <string name="settings_panel_apply">প্রয়োগ করুন</string>
+    <string name="settings_panel_close">বন্ধ করুন</string>
+    <string name="settings_apply">প্রয়োগ করুন</string>
+    <string name="settings_effect_set">ইফেক্ট সেট</string>
+    <string name="settings_all">সব</string>
+    <string name="settings_off">বন্ধ</string>
+    <string name="settings_none">কিছু না</string>
+    <string name="settings_pro">PRO</string>
+    <string name="settings_duration_per_image">প্রতিটি ছবির সময়কাল</string>
+    <string name="settings_seconds_format">%dসে</string>
+    <string name="settings_duration_seconds">%dসে</string>
+    <string name="settings_overlay_frame">ওভারলে ফ্রেম</string>
+    <string name="settings_background_music">ব্যাকগ্রাউন্ড সঙ্গীত</string>
+    <string name="settings_custom">কাস্টম</string>
+    <string name="settings_add">+ যোগ করুন</string>
+    <string name="settings_add_audio">+ যোগ করুন</string>
+    <string name="settings_volume">ভলিউম</string>
+    <string name="settings_clip_music">ক্লিপ সঙ্গীত</string>
+    <string name="settings_aspect_ratio">অ্যাসপেক্ট রেশিও</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">ভলিউম</string>
+    <string name="tab_music_clip">মিউজিক ক্লিপ</string>
+    <string name="settings_transition_effect">ট্রানজিশন ইফেক্ট</string>
+    <string name="settings_transition_duration">ট্রানজিশন সময়কাল</string>
+    <string name="settings_transition_duration_value">%.1fসে</string>
+
+    <!-- Search -->
+    <string name="search_hint">আপনার নিখুঁত স্টাইল খুঁজুন…</string>
+    <string name="search_recent">সম্প্রতি খোঁজা হয়েছে</string>
+    <string name="search_clear_all">সব মুছুন</string>
+    <string name="search_no_results">কোনো স্টাইল পাওয়া যায়নি</string>
+    <string name="search_no_results_hint">ভিন্ন শব্দ চেষ্টা করুন বা নিচে ভাইব বেছে নিন</string>
+    <string name="search_suggestions">সাজেশন</string>
+    <string name="search_browse_by_theme">ভাইব দিয়ে অন্বেষণ করুন</string>
+    <string name="search_trending_templates">এখন জনপ্রিয়</string>
+    <string name="search_tag_aesthetic">এস্থেটিক</string>
+    <string name="search_tag_birthday">জন্মদিন</string>
+    <string name="search_tag_travel">ভ্রমণ</string>
+    <string name="search_tag_lofi">লোফাই</string>
+    <string name="search_tag_cinematic">সিনেমাটিক</string>
+    <string name="search_tag_vintage">ভিনটেজ</string>
+
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">স্বপ্নিল পরিবেশ</string>
+    <string name="effect_dreamy_vibes_desc">নরম আভা এবং প্যাস্টেল রং</string>
+    <string name="effect_cyberpunk_title">সাইবারপাংক</string>
+    <string name="effect_cyberpunk_desc">নিওন আলো এবং গ্লিচ ইফেক্ট</string>
+    <string name="effect_vintage_film_title">ভিনটেজ ফিল্ম</string>
+    <string name="effect_vintage_film_desc">রেট্রো দানা এবং উষ্ণ রং</string>
+    <string name="effect_ocean_breeze_title">সমুদ্রের বাতাস</string>
+    <string name="effect_ocean_breeze_desc">শীতল নীল গ্রেডিয়েন্ট</string>
+    <string name="effect_golden_hour_title">সোনালী মুহূর্ত</string>
+    <string name="effect_golden_hour_desc">উষ্ণ সূর্যাস্তের আভা</string>
+    <string name="effect_noir_title">নোয়ার</string>
+    <string name="effect_noir_desc">উচ্চ কন্ট্রাস্ট কালো এবং সাদা</string>
+    <string name="effect_sakura_title">সাকুরা</string>
+    <string name="effect_sakura_desc">চেরি ফুলের গোলাপি</string>
+    <string name="effect_aurora_title">অরোরা</string>
+    <string name="effect_aurora_desc">উত্তর আলোর আভা</string>
+
+    <!-- Common -->
+    <string name="cancel">বাতিল</string>
+    <string name="confirm">নিশ্চিত করুন</string>
+    <string name="delete">মুছুন</string>
+    <string name="save">সংরক্ষণ</string>
+    <string name="back">পেছনে</string>
+    <string name="done">সম্পন্ন</string>
+    <string name="error">ত্রুটি</string>
+    <string name="retry">আবার চেষ্টা করুন</string>
+    <string name="seconds">%d সেকেন্ড</string>
+    <string name="none">কিছু না</string>
+    <string name="close">বন্ধ করুন</string>
+    <string name="remove">সরান</string>
+    <string name="badge_pro">PRO</string>
+    <string name="settings">সেটিংস</string>
+
+    <!-- Error states -->
+    <string name="error_load_failed">লোড করতে ব্যর্থ। পুনরায় চেষ্টা করতে নিচে টানুন।</string>
+    <string name="error_network_title">নেটওয়ার্ক ত্রুটি</string>
+    <string name="error_data_load_failed">প্রয়োজনীয় ডেটা লোড করতে ব্যর্থ। আপনার ইন্টারনেট সংযোগ যাচাই করুন এবং আবার চেষ্টা করুন।</string>
+    <string name="loading_building_feed">আপনার ফিড তৈরি হচ্ছে</string>
+    <string name="error_network_message">সঙ্গীত লোড করতে ব্যর্থ। আপনার সংযোগ যাচাই করুন এবং আবার চেষ্টা করুন।</string>
+    <string name="error_network_timeout">নেটওয়ার্ক টাইমআউট। আপনার সংযোগ যাচাই করুন এবং আবার চেষ্টা করুন।</string>
+    <string name="error_preview_title">প্রিভিউ ত্রুটি</string>
+    <string name="error_preview_music_network">সঙ্গীত লোডে নেটওয়ার্ক ত্রুটি। আপনার সংযোগ যাচাই করুন এবং আবার চেষ্টা করুন।</string>
+    <string name="error_preview_music_failed">সঙ্গীত লোড করতে ব্যর্থ। আবার চেষ্টা করুন।</string>
+    <string name="error_template_music_failed">গান লোড করতে ব্যর্থ। আপনার সংযোগ যাচাই করুন এবং আবার চেষ্টা করুন।</string>
+    <string name="error_video_playback_failed">ভিডিও প্রিভিউ লোড করতে ব্যর্থ। আপনার সংযোগ যাচাই করুন এবং আবার চেষ্টা করুন।</string>
+    <string name="error_video_network">ভিডিও লোডে নেটওয়ার্ক ত্রুটি। আপনার সংযোগ যাচাই করুন এবং আবার চেষ্টা করুন।</string>
+    <string name="video_retrying">প্রিভিউ লোড হচ্ছে…</string>
+    <string name="dialog_ok">ঠিক আছে</string>
+
+    <!-- Songs -->
+    <string name="start_project">প্রজেক্ট শুরু করুন</string>
+
+    <!-- Song Search -->
+    <string name="song_search_hint">গান খুঁজুন…</string>
+    <string name="song_search_explore_by_genre">ঘরানা দিয়ে অন্বেষণ করুন</string>
+    <string name="song_search_suggested">আপনার জন্য সাজেশন</string>
+    <string name="song_search_no_results">কোনো গান পাওয়া যায়নি</string>
+    <string name="song_search_change_music">সঙ্গীত পরিবর্তন করুন</string>
+    <string name="song_search_idle_hint">গান খুঁজতে টাইপ শুরু করুন</string>
+
+    <!-- Onboarding Page 4 -->
+    <string name="onboarding_page4_title">আপনি কিভাবে শুরু করতে চান?</string>
+    <string name="onboarding_page4_subtitle">এটি আমাদের আপনার জন্য সবচেয়ে প্রাসঙ্গিক কন্টেন্ট সুপারিশ করতে সাহায্য করে।</string>
+    <string name="feature_music_video_instant">ভিডিও টেমপ্লেট ব্রাউজ করুন</string>
+    <string name="feature_photos_to_video">গান দিয়ে শুরু করুন</string>
+    <string name="feature_trending_templates">ট্রেন্ডিং টেমপ্লেট ব্যবহার করুন</string>
+    <string name="feature_trending_music">ট্রেন্ডিং সঙ্গীত যোগ করুন</string>
+
+    <!-- Music Genres -->
+    <string name="genre_pop">পপ</string>
+    <string name="genre_rock">রক</string>
+    <string name="genre_hiphop">হিপ-হপ</string>
+    <string name="genre_rnb">R&amp;B</string>
+    <string name="genre_electronic">ইলেকট্রনিক</string>
+    <string name="genre_jazz">জ্যাজ</string>
+    <string name="genre_classical">ক্লাসিক্যাল</string>
+    <string name="genre_country">কান্ট্রি</string>
+    <string name="genre_latin">ল্যাটিন</string>
+    <string name="genre_kpop">কে-পপ</string>
+    <string name="genre_dance">ডান্স</string>
+    <string name="genre_edm">EDM</string>
+    <string name="genre_blues">ব্লুজ</string>
+    <string name="genre_metal">মেটাল</string>
+    <string name="genre_soul">সোল</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_trending_search_long">ট্রেন্ডিং সার্চ</string>
+    <string name="shortcut_create_video_long">ভিডিও তৈরি করুন</string>
+    <string name="shortcut_choose_template_long">ভিডিও টেমপ্লেট বেছে নিন</string>
+    <string name="shortcut_uninstall_long">অ্যাপ আনইনস্টল</string>
+
+    <!-- Widget -->
+    <string name="widget_title">উইজেট</string>
+    <string name="widget_bts">উইজেট যোগ করুন</string>
+    <string name="widget_smart_search">স্মার্ট সার্চ</string>
+    <string name="widget_smart_search_description">আপনার স্টাইল খোঁজা হচ্ছে</string>
+    <string name="widget_smart_search_trending">ট্রেন্ডিং ❤️‍🔥</string>
+    <string name="widget_trending_template">ট্রেন্ডিং টেমপ্লেট</string>
+    <string name="widget_recently">সম্প্রতি</string>
+    <string name="widget_trending_song">ট্রেন্ডিং গান</string>
+    <string name="widget_trending_song_hot">জনপ্রিয়</string>
+    <string name="widget_search_hint">টেমপ্লেট খুঁজুন...</string>
+    <string name="widget_pin_request_sent">হোম স্ক্রিনে উইজেট যোগ হয়েছে</string>
+    <string name="widget_pin_not_supported">এই ডিভাইসে উইজেট পিন করা সমর্থিত নয়</string>
+    <string name="widget_add_failed">উইজেট যোগ করতে ব্যর্থ: %s</string>
+
+    <!-- Unified search -->
+    <string name="unified_search_templates">টেমপ্লেট</string>
+    <string name="unified_search_music">সঙ্গীত</string>
+    <string name="unified_search_see_more">আরও দেখুন</string>
+    <string name="unified_search_loading_more">লোড হচ্ছে…</string>
+    <string name="unified_search_explore_more">আরও অন্বেষণ করুন</string>
+    <string name="unified_search_explore_suggestions">সাজেশন অন্বেষণ করুন</string>
+    <string name="unified_search_no_results_title">কোনো ফলাফল পাওয়া যায়নি</string>
+    <string name="unified_search_keep_typing">আপনার সার্চ পরিমার্জিত করতে টাইপ চালিয়ে যান</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">জনপ্রিয়</string>
+    <string name="tag_trending">ট্রেন্ডিং</string>
+    <string name="tag_new">নতুন</string>
+    <string name="tag_featured">বিশেষ</string>
+
+    <!-- Template Previewer -->
+    <string name="template_add_to_favorites">যোগ করুন</string>
+    <string name="template_use_button">এই টেমপ্লেট ব্যবহার করুন</string>
+    <string name="template_swipe_hint">উপরে সোয়াইপ করুন</string>
+    <string name="template_swipe_subtitle">আপনার টেমপ্লেট উপভোগ করতে</string>
+    <string name="template_select_ratio_title">ভিডিও রেশিও বেছে নিন</string>
+    <string name="template_create_now">এখনই তৈরি করুন</string>
+    <string name="template_error_load_failed">টেমপ্লেট লোড করতে ব্যর্থ। আবার চেষ্টা করুন।</string>
+
+    <!-- Unified Search -->
+    <string name="search_templates_suggestions">টেমপ্লেট সাজেশন</string>
+    <string name="search_music_suggestion">সঙ্গীত সাজেশন</string>
+    <string name="search_empty_subtitle">অন্য কিছু চেষ্টা করুন বা\nট্রেন্ডিং ভাইব অন্বেষণ করুন</string>
+    <string name="search_typing_result_header">ফলাফল</string>
+    <string name="search_loading_title">ফলাফল খোঁজা হচ্ছে…</string>
+    <string name="search_loading_message">আমরা আপনার জন্য সবচেয়ে সঠিক তথ্য আনতে\nআমাদের ডেটাবেস স্ক্যান করছি।\nঅনুগ্রহ করে একটু অপেক্ষা করুন।</string>
+    <string name="search_placeholder">যেকোনো কিছু খুঁজুন</string>
+    <string name="search_pro_badge">PRO</string>
+
+    <!-- Editor Volume -->
+    <string name="volume_title">ভলিউম</string>
+
+    <!-- Rating Popup -->
+    <string name="rating_satisfaction_title">ভিডিও জেনারেটিংয়ে আপনার সময়ের জন্য কৃতজ্ঞ</string>
+    <string name="rating_satisfaction_subtitle">আপনি কি আমাদের অ্যাপে সন্তুষ্ট?</string>
+    <string name="rating_not_really">খুব একটা না</string>
+    <string name="rating_good">ভালো</string>
+    <string name="rating_experience_title">আমাদের সাথে আপনার\nঅভিজ্ঞতা রেট করুন</string>
+    <string name="rating_submit">জমা দিন</string>
+    <string name="rating_feedback_title">শুনে দুঃখিত 🥲</string>
+    <string name="rating_feedback_subtitle">আমরা আপনার অভিজ্ঞতা উন্নত করতে আরও কঠোর পরিশ্রম করব</string>
+    <string name="rating_feedback_type_hint">আপনার মতামত টাইপ করুন</string>
+    <string name="rating_feedback_reason_music_quality">প্রিয় গান নেই / সঙ্গীতের মান কম</string>
+    <string name="rating_feedback_reason_translation">অনুবাদের মান খুব কম</string>
+    <string name="rating_feedback_reason_tools">সম্পাদনা সরঞ্জাম আমার চাহিদা পূরণ করে না</string>
+    <string name="rating_feedback_reason_output_quality">আউটপুট ভিডিওর মান খুব কম</string>
+    <string name="rating_feedback_reason_performance">অ্যাপ ধীর বা ঘন ঘন ক্র্যাশ হয়</string>
+    <string name="rating_feedback_reason_templates">পর্যাপ্ত টেমপ্লেট / কন্টেন্ট আপডেট নেই</string>
+    <string name="rating_feedback_reason_other">অন্যান্য</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">বিজ্ঞাপন</string>
+    <string name="ad_icon">বিজ্ঞাপন আইকন</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">এই ইফেক্ট আনলক করতে বিজ্ঞাপন দেখবেন?</string>
+    <string name="effect_set_watch_ad_subtitle">একটি ছোট বিজ্ঞাপন দেখে এই ইফেক্ট সেটটি স্থায়ীভাবে আনলক করুন</string>
+    <string name="effect_set_ad_not_available">এখন বিজ্ঞাপন উপলব্ধ নেই। পরে আবার চেষ্টা করুন।</string>
+    <string name="effect_set_locked">লক করা ইফেক্ট সেট</string>
+    <string name="ad_not_available">এখন বিজ্ঞাপন উপলব্ধ নেই। পরে আবার চেষ্টা করুন।</string>
+
+    <!-- Quality Unlock Rewarded Ad -->
+    <string name="quality_watch_ad_title">উচ্চ মানে এক্সপোর্ট করতে বিজ্ঞাপন দেখবেন?</string>
+    <string name="quality_watch_ad_subtitle">একটি ছোট বিজ্ঞাপন দেখে এই সেশনের জন্য ৭২০p/১০৮০p এক্সপোর্ট আনলক করুন</string>
+    <string name="quality_ad_not_available">এখন বিজ্ঞাপন উপলব্ধ নেই। পরে আবার চেষ্টা করুন বা কম মান নির্বাচন করুন।</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">এই টেমপ্লেট আনলক করতে বিজ্ঞাপন দেখবেন?</string>
+    <string name="template_watch_ad_subtitle">একটি ছোট বিজ্ঞাপন দেখে এই টেমপ্লেটটি স্থায়ীভাবে আনলক করুন</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">এই গান আনলক করতে বিজ্ঞাপন দেখবেন?</string>
+    <string name="song_watch_ad_subtitle">দেখার পরে, আপনি ভিডিও তৈরিতে এই গানটি ব্যবহার করতে পারবেন। আনলক স্থায়ী।</string>
+
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">নতুন ট্রেন্ড গান!</string>
+    <string name="notif_trending_song_body">%1$s-এর \'%2$s\' ভাইরাল হচ্ছে! ট্রেন্ড শীর্ষে পৌঁছানোর আগেই ১ ট্যাপে আপনার এডিট তৈরি করুন।</string>
+    <string name="notif_viral_template_title">আপনার জন্য ট্রেন্ডিং টেমপ্লেট। এখনই চেষ্টা করুন!</string>
+    <string name="notif_viral_template_body">আজ ১০,০০,০০০ মানুষ এই %1$s ব্যবহার করেছে। হাইপ মিস করবেন না!</string>
+    <string name="notif_forgotten_masterpiece_title">আপনার মাস্টারপিস অপেক্ষা করছে!</string>
+    <string name="notif_forgotten_masterpiece_body">আপনি কঠিন অংশটি করেছেন, এখন এটি উজ্জ্বল করুন। আপনার ভিডিও বিশ্বের সাথে শেয়ার করার জন্য প্রস্তুত!</string>
+    <string name="notif_quick_save_title">আপনার কাজ হারাবেন না!</string>
+    <string name="notif_quick_save_body">আপনার এডিট দারুণ দেখাচ্ছে! এখনই গ্যালারিতে সংরক্ষণ করুন যাতে নিখুঁত বিট-সিঙ্ক হারিয়ে না যায়।</string>
+    <string name="notif_share_encouragement_title">\'লাইক\' পেতে প্রস্তুত?</string>
+    <string name="notif_share_encouragement_body">আপনার \'%1$s\' এডিট ১০০%% বিট-সিঙ্কড এবং যেতে প্রস্তুত। এখনই TikTok-এ পোস্ট করুন!</string>
+    <string name="notif_abandoned_select_photos_title">বিটকে ঝুলিয়ে রাখবেন না!</string>
+    <string name="notif_abandoned_select_photos_body">আপনার \'Not Like Us\' এডিট প্রায় প্রস্তুত। যাদু দেখতে শুধু কয়েকটি ছবি বেছে নিন!</string>
+    <string name="notif_draft_completion_nudge_title">যা শুরু করেছেন শেষ করুন!</string>
+    <string name="notif_draft_completion_nudge_body">আপনি একটি ভাইরাল ভিডিও থেকে মাত্র এক ধাপ দূরে। ফিরে এসে এখনই আপনার ছবি যোগ করুন!</string>
+    <string name="notif_cta_play_song">গান চালান</string>
+    <string name="notif_cta_discover_templates">টেমপ্লেট আবিষ্কার করুন</string>
+    <string name="notif_cta_continue_editing">সম্পাদনা চালিয়ে যান</string>
+    <string name="notif_cta_view_template">টেমপ্লেট দেখুন</string>
+
+</resources>

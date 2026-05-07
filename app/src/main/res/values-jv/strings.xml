@@ -1,0 +1,547 @@
+<resources>
+    <string name="app_name">Video Maker - AI Music</string>
+
+    <!-- Facebook SDK (Analytics only) -->
+    <string name="facebook_app_id">2394935491027358</string>
+    <string name="facebook_client_token">59adbbae92079f20f43d002f331d8e9d</string>
+
+    <!-- Loading -->
+    <string name="loading">Ngunggah…</string>
+    <string name="ad_loading">Ngunggah iklan…</string>
+
+    <!-- Language Selection -->
+    <string name="language_select_title">Pilih Basa</string>
+    <string name="language_select_subtitle">Pilih basa tampilan.</string>
+    <string name="language_continue">Lanjutake</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Selajengipun</string>
+    <string name="onboarding_get_started">Mulai</string>
+    <!-- Page 1 -->
+    <string name="onboarding_page1_title">Gawe Keajaiban ing Sawetara Detik</string>
+    <string name="onboarding_page1_subtitle">Video apik nganggo sawetara tutul. Gampang lan cepet</string>
+    <!-- Page 2 -->
+    <string name="onboarding_page2_title">Temokake Ritme Sampeyan</string>
+    <string name="onboarding_page2_subtitle">Swara trending kanggo saben suasana</string>
+    <!-- Page 3 -->
+    <string name="onboarding_page3_title">Bebarengan Luwih Apik!</string>
+    <string name="onboarding_page3_subtitle">Bebarengan luwih apik. Undang kanca kanggo nuduhake seneng</string>
+    <string name="onboarding_swipe_next">Geser menyang selajengipun</string>
+    <string name="onboarding_exit_title">Metu saka Setup?</string>
+    <string name="onboarding_exit_message">Sampeyan bisa ngganti preferensi mengko ing Setelan.</string>
+    <string name="onboarding_exit_confirm">Metu</string>
+    <string name="onboarding_exit_dismiss">Lanjutake</string>
+    <string name="root_no_internet_title">Ora Ana Koneksi Internet</string>
+    <string name="root_no_internet_message">Piranti sampeyan saiki offline. Sambung maneh kanggo nerusake kemajuan</string>
+    <string name="root_try_again">Coba Maneh</string>
+    <string name="root_loading_initializing">Initialization...</string>
+    <string name="root_loading_fetching_config">Ngunggah konfigurasi...</string>
+    <string name="root_loading_ad">Iki bisa ngemot iklan</string>
+    <string name="root_loading_checking_status">Mriksa status...</string>
+    <string name="root_loading_preparing">Nyiyapake...</string>
+
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">Galeri</string>
+    <string name="home_tab_songs">Lagu</string>
+    <string name="home_tab_projects">Perpustakaan</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_filter_for_you">Kanggo sampeyan</string>
+    <string name="gallery_hot_songs">Lagu Populer</string>
+    <string name="gallery_templates">Template</string>
+    <string name="gallery_coming_soon">Bakal Teka</string>
+    <string name="gallery_search_hint">Goleki gaya sampeyan</string>
+    <string name="gallery_create_new_video">Gawe Video Anyar</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">Lagu</string>
+    <string name="songs_all">Kabeh Lagu</string>
+    <string name="songs_categories">Kategori</string>
+    <string name="songs_search_hint">Goleki lagu</string>
+    <string name="songs_suggest_for_you">Saran kanggo sampeyan</string>
+    <string name="songs_weekly_ranking">Peringkat Mingguan</string>
+    <string name="songs_station">Stasiun Sing Disaranake</string>
+
+    <!-- Common Actions -->
+    <string name="home_create">Gawe</string>
+
+    <!-- Legacy Home -->
+    <string name="home_title">Video Maker</string>
+    <string name="home_welcome">Apa sing pengin sampeyan lakoni?</string>
+    <string name="home_create_description">Gawe slideshow saka foto sampeyan</string>
+    <string name="home_my_projects">Proyek Saya</string>
+    <string name="home_my_projects_description">Deleng proyek sing disimpen</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Setelan</string>
+    <string name="settings_account">Akun</string>
+    <string name="settings_legal">Legal</string>
+    <string name="settings_language">Basa</string>
+    <string name="settings_app_widet">Tambah Widget</string>
+    <string name="settings_rate_us">Nilai kita</string>
+    <string name="settings_share_with_friends">Bagikan karo Kanca</string>
+    <string name="settings_report">Laporan</string>
+    <string name="settings_term_of_service">Syarat Layanan</string>
+    <string name="settings_privacy_policy">Kebijakan Privasi</string>
+    <string name="settings_language_description">Ganti basa app</string>
+    <string name="settings_about">Babagan</string>
+    <string name="settings_version">Versi</string>
+    <string name="settings_uninstall">Uninstall</string>
+    <string name="settings_share_subject">Deleng app iki!</string>
+    <string name="settings_share_message">Hei! Aku nggunakake app apik iki. Coba:\n%s</string>
+    <string name="notification_permission_trending_title">Tetep ing ngarep tren!</string>
+    <string name="notification_permission_trending_message"> Aktifake notifikasi kanggo entuk peringatan langsung nalika template viral anyar ditambahake.</string>
+    <string name="notification_permission_notify_me">Beri Tahu Saya</string>
+    <string name="notification_permission_maybe_later">Mengko Wae</string>
+    <string name="notification_permission_settings_title">Notifikasi saiki\ndisabilitasi.</string>
+    <string name="notification_permission_settings_message"> Aktifake ing setelan piranti kanggo nampa pembaruan template</string>
+    <string name="notification_permission_open_settings">Menyang Setelan</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Coba maneh</string>
+    <string name="uninstall_description">Apa sampeyan yakin arep uninstall?</string>
+    <string name="uninstall_confirm">Tetep uninstall app</string>
+    <string name="uninstall_cancel">Aja Uninstall. Temokake Liyane</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Sunting Proyek</string>
+    <string name="editor_add_photos">Tambah Foto</string>
+    <string name="editor_settings">Setelan</string>
+    <string name="editor_preview">Pratinjau</string>
+    <string name="editor_export">Ekspor</string>
+    <string name="editor_transition">Transisi</string>
+    <string name="editor_duration">Durasi</string>
+    <string name="editor_music">Musik</string>
+    <string name="editor_frame">Bingkai</string>
+    <string name="editor_aspect_ratio">Rasio Aspek</string>
+    <string name="editor_volume">Volume</string>
+    <string name="editor_effect">Efek</string>
+    <string name="editor_select_video_ratio">Pilih Rasio Video</string>
+    <string name="editor_apply">Terapake</string>
+    <string name="editor_image_duration">Durasi Gambar</string>
+    <string name="editor_change_music">Ganti musik</string>
+    <string name="editor_select_quality">Pilih kualitas</string>
+    <string name="editor_hd">HD</string>
+    <string name="editor_play">Putar</string>
+    <string name="editor_pause">Jeda</string>
+    <string name="editor_duration_format">Durasi: %s</string>
+
+    <!-- Music Trim Feature -->
+    <string name="editor_music_trim">Pangkas Musik</string>
+    <string name="editor_music_trim_from_start">Pangkas saka Wiwitan</string>
+    <string name="editor_music_trim_from_end">Pangkas saka Pungkasan</string>
+    <string name="editor_music_trim_edit">Sunting Pangkas Musik</string>
+    <string name="editor_music_trim_title">Pangkas Musik</string>
+    <string name="editor_music_trim_subtitle">Pilih bagian lagu sing arep digunakake</string>
+    <string name="editor_music_trim_start">Wiwitan Musik</string>
+    <string name="editor_music_trim_end">Pungkasan Musik</string>
+    <string name="editor_music_trim_duration">Durasi Musik</string>
+    <string name="editor_music_trim_min_duration">Musik kudu minimal 5 detik</string>
+    <string name="editor_music_trim_will_loop">Musik bakal diulang yen perlu kanggo video sampeyan</string>
+    <string name="editor_music_trimmed_info">Musik: %1$s</string>
+    <string name="editor_music_trim_play_selection">Putar Pilihan</string>
+    <string name="editor_music_trim_skip_to_start">Loncat menyang Wiwitan</string>
+    <string name="editor_music_trim_skip_to_end">Loncat menyang Pungkasan</string>
+    <string name="editor_photos_count">%d foto</string>
+    <string name="editor_save_dialog_title">Simpen Proyek?</string>
+    <string name="editor_save_dialog_message">Proyek sampeyan bakal disimpen lan kasedhiya ing Proyek Saya.</string>
+    <string name="editor_save_and_exit">Simpen &amp; Metu</string>
+    <string name="editor_discard_changes">Buang Owahan</string>
+    <string name="editor_processing">Ngolah…</string>
+    <string name="editor_preparing_video">Nyiyapake video…</string>
+    <string name="editor_unsaved_project_title">Simpen Proyek Sampeyan?</string>
+    <string name="editor_unsaved_project_message">Proyek sampeyan durung disimpen. Simpen saiki utawa buang karya sampeyan?</string>
+    <string name="editor_unsaved_changes_title">Owahan Durung Disimpen</string>
+    <string name="editor_unsaved_changes_message">Yen sampeyan lunga saiki, owahan sampeyan bakal ilang. Apa sampeyan yakin arep lunga?</string>
+    <string name="editor_keep_editing">Terus Sunting</string>
+    <string name="editor_discard">Buang</string>
+    <string name="editor_effect_sets">Set Efek</string>
+    <string name="editor_retry">Coba Maneh</string>
+    <string name="editor_no_music_selected">Ora ana musik sing dipilih</string>
+
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Video Digawe</string>
+    <string name="projects_tab_liked_template">Template Disenengi</string>
+    <string name="projects_tab_liked_song">Lagu Disenengi</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Lagu Kosong</string>
+    <string name="like_song_search_button">Goleki Lagu</string>
+    <string name="like_song_section_header">Musik kanggo Sampeyan</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Template Kosong</string>
+    <string name="like_template_search_button">Goleki Template</string>
+    <string name="like_template_section_header">Template Video</string>
+
+    <!-- Projects -->
+    <string name="projects_title">Proyek Saya</string>
+    <string name="projects_menu">Menu proyek</string>
+    <string name="projects_download">Unduh</string>
+    <string name="projects_share">Bagikan</string>
+    <string name="projects_delete">Hapus</string>
+    <string name="projects_delete_confirmation_title">Hapus Video?</string>
+    <string name="projects_delete_confirmation_message">Video iki bakal dihapus permanen. Tindakan iki ora bisa dibatalake.</string>
+    <string name="projects_delete_confirm">Hapus</string>
+    <string name="projects_delete_cancel">Batal</string>
+    <string name="projects_empty">Durung ana proyek</string>
+    <string name="projects_empty_description">Gawe proyek pertama kanggo ndeleng ing kene</string>
+    <string name="projects_empty_title">Wiwiti perjalanan sampeyan</string>
+    <string name="projects_empty_subtitle">Katon rada sepi ing kene. Ayo gawe mahakarya pertama sampeyan dina iki.</string>
+    <string name="projects_create_new_video">Gawe Video Anyar</string>
+    <string name="projects_create_description">Wiwiti proyek slideshow anyar</string>
+    <string name="projects_item_info">%1$d foto • %2$s</string>
+    <string name="projects_delete_title">Hapus Proyek?</string>
+    <string name="projects_delete_message">\"%s\" bakal dihapus permanen. Tindakan iki ora bisa dibatalake.</string>
+    <string name="projects_removed_from_list">Dicopot saka dhaptar</string>
+
+    <!-- Export -->
+    <string name="export_title">Ekspor Video</string>
+    <string name="export_processing">Ngolah…</string>
+    <string name="export_complete">Ekspor Rampung!</string>
+    <string name="export_share">Bagikan</string>
+    <string name="export_save">Simpen menyang Galeri</string>
+    <string name="export_preparing">Nyiyapake ekspor…</string>
+    <string name="export_generating">Ngasilake</string>
+    <string name="export_please_wait">Sedhela, video sampeyan lagi disiapake!\nMohon aja tutup app</string>
+    <string name="export_exporting">Mengekspor video…</string>
+    <string name="export_dont_close">Mohon aja tutup app</string>
+    <string name="export_tip_1">Nggawe mahakarya sampeyan…</string>
+    <string name="export_tip_2">Nambah sihir film…</string>
+    <string name="export_tip_3">Nguripake kenangan sampeyan…</string>
+    <string name="export_tip_4">Nggilap saben bingkai…</string>
+    <string name="export_tip_5">Nggawe sampurna…</string>
+    <string name="export_tip_6">Nyusun critane sampeyan…</string>
+    <string name="export_tip_7">Nggawe sesuatu istimewa…</string>
+    <string name="export_tip_8">Meh rampung! Katon apik…</string>
+    <string name="export_tip_9">Ngerokake detail…</string>
+    <string name="export_tip_10">Menehi sentuhan pungkasan…</string>
+    <string name="export_video_saved">Video sampeyan wis disimpen</string>
+    <string name="export_saved_to_gallery">Disimpen menyang Galeri</string>
+    <string name="export_saving_to_gallery">Nyimpen menyang galeri…</string>
+    <string name="export_error_save_failed">Gagal nyimpen menyang galeri</string>
+    <string name="export_share_video">Bagikan Video</string>
+    <string name="export_failed">Ekspor Gagal</string>
+    <string name="export_try_again">Coba Maneh</string>
+    <string name="export_go_back">Balik</string>
+    <string name="export_cancelled">Ekspor Dibatalake</string>
+    <string name="export_cancelled_message">Ekspor video dibatalake</string>
+    <string name="export_back_to_editor">Balik menyang Editor</string>
+    <string name="export_cancel_title">Batalake Ekspor?</string>
+    <string name="export_cancel_message">Apa sampeyan yakin arep mbatalake ekspor? Kabeh kemajuan bakal ilang.</string>
+    <string name="export_continue">Lanjutake</string>
+    <string name="export_cancel_export">Batalake Ekspor</string>
+    <string name="export_error_file_not_found">File video ora ditemokake</string>
+    <string name="export_error_share_failed">Gagal mbagikan video</string>
+    <string name="export_try_another_templates">Coba Template Liyane</string>
+    <string name="export_templates_load_failed">Gagal ngunggah template</string>
+    <string name="export_watch_ad_title">Deleng iklan kanggo unduh?</string>
+    <string name="export_watch_ad_subtitle">Tulung jaga app iki gratis kanthi nonton iklan singkat. Video sampeyan bakal langsung diunduh!</string>
+    <string name="watch_ad_dialog_title">Buka Fitur Eksklusif! ✨</string>
+    <string name="watch_ad_dialog_subtitle">Tonton iklan singkat kanggo buka fitur iki lan nerusake nyunting video sampeyan!</string>
+    <string name="export_watch_ad_button">Tonton Iklan (1/1)</string>
+    <string name="export_watch_ad_close">Tutup</string>
+    <string name="export_watermark_remove_title">Hapus watermark?</string>
+    <string name="export_watermark_remove_subtitle">Tonton iklan singkat kanggo ngapus watermark saka pratinjau video sampeyan.</string>
+    <string name="export_watermark_remove_button">Tonton Iklan</string>
+    <string name="export_watermark_remove_close">Tutup</string>
+
+    <!-- Asset Picker -->
+    <string name="picker_title">Pilih gambar sampeyan</string>
+    <string name="picker_done">Rampung (%1$d/%2$d)</string>
+    <string name="picker_close">Tutup</string>
+    <string name="picker_selected">Dipilih</string>
+    <string name="picker_no_photos">Ora ana foto sing ditemokake</string>
+    <string name="picker_no_photos_hint">Njupuk sawetara foto kanggo miwiti</string>
+    <string name="picker_permission_title">Ngidini akses menyang foto</string>
+    <string name="picker_permission_message">Kanggo nerusake, Rehancer butuh ijin sampeyan kanggo ngakses Foto</string>
+    <string name="picker_allow_access">Ijini Akses</string>
+    <string name="picker_give_access">Wenehake Akses</string>
+    <string name="picker_give_access_settings">Akses menyang foto sampeyan\ndisabilitasi.</string>
+    <string name="picker_give_access_permission">Siap nggawe?</string>
+    <string name="picker_not_now">Ora Saiki</string>
+    <string name="picker_full_access_custom_message">Kanggo telusuri video lan foto sampeyan, kita butuh akses menyang galeri sampeyan.</string>
+    <string name="picker_full_access_settings_message"> Kanggo miwiti nyunting, aktifake \'Foto\' utawa \'Penyimpen\' ing setelan piranti sampeyan.</string>
+    <string name="picker_limited_access_message">Sampeyan wis menehi Video Maker akses menyang sawetara foto.</string>
+    <string name="picker_add_more_photos">Tambah</string>
+    <string name="picker_go_to_settings">Menyang Setelan</string>
+    <string name="picker_min_selection">Pilih paling sithik %d gambar.</string>
+    <string name="picker_current_selection">%d gambar Dipilih</string>
+    <string name="picker_exit_confirm_title">Metu saka pilihan gambar?</string>
+    <string name="picker_exit_confirm_message">Sampeyan wis milih gambar. Yen metu saiki, gambar sing dipilih bakal dibuang.</string>
+    <string name="picker_exit_confirm">Metu</string>
+    <string name="picker_exit_stay">Tetep</string>
+
+    <!-- Music Player Bottom Sheet -->
+    <string name="music_player_title">Pemutar Musik</string>
+    <string name="music_player_use_to_create">Gunakake kanggo Gawe Video</string>
+
+    <!-- Music Picker -->
+    <string name="music_picker_title">Pilih Musik</string>
+    <string name="music_picker_loading">Ngunggah musik…</string>
+    <string name="music_picker_no_music">Ora ana musik sing ditemokake</string>
+    <string name="music_picker_no_music_hint">Tambah file musik menyang piranti kanggo nggunakake ing kene</string>
+    <string name="music_picker_permission_title">Akses Audio Dibutuhake</string>
+    <string name="music_picker_permission_message">Kanggo nggunakake musik sampeyan minangka audio latar, kita butuh ijin kanggo ngakses file audio sampeyan.</string>
+    <string name="music_picker_allow_access">Ijini Akses</string>
+    <string name="music_picker_preview">Pratinjau</string>
+    <string name="music_picker_stop_preview">Mandeg</string>
+    <string name="music_picker_select">Pilih</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">Setelan</string>
+    <string name="settings_panel_apply">Terapake</string>
+    <string name="settings_panel_close">Tutup</string>
+    <string name="settings_apply">Terapake</string>
+    <string name="settings_effect_set">Set Efek</string>
+    <string name="settings_all">Kabeh</string>
+    <string name="settings_off">MATI</string>
+    <string name="settings_none">Ora Ana</string>
+    <string name="settings_pro">PRO</string>
+    <string name="settings_duration_per_image">Durasi per Gambar</string>
+    <string name="settings_seconds_format">%dd</string>
+    <string name="settings_duration_seconds">%dd</string>
+    <string name="settings_overlay_frame">Bingkai Overlay</string>
+    <string name="settings_background_music">Musik Latar</string>
+    <string name="settings_custom">Kustom</string>
+    <string name="settings_add">+ Tambah</string>
+    <string name="settings_add_audio">+ Tambah</string>
+    <string name="settings_volume">Volume</string>
+    <string name="settings_clip_music">Klip Musik</string>
+    <string name="settings_aspect_ratio">Rasio Aspek</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">Volume</string>
+    <string name="tab_music_clip">Klip Musik</string>
+    <string name="settings_transition_effect">Efek Transisi</string>
+    <string name="settings_transition_duration">Durasi Transisi</string>
+    <string name="settings_transition_duration_value">%.1fd</string>
+
+    <!-- Search -->
+    <string name="search_hint">Temokake gaya sampurna sampeyan…</string>
+    <string name="search_recent">Paling Anyar Digoleki</string>
+    <string name="search_clear_all">Resiki Kabeh</string>
+    <string name="search_no_results">Ora ana gaya sing ditemokake</string>
+    <string name="search_no_results_hint">Coba tembung liyane utawa pilih vibe ing ngisor iki</string>
+    <string name="search_suggestions">Saran</string>
+    <string name="search_browse_by_theme">Jelajah miturut Vibe</string>
+    <string name="search_trending_templates">Populer Saiki</string>
+    <string name="search_tag_aesthetic">Estetik</string>
+    <string name="search_tag_birthday">Ulang Tahun</string>
+    <string name="search_tag_travel">Wisata</string>
+    <string name="search_tag_lofi">Lofi</string>
+    <string name="search_tag_cinematic">Sinematik</string>
+    <string name="search_tag_vintage">Vintage</string>
+
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">Vibe Ngimpi</string>
+    <string name="effect_dreamy_vibes_desc">Cahya alus lan warna pastel</string>
+    <string name="effect_cyberpunk_title">Cyberpunk</string>
+    <string name="effect_cyberpunk_desc">Lampu neon lan efek glitch</string>
+    <string name="effect_vintage_film_title">Film Vintage</string>
+    <string name="effect_vintage_film_desc">Butiran retro lan warna anget</string>
+    <string name="effect_ocean_breeze_title">Angin Samudra</string>
+    <string name="effect_ocean_breeze_desc">Gradien biru adhem</string>
+    <string name="effect_golden_hour_title">Jam Emas</string>
+    <string name="effect_golden_hour_desc">Overlay surup anget</string>
+    <string name="effect_noir_title">Noir</string>
+    <string name="effect_noir_desc">Kontras dhuwur ireng lan putih</string>
+    <string name="effect_sakura_title">Sakura</string>
+    <string name="effect_sakura_desc">Pink kembang ceri</string>
+    <string name="effect_aurora_title">Aurora</string>
+    <string name="effect_aurora_desc">Cahya lampu lor</string>
+
+    <!-- Common -->
+    <string name="cancel">Batal</string>
+    <string name="confirm">Konfirmasi</string>
+    <string name="delete">Hapus</string>
+    <string name="save">Simpen</string>
+    <string name="back">Bali</string>
+    <string name="done">Rampung</string>
+    <string name="error">Kesalahan</string>
+    <string name="retry">Coba Maneh</string>
+    <string name="seconds">%d detik</string>
+    <string name="none">Ora Ana</string>
+    <string name="close">Tutup</string>
+    <string name="remove">Copot</string>
+    <string name="badge_pro">PRO</string>
+    <string name="settings">Setelan</string>
+
+    <!-- Error states -->
+    <string name="error_load_failed">Gagal ngunggah. Tarik mudhun kanggo nyoba maneh.</string>
+    <string name="error_network_title">Kesalahan Jaringan</string>
+    <string name="error_data_load_failed">Gagal ngunggah data sing dibutuhake. Priksa koneksi internet lan coba maneh.</string>
+    <string name="loading_building_feed">Mbangun Feed Sampeyan</string>
+    <string name="error_network_message">Gagal ngunggah musik. Priksa koneksi lan coba maneh.</string>
+    <string name="error_network_timeout">Timeout jaringan. Priksa koneksi lan coba maneh.</string>
+    <string name="error_preview_title">Kesalahan Pratinjau</string>
+    <string name="error_preview_music_network">Kesalahan jaringan ngunggah musik. Priksa koneksi lan coba maneh.</string>
+    <string name="error_preview_music_failed">Gagal ngunggah musik. Coba maneh.</string>
+    <string name="error_template_music_failed">Gagal ngunggah lagu. Priksa koneksi lan coba maneh.</string>
+    <string name="error_video_playback_failed">Gagal ngunggah pratinjau video. Priksa koneksi lan coba maneh.</string>
+    <string name="error_video_network">Kesalahan jaringan ngunggah video. Priksa koneksi lan coba maneh.</string>
+    <string name="video_retrying">Ngunggah pratinjau…</string>
+    <string name="dialog_ok">OK</string>
+
+    <!-- Songs -->
+    <string name="start_project">Wiwiti proyek</string>
+
+    <!-- Song Search -->
+    <string name="song_search_hint">Goleki lagu…</string>
+    <string name="song_search_explore_by_genre">Jelajah miturut Genre</string>
+    <string name="song_search_suggested">Disaranake kanggo Sampeyan</string>
+    <string name="song_search_no_results">Ora ana lagu sing ditemokake</string>
+    <string name="song_search_change_music">Ganti Musik</string>
+    <string name="song_search_idle_hint">Wiwiti ngetik kanggo goleki lagu</string>
+
+    <!-- Onboarding Page 4 -->
+    <string name="onboarding_page4_title">Kepiye sampeyan arep miwiti?</string>
+    <string name="onboarding_page4_subtitle">Iki mbantu kita menehi rekomendasi konten sing paling relevan kanggo sampeyan.</string>
+    <string name="feature_music_video_instant">Telusuri Template Video</string>
+    <string name="feature_photos_to_video">Wiwiti karo Lagu</string>
+    <string name="feature_trending_templates">Gunakake template trending</string>
+    <string name="feature_trending_music">Tambah musik trending</string>
+
+    <!-- Music Genres -->
+    <string name="genre_pop">Pop</string>
+    <string name="genre_rock">Rock</string>
+    <string name="genre_hiphop">Hip-Hop</string>
+    <string name="genre_rnb">R&amp;B</string>
+    <string name="genre_electronic">Elektronik</string>
+    <string name="genre_jazz">Jazz</string>
+    <string name="genre_classical">Klasik</string>
+    <string name="genre_country">Country</string>
+    <string name="genre_latin">Latin</string>
+    <string name="genre_kpop">K-Pop</string>
+    <string name="genre_dance">Dance</string>
+    <string name="genre_edm">EDM</string>
+    <string name="genre_blues">Blues</string>
+    <string name="genre_metal">Metal</string>
+    <string name="genre_soul">Soul</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_trending_search_long">Pencarian Trending</string>
+    <string name="shortcut_create_video_long">Gawe Video</string>
+    <string name="shortcut_choose_template_long">Pilih Template Video</string>
+    <string name="shortcut_uninstall_long">Uninstall App</string>
+
+    <!-- Widget -->
+    <string name="widget_title">Widget</string>
+    <string name="widget_bts">Tambah Widget</string>
+    <string name="widget_smart_search">Pencarian Cerdas</string>
+    <string name="widget_smart_search_description">Nggoleki gaya sampeyan</string>
+    <string name="widget_smart_search_trending">Trending ❤️‍🔥</string>
+    <string name="widget_trending_template">Template trending</string>
+    <string name="widget_recently">Paling Anyar</string>
+    <string name="widget_trending_song">Lagu Trending</string>
+    <string name="widget_trending_song_hot">Panas</string>
+    <string name="widget_search_hint">Goleki template...</string>
+    <string name="widget_pin_request_sent">Widget ditambahake menyang layar utama</string>
+    <string name="widget_pin_not_supported">Pinning widget ora didhukung ing piranti iki</string>
+    <string name="widget_add_failed">Gagal nambah widget: %s</string>
+
+    <!-- Unified search -->
+    <string name="unified_search_templates">Template</string>
+    <string name="unified_search_music">Musik</string>
+    <string name="unified_search_see_more">Deleng liyane</string>
+    <string name="unified_search_loading_more">Ngunggah…</string>
+    <string name="unified_search_explore_more">Jelajah Liyane</string>
+    <string name="unified_search_explore_suggestions">Jelajah Saran</string>
+    <string name="unified_search_no_results_title">Ora ana asil sing ditemokake</string>
+    <string name="unified_search_keep_typing">Terus ngetik kanggo nyempurnakake pencarian</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">Panas</string>
+    <string name="tag_trending">Trending</string>
+    <string name="tag_new">Anyar</string>
+    <string name="tag_featured">Unggulan</string>
+
+    <!-- Template Previewer -->
+    <string name="template_add_to_favorites">Tambah</string>
+    <string name="template_use_button">Gunakake Template Iki</string>
+    <string name="template_swipe_hint">Geser munggah</string>
+    <string name="template_swipe_subtitle">Kanggo nikmati template sampeyan</string>
+    <string name="template_select_ratio_title">Pilih Rasio Video</string>
+    <string name="template_create_now">Gawe saiki</string>
+    <string name="template_error_load_failed">Gagal ngunggah template. Coba maneh.</string>
+
+    <!-- Unified Search -->
+    <string name="search_templates_suggestions">Saran Template</string>
+    <string name="search_music_suggestion">Saran Musik</string>
+    <string name="search_empty_subtitle">Ayo coba sing liyane utawa jelajah\nvibe trending</string>
+    <string name="search_typing_result_header">Asil</string>
+    <string name="search_loading_title">Nggoleki asil…</string>
+    <string name="search_loading_message">Kita lagi nyekeli database kanggo nggawa\ninformasi paling akurat kanggo sampeyan.\nMohon ngenteni sedhela.</string>
+    <string name="search_placeholder">Goleki apa wae</string>
+    <string name="search_pro_badge">PRO</string>
+
+    <!-- Editor Volume -->
+    <string name="volume_title">Volume</string>
+
+    <!-- Rating Popup -->
+    <string name="rating_satisfaction_title">Kita bersyukur atas waktumu ing Video Generating</string>
+    <string name="rating_satisfaction_subtitle">Apa sampeyan puas karo app kita?</string>
+    <string name="rating_not_really">Ora temen</string>
+    <string name="rating_good">Apik</string>
+    <string name="rating_experience_title">Nilai Pengalaman\nsampeyan karo kita</string>
+    <string name="rating_submit">Kirim</string>
+    <string name="rating_feedback_title">Nuwun sewu krungu ngono 🥲</string>
+    <string name="rating_feedback_subtitle">Kita bakal kerja luwih keras kanggo ningkatake pengalaman sampeyan</string>
+    <string name="rating_feedback_type_hint">Ketik umpan balik sampeyan</string>
+    <string name="rating_feedback_reason_music_quality">Ora ana lagu favorit / Kualitas musik kurang</string>
+    <string name="rating_feedback_reason_translation">Kualitas terjemahan kurang banget</string>
+    <string name="rating_feedback_reason_tools">Alat sunting ora nyukupi kabutuhan</string>
+    <string name="rating_feedback_reason_output_quality">Kualitas video output kurang banget</string>
+    <string name="rating_feedback_reason_performance">App alon utawa kerep crash</string>
+    <string name="rating_feedback_reason_templates">Kurang template / pembaruan konten</string>
+    <string name="rating_feedback_reason_other">Liyane</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">Iklan</string>
+    <string name="ad_icon">Ikon iklan</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">Tonton iklan kanggo buka efek iki?</string>
+    <string name="effect_set_watch_ad_subtitle">Buka set efek iki permanen kanthi nonton iklan singkat</string>
+    <string name="effect_set_ad_not_available">Iklan ora kasedhiya saiki. Coba maneh mengko.</string>
+    <string name="effect_set_locked">Set efek dikunci</string>
+    <string name="ad_not_available">Iklan ora kasedhiya saiki. Coba maneh mengko.</string>
+
+    <!-- Quality Unlock Rewarded Ad -->
+    <string name="quality_watch_ad_title">Tonton iklan kanggo ekspor kualitas dhuwur?</string>
+    <string name="quality_watch_ad_subtitle">Buka ekspor 720p/1080p kanggo sesi iki kanthi nonton iklan singkat</string>
+    <string name="quality_ad_not_available">Iklan ora kasedhiya saiki. Coba mengko utawa pilih kualitas luwih endhek.</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">Tonton iklan kanggo buka template iki?</string>
+    <string name="template_watch_ad_subtitle">Buka template iki permanen kanthi nonton iklan singkat</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Tonton iklan kanggo buka lagu iki?</string>
+    <string name="song_watch_ad_subtitle">Sawise nonton, sampeyan bisa nggunakake lagu iki kanggo gawe video. Pembukaan permanen.</string>
+
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">Lagu Tren Anyar!</string>
+    <string name="notif_trending_song_body">\'%2$s\' %1$s lagi viral! Gawe editanmu 1 tutul sadurunge tren tekan puncak.</string>
+    <string name="notif_viral_template_title">Template trending kanggo sampeyan. Coba saiki!</string>
+    <string name="notif_viral_template_body">1.000.000 wong nggunakake %1$s iki dina iki. Aja ketinggalan hype!</string>
+    <string name="notif_forgotten_masterpiece_title">Mahakarya sampeyan lagi ngenteni!</string>
+    <string name="notif_forgotten_masterpiece_body">Sampeyan wis ngrampungake bagian sing angel, saiki ayo dipamerake. Video sampeyan siap dibagikan menyang dunia!</string>
+    <string name="notif_quick_save_title">Aja ilangake karya sampeyan!</string>
+    <string name="notif_quick_save_body">Editanmu katon apik! Simpen menyang galeri saiki supaya ora ilang beat-sync sing sampurna.</string>
+    <string name="notif_share_encouragement_title">Siap kanggo \'Like\'?</string>
+    <string name="notif_share_encouragement_body">Editan \'%1$s\' sampeyan 100%% beat-synced lan siap dipostingake. Posting menyang TikTok saiki!</string>
+    <string name="notif_abandoned_select_photos_title">Aja ninggalake beat!</string>
+    <string name="notif_abandoned_select_photos_body">Editan \'Not Like Us\' sampeyan meh rampung. Pilih sawetara foto kanggo ndeleng keajaibane!</string>
+    <string name="notif_draft_completion_nudge_title">Rampungake apa sing wis diwiwiti!</string>
+    <string name="notif_draft_completion_nudge_body">Sampeyan mung siji langkah saka video viral. Balik lan tambah foto sampeyan saiki!</string>
+    <string name="notif_cta_play_song">Putar Lagu</string>
+    <string name="notif_cta_discover_templates">Temokake Template</string>
+    <string name="notif_cta_continue_editing">Terus Nyunting</string>
+    <string name="notif_cta_view_template">Deleng Template</string>
+
+</resources>

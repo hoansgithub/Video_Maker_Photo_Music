@@ -4,8 +4,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.RectF
 import android.opengl.GLES20
 import android.opengl.GLUtils
 import androidx.annotation.DrawableRes
@@ -15,7 +17,6 @@ import androidx.media3.common.util.Size
 import androidx.media3.effect.BaseGlShaderProgram
 import androidx.media3.effect.GlEffect
 import androidx.media3.effect.GlShaderProgram
-import kotlin.math.min
 
 /**
  * Overlays app logo as watermark at bottom-right corner.
@@ -24,6 +25,42 @@ class WatermarkOverlayEffect(
     private val context: Context,
     @param:DrawableRes private val watermarkResId: Int
 ) : GlEffect {
+
+    internal data class OverlayPlacement(
+        val left: Int,
+        val top: Int,
+        val right: Int,
+        val bottom: Int
+    )
+
+    companion object {
+        /**
+         * Calculate watermark draw rect in bitmap space.
+         *
+         * Bitmap pixels are authored in Canvas top-left coordinates, but this overlay texture
+         * is sampled with GL coordinates where Y is inverted. Drawing near top maps visually
+         * to bottom in the exported frame.
+         */
+        internal fun calculateOverlayPlacement(inputWidth: Int, inputHeight: Int): OverlayPlacement {
+            val minDim = kotlin.math.min(inputWidth, inputHeight).toFloat()
+            val margin = (minDim * 0.04f).toInt().coerceAtLeast(16)
+            val logoSize = (minDim * 0.12f).toInt().coerceAtLeast(48)
+
+            val right = inputWidth - margin
+            val left = right - logoSize
+            val top = margin
+            val bottom = top + logoSize
+
+            return OverlayPlacement(
+                left = left,
+                top = top,
+                right = right,
+                bottom = bottom
+            )
+        }
+
+        internal fun shouldPreFlipLogoVertically(): Boolean = true
+    }
 
     override fun toGlShaderProgram(context: Context, useHdr: Boolean): GlShaderProgram {
         return WatermarkOverlayShaderProgram(this.context, watermarkResId, useHdr)
@@ -72,21 +109,30 @@ private class WatermarkOverlayShaderProgram(
         val logo = BitmapFactory.decodeResource(context.resources, watermarkResId) ?: return null
         val overlay = Bitmap.createBitmap(inputWidth, inputHeight, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(overlay)
-
-        val minDim = min(inputWidth, inputHeight).toFloat()
-        val margin = (minDim * 0.04f).toInt().coerceAtLeast(16)
-        val logoSize = (minDim * 0.12f).toInt().coerceAtLeast(48)
-
-        val right = inputWidth - margin
-        val bottom = inputHeight - margin
-        val left = right - logoSize
-        val top = bottom - logoSize
+        val placement = WatermarkOverlayEffect.calculateOverlayPlacement(inputWidth, inputHeight)
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             alpha = 190
             isFilterBitmap = true
         }
-        canvas.drawBitmap(logo, null, Rect(left, top, right, bottom), paint)
+        val destinationRect = Rect(
+            placement.left,
+            placement.top,
+            placement.right,
+            placement.bottom
+        )
+
+        if (WatermarkOverlayEffect.shouldPreFlipLogoVertically()) {
+            val srcRect = RectF(0f, 0f, logo.width.toFloat(), logo.height.toFloat())
+            val dstRect = RectF(destinationRect)
+            val matrix = Matrix().apply {
+                setRectToRect(srcRect, dstRect, Matrix.ScaleToFit.FILL)
+                postScale(1f, -1f, dstRect.centerX(), dstRect.centerY())
+            }
+            canvas.drawBitmap(logo, matrix, paint)
+        } else {
+            canvas.drawBitmap(logo, null, destinationRect, paint)
+        }
         logo.recycle()
         return overlay
     }

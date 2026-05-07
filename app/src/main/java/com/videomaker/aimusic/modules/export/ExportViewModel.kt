@@ -182,12 +182,10 @@ class ExportViewModel(
     // Rewarded ad controller for video download
     private val downloadAdController = RewardedAdController(
         placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
-        adsLoaderService = adsLoaderService,
         viewModelScope = viewModelScope
     )
 
-    // Expose download ad states
-    val showWatchAdDialog: StateFlow<Boolean> = downloadAdController.showWatchAdDialog
+    // Expose download ad state
     val shouldPresentDownloadAd: StateFlow<Boolean> = downloadAdController.shouldPresentAd
 
     // Pending download request - stored when user initiates download
@@ -200,12 +198,10 @@ class ExportViewModel(
     // Rewarded ad controller for watermark removal
     private val watermarkAdController = RewardedAdController(
         placement = AdPlacement.REWARD_REMOVE_WATERMARK,
-        adsLoaderService = adsLoaderService,
         viewModelScope = viewModelScope
     )
 
-    // Expose watermark ad states
-    val showWatermarkAdDialog: StateFlow<Boolean> = watermarkAdController.showWatchAdDialog
+    // Expose watermark ad state
     val shouldPresentWatermarkAd: StateFlow<Boolean> = watermarkAdController.shouldPresentAd
 
     // ============================================
@@ -279,16 +275,6 @@ class ExportViewModel(
         exportJob = viewModelScope.launch {
             val project = currentProjectSnapshot ?: projectRepository.getProject(projectId)
             currentProjectSnapshot = project
-            Analytics.trackVideoGenerate(
-                videoId = projectId,
-                templateId = project?.settings?.effectSetId,
-                songId = project?.settings?.musicSongId?.toString(),
-                quality = _currentQuality.value.displayName,
-                duration = project?.totalDurationMs,
-                ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
-                volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
-                mediaQuantity = project?.assets?.size
-            )
             // startExport and observeProgress run sequentially in one coroutine —
             // workId is guaranteed to be set before observeProgress reads it.
             val id = exportRepository.startExport(projectId)
@@ -299,19 +285,9 @@ class ExportViewModel(
                     is ExportProgress.Processing -> ExportUiState.Processing(progress.percent)
                     is ExportProgress.Success -> {
                         currentOutputWatermarkFree = project?.isWatermarkFree == true
-                        Analytics.trackVideoGenerateComplete(
-                            videoId = projectId,
-                            templateId = project?.settings?.effectSetId,
-                            songId = project?.settings?.musicSongId?.toString(),
-                            quality = _currentQuality.value.displayName,
-                            duration = project?.totalDurationMs,
-                            ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
-                            volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
-                            mediaQuantity = project?.assets?.size
-                        )
                         Analytics.trackVideoExportComplete(
                             videoId = projectId,
-                            templateId = project?.settings?.effectSetId,
+                            templateId = project?.settings?.templateId,
                             songId = project?.settings?.musicSongId?.toString(),
                             quality = _currentQuality.value.displayName,
                             duration = project?.totalDurationMs,
@@ -323,7 +299,7 @@ class ExportViewModel(
                         preferencesManager.upsertVideoReminderState(
                             projectId = projectId,
                             generatedAtMs = generatedAt,
-                            templateId = project?.settings?.effectSetId,
+                            templateId = project?.settings?.templateId,
                             songId = project?.settings?.musicSongId,
                             thumbnailUri = _thumbnailUri.value?.toString()
                         )
@@ -345,7 +321,7 @@ class ExportViewModel(
                             itemType = "video",
                             sourceTrigger = "export_success",
                             deepLinkDestination = "my_video",
-                            delayMinutes = 30,
+                            delayMinutes = notificationScheduler.currentScheduleConfig().quickSaveDelayMs / 60_000L,
                             copyVariant = "quick_save_v1",
                             imageType = "video_cover",
                             sessionType = "retention"
@@ -356,7 +332,7 @@ class ExportViewModel(
                             itemType = "video",
                             sourceTrigger = "export_success",
                             deepLinkDestination = "my_video",
-                            delayMinutes = 12L * 60L,
+                            delayMinutes = notificationScheduler.currentScheduleConfig().shareEncouragementDelayMs / 60_000L,
                             copyVariant = "likes_push_v1",
                             imageType = "video_cover",
                             sessionType = "retention"
@@ -367,7 +343,7 @@ class ExportViewModel(
                             itemType = "video",
                             sourceTrigger = "export_success",
                             deepLinkDestination = "my_video",
-                            delayMinutes = 24L * 60L,
+                            delayMinutes = notificationScheduler.currentScheduleConfig().forgottenMasterpieceDelayMs / 60_000L,
                             copyVariant = "masterpiece_waiting_v1",
                             imageType = "video_cover",
                             sessionType = "retention"
@@ -639,7 +615,7 @@ class ExportViewModel(
         )
         Analytics.trackVideoShare(
             videoId = projectId,
-            templateId = project?.settings?.effectSetId,
+            templateId = project?.settings?.templateId,
             songId = project?.settings?.musicSongId?.toString(),
             quality = _currentQuality.value.displayName,
             duration = project?.totalDurationMs,
@@ -652,7 +628,7 @@ class ExportViewModel(
 
     /**
      * Called when user initiates download (clicks download button)
-     * Shows watch ad dialog or proceeds directly if ad disabled
+     * Presents rewarded ad or proceeds directly if ad disabled
      *
      * @param applicationContext Application context for download
      * @param loadingMessage Localized message for loading state
@@ -693,21 +669,6 @@ class ExportViewModel(
     }
 
     /**
-     * Called when user dismisses watch ad dialog (clicks "Close")
-     */
-    fun onWatchAdDialogDismiss() {
-        downloadAdController.onDialogDismiss()
-        pendingDownloadRequest = null
-    }
-
-    /**
-     * Called when user confirms watching ad (clicks "Watch Ad")
-     */
-    fun onWatchAdConfirmed() {
-        downloadAdController.onDialogConfirm()
-    }
-
-    /**
      * Called by UI after user earns reward from watching download ad
      */
     fun onDownloadRewardEarned() {
@@ -728,7 +689,7 @@ class ExportViewModel(
 
     /**
      * Called when user clicks watermark overlay
-     * Shows watermark ad dialog or removes watermark immediately if ad disabled
+     * Presents rewarded ad or removes watermark immediately if ad disabled
      */
     fun onWatermarkClick() {
         watermarkAdController.requestAd(
@@ -758,20 +719,6 @@ class ExportViewModel(
         android.util.Log.d("ExportViewModel", "❌ User dismissed watermark without watching ad")
         // Watermark stays visible, just closes the overlay
         // User can click it again later to watch ad
-    }
-
-    /**
-     * Called when user dismisses watermark ad dialog (clicks "Close")
-     */
-    fun onWatermarkAdDialogDismiss() {
-        watermarkAdController.onDialogDismiss()
-    }
-
-    /**
-     * Called when user confirms watching watermark ad (clicks "Watch Ad")
-     */
-    fun onWatermarkAdConfirmed() {
-        watermarkAdController.onDialogConfirm()
     }
 
     /**
@@ -829,7 +776,7 @@ class ExportViewModel(
             val project = currentProjectSnapshot
             Analytics.trackVideoDownload(
                 videoId = projectId,
-                templateId = project?.settings?.effectSetId,
+                templateId = project?.settings?.templateId,
                 songId = project?.settings?.musicSongId?.toString(),
                 quality = _currentQuality.value.displayName,
                 duration = project?.totalDurationMs,
@@ -857,7 +804,12 @@ class ExportViewModel(
 
             when (result) {
                 is MediaStoreHelper.SaveResult.Success -> {
-                    _uiState.value = currentState.copy(savedToGallery = true, saveError = null)
+                    _uiState.value = mergeDownloadResultState(
+                        snapshotState = currentState,
+                        latestState = _uiState.value as? ExportUiState.Success,
+                        savedToGallery = true,
+                        saveError = null
+                    )
                     _saveToastState.value = ProcessToastState.Success(successMessage)
                     val now = System.currentTimeMillis()
                     preferencesManager.markVideoSaved(projectId, now)
@@ -878,7 +830,12 @@ class ExportViewModel(
                     )
                 }
                 is MediaStoreHelper.SaveResult.Error -> {
-                    _uiState.value = currentState.copy(savedToGallery = false, saveError = result.message)
+                    _uiState.value = mergeDownloadResultState(
+                        snapshotState = currentState,
+                        latestState = _uiState.value as? ExportUiState.Success,
+                        savedToGallery = false,
+                        saveError = result.message
+                    )
                     _saveToastState.value = ProcessToastState.Error(errorMessage)
                 }
             }
@@ -925,6 +882,19 @@ class ExportViewModel(
             outputIsWatermarkFree: Boolean
         ): Boolean {
             return projectIsWatermarkFree && !outputIsWatermarkFree
+        }
+
+        internal fun mergeDownloadResultState(
+            snapshotState: ExportUiState.Success,
+            latestState: ExportUiState.Success?,
+            savedToGallery: Boolean,
+            saveError: String?
+        ): ExportUiState.Success {
+            val baseState = latestState ?: snapshotState
+            return baseState.copy(
+                savedToGallery = savedToGallery,
+                saveError = saveError
+            )
         }
     }
 

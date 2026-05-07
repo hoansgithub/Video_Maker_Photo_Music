@@ -1,0 +1,547 @@
+<resources>
+    <string name="app_name">Video Maker - AI Music</string>
+
+    <!-- Facebook SDK (Analytics only) -->
+    <string name="facebook_app_id">2394935491027358</string>
+    <string name="facebook_client_token">59adbbae92079f20f43d002f331d8e9d</string>
+
+    <!-- Loading -->
+    <string name="loading">Ń gba ẹrọ jẹ…</string>
+    <string name="ad_loading">Ń gba ìpolówó ẹrọ jẹ…</string>
+
+    <!-- Language Selection -->
+    <string name="language_select_title">Yan Èdè</string>
+    <string name="language_select_subtitle">Jọwọ yan èdè ìfihàn kan.</string>
+    <string name="language_continue">Tẹ̀síwájú</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Tókàn</string>
+    <string name="onboarding_get_started">Bẹ̀rẹ̀</string>
+    <!-- Page 1 -->
+    <string name="onboarding_page1_title">Ṣẹ Ìyanu ní Ìṣẹ́jú Àáárọ̀</string>
+    <string name="onboarding_page1_subtitle">Fídíò tó dára pẹ̀lú ìtẹ̀ díẹ̀. Rọrùn àti yára</string>
+    <!-- Page 2 -->
+    <string name="onboarding_page2_title">Rí Rhythm Rẹ</string>
+    <string name="onboarding_page2_subtitle">Ohùn tó wọ́pọ̀ fún ìlera wọn wọn</string>
+    <!-- Page 3 -->
+    <string name="onboarding_page3_title">Papọ̀ Dára Jù!</string>
+    <string name="onboarding_page3_subtitle">Papọ̀ dára jù. Pe àwọn ọ̀rẹ́ láti pín igbádùn</string>
+    <string name="onboarding_swipe_next">Fàwọ́n sí ìsàlẹ̀</string>
+    <string name="onboarding_exit_title">Jáde kúrò ní Ìpìlẹ̀?</string>
+    <string name="onboarding_exit_message">O lè yí àwọn aṣàyàn rẹ padà lẹ́yìn nínú Ìtọ́sọ́nà.</string>
+    <string name="onboarding_exit_confirm">Jáde</string>
+    <string name="onboarding_exit_dismiss">Tẹ̀síwájú</string>
+    <string name="root_no_internet_title">Kò Sí Ìsopọ̀ Íńtánẹ́ẹ̀tì</string>
+    <string name="root_no_internet_message">Ẹ̀rọ rẹ wà lórí offline ní báyìí. Jọwọ tún sopọ̀ láti tẹ̀síwájú pẹ̀lú ìlọsíwájú rẹ</string>
+    <string name="root_try_again">Gbìyànjú Lẹ́ẹ̀kan Sí</string>
+    <string name="root_loading_initializing">Ń bẹ̀rẹ̀...</string>
+    <string name="root_loading_fetching_config">Ń gba ìtọ́sọ́nà jẹ...</string>
+    <string name="root_loading_ad">Èyí lè ní ìpolówó</string>
+    <string name="root_loading_checking_status">Ń ṣàyẹ̀wò ipò...</string>
+    <string name="root_loading_preparing">Ń pèsè...</string>
+
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">Gàlẹ́rì</string>
+    <string name="home_tab_songs">Orin</string>
+    <string name="home_tab_projects">Ìkàwé</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_filter_for_you">Fún ẹ</string>
+    <string name="gallery_hot_songs">Orin Olókìkí</string>
+    <string name="gallery_templates">Àwọn Àpẹẹrẹ</string>
+    <string name="gallery_coming_soon">Ń bọ̀ Láìpẹ́</string>
+    <string name="gallery_search_hint">Wá ìpele rẹ</string>
+    <string name="gallery_create_new_video">Ṣẹ Fídíò Tuntun</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">Orin</string>
+    <string name="songs_all">Gbogbo Orin</string>
+    <string name="songs_categories">Àwọn Ìpínlẹ̀</string>
+    <string name="songs_search_hint">Wá orin</string>
+    <string name="songs_suggest_for_you">Àbájáde fún ẹ</string>
+    <string name="songs_weekly_ranking">Ìpínyà Ọ̀sẹ̀</string>
+    <string name="songs_station">Àwọn Ibùdó Tí A Dámọ̀ràn</string>
+
+    <!-- Common Actions -->
+    <string name="home_create">Ṣẹ</string>
+
+    <!-- Legacy Home -->
+    <string name="home_title">Video Maker</string>
+    <string name="home_welcome">Kíni o fẹ́ ṣe?</string>
+    <string name="home_create_description">Ṣẹ slideshow láti àwọn fọ́tò rẹ</string>
+    <string name="home_my_projects">Àwọn Iṣẹ́ Mi</string>
+    <string name="home_my_projects_description">Wo àwọn iṣẹ́ tí a tọ́jú</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Ìtọ́sọ́nà</string>
+    <string name="settings_account">Àkántì</string>
+    <string name="settings_legal">Òfin</string>
+    <string name="settings_language">Èdè</string>
+    <string name="settings_app_widet">Fi Widget Kún</string>
+    <string name="settings_rate_us">Ṣàpèjúwe wa</string>
+    <string name="settings_share_with_friends">Pín pẹ̀lú Àwọn Ọ̀rẹ́</string>
+    <string name="settings_report">Ìjábọ̀</string>
+    <string name="settings_term_of_service">Àwọn Ọ̀rọ̀ Ìṣẹ́</string>
+    <string name="settings_privacy_policy">Ìlànà Àṣírí</string>
+    <string name="settings_language_description">Yí èdè app padà</string>
+    <string name="settings_about">Nípa</string>
+    <string name="settings_version">Ẹ̀yà</string>
+    <string name="settings_uninstall">Yọ kúrò</string>
+    <string name="settings_share_subject">Wo app yìí!</string>
+    <string name="settings_share_message">Hey! Mò ń lo app tó dára yìí. Gbìyànjú:\n%s</string>
+    <string name="notification_permission_trending_title">Máa wà níwájú ìgbékalẹ̀!</string>
+    <string name="notification_permission_trending_message"> Mú ìwifún jáde láti gba àwọn ìkìlọ̀ lẹ́sẹ̀kẹsẹ̀ nígbà tí àwọn àpẹẹrẹ tuntun tí ó gbajúmọ̀ bá wọlé.</string>
+    <string name="notification_permission_notify_me">Sọ Fún Mi</string>
+    <string name="notification_permission_maybe_later">Bóyá Lẹ́yìn Náà</string>
+    <string name="notification_permission_settings_title">Àwọn Ìwifún wà ní\nì ì pa dà báyìí.</string>
+    <string name="notification_permission_settings_message"> Jọwọ mú wọn jáde nínú ìtọ́sọ́nà ẹ̀rọ rẹ láti gba àwọn ìmúdójúìwọ̀n àpẹẹrẹ</string>
+    <string name="notification_permission_open_settings">Lọ sí Ìtọ́sọ́nà</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Gbìyànjú lẹ́ẹ̀kan sí</string>
+    <string name="uninstall_description">Ṣé o dájú pé o fẹ́ yọ kúrò?</string>
+    <string name="uninstall_confirm">Tún yọ app kúrò</string>
+    <string name="uninstall_cancel">Máṣe Yọ Kúrò. Ṣàwárí Síwájú Sí</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Ṣàtúnṣe Iṣẹ́</string>
+    <string name="editor_add_photos">Fi Àwọn Fọ́tò Kún</string>
+    <string name="editor_settings">Ìtọ́sọ́nà</string>
+    <string name="editor_preview">Àgbéjáde</string>
+    <string name="editor_export">Gbé jáde</string>
+    <string name="editor_transition">Ìrọ̀lẹ̀yípadà</string>
+    <string name="editor_duration">Ìgbà</string>
+    <string name="editor_music">Orin</string>
+    <string name="editor_frame">Àpótí</string>
+    <string name="editor_aspect_ratio">Ìwọ̀n Àpótí</string>
+    <string name="editor_volume">Ohùn</string>
+    <string name="editor_effect">Ipa</string>
+    <string name="editor_select_video_ratio">Yan Ìwọ̀n Fídíò</string>
+    <string name="editor_apply">Lò</string>
+    <string name="editor_image_duration">Ìgbà Àwòrán</string>
+    <string name="editor_change_music">Yí orin padà</string>
+    <string name="editor_select_quality">Yan didara</string>
+    <string name="editor_hd">HD</string>
+    <string name="editor_play">Ṣe</string>
+    <string name="editor_pause">Dúró</string>
+    <string name="editor_duration_format">Ìgbà: %s</string>
+
+    <!-- Music Trim Feature -->
+    <string name="editor_music_trim">Gé Orin</string>
+    <string name="editor_music_trim_from_start">Gé láti Ìbẹ̀rẹ̀</string>
+    <string name="editor_music_trim_from_end">Gé láti Òpin</string>
+    <string name="editor_music_trim_edit">Ṣàtúnṣe Gígé Orin</string>
+    <string name="editor_music_trim_title">Gé Orin</string>
+    <string name="editor_music_trim_subtitle">Yan ìpín orin tí o fẹ́ lò</string>
+    <string name="editor_music_trim_start">Ìbẹ̀rẹ̀ Orin</string>
+    <string name="editor_music_trim_end">Òpin Orin</string>
+    <string name="editor_music_trim_duration">Ìgbà Orin</string>
+    <string name="editor_music_trim_min_duration">Orin gbọdọ jẹ ó kéré jù ìṣẹ́jú àáárọ̀ 5</string>
+    <string name="editor_music_trim_will_loop">Orin yóò tún bẹ̀rẹ̀ tí ó bá nílò fún fídíò rẹ</string>
+    <string name="editor_music_trimmed_info">Orin: %1$s</string>
+    <string name="editor_music_trim_play_selection">Ṣe Àyàn</string>
+    <string name="editor_music_trim_skip_to_start">Fo sí Ìbẹ̀rẹ̀</string>
+    <string name="editor_music_trim_skip_to_end">Fo sí Òpin</string>
+    <string name="editor_photos_count">Fọ́tò %d</string>
+    <string name="editor_save_dialog_title">Tọ́jú Iṣẹ́?</string>
+    <string name="editor_save_dialog_message">A óò tọ́jú iṣẹ́ rẹ tí ó sì wà nínú Àwọn Iṣẹ́ Mi.</string>
+    <string name="editor_save_and_exit">Tọ́jú &amp; Jáde</string>
+    <string name="editor_discard_changes">Kọ Àwọn Àyípadà</string>
+    <string name="editor_processing">Ń ṣiṣẹ́…</string>
+    <string name="editor_preparing_video">Ń pèsè fídíò…</string>
+    <string name="editor_unsaved_project_title">Tọ́jú Iṣẹ́ Rẹ?</string>
+    <string name="editor_unsaved_project_message">A kò tọ́jú iṣẹ́ rẹ síbẹ̀. Tọ́jú báyìí tàbí kọ iṣẹ́ rẹ?</string>
+    <string name="editor_unsaved_changes_title">Àwọn Àyípadà Tí A Kò Tọ́jú</string>
+    <string name="editor_unsaved_changes_message">Tí o bá lọ báyìí, àwọn àyípadà rẹ yóò sọnù. Ṣé o dájú pé o fẹ́ lọ?</string>
+    <string name="editor_keep_editing">Tẹ̀síwájú Ṣíṣàtúnṣe</string>
+    <string name="editor_discard">Kọ</string>
+    <string name="editor_effect_sets">Àwọn Ìpín Ipa</string>
+    <string name="editor_retry">Gbìyànjú Lẹ́ẹ̀kan Sí</string>
+    <string name="editor_no_music_selected">A kò yan orin kankan</string>
+
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Fídíò Tí A Ṣẹ</string>
+    <string name="projects_tab_liked_template">Àpẹẹrẹ Tí A Fẹ́ran</string>
+    <string name="projects_tab_liked_song">Orin Tí A Fẹ́ran</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Orin Ń Ṣòfò</string>
+    <string name="like_song_search_button">Wá Orin</string>
+    <string name="like_song_section_header">Orin Fún Ẹ</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Àpẹẹrẹ Ń Ṣòfò</string>
+    <string name="like_template_search_button">Wá Àwọn Àpẹẹrẹ</string>
+    <string name="like_template_section_header">Àwọn Àpẹẹrẹ Fídíò</string>
+
+    <!-- Projects -->
+    <string name="projects_title">Àwọn Iṣẹ́ Mi</string>
+    <string name="projects_menu">Àkójọ iṣẹ́</string>
+    <string name="projects_download">Gba</string>
+    <string name="projects_share">Pín</string>
+    <string name="projects_delete">Paarẹ</string>
+    <string name="projects_delete_confirmation_title">Paarẹ Fídíò?</string>
+    <string name="projects_delete_confirmation_message">A ó parẹ fídíò yìí títí láé. A kò lè fagilee iṣẹ́ yìí.</string>
+    <string name="projects_delete_confirm">Paarẹ</string>
+    <string name="projects_delete_cancel">Fagilée</string>
+    <string name="projects_empty">Kò sí iṣẹ́ títí di báyìí</string>
+    <string name="projects_empty_description">Ṣẹ iṣẹ́ àkọ́kọ́ rẹ láti ríran níbí</string>
+    <string name="projects_empty_title">Bẹ̀rẹ̀ ìrìn-àjò rẹ</string>
+    <string name="projects_empty_subtitle">Ó dàbí ẹ̀ẹ́ ò jìnà níbí. Jẹ́ ká ṣẹ iṣẹ́ àkọ́kọ́ rẹ lónì.</string>
+    <string name="projects_create_new_video">Ṣẹ Fídíò Tuntun</string>
+    <string name="projects_create_description">Bẹ̀rẹ̀ iṣẹ́ slideshow tuntun</string>
+    <string name="projects_item_info">Fọ́tò %1$d • %2$s</string>
+    <string name="projects_delete_title">Paarẹ Iṣẹ́?</string>
+    <string name="projects_delete_message">\"%s\" yóò parẹ títí láé. A kò lè fagilee iṣẹ́ yìí.</string>
+    <string name="projects_removed_from_list">A yọ kúrò nínú àkójọ</string>
+
+    <!-- Export -->
+    <string name="export_title">Gbé Fídíò Jáde</string>
+    <string name="export_processing">Ń ṣiṣẹ́…</string>
+    <string name="export_complete">Gbígbé Jáde Parí!</string>
+    <string name="export_share">Pín</string>
+    <string name="export_save">Tọ́jú sí Gàlẹ́rì</string>
+    <string name="export_preparing">Ń pèsè gbígbé jáde…</string>
+    <string name="export_generating">Ń ṣẹ</string>
+    <string name="export_please_wait">Dúró díẹ̀, fídíò rẹ ń dúró!\nJọwọ máṣe pa app mọ́</string>
+    <string name="export_exporting">Ń gbé fídíò jáde…</string>
+    <string name="export_dont_close">Jọwọ máṣe pa app mọ́</string>
+    <string name="export_tip_1">Ń ṣẹ iṣẹ́ ìgbàgbọ́ rẹ…</string>
+    <string name="export_tip_2">Ń fi ìyànjú fíìmù kún…</string>
+    <string name="export_tip_3">Ń mú àwọn ìrántí rẹ wá sí ìmọ̀…</string>
+    <string name="export_tip_4">Ń ṣe àwòkọ́ pàtó kọ̀ọ̀kan…</string>
+    <string name="export_tip_5">Ń ṣe pípé…</string>
+    <string name="export_tip_6">Ń hun ìtàn rẹ pọ̀…</string>
+    <string name="export_tip_7">Ń ṣẹ nǹkan pàtàkì kan…</string>
+    <string name="export_tip_8">Fẹ́rẹ̀ parí! Ó dára…</string>
+    <string name="export_tip_9">Ń ṣàtúnṣe àwọn àlàyé…</string>
+    <string name="export_tip_10">Ń fi ìfọwọ́kàn ìkẹyìn kún…</string>
+    <string name="export_video_saved">A tọ́jú fídíò rẹ</string>
+    <string name="export_saved_to_gallery">A tọ́jú sí Gàlẹ́rì</string>
+    <string name="export_saving_to_gallery">Ń tọ́jú sí gàlẹ́rì…</string>
+    <string name="export_error_save_failed">Kùnà láti tọ́jú sí gàlẹ́rì</string>
+    <string name="export_share_video">Pín Fídíò</string>
+    <string name="export_failed">Gbígbé Jáde Kùnà</string>
+    <string name="export_try_again">Gbìyànjú Lẹ́ẹ̀kan Sí</string>
+    <string name="export_go_back">Padà</string>
+    <string name="export_cancelled">A Fagilée Gbígbé Jáde</string>
+    <string name="export_cancelled_message">A fagilée gbígbé fídíò jáde</string>
+    <string name="export_back_to_editor">Padà sí Olùṣàtúnṣe</string>
+    <string name="export_cancel_title">Fagilée Gbígbé Jáde?</string>
+    <string name="export_cancel_message">Ṣé o dájú pé o fẹ́ fagilée gbígbé jáde? A ó sọnù gbogbo ìlọsíwájú.</string>
+    <string name="export_continue">Tẹ̀síwájú</string>
+    <string name="export_cancel_export">Fagilée Gbígbé Jáde</string>
+    <string name="export_error_file_not_found">A kò rí fáìlì fídíò</string>
+    <string name="export_error_share_failed">Kùnà láti pín fídíò</string>
+    <string name="export_try_another_templates">Gbìyànjú Àwọn Àpẹẹrẹ Mìíràn</string>
+    <string name="export_templates_load_failed">Kùnà láti gba àwọn àpẹẹrẹ</string>
+    <string name="export_watch_ad_title">Wo ìpolówó láti gba?</string>
+    <string name="export_watch_ad_subtitle">Ràn wá lọ́wọ́ láti jẹ́ kí app yìí wà lọ́fẹ̀ẹ́ nípasẹ̀ kíkọ ìpolówó ọ̀rọ̀ àárọ̀ kan. Fídíò rẹ yóò gba lẹ́sẹ̀kẹsẹ̀!</string>
+    <string name="watch_ad_dialog_title">Ṣí Ẹ̀yà Àkànṣe! ✨</string>
+    <string name="watch_ad_dialog_subtitle">Wo ìpolówó ọ̀rọ̀ àárọ̀ kan láti ṣí ẹ̀yà yìí kí o sì tẹ̀síwájú pẹ̀lú ṣíṣàtúnṣe fídíò rẹ!</string>
+    <string name="export_watch_ad_button">Wo Ìpolówó (1/1)</string>
+    <string name="export_watch_ad_close">Pa mọ́</string>
+    <string name="export_watermark_remove_title">Yọ àmì omi?</string>
+    <string name="export_watermark_remove_subtitle">Wo ìpolówó ọ̀rọ̀ àárọ̀ kan láti yọ àmì omi kúrò nínú àgbéjáde fídíò rẹ.</string>
+    <string name="export_watermark_remove_button">Wo Ìpolówó</string>
+    <string name="export_watermark_remove_close">Pa mọ́</string>
+
+    <!-- Asset Picker -->
+    <string name="picker_title">Yan àwòrán rẹ</string>
+    <string name="picker_done">Parí (%1$d/%2$d)</string>
+    <string name="picker_close">Pa mọ́</string>
+    <string name="picker_selected">A Yan</string>
+    <string name="picker_no_photos">A kò rí fọ́tò kankan</string>
+    <string name="picker_no_photos_hint">Yàwòrán láti bẹ̀rẹ̀</string>
+    <string name="picker_permission_title">Gbà láàyè láti wọlé sí àwọn fọ́tò</string>
+    <string name="picker_permission_message">Láti tẹ̀síwájú, Rehancer nílò ìgbàláàyè rẹ láti wọlé sí Àwọn Fọ́tò</string>
+    <string name="picker_allow_access">Gbà Láàyè</string>
+    <string name="picker_give_access">Fún Láàyè</string>
+    <string name="picker_give_access_settings">Wíwọlé sí àwọn fọ́tò rẹ\nti pa.</string>
+    <string name="picker_give_access_permission">Ṣetán láti ṣẹ?</string>
+    <string name="picker_not_now">Kì í ṣe Báyìí</string>
+    <string name="picker_full_access_custom_message">Láti ṣàwárí àwọn fídíò àti fọ́tò rẹ, a nílò wíwọlé sí gàlẹ́rì rẹ.</string>
+    <string name="picker_full_access_settings_message"> Láti bẹ̀rẹ̀ ṣíṣàtúnṣe, mú \'Àwọn Fọ́tò\' tàbí \'Ìtọ́jú\' jáde nínú ìtọ́sọ́nà ẹ̀rọ rẹ.</string>
+    <string name="picker_limited_access_message">O ti fún Video Maker ní wíwọlé sí iye fọ́tò díẹ̀.</string>
+    <string name="picker_add_more_photos">Fi Kún</string>
+    <string name="picker_go_to_settings">Lọ sí Ìtọ́sọ́nà</string>
+    <string name="picker_min_selection">Jọwọ yan ó kéré jù àwọn àwòrán %d.</string>
+    <string name="picker_current_selection">A yan àwọn àwòrán %d</string>
+    <string name="picker_exit_confirm_title">Jáde kúrò nínú ìyàn àwòrán?</string>
+    <string name="picker_exit_confirm_message">O ti yan àwọn àwòrán. Tí o bá jáde báyìí, a ó kọ àwọn àwòrán tí a yan.</string>
+    <string name="picker_exit_confirm">Jáde</string>
+    <string name="picker_exit_stay">Dúró</string>
+
+    <!-- Music Player Bottom Sheet -->
+    <string name="music_player_title">Olùṣe Orin</string>
+    <string name="music_player_use_to_create">Lò Láti Ṣẹ Fídíò</string>
+
+    <!-- Music Picker -->
+    <string name="music_picker_title">Yan Orin</string>
+    <string name="music_picker_loading">Ń gba orin jẹ…</string>
+    <string name="music_picker_no_music">A kò rí orin kankan</string>
+    <string name="music_picker_no_music_hint">Fi àwọn fáìlì orin kún ẹ̀rọ rẹ láti lo wọn níbí</string>
+    <string name="music_picker_permission_title">A Nílò Wíwọlé Sí Ohùn</string>
+    <string name="music_picker_permission_message">Láti lò orin rẹ gẹ́gẹ́ bí ohùn ẹ̀yìn, a nílò ìgbàláàyè láti wọlé sí àwọn fáìlì ohùn rẹ.</string>
+    <string name="music_picker_allow_access">Gbà Láàyè</string>
+    <string name="music_picker_preview">Àgbéjáde</string>
+    <string name="music_picker_stop_preview">Dúró</string>
+    <string name="music_picker_select">Yan</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">Ìtọ́sọ́nà</string>
+    <string name="settings_panel_apply">Lò</string>
+    <string name="settings_panel_close">Pa mọ́</string>
+    <string name="settings_apply">Lò</string>
+    <string name="settings_effect_set">Ìpín Ipa</string>
+    <string name="settings_all">Gbogbo</string>
+    <string name="settings_off">PIPA</string>
+    <string name="settings_none">Kò Sí</string>
+    <string name="settings_pro">PRO</string>
+    <string name="settings_duration_per_image">Ìgbà fún Àwòrán Kọ̀ọ̀kan</string>
+    <string name="settings_seconds_format">%ds</string>
+    <string name="settings_duration_seconds">%ds</string>
+    <string name="settings_overlay_frame">Àpótí Overlay</string>
+    <string name="settings_background_music">Orin Ẹ̀yìn</string>
+    <string name="settings_custom">Àdánidá</string>
+    <string name="settings_add">+ Fi Kún</string>
+    <string name="settings_add_audio">+ Fi Kún</string>
+    <string name="settings_volume">Ohùn</string>
+    <string name="settings_clip_music">Kípe Orin</string>
+    <string name="settings_aspect_ratio">Ìwọ̀n Àpótí</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">Ohùn</string>
+    <string name="tab_music_clip">Kípe Orin</string>
+    <string name="settings_transition_effect">Ipa Ìrọ̀lẹ̀yípadà</string>
+    <string name="settings_transition_duration">Ìgbà Ìrọ̀lẹ̀yípadà</string>
+    <string name="settings_transition_duration_value">%.1fs</string>
+
+    <!-- Search -->
+    <string name="search_hint">Wá ìpele àgbàyanu rẹ…</string>
+    <string name="search_recent">Tí A Wá Láìpẹ́</string>
+    <string name="search_clear_all">Parẹ Gbogbo</string>
+    <string name="search_no_results">A kò rí ìpele kankan</string>
+    <string name="search_no_results_hint">Gbìyànjú ọ̀rọ̀ mìíràn tàbí yan vibe ní ìsàlẹ̀</string>
+    <string name="search_suggestions">Àwọn Àbájáde</string>
+    <string name="search_browse_by_theme">Ṣàwárí nípasẹ̀ Vibe</string>
+    <string name="search_trending_templates">Gbajúmọ̀ Báyìí</string>
+    <string name="search_tag_aesthetic">Ẹwà</string>
+    <string name="search_tag_birthday">Ọjọ́ Ìbí</string>
+    <string name="search_tag_travel">Ìrìn-àjò</string>
+    <string name="search_tag_lofi">Lofi</string>
+    <string name="search_tag_cinematic">Fíìmù</string>
+    <string name="search_tag_vintage">Àtijọ́</string>
+
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">Vibe Àlá</string>
+    <string name="effect_dreamy_vibes_desc">Ìmọ̀lẹ̀ rọrùn àti àwọn àwọ̀ pastel</string>
+    <string name="effect_cyberpunk_title">Cyberpunk</string>
+    <string name="effect_cyberpunk_desc">Ìmọ̀lẹ̀ neon àti àwọn ipa glitch</string>
+    <string name="effect_vintage_film_title">Fíìmù Àtijọ́</string>
+    <string name="effect_vintage_film_desc">Ẹ̀jẹ̀ retro àti àwọn àwọ̀ gbígbóná</string>
+    <string name="effect_ocean_breeze_title">Afẹ́fẹ́ Òkun</string>
+    <string name="effect_ocean_breeze_desc">Àwọn grádíẹ̀ọ̀n bulu tutu</string>
+    <string name="effect_golden_hour_title">Wákàtí Wúrà</string>
+    <string name="effect_golden_hour_desc">Overlay òrùlé gbígbóná</string>
+    <string name="effect_noir_title">Noir</string>
+    <string name="effect_noir_desc">Ìyàtọ̀ gíga dúdú àti funfun</string>
+    <string name="effect_sakura_title">Sakura</string>
+    <string name="effect_sakura_desc">Pínpín Àkùkọ̀ aráso</string>
+    <string name="effect_aurora_title">Aurora</string>
+    <string name="effect_aurora_desc">Ìmọ̀lẹ̀ àríwá</string>
+
+    <!-- Common -->
+    <string name="cancel">Fagilée</string>
+    <string name="confirm">Jẹrìísì</string>
+    <string name="delete">Paarẹ</string>
+    <string name="save">Tọ́jú</string>
+    <string name="back">Padà</string>
+    <string name="done">Parí</string>
+    <string name="error">Àṣìṣe</string>
+    <string name="retry">Gbìyànjú Lẹ́ẹ̀kan Sí</string>
+    <string name="seconds">Ìṣẹ́jú àáárọ̀ %d</string>
+    <string name="none">Kò Sí</string>
+    <string name="close">Pa mọ́</string>
+    <string name="remove">Yọ</string>
+    <string name="badge_pro">PRO</string>
+    <string name="settings">Ìtọ́sọ́nà</string>
+
+    <!-- Error states -->
+    <string name="error_load_failed">Kùnà láti gba. Fà sí ìsàlẹ̀ láti gbìyànjú lẹ́ẹ̀kan sí.</string>
+    <string name="error_network_title">Àṣìṣe Nẹ́tíwọ̀ọ̀kì</string>
+    <string name="error_data_load_failed">Kùnà láti gba àwọn dátà tí a nílò. Jọwọ ṣàyẹ̀wò ìsopọ̀ íńtánẹ́ẹ̀tì rẹ kí o sì gbìyànjú lẹ́ẹ̀kan sí.</string>
+    <string name="loading_building_feed">Ń kọ́ Feed Rẹ</string>
+    <string name="error_network_message">Kùnà láti gba orin. Jọwọ ṣàyẹ̀wò ìsopọ̀ rẹ kí o sì gbìyànjú lẹ́ẹ̀kan sí.</string>
+    <string name="error_network_timeout">Ìsopọ̀ nẹ́tíwọ̀ọ̀kì gbéyìn. Jọwọ ṣàyẹ̀wò ìsopọ̀ rẹ kí o sì gbìyànjú lẹ́ẹ̀kan sí.</string>
+    <string name="error_preview_title">Àṣìṣe Àgbéjáde</string>
+    <string name="error_preview_music_network">Àṣìṣe nẹ́tíwọ̀ọ̀kì nínú gbígba orin. Jọwọ ṣàyẹ̀wò ìsopọ̀ rẹ kí o sì gbìyànjú lẹ́ẹ̀kan sí.</string>
+    <string name="error_preview_music_failed">Kùnà láti gba orin. Gbìyànjú lẹ́ẹ̀kan sí.</string>
+    <string name="error_template_music_failed">Kùnà láti gba orin. Jọwọ ṣàyẹ̀wò ìsopọ̀ rẹ kí o sì gbìyànjú lẹ́ẹ̀kan sí.</string>
+    <string name="error_video_playback_failed">Kùnà láti gba àgbéjáde fídíò. Jọwọ ṣàyẹ̀wò ìsopọ̀ rẹ kí o sì gbìyànjú lẹ́ẹ̀kan sí.</string>
+    <string name="error_video_network">Àṣìṣe nẹ́tíwọ̀ọ̀kì nínú gbígba fídíò. Jọwọ ṣàyẹ̀wò ìsopọ̀ rẹ kí o sì gbìyànjú lẹ́ẹ̀kan sí.</string>
+    <string name="video_retrying">Ń gba àgbéjáde jẹ…</string>
+    <string name="dialog_ok">Ó dára</string>
+
+    <!-- Songs -->
+    <string name="start_project">Bẹ̀rẹ̀ iṣẹ́</string>
+
+    <!-- Song Search -->
+    <string name="song_search_hint">Wá orin…</string>
+    <string name="song_search_explore_by_genre">Ṣàwárí nípasẹ̀ Genre</string>
+    <string name="song_search_suggested">Tí A Dámọ̀ràn Fún Ẹ</string>
+    <string name="song_search_no_results">A kò rí orin kankan</string>
+    <string name="song_search_change_music">Yí Orin Padà</string>
+    <string name="song_search_idle_hint">Bẹ̀rẹ̀ títẹ láti wá orin</string>
+
+    <!-- Onboarding Page 4 -->
+    <string name="onboarding_page4_title">Báwo ni o fẹ́ bẹ̀rẹ̀?</string>
+    <string name="onboarding_page4_subtitle">Èyí ràn wá lọ́wọ́ láti dámọ̀ràn àkóónú tó yẹ jù fún ẹ.</string>
+    <string name="feature_music_video_instant">Ṣàwárí Àwọn Àpẹẹrẹ Fídíò</string>
+    <string name="feature_photos_to_video">Bẹ̀rẹ̀ pẹ̀lú Orin</string>
+    <string name="feature_trending_templates">Lò àwọn àpẹẹrẹ trending</string>
+    <string name="feature_trending_music">Fi orin trending kún</string>
+
+    <!-- Music Genres -->
+    <string name="genre_pop">Pop</string>
+    <string name="genre_rock">Rock</string>
+    <string name="genre_hiphop">Hip-Hop</string>
+    <string name="genre_rnb">R&amp;B</string>
+    <string name="genre_electronic">Ẹ̀lẹ́kítírónì</string>
+    <string name="genre_jazz">Jazz</string>
+    <string name="genre_classical">Ìbílẹ̀</string>
+    <string name="genre_country">Country</string>
+    <string name="genre_latin">Latin</string>
+    <string name="genre_kpop">K-Pop</string>
+    <string name="genre_dance">Ijó</string>
+    <string name="genre_edm">EDM</string>
+    <string name="genre_blues">Blues</string>
+    <string name="genre_metal">Metal</string>
+    <string name="genre_soul">Soul</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_trending_search_long">Ìwádìí Trending</string>
+    <string name="shortcut_create_video_long">Ṣẹ Fídíò</string>
+    <string name="shortcut_choose_template_long">Yan Àpẹẹrẹ Fídíò</string>
+    <string name="shortcut_uninstall_long">Yọ App Kúrò</string>
+
+    <!-- Widget -->
+    <string name="widget_title">Widget</string>
+    <string name="widget_bts">Fi Widget Kún</string>
+    <string name="widget_smart_search">Ìwádìí Ọlọ́gbọ́n</string>
+    <string name="widget_smart_search_description">Ń wá ìpele rẹ</string>
+    <string name="widget_smart_search_trending">Trending ❤️‍🔥</string>
+    <string name="widget_trending_template">Àpẹẹrẹ trending</string>
+    <string name="widget_recently">Láìpẹ́</string>
+    <string name="widget_trending_song">Orin Trending</string>
+    <string name="widget_trending_song_hot">Gbígbóná</string>
+    <string name="widget_search_hint">Wá àwọn àpẹẹrẹ...</string>
+    <string name="widget_pin_request_sent">A fi widget kún ìbẹ̀rẹ̀ ojú-ìwòye</string>
+    <string name="widget_pin_not_supported">Fífi widget síle kò ṣe àtìlẹ́yìn lórí ẹ̀rọ yìí</string>
+    <string name="widget_add_failed">Kùnà láti fi widget kún: %s</string>
+
+    <!-- Unified search -->
+    <string name="unified_search_templates">Àwọn Àpẹẹrẹ</string>
+    <string name="unified_search_music">Orin</string>
+    <string name="unified_search_see_more">Wo síwájú sí</string>
+    <string name="unified_search_loading_more">Ń gba jẹ…</string>
+    <string name="unified_search_explore_more">Ṣàwárí Síwájú Sí</string>
+    <string name="unified_search_explore_suggestions">Ṣàwárí Àwọn Àbájáde</string>
+    <string name="unified_search_no_results_title">A kò rí àbájáde kankan</string>
+    <string name="unified_search_keep_typing">Máa tẹ láti ṣe àtúnṣe ìwádìí rẹ</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">Gbígbóná</string>
+    <string name="tag_trending">Trending</string>
+    <string name="tag_new">Tuntun</string>
+    <string name="tag_featured">Àyàn</string>
+
+    <!-- Template Previewer -->
+    <string name="template_add_to_favorites">Fi Kún</string>
+    <string name="template_use_button">Lò Àpẹẹrẹ Yìí</string>
+    <string name="template_swipe_hint">Fàwọ́n soke</string>
+    <string name="template_swipe_subtitle">Láti gbádùn àwọn àpẹẹrẹ rẹ</string>
+    <string name="template_select_ratio_title">Yan Ìwọ̀n Fídíò</string>
+    <string name="template_create_now">Ṣẹ báyìí</string>
+    <string name="template_error_load_failed">Kùnà láti gba àwọn àpẹẹrẹ. Gbìyànjú lẹ́ẹ̀kan sí.</string>
+
+    <!-- Unified Search -->
+    <string name="search_templates_suggestions">Àwọn Àbájáde Àpẹẹrẹ</string>
+    <string name="search_music_suggestion">Àbájáde Orin</string>
+    <string name="search_empty_subtitle">Jẹ́ ká gbìyànjú nǹkan mìíràn tàbí ṣàwárí\nvibe trending</string>
+    <string name="search_typing_result_header">Àbájáde</string>
+    <string name="search_loading_title">Ń wá àwọn àbájáde…</string>
+    <string name="search_loading_message">A ń ṣàyẹ̀wò dátábéèsì wa láti mú\nàlàyé tó péye jù wa fún ẹ.\nJọwọ dúró ìṣẹ́jú kan.</string>
+    <string name="search_placeholder">Wá ohunkóhun</string>
+    <string name="search_pro_badge">PRO</string>
+
+    <!-- Editor Volume -->
+    <string name="volume_title">Ohùn</string>
+
+    <!-- Rating Popup -->
+    <string name="rating_satisfaction_title">A dúpẹ́ lórí àkókò rẹ lórí Video Generating</string>
+    <string name="rating_satisfaction_subtitle">Ṣé o ti dùn pẹ̀lú app wa?</string>
+    <string name="rating_not_really">Kì í ṣe gẹ́gẹ́ bẹ́ẹ̀</string>
+    <string name="rating_good">Dára</string>
+    <string name="rating_experience_title">Ṣàpèjúwe Ìrírí Rẹ\nPẹ̀lú Wa</string>
+    <string name="rating_submit">Fi Ranṣẹ́</string>
+    <string name="rating_feedback_title">Àánú láti gbọ́ bẹ́ẹ̀ 🥲</string>
+    <string name="rating_feedback_subtitle">A ó ṣiṣẹ́ síwájú sí láti mú ìrírí rẹ dára sí i</string>
+    <string name="rating_feedback_type_hint">Tẹ ìdáhùn rẹ</string>
+    <string name="rating_feedback_reason_music_quality">Kò sí orin ayanfẹ́ / Didara orin kò dára</string>
+    <string name="rating_feedback_reason_translation">Didara ìtúmọ̀ kéré jù</string>
+    <string name="rating_feedback_reason_tools">Àwọn ohun èlò ìṣàtúnṣe kò pàdé àwọn ìnílò mi</string>
+    <string name="rating_feedback_reason_output_quality">Didara fídíò ìbéèrè kéré jù</string>
+    <string name="rating_feedback_reason_performance">App lọra tàbí máa ń ṣubú</string>
+    <string name="rating_feedback_reason_templates">Kò tó àwọn àpẹẹrẹ / àwọn ìmúdójúìwọ̀n àkóónú</string>
+    <string name="rating_feedback_reason_other">Mìíràn</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">Ìpolówó</string>
+    <string name="ad_icon">Àmì ìpolówó</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">Wo ìpolówó láti ṣí ipa yìí?</string>
+    <string name="effect_set_watch_ad_subtitle">Ṣí ìpín ipa yìí títí láé nípasẹ̀ kíkọ ìpolówó ọ̀rọ̀ àárọ̀ kan</string>
+    <string name="effect_set_ad_not_available">Ìpolówó kò sí báyìí. Gbìyànjú lẹ́yìn náà.</string>
+    <string name="effect_set_locked">Ìpín ipa tí a ti di</string>
+    <string name="ad_not_available">Ìpolówó kò sí báyìí. Gbìyànjú lẹ́yìn náà.</string>
+
+    <!-- Quality Unlock Rewarded Ad -->
+    <string name="quality_watch_ad_title">Wo ìpolówó láti gbé jáde ní didara gíga?</string>
+    <string name="quality_watch_ad_subtitle">Ṣí gbígbé jáde 720p/1080p fún ìgbà yìí nípasẹ̀ kíkọ ìpolówó ọ̀rọ̀ àárọ̀ kan</string>
+    <string name="quality_ad_not_available">Ìpolówó kò sí báyìí. Gbìyànjú lẹ́yìn náà tàbí yan didara tí ó kéré.</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">Wo ìpolówó láti ṣí àpẹẹrẹ yìí?</string>
+    <string name="template_watch_ad_subtitle">Ṣí àpẹẹrẹ yìí títí láé nípasẹ̀ kíkọ ìpolówó ọ̀rọ̀ àárọ̀ kan</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Wo ìpolówó láti ṣí orin yìí?</string>
+    <string name="song_watch_ad_subtitle">Lẹ́yìn kíkọ, o lè lò orin yìí láti ṣẹ àwọn fídíò. Ṣíṣí jẹ́ títí láé.</string>
+
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">Orin Tuntun Trending!</string>
+    <string name="notif_trending_song_body">\'%2$s\' %1$s ń fìn! Ṣẹ ìṣàtúnṣe rẹ pẹ̀lú ìtẹ̀ 1 kí tí trending tó dé òkè.</string>
+    <string name="notif_viral_template_title">Àwọn àpẹẹrẹ trending fún ẹ. Gbìyànjú báyìí!</string>
+    <string name="notif_viral_template_body">Ènìyàn 1,000,000 lò %1$s yìí lónì. Máṣe fọwọ́ yọ kúrò nínú hype!</string>
+    <string name="notif_forgotten_masterpiece_title">Iṣẹ́ ìgbàgbọ́ rẹ ń dúró!</string>
+    <string name="notif_forgotten_masterpiece_body">O ti ṣe ìpín tó ṣòro, báyìí jẹ́ kí ó tan. Fídíò rẹ ṣetán láti pín pẹ̀lú ayé!</string>
+    <string name="notif_quick_save_title">Máṣe sọ iṣẹ́ rẹ nù!</string>
+    <string name="notif_quick_save_body">Ìṣàtúnṣe rẹ dára! Tọ́jú sí gàlẹ́rì rẹ báyìí kí o má bàa sọ àwọn beat-sync tó péye nù.</string>
+    <string name="notif_share_encouragement_title">Ṣetán fún \'Likes\'?</string>
+    <string name="notif_share_encouragement_body">Ìṣàtúnṣe \'%1$s\' rẹ jẹ́ 100%% beat-synced tí ó sì ṣetán. Gbekalẹ̀ sí TikTok báyìí!</string>
+    <string name="notif_abandoned_select_photos_title">Máṣe fi beat sílẹ̀!</string>
+    <string name="notif_abandoned_select_photos_body">Ìṣàtúnṣe \'Not Like Us\' rẹ fẹ́rẹ̀ parí. Yan àwọn fọ́tò díẹ̀ láti rí ìyànjú náà!</string>
+    <string name="notif_draft_completion_nudge_title">Parí ohun tí o bẹ̀rẹ̀!</string>
+    <string name="notif_draft_completion_nudge_body">O wà ní ìgbésẹ̀ kan sí fídíò viral. Padà kí o sì fi àwọn fọ́tò rẹ kún báyìí!</string>
+    <string name="notif_cta_play_song">Ṣe Orin</string>
+    <string name="notif_cta_discover_templates">Wárí Àwọn Àpẹẹrẹ</string>
+    <string name="notif_cta_continue_editing">Tẹ̀síwájú Ṣíṣàtúnṣe</string>
+    <string name="notif_cta_view_template">Wo Àpẹẹrẹ</string>
+
+</resources>

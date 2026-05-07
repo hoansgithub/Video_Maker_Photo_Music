@@ -37,6 +37,8 @@ class VideoExportWorker(
     private val projectRepository: ProjectRepository by inject()
     private val compositionFactory: CompositionFactory by inject()
     private val audioCache: com.videomaker.aimusic.media.audio.AudioPreviewCache by inject()
+    private val beatSyncRepository: com.videomaker.aimusic.domain.repository.BeatSyncRepository by inject()
+    private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService by inject()
 
     companion object {
         private const val TAG = "VideoExportWorker"
@@ -55,13 +57,78 @@ class VideoExportWorker(
             ?: return Result.failure(workDataOf(KEY_ERROR to "Missing project ID"))
 
         return try {
-            val project = projectRepository.getProject(projectId)
+            var project = projectRepository.getProject(projectId)
                 ?: return Result.failure(workDataOf(KEY_ERROR to "Project not found"))
 
-            android.util.Log.d("VideoExportWorker", "Loaded project: id=$projectId, trimStart=${project.settings.musicTrimStartMs}, trimEnd=${project.settings.musicTrimEndMs}")
+            android.util.Log.d("VideoExportWorker", "Loaded project: id=$projectId")
 
             if (project.assets.isEmpty()) {
                 return Result.failure(workDataOf(KEY_ERROR to "Project has no assets"))
+            }
+
+            // Load beat-sync data if music is selected but beatSyncData is null
+            // (beatSyncData is not persisted in database, must be loaded from Supabase)
+            if (project.settings.musicSongId != null && project.settings.beatSyncData == null) {
+                android.util.Log.d("VideoExportWorker", "Loading beat-sync data for song ${project.settings.musicSongId}")
+
+                val beatSyncData = try {
+                    beatSyncRepository.getBeatData(project.settings.musicSongId).getOrNull()
+                        ?: return Result.failure(workDataOf(KEY_ERROR to "Beat-sync data not available for this song"))
+                } catch (e: Exception) {
+                    android.util.Log.e("VideoExportWorker", "Failed to load beat-sync data", e)
+                    return Result.failure(workDataOf(KEY_ERROR to "Failed to load beat-sync data: ${e.message}"))
+                }
+
+                // Calculate total duration with beat-sync data
+                val totalDurationMs = com.videomaker.aimusic.domain.model.Project.calculateBeatSyncDuration(
+                    beatData = beatSyncData,
+                    assetCount = project.assets.size,
+                    trimStartMs = 0L
+                ) ?: 0L
+
+                // Update project settings with beat-sync data
+                project = project.copy(
+                    settings = project.settings.copy(
+                        beatSyncData = beatSyncData,
+                        totalDurationMs = totalDurationMs
+                    )
+                )
+
+                android.util.Log.d("VideoExportWorker", "Beat-sync data loaded: BPM=${beatSyncData.bpm}, duration=${totalDurationMs}ms")
+            }
+
+            // Preprocess audio with fadeout if needed
+            if (project.settings.musicSongId != null &&
+                project.settings.musicSongUrl != null &&
+                project.settings.beatSyncData != null &&
+                project.settings.processedAudioUri == null) {
+
+                android.util.Log.d("VideoExportWorker", "Preprocessing audio with fadeout for export")
+
+                val beatData = project.settings.beatSyncData
+                val beatMs = 60000.0 / beatData.bpm
+                val fadeoutDurationMs = (beatMs * 6).toLong() // 6 beats fadeout
+                val hookStartTimeMs = project.settings.hookStartTimeMs
+
+                val preprocessedUri = audioPreprocessingService.preprocessAudioWithFadeout(
+                    sourceUri = android.net.Uri.parse(project.settings.musicSongUrl),
+                    songId = project.settings.musicSongId,
+                    trimStartMs = hookStartTimeMs,
+                    totalDurationMs = project.settings.totalDurationMs,
+                    fadeoutDurationMs = fadeoutDurationMs,
+                    baseVolume = project.settings.audioVolume
+                )
+
+                if (preprocessedUri != null) {
+                    project = project.copy(
+                        settings = project.settings.copy(
+                            processedAudioUri = preprocessedUri
+                        )
+                    )
+                    android.util.Log.d("VideoExportWorker", "✅ Audio preprocessed with fadeout: $preprocessedUri")
+                } else {
+                    android.util.Log.w("VideoExportWorker", "⚠️ Audio preprocessing failed, export will have no audio")
+                }
             }
 
             val outputFile = createOutputFile(projectId)

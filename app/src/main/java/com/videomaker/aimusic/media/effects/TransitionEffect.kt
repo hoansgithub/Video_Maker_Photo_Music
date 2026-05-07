@@ -194,8 +194,10 @@ void main() {
             }
         }
 
-        // Apply sine ease-out curve for smooth transition
-        val progress = kotlin.math.sin(linearProgress * Math.PI.toFloat() / 2f)
+        // Apply cosine ease-in-out curve for smooth beat-sync transitions
+        // Formula matches Python preview generation: 0.5 - 0.5 * cos(π * progress)
+        // With transition starting at beat: peak visual change occurs at beat + duration/2 (progress=0.5)
+        val progress = 0.5f - 0.5f * kotlin.math.cos(linearProgress * Math.PI.toFloat())
 
         program.use()
 

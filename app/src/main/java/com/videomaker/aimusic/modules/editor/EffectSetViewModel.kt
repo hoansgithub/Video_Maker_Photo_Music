@@ -60,12 +60,10 @@ class EffectSetViewModel(
     // Rewarded ad controller for effect set unlock
     private val rewardedAdController = RewardedAdController(
         placement = AdPlacement.REWARD_UNLOCK_EFFECT_SET,
-        adsLoaderService = adsLoaderService,
         viewModelScope = viewModelScope
     )
 
-    // Expose rewarded ad states
-    val showWatchAdDialog: StateFlow<Boolean> = rewardedAdController.showWatchAdDialog
+    // Expose rewarded ad state
     val shouldPresentAd: StateFlow<Boolean> = rewardedAdController.shouldPresentAd
 
     // Effect set waiting to be unlocked (stored for callback after ad)
@@ -106,7 +104,7 @@ class EffectSetViewModel(
 
     /**
      * Handle effect set click.
-     * If locked, show watch ad dialog. If unlocked, pass to callback.
+     * If locked, present rewarded ad. If unlocked, pass to callback.
      *
      * @param effectSet The clicked effect set
      * @param onUnlockedEffectSetSelected Callback when effect set is unlocked
@@ -140,22 +138,6 @@ class EffectSetViewModel(
                 checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_EFFECT_SET) }
             )
         }
-    }
-
-    /**
-     * User dismissed watch ad dialog (clicked "Close")
-     */
-    fun onWatchAdDialogDismiss() {
-        rewardedAdController.onDialogDismiss()
-        _pendingUnlockEffectSet.value = null
-        onUnlockSuccessCallback = null
-    }
-
-    /**
-     * User confirmed watching ad (clicked "Watch Ad")
-     */
-    fun onWatchAdConfirmed() {
-        rewardedAdController.onDialogConfirm()
     }
 
     /**

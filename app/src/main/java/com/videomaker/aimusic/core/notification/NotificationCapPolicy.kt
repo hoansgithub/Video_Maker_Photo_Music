@@ -1,9 +1,10 @@
 package com.videomaker.aimusic.core.notification
 
 class NotificationCapPolicy(
+    private val scheduleConfigService: NotificationScheduleConfigService? = null,
     private val dailyCap: Int = DAILY_CAP,
     private val perTypeDailyCap: Int = PER_TYPE_DAILY_CAP,
-    private val cooldownMinutes: Int = COOLDOWN_MINUTES,
+    private val cooldownMinutes: Int = 0,
     private val perItemCooldownHours: Int = PER_ITEM_COOLDOWN_HOURS
 ) {
 
@@ -12,7 +13,8 @@ class NotificationCapPolicy(
         val dailyShownCount: Int,
         val typeDailyShownCount: Int = 0,
         val lastShownAtMs: Long?,
-        val sameItemLastShownAtMs: Long?
+        val sameItemLastShownAtMs: Long?,
+        val ignorePerItemCooldown: Boolean = false
     )
 
     data class Decision(
@@ -28,6 +30,10 @@ class NotificationCapPolicy(
     }
 
     fun evaluate(input: Input): Decision {
+        if (scheduleConfigService?.current()?.isFastScheduleMode() == true) {
+            return Decision(allowed = true)
+        }
+
         if (input.dailyShownCount >= dailyCap) {
             return Decision(
                 allowed = false,
@@ -51,7 +57,9 @@ class NotificationCapPolicy(
         }
 
         val perItemCooldownMs = perItemCooldownHours * 60L * 60_000L
-        if (isWithinWindow(input.nowMs, input.sameItemLastShownAtMs, perItemCooldownMs)) {
+        if (!input.ignorePerItemCooldown &&
+            isWithinWindow(input.nowMs, input.sameItemLastShownAtMs, perItemCooldownMs)
+        ) {
             return Decision(
                 allowed = false,
                 reason = BlockReason.PER_ITEM_COOLDOWN_ACTIVE

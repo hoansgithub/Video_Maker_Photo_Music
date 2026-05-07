@@ -72,12 +72,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
-import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
@@ -134,7 +134,6 @@ fun ProjectsTabContent(
     val activity = context as? Activity
 
     // Ad states
-    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
 
     LaunchedEffect(showRemovedMessage) {
@@ -275,7 +274,7 @@ fun ProjectsTabContent(
                                     onProjectClick = { project ->
                                         Analytics.trackVideoClick(
                                             videoId = project.id,
-                                            templateId = project.settings.effectSetId,
+                                            templateId = project.settings.templateId,
                                             songId = project.settings.musicSongId?.toString(),
                                             location = AnalyticsEvent.Value.Location.LIBRARY
                                         )
@@ -287,7 +286,7 @@ fun ProjectsTabContent(
                                     onDeleteProject = { project ->
                                         Analytics.trackVideoDelete(
                                             videoId = project.id,
-                                            templateId = project.settings.effectSetId,
+                                            templateId = project.settings.templateId,
                                             songId = project.settings.musicSongId?.toString(),
                                             duration = project.totalDurationMs,
                                             ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
@@ -299,7 +298,7 @@ fun ProjectsTabContent(
                                     onDownloadProject = { project ->
                                         Analytics.trackVideoDownload(
                                             videoId = project.id,
-                                            templateId = project.settings.effectSetId,
+                                            templateId = project.settings.templateId,
                                             songId = project.settings.musicSongId?.toString(),
                                             duration = project.totalDurationMs,
                                             ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
@@ -312,7 +311,7 @@ fun ProjectsTabContent(
                                     onShareProject = { project ->
                                         Analytics.trackVideoShare(
                                             videoId = project.id,
-                                            templateId = project.settings.effectSetId,
+                                            templateId = project.settings.templateId,
                                             songId = project.settings.musicSongId?.toString(),
                                             duration = project.totalDurationMs,
                                             ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
@@ -489,16 +488,6 @@ fun ProjectsTabContent(
         // Z-ordering: Last declared composable in Box appears on top layer
         // This ensures loading overlay blocks all interactions during ad loading
         com.videomaker.aimusic.ui.components.AdsLoadingOverlay()
-    }
-
-    // Watch ad dialog for download
-    if (showWatchAdDialog) {
-        WatchAdDialog(
-            title = stringResource(R.string.export_watch_ad_title),
-            subtitle = stringResource(R.string.export_watch_ad_subtitle),
-            onDismiss = viewModel::onWatchAdDialogDismiss,
-            onWatchAd = viewModel::onWatchAdConfirmed
-        )
     }
 
     // Handle rewarded ad presentation using reusable presenter
@@ -825,7 +814,8 @@ private fun ProjectsStaggeredGrid(
             is ProjectGridItem.AdItem -> {
                 NativeAdView(
                     placement = AdPlacement.NATIVE_PROJECTS_GRID,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
                 )
             }
         }

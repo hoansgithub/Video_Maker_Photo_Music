@@ -52,6 +52,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,7 +74,6 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.storage.UnlockedSongsManager
-import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
@@ -154,10 +155,12 @@ internal fun MusicSearchBottomSheet(
     val adsLoaderService: AdsLoaderService = koinInject()
     val screenSessionId = remember { Analytics.newScreenSessionId() }
 
-    // State for watch ad flow
-    var showWatchAdDialog by remember { mutableStateOf(false) }
+    // State for rewarded ad flow
     var shouldPresentAd by remember { mutableStateOf(false) }
     var pendingSongToUnlock by remember { mutableStateOf<MusicSong?>(null) }
+    var selectedSongLocation by rememberSaveable {
+        mutableStateOf(AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM)
+    }
 
     // Helper function to check if song is locked
     fun isSongLocked(song: MusicSong): Boolean {
@@ -173,25 +176,19 @@ internal fun MusicSearchBottomSheet(
         } ?: return
 
         if (isSongLocked(song)) {
-            // Song is locked - show watch ad dialog
+            // Song is locked - present rewarded ad directly
             pendingSongToUnlock = song
-            showWatchAdDialog = true
+            shouldPresentAd = true
         } else {
             // Song is unlocked or free - directly select
             MusicPreviewManager.clearPreviewState()
             onSongSelected(song)
+            Analytics.trackSongSelect(
+                songId = song.id.toString(),
+                songName = song.name,
+                location = selectedSongLocation
+            )
         }
-    }
-
-    // Watch ad dialog handlers
-    fun onWatchAdDialogDismiss() {
-        showWatchAdDialog = false
-        pendingSongToUnlock = null
-    }
-
-    fun onWatchAdConfirmed() {
-        showWatchAdDialog = false
-        shouldPresentAd = true
     }
 
     fun onRewardEarned() {
@@ -518,7 +515,19 @@ internal fun MusicSearchBottomSheet(
                                 isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                 onSongClick = {
                                     onSongClick(song)
+                                    selectedSongLocation = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
                                     Analytics.trackSongClick(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
+                                    )
+                                    Analytics.trackSongImpression(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH,
+                                        screenSessionId = screenSessionId
+                                    )
+                                    Analytics.trackSongPreview(
                                         songId = song.id.toString(),
                                         songName = song.name,
                                         location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
@@ -633,7 +642,19 @@ internal fun MusicSearchBottomSheet(
                                     isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                     onSongClick = {
                                         onSongClick(song)
+                                        selectedSongLocation = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
                                         Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                        )
+                                        Analytics.trackSongImpression(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                            screenSessionId = screenSessionId
+                                        )
+                                        Analytics.trackSongPreview(
                                             songId = song.id.toString(),
                                             songName = song.name,
                                             location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
@@ -733,7 +754,19 @@ internal fun MusicSearchBottomSheet(
                                     isLoading = song.id == selectedForConfirmId && isLoadingPreview,
                                     onSongClick = {
                                         onSongClick(song)
+                                        selectedSongLocation = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
                                         Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                        )
+                                        Analytics.trackSongImpression(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                            screenSessionId = screenSessionId
+                                        )
+                                        Analytics.trackSongPreview(
                                             songId = song.id.toString(),
                                             songName = song.name,
                                             location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
@@ -754,16 +787,6 @@ internal fun MusicSearchBottomSheet(
             AdsLoadingOverlay()
         }  // End Box
     }  // End ModalBottomSheet
-
-    // Watch ad dialog for song unlock
-    if (showWatchAdDialog) {
-        WatchAdDialog(
-            title = stringResource(R.string.song_watch_ad_title),
-            subtitle = stringResource(R.string.song_watch_ad_subtitle),
-            onDismiss = ::onWatchAdDialogDismiss,
-            onWatchAd = ::onWatchAdConfirmed
-        )
-    }
 
     // Handle rewarded ad presentation
     RewardedAdPresenter(

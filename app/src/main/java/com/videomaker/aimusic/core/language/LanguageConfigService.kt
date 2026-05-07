@@ -35,6 +35,9 @@ import kotlinx.serialization.json.jsonPrimitive
  * ```
  *
  * Implements ConfigurableObject for automatic Remote Config updates.
+ * Registration happens centrally in VideoMakerApplication.kt.
+ *
+ * @param context Application context for country detection
  */
 class LanguageConfigService(
     private val context: Context
@@ -127,8 +130,7 @@ class LanguageConfigService(
     /**
      * Hardcoded language priorities per country (fallback).
      *
-     * Matches drama app pattern with supported languages only.
-     * Supported: en, ar, es, fil, hi, id, pt, tr
+     * Supported: en, ar, es, fil, hi, id, pt, tr, bn, kn, de, jv, su, ha, yo, ig
      *
      * Based on:
      * - Official languages of the country
@@ -141,20 +143,22 @@ class LanguageConfigService(
             "US" -> listOf("en", "es", "fil", "ar", "hi")
 
             // Latin America - Portuguese
-            "BR", "PT" -> listOf("pt", "en", "es")
+            "BR" -> listOf("pt", "es", "en", "de")
+            "PT" -> listOf("pt", "en", "es")
 
-            // Latin America - Spanish (short list like drama app)
-            "MX", "CO" -> listOf("es", "en")
+            // Latin America - Spanish
+            "MX" -> listOf("es")
+            "CO" -> listOf("es", "en")
             "ES", "AR", "PE", "CL", "VE" -> listOf("es", "en", "pt")
 
             // Asia - Southeast
-            "ID" -> listOf("id", "en")
+            "ID" -> listOf("id", "jv", "su")
             "PH" -> listOf("fil", "en")
 
             // Asia - South
-            "IN" -> listOf("hi", "en")
-            "PK" -> listOf("en")  // Urdu not supported, fallback to English
-            "BD" -> listOf("en")  // Bengali not supported, fallback to English
+            "IN" -> listOf("hi", "bn", "en", "kn")
+            "PK" -> listOf("en", "hi", "ar", "bn")
+            "BD" -> listOf("bn", "en", "ar", "hi")
 
             // Middle East & North Africa
             "SA", "AE", "EG", "IQ", "JO", "LB", "SY", "YE", "KW", "OM", "QA", "BH" ->
@@ -162,6 +166,13 @@ class LanguageConfigService(
 
             // Europe - Turkish
             "TR" -> listOf("tr", "en")
+
+            // Europe - German
+            "DE" -> listOf("de")
+            "AT", "CH" -> listOf("de", "en")
+
+            // Africa - Nigeria
+            "NG" -> listOf("ha", "yo", "ig", "en")
 
             // Unknown country - use device language
             else -> {

@@ -236,7 +236,9 @@
     <string name="export_templates_load_failed">فشل تحميل القوالب</string>
     <string name="export_watch_ad_title">شاهد إعلان للتنزيل؟</string>
     <string name="export_watch_ad_subtitle">ساعدنا في الحفاظ على هذا التطبيق مجانيًا بمشاهدة إعلان قصير. سيتم تنزيل الفيديو الخاص بك مباشرة بعد ذلك!</string>
-    <string name="export_watch_ad_button">شاهد الإعلان</string>
+    <string name="watch_ad_dialog_title">افتح ميزة حصرية! ✨</string>
+    <string name="watch_ad_dialog_subtitle">شاهد إعلانًا قصيرًا لفتح هذه الميزة ومتابعة تعديل الفيديو الرائع الخاص بك!</string>
+    <string name="export_watch_ad_button">شاهد الإعلان (1/1)</string>
     <string name="export_watch_ad_close">إغلاق</string>
     <string name="export_watermark_remove_title">إزالة العلامة المائية؟</string>
     <string name="export_watermark_remove_subtitle">شاهد إعلانًا قصيرًا لإزالة العلامة المائية من معاينة الفيديو.</string>
@@ -368,6 +370,7 @@
     <string name="error_load_failed">فشل التحميل. اسحب للأسفل للمحاولة مجدداً.</string>
     <string name="error_video_playback_failed">فشل تحميل معاينة الفيديو. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
     <string name="error_video_network">خطأ في الشبكة أثناء تحميل الفيديو. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>
+    <string name="video_retrying">Loading preview…</string>
     <string name="error_network_title">خطأ في الشبكة</string>
     <string name="loading_building_feed">جارٍ بناء موجزك</string>
     <string name="error_network_message">فشل تحميل الموسيقى. يرجى التحقق من اتصالك والمحاولة مرة أخرى.</string>

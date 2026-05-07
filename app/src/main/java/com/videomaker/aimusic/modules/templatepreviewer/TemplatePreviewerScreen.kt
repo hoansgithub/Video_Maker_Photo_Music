@@ -13,7 +13,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -30,7 +29,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -62,19 +60,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.C
-import androidx.media3.common.MediaItem
-import androidx.media3.common.PlaybackException
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.exoplayer.DefaultLoadControl
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -90,19 +79,15 @@ import androidx.compose.ui.unit.sp
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
-import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.R
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withTimeout
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
-import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.ui.components.AdBadge
 import com.videomaker.aimusic.ui.components.AdBadgeStyle
 import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
@@ -111,10 +96,7 @@ import com.videomaker.aimusic.ui.components.NotificationPermissionSettingsGuideD
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
 import org.koin.compose.koinInject
-import com.videomaker.aimusic.ui.components.ErrorOverlay
-import com.videomaker.aimusic.ui.components.ErrorType
 import com.videomaker.aimusic.ui.components.PrimaryButton
-import com.videomaker.aimusic.ui.theme.Black60
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.SurfaceDarkVariant
@@ -127,45 +109,12 @@ import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Scale
 import com.videomaker.aimusic.domain.model.VideoTemplate
-import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
-import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
-import com.videomaker.aimusic.ui.theme.CtaText
 import com.videomaker.aimusic.ui.theme.FoundationBlack
-import com.videomaker.aimusic.ui.theme.SecondaryLight
 import com.videomaker.aimusic.ui.theme.SurfaceLight
-import com.videomaker.aimusic.ui.theme.TextSecondary
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
 import androidx.core.content.edit
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
-import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-
-// ============================================
-// HELPER - Release player async to avoid ANR
-// ============================================
-
-/**
- * Release ExoPlayer asynchronously on background thread to avoid ANR.
- * ExoPlayer.release() can block for 10+ seconds when releasing resources.
- */
-private fun ExoPlayer.releaseAsync() {
-    val playerToRelease = this
-    ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
-        runCatching {
-            android.util.Log.d("TemplatePreviewerScreen", "Releasing player on background thread...")
-            playerToRelease.release()
-            android.util.Log.d("TemplatePreviewerScreen", "Player released successfully")
-        }.onFailure { e ->
-            android.util.Log.e("TemplatePreviewerScreen", "Failed to release player", e)
-        }
-    }
-}
 
 // Virtual page count for infinite-scroll illusion.
 private const val VIRTUAL_PAGE_COUNT = 10_000
@@ -185,17 +134,13 @@ private fun initialVirtualPage(initialPage: Int, templateCount: Int): Int {
 fun TemplatePreviewerScreen(
     viewModel: TemplatePreviewerViewModel,
     sourceLocation: String? = null,
-    audioDataSourceFactory: CacheDataSource.Factory,
     onNavigateToAssetPicker: (template: com.videomaker.aimusic.domain.model.VideoTemplate, overrideSongId: Long, aspectRatio: AspectRatio) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
-    val currentSong by viewModel.currentSong.collectAsStateWithLifecycle()
     val likedTemplateIds by viewModel.likedTemplateIds.collectAsStateWithLifecycle()
     val unlockedTemplateIds by viewModel.unlockedTemplateIds.collectAsStateWithLifecycle()
-    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
-    val pendingUnlockTemplate by viewModel.pendingUnlockTemplate.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -203,9 +148,6 @@ fun TemplatePreviewerScreen(
     val eventLocation = remember(sourceLocation) {
         sourceLocation?.takeIf { it.isNotBlank() } ?: AnalyticsEvent.Value.Location.PREVIEW_SWIPE
     }
-
-    // Track song loading error
-    var songError by remember { mutableStateOf<String?>(null) }
 
     // Get dependencies for ad showing
     val activity = context as? Activity
@@ -223,7 +165,9 @@ fun TemplatePreviewerScreen(
                 AnalyticsEvent.Value.Option.ALLOW
             } else {
                 AnalyticsEvent.Value.Option.NO_ALLOW
-            }
+            },
+            perType = AnalyticsEvent.Value.PerType.NOTI,
+            popType = AnalyticsEvent.Value.PopType.SYSTEM
         )
         notificationPermissionCoordinator.onSystemPermissionResult(granted)
         Analytics.trackPermissionCheck(allow = granted)
@@ -240,12 +184,7 @@ fun TemplatePreviewerScreen(
         navigationEvent?.let { event ->
             when (event) {
                 is TemplatePreviewerNavigationEvent.NavigateToAssetPicker -> {
-                    // Block navigation if music failed to load
-                    if (songError == null) {
-                        onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
-                    } else {
-                        android.util.Log.w("TemplatePreviewerScreen", "Navigation blocked due to music loading error")
-                    }
+                    onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
                 }
 
                 is TemplatePreviewerNavigationEvent.RequestBackWithAd -> {
@@ -293,44 +232,24 @@ fun TemplatePreviewerScreen(
         onAdFailed = viewModel::onAdFailed
     )
 
-    // Single ExoPlayer for the entire screen — crossfaded on page change
-    val player = remember {
-        // Optimized LoadControl for faster music streaming
-        val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(
-                /* minBufferMs */ 2500,      // Balanced: faster than default, stable on slow networks
-                /* maxBufferMs */ 15000,     // Max buffer 15s (reduced from default 50s)
-                /* bufferForPlaybackMs */ 1500,      // Start playback after 1.5s buffered (safer than 500ms)
-                /* bufferForPlaybackAfterRebufferMs */ 2500  // ExoPlayer default for stability
-            )
-            .setPrioritizeTimeOverSizeThresholds(true)  // Favor low latency over size
-            .build()
+    // Track loading state
+    var showLoadingOverlay by remember { mutableStateOf(true) }
+    var firstVideoReady by remember { mutableStateOf(false) }
 
-        ExoPlayer.Builder(context)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(audioDataSourceFactory))
-            .setLoadControl(loadControl)
-            .build()
-    }
-
-    // Real duration read from ExoPlayer after playback is ready — not from DB
-    var playerDurationMs by remember { mutableStateOf<Long?>(null) }
-
-    // Track ad loading state (declared early so it can be used in lifecycle observers)
-    var adReady by remember { mutableStateOf(false) }
-    var loadingAdComplete by remember { mutableStateOf(false) }
-
-    // Ad loading with timeout:
-    // - Wait up to 10s for ad to load
-    // - When ad loads: wait 2s for impression, then proceed
-    // - If timeout (10s): proceed immediately
+    // Loading overlay timing:
+    // - Video starts buffering immediately (in TemplatePreviewerReadyContent below)
+    // - Wait for ad to be ready (up to 10s timeout)
+    // - Show ad for 2 seconds (impression + user sees it)
+    // - Video will be ready by then (loads in ~1s in background)
     LaunchedEffect(Unit) {
         val startTime = System.currentTimeMillis()
+        var adReady = false
 
-        // Check if ad is already loaded
+        // Check if ad is already loaded (cached from preload)
         adReady = adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)
 
         if (adReady) {
-            android.util.Log.d("TemplatePreviewerLoading", "✅ Ad already loaded (preload successful)")
+            android.util.Log.d("TemplatePreviewerLoading", "✅ Ad already cached - showing for 2s")
         } else {
             android.util.Log.d("TemplatePreviewerLoading", "⏳ Ad not ready, polling...")
 
@@ -347,19 +266,31 @@ fun TemplatePreviewerScreen(
             }
         }
 
+        // Show ad for 2 seconds when ready (impression + visibility)
         if (adReady) {
-            android.util.Log.d("TemplatePreviewerLoading", "📊 Ad ready - showing for 2 more seconds")
-            delay(2_000) // Show ad for 2 seconds after ready
+            android.util.Log.d("TemplatePreviewerLoading", "📊 Ad ready - showing for 2s (impression + display)")
+            delay(2_000) // Show for 2 seconds
         } else {
             android.util.Log.d("TemplatePreviewerLoading", "⏱️ Ad timeout (10s) - proceeding immediately")
         }
 
-        loadingAdComplete = true
+        val totalTime = System.currentTimeMillis() - startTime
+        android.util.Log.d("TemplatePreviewerLoading", "✅ LOADING COMPLETE (${totalTime}ms)")
+
+        // Log video status
+        if (firstVideoReady) {
+            android.util.Log.d("TemplatePreviewerLoading", "✅ First video is ready")
+        } else {
+            android.util.Log.d("TemplatePreviewerLoading", "⏳ First video still loading (will continue in background)")
+        }
+
+        showLoadingOverlay = false
     }
 
-    LaunchedEffect(uiState, loadingAdComplete) {
+    // Show notification permission dialog only after loading complete
+    LaunchedEffect(uiState, showLoadingOverlay) {
         if (uiState is TemplatePreviewerUiState.Ready &&
-            loadingAdComplete &&
+            !showLoadingOverlay &&
             notificationPermissionCoordinator.shouldShowTemplatePreviewerContextualPopup(context)
         ) {
             if (notificationPermissionCoordinator.shouldShowSettingsGuide(context)) {
@@ -369,16 +300,20 @@ fun TemplatePreviewerScreen(
                 showNotificationPromoDialog = true
                 showNotificationSettingsGuideDialog = false
             }
-            Analytics.trackPermissionRender()
         }
     }
 
-    DisposableEffect(Unit) {
-        onDispose { player.releaseAsync() }  // ✅ Release async to avoid ANR
+    LaunchedEffect(showNotificationPromoDialog) {
+        if (showNotificationPromoDialog) {
+            Analytics.trackPermissionRender(
+                perType = AnalyticsEvent.Value.PerType.NOTI,
+                popType = AnalyticsEvent.Value.PopType.CUSTOM
+            )
+        }
     }
 
     // Pause/resume on app background
-    DisposableEffect(lifecycleOwner, loadingAdComplete, pendingPermissionCheckAfterSettings) {
+    DisposableEffect(lifecycleOwner, showLoadingOverlay, pendingPermissionCheckAfterSettings) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
@@ -391,13 +326,6 @@ fun TemplatePreviewerScreen(
                         pendingPermissionCheckAfterSettings = false
                     }
                 }
-                Lifecycle.Event.ON_STOP -> player.pause()
-                Lifecycle.Event.ON_START -> {
-                    // Only resume playback after loading ad timing is complete
-                    if (loadingAdComplete && player.playbackState == Player.STATE_READY) {
-                        player.play()
-                    }
-                }
                 else -> Unit
             }
         }
@@ -405,73 +333,16 @@ fun TemplatePreviewerScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // Crossfade audio on song change.
-    // Loading state: keep current track playing while the next song is being fetched.
-    // Ready: fade out → swap track → fade in (ONLY after loading ad timing completes).
-    // None: fade out and stop.
-    // Error: show error overlay.
-    LaunchedEffect(currentSong, loadingAdComplete) {
-        when (val state = currentSong) {
-            is SongLoadState.Loading -> {
-                songError = null // Clear any previous error
-            }
-
-            is SongLoadState.None -> {
-                playerDurationMs = null
-                fadeVolume(player, to = 0f)
-                player.stop()
-                songError = null
-            }
-
-            is SongLoadState.Error -> {
-                // Show error overlay with localized message
-                songError = context.getString(R.string.error_template_music_failed)
-                playerDurationMs = null
-                fadeVolume(player, to = 0f)
-                player.stop()
-            }
-
-            is SongLoadState.Ready -> {
-                // Only start playing music after loading ad timing is complete
-                if (!loadingAdComplete) {
-                    android.util.Log.d("TemplatePreviewerMusic", "🎵 Song ready but waiting for ad timing to complete")
-                    return@LaunchedEffect
-                }
-
-                android.util.Log.d("TemplatePreviewerMusic", "🎵 Starting music playback (ad timing complete)")
-                songError = null // Clear any previous error
-                playerDurationMs = null  // clear stale duration until new track is ready
-                // Use full track (mp3Url) for consistency with Editor, not short preview clip
-                val url = state.song.mp3Url.ifEmpty { state.song.previewUrl }
-                if (url.isEmpty()) { player.stop(); return@LaunchedEffect }
-
-                fadeVolume(player, to = 0f)
-                player.setMediaItem(MediaItem.fromUri(url))
-                player.repeatMode = Player.REPEAT_MODE_ONE
-                player.prepare()
-                player.play()
-                if (awaitPlayerReady(player)) {
-                    val dur = player.duration
-                    playerDurationMs = if (dur != C.TIME_UNSET && dur > 0) dur else null
-                    fadeVolume(player, to = 1f)
-                } else {
-                    player.volume = 1f
-                }
-            }
-        }
-    }
-
     when (val state = uiState) {
         is TemplatePreviewerUiState.Loading -> {
             LoadingStateWithAd()
         }
         is TemplatePreviewerUiState.Ready -> {
-            // Only show Ready content after ad timing is complete
-            if (loadingAdComplete) {
+            // Show content immediately so video starts buffering
+            // Loading overlay will be shown on top until ad display completes
+            Box(modifier = Modifier.fillMaxSize()) {
                 TemplatePreviewerReadyContent(
                     state = state,
-                    currentSong = currentSong,
-                    playerDurationMs = playerDurationMs,
                     likedTemplateIds = likedTemplateIds,
                     unlockedTemplateIds = unlockedTemplateIds,
                     onPageChanged = viewModel::onPageChanged,
@@ -479,11 +350,14 @@ fun TemplatePreviewerScreen(
                     onRatioSelected = viewModel::onRatioSelected,
                     onLikeTemplate = viewModel::onLikeTemplate,
                     eventLocation = eventLocation,
-                    onNavigateBack = viewModel::onNavigateBack
+                    onNavigateBack = viewModel::onNavigateBack,
+                    onFirstVideoReady = { firstVideoReady = true }
                 )
-            } else {
-                // Keep showing loading state with ad until timing is complete
-                LoadingStateWithAd()
+
+                // Show loading overlay on top until ad display completes
+                if (showLoadingOverlay) {
+                    LoadingStateWithAd()
+                }
             }
         }
         is TemplatePreviewerUiState.Error -> {
@@ -508,37 +382,19 @@ fun TemplatePreviewerScreen(
         }
     }
 
-    // Error overlay for song loading failures
-    songError?.let { errorMessage ->
-        ErrorOverlay(
-            errorType = ErrorType.MusicLoading,
-            title = context.getString(R.string.error_network_title),
-            message = errorMessage,
-            onDismiss = {
-                songError = null
-            }
-        )
-    }
-
-    // Watch ad dialog
-    if (showWatchAdDialog) {
-        WatchAdDialog(
-            title = stringResource(R.string.template_watch_ad_title),
-            subtitle = stringResource(R.string.template_watch_ad_subtitle),
-            onDismiss = viewModel::onWatchAdDialogDismiss,
-            onWatchAd = {
-                // Set pending template - LaunchedEffect will handle ad presentation
-                viewModel.onWatchAdConfirmed()
-            }
-        )
-    }
-
     if (showNotificationPromoDialog) {
         NotificationPermissionPromoDialog(
             onNotifyMe = {
-                Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.ALLOW)
+                Analytics.trackPermissionClick(
+                    button = AnalyticsEvent.Value.Option.ALLOW,
+                    perType = AnalyticsEvent.Value.PerType.NOTI,
+                    popType = AnalyticsEvent.Value.PopType.CUSTOM
+                )
                 if (notificationPermissionCoordinator.canRequestSystemPermission(context)) {
-                    Analytics.trackPermissionRender()
+                    Analytics.trackPermissionRender(
+                        perType = AnalyticsEvent.Value.PerType.NOTI,
+                        popType = AnalyticsEvent.Value.PopType.SYSTEM
+                    )
                     notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     showNotificationPromoDialog = false
                 } else {
@@ -547,7 +403,11 @@ fun TemplatePreviewerScreen(
                 }
             },
             onMaybeLater = {
-                Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.NO_ALLOW)
+                Analytics.trackPermissionClick(
+                    button = AnalyticsEvent.Value.Option.NO_ALLOW,
+                    perType = AnalyticsEvent.Value.PerType.NOTI,
+                    popType = AnalyticsEvent.Value.PopType.CUSTOM
+                )
                 showNotificationPromoDialog = false
             }
         )
@@ -578,7 +438,7 @@ fun TemplatePreviewerScreen(
 }
 
 // ============================================
-// LOADING STATE WITH AD — 10s timeout + 2s display
+// LOADING STATE WITH AD — Waits for both ad and video
 // ============================================
 
 /**
@@ -587,12 +447,14 @@ fun TemplatePreviewerScreen(
  * Behavior:
  * - Shows CircularProgressIndicator at center
  * - Shows native ad at bottom
- * - Waits 10 seconds for ad to load
- * - After 10s, shows ad for 2 more seconds
- * - Total: 12 seconds before transitioning to Ready state
+ * - Waits for BOTH:
+ *   1. Ad loading: 10s timeout + 2s display (12s total)
+ *   2. First video loading: 10s timeout
+ * - Transitions to Ready state only when BOTH complete (or timeout)
+ * - Maximum wait time: ~12s (both timeouts run in parallel)
  *
- * Note: The actual transition to Ready state is controlled by ViewModel's
- * data loading. This just ensures the ad gets adequate display time.
+ * Note: This ensures users see a fully-loaded experience with both
+ * ad impression and first video ready to play.
  */
 @Composable
 private fun LoadingStateWithAd() {
@@ -621,7 +483,7 @@ private fun LoadingStateWithAd() {
         }
 
         // Native ad at bottom
-        // Loads during 10s + displays for 2s more = 12s total
+        // Loads during 10s + displays for 1s more = 11s maximum
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -629,7 +491,8 @@ private fun LoadingStateWithAd() {
         ) {
             NativeAdView(
                 placement = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isDebug = BuildConfig.DEBUG
             )
         }
     }
@@ -643,8 +506,6 @@ private fun LoadingStateWithAd() {
 @Composable
 private fun TemplatePreviewerReadyContent(
     state: TemplatePreviewerUiState.Ready,
-    currentSong: SongLoadState,
-    playerDurationMs: Long?,
     likedTemplateIds: Set<String>,
     unlockedTemplateIds: Set<String>,
     onPageChanged: (Int) -> Unit,
@@ -652,10 +513,12 @@ private fun TemplatePreviewerReadyContent(
     onRatioSelected: (VideoTemplate, AspectRatio) -> Unit,
     onLikeTemplate: (VideoTemplate) -> Unit,
     eventLocation: String = AnalyticsEvent.Value.Location.PREVIEW_SWIPE,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onFirstVideoReady: () -> Unit
 ) {
     val templates = state.templates
     val screenSessionId = remember { Analytics.newScreenSessionId() }
+    var hasSwipedTemplate by remember { mutableStateOf(false) }
     val pagerState = rememberPagerState(
         initialPage = initialVirtualPage(state.initialPage, templates.size),
         pageCount = { VIRTUAL_PAGE_COUNT }
@@ -682,27 +545,41 @@ private fun TemplatePreviewerReadyContent(
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .drop(1)
-            .collect { onPageChanged(it) }
+            .collect {
+                hasSwipedTemplate = true
+                onPageChanged(it)
+            }
     }
 
     LaunchedEffect(pagerState, templates, screenSessionId) {
+        var isFirstSettledEmission = true
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { settledPage ->
                 val template = templates[settledPage % templates.size]
+                val trackingLocation =
+                    if (isFirstSettledEmission) {
+                        eventLocation
+                    } else {
+                        AnalyticsEvent.Value.Location.PREVIEW_SWIPE
+                    }
                 Analytics.trackTemplatePreview(
                     templateId = template.id,
                     templateName = template.name,
-                    location = eventLocation
+                    location = trackingLocation
                 )
                 Analytics.trackTemplateImpression(
                     templateId = template.id,
                     templateName = template.name,
-                    location = eventLocation,
+                    location = trackingLocation,
                     screenSessionId = screenSessionId
                 )
+                isFirstSettledEmission = false
             }
     }
+
+    val templateEventLocation =
+        if (hasSwipedTemplate) AnalyticsEvent.Value.Location.PREVIEW_SWIPE else eventLocation
 
     // Priority-based image preloading: current page first, then adjacent pages
     // Use singleton ImageLoader to avoid memory leaks from creating new instances
@@ -758,17 +635,18 @@ private fun TemplatePreviewerReadyContent(
             modifier = Modifier.fillMaxSize(),
             key = { pageIndex -> templates[pageIndex % templates.size].id }
         ) { pageIndex ->
-            // Only animate thumbnail once music is loaded — thumbnail + audio start together.
-            // While SongLoadState.Loading: static first frame shown (shimmer in music row).
-            // SongLoadState.None means this template has no song — animate immediately.
-            val musicReady = currentSong !is SongLoadState.Loading
+            // Videos now have built-in music, so always animate immediately when page is current
             val isCurrentPage = pageIndex == pagerState.settledPage
                 && !pagerState.isScrollInProgress
-                && musicReady
+
+            // Only pass onFirstVideoReady callback to the initial page
+            val isInitialPage = pageIndex == initialVirtualPage(state.initialPage, templates.size)
+
             TemplateThumbnailPage(
                 template = templates[pageIndex % templates.size],
                 isCurrentPage = isCurrentPage,
-                isPriorityPage = pageIndex == pagerState.settledPage  // High priority for visible page
+                isPriorityPage = pageIndex == pagerState.settledPage,  // High priority for visible page
+                onVideoReady = if (isInitialPage) onFirstVideoReady else null  // Only track first video
             )
         }
 
@@ -834,110 +712,103 @@ private fun TemplatePreviewerReadyContent(
             }
         }
 
-        // Bottom bar — music info + template name + CTA
-        ProvideShimmerEffect {
-            Column(
+        // Bottom bar — like button + CTA
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .padding(bottom = 60.dp),  // Space for banner ad (50dp + 10dp spacing)
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            val currentTemplate = templates.getOrNull(pagerState.settledPage % templates.size)
+            val isLiked = currentTemplate?.id in likedTemplateIds
+            Row(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
-                    .padding(bottom = 60.dp),  // Space for banner ad (50dp + 10dp spacing)
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
             ) {
-                val currentTemplate = templates.getOrNull(pagerState.settledPage % templates.size)
-                val isLiked = currentTemplate?.id in likedTemplateIds
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        if (isLiked) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_heart_liked),
-                                tint = Primary,
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp)
-                                    .clickableSingle {
-                                        currentTemplate?.let { template ->
-                                            Analytics.trackTemplateUnfavorite(
-                                                templateId = template.id,
-                                                templateName = template.name,
-                                                location = eventLocation
-                                            )
-                                            onLikeTemplate(template)
-                                        }
+                    if (isLiked) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_heart_liked),
+                            tint = Primary,
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp)
+                                .clickableSingle {
+                                    currentTemplate?.let { template ->
+                                        Analytics.trackTemplateUnfavorite(
+                                            templateId = template.id,
+                                            templateName = template.name,
+                                            location = templateEventLocation
+                                        )
+                                        onLikeTemplate(template)
                                     }
-                            )
-                        } else {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_heart),
-                                tint = SurfaceLight,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clickableSingle {
-                                        currentTemplate?.let { template ->
-                                            Analytics.trackTemplateFavorite(
-                                                templateId = template.id,
-                                                templateName = template.name,
-                                                location = eventLocation
-                                            )
-                                            onLikeTemplate(template)
-                                        }
+                                }
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_heart),
+                            tint = SurfaceLight,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clickableSingle {
+                                    currentTemplate?.let { template ->
+                                        Analytics.trackTemplateFavorite(
+                                            templateId = template.id,
+                                            templateName = template.name,
+                                            location = templateEventLocation
+                                        )
+                                        onLikeTemplate(template)
                                     }
-                            )
-                        }
-
-                        Text(
-                            text = stringResource(R.string.template_add_to_favorites),
-                            color = SurfaceLight,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 12.sp
+                                }
                         )
                     }
+
+                    Text(
+                        text = stringResource(R.string.template_add_to_favorites),
+                        color = SurfaceLight,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp
+                    )
                 }
-
-                // Music info capsule
-                MusicInfoCapsule(currentSong = currentSong, playerDurationMs = playerDurationMs)
-
-                // CTA button — spinner while music loads or project is being created.
-                // Enabled once music is ready (or template has no music) and not yet creating.
-                // Always shows ratio selector (lock check moved to ratio sheet)
-                val ctaLoading = state.isCreatingProject || currentSong is SongLoadState.Loading
-                val ctaEnabled = currentSong !is SongLoadState.Loading && !state.isCreatingProject
-                PrimaryButton(
-                    text = stringResource(R.string.template_use_button),
-                    onClick = {
-                        val template = templates.getOrNull(pagerState.settledPage % templates.size) ?: return@PrimaryButton
-                        Analytics.trackTemplateClick(
-                            templateId = template.id,
-                            templateName = template.name,
-                            location = eventLocation
-                        )
-                        // Always show ratio selection bottom sheet
-                        pendingTemplate = template
-                    },
-                    enabled = ctaEnabled,
-                    isLoading = ctaLoading,
-                    leadingIcon = {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_circle_plus),
-                            contentDescription = null,
-                            tint = Color.Unspecified,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    },
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .height(52.dp)
-                )
             }
+
+            // CTA button — spinner while project is being created
+            val ctaLoading = state.isCreatingProject
+            val ctaEnabled = !state.isCreatingProject
+            PrimaryButton(
+                text = stringResource(R.string.template_use_button),
+                onClick = {
+                    val template = templates.getOrNull(pagerState.settledPage % templates.size) ?: return@PrimaryButton
+                    Analytics.trackTemplateClick(
+                        templateId = template.id,
+                        templateName = template.name,
+                        location = templateEventLocation
+                    )
+                    // Always show ratio selection bottom sheet
+                    pendingTemplate = template
+                },
+                enabled = ctaEnabled,
+                isLoading = ctaLoading,
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_circle_plus),
+                        contentDescription = null,
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .height(52.dp)
+            )
         }
 
         // Banner ad - positioned at bottom, above safe area (like HomeScreen)
@@ -963,7 +834,7 @@ private fun TemplatePreviewerReadyContent(
                     Analytics.trackTemplateSelect(
                         templateId = template.id,
                         templateName = template.name,
-                        location = eventLocation
+                        location = templateEventLocation
                     )
 
                     if (isLocked) {
@@ -1236,82 +1107,6 @@ private fun AspectRatioIcon(ratio: AspectRatio, isSelected: Boolean) {
 }
 
 // ============================================
-// MUSIC INFO CAPSULE — vertical layout, shimmer while loading
-// ============================================
-
-/** Formats duration millis as "00:12" (zero-padded minutes and seconds). */
-private fun formatDurationMmSs(durationMs: Long): String {
-    val totalSec = durationMs / 1000
-    val minutes = totalSec / 60
-    val seconds = totalSec % 60
-    return "%02d:%02d".format(minutes, seconds)
-}
-
-@Composable
-private fun MusicInfoCapsule(currentSong: SongLoadState, playerDurationMs: Long?) {
-    if (currentSong is SongLoadState.None) return
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(color = Black60, shape = RoundedCornerShape(999.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Icon(
-            painter = painterResource(id = R.drawable.ic_double_notes),
-            contentDescription = null,
-            tint = Color.White.copy(alpha = 0.8f),
-            modifier = Modifier.size(16.dp)
-        )
-
-        when (currentSong) {
-            is SongLoadState.Loading -> {
-                ShimmerPlaceholder(
-                    modifier = Modifier.width(100.dp).height(10.dp),
-                    cornerRadius = 4.dp
-                )
-                ShimmerPlaceholder(
-                    modifier = Modifier.width(36.dp).height(10.dp),
-                    cornerRadius = 4.dp
-                )
-            }
-            is SongLoadState.Ready -> {
-                Text(
-                    text = currentSong.song.name,
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    modifier = Modifier
-                        .weight(1f)
-                        .basicMarquee()
-                )
-                Text(
-                    text = if (playerDurationMs != null && playerDurationMs > 0)
-                        formatDurationMmSs(playerDurationMs)
-                    else "--:--",
-                    color = Color.White.copy(alpha = 0.6f),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal
-                )
-            }
-            is SongLoadState.Error -> {
-                Text(
-                    text = stringResource(R.string.error_template_music_failed),
-                    color = com.videomaker.aimusic.ui.theme.Error,
-                    style = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            is SongLoadState.None -> Unit
-        }
-    }
-}
-
-// ============================================
 // SINGLE PAGE — thumbnail image
 // ============================================
 
@@ -1319,7 +1114,8 @@ private fun MusicInfoCapsule(currentSong: SongLoadState, playerDurationMs: Long?
 private fun TemplateThumbnailPage(
     template: VideoTemplate,
     isCurrentPage: Boolean,
-    isPriorityPage: Boolean = false  // True for visible/settled page (kept for future use)
+    isPriorityPage: Boolean = false,  // True for visible/settled page (kept for future use)
+    onVideoReady: (() -> Unit)? = null  // Callback when video is ready (for first video only)
 ) {
     val context = LocalContext.current
 
@@ -1337,7 +1133,9 @@ private fun TemplateThumbnailPage(
                 modifier = Modifier.fillMaxSize(),
                 autoPlay = isCurrentPage,  // Only play when visible
                 loop = true,
-                showControls = false
+                showControls = false,
+                skipDebounce = onVideoReady != null,  // Skip 150ms delay for first video only
+                onVideoReady = onVideoReady  // Notify when video is ready (for first video tracking)
             )
         } else {
             // Fallback to image preview
@@ -1383,47 +1181,6 @@ private fun TemplateThumbnailPage(
 }
 
 // ============================================
-// AUDIO HELPERS
-// ============================================
-
-/** Smoothly animate player volume to [to] over [durationMs]. */
-private suspend fun fadeVolume(player: ExoPlayer, to: Float, durationMs: Long = 250) {
-    val from = player.volume
-    if (from == to) return
-    val steps = 10
-    val stepMs = durationMs / steps
-    repeat(steps) { i ->
-        player.volume = from + (to - from) * ((i + 1).toFloat() / steps)
-        delay(stepMs)
-    }
-    player.volume = to
-}
-
-/** Suspend until the player reaches STATE_READY or fails. Returns true on ready. */
-@androidx.annotation.OptIn(UnstableApi::class)
-private suspend fun awaitPlayerReady(player: ExoPlayer): Boolean {
-    if (player.playbackState == Player.STATE_READY) return true
-    return suspendCancellableCoroutine { cont ->
-        val listener = object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                // STATE_IDLE excluded: it fires spuriously right after prepare() before
-                // buffering begins. Errors are handled exclusively by onPlayerError.
-                if (state == Player.STATE_READY || state == Player.STATE_ENDED) {
-                    player.removeListener(this)
-                    if (cont.isActive) cont.resume(state == Player.STATE_READY)
-                }
-            }
-            override fun onPlayerError(error: PlaybackException) {
-                player.removeListener(this)
-                if (cont.isActive) cont.resume(false)
-            }
-        }
-        player.addListener(listener)
-        cont.invokeOnCancellation { player.removeListener(listener) }
-    }
-}
-
-// ============================================
 // PREVIEWS
 // ============================================
 
@@ -1433,18 +1190,8 @@ private val previewTemplates = listOf(
     VideoTemplate(id = "t3", name = "City Lights", songId = 0L, effectSetId = "minimal"),
 )
 
-private val previewSongReady = SongLoadState.Ready(
-    song = com.videomaker.aimusic.domain.model.MusicSong(
-        id = 1L,
-        name = "Golden Hour",
-        artist = "Loving Caliber",
-        durationMs = 182000
-    ),
-    nonce = 0
-)
-
 @androidx.compose.ui.tooling.preview.Preview(
-    name = "Ready — music loaded",
+    name = "Ready",
     showBackground = true,
     backgroundColor = 0xFF000000,
     device = "spec:width=390dp,height=844dp,dpi=460"
@@ -1452,81 +1199,20 @@ private val previewSongReady = SongLoadState.Ready(
 @Composable
 private fun PreviewTemplatePreviewerReady() {
     com.videomaker.aimusic.ui.theme.VideoMakerTheme {
-        ProvideShimmerEffect {
-            TemplatePreviewerReadyContent(
-                state = TemplatePreviewerUiState.Ready(
-                    templates = previewTemplates,
-                    initialPage = 0
-                ),
-                currentSong = previewSongReady,
-                playerDurationMs = 182000L,
-                likedTemplateIds = emptySet(),
-                unlockedTemplateIds = emptySet(),
-                onPageChanged = {},
-                onUseThisTemplate = { _, _ -> },
-                onRatioSelected = { _, _ -> },
-                onLikeTemplate = {},
-                onNavigateBack = {}
-            )
-        }
-    }
-}
-
-@androidx.compose.ui.tooling.preview.Preview(
-    name = "Ready — music loading (shimmer)",
-    showBackground = true,
-    backgroundColor = 0xFF000000,
-    device = "spec:width=390dp,height=844dp,dpi=460"
-)
-@Composable
-private fun PreviewTemplatePreviewerMusicLoading() {
-    com.videomaker.aimusic.ui.theme.VideoMakerTheme {
-        ProvideShimmerEffect {
-            TemplatePreviewerReadyContent(
-                state = TemplatePreviewerUiState.Ready(
-                    templates = previewTemplates,
-                    initialPage = 0
-                ),
-                currentSong = SongLoadState.Loading,
-                playerDurationMs = null,
-                likedTemplateIds = emptySet(),
-                unlockedTemplateIds = emptySet(),
-                onPageChanged = {},
-                onUseThisTemplate = { _, _ -> },
-                onRatioSelected = { _, _ -> },
-                onLikeTemplate = {},
-                onNavigateBack = {}
-            )
-        }
-    }
-}
-
-@androidx.compose.ui.tooling.preview.Preview(
-    name = "Ready — no music",
-    showBackground = true,
-    backgroundColor = 0xFF000000,
-    device = "spec:width=390dp,height=844dp,dpi=460"
-)
-@Composable
-private fun PreviewTemplatePreviewerNoMusic() {
-    com.videomaker.aimusic.ui.theme.VideoMakerTheme {
-        ProvideShimmerEffect {
-            TemplatePreviewerReadyContent(
-                state = TemplatePreviewerUiState.Ready(
-                    templates = previewTemplates,
-                    initialPage = 2  // "City Lights" has songId=0
-                ),
-                currentSong = SongLoadState.None,
-                playerDurationMs = null,
-                likedTemplateIds = emptySet(),
-                unlockedTemplateIds = emptySet(),
-                onPageChanged = {},
-                onUseThisTemplate = { _, _ -> },
-                onRatioSelected = { _, _ -> },
-                onLikeTemplate = {},
-                onNavigateBack = {}
-            )
-        }
+        TemplatePreviewerReadyContent(
+            state = TemplatePreviewerUiState.Ready(
+                templates = previewTemplates,
+                initialPage = 0
+            ),
+            likedTemplateIds = emptySet(),
+            unlockedTemplateIds = emptySet(),
+            onPageChanged = {},
+            onUseThisTemplate = { _, _ -> },
+            onRatioSelected = { _, _ -> },
+            onLikeTemplate = {},
+            onNavigateBack = {},
+            onFirstVideoReady = {}
+        )
     }
 }
 
@@ -1539,24 +1225,21 @@ private fun PreviewTemplatePreviewerNoMusic() {
 @Composable
 private fun PreviewTemplatePreviewerCreating() {
     com.videomaker.aimusic.ui.theme.VideoMakerTheme {
-        ProvideShimmerEffect {
-            TemplatePreviewerReadyContent(
-                state = TemplatePreviewerUiState.Ready(
-                    templates = previewTemplates,
-                    initialPage = 0,
-                    isCreatingProject = true
-                ),
-                currentSong = previewSongReady,
-                playerDurationMs = 182000L,
-                likedTemplateIds = setOf("t1"),
-                unlockedTemplateIds = emptySet(),
-                onPageChanged = {},
-                onUseThisTemplate = { _, _ -> },
-                onRatioSelected = { _, _ -> },
-                onLikeTemplate = {},
-                onNavigateBack = {}
-            )
-        }
+        TemplatePreviewerReadyContent(
+            state = TemplatePreviewerUiState.Ready(
+                templates = previewTemplates,
+                initialPage = 0,
+                isCreatingProject = true
+            ),
+            likedTemplateIds = setOf("t1"),
+            unlockedTemplateIds = emptySet(),
+            onPageChanged = {},
+            onUseThisTemplate = { _, _ -> },
+            onRatioSelected = { _, _ -> },
+            onLikeTemplate = {},
+            onNavigateBack = {},
+            onFirstVideoReady = {}
+        )
     }
 }
 

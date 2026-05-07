@@ -4,6 +4,15 @@ import co.alcheclub.lib.acccore.remoteconfig.ConfigContainer
 import co.alcheclub.lib.acccore.remoteconfig.ConfigurableObject
 import com.videomaker.aimusic.core.constants.RemoteConfigKeys
 
+/**
+ * Notification Schedule Configuration Service
+ *
+ * Manages notification scheduling configuration from Remote Config.
+ * Implements ConfigurableObject for automatic Remote Config updates.
+ * Registration happens centrally in VideoMakerApplication.kt.
+ *
+ * @param onEffectiveConfigChanged Callback when effective config changes
+ */
 class NotificationScheduleConfigService(
     private val onEffectiveConfigChanged: () -> Unit = {}
 ) : ConfigurableObject {

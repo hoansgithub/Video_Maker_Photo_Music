@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
@@ -83,7 +84,8 @@ fun UnifiedSearchIdleContent(
                 android.util.Log.d("UnifiedSearch", "🔵 Composing NativeAdView (Idle)")
                 NativeAdView(
                     placement = AdPlacement.NATIVE_SEARCH_INFEED,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
                 )
             }
         }
@@ -175,7 +177,14 @@ fun UnifiedSearchIdleContent(
                             Spacer(modifier = Modifier.height(dimens.spaceSm))
                             UnifiedTemplateGrid(
                                 templates = featuredTemplates,
-                                onTemplateClick = onTemplateClick,
+                                onTemplateClick = { template ->
+                                    Analytics.trackTemplateClick(
+                                        templateId = template.id,
+                                        templateName = template.name,
+                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                    )
+                                    onTemplateClick.invoke(template.id)
+                                },
                                 modifier = Modifier.padding(horizontal = dimens.spaceLg)
                             )
                             Spacer(modifier = Modifier.height(dimens.spaceXl))

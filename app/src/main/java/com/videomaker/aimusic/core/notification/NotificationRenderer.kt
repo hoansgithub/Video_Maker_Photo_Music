@@ -2,6 +2,7 @@ package com.videomaker.aimusic.core.notification
 
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -14,6 +15,7 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
 import android.net.Uri
+import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -37,35 +39,40 @@ class NotificationRenderer(
         val resolvedTitle = payload.title.resolve(context)
         val resolvedBody = payload.body.resolve(context)
         val resolvedCtaText = payload.ctaText.resolve(context)
-        val deepLinkIntent = NotificationDeepLinkFactory.toMainActivityIntent(context, payload.deepLink)
-        val contentIntent = PendingIntent.getBroadcast(
+        val baseLaunchIntent = NotificationDeepLinkFactory.toMainActivityIntent(context, payload.deepLink)
+        val contentLaunchIntent = Intent(baseLaunchIntent).apply {
+            putExtra(NotificationIntentExtras.EXTRA_NOTIFICATION_TYPE, payload.type.name)
+            putExtra(NotificationIntentExtras.EXTRA_NOTIFICATION_ITEM_ID, payload.itemId)
+            putExtra(NotificationIntentExtras.EXTRA_NOTIFICATION_ITEM_TYPE, payload.itemType)
+            putExtra(NotificationIntentExtras.EXTRA_NOTIFICATION_CTA, "open_notification")
+            putExtra(
+                NotificationIntentExtras.EXTRA_NOTIFICATION_DEEP_LINK_DESTINATION,
+                payload.deepLink.deepLinkDestination
+            )
+        }
+        val actionLaunchIntent = Intent(baseLaunchIntent).apply {
+            putExtra(NotificationIntentExtras.EXTRA_NOTIFICATION_TYPE, payload.type.name)
+            putExtra(NotificationIntentExtras.EXTRA_NOTIFICATION_ITEM_ID, payload.itemId)
+            putExtra(NotificationIntentExtras.EXTRA_NOTIFICATION_ITEM_TYPE, payload.itemType)
+            putExtra(
+                NotificationIntentExtras.EXTRA_NOTIFICATION_CTA,
+                resolvedCtaText.lowercase(Locale.ROOT).replace(" ", "_")
+            )
+            putExtra(
+                NotificationIntentExtras.EXTRA_NOTIFICATION_DEEP_LINK_DESTINATION,
+                payload.deepLink.deepLinkDestination
+            )
+        }
+        val contentIntent = PendingIntent.getActivity(
             context,
             buildRequestCode(stableSeed, 11),
-            NotificationActionReceiver.buildIntent(
-                context = context,
-                type = payload.type,
-                itemId = payload.itemId,
-                itemType = payload.itemType,
-                notificationId = notificationId,
-                cta = "open_notification",
-                deepLinkDestination = payload.deepLink.deepLinkDestination,
-                deepLinkIntent = deepLinkIntent
-            ),
+            contentLaunchIntent,
             PENDING_INTENT_FLAGS
         )
-        val actionIntent = PendingIntent.getBroadcast(
+        val actionIntent = PendingIntent.getActivity(
             context,
             buildRequestCode(stableSeed, 17),
-            NotificationActionReceiver.buildIntent(
-                context = context,
-                type = payload.type,
-                itemId = payload.itemId,
-                itemType = payload.itemType,
-                notificationId = notificationId,
-                cta = resolvedCtaText.lowercase(Locale.ROOT).replace(" ", "_"),
-                deepLinkDestination = payload.deepLink.deepLinkDestination,
-                deepLinkIntent = deepLinkIntent
-            ),
+            actionLaunchIntent,
             PENDING_INTENT_FLAGS
         )
         val deleteIntent = PendingIntent.getBroadcast(
@@ -96,7 +103,10 @@ class NotificationRenderer(
         return runCatching {
             NotificationManagerCompat.from(context).notify(notificationId, notification)
             true
-        }.getOrElse { false }
+        }.getOrElse {
+            Log.e(TAG, "Failed to show notification type=${payload.type} itemId=${payload.itemId}", it)
+            false
+        }
     }
 
     private suspend fun loadHeroBitmap(
@@ -439,6 +449,7 @@ class NotificationRenderer(
     }
 
     companion object {
+        private const val TAG = "NotificationRenderer"
         private const val COLOR_WHITE = 0xFFFFFFFF.toInt()
         private const val COLOR_TITLE_LIGHT = 0xFF171D1B.toInt()
         private const val COLOR_BODY_LIGHT = 0xFF3F4946.toInt()

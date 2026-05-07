@@ -34,14 +34,13 @@ object ProjectMapper {
     }
 
     /**
-     * Map ProjectEntity to ProjectSettings
-     * Applies defaults for null values from legacy projects
+     * Map ProjectEntity to ProjectSettings (BEAT-SYNC ONLY)
      */
     private fun toSettings(entity: ProjectEntity): ProjectSettings {
         return ProjectSettings(
-            imageDurationMs = entity.imageDurationMs,
-            transitionPercentage = entity.transitionPercentage,
+            totalDurationMs = entity.totalDurationMs,
             effectSetId = entity.effectSetId,
+            templateId = entity.templateId?.takeIf { it.isNotBlank() },
             overlayFrameId = entity.overlayFrameId,
             musicSongId = entity.musicSongId,
             musicSongName = entity.musicSongName,
@@ -50,8 +49,6 @@ object ProjectMapper {
             customAudioUri = entity.customAudioUri?.let { Uri.parse(it) },
             processedAudioUri = entity.processedAudioUri?.let { Uri.parse(it) },
             audioVolume = entity.audioVolume,
-            musicTrimStartMs = entity.musicTrimStartMs,
-            musicTrimEndMs = entity.musicTrimEndMs,
             aspectRatio = AspectRatio.fromString(entity.aspectRatio)
         )
     }
@@ -69,7 +66,7 @@ object ProjectMapper {
     }
 
     /**
-     * Map Project domain model to ProjectEntity
+     * Map Project domain model to ProjectEntity (BEAT-SYNC ONLY)
      */
     fun toEntity(project: Project): ProjectEntity {
         return ProjectEntity(
@@ -78,9 +75,9 @@ object ProjectMapper {
             createdAt = project.createdAt,
             updatedAt = project.updatedAt,
             thumbnailUri = project.thumbnailUri?.toString(),
-            imageDurationMs = project.settings.imageDurationMs,
-            transitionPercentage = project.settings.transitionPercentage,
+            totalDurationMs = project.settings.totalDurationMs,
             effectSetId = project.settings.effectSetId,
+            templateId = project.settings.templateId?.takeIf { it.isNotBlank() },
             overlayFrameId = project.settings.overlayFrameId,
             musicSongId = project.settings.musicSongId,
             musicSongName = project.settings.musicSongName,
@@ -89,8 +86,6 @@ object ProjectMapper {
             customAudioUri = project.settings.customAudioUri?.toString(),
             processedAudioUri = project.settings.processedAudioUri?.toString(),
             audioVolume = project.settings.audioVolume,
-            musicTrimStartMs = project.settings.musicTrimStartMs,
-            musicTrimEndMs = project.settings.musicTrimEndMs,
             aspectRatio = project.settings.aspectRatio.name,
             isWatermarkFree = project.isWatermarkFree
         )

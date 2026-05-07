@@ -98,6 +98,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.runtime.Immutable
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
 
 // ============================================
@@ -279,7 +280,7 @@ private fun SongsContent(
             state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                top = topBarHeight + dimens.spaceLg,
+                top = topBarHeight + dimens.spaceSm,  // Reduced from spaceLg to spaceSm
                 bottom = dimens.space3Xl + dimens.space2Xl
             )
         ) {
@@ -290,7 +291,7 @@ private fun SongsContent(
                     hint = stringResource(R.string.songs_search_hint),
                     modifier = Modifier.padding(
                         horizontal = dimens.spaceLg,
-                        vertical = dimens.spaceMd
+                        vertical = dimens.spaceXs  // Reduced from spaceMd to spaceXs
                     )
                 )
             }
@@ -617,10 +618,8 @@ private fun StationSongsSection(
                             // Native ad item (horizontal row, matches song items)
                             NativeAdView(
                                 placement = AdPlacement.NATIVE_SONGS_STATION,
-                                modifier = Modifier.padding(
-                                    horizontal = dimens.spaceLg,
-                                    vertical = dimens.spaceXs
-                                )
+                                modifier = Modifier.fillMaxWidth(),
+                                isDebug = BuildConfig.DEBUG
                             )
                         }
                     }

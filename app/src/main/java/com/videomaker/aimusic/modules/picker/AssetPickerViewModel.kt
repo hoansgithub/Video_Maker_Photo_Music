@@ -19,6 +19,7 @@ import com.videomaker.aimusic.core.notification.NotificationScheduler
 import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.EditorInitialData
+import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
@@ -219,7 +220,7 @@ class AssetPickerViewModel(
     val isSongToVideoMode: Boolean get() = overrideSongId >= 0L
 
     /** Minimum number of images required before confirming */
-    val minSelection: Int get() = if (isTemplateMode) 3 else 1
+    val minSelection: Int get() = if (isAddMode) 1 else 2
 
     // ============================================
     // STATE
@@ -757,14 +758,22 @@ class AssetPickerViewModel(
             notificationScheduler.cancelDraftReminders(draftId)
             preferencesManager.clearDraftReminderState(draftId)
         }
-        Analytics.trackExitSave(
-            videoId = projectId,
-            location = AnalyticsEvent.Value.Location.MEDIA_SELECT
-        )
         Analytics.trackMediaComplete(currentState.selectedAssets.size)
 
         viewModelScope.launch {
             val uris = currentState.selectedAssets.map { it.uri }
+            // Beat-sync mode only - duration calculated from beat-sync data later
+            val analyticsVideoId = buildDraftId() ?: "picker_generate_${System.currentTimeMillis()}"
+
+            if (!templateId.isNullOrBlank()) {
+                Analytics.trackVideoGenerate(
+                    videoId = analyticsVideoId,
+                    templateId = templateId,
+                    songId = overrideSongId.takeIf { it >= 0L }?.toString(),
+                    duration = null, // Duration will be calculated from beat-sync data
+                    mediaQuantity = uris.size
+                )
+            }
 
             when {
                 // PRIORITY 1: Template already selected - go directly to Editor
@@ -789,11 +798,12 @@ class AssetPickerViewModel(
                                 val initialData = EditorInitialData(
                                     imageUris = uris.map { it.toString() },
                                     effectSetId = template.effectSetId,
-                                    imageDurationMs = template.imageDurationMs.toLong(),
-                                    transitionPercentage = template.transitionPct,
+                                    templateId = template.id,
                                     musicSongId = songId,
                                     musicSongName = songName,
-                                    aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio)
+                                    aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio),
+                                    applyHookStartDefaults = overrideSongId >= 0L,
+                                    analyticsVideoId = analyticsVideoId
                                 )
 
                                 _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditorWithData(initialData)
@@ -806,12 +816,19 @@ class AssetPickerViewModel(
                         }
                 }
                 // PRIORITY 2: Song-to-video mode WITHOUT template selected
-                // Navigate to template selector with the chosen song
+                // Navigate directly to Editor - effect set will be fetched from Supabase
                 isSongToVideoMode -> {
-                    _navigationEvent.value = AssetPickerNavigationEvent.NavigateToTemplatePreviewer(
-                        templateId = "",
-                        imageUris = uris.map { it.toString() },
-                        overrideSongId = overrideSongId
+                    _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditorWithData(
+                        initialData = EditorInitialData(
+                            imageUris = uris.map { it.toString() },
+                            effectSetId = null,  // Editor will fetch first effect set from Supabase
+                            templateId = null,
+                            musicSongId = overrideSongId,
+                            musicSongName = null,  // Will be loaded by editor
+                            aspectRatio = AspectRatio.RATIO_9_16,
+                            applyHookStartDefaults = true,  // Apply hook start for song-to-video mode
+                            analyticsVideoId = analyticsVideoId
+                        )
                     )
                 }
                 projectId != null -> {
@@ -825,8 +842,14 @@ class AssetPickerViewModel(
                         }
                 }
                 else -> {
-                    // Create mode - create new project
-                    createProjectUseCase(uris)
+                    // Create mode - create new project (beat-sync only)
+                    // Duration will be calculated from beat-sync data in Editor
+                    val settings = ProjectSettings(
+                        totalDurationMs = 0L,
+                        templateId = null
+                    )
+
+                    createProjectUseCase(uris, settings)
                         .onSuccess { project ->
                             _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditor(project.id)
                         }

@@ -2,6 +2,9 @@ package com.videomaker.aimusic.modules.editor.components
 
 object PreviewLoopPolicy {
 
+    // Ignore tiny duration deltas caused by timing/decoder jitter to avoid accidental loop toggles.
+    private const val LOOP_COMPARISON_TOLERANCE_MS = 50L
+
     fun resolveSegmentDurationMs(
         trimStartMs: Long,
         trimEndMs: Long,
@@ -20,7 +23,9 @@ object PreviewLoopPolicy {
     }
 
     fun shouldLoopAudio(segmentDurationMs: Long, videoDurationMs: Long): Boolean {
-        return segmentDurationMs > 0L && videoDurationMs > 0L && segmentDurationMs < videoDurationMs
+        return segmentDurationMs > 0L &&
+            videoDurationMs > 0L &&
+            segmentDurationMs + LOOP_COMPARISON_TOLERANCE_MS < videoDurationMs
     }
 
     fun mapVideoToAudioPosition(
@@ -45,5 +50,21 @@ object PreviewLoopPolicy {
         // Loop only after crossing the end boundary.
         // Exact-boundary handling is owned by Player.STATE_ENDED callback to avoid double-restart races.
         return isPlaying && videoDurationMs > 0L && currentVideoPositionMs > videoDurationMs
+    }
+
+    fun shouldPropagatePlaybackStateToUi(
+        isPlaying: Boolean,
+        isPlayWhenReady: Boolean
+    ): Boolean {
+        // When playWhenReady is still true, a false isPlaying often means transient buffering/end-boundary.
+        // UI intent should stay "playing" and loop handling will resume playback immediately.
+        return isPlaying || !isPlayWhenReady
+    }
+
+    fun shouldRestartLoopPlayback(
+        userWantsPlayback: Boolean,
+        playerPlayWhenReady: Boolean
+    ): Boolean {
+        return userWantsPlayback && playerPlayWhenReady
     }
 }

@@ -79,6 +79,12 @@ import com.videomaker.aimusic.widget.WidgetScreen
 
 private val slideAnimSpec = tween<IntOffset>(300)
 
+internal fun createVideoEntryRoute(): AppRoute.TemplatePreviewer = AppRoute.TemplatePreviewer(
+    templateId = "",
+    imageUris = emptyList(),
+    sourceLocation = AnalyticsEvent.Value.Location.SHORTCUT_CREATE_VIDEO
+)
+
 /**
  * Safe back navigation helper - prevents NavDisplay crash from empty backstack
  * CRITICAL: NavDisplay requires at least 1 route in backstack at all times
@@ -202,7 +208,7 @@ fun AppNavigation(
                 }
             }
             WidgetActions.ACTION_CREATE_VIDEO -> {
-                backStack.add(AppRoute.AssetPicker())
+                backStack.add(createVideoEntryRoute())
             }
             NotificationDeepLinkFactory.ACTION_NOTIF_TRENDING_SONG -> {
                 val songId = intent.getLongExtra(NotificationDeepLinkFactory.EXTRA_SONG_ID, -1L)
@@ -350,10 +356,8 @@ fun AppNavigation(
                         backStack.add(AppRoute.TemplateList(selectedVibeTagId))
                     },
                     onNavigateToAssetPicker = { songId ->
-                        // Song-to-video flow: browse templates with override song
-                        backStack.add(AppRoute.TemplatePreviewer(
-                            templateId = "", // Top-ranked
-                            imageUris = emptyList(),
+                        // Song-to-video flow: select images, then go to editor (skip templates)
+                        backStack.add(AppRoute.AssetPicker(
                             overrideSongId = songId
                         ))
                     },
@@ -401,9 +405,8 @@ fun AppNavigation(
                     viewModel = suggestedSongsViewModel,
                     onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToAssetPicker = { songId ->
-                        backStack.add(AppRoute.TemplatePreviewer(
-                            templateId = "", // Top-ranked template
-                            imageUris = emptyList(),
+                        // Song-to-video flow: select images, then go to editor (skip templates)
+                        backStack.add(AppRoute.AssetPicker(
                             overrideSongId = songId
                         ))
                     }
@@ -420,9 +423,8 @@ fun AppNavigation(
                     viewModel = weeklyRankingViewModel,
                     onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToAssetPicker = { songId ->
-                        backStack.add(AppRoute.TemplatePreviewer(
-                            templateId = "", // Top-ranked template
-                            imageUris = emptyList(),
+                        // Song-to-video flow: select images, then go to editor (skip templates)
+                        backStack.add(AppRoute.AssetPicker(
                             overrideSongId = songId
                         ))
                     }
@@ -571,7 +573,6 @@ fun AppNavigation(
 
             entry<AppRoute.TemplatePreviewer> { route ->
                 val factory: TemplatePreviewerViewModelFactory = koinInject()
-                val audioCache: AudioPreviewCache = koinInject()
                 val viewModel: TemplatePreviewerViewModel = viewModel(
                     key = "template_previewer_${route.templateId}_${route.overrideSongId}_${route.sourceLocation}",
                     factory = createSafeViewModelFactory {
@@ -585,7 +586,6 @@ fun AppNavigation(
                 TemplatePreviewerScreen(
                     viewModel = viewModel,
                     sourceLocation = route.sourceLocation,
-                    audioDataSourceFactory = audioCache.cacheDataSourceFactory,
                     onNavigateToAssetPicker = { template, overrideSongId, aspectRatio ->
                         // User selected a template with aspect ratio, now pick images
                         // Pass templateId, overrideSongId (if song-to-video mode), and selected aspectRatio

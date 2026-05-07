@@ -19,8 +19,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,10 +49,14 @@ import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Black60
 import com.videomaker.aimusic.ui.theme.GoldAccent
 import com.videomaker.aimusic.ui.theme.Gray200
+import com.videomaker.aimusic.ui.theme.Gray600
+import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.TemplateBadgeBackground
 import com.videomaker.aimusic.ui.theme.TextOnPrimary
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.White12
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private val BadgeShape = RoundedCornerShape(999.dp)
 
@@ -79,9 +85,15 @@ fun TemplateCard(
 ) {
     val dimens = AppDimens.current
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     var expanded by remember { mutableStateOf(false) }
-    val imageRequest = remember(thumbnailPath) {
+
+    // Simple retry mechanism (3 attempts max) - keyed to thumbnailPath for lazy list safety
+    var retryCount by remember(thumbnailPath) { mutableIntStateOf(0) }
+    var retryTrigger by remember(thumbnailPath) { mutableIntStateOf(0) }
+
+    val imageRequest = remember(thumbnailPath, retryTrigger) {
         ImageRequest.Builder(context)
             .data(thumbnailPath)
             .size(Size(200, 350))  // Reduced from 400x700 to 200x350 (4x less data!)
@@ -92,7 +104,19 @@ fun TemplateCard(
             .crossfade(200)  // 200ms crossfade duration
             .listener(
                 onError = { request, result ->
-                    android.util.Log.e("TemplateCard", "Failed to load thumbnail: ${thumbnailPath}, error: ${result.throwable.message}")
+                    android.util.Log.e("TemplateCard", "Failed to load thumbnail (attempt ${retryCount + 1}/3): ${thumbnailPath}, error: ${result.throwable.message}")
+
+                    // Auto-retry silently (no user message)
+                    if (retryCount < 2) {  // 0, 1 = retry; 2 = give up
+                        retryCount++
+                        coroutineScope.launch {
+                            delay(1000L * retryCount)  // 1s, 2s delay
+                            retryTrigger++  // Trigger reload
+                        }
+                    }
+                },
+                onSuccess = { _, _ ->
+                    retryCount = 0  // Reset on success
                 }
             )
             .build()
@@ -122,17 +146,18 @@ fun TemplateCard(
                         )
                     },
                     error = { errorState ->
-                        // Show placeholder on error (will retry on scroll/recomposition)
+                        // Show friendly placeholder on error (auto-retrying up to 3 times)
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                                .background(SurfaceDark),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "⚠️",
-                                fontSize = 32.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                            Icon(
+                                painter = painterResource(R.drawable.ic_choose_img),
+                                contentDescription = "Failed to load",
+                                modifier = Modifier.size(48.dp),
+                                tint = Gray600
                             )
                         }
                     },

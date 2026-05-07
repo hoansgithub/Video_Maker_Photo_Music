@@ -54,6 +54,11 @@ class PreviewLoopPolicyTest {
     }
 
     @Test
+    fun `shouldLoopAudio returns false for tiny duration delta to avoid jitter loop`() {
+        assertFalse(PreviewLoopPolicy.shouldLoopAudio(segmentDurationMs = 5_000L, videoDurationMs = 5_020L))
+    }
+
+    @Test
     fun `shouldLoopAudio returns false when segment duration is invalid`() {
         assertFalse(PreviewLoopPolicy.shouldLoopAudio(segmentDurationMs = 0L, videoDurationMs = 60_000L))
     }
@@ -140,12 +145,71 @@ class PreviewLoopPolicyTest {
     }
 
     @Test
+    fun `near equal durations should not modulo map`() {
+        val mappedPosition = PreviewLoopPolicy.mapVideoToAudioPosition(
+            videoPositionMs = 5_015L,
+            segmentDurationMs = 5_000L,
+            videoDurationMs = 5_020L
+        )
+
+        assertEquals(5_015L, mappedPosition)
+    }
+
+    @Test
     fun `invalid video duration returns false for shouldLoopPreviewAtEnd`() {
         assertFalse(
             PreviewLoopPolicy.shouldLoopPreviewAtEnd(
                 currentVideoPositionMs = 10L,
                 videoDurationMs = 0L,
                 isPlaying = true
+            )
+        )
+    }
+
+    @Test
+    fun `propagate playback state for normal pause resume signals`() {
+        assertTrue(
+            PreviewLoopPolicy.shouldPropagatePlaybackStateToUi(
+                isPlaying = true,
+                isPlayWhenReady = true
+            )
+        )
+        assertTrue(
+            PreviewLoopPolicy.shouldPropagatePlaybackStateToUi(
+                isPlaying = false,
+                isPlayWhenReady = false
+            )
+        )
+    }
+
+    @Test
+    fun `suppress transient pause when playWhenReady remains true`() {
+        assertFalse(
+            PreviewLoopPolicy.shouldPropagatePlaybackStateToUi(
+                isPlaying = false,
+                isPlayWhenReady = true
+            )
+        )
+    }
+
+    @Test
+    fun `restart loop playback only when user still wants play and player was playWhenReady`() {
+        assertTrue(
+            PreviewLoopPolicy.shouldRestartLoopPlayback(
+                userWantsPlayback = true,
+                playerPlayWhenReady = true
+            )
+        )
+        assertFalse(
+            PreviewLoopPolicy.shouldRestartLoopPlayback(
+                userWantsPlayback = false,
+                playerPlayWhenReady = true
+            )
+        )
+        assertFalse(
+            PreviewLoopPolicy.shouldRestartLoopPlayback(
+                userWantsPlayback = true,
+                playerPlayWhenReady = false
             )
         )
     }

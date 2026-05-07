@@ -225,12 +225,15 @@ fun AssetPickerScreen(
         val fullGranted = result[Manifest.permission.READ_MEDIA_IMAGES] == true ||
             result[Manifest.permission.READ_EXTERNAL_STORAGE] == true
         val limitedGranted = result[Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED] == true
+        val button = when {
+            fullGranted -> AnalyticsEvent.Value.Option.ALLOW
+            limitedGranted -> AnalyticsEvent.Value.Option.LIMIT_ACCESS
+            else -> AnalyticsEvent.Value.Option.NO_ALLOW
+        }
         Analytics.trackPermissionClick(
-            button = if (fullGranted) {
-                AnalyticsEvent.Value.Option.ALLOW
-            } else {
-                AnalyticsEvent.Value.Option.NO_ALLOW
-            }
+            button = button,
+            perType = AnalyticsEvent.Value.PerType.MEDIA,
+            popType = AnalyticsEvent.Value.PopType.SYSTEM
         )
         mediaPermissionCoordinator.onSystemPermissionResult(fullGranted = fullGranted)
         val blockedAfterResult = !fullGranted &&
@@ -270,6 +273,15 @@ fun AssetPickerScreen(
                 showPermissionPromoDialog = false
                 showPermissionSettingsDialog = true
             }
+        }
+    }
+
+    LaunchedEffect(showPermissionPromoDialog) {
+        if (showPermissionPromoDialog) {
+            Analytics.trackPermissionRender(
+                perType = AnalyticsEvent.Value.PerType.MEDIA,
+                popType = AnalyticsEvent.Value.PopType.CUSTOM
+            )
         }
     }
 
@@ -371,10 +383,17 @@ fun AssetPickerScreen(
     }
 
     val onGiveAccess = {
-        Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.ALLOW)
+        Analytics.trackPermissionClick(
+            button = AnalyticsEvent.Value.Option.ALLOW,
+            perType = AnalyticsEvent.Value.PerType.MEDIA,
+            popType = AnalyticsEvent.Value.PopType.CUSTOM
+        )
         if (mediaPermissionCoordinator.canRequestSystemPermission(context)) {
             showPermissionPromoDialog = false
-            Analytics.trackPermissionRender()
+            Analytics.trackPermissionRender(
+                perType = AnalyticsEvent.Value.PerType.MEDIA,
+                popType = AnalyticsEvent.Value.PopType.SYSTEM
+            )
             permissionLauncher.launch(permissionsToRequest)
         } else {
             showPermissionPromoDialog = false
@@ -383,7 +402,11 @@ fun AssetPickerScreen(
     }
 
     val onNotNow = {
-        Analytics.trackPermissionClick(button = AnalyticsEvent.Value.Option.NO_ALLOW)
+        Analytics.trackPermissionClick(
+            button = AnalyticsEvent.Value.Option.NO_ALLOW,
+            perType = AnalyticsEvent.Value.PerType.MEDIA,
+            popType = AnalyticsEvent.Value.PopType.CUSTOM
+        )
         showPermissionPromoDialog = false
     }
 
@@ -435,6 +458,7 @@ fun AssetPickerScreen(
     }
 
     val onAddMorePhotos = {
+        Analytics.trackPermissionAddImage()
         photoPickerLauncher.launch(
             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
         )
@@ -456,6 +480,15 @@ fun AssetPickerScreen(
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
+        Analytics.trackPermissionClick(
+            button = if (granted) {
+                AnalyticsEvent.Value.Option.ALLOW
+            } else {
+                AnalyticsEvent.Value.Option.NO_ALLOW
+            },
+            perType = AnalyticsEvent.Value.PerType.CAMERA,
+            popType = AnalyticsEvent.Value.PopType.SYSTEM
+        )
         if (granted) {
             cameraUri?.let { cameraLauncher.launch(it) }
         }
@@ -478,6 +511,10 @@ fun AssetPickerScreen(
             if (hasCameraPermission) {
                 cameraLauncher.launch(uri)
             } else {
+                Analytics.trackPermissionRender(
+                    perType = AnalyticsEvent.Value.PerType.CAMERA,
+                    popType = AnalyticsEvent.Value.PopType.SYSTEM
+                )
                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
         } catch (e: IllegalArgumentException) {
@@ -1264,7 +1301,7 @@ private fun AssetPickerPermissionSettingsDialog(
                     .padding(12.dp)
                     .size(28.dp)
                     .background(Color.Black.copy(0.2f), CircleShape)
-                    .clickableSingle{
+                    .clickableSingle {
                         onDismiss.invoke()
                     }
                     .padding(4.dp)

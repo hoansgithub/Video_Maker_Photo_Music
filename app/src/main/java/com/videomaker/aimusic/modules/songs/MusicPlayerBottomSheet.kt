@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.Slideshow
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
-import com.videomaker.aimusic.modules.export.WatchAdDialog
 import com.videomaker.aimusic.ui.components.AdBadge
 import com.videomaker.aimusic.ui.components.AdBadgeStyle
 import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
@@ -74,6 +73,7 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import com.videomaker.aimusic.media.audio.HookStartTimePolicy
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
@@ -120,6 +120,23 @@ private fun ExoPlayer.releaseAsync() {
     }
 }
 
+internal fun shouldApplyMusicPlayerHookSeek(
+    playbackState: Int,
+    hasAppliedHookSeek: Boolean
+): Boolean = playbackState == Player.STATE_READY && !hasAppliedHookSeek
+
+internal fun resolveMusicPlayerHookStartPositionMs(
+    hookStartTimeMs: Long,
+    playerDurationMs: Long?,
+    songDurationMs: Int?
+): Long {
+    val resolvedDurationMs = playerDurationMs?.takeIf { it > 0L } ?: songDurationMs?.toLong()
+    return HookStartTimePolicy.resolve(
+        hookStartTimeMs = hookStartTimeMs,
+        durationMs = resolvedDurationMs
+    )
+}
+
 // ============================================
 // MUSIC PLAYER BOTTOM SHEET
 // ============================================
@@ -153,7 +170,6 @@ fun MusicPlayerBottomSheet(
     )
     val isLiked by viewModel.isLiked.collectAsStateWithLifecycle()
     val isSongUnlocked by viewModel.isSongUnlocked.collectAsStateWithLifecycle()
-    val showWatchAdDialog by viewModel.showWatchAdDialog.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
     val adsLoaderService = koinInject<AdsLoaderService>()
     var isPlaying  by remember { mutableStateOf(false) }
@@ -164,6 +180,8 @@ fun MusicPlayerBottomSheet(
     var seekValue  by remember { mutableFloatStateOf(0f) }
     var hasTrackedAutoPreview by remember(song.id) { mutableStateOf(false) }
     var hasTrackedImpression by remember(song.id) { mutableStateOf(false) }
+    var hasAppliedHookSeek by remember(song.id) { mutableStateOf(false) }
+    var wasPlayingBeforeAd by remember(song.id) { mutableStateOf(false) }
     val playerSessionId = remember(song.id) { Analytics.newScreenSessionId() }
 
     val context = LocalContext.current
@@ -194,7 +212,20 @@ fun MusicPlayerBottomSheet(
             override fun onPlaybackStateChanged(state: Int) {
                 when (state) {
                     Player.STATE_READY -> {
-                        durationMs = player.duration.coerceAtLeast(1).toInt()
+                        val resolvedDurationMs = player.duration.takeIf { it > 0L } ?: song.durationMs?.toLong()
+                        durationMs = resolvedDurationMs?.coerceAtLeast(1L)?.toInt() ?: 1
+                        if (shouldApplyMusicPlayerHookSeek(state, hasAppliedHookSeek)) {
+                            val hookStartPositionMs = resolveMusicPlayerHookStartPositionMs(
+                                hookStartTimeMs = song.hookStartTimeMs,
+                                playerDurationMs = resolvedDurationMs,
+                                songDurationMs = song.durationMs
+                            )
+                            if (hookStartPositionMs > 0L) {
+                                player.seekTo(hookStartPositionMs)
+                                currentMs = hookStartPositionMs.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+                            }
+                            hasAppliedHookSeek = true
+                        }
                         player.play()
                         isPlaying = true
                         isPrepared = true
@@ -254,15 +285,6 @@ fun MusicPlayerBottomSheet(
     }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    // Pause music when ad is about to show
-    LaunchedEffect(shouldPresentAd) {
-        if (shouldPresentAd && player.isPlaying) {
-            player.pause()
-            isPlaying = false
-            android.util.Log.d("MusicPlayerBottomSheet", "Paused music for ad presentation")
-        }
-    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -594,23 +616,27 @@ fun MusicPlayerBottomSheet(
         }  // End Box
     }  // End ModalBottomSheet
 
-    // Watch ad dialog for song unlock
-    if (showWatchAdDialog) {
-        WatchAdDialog(
-            title = stringResource(R.string.song_watch_ad_title),
-            subtitle = stringResource(R.string.song_watch_ad_subtitle),
-            onDismiss = viewModel::onWatchAdDialogDismiss,
-            onWatchAd = viewModel::onWatchAdConfirmed
-        )
-    }
-
     // Handle rewarded ad presentation
     RewardedAdPresenter(
         shouldPresent = shouldPresentAd,
         placement = AdPlacement.REWARD_UNLOCK_SONG,
         adsLoaderService = adsLoaderService,
         onRewardEarned = viewModel::onRewardEarned,
-        onAdFailed = viewModel::onAdFailed
+        onAdFailed = viewModel::onAdFailed,
+        onAdShown = {
+            wasPlayingBeforeAd = player.isPlaying
+            if (player.isPlaying) {
+                player.pause()
+                isPlaying = false
+                android.util.Log.d("MusicPlayerBottomSheet", "Paused music for ad presentation")
+            }
+        },
+        onAdClosed = {
+            if (wasPlayingBeforeAd) {
+                player.play()
+            }
+            wasPlayingBeforeAd = false
+        }
     )
 }
 

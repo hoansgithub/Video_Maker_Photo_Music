@@ -1,16 +1,24 @@
 package com.videomaker.aimusic.modules.onboarding.pages
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,9 +30,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
+import com.videomaker.aimusic.ui.components.ShimmerBox
+import com.videomaker.aimusic.ui.theme.SurfaceDark
+import com.videomaker.aimusic.ui.theme.TextSecondary
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
 import kotlinx.coroutines.delay
@@ -126,6 +141,7 @@ fun FullscreenAdStep(
 
     // Ad loading logic - runs once when composed (can start early)
     LaunchedEffect(Unit) {
+        android.util.Log.d("FullscreenAdStep", "🎬 Ad loading LaunchedEffect started")
 
         // Check ad status (runs in parallel with close button delay)
         isAdLoaded = adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
@@ -133,7 +149,7 @@ fun FullscreenAdStep(
         if (isAdLoaded) {
             android.util.Log.d("FullscreenAdStep", "✅ Ad already loaded (preload successful)")
         } else {
-            android.util.Log.d("FullscreenAdStep", "⏳ Ad not ready, polling...")
+            android.util.Log.d("FullscreenAdStep", "⏳ Ad not ready, starting polling (timeout: ${AD_LOADING_TIMEOUT_SECONDS}s)...")
 
             // Poll for up to 30 seconds (60 × 500ms)
             var pollAttempts = 0
@@ -142,6 +158,11 @@ fun FullscreenAdStep(
             while (pollAttempts < maxPolls && !isAdLoaded && isActive) {
                 delay(500)
                 pollAttempts++
+
+                // Log every 5 seconds
+                if (pollAttempts % 10 == 0) {
+                    android.util.Log.d("FullscreenAdStep", "⏳ Still polling... ${pollAttempts * 0.5}s elapsed")
+                }
 
                 if (adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)) {
                     isAdLoaded = true
@@ -152,8 +173,13 @@ fun FullscreenAdStep(
             // Auto-advance if ad failed to load within timeout (only if still on current page)
             if (!isAdLoaded && isActive && isCurrentPage) {
                 android.util.Log.w("FullscreenAdStep", "⚠️ Fullscreen ad not loaded after ${AD_LOADING_TIMEOUT_SECONDS}s, auto-advancing")
+                android.util.Log.w("FullscreenAdStep", "⚠️ Ad network info: $adNetworkInfo")
                 Analytics.track("fullscreen_ad_timeout")
                 onClose()
+            } else if (!isAdLoaded && !isActive) {
+                android.util.Log.w("FullscreenAdStep", "⚠️ LaunchedEffect cancelled before ad loaded")
+            } else if (!isAdLoaded && !isCurrentPage) {
+                android.util.Log.w("FullscreenAdStep", "⚠️ User navigated away before ad loaded")
             }
         }
     }
@@ -163,18 +189,34 @@ fun FullscreenAdStep(
         android.util.Log.d("FullscreenAdStep", "🎨 UI recomposed - isCloseButtonVisible: $isCloseButtonVisible")
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)  // Black background for fullscreen
-    ) {
-        // Fullscreen native ad
+    // Track when ad loaded state changes
+    LaunchedEffect(isAdLoaded) {
+        android.util.Log.d("FullscreenAdStep", "📊 Ad loaded state changed: isAdLoaded=$isAdLoaded")
+        if (isAdLoaded) {
+            android.util.Log.d("FullscreenAdStep", "✅ Ad marked as loaded - shimmer should hide, NativeAdView should show")
+
+            // DEBUG: Check if ad is actually retrievable
+            val ad = adsLoaderService.getNativeAd(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
+            android.util.Log.d("FullscreenAdStep", "🔍 getNativeAd() returned: ${if (ad != null) "AD OBJECT" else "NULL"}")
+        } else {
+            android.util.Log.d("FullscreenAdStep", "⏳ Ad not loaded yet - showing shimmer")
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Fullscreen native ad (rendered first, at bottom of Z-order)
         NativeAdView(
             placement = AdPlacement.NATIVE_ONBOARDING_FULLSCREEN,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            isDebug = BuildConfig.DEBUG,  // Show debug label only in debug build
         )
 
-        // Close button (top-right) - our custom overlay button
+        // Shimmer loading overlay (rendered second, covers ad until loaded)
+        if (!isAdLoaded) {
+            FullscreenAdShimmerLayout()
+        }
+
+        // Close button (top-right) - our custom overlay button (rendered last, always on top)
         if (isCloseButtonVisible) {
             android.util.Log.d("FullscreenAdStep", "🔘 Custom close button VISIBLE in composition")
             Surface(
@@ -204,6 +246,131 @@ fun FullscreenAdStep(
                         modifier = Modifier.size(24.dp)
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Shimmer loading layout for fullscreen ad
+ * Mimics native_full_screen_bait.xml structure
+ * Shows while native ad is loading (based on drama app pattern)
+ */
+@Composable
+private fun FullscreenAdShimmerLayout() {
+    ProvideShimmerEffect {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(SurfaceDark)
+        ) {
+            // Media view shimmer (fullscreen background)
+            ShimmerBox(
+                modifier = Modifier.fillMaxSize()
+            )
+
+            // Centered loading message
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(horizontal = 32.dp, vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Animated shimmer layer
+                    ShimmerBox(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                    )
+
+                    // Text overlay with reduced brightness
+                    Text(
+                        text = "Loading ad...",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            // Top overlay card (headline + body)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 72.dp, start = 16.dp, end = 16.dp)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.6f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(16.dp)
+            ) {
+                // Headline shimmer (2 lines)
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .height(24.dp),
+                    cornerRadius = 4.dp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .height(24.dp),
+                    cornerRadius = 4.dp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Body text shimmer (3 lines)
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp),
+                    cornerRadius = 4.dp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.95f)
+                        .height(16.dp),
+                    cornerRadius = 4.dp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .height(16.dp),
+                    cornerRadius = 4.dp
+                )
+            }
+
+            // Bottom CTA button shimmer
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 80.dp, start = 16.dp, end = 16.dp)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.7f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.5f)
+                        .height(48.dp),
+                    cornerRadius = 24.dp
+                )
             }
         }
     }

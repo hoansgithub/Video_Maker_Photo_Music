@@ -1,5 +1,13 @@
 package com.videomaker.aimusic.modules.language
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,9 +17,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -31,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,10 +58,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.data.local.LanguageManager
@@ -68,9 +87,10 @@ import com.videomaker.aimusic.ui.theme.White20
 import com.videomaker.aimusic.ui.theme.White40
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.modules.featureselection.EVENT_GENRE_SHOW
 import kotlinx.coroutines.delay
-import org.koin.compose.koinInject
 
 /**
  * LanguageSelectionScreen - Language picker for onboarding and settings.
@@ -88,10 +108,9 @@ fun LanguageSelectionScreen(
     onBackClick: () -> Unit = {},
     languageConfigService: LanguageConfigService = koinInject()
 ) {
-    Analytics.trackScreenView(
-        screenName = "language_show",
-        screenClass = "LanguageSelectionScreen"
-    )
+    LaunchedEffect(Unit) {
+        Analytics.track(name = "language_show")
+    }
     val density = LocalDensity.current
     var selectedLanguage by remember { mutableStateOf<String?>(null) }
 
@@ -109,6 +128,12 @@ fun LanguageSelectionScreen(
     var delayedHasSelection by remember { mutableStateOf(false) }
     var delayedButtonEnabled by remember { mutableStateOf(false) }
     var hasStartedDelay by remember { mutableStateOf(false) }
+
+    // Cursor hint: idle timer key and visibility
+    var interactionKey by remember { mutableStateOf(0L) }
+    var showCursor by remember { mutableStateOf(false) }
+    val languageCardOffsets = remember { mutableStateMapOf<String, Offset>() }
+    var ctaButtonOffset by remember { mutableStateOf(Offset.Zero) }
 
     // Sequential delays ensuring EACH ad gets at least 0.5 second of display time
     // Timer starts on FIRST selection and does NOT reset on subsequent selections
@@ -141,11 +166,30 @@ fun LanguageSelectionScreen(
         }
     }
 
+    // Show cursor after 2s of no user interaction. Resets on every touch.
+    LaunchedEffect(interactionKey) {
+        delay(2_000)
+        showCursor = true
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .windowInsetsPadding(
+                WindowInsets.safeDrawing.only(
+                    WindowInsetsSides.Horizontal + WindowInsetsSides.Top
+                )
+            )
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        awaitPointerEvent(pass = PointerEventPass.Initial)
+                        interactionKey = System.currentTimeMillis()
+                        showCursor = false
+                    }
+                }
+            }
     ) {
         // Scrollable content with dynamic bottom padding
         Column(
@@ -175,22 +219,29 @@ fun LanguageSelectionScreen(
                     }
 
                     // Done button in top right
-                    OnboardingCtaButton(
-                        text = stringResource(R.string.done),
-                        onClick = {
-                            onContinue.invoke()
-                            selectedLanguage?.let {
-                                Analytics.track(
-                                    name = "language_next",
-                                    params = mapOf(
-                                        "language" to it
+                    Box(
+                        modifier = Modifier.onGloballyPositioned { coords ->
+                            val topLeft = coords.positionInRoot()
+                            ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
+                        }
+                    ) {
+                        OnboardingCtaButton(
+                            text = stringResource(R.string.done),
+                            onClick = {
+                                onContinue.invoke()
+                                selectedLanguage?.let {
+                                    Analytics.track(
+                                        name = "language_next",
+                                        params = mapOf(
+                                            "language" to it
+                                        )
                                     )
-                                )
-                            }
-                        },
-                        color = Primary,
-                        enabled = selectedLanguage != null && delayedButtonEnabled
-                    )
+                                }
+                            },
+                            color = Primary,
+                            enabled = selectedLanguage != null && delayedButtonEnabled
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             } else {
@@ -226,6 +277,10 @@ fun LanguageSelectionScreen(
                     LanguageCard(
                         language = language,
                         isSelected = selectedLanguage == language.code,
+                        modifier = Modifier.onGloballyPositioned { coords ->
+                            val topLeft = coords.positionInRoot()
+                            languageCardOffsets[language.code] = topLeft + Offset(coords.size.width / 2f, 0f)
+                        },
                         onClick = {
                             selectedLanguage = language.code
                             onLanguageSelected(language.code)
@@ -248,7 +303,6 @@ fun LanguageSelectionScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 24.dp, vertical = 16.dp)
                 .onSizeChanged { size ->
                     bottomSectionHeight = size.height  // Measure actual height dynamically!
                 }
@@ -256,7 +310,8 @@ fun LanguageSelectionScreen(
             // ALT ad - bottom layer, always at full opacity
             NativeAdView(
                 placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isDebug = BuildConfig.DEBUG
             )
 
             // PRIMARY ad - top layer, fades out when user selects
@@ -264,7 +319,8 @@ fun LanguageSelectionScreen(
                 placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .alpha(if (delayedHasSelection) 0f else 1f)
+                    .alpha(if (delayedHasSelection) 0f else 1f),
+                isDebug = BuildConfig.DEBUG
             )
         }
 
@@ -274,6 +330,10 @@ fun LanguageSelectionScreen(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(24.dp)
+                    .onGloballyPositioned { coords ->
+                        val topLeft = coords.positionInRoot()
+                        ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
+                    }
             ) {
                 OnboardingCtaButton(
                     text = stringResource(R.string.onboarding_next),
@@ -294,6 +354,17 @@ fun LanguageSelectionScreen(
                 )
             }
         }
+
+        CursorOverlay(
+            visible = showCursor,
+            selectedLanguage = selectedLanguage,
+            languageCardOffsets = languageCardOffsets,
+            ctaButtonOffset = ctaButtonOffset,
+            onSelectLanguage = { code ->
+                selectedLanguage = code
+                onLanguageSelected(code)
+            }
+        )
     }
 }
 
@@ -305,14 +376,15 @@ fun LanguageSelectionScreen(
 private fun LanguageCard(
     language: SupportedLanguage,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val cardShape = RoundedCornerShape(50)
     val accentColor = MaterialTheme.colorScheme.primary
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(cardShape)
             .background(if (isSelected) accentColor.copy(alpha = 0.15f) else Black20)
@@ -489,6 +561,80 @@ internal fun OnboardingCtaMaxWidthButton(
                     .size(20.dp)
             )
         }
+    }
+}
+
+@Composable
+private fun CursorOverlay(
+    visible: Boolean,
+    selectedLanguage: String?,
+    languageCardOffsets: Map<String, Offset>,
+    ctaButtonOffset: Offset,
+    onSelectLanguage: (String) -> Unit
+) {
+    val density = LocalDensity.current
+    val cursorAnim = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
+
+    LaunchedEffect(visible) {
+        if (!visible) return@LaunchedEffect
+        if (languageCardOffsets.isEmpty() || ctaButtonOffset == Offset.Zero) return@LaunchedEffect
+
+        val bouncePx = with(density) { 12.dp.toPx() }
+        val hotspot = with(density) { Offset(8.dp.toPx(), 4.dp.toPx()) }
+
+        if (selectedLanguage == null) {
+            val firstVisibleCode = languageCardOffsets
+                .filter { (_, offset) -> offset.y >= 0f }
+                .minByOrNull { it.value.y }
+                ?.key
+
+            if (firstVisibleCode != null) {
+                val rawTarget = languageCardOffsets[firstVisibleCode] ?: return@LaunchedEffect
+                val target = rawTarget - hotspot
+
+                // Appear above target then slide in
+                cursorAnim.snapTo(Offset(target.x, target.y - with(density) { 48.dp.toPx() }))
+                cursorAnim.animateTo(target, animationSpec = tween(450, easing = EaseInOutCubic))
+
+                // Single tap bounce
+                cursorAnim.animateTo(target + Offset(0f, bouncePx), animationSpec = tween(150))
+                cursorAnim.animateTo(target, animationSpec = tween(150))
+                delay(300)
+
+                onSelectLanguage(firstVisibleCode)
+                delay(400)
+            }
+        }
+
+        val ctaTarget = ctaButtonOffset - hotspot
+
+        cursorAnim.animateTo(ctaTarget, animationSpec = tween(450, easing = EaseInOutCubic))
+
+        // Loop bounce at CTA until user interacts (coroutine cancelled on showCursor=false)
+        while (true) {
+            cursorAnim.animateTo(ctaTarget + Offset(0f, bouncePx), animationSpec = tween(200))
+            cursorAnim.animateTo(ctaTarget, animationSpec = tween(200))
+            delay(600)
+        }
+    }
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(300)),
+        exit = fadeOut(tween(200))
+    ) {
+        Image(
+            painter = painterResource(R.drawable.img_hand_point),
+            contentDescription = null,
+            modifier = Modifier
+                .size(48.dp)
+                .offset {
+                    IntOffset(
+                        cursorAnim.value.x.roundToInt(),
+                        cursorAnim.value.y.roundToInt()
+                    )
+                }
+        )
     }
 }
 

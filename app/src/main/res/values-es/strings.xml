@@ -236,7 +236,9 @@
     <string name="export_templates_load_failed">Error al cargar plantillas</string>
     <string name="export_watch_ad_title">¿Ver un anuncio para descargar?</string>
     <string name="export_watch_ad_subtitle">Ayúdanos a mantener esta aplicación gratis viendo un breve anuncio. ¡Tu video se descargará justo después!</string>
-    <string name="export_watch_ad_button">Ver Anuncio</string>
+    <string name="watch_ad_dialog_title">¡Desbloquea una función exclusiva! ✨</string>
+    <string name="watch_ad_dialog_subtitle">Mira un anuncio corto para desbloquear esta función y seguir editando tu increíble video.</string>
+    <string name="export_watch_ad_button">Ver Anuncio (1/1)</string>
     <string name="export_watch_ad_close">Cerrar</string>
     <string name="export_watermark_remove_title">¿Eliminar marca de agua?</string>
     <string name="export_watermark_remove_subtitle">Mira un breve anuncio para eliminar la marca de agua de tu vista previa de video.</string>
@@ -368,6 +370,7 @@
     <string name="error_load_failed">Error al cargar. Desliza hacia abajo para reintentar.</string>
     <string name="error_video_playback_failed">Error al cargar la vista previa del video. Verifica tu conexión e inténtalo de nuevo.</string>
     <string name="error_video_network">Error de red al cargar el video. Verifica tu conexión e inténtalo de nuevo.</string>
+    <string name="video_retrying">Loading preview…</string>
     <string name="error_network_title">Error de Red</string>
     <string name="loading_building_feed">Construyendo tu Feed</string>
     <string name="error_network_message">No se pudo cargar la música. Verifica tu conexión e inténtalo de nuevo.</string>

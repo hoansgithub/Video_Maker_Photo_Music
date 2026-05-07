@@ -236,7 +236,9 @@
     <string name="export_templates_load_failed">Nabigo ang pag-load ng mga template</string>
     <string name="export_watch_ad_title">Manood ng ad para mag-download?</string>
     <string name="export_watch_ad_subtitle">Tulungan mo kaming panatilihing libre ang app na ito sa pamamagitan ng panonood ng maikling ad. Mag-download ang iyong video pagkatapos!</string>
-    <string name="export_watch_ad_button">Manood ng Ad</string>
+    <string name="watch_ad_dialog_title">I-unlock ang Eksklusibong Feature! ✨</string>
+    <string name="watch_ad_dialog_subtitle">Manood ng maikling ad para ma-unlock ang feature na ito at ipagpatuloy ang pag-edit ng kahanga-hanga mong video!</string>
+    <string name="export_watch_ad_button">Manood ng Ad (1/1)</string>
     <string name="export_watch_ad_close">Isara</string>
     <string name="export_watermark_remove_title">Alisin ang watermark?</string>
     <string name="export_watermark_remove_subtitle">Manood ng maikling ad para alisin ang watermark sa iyong video preview.</string>
@@ -368,6 +370,7 @@
     <string name="error_load_failed">Nabigo ang pag-load. Mag-swipe pababa para subukan muli.</string>
     <string name="error_video_playback_failed">Nabigo ang pag-load ng video preview. Suriin ang koneksyon at subukan muli.</string>
     <string name="error_video_network">Network error sa pag-load ng video. Suriin ang koneksyon at subukan muli.</string>
+    <string name="video_retrying">Loading preview…</string>
     <string name="error_network_title">Network Error</string>
     <string name="loading_building_feed">Binubuo ang Iyong Feed</string>
     <string name="error_network_message">Hindi ma-load ang musika. Pakisuri ang iyong koneksyon at subukang muli.</string>

@@ -38,8 +38,8 @@ android {
         applicationId = "com.videomaker.aimusic"
         minSdk = 28
         targetSdk = 36
-        versionCode = 13
-        versionName = "1.0.1"
+        versionCode = 21
+        versionName = "1.0.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -71,7 +71,7 @@ android {
     // Only include supported languages
     // This reduces APK size by ~5-10MB
     androidResources {
-        localeFilters += listOf("en", "zh-rCN", "de", "in", "ja", "pt-rBR", "es", "hi", "ms", "ar", "my", "vi", "fil", "tr")
+        localeFilters += listOf("en", "pt-rBR", "es", "ar", "hi", "in", "fil", "tr", "bn", "kn", "de", "jv", "su", "ha", "yo", "ig")
     }
 
     // ============================================
@@ -231,6 +231,7 @@ dependencies {
     // ============================================
     implementation(platform(libs.supabase.bom))
     implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.storage)  // For beat-sync data downloads
     // implementation(libs.supabase.auth)  // Uncomment when auth needed
 
     // ============================================
@@ -298,6 +299,7 @@ dependencies {
     testImplementation(libs.koin.test.junit4)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)

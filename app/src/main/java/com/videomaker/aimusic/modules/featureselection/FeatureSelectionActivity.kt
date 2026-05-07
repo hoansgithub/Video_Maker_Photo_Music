@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
@@ -107,7 +108,7 @@ class FeatureSelectionActivity : AppCompatActivity() {
                             onboardingViewModel.selectedFeatures.firstOrNull()?.let { genre ->
                                 Analytics.track(
                                     name = EVENT_GENRE_SELECT,
-                                    params = mapOf(PARAM_GENRE_SELECT to genre)
+                                    params = mapOf(PARAM_GENRE_SELECT to if (genre == "music_video_instant") "music" else "photo")
                                 )
                             }
                         },
@@ -119,7 +120,6 @@ class FeatureSelectionActivity : AppCompatActivity() {
                         modifier = Modifier
                             .fillMaxWidth()
                             .align(Alignment.BottomCenter)
-                            .padding(horizontal = 24.dp, vertical = 16.dp)
                             .onSizeChanged { size ->
                                 bottomSectionHeight = size.height  // Measure actual height dynamically!
                             }
@@ -127,7 +127,8 @@ class FeatureSelectionActivity : AppCompatActivity() {
                         // ALT ad - bottom layer, always at full opacity
                         NativeAdView(
                             placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            isDebug = BuildConfig.DEBUG
                         )
 
                         // PRIMARY ad - top layer, fades out when user selects
@@ -135,7 +136,8 @@ class FeatureSelectionActivity : AppCompatActivity() {
                             placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .alpha(if (delayedHasSelection) 0f else 1f)
+                                .alpha(if (delayedHasSelection) 0f else 1f),
+                            isDebug = BuildConfig.DEBUG
                         )
                     }
 

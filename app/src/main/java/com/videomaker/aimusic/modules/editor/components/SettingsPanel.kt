@@ -162,18 +162,8 @@ fun SettingsPanel(
                 onEffectSetSelect = onEffectSetChange
             )
 
-            // Image Duration
-            ImageDurationSelector(
-                selectedDurationMs = settings.imageDurationMs,
-                onDurationSelect = onImageDurationChange
-            )
-
-            // Transition Duration (Percentage)
-            TransitionPercentageSelector(
-                selectedPercentage = settings.transitionPercentage,
-                imageDurationMs = settings.imageDurationMs,
-                onPercentageSelect = onTransitionPercentageChange
-            )
+            // LEGACY: Image Duration and Transition Percentage removed (beat-sync mode only)
+            // ImageDurationSelector and TransitionPercentageSelector are no longer supported
 
             // Overlay Frame
             OverlayFrameSelector(
@@ -389,6 +379,10 @@ private fun ImageDurationSelector(
     selectedDurationMs: Long,
     onDurationSelect: (Long) -> Unit
 ) {
+    // LEGACY COMPONENT - No longer used in beat-sync mode
+    // Kept for backward compatibility only
+    val maxImageDurationSeconds = 10f
+
     Column {
         Text(
             text = stringResource(R.string.settings_duration_per_image),
@@ -403,7 +397,7 @@ private fun ImageDurationSelector(
         ) {
             // Quick-select chips for common whole-second durations (1s - 5s)
             // For sub-1s control (0.5s-0.9s) and 0.1s increments, users tap to open the slider sheet
-            val quickSelectOptions = (1..ProjectSettings.MAX_IMAGE_DURATION_SECONDS.toInt()).toList()
+            val quickSelectOptions = (1..maxImageDurationSeconds.toInt()).toList()
 
             quickSelectOptions.forEach { seconds ->
                 val durationMs = seconds * 1000L
@@ -423,6 +417,10 @@ private fun TransitionPercentageSelector(
     imageDurationMs: Long,
     onPercentageSelect: (Int) -> Unit
 ) {
+    // LEGACY COMPONENT - No longer used in beat-sync mode
+    // Kept for backward compatibility only
+    val transitionPercentageOptions = listOf(10, 15, 20, 25, 30, 35, 40)
+
     // Calculate actual transition duration for display
     val transitionDurationSec = (imageDurationMs * 2 * selectedPercentage / 100) / 1000f
 
@@ -450,7 +448,7 @@ private fun TransitionPercentageSelector(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.horizontalScroll(rememberScrollState())
         ) {
-            ProjectSettings.TRANSITION_PERCENTAGE_OPTIONS.forEach { percentage ->
+            transitionPercentageOptions.forEach { percentage ->
                 SelectableChip(
                     text = "$percentage%",
                     isSelected = selectedPercentage == percentage,
