@@ -96,6 +96,11 @@ class RootViewModel(
     @Volatile
     private var onboardingComplete = false
 
+    // Captured once in loadInitialData() before any ad logic runs.
+    // true = first ever launch → INTERSTITIAL_SPLASH; false = second+ → INTERSTITIAL_OPEN_APP
+    @Volatile
+    private var isFirstOpen = false
+
     @Volatile
     private var isInitialized = false
 
@@ -200,6 +205,9 @@ class RootViewModel(
                 return@launch
             }
 
+            // Capture once — isFirstLaunch() auto-marks false on first call
+            isFirstOpen = preferencesManager.isFirstLaunch()
+
             // Step 3: Get initialization timeout from Remote Config
             // Default: 45 seconds (can be adjusted remotely without app update)
             // Longer timeout allows for slower networks while still preventing infinite loading
@@ -294,18 +302,19 @@ class RootViewModel(
                                 }
                             }
 
+                            val splashPlacement = if (isFirstOpen) AdPlacement.INTERSTITIAL_SPLASH else AdPlacement.INTERSTITIAL_OPEN_APP
                             val splashAdJob = async(Dispatchers.Main) {
                                 runCatching {
                                     val success = InterstitialAdHelperExt.preloadInterstitial(
                                         adsLoaderService = adsLoaderService,
-                                        placement = AdPlacement.INTERSTITIAL_SPLASH,
+                                        placement = splashPlacement,
                                         loadTimeoutMillis = initTimeoutMs,
                                         showLoadingOverlay = false
                                     )
                                     if (success) {
-                                        android.util.Log.d("RootViewModel", "✅ Splash interstitial preloaded")
+                                        android.util.Log.d("RootViewModel", "✅ Splash interstitial preloaded ($splashPlacement)")
                                     } else {
-                                        android.util.Log.w("RootViewModel", "⚠️ Splash interstitial preload failed")
+                                        android.util.Log.w("RootViewModel", "⚠️ Splash interstitial preload failed ($splashPlacement)")
                                     }
                                     success
                                 }.onFailure {
@@ -402,9 +411,10 @@ class RootViewModel(
 
         // Show splash interstitial ad (if loaded) before navigating
         // Ad shows on top of loading screen, then navigates when closed
+        val splashPlacement = if (isFirstOpen) AdPlacement.INTERSTITIAL_SPLASH else AdPlacement.INTERSTITIAL_OPEN_APP
         activityRef?.get()?.let { activity ->
             android.util.Log.d("RootViewModel", "📺 Attempting to show splash interstitial ad...")
-            android.util.Log.d("RootViewModel", "   - Placement: ${AdPlacement.INTERSTITIAL_SPLASH}")
+            android.util.Log.d("RootViewModel", "   - Placement: $splashPlacement (isFirstOpen=$isFirstOpen)")
             android.util.Log.d("RootViewModel", "   - Bypass frequency cap: true")
             android.util.Log.d("RootViewModel", "   - Load timeout: ${initTimeoutMs}ms")
 
@@ -414,7 +424,7 @@ class RootViewModel(
             InterstitialAdHelperExt.showInterstitial(
                 adsLoaderService = adsLoaderService,
                 activity = activity,
-                placement = AdPlacement.INTERSTITIAL_SPLASH,
+                placement = splashPlacement,
                 action = {
                     if (callbackCalled.compareAndSet(false, true)) {
                         // Navigate when ad closes (or if ad fails to show)

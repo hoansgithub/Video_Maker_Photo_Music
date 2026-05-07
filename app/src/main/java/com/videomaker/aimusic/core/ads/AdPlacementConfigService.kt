@@ -124,7 +124,7 @@ class AdPlacementConfigService(
         // INTERSTITIAL ADS
         // ============================================
 
-        // Splash screen interstitial (shown after loading completes)
+        // Splash screen interstitial - first app launch only
         // Waterfall: Primary unit → Secondary unit
         registerPlacementWithMultipleUnits(
             placementId = AdPlacement.INTERSTITIAL_SPLASH,
@@ -132,6 +132,18 @@ class AdPlacementConfigService(
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/4247360286",  // Primary
                 "ca-app-pub-7121075950716954/6785534926"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Open app interstitial - second launch onwards (separate ad unit for independent tracking)
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_OPEN_APP,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/3800316265",  // Inter_high_splash_reopen (Primary)
+                "ca-app-pub-7121075950716954/2822365800"   // Inter_all_splash_reopen (Secondary)
             ),
             enabled = true
         )

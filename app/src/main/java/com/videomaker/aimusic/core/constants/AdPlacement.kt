@@ -26,7 +26,7 @@ package com.videomaker.aimusic.core.constants
 object AdPlacement {
 
     /**
-     * Interstitial ad shown after splash screen loading completes.
+     * Interstitial ad shown after splash screen loading completes (first app install only).
      * Timing: After all data loaded (Remote Config, status checks), before navigating to next screen.
      * Shown once per app session (splash screen only appears once).
      *
@@ -37,6 +37,19 @@ object AdPlacement {
      * Remote Config key: ad_interstitial_splash
      */
     const val INTERSTITIAL_SPLASH = "ad_interstitial_splash"
+
+    /**
+     * Interstitial ad shown after splash screen loading completes (second app open onwards).
+     * Timing: Same as INTERSTITIAL_SPLASH but shown from the second launch onward.
+     * Uses separate ad unit to allow independent eCPM tracking and frequency capping.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/3800316265 (Inter_high_splash_reopen)
+     * - Secondary: ca-app-pub-7121075950716954/2822365800 (Inter_all_splash_reopen)
+     *
+     * Remote Config key: ad_interstitial_open_app
+     */
+    const val INTERSTITIAL_OPEN_APP = "ad_interstitial_open_app"
 
     /**
      * Interstitial ad shown when user presses back from template previewer.
