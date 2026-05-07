@@ -33,6 +33,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.lang.ref.WeakReference
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
 
 /**
@@ -407,14 +408,19 @@ class RootViewModel(
             android.util.Log.d("RootViewModel", "   - Bypass frequency cap: true")
             android.util.Log.d("RootViewModel", "   - Load timeout: ${initTimeoutMs}ms")
 
+            // Track if callback was called
+            val callbackCalled = AtomicBoolean(false)
+
             InterstitialAdHelperExt.showInterstitial(
                 adsLoaderService = adsLoaderService,
                 activity = activity,
                 placement = AdPlacement.INTERSTITIAL_SPLASH,
                 action = {
-                    // Navigate when ad closes (or if ad fails to show)
-                    android.util.Log.d("RootViewModel", "✅ Ad action callback called - navigating to $route")
-                    _navigationEvent.value = RootNavigationEvent.NavigateTo(route)
+                    if (callbackCalled.compareAndSet(false, true)) {
+                        // Navigate when ad closes (or if ad fails to show)
+                        android.util.Log.d("RootViewModel", "✅ Ad action callback called - navigating to $route")
+                        _navigationEvent.value = RootNavigationEvent.NavigateTo(route)
+                    }
                 },
                 onShown = {
                     android.util.Log.d("RootViewModel", "🎬 Splash ad is now showing on screen")
@@ -423,6 +429,16 @@ class RootViewModel(
                 loadTimeoutMillis = initTimeoutMs,  // Use Remote Config timeout (default 45s)
                 showLoadingOverlay = false  // Loading screen already visible
             )
+
+            // ⚠️ WORKAROUND for ACCCore bug: InterstitialAdHelper doesn't call action callback on timeout
+            // Force navigation after timeout + 5s buffer if callback wasn't called
+            viewModelScope.launch {
+                delay(initTimeoutMs + 5000L)  // Wait for ad timeout + 5s buffer
+                if (callbackCalled.compareAndSet(false, true)) {
+                    android.util.Log.w("RootViewModel", "⚠️ Ad callback not called within timeout - forcing navigation")
+                    _navigationEvent.value = RootNavigationEvent.NavigateTo(route)
+                }
+            }
         } ?: run {
             // No activity reference - navigate without ad
             android.util.Log.w("RootViewModel", "⚠️ No activity reference, skipping splash ad")

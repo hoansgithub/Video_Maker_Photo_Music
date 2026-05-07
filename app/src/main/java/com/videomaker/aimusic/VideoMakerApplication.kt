@@ -267,16 +267,23 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
                     // Step 4: Initialize AdMob SDK - PRODUCTION MODE (no test devices)
                     // ✅ Runs on IO thread - this is where DEX loading happens (ANR fix)
-                    val config: Map<String, Any> = emptyMap()
-                    // val config: Map<String, Any> = if (BuildConfig.DEBUG) {
-                    //     mapOf("testDeviceIds" to UMP_TEST_DEVICE_IDS)
-                    // } else {
-                    //     emptyMap()
-                    // }
-                    adMobMediator.initialize(activity.applicationContext, config)
+                    // ✅ 60 second timeout to prevent infinite loading
+                    try {
+                        withTimeout(60_000L) {  // 1 minute timeout for AdMob SDK initialization
+                            val config: Map<String, Any> = emptyMap()
+                            // val config: Map<String, Any> = if (BuildConfig.DEBUG) {
+                            //     mapOf("testDeviceIds" to UMP_TEST_DEVICE_IDS)
+                            // } else {
+                            //     emptyMap()
+                            // }
+                            adMobMediator.initialize(activity.applicationContext, config)
+                            android.util.Log.d("VideoMakerApp", "✅ Ads initialization complete!")
+                        }
+                    } catch (e: TimeoutCancellationException) {
+                        android.util.Log.w("VideoMakerApp", "⏱️ AdMob SDK initialization timed out after 60 seconds - continuing anyway")
+                    }
 
                     adsInitialized.set(true)
-                    android.util.Log.d("VideoMakerApp", "✅ Ads initialization complete!")
 
                 } catch (e: Exception) {
                     android.util.Log.e("VideoMakerApp", "❌ Ads initialization error: ${e.message}", e)
@@ -406,6 +413,20 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
             FACEBOOK_TEST_DEVICE_IDS.forEach { deviceId ->
                 AdSettings.addTestDevice(deviceId)
                 android.util.Log.d("VideoMakerApp", "📱 Meta Audience Network test device added: $deviceId")
+            }
+
+            // ============================================
+            // DEBUG: Force clear API cache on app start (for VPN testing)
+            // ============================================
+            applicationScope.launch {
+                runCatching {
+                    val apiCacheManager = get<com.videomaker.aimusic.core.data.local.ApiCacheManager>()
+                    apiCacheManager.clearTemplateCache()
+                    apiCacheManager.clearSongCache()
+                    android.util.Log.w("VideoMakerApp", "🧹 [DEBUG] API cache force-cleared on app start")
+                }.onFailure { e ->
+                    android.util.Log.e("VideoMakerApp", "❌ Failed to clear cache: ${e.message}")
+                }
             }
         }
 
