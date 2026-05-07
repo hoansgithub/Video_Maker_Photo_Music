@@ -190,10 +190,10 @@ val dataModule = module {
     // Supabase client (singleton)
     single { SupabaseClientProvider.instance }
 
-    // Region provider (singleton - derived from language + device locale)
+    // Region provider (singleton - auto-detected from system: SIM → Network → Locale)
     single {
         RegionProvider(
-            languageManager = get(),
+            context = androidContext(),
             preferencesManager = get()
         )
     }
@@ -361,7 +361,7 @@ val domainModule = module {
     factory { CheckLanguageSelectedUseCase(get()) }
     factory { CompleteLanguageSelectionUseCase(get()) }
     factory { GetSelectedLanguageUseCase(get()) }
-    factory { SaveLanguagePreferenceUseCase(get(), get(), get()) }  // LanguageManager, RegionProvider, TemplateRepository
+    factory { SaveLanguagePreferenceUseCase(get(), get()) }  // LanguageManager, TemplateRepository
     factory { ApplyLanguageUseCase(get(), get()) }  // LanguageManager, ApiCacheManager
 
     // Feedback use case
