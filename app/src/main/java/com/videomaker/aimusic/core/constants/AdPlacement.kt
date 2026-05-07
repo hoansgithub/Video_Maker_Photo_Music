@@ -132,6 +132,56 @@ object AdPlacement {
     const val BANNER_TEMPLATE_PREVIEWER = "ad_banner_template_previewer"
 
     /**
+     * Banner ad shown at bottom of asset picker screen (image selector).
+     * Timing: Loaded when asset picker is displayed.
+     * Displayed below the image grid and selection bar.
+     *
+     * Features:
+     * - Adaptive banner sizing (320dp width default)
+     * - Lifecycle-aware cleanup
+     *
+     * Ad units (priority order):
+     * - Primary: TBD (temporary: ca-app-pub-7121075950716954/1313786204)
+     *
+     * Remote Config key: ad_banner_asset_picker
+     */
+    const val BANNER_ASSET_PICKER = "ad_banner_asset_picker"
+
+    /**
+     * Banner ad shown at bottom of editor screen.
+     * Timing: Loaded when editor screen is displayed.
+     * Displayed below the Scaffold content, outside the blur effect.
+     *
+     * Features:
+     * - Adaptive banner sizing (320dp width default)
+     * - Stays sharp when editor preview is building (outside Scaffold blur)
+     * - Lifecycle-aware cleanup
+     *
+     * Ad units (priority order):
+     * - Primary: TBD (temporary: ca-app-pub-7121075950716954/1313786204)
+     *
+     * Remote Config key: ad_banner_editor
+     */
+    const val BANNER_EDITOR = "ad_banner_editor"
+
+    /**
+     * Banner ad shown at bottom of export/result screen (all states).
+     * Timing: Loaded when export screen is displayed.
+     * Shown across all export states: Preparing, Processing, Success, Error, Cancelled.
+     *
+     * Features:
+     * - Adaptive banner sizing (320dp width default)
+     * - Visible during all export states (not just success)
+     * - Lifecycle-aware cleanup
+     *
+     * Ad units (priority order):
+     * - Primary: TBD (temporary: ca-app-pub-7121075950716954/1313786204)
+     *
+     * Remote Config key: ad_banner_export
+     */
+    const val BANNER_EXPORT = "ad_banner_export"
+
+    /**
      * Native ad shown at bottom of onboarding language selector screen.
      * Timing: Loaded when language selector is displayed.
      * High-engagement placement for first-time users.
@@ -560,6 +610,9 @@ object AdPlacement {
         INTERSTITIAL_ASSET_PICKER_EXIT,
         BANNER_HOME,
         BANNER_TEMPLATE_PREVIEWER,
+        BANNER_ASSET_PICKER,
+        BANNER_EDITOR,
+        BANNER_EXPORT,
         NATIVE_ONBOARDING_LANGUAGE,
         NATIVE_ONBOARDING_LANGUAGE_ALT,
         NATIVE_ONBOARDING_PAGE1,

@@ -94,6 +94,8 @@ import kotlin.math.roundToInt
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.SnackbarHostState
 
 /**
@@ -263,7 +265,8 @@ fun EditorScreen(
     var previewState by remember { mutableStateOf<com.videomaker.aimusic.modules.editor.components.PreviewState>(com.videomaker.aimusic.modules.editor.components.PreviewState.Building) }
     val isPreviewBuilding = previewState is com.videomaker.aimusic.modules.editor.components.PreviewState.Building
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.weight(1f)) {
         // Main editor UI with Scaffold - blur when preview is building
         val editorTitle = stringResource(R.string.editor_title)
         Scaffold(
@@ -715,6 +718,15 @@ fun EditorScreen(
         )
 
     }
+
+    BannerAdView(
+        placement = AdPlacement.BANNER_EDITOR,
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .height(50.dp)
+    )
+}
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

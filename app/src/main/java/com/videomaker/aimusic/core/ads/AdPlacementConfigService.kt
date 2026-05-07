@@ -203,6 +203,39 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Asset picker banner (shown at bottom of image selector screen)
+        // Temporary: shares home banner unit until dedicated unit is assigned
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.BANNER_ASSET_PICKER,
+            type = "banner",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1313786204"  // Temporary (same as home)
+            ),
+            enabled = true
+        )
+
+        // Editor banner (shown at bottom of editor screen)
+        // Temporary: shares home banner unit until dedicated unit is assigned
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.BANNER_EDITOR,
+            type = "banner",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1313786204"  // Temporary (same as home)
+            ),
+            enabled = true
+        )
+
+        // Export/result banner (shown at bottom of export screen, all states)
+        // Temporary: shares home banner unit until dedicated unit is assigned
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.BANNER_EXPORT,
+            type = "banner",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1313786204"  // Temporary (same as home)
+            ),
+            enabled = true
+        )
+
         // ============================================
         // NATIVE ADS
         // ============================================

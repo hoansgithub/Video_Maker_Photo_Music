@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.core.content.FileProvider
 import java.io.File
 import androidx.activity.compose.BackHandler
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -548,31 +549,39 @@ fun AssetPickerScreen(
     }
 
     // Full-screen content
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
-        AssetPickerContent(
-            uiState = uiState,
-            minSelection = viewModel.minSelection,
-            initialGridScrollState = gridScrollState,
-            onAlbumSelect = { albumId -> viewModel.selectAlbum(albumId) },
-            onAssetClick = { asset -> viewModel.toggleAssetSelection(asset) },
-            onGridScrollChanged = { index, offset ->
-                viewModel.onGridScrollChanged(index, offset)
-            },
-            onConfirmClick = { viewModel.confirmSelection() },
-            onClearSelection = {viewModel.clearSelection()},
-            onCloseClick = {
-                requestExit()
-            },
-            onRequestFullPermission = {
-                showPermissionGateForMode(PermissionMode.DENIED)
-            },
-            onAddMorePhotos = onAddMorePhotos,
-            onCameraClick = onCameraClick
+        Box(modifier = Modifier.weight(1f)) {
+            AssetPickerContent(
+                uiState = uiState,
+                minSelection = viewModel.minSelection,
+                initialGridScrollState = gridScrollState,
+                onAlbumSelect = { albumId -> viewModel.selectAlbum(albumId) },
+                onAssetClick = { asset -> viewModel.toggleAssetSelection(asset) },
+                onGridScrollChanged = { index, offset ->
+                    viewModel.onGridScrollChanged(index, offset)
+                },
+                onConfirmClick = { viewModel.confirmSelection() },
+                onClearSelection = {viewModel.clearSelection()},
+                onCloseClick = {
+                    requestExit()
+                },
+                onRequestFullPermission = {
+                    showPermissionGateForMode(PermissionMode.DENIED)
+                },
+                onAddMorePhotos = onAddMorePhotos,
+                onCameraClick = onCameraClick
+            )
+        }
+        BannerAdView(
+            placement = AdPlacement.BANNER_ASSET_PICKER,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
         )
     }
 
