@@ -312,6 +312,31 @@ class GalleryViewModel(
         }
     }
 
+    /**
+     * Preload template grid tap interstitial ad.
+     * Called after ad is shown to prepare the next one (Drama app pattern).
+     * ACCCore handles duplicate prevention automatically.
+     */
+    fun preloadTemplateGridAd() {
+        viewModelScope.launch {
+            android.util.Log.d("GalleryViewModel", "🔄 Reloading template grid tap ad after show...")
+            runCatching {
+                com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+                    loadTimeoutMillis = null,
+                    showLoadingOverlay = false
+                )
+            }.onSuccess { success ->
+                if (success) {
+                    android.util.Log.d("GalleryViewModel", "✅ Template grid tap ad reload SUCCESS")
+                }
+            }.onFailure { e ->
+                android.util.Log.e("GalleryViewModel", "❌ Template grid tap ad reload exception: ${e.message}", e)
+            }
+        }
+    }
+
     fun onNavigationHandled() {
         _navigationEvent.value = null
     }

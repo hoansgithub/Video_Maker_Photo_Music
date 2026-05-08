@@ -184,6 +184,10 @@ fun GalleryScreen(
                                 // Navigate after ad closes
                                 onNavigateToTemplateDetail(event.templateId, event.sourceLocation)
                             },
+                            onShown = {
+                                // Preload next ad after current one shows (Drama app pattern)
+                                viewModel.preloadTemplateGridAd()
+                            },
                             bypassFrequencyCap = false,  // Respect frequency cap
                             showLoadingOverlay = false  // Background preloaded, no overlay
                         )
