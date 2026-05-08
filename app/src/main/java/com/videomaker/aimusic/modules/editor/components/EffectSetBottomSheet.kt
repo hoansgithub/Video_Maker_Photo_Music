@@ -25,7 +25,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -70,10 +69,13 @@ import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.EffectSet
 import com.videomaker.aimusic.modules.editor.EffectSetUiState
 import com.videomaker.aimusic.modules.editor.EffectSetViewModel
+import com.videomaker.aimusic.ui.components.AdBadge
+import com.videomaker.aimusic.ui.components.AdBadgeStyle
 import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.theme.Gray500
 import com.videomaker.aimusic.ui.theme.Gray600
+import com.videomaker.aimusic.ui.theme.Gray700
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
@@ -326,24 +328,17 @@ private fun EffectSetCard(
                     .clip(RoundedCornerShape(8.dp))
             )
 
-            // Lock icon overlay for locked effect sets
+            // AD badge for locked effect sets
             if (isLocked) {
-                Box(
+                AdBadge(
+                    style = AdBadgeStyle.Small(
+                        textColor = Color.White,
+                        backgroundColor = Gray700
+                    ),
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            color = Color.Black.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(8.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = stringResource(R.string.effect_set_locked),
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                        .align(Alignment.TopStart)
+                        .padding(4.dp)
+                )
             }
         }
 
