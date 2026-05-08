@@ -68,7 +68,10 @@ sealed class ProjectsUiState {
 
 sealed class ProjectsNavigationEvent {
     data object NavigateBack : ProjectsNavigationEvent()
-    data class NavigateToEditor(val projectId: String) : ProjectsNavigationEvent()
+    data class NavigateToEditor(
+        val projectId: String,
+        val shouldShowAd: Boolean = false
+    ) : ProjectsNavigationEvent()
     data class NavigateToTemplateDetail(
         val templateId: String,
         val shouldShowAd: Boolean = false
@@ -157,30 +160,24 @@ class ProjectsViewModel(
     private var isObserving = false
 
     init {
-        // Preload template grid tap interstitial ad with retry
+        // Preload template grid tap interstitial ad
         viewModelScope.launch {
-            kotlinx.coroutines.delay(500)
+            com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                adsLoaderService = adsLoaderService,
+                placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+                loadTimeoutMillis = null,
+                showLoadingOverlay = false
+            )
+        }
 
-            val success = runCatching {
-                com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
-                    adsLoaderService = adsLoaderService,
-                    placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
-                    loadTimeoutMillis = null,
-                    showLoadingOverlay = false
-                )
-            }.getOrNull() ?: false
-
-            if (!success) {
-                kotlinx.coroutines.delay(2000)
-                runCatching {
-                    com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
-                        adsLoaderService = adsLoaderService,
-                        placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
-                        loadTimeoutMillis = null,
-                        showLoadingOverlay = false
-                    )
-                }
-            }
+        // Preload library project tap interstitial ad
+        viewModelScope.launch {
+            com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                adsLoaderService = adsLoaderService,
+                placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP,
+                loadTimeoutMillis = null,
+                showLoadingOverlay = false
+            )
         }
     }
 
@@ -239,7 +236,12 @@ class ProjectsViewModel(
     }
 
     fun onProjectClick(project: Project) {
-        _navigationEvent.value = ProjectsNavigationEvent.NavigateToEditor(project.id)
+        // Check if library project tap ad is ready
+        val isAdReady = adsLoaderService.isInterstitialReady(com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP)
+        _navigationEvent.value = ProjectsNavigationEvent.NavigateToEditor(
+            projectId = project.id,
+            shouldShowAd = isAdReady
+        )
     }
 
     fun onTemplateClick(template: VideoTemplate) {
@@ -491,6 +493,19 @@ class ProjectsViewModel(
                 com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
                     adsLoaderService = adsLoaderService,
                     placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+                    loadTimeoutMillis = null,
+                    showLoadingOverlay = false
+                )
+            }
+        }
+    }
+
+    fun preloadLibraryProjectAd() {
+        viewModelScope.launch {
+            runCatching {
+                com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP,
                     loadTimeoutMillis = null,
                     showLoadingOverlay = false
                 )

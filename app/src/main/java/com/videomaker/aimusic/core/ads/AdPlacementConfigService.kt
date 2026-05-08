@@ -188,6 +188,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Library project tap interstitial (shown when tapping a created project in Library tab)
+        // Frequency controlled by ad_interstitial_interval_seconds
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/3630901660",  // Primary
+                "ca-app-pub-7121075950716954/4477079477"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Export result exit interstitial (shown when user exits export result screen)
         // Preloaded when export completes, non-blocking if not ready
         // Waterfall: Primary unit → Secondary unit

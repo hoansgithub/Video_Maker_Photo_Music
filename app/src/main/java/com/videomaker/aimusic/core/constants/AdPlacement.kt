@@ -96,6 +96,19 @@ object AdPlacement {
     const val INTERSTITIAL_TEMPLATE_GRID_TAP = "ad_interstitial_template_grid_tap"
 
     /**
+     * Interstitial ad shown when user taps a created project in Library tab to edit.
+     * Timing: Preloaded when Projects tab loads, shown on project tap if ready and frequency cap allows.
+     * If ad not loaded yet, navigation proceeds normally (non-blocking).
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/3630901660
+     * - Secondary: ca-app-pub-7121075950716954/4477079477
+     *
+     * Remote Config key: ad_interstitial_library_project_tap
+     */
+    const val INTERSTITIAL_LIBRARY_PROJECT_TAP = "ad_interstitial_library_project_tap"
+
+    /**
      * Interstitial ad shown when user exits the export result screen.
      * Timing: Preloaded when export completes, shown on back/exit if ready.
      * If ad not loaded yet, navigation proceeds normally (non-blocking).
@@ -603,6 +616,7 @@ object AdPlacement {
         INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
         INTERSTITIAL_EDITOR_BACK,
         INTERSTITIAL_TEMPLATE_GRID_TAP,
+        INTERSTITIAL_LIBRARY_PROJECT_TAP,
         INTERSTITIAL_EXPORT_RESULT_EXIT,
         INTERSTITIAL_ASSET_PICKER_EXIT,
         BANNER_HOME,

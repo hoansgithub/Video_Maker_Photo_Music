@@ -143,6 +143,13 @@ fun ProjectsTabContent(
         }
     }
 
+    // Extract editor navigation data
+    val editorNavigation = remember(navigationEvent) {
+        (navigationEvent as? ProjectsNavigationEvent.NavigateToEditor)?.let {
+            it.projectId to it.shouldShowAd
+        }
+    }
+
     LaunchedEffect(showRemovedMessage) {
         if (showRemovedMessage) {
             delay(2000)
@@ -161,6 +168,33 @@ fun ProjectsTabContent(
                 viewModel.onNavigationHandled()
             }
         )
+    }
+
+    // Handle editor navigation with ad
+    editorNavigation?.let { (projectId, shouldShowAd) ->
+        val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
+
+        LaunchedEffect(projectId, shouldShowAd) {
+            if (shouldShowAd && activity != null) {
+                com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.showInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    activity = activity,
+                    placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP,
+                    action = {
+                        onProjectClick(projectId)
+                        viewModel.onNavigationHandled()
+                    },
+                    onShown = {
+                        viewModel.preloadLibraryProjectAd()
+                    },
+                    bypassFrequencyCap = false,
+                    showLoadingOverlay = false
+                )
+            } else {
+                onProjectClick(projectId)
+                viewModel.onNavigationHandled()
+            }
+        }
     }
 
     // Handle other navigation events
@@ -187,7 +221,9 @@ fun ProjectsTabContent(
                     onNavigateToAssetPicker(event.songId)
                     viewModel.onNavigationHandled()
                 }
-                is ProjectsNavigationEvent.NavigateToEditor -> { /* handled by caller */ }
+                is ProjectsNavigationEvent.NavigateToEditor -> {
+                    // Handled by editor navigation handler above
+                }
                 is ProjectsNavigationEvent.NavigateToTemplateDetail -> {
                     // Handled by HandleTemplateNavigation above
                 }
