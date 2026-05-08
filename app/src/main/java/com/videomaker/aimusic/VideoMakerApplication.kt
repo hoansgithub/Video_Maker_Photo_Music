@@ -84,6 +84,10 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
     // ✅ Guard to ensure shader preloading happens only once (not on every foreground)
     private val shaderPreloadedOnce = AtomicBoolean(false)
 
+    // Tracks whether the app has been backgrounded at least once (warm return detection)
+    // Set to true in onStop, consumed atomically in AppOpenAdManager.shouldShowCallback
+    private val wasBackgrounded = AtomicBoolean(false)
+
     companion object {
         // Track if ads have been initialized (global, survives Activity destruction)
         private val adsInitialized = AtomicBoolean(false)
@@ -405,6 +409,14 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
             }
         })
 
+        // AOA_MINIMIZE: track when app goes to background (warm return detection)
+        // PROCESS-LIFETIME OBSERVER: intentionally not removed (matches ProcessLifecycleOwner lifetime)
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : androidx.lifecycle.DefaultLifecycleObserver {
+            override fun onStop(owner: androidx.lifecycle.LifecycleOwner) {
+                wasBackgrounded.set(true)
+            }
+        })
+
         // ============================================
         // META AUDIENCE NETWORK TEST DEVICES (Debug Only)
         // ============================================
@@ -441,7 +453,8 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         // Initialize app open ad manager (lifecycle-based)
         val appOpenAdManager = org.koin.core.context.GlobalContext.get().get<co.alcheclub.lib.acccore.ads.helpers.AppOpenAdManager>()
         appOpenAdManager.setForegroundPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_AOA)
-        android.util.Log.d("VideoMakerApp", "✅ App open ad manager initialized")
+        appOpenAdManager.setShouldShowCallback { wasBackgrounded.getAndSet(false) }
+        android.util.Log.d("VideoMakerApp", "✅ App open ad manager initialized (minimize mode)")
 
         configureNotifications()
         primeNotificationScheduleConfigFromCache()
