@@ -7,6 +7,7 @@ import co.alcheclub.lib.acccore.ads.loader.AdUnitConfig as CoreAdUnitConfig
 import co.alcheclub.lib.acccore.remoteconfig.ConfigContainer
 import co.alcheclub.lib.acccore.remoteconfig.ConfigurableObject
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.domain.model.VideoQuality
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -59,6 +60,10 @@ class AdPlacementConfigService(
          * Remote Config key for global interstitial interval
          */
         private const val KEY_INTERSTITIAL_INTERVAL = "ad_interstitial_interval_seconds"
+
+        private const val KEY_QUALITY_720P_AD_TYPE = "ad_quality_720p_type"
+        private const val KEY_QUALITY_1080P_AD_TYPE = "ad_quality_1080p_type"
+        private const val DEFAULT_QUALITY_AD_TYPE = "rewarded"
     }
 
     /**
@@ -74,6 +79,9 @@ class AdPlacementConfigService(
      */
     var interstitialIntervalSeconds: Int = DEFAULT_INTERSTITIAL_INTERVAL
         private set  // Only update() can modify
+
+    private var quality720pAdType: String = DEFAULT_QUALITY_AD_TYPE
+    private var quality1080pAdType: String = DEFAULT_QUALITY_AD_TYPE
 
     init {
         try {
@@ -620,6 +628,22 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // ============================================
+        // INTERSTITIAL — QUALITY UNLOCK
+        // ============================================
+
+        // Interstitial for quality unlock (shown instead of RW when Remote Config = "interstitial")
+        // Placeholder unit IDs — replace via Firebase after AdMob assigns dedicated units
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_UNLOCK_QUALITY,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6949256261",  // Placeholder (borrowed from ASSET_PICKER_EXIT)
+                "ca-app-pub-7121075950716954/1583783907"   // Placeholder Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }
@@ -741,6 +765,10 @@ class AdPlacementConfigService(
         } else {
             Log.d(TAG, "📊 Remote Config updated - Interstitial interval: ${interstitialIntervalSeconds}s (using local default)")
         }
+
+        quality720pAdType = config.getString(KEY_QUALITY_720P_AD_TYPE, DEFAULT_QUALITY_AD_TYPE)
+        quality1080pAdType = config.getString(KEY_QUALITY_1080P_AD_TYPE, DEFAULT_QUALITY_AD_TYPE)
+        Log.d(TAG, "📊 Quality ad types — 720p: $quality720pAdType, 1080p: $quality1080pAdType")
     }
 
     /**
@@ -763,5 +791,16 @@ class AdPlacementConfigService(
      */
     fun isPlacementEnabled(placementId: String): Boolean {
         return placementConfigService.getConfig(placementId)?.enabled == true
+    }
+
+    /**
+     * Returns the ad type to use for quality unlock: "interstitial" or "rewarded".
+     * Controlled by Remote Config; falls back to "rewarded" if key not present.
+     */
+    fun getAdTypeForQuality(quality: VideoQuality): String {
+        return when (quality) {
+            VideoQuality.HD_720 -> quality720pAdType
+            VideoQuality.FHD_1080 -> quality1080pAdType
+        }
     }
 }

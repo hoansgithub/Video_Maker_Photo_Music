@@ -666,6 +666,23 @@ object AdPlacement {
      */
     const val REWARD_UNLOCK_SONG = "ad_reward_unlock_song"
 
+    // ============================================
+    // INTERSTITIAL — QUALITY UNLOCK
+    // ============================================
+
+    /**
+     * Interstitial ad shown when user taps Done with locked quality (720p/1080p)
+     * and Remote Config routes to interstitial instead of rewarded.
+     * Unlock happens when user CLOSES the ad (action callback), not on show.
+     *
+     * Placeholder unit IDs (replace via Firebase Remote Config after AdMob assigns):
+     * - Primary: ca-app-pub-7121075950716954/6949256261 (borrowed from ASSET_PICKER_EXIT)
+     * - Secondary: ca-app-pub-7121075950716954/1583783907
+     *
+     * Remote Config key: ad_interstitial_unlock_quality
+     */
+    const val INTERSTITIAL_UNLOCK_QUALITY = "ad_interstitial_unlock_quality"
+
     /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
@@ -678,6 +695,7 @@ object AdPlacement {
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
         INTERSTITIAL_EXPORT_RESULT_EXIT,
         INTERSTITIAL_ASSET_PICKER_EXIT,
+        INTERSTITIAL_UNLOCK_QUALITY,   // ← add this line
         BANNER_HOME,
         BANNER_TEMPLATE_PREVIEWER,
         BANNER_ASSET_PICKER,

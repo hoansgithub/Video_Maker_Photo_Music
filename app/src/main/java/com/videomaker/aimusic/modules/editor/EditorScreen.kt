@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
@@ -256,6 +257,24 @@ fun EditorScreen(
                 is EditorNavigationEvent.NavigateBack -> onNavigateBack()
                 is EditorNavigationEvent.NavigateToPreview -> onNavigateToPreview(event.projectId)
                 is EditorNavigationEvent.NavigateToExport -> onNavigateToExport(event.projectId, event.quality)
+                is EditorNavigationEvent.RequestQualityInterstitial -> {
+                    if (activity != null) {
+                        InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = AdPlacement.INTERSTITIAL_UNLOCK_QUALITY,
+                            action = {
+                                // Fired when user CLOSES the ad (or if ad fails to load)
+                                viewModel.onQualityInterstitialClosed()
+                            },
+                            bypassFrequencyCap = true,
+                            showLoadingOverlay = false
+                        )
+                    } else {
+                        // activity null (rare) — unlock for free and proceed
+                        viewModel.onQualityInterstitialClosed()
+                    }
+                }
             }
             viewModel.onNavigationHandled()
         }
