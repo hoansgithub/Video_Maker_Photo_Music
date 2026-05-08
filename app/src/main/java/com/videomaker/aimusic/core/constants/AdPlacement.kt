@@ -250,6 +250,16 @@ object AdPlacement {
      */
     const val NATIVE_ONBOARDING_PAGE3 = "ad_native_onboarding_page3"
 
+    // ==========================================
+    // NATIVE ADS (In-feed, Dialogs, Bottom Sheets, Banners)
+    // ==========================================
+
+    /**
+     * Home bottom banner native ad
+     * Replaces standard banner with a native ad layout
+     */
+    const val NATIVE_HOME_BANNER = "ad_native_home_banner"
+
     /**
      * Fullscreen native ad shown between onboarding pages.
      * Displayed as a full-screen overlay with close button.
@@ -378,6 +388,18 @@ object AdPlacement {
     const val NATIVE_GALLERY_GRID = "ad_native_gallery_grid"
 
     /**
+     * Native ad shown in the featured templates carousel of the gallery screen.
+     * Displayed at the 2nd position.
+     *
+     * Ad units:
+     * - Primary: ca-app-pub-7121075950716954/6084726491
+     * - Secondary: ca-app-pub-7121075950716954/3468887588
+     * 
+     * Remote Config key: ad_native_gallery_hot_tpt
+     */
+    const val NATIVE_GALLERY_HOT_TPT = "ad_native_gallery_hot_tpt"
+
+    /**
      * Native ad shown in songs tab station section (in-feed placement).
      * Displayed as an item within the station songs vertical list.
      * Position: 4th position (index 3), or last position if total items < 3.
@@ -413,6 +435,18 @@ object AdPlacement {
      * Remote Config key: ad_native_export_generating
      */
     const val NATIVE_EXPORT_GENERATING = "ad_native_export_generating"
+
+    /**
+     * Native ad shown in template ratio selection bottom sheet.
+     * Timing: Loaded when the select ratio bottom sheet is displayed.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6466097345
+     * - Secondary: ca-app-pub-7121075950716954/8422087554
+     *
+     * Remote Config key: ad_native_template_ratio_sheet
+     */
+    const val NATIVE_TEMPLATE_RATIO_SHEET = "ad_native_template_ratio_sheet"
 
     /**
      * Rewarded ad shown when user wants to download video to gallery.
@@ -572,9 +606,12 @@ object AdPlacement {
         NATIVE_UNINSTALL_BOTTOM,
         NATIVE_WIDGET_BOTTOM,
         NATIVE_PROJECTS_GRID,
+        NATIVE_HOME_BANNER,
         NATIVE_GALLERY_GRID,
+        NATIVE_GALLERY_HOT_TPT,
         NATIVE_SONGS_STATION,
         NATIVE_TEMPLATE_PREVIEWER_LOADING,
+        NATIVE_TEMPLATE_RATIO_SHEET,
         NATIVE_EXPORT_GENERATING,
         REWARD_DOWNLOAD_VIDEO,
         REWARD_REMOVE_WATERMARK,
