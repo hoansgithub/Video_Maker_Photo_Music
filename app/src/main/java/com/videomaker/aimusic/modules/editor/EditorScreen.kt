@@ -259,6 +259,10 @@ fun EditorScreen(
                             activity = activity,
                             placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_EDITOR_BACK,
                             action = { onNavigateBack() },  // Navigate after ad closes
+                            onShown = {
+                                // Pause preview playback when ad shows
+                                viewModel.stopPlayback()
+                            },
                             bypassFrequencyCap = false,  // Respect frequency cap
                             showLoadingOverlay = false  // Background preloaded, no overlay
                         )
