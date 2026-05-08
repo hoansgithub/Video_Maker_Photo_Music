@@ -91,14 +91,15 @@ object AdPlacement {
     const val INTERSTITIAL_ASSET_PICKER_EXIT = "ad_interstitial_asset_picker_exit"
 
     /**
-     * App Open Ad shown when app comes to foreground.
+     * App Open Ad - BACKGROUND LAYER (shown when app comes to foreground after full backgrounding).
      * Timing: Preloaded when app goes to background, shown when app returns to foreground.
+     * Triggered on onStop/onStart - full app switches (home button, switch app).
      * Automatically managed by AppOpenAdManager (lifecycle-aware).
      *
      * Behavior:
      * - Preloads when app enters background (ProcessLifecycleOwner.onStop)
      * - Shows when app enters foreground (ProcessLifecycleOwner.onStart)
-     * - Skipped during splash screen
+     * - Skipped during splash screen (warm return detection via wasBackgrounded flag)
      * - Skipped when another fullscreen ad is showing
      *
      * Ad units (priority order):
@@ -108,6 +109,26 @@ object AdPlacement {
      * Remote Config key: ad_appopen_aoa
      */
     const val APP_OPEN_AOA = "ad_appopen_aoa"
+
+    /**
+     * App Open Ad - FOREGROUND LAYER (shown when app loses/regains focus).
+     * Timing: Triggered on onPause/onResume - quick interactions (notification, Recent Apps).
+     * Priority system in onResume: Background ad (if available) > Foreground ad (fallback).
+     * Automatically managed by AppOpenAdManager (lifecycle-aware).
+     *
+     * Behavior:
+     * - Preloads when app loses focus (ProcessLifecycleOwner.onPause)
+     * - Shows when app regains focus (ProcessLifecycleOwner.onResume)
+     * - Acts as fallback if background ad is not ready
+     * - Skipped when another fullscreen ad is showing
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/4327019161
+     * - Secondary: ca-app-pub-7121075950716954/5945281221
+     *
+     * Remote Config key: ad_appopen_foreground
+     */
+    const val APP_OPEN_FOREGROUND = "ad_appopen_foreground"
 
     /**
      * Banner ad shown at bottom of home screen (below tab bar).
@@ -617,7 +638,9 @@ object AdPlacement {
      */
     val ALL_PLACEMENTS = listOf(
         APP_OPEN_AOA,
+        APP_OPEN_FOREGROUND,
         INTERSTITIAL_SPLASH,
+        INTERSTITIAL_OPEN_APP,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
         INTERSTITIAL_EXPORT_RESULT_EXIT,
         INTERSTITIAL_ASSET_PICKER_EXIT,

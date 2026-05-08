@@ -107,7 +107,8 @@ class AdPlacementConfigService(
         // APP OPEN ADS
         // ============================================
 
-        // App Open Ad (shown when app comes to foreground)
+        // App Open Ad - Background layer (shown when app comes to foreground)
+        // Triggered on onStop/onStart - full app switches (home button, switch app)
         // Managed by AppOpenAdManager lifecycle observer
         // Waterfall: Primary unit → Secondary unit
         registerPlacementWithMultipleUnits(
@@ -116,6 +117,20 @@ class AdPlacementConfigService(
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/3672286423",  // Primary
                 "ca-app-pub-7121075950716954/7364624003"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // App Open Ad - Foreground layer (shown when app loses/regains focus)
+        // Triggered on onPause/onResume - quick interactions (notification, Recent Apps)
+        // Priority system in onResume: Background ad (if available) > Foreground ad (fallback)
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.APP_OPEN_FOREGROUND,
+            type = "appOpen",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4327019161",  // Primary
+                "ca-app-pub-7121075950716954/5945281221"   // Secondary
             ),
             enabled = true
         )

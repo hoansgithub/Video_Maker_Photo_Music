@@ -207,6 +207,7 @@ class RootViewModel(
 
             // Capture once — isFirstLaunch() auto-marks false on first call
             isFirstOpen = preferencesManager.isFirstLaunch()
+            android.util.Log.d("RootViewModel", "📊 First open detection: isFirstOpen=$isFirstOpen")
 
             // Step 3: Get initialization timeout from Remote Config
             // Default: 45 seconds (can be adjusted remotely without app update)
@@ -254,9 +255,10 @@ class RootViewModel(
                         // Native ads load on IO thread, interstitial on Main (AdMob requirement)
                         // Uses same timeout as overall initialization (from Remote Config)
                         _loadingStep.value = LoadingStep.LOADING_AD
+                        val splashPlacementForLog = if (isFirstOpen) AdPlacement.INTERSTITIAL_SPLASH else AdPlacement.INTERSTITIAL_OPEN_APP
                         android.util.Log.d("RootViewModel", "🎬 Step 5: Preloading ads (1-step-ahead strategy)...")
                         android.util.Log.d("RootViewModel", "   - onboardingComplete: ${this@RootViewModel.onboardingComplete}")
-                        android.util.Log.d("RootViewModel", "   - Interstitial: ${AdPlacement.INTERSTITIAL_SPLASH}")
+                        android.util.Log.d("RootViewModel", "   - Interstitial: $splashPlacementForLog (isFirstOpen=$isFirstOpen)")
                         android.util.Log.d("RootViewModel", "   - Timeout: ${initTimeoutMs}ms")
 
                         coroutineScope {
