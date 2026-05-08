@@ -586,13 +586,15 @@ class ProjectsViewModelFactory(
 class GalleryViewModelFactory(
     private val application: android.app.Application,
     private val imageLoader: coil.ImageLoader,
-    private val templateRepository: TemplateRepository
+    private val templateRepository: TemplateRepository,
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 ) {
     fun create(): GalleryViewModel {
         return GalleryViewModel(
             application = application,
             imageLoader = imageLoader,
-            templateRepository = templateRepository
+            templateRepository = templateRepository,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -888,7 +890,8 @@ val presentationModule = module {
             application = (androidContext().applicationContext as? android.app.Application)
                 ?: error("applicationContext is not an Application instance"),
             imageLoader = get(),
-            templateRepository = get()
+            templateRepository = get(),
+            adsLoaderService = get()
         )
     }
 

@@ -55,9 +55,14 @@ sealed class GalleryUiState {
 
 sealed class GalleryNavigationEvent {
     data class NavigateToSongDetail(val songId: Long) : GalleryNavigationEvent()
+    /**
+     * Navigate to template detail with optional ad
+     * @param shouldShowAd true if ad is ready and should be shown
+     */
     data class NavigateToTemplateDetail(
         val templateId: String,
-        val sourceLocation: String
+        val sourceLocation: String,
+        val shouldShowAd: Boolean = false
     ) : GalleryNavigationEvent()
     data object NavigateToAllTopSongs : GalleryNavigationEvent()
     data class NavigateToAllTemplates(val selectedVibeTagId: String?) : GalleryNavigationEvent()
@@ -71,7 +76,8 @@ sealed class GalleryNavigationEvent {
 class GalleryViewModel(
     private val application: Application,
     private val imageLoader: ImageLoader,
-    private val templateRepository: TemplateRepository
+    private val templateRepository: TemplateRepository,
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GalleryUiState>(GalleryUiState.Loading)
@@ -89,6 +95,29 @@ class GalleryViewModel(
 
     init {
         loadGalleryData()
+
+        // Preload template grid tap interstitial ad
+        // Ad loads in background with no timeout - may be used when template is tapped
+        // Non-blocking: template tap works normally if ad not ready yet
+        viewModelScope.launch {
+            android.util.Log.d("GalleryViewModel", "🎬 Preloading template grid tap ad...")
+            runCatching {
+                com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+                    loadTimeoutMillis = null,  // No timeout - load as long as needed
+                    showLoadingOverlay = false  // Background preload, no overlay
+                )
+            }.onSuccess { success ->
+                if (success) {
+                    android.util.Log.d("GalleryViewModel", "✅ Template grid tap ad preload SUCCESS")
+                } else {
+                    android.util.Log.w("GalleryViewModel", "⚠️ Template grid tap ad preload FAILED")
+                }
+            }.onFailure { e ->
+                android.util.Log.e("GalleryViewModel", "❌ Template grid tap ad preload exception: ${e.message}", e)
+            }
+        }
     }
 
     fun refresh() {
@@ -250,9 +279,15 @@ class GalleryViewModel(
     }
 
     fun onTemplateClick(template: VideoTemplate, sourceLocation: String) {
+        // Check if template grid tap ad is ready (non-blocking, with frequency cap)
+        val isAdReady = adsLoaderService.isInterstitialReady(com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP)
+
+        android.util.Log.d("GalleryViewModel", "🔔 onTemplateClick - Ad ready: $isAdReady")
+
         _navigationEvent.value = GalleryNavigationEvent.NavigateToTemplateDetail(
             templateId = template.id,
-            sourceLocation = sourceLocation
+            sourceLocation = sourceLocation,
+            shouldShowAd = isAdReady
         )
     }
 

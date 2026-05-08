@@ -83,6 +83,19 @@ object AdPlacement {
     const val INTERSTITIAL_EDITOR_BACK = "ad_interstitial_editor_back"
 
     /**
+     * Interstitial ad shown when user taps a template in gallery/home grid.
+     * Timing: Shown when tapping template to open previewer.
+     * Frequency controlled by ad_interstitial_interval_seconds Remote Config.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/4929654393
+     * - Secondary: ca-app-pub-7121075950716954/7761718368
+     *
+     * Remote Config key: ad_interstitial_template_grid_tap
+     */
+    const val INTERSTITIAL_TEMPLATE_GRID_TAP = "ad_interstitial_template_grid_tap"
+
+    /**
      * Interstitial ad shown when user exits the export result screen.
      * Timing: Preloaded when export completes, shown on back/exit if ready.
      * If ad not loaded yet, navigation proceeds normally (non-blocking).
@@ -589,6 +602,7 @@ object AdPlacement {
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
         INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
         INTERSTITIAL_EDITOR_BACK,
+        INTERSTITIAL_TEMPLATE_GRID_TAP,
         INTERSTITIAL_EXPORT_RESULT_EXIT,
         INTERSTITIAL_ASSET_PICKER_EXIT,
         BANNER_HOME,

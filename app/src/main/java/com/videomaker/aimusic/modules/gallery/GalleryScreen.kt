@@ -152,6 +152,10 @@ fun GalleryScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val activity = context as? android.app.Activity
+    val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
+
     // ✅ FIX: Refresh data when locale changes (after language change in settings)
     // Use rememberSaveable to persist previousLocale across Activity recreation
     val locale = LocalConfiguration.current.locales[0]?.toLanguageTag()
@@ -169,8 +173,25 @@ fun GalleryScreen(
         navigationEvent?.let { event ->
             when (event) {
                 is GalleryNavigationEvent.NavigateToSongDetail -> onNavigateToSongDetail(event.songId)
-                is GalleryNavigationEvent.NavigateToTemplateDetail ->
-                    onNavigateToTemplateDetail(event.templateId, event.sourceLocation)
+                is GalleryNavigationEvent.NavigateToTemplateDetail -> {
+                    if (event.shouldShowAd && activity != null) {
+                        // Show template grid tap interstitial ad
+                        com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+                            action = {
+                                // Navigate after ad closes
+                                onNavigateToTemplateDetail(event.templateId, event.sourceLocation)
+                            },
+                            bypassFrequencyCap = false,  // Respect frequency cap
+                            showLoadingOverlay = false  // Background preloaded, no overlay
+                        )
+                    } else {
+                        // Ad not ready or frequency cap active - navigate immediately
+                        onNavigateToTemplateDetail(event.templateId, event.sourceLocation)
+                    }
+                }
                 is GalleryNavigationEvent.NavigateToAllTopSongs -> onNavigateToAllTopSongs()
                 is GalleryNavigationEvent.NavigateToAllTemplates -> onNavigateToAllTemplates(event.selectedVibeTagId)
                 is GalleryNavigationEvent.NavigateToCreate -> onNavigateToCreate()

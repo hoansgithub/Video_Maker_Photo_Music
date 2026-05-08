@@ -175,6 +175,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Template grid tap interstitial (shown when tapping template in gallery/home)
+        // Frequency controlled by ad_interstitial_interval_seconds
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4929654393",  // Primary
+                "ca-app-pub-7121075950716954/7761718368"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Export result exit interstitial (shown when user exits export result screen)
         // Preloaded when export completes, non-blocking if not ready
         // Waterfall: Primary unit → Secondary unit
