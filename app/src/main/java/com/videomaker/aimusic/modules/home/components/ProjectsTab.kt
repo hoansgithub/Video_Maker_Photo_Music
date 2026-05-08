@@ -132,9 +132,30 @@ fun ProjectsTabContent(
     var showRemovedMessage by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val activity = context as? Activity
+    val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
 
     // Ad states
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
+
+    // Preload template grid tap ad when view appears
+    LaunchedEffect(Unit) {
+        com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+            adsLoaderService = adsLoaderService,
+            placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+            loadTimeoutMillis = null,
+            showLoadingOverlay = false
+        )
+    }
+
+    // Preload library project tap ad when view appears
+    LaunchedEffect(Unit) {
+        com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+            adsLoaderService = adsLoaderService,
+            placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP,
+            loadTimeoutMillis = null,
+            showLoadingOverlay = false
+        )
+    }
 
     // Extract template navigation data
     val templateNavigation = remember(navigationEvent) {
@@ -172,8 +193,6 @@ fun ProjectsTabContent(
 
     // Handle editor navigation with ad
     editorNavigation?.let { (projectId, shouldShowAd) ->
-        val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
-
         LaunchedEffect(projectId, shouldShowAd) {
             if (shouldShowAd && activity != null) {
                 com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.showInterstitial(
@@ -187,7 +206,7 @@ fun ProjectsTabContent(
                     onShown = {
                         viewModel.preloadLibraryProjectAd()
                     },
-                    bypassFrequencyCap = false,
+                    bypassFrequencyCap = true,  // Show every time, ignore frequency cap
                     showLoadingOverlay = false
                 )
             } else {

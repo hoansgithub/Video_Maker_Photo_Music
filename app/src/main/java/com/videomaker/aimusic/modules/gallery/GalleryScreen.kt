@@ -151,6 +151,7 @@ fun GalleryScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
 
     // ✅ FIX: Refresh data when locale changes (after language change in settings)
     // Use rememberSaveable to persist previousLocale across Activity recreation
@@ -162,6 +163,16 @@ fun GalleryScreen(
             viewModel.refresh()
         }
         previousLocale = locale
+    }
+
+    // Preload template grid tap ad when view appears
+    LaunchedEffect(Unit) {
+        com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+            adsLoaderService = adsLoaderService,
+            placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+            loadTimeoutMillis = null,
+            showLoadingOverlay = false
+        )
     }
 
     // Extract template navigation data

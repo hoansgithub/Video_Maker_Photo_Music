@@ -251,32 +251,6 @@ class ExportViewModel(
         loadFeaturedTemplates()
         observeRatingTrigger()
         observeSuccessForAdPreload()
-
-        // Preload template grid tap interstitial ad with retry
-        viewModelScope.launch {
-            kotlinx.coroutines.delay(500)
-
-            val success = runCatching {
-                InterstitialAdHelperExt.preloadInterstitial(
-                    adsLoaderService = adsLoaderService,
-                    placement = AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
-                    loadTimeoutMillis = null,
-                    showLoadingOverlay = false
-                )
-            }.getOrNull() ?: false
-
-            if (!success) {
-                kotlinx.coroutines.delay(2000)
-                runCatching {
-                    InterstitialAdHelperExt.preloadInterstitial(
-                        adsLoaderService = adsLoaderService,
-                        placement = AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
-                        loadTimeoutMillis = null,
-                        showLoadingOverlay = false
-                    )
-                }
-            }
-        }
     }
 
     private fun loadProjectData() {

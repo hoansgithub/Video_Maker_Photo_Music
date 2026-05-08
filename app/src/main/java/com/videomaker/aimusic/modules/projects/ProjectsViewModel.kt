@@ -159,28 +159,6 @@ class ProjectsViewModel(
         )
     private var isObserving = false
 
-    init {
-        // Preload template grid tap interstitial ad
-        viewModelScope.launch {
-            com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
-                adsLoaderService = adsLoaderService,
-                placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
-                loadTimeoutMillis = null,
-                showLoadingOverlay = false
-            )
-        }
-
-        // Preload library project tap interstitial ad
-        viewModelScope.launch {
-            com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
-                adsLoaderService = adsLoaderService,
-                placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP,
-                loadTimeoutMillis = null,
-                showLoadingOverlay = false
-            )
-        }
-    }
-
     /**
      * Start observing projects - call this when the My Videos tab becomes visible
      */

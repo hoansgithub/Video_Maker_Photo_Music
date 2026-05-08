@@ -226,6 +226,16 @@ fun ExportScreen(
     var pauseSuccessPreviewForAd by remember { mutableStateOf(false) }
     val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
 
+    // Preload template grid tap ad when view appears
+    LaunchedEffect(Unit) {
+        InterstitialAdHelperExt.preloadInterstitial(
+            adsLoaderService = adsLoaderService,
+            placement = AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+            loadTimeoutMillis = null,
+            showLoadingOverlay = false
+        )
+    }
+
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->

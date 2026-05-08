@@ -219,32 +219,6 @@ class UnifiedSearchViewModel(
                     }
                 }
         }
-
-        // Preload template grid tap interstitial ad with retry
-        viewModelScope.launch {
-            kotlinx.coroutines.delay(500)
-
-            val success = runCatching {
-                com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
-                    adsLoaderService = adsLoaderService,
-                    placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
-                    loadTimeoutMillis = null,
-                    showLoadingOverlay = false
-                )
-            }.getOrNull() ?: false
-
-            if (!success) {
-                kotlinx.coroutines.delay(2000)
-                runCatching {
-                    com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
-                        adsLoaderService = adsLoaderService,
-                        placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
-                        loadTimeoutMillis = null,
-                        showLoadingOverlay = false
-                    )
-                }
-            }
-        }
     }
 
     fun onQueryChange(newQuery: String) {

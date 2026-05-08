@@ -60,7 +60,7 @@ fun HandleTemplateNavigation(
                     // Preload next ad after current one shows (Drama app pattern)
                     onPreloadNext()
                 },
-                bypassFrequencyCap = false,  // Respect frequency cap
+                bypassFrequencyCap = true,   // Show every time, ignore frequency cap
                 showLoadingOverlay = false   // Background preloaded, no overlay
             )
         } else {
