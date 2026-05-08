@@ -251,7 +251,22 @@ fun EditorScreen(
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
-                is EditorNavigationEvent.NavigateBack -> onNavigateBack()
+                is EditorNavigationEvent.RequestBackWithAd -> {
+                    if (event.shouldShowAd && activity != null) {
+                        // Show back button interstitial ad
+                        com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_EDITOR_BACK,
+                            action = { onNavigateBack() },  // Navigate after ad closes
+                            bypassFrequencyCap = false,  // Respect frequency cap
+                            showLoadingOverlay = false  // Background preloaded, no overlay
+                        )
+                    } else {
+                        // Ad not ready or no activity - navigate immediately
+                        onNavigateBack()
+                    }
+                }
                 is EditorNavigationEvent.NavigateToPreview -> onNavigateToPreview(event.projectId)
                 is EditorNavigationEvent.NavigateToExport -> onNavigateToExport(event.projectId, event.quality)
             }

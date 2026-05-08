@@ -70,6 +70,19 @@ object AdPlacement {
     const val INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL = "ad_interstitial_template_previewer_scroll"
 
     /**
+     * Interstitial ad shown when user presses back or swipes to exit editor screen.
+     * Timing: Preloaded at screen launch, shown on back button press/swipe if ready.
+     * If ad not loaded yet, back navigation proceeds normally (non-blocking).
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/9607266009
+     * - Secondary: ca-app-pub-7121075950716954/5668020998
+     *
+     * Remote Config key: ad_interstitial_editor_back
+     */
+    const val INTERSTITIAL_EDITOR_BACK = "ad_interstitial_editor_back"
+
+    /**
      * Interstitial ad shown when user exits the export result screen.
      * Timing: Preloaded when export completes, shown on back/exit if ready.
      * If ad not loaded yet, navigation proceeds normally (non-blocking).
@@ -575,6 +588,7 @@ object AdPlacement {
         INTERSTITIAL_SPLASH,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
         INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
+        INTERSTITIAL_EDITOR_BACK,
         INTERSTITIAL_EXPORT_RESULT_EXIT,
         INTERSTITIAL_ASSET_PICKER_EXIT,
         BANNER_HOME,

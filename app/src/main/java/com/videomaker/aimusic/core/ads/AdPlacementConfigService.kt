@@ -162,6 +162,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Editor back button interstitial (shown when exiting editor screen)
+        // Preloaded on screen entry, non-blocking if not ready
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_EDITOR_BACK,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9607266009",  // Primary
+                "ca-app-pub-7121075950716954/5668020998"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Export result exit interstitial (shown when user exits export result screen)
         // Preloaded when export completes, non-blocking if not ready
         // Waterfall: Primary unit → Secondary unit

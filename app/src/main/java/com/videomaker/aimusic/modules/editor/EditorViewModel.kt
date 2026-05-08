@@ -80,7 +80,12 @@ sealed class EditorUiState {
 // ============================================
 
 sealed class EditorNavigationEvent {
-    data object NavigateBack : EditorNavigationEvent()
+    /**
+     * Request back navigation with optional ad
+     * @param shouldShowAd true if ad is ready and should be shown
+     */
+    data class RequestBackWithAd(val shouldShowAd: Boolean) : EditorNavigationEvent()
+
     data class NavigateToPreview(val projectId: String) : EditorNavigationEvent()
     data class NavigateToExport(val projectId: String, val quality: VideoQuality) : EditorNavigationEvent()
 }
@@ -153,6 +158,29 @@ class EditorViewModel(
             "Either projectId or initialData must be provided"
         }
         loadOrInitializeProject()
+
+        // Preload back button interstitial ad
+        // Ad loads in background with no timeout - may be used later if back is pressed
+        // Non-blocking: back button works normally if ad not ready yet
+        viewModelScope.launch {
+            android.util.Log.d("EditorViewModel", "🎬 Preloading back button ad...")
+            runCatching {
+                com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_EDITOR_BACK,
+                    loadTimeoutMillis = null,  // No timeout - load as long as needed
+                    showLoadingOverlay = false  // Background preload, no overlay
+                )
+            }.onSuccess { success ->
+                if (success) {
+                    android.util.Log.d("EditorViewModel", "✅ Back button ad preload SUCCESS")
+                } else {
+                    android.util.Log.w("EditorViewModel", "⚠️ Back button ad preload FAILED")
+                }
+            }.onFailure { e ->
+                android.util.Log.e("EditorViewModel", "❌ Back button ad preload exception: ${e.message}", e)
+            }
+        }
     }
 
     /**
@@ -1327,7 +1355,14 @@ class EditorViewModel(
     // ============================================
 
     fun navigateBack() {
-        _navigationEvent.value = EditorNavigationEvent.NavigateBack
+        // Check if back button ad is ready (non-blocking)
+        val isAdReady = adsLoaderService.isInterstitialReady(com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_EDITOR_BACK)
+
+        android.util.Log.d("EditorViewModel", "🔙 navigateBack - Ad ready: $isAdReady")
+
+        // Send navigation event with ad status
+        // Screen will show ad if ready, otherwise navigate immediately
+        _navigationEvent.value = EditorNavigationEvent.RequestBackWithAd(isAdReady)
     }
 
     /**
