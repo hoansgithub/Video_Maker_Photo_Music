@@ -109,6 +109,19 @@ object AdPlacement {
     const val INTERSTITIAL_LIBRARY_PROJECT_TAP = "ad_interstitial_library_project_tap"
 
     /**
+     * Interstitial ad shown when user taps a template on uninstall confirmation screen.
+     * Timing: Preloaded at screen launch, shown on template tap if ready.
+     * If ad not loaded yet, navigation proceeds normally (non-blocking).
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/3608744575
+     * - Secondary: ca-app-pub-7121075950716954/2161948881
+     *
+     * Remote Config key: ad_interstitial_uninstall_template_tap
+     */
+    const val INTERSTITIAL_UNINSTALL_TEMPLATE_TAP = "ad_interstitial_uninstall_template_tap"
+
+    /**
      * Interstitial ad shown when user exits the export result screen.
      * Timing: Preloaded when export completes, shown on back/exit if ready.
      * If ad not loaded yet, navigation proceeds normally (non-blocking).
@@ -617,6 +630,7 @@ object AdPlacement {
         INTERSTITIAL_EDITOR_BACK,
         INTERSTITIAL_TEMPLATE_GRID_TAP,
         INTERSTITIAL_LIBRARY_PROJECT_TAP,
+        INTERSTITIAL_UNINSTALL_TEMPLATE_TAP,
         INTERSTITIAL_EXPORT_RESULT_EXIT,
         INTERSTITIAL_ASSET_PICKER_EXIT,
         BANNER_HOME,

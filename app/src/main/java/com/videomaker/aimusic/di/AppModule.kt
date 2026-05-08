@@ -743,6 +743,7 @@ class UninstallViewModelFactory(
     private val observeLikedSongsUseCase: ObserveLikedSongsUseCase,
     private val templateRepository: TemplateRepository,
     private val songRepository: SongRepository,
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
 ) {
     fun create(): UninstallViewModel {
         return UninstallViewModel(
@@ -750,6 +751,7 @@ class UninstallViewModelFactory(
             observeLikedSongsUseCase = observeLikedSongsUseCase,
             templateRepository = templateRepository,
             songRepository = songRepository,
+            adsLoaderService = adsLoaderService,
         )
     }
 }
@@ -974,6 +976,7 @@ val presentationModule = module {
             observeLikedSongsUseCase = get(),
             templateRepository = get(),
             songRepository = get(),
+            adsLoaderService = get(),
         )
     }
 

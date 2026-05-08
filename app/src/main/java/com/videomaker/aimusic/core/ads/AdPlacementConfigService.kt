@@ -201,6 +201,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Uninstall template tap interstitial (shown when tapping template on uninstall screen)
+        // Preloaded at screen launch, shown every time (bypasses frequency cap)
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_UNINSTALL_TEMPLATE_TAP,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/3608744575",  // Primary
+                "ca-app-pub-7121075950716954/2161948881"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Export result exit interstitial (shown when user exits export result screen)
         // Preloaded when export completes, non-blocking if not ready
         // Waterfall: Primary unit → Secondary unit

@@ -31,6 +31,7 @@ import org.koin.compose.koinInject
  *
  * @param templateId The template ID to navigate to
  * @param shouldShowAd Whether ad is ready and should be shown
+ * @param placement The ad placement to show (default: INTERSTITIAL_TEMPLATE_GRID_TAP)
  * @param onPreloadNext Callback to preload next ad after current one shows
  * @param onNavigate Navigation callback with template ID
  */
@@ -38,6 +39,7 @@ import org.koin.compose.koinInject
 fun HandleTemplateNavigation(
     templateId: String,
     shouldShowAd: Boolean,
+    placement: String = AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
     onPreloadNext: () -> Unit,
     onNavigate: (String) -> Unit
 ) {
@@ -47,11 +49,11 @@ fun HandleTemplateNavigation(
 
     LaunchedEffect(templateId, shouldShowAd) {
         if (shouldShowAd && activity != null) {
-            // Show template grid tap interstitial ad
+            // Show interstitial ad
             InterstitialAdHelperExt.showInterstitial(
                 adsLoaderService = adsLoaderService,
                 activity = activity,
-                placement = AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+                placement = placement,
                 action = {
                     // Navigate after ad closes
                     onNavigate(templateId)
