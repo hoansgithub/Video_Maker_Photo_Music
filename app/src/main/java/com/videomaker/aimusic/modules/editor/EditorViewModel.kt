@@ -1456,8 +1456,8 @@ class EditorViewModel(
 
     fun onBeatSyncErrorDismissed() {
         _showBeatSyncErrorDialog.value = false
-        // Navigate back to home
-        _navigationEvent.value = EditorNavigationEvent.NavigateBack
+        // Navigate back to home (no ad on error case)
+        _navigationEvent.value = EditorNavigationEvent.RequestBackWithAd(shouldShowAd = false)
     }
 
     override fun onCleared() {
