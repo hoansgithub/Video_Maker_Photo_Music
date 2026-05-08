@@ -796,10 +796,27 @@ fun VideoPreviewPlayer(
     // Cancel all processing when app goes to background
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
+        var wasPlayingBeforeActivityPause = false
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    // Pause only (no release) — covers interstitial ads and AOA overlay
+                    wasPlayingBeforeActivityPause = videoPlayer?.isPlaying == true
+                    videoPlayer?.pause()
+                    audioPlayer?.pause()
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    // Resume if player is still alive (not released by ON_STOP)
+                    if (wasPlayingBeforeActivityPause && videoPlayer != null) {
+                        videoPlayer?.play()
+                        audioPlayer?.play()
+                        onPlaybackStateChange(true)
+                    }
+                    wasPlayingBeforeActivityPause = false
+                }
                 Lifecycle.Event.ON_STOP -> {
-                    // Pause playback
+                    // Full cleanup when app goes to background
+                    wasPlayingBeforeActivityPause = false
                     videoPlayer?.pause()
                     audioPlayer?.pause()
                     onPlaybackStateChange(false)

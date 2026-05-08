@@ -95,7 +95,10 @@ import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.theme.TextTertiary
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -239,6 +242,27 @@ internal fun MusicSearchBottomSheet(
             exoPlayer.pause()
             android.util.Log.d("MusicSearchBottomSheet", "Paused music preview for ad presentation")
         }
+    }
+
+    // Pause/resume when Activity loses focus (AOA, interstitial ads)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        var wasPlayingBeforeActivityPause = false
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    wasPlayingBeforeActivityPause = exoPlayer.isPlaying
+                    if (exoPlayer.isPlaying) exoPlayer.pause()
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    if (wasPlayingBeforeActivityPause) exoPlayer.play()
+                    wasPlayingBeforeActivityPause = false
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     // Handle preview playback

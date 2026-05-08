@@ -26,7 +26,7 @@ package com.videomaker.aimusic.core.constants
 object AdPlacement {
 
     /**
-     * Interstitial ad shown after splash screen loading completes.
+     * Interstitial ad shown after splash screen loading completes (first app install only).
      * Timing: After all data loaded (Remote Config, status checks), before navigating to next screen.
      * Shown once per app session (splash screen only appears once).
      *
@@ -37,6 +37,19 @@ object AdPlacement {
      * Remote Config key: ad_interstitial_splash
      */
     const val INTERSTITIAL_SPLASH = "ad_interstitial_splash"
+
+    /**
+     * Interstitial ad shown after splash screen loading completes (second app open onwards).
+     * Timing: Same as INTERSTITIAL_SPLASH but shown from the second launch onward.
+     * Uses separate ad unit to allow independent eCPM tracking and frequency capping.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/3800316265 (Inter_high_splash_reopen)
+     * - Secondary: ca-app-pub-7121075950716954/2822365800 (Inter_all_splash_reopen)
+     *
+     * Remote Config key: ad_interstitial_open_app
+     */
+    const val INTERSTITIAL_OPEN_APP = "ad_interstitial_open_app"
 
     /**
      * Interstitial ad shown when user presses back from template previewer.
@@ -78,14 +91,15 @@ object AdPlacement {
     const val INTERSTITIAL_ASSET_PICKER_EXIT = "ad_interstitial_asset_picker_exit"
 
     /**
-     * App Open Ad shown when app comes to foreground.
+     * App Open Ad - BACKGROUND LAYER (shown when app comes to foreground after full backgrounding).
      * Timing: Preloaded when app goes to background, shown when app returns to foreground.
+     * Triggered on onStop/onStart - full app switches (home button, switch app).
      * Automatically managed by AppOpenAdManager (lifecycle-aware).
      *
      * Behavior:
      * - Preloads when app enters background (ProcessLifecycleOwner.onStop)
      * - Shows when app enters foreground (ProcessLifecycleOwner.onStart)
-     * - Skipped during splash screen
+     * - Skipped during splash screen (warm return detection via wasBackgrounded flag)
      * - Skipped when another fullscreen ad is showing
      *
      * Ad units (priority order):
@@ -95,6 +109,26 @@ object AdPlacement {
      * Remote Config key: ad_appopen_aoa
      */
     const val APP_OPEN_AOA = "ad_appopen_aoa"
+
+    /**
+     * App Open Ad - FOREGROUND LAYER (shown when app loses/regains focus).
+     * Timing: Triggered on onPause/onResume - quick interactions (notification, Recent Apps).
+     * Priority system in onResume: Background ad (if available) > Foreground ad (fallback).
+     * Automatically managed by AppOpenAdManager (lifecycle-aware).
+     *
+     * Behavior:
+     * - Preloads when app loses focus (ProcessLifecycleOwner.onPause)
+     * - Shows when app regains focus (ProcessLifecycleOwner.onResume)
+     * - Acts as fallback if background ad is not ready
+     * - Skipped when another fullscreen ad is showing
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/4327019161
+     * - Secondary: ca-app-pub-7121075950716954/5945281221
+     *
+     * Remote Config key: ad_appopen_foreground
+     */
+    const val APP_OPEN_FOREGROUND = "ad_appopen_foreground"
 
     /**
      * Banner ad shown at bottom of home screen (below tab bar).
@@ -130,6 +164,56 @@ object AdPlacement {
      * Remote Config key: ad_banner_template_previewer
      */
     const val BANNER_TEMPLATE_PREVIEWER = "ad_banner_template_previewer"
+
+    /**
+     * Banner ad shown at bottom of asset picker screen (image selector).
+     * Timing: Loaded when asset picker is displayed.
+     * Displayed below the image grid and selection bar.
+     *
+     * Features:
+     * - Adaptive banner sizing (320dp width default)
+     * - Lifecycle-aware cleanup
+     *
+     * Ad units (priority order):
+     * - Primary: TBD (temporary: ca-app-pub-7121075950716954/1313786204)
+     *
+     * Remote Config key: ad_banner_asset_picker
+     */
+    const val BANNER_ASSET_PICKER = "ad_banner_asset_picker"
+
+    /**
+     * Banner ad shown at bottom of editor screen.
+     * Timing: Loaded when editor screen is displayed.
+     * Displayed below the Scaffold content, outside the blur effect.
+     *
+     * Features:
+     * - Adaptive banner sizing (320dp width default)
+     * - Stays sharp when editor preview is building (outside Scaffold blur)
+     * - Lifecycle-aware cleanup
+     *
+     * Ad units (priority order):
+     * - Primary: TBD (temporary: ca-app-pub-7121075950716954/1313786204)
+     *
+     * Remote Config key: ad_banner_editor
+     */
+    const val BANNER_EDITOR = "ad_banner_editor"
+
+    /**
+     * Banner ad shown at bottom of export/result screen (all states).
+     * Timing: Loaded when export screen is displayed.
+     * Shown across all export states: Preparing, Processing, Success, Error, Cancelled.
+     *
+     * Features:
+     * - Adaptive banner sizing (320dp width default)
+     * - Visible during all export states (not just success)
+     * - Lifecycle-aware cleanup
+     *
+     * Ad units (priority order):
+     * - Primary: TBD (temporary: ca-app-pub-7121075950716954/1313786204)
+     *
+     * Remote Config key: ad_banner_export
+     */
+    const val BANNER_EXPORT = "ad_banner_export"
 
     /**
      * Native ad shown at bottom of onboarding language selector screen.
@@ -582,18 +666,41 @@ object AdPlacement {
      */
     const val REWARD_UNLOCK_SONG = "ad_reward_unlock_song"
 
+    // ============================================
+    // INTERSTITIAL — QUALITY UNLOCK
+    // ============================================
+
+    /**
+     * Interstitial ad shown when user taps Done with locked quality (720p/1080p)
+     * and Remote Config routes to interstitial instead of rewarded.
+     * Unlock happens when user CLOSES the ad (action callback), not on show.
+     *
+     * Placeholder unit IDs (replace via Firebase Remote Config after AdMob assigns):
+     * - Primary: ca-app-pub-7121075950716954/6949256261 (borrowed from ASSET_PICKER_EXIT)
+     * - Secondary: ca-app-pub-7121075950716954/1583783907
+     *
+     * Remote Config key: ad_interstitial_unlock_quality
+     */
+    const val INTERSTITIAL_UNLOCK_QUALITY = "ad_interstitial_unlock_quality"
+
     /**
      * List of all ad placement IDs.
      * Used by AdInitializer to validate that all placements are registered.
      */
     val ALL_PLACEMENTS = listOf(
         APP_OPEN_AOA,
+        APP_OPEN_FOREGROUND,
         INTERSTITIAL_SPLASH,
+        INTERSTITIAL_OPEN_APP,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
         INTERSTITIAL_EXPORT_RESULT_EXIT,
         INTERSTITIAL_ASSET_PICKER_EXIT,
+        INTERSTITIAL_UNLOCK_QUALITY,   // ← add this line
         BANNER_HOME,
         BANNER_TEMPLATE_PREVIEWER,
+        BANNER_ASSET_PICKER,
+        BANNER_EDITOR,
+        BANNER_EXPORT,
         NATIVE_ONBOARDING_LANGUAGE,
         NATIVE_ONBOARDING_LANGUAGE_ALT,
         NATIVE_ONBOARDING_PAGE1,
