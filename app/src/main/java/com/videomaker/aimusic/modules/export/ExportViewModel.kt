@@ -114,7 +114,10 @@ sealed class ExportNavigationEvent {
      */
     data class RequestExitWithAd(val shouldShowAd: Boolean) : ExportNavigationEvent()
 
-    data class NavigateToTemplateDetail(val templateId: String) : ExportNavigationEvent()
+    data class NavigateToTemplateDetail(
+        val templateId: String,
+        val shouldShowAd: Boolean = false
+    ) : ExportNavigationEvent()
 }
 
 /**
@@ -248,6 +251,32 @@ class ExportViewModel(
         loadFeaturedTemplates()
         observeRatingTrigger()
         observeSuccessForAdPreload()
+
+        // Preload template grid tap interstitial ad with retry
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(500)
+
+            val success = runCatching {
+                InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+                    loadTimeoutMillis = null,
+                    showLoadingOverlay = false
+                )
+            }.getOrNull() ?: false
+
+            if (!success) {
+                kotlinx.coroutines.delay(2000)
+                runCatching {
+                    InterstitialAdHelperExt.preloadInterstitial(
+                        adsLoaderService = adsLoaderService,
+                        placement = AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+                        loadTimeoutMillis = null,
+                        showLoadingOverlay = false
+                    )
+                }
+            }
+        }
     }
 
     private fun loadProjectData() {
@@ -591,7 +620,14 @@ class ExportViewModel(
             templateName = templateName,
             location = AnalyticsEvent.Value.Location.RESULT_RCM
         )
-        _navigationEvent.value = ExportNavigationEvent.NavigateToTemplateDetail(templateId)
+
+        // Check if template grid tap ad is ready
+        val isAdReady = adsLoaderService.isInterstitialReady(AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP)
+
+        _navigationEvent.value = ExportNavigationEvent.NavigateToTemplateDetail(
+            templateId = templateId,
+            shouldShowAd = isAdReady
+        )
     }
 
     fun trackShareAction() {
@@ -873,6 +909,24 @@ class ExportViewModel(
             is ExportProgress.Error -> Result.failure(IllegalStateException(terminalProgress.message))
             is ExportProgress.Cancelled -> Result.failure(IllegalStateException("Export cancelled"))
             else -> Result.failure(IllegalStateException("Unexpected export terminal state"))
+        }
+    }
+
+    /**
+     * Preload template grid tap interstitial ad.
+     * Called after ad is shown to prepare the next one (Drama app pattern).
+     * ACCCore handles duplicate prevention automatically.
+     */
+    fun preloadTemplateGridAd() {
+        viewModelScope.launch {
+            runCatching {
+                InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+                    loadTimeoutMillis = null,
+                    showLoadingOverlay = false
+                )
+            }
         }
     }
 

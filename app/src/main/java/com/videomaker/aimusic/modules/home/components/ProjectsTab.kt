@@ -136,6 +136,13 @@ fun ProjectsTabContent(
     // Ad states
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
 
+    // Extract template navigation data
+    val templateNavigation = remember(navigationEvent) {
+        (navigationEvent as? ProjectsNavigationEvent.NavigateToTemplateDetail)?.let {
+            it.templateId to it.shouldShowAd
+        }
+    }
+
     LaunchedEffect(showRemovedMessage) {
         if (showRemovedMessage) {
             delay(2000)
@@ -143,19 +150,49 @@ fun ProjectsTabContent(
         }
     }
 
+    // Handle template navigation with reusable helper
+    templateNavigation?.let { (templateId, shouldShowAd) ->
+        com.videomaker.aimusic.core.ads.HandleTemplateNavigation(
+            templateId = templateId,
+            shouldShowAd = shouldShowAd,
+            onPreloadNext = { viewModel.preloadTemplateGridAd() },
+            onNavigate = {
+                onNavigateToTemplateDetail(it, null)
+                viewModel.onNavigationHandled()
+            }
+        )
+    }
+
+    // Handle other navigation events
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
-                is ProjectsNavigationEvent.NavigateToSongSearch -> onNavigateToSongSearch()
-                is ProjectsNavigationEvent.NavigateToAllSongs -> onNavigateToAllSongs()
-                is ProjectsNavigationEvent.NavigateToTemplateSearch -> onNavigateToTemplateSearch()
-                is ProjectsNavigationEvent.NavigateToAllTemplates -> onNavigateToAllTemplates()
-                is ProjectsNavigationEvent.NavigateToAssetPickerForSong -> onNavigateToAssetPicker(event.songId)
+                is ProjectsNavigationEvent.NavigateToSongSearch -> {
+                    onNavigateToSongSearch()
+                    viewModel.onNavigationHandled()
+                }
+                is ProjectsNavigationEvent.NavigateToAllSongs -> {
+                    onNavigateToAllSongs()
+                    viewModel.onNavigationHandled()
+                }
+                is ProjectsNavigationEvent.NavigateToTemplateSearch -> {
+                    onNavigateToTemplateSearch()
+                    viewModel.onNavigationHandled()
+                }
+                is ProjectsNavigationEvent.NavigateToAllTemplates -> {
+                    onNavigateToAllTemplates()
+                    viewModel.onNavigationHandled()
+                }
+                is ProjectsNavigationEvent.NavigateToAssetPickerForSong -> {
+                    onNavigateToAssetPicker(event.songId)
+                    viewModel.onNavigationHandled()
+                }
                 is ProjectsNavigationEvent.NavigateToEditor -> { /* handled by caller */ }
-                is ProjectsNavigationEvent.NavigateToTemplateDetail -> { /* handled by caller */ }
+                is ProjectsNavigationEvent.NavigateToTemplateDetail -> {
+                    // Handled by HandleTemplateNavigation above
+                }
                 is ProjectsNavigationEvent.NavigateBack -> { /* handled by caller */ }
             }
-            viewModel.onNavigationHandled()
         }
     }
 

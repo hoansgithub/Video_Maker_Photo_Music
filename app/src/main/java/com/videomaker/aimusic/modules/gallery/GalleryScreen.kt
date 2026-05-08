@@ -152,10 +152,6 @@ fun GalleryScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val activity = context as? android.app.Activity
-    val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
-
     // ✅ FIX: Refresh data when locale changes (after language change in settings)
     // Use rememberSaveable to persist previousLocale across Activity recreation
     val locale = LocalConfiguration.current.locales[0]?.toLanguageTag()
@@ -168,39 +164,50 @@ fun GalleryScreen(
         previousLocale = locale
     }
 
-    // Handle navigation events
+    // Extract template navigation data
+    val templateNavigation = remember(navigationEvent) {
+        (navigationEvent as? GalleryNavigationEvent.NavigateToTemplateDetail)?.let {
+            Triple(it.templateId, it.sourceLocation, it.shouldShowAd)
+        }
+    }
+
+    // Handle template navigation with reusable helper
+    templateNavigation?.let { (templateId, sourceLocation, shouldShowAd) ->
+        com.videomaker.aimusic.core.ads.HandleTemplateNavigation(
+            templateId = templateId,
+            shouldShowAd = shouldShowAd,
+            onPreloadNext = { viewModel.preloadTemplateGridAd() },
+            onNavigate = {
+                onNavigateToTemplateDetail(it, sourceLocation)
+                viewModel.onNavigationHandled()
+            }
+        )
+    }
+
+    // Handle other navigation events
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
-                is GalleryNavigationEvent.NavigateToSongDetail -> onNavigateToSongDetail(event.songId)
-                is GalleryNavigationEvent.NavigateToTemplateDetail -> {
-                    if (event.shouldShowAd && activity != null) {
-                        // Show template grid tap interstitial ad
-                        com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.showInterstitial(
-                            adsLoaderService = adsLoaderService,
-                            activity = activity,
-                            placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
-                            action = {
-                                // Navigate after ad closes
-                                onNavigateToTemplateDetail(event.templateId, event.sourceLocation)
-                            },
-                            onShown = {
-                                // Preload next ad after current one shows (Drama app pattern)
-                                viewModel.preloadTemplateGridAd()
-                            },
-                            bypassFrequencyCap = false,  // Respect frequency cap
-                            showLoadingOverlay = false  // Background preloaded, no overlay
-                        )
-                    } else {
-                        // Ad not ready or frequency cap active - navigate immediately
-                        onNavigateToTemplateDetail(event.templateId, event.sourceLocation)
-                    }
+                is GalleryNavigationEvent.NavigateToSongDetail -> {
+                    onNavigateToSongDetail(event.songId)
+                    viewModel.onNavigationHandled()
                 }
-                is GalleryNavigationEvent.NavigateToAllTopSongs -> onNavigateToAllTopSongs()
-                is GalleryNavigationEvent.NavigateToAllTemplates -> onNavigateToAllTemplates(event.selectedVibeTagId)
-                is GalleryNavigationEvent.NavigateToCreate -> onNavigateToCreate()
+                is GalleryNavigationEvent.NavigateToAllTopSongs -> {
+                    onNavigateToAllTopSongs()
+                    viewModel.onNavigationHandled()
+                }
+                is GalleryNavigationEvent.NavigateToAllTemplates -> {
+                    onNavigateToAllTemplates(event.selectedVibeTagId)
+                    viewModel.onNavigationHandled()
+                }
+                is GalleryNavigationEvent.NavigateToCreate -> {
+                    onNavigateToCreate()
+                    viewModel.onNavigationHandled()
+                }
+                is GalleryNavigationEvent.NavigateToTemplateDetail -> {
+                    // Handled by HandleTemplateNavigation above
+                }
             }
-            viewModel.onNavigationHandled()
         }
     }
 

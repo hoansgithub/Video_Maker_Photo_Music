@@ -319,3 +319,13 @@ DisposableEffect(composition) {
 
 Commit format: `<type>: <description>`
 - `feat:` new feature | `fix:` bug fix | `refactor:` code restructure | `ui:` UI/UX improvements
+
+---
+
+## Documentation Workflow
+
+⚠️ **NEVER write summary files, reports, or documentation automatically.**
+
+- **FORBIDDEN**: Creating summary.md, refactoring_summary.md, report files, or any documentation without explicit user request
+- **REQUIRED**: Only create documentation when user explicitly asks "write a summary" or "create documentation"
+- **EXCEPTION**: Code comments and inline documentation are always allowed

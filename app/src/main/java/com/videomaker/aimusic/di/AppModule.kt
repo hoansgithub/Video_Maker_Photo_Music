@@ -917,7 +917,8 @@ val presentationModule = module {
             templateRepository = get(),
             getGenresUseCase = get(),
             getSuggestedSongsUseCase = get(),
-            getSongsByGenreUseCase = get()
+            getSongsByGenreUseCase = get(),
+            adsLoaderService = get()
         )
     }
 

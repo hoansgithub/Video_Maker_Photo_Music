@@ -89,16 +89,42 @@ fun UnifiedSearchScreen(
         previousLocale = locale
     }
 
+    // Extract template navigation data
+    val templateNavigation = remember(navigationEvent) {
+        (navigationEvent as? UnifiedSearchNavigationEvent.NavigateToTemplateDetail)?.let {
+            it.templateId to it.shouldShowAd
+        }
+    }
+
+    // Handle template navigation with reusable helper
+    templateNavigation?.let { (templateId, shouldShowAd) ->
+        com.videomaker.aimusic.core.ads.HandleTemplateNavigation(
+            templateId = templateId,
+            shouldShowAd = shouldShowAd,
+            onPreloadNext = { viewModel.preloadTemplateGridAd() },
+            onNavigate = {
+                onNavigateToTemplateDetail(it)
+                viewModel.onNavigationHandled()
+            }
+        )
+    }
+
+    // Handle other navigation events
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
-                is UnifiedSearchNavigationEvent.NavigateBack -> onNavigateBack()
-                is UnifiedSearchNavigationEvent.NavigateToTemplateDetail ->
-                    onNavigateToTemplateDetail(event.templateId)
-                is UnifiedSearchNavigationEvent.NavigateToSongDetail ->
+                is UnifiedSearchNavigationEvent.NavigateBack -> {
+                    onNavigateBack()
+                    viewModel.onNavigationHandled()
+                }
+                is UnifiedSearchNavigationEvent.NavigateToSongDetail -> {
                     onNavigateToSongDetail(event.songId)
+                    viewModel.onNavigationHandled()
+                }
+                is UnifiedSearchNavigationEvent.NavigateToTemplateDetail -> {
+                    // Handled by HandleTemplateNavigation above
+                }
             }
-            viewModel.onNavigationHandled()
         }
     }
 

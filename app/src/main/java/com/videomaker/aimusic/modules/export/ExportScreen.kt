@@ -210,15 +210,20 @@ fun ExportScreen(
     val showWatermark by viewModel.showWatermark.collectAsStateWithLifecycle()
     val shouldPresentWatermarkAd by viewModel.shouldPresentWatermarkAd.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val activity = context as? Activity
+    val adsLoaderService = koinInject<AdsLoaderService>()
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Extract template navigation data
+    val templateNavigation = remember(navigationEvent) {
+        (navigationEvent as? ExportNavigationEvent.NavigateToTemplateDetail)?.let {
+            it.templateId to it.shouldShowAd
+        }
+    }
     var showNotificationPromoDialog by remember { mutableStateOf(false) }
     var showNotificationSettingsGuideDialog by remember { mutableStateOf(false) }
     var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
     var pauseSuccessPreviewForAd by remember { mutableStateOf(false) }
-
-    // Get dependencies for ad showing
-    val activity = context as? Activity
-    val adsLoaderService = koinInject<AdsLoaderService>()
     val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -352,13 +357,32 @@ fun ExportScreen(
         }
     }
 
-    // Handle navigation events - StateFlow-based (Google recommended pattern)
+    // Handle template navigation with reusable helper
+    templateNavigation?.let { (templateId, shouldShowAd) ->
+        com.videomaker.aimusic.core.ads.HandleTemplateNavigation(
+            templateId = templateId,
+            shouldShowAd = shouldShowAd,
+            onPreloadNext = { viewModel.preloadTemplateGridAd() },
+            onNavigate = {
+                onNavigateToTemplateDetail(it)
+                viewModel.onNavigationHandled()
+            }
+        )
+    }
+
+    // Handle other navigation events - StateFlow-based (Google recommended pattern)
     // Observe navigationEvent StateFlow and call onNavigationHandled() after navigating
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
-                is ExportNavigationEvent.NavigateBack -> onNavigateBack()
-                is ExportNavigationEvent.NavigateToHomeMyVideos -> onNavigateToHomeMyVideos()
+                is ExportNavigationEvent.NavigateBack -> {
+                    onNavigateBack()
+                    viewModel.onNavigationHandled()
+                }
+                is ExportNavigationEvent.NavigateToHomeMyVideos -> {
+                    onNavigateToHomeMyVideos()
+                    viewModel.onNavigationHandled()
+                }
 
                 is ExportNavigationEvent.RequestExitWithAd -> {
                     // Show ad if ready, otherwise navigate immediately (non-blocking)
@@ -388,13 +412,13 @@ fun ExportScreen(
                         }
                         onNavigateToHomeMyVideos()
                     }
+                    viewModel.onNavigationHandled()
                 }
 
                 is ExportNavigationEvent.NavigateToTemplateDetail -> {
-                    onNavigateToTemplateDetail(event.templateId)
+                    // Handled by HandleTemplateNavigation above
                 }
             }
-            viewModel.onNavigationHandled()
         }
     }
 
