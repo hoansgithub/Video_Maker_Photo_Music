@@ -96,26 +96,42 @@ class GalleryViewModel(
     init {
         loadGalleryData()
 
-        // Preload template grid tap interstitial ad
-        // Ad loads in background with no timeout - may be used when template is tapped
-        // Non-blocking: template tap works normally if ad not ready yet
+        // Preload template grid tap interstitial ad with retry
+        // Delay prevents conflict with ads showing during navigation
         viewModelScope.launch {
+            kotlinx.coroutines.delay(500)  // Wait for navigation ads to finish
+
             android.util.Log.d("GalleryViewModel", "🎬 Preloading template grid tap ad...")
-            runCatching {
+            val success = runCatching {
                 com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
                     adsLoaderService = adsLoaderService,
                     placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
-                    loadTimeoutMillis = null,  // No timeout - load as long as needed
-                    showLoadingOverlay = false  // Background preload, no overlay
+                    loadTimeoutMillis = null,
+                    showLoadingOverlay = false
                 )
-            }.onSuccess { success ->
-                if (success) {
-                    android.util.Log.d("GalleryViewModel", "✅ Template grid tap ad preload SUCCESS")
+            }.getOrNull() ?: false
+
+            if (success) {
+                android.util.Log.d("GalleryViewModel", "✅ Template grid tap ad preload SUCCESS")
+            } else {
+                // Retry once after delay if failed (another ad might be showing)
+                android.util.Log.w("GalleryViewModel", "⚠️ Template grid tap ad preload FAILED, retrying...")
+                kotlinx.coroutines.delay(2000)
+
+                val retrySuccess = runCatching {
+                    com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                        adsLoaderService = adsLoaderService,
+                        placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+                        loadTimeoutMillis = null,
+                        showLoadingOverlay = false
+                    )
+                }.getOrNull() ?: false
+
+                if (retrySuccess) {
+                    android.util.Log.d("GalleryViewModel", "✅ Template grid tap ad retry SUCCESS")
                 } else {
-                    android.util.Log.w("GalleryViewModel", "⚠️ Template grid tap ad preload FAILED")
+                    android.util.Log.w("GalleryViewModel", "⚠️ Template grid tap ad retry FAILED")
                 }
-            }.onFailure { e ->
-                android.util.Log.e("GalleryViewModel", "❌ Template grid tap ad preload exception: ${e.message}", e)
             }
         }
     }
