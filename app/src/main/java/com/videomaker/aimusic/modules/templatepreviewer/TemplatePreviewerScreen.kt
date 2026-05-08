@@ -217,6 +217,33 @@ fun TemplatePreviewerScreen(
                     }
                 }
 
+                is TemplatePreviewerNavigationEvent.ShowScrollInterstitial -> {
+                    // Show scroll interstitial if activity available
+                    // ACCCore handles frequency cap automatically (ad_interstitial_interval_seconds)
+                    // If interval not passed, ad is skipped silently
+                    if (activity != null) {
+                        android.util.Log.d("TemplatePreviewerScreen", "📺 Attempting to show scroll interstitial...")
+
+                        InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
+                            action = {
+                                // Ad closed or skipped - no action needed, user continues browsing
+                                android.util.Log.d("TemplatePreviewerScreen", "✅ Scroll ad action callback")
+                            },
+                            onShown = {
+                                // Ad actually shown (not skipped by frequency cap)
+                                android.util.Log.d("TemplatePreviewerScreen", "🎬 Scroll ad shown to user")
+                            },
+                            bypassFrequencyCap = false,  // ✅ Let ACCCore enforce interval
+                            showLoadingOverlay = false  // Background preloaded, no overlay
+                        )
+                    } else {
+                        android.util.Log.w("TemplatePreviewerScreen", "⚠️ No activity - cannot show scroll ad")
+                    }
+                }
+
                 is TemplatePreviewerNavigationEvent.NavigateBack -> onNavigateBack()
             }
             viewModel.onNavigationHandled()

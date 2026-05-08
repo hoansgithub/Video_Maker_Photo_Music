@@ -52,6 +52,24 @@ object AdPlacement {
     const val INTERSTITIAL_TEMPLATE_PREVIEWER_BACK = "ad_interstitial_template_previewer_back"
 
     /**
+     * Interstitial ad shown while user scrolls through templates in template previewer.
+     * Timing: Shown at intervals while browsing templates (vertical scroll/swipe).
+     * Frequency controlled by ad_interstitial_interval_seconds Remote Config (default 60s).
+     *
+     * Behavior:
+     * - Shows after user has scrolled for configured interval duration
+     * - Non-blocking (doesn't interrupt scroll if ad not ready)
+     * - Timer resets after ad shown
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1693027679
+     * - Secondary: ca-app-pub-7121075950716954/3084106753
+     *
+     * Remote Config key: ad_interstitial_template_previewer_scroll
+     */
+    const val INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL = "ad_interstitial_template_previewer_scroll"
+
+    /**
      * Interstitial ad shown when user exits the export result screen.
      * Timing: Preloaded when export completes, shown on back/exit if ready.
      * If ad not loaded yet, navigation proceeds normally (non-blocking).
@@ -556,6 +574,7 @@ object AdPlacement {
         APP_OPEN_AOA,
         INTERSTITIAL_SPLASH,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
+        INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
         INTERSTITIAL_EXPORT_RESULT_EXIT,
         INTERSTITIAL_ASSET_PICKER_EXIT,
         BANNER_HOME,

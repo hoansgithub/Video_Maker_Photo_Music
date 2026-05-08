@@ -1,7 +1,9 @@
 package com.videomaker.aimusic.modules.templatepreviewer
 
 import android.net.Uri
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.ProjectSettings
@@ -18,6 +20,7 @@ import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.storage.UnlockedTemplatesManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -61,6 +64,12 @@ sealed class TemplatePreviewerNavigationEvent {
      * @param shouldShowAd true if ad is ready and should be shown
      */
     data class RequestBackWithAd(val shouldShowAd: Boolean) : TemplatePreviewerNavigationEvent()
+
+    /**
+     * Show scroll interstitial ad while browsing templates
+     * Frequency controlled by ad_interstitial_interval_seconds (ACCCore handles timing)
+     */
+    data object ShowScrollInterstitial : TemplatePreviewerNavigationEvent()
 
     data class NavigateToAssetPicker(
         val template: VideoTemplate,
@@ -166,6 +175,10 @@ class TemplatePreviewerViewModel(
                 android.util.Log.e("TemplatePreviewerVM", "❌ Back button ad preload exception: ${e.message}", e)
             }
         }
+
+        // Preload scroll interstitial ad (Drama app pattern: preload on entry)
+        // Frequency controlled by ACCCore's ad_interstitial_interval_seconds
+        preloadScrollInterstitial()
     }
 
     // ============================================
@@ -181,6 +194,13 @@ class TemplatePreviewerViewModel(
             loadMoreTemplates()
         }
         // No music loading needed - videos have built-in music
+
+        // Preload scroll interstitial on every page change (Drama app pattern)
+        // Library handles duplicate checks - safe to call repeatedly
+        preloadScrollInterstitial()
+
+        // Trigger scroll ad check (ACCCore enforces interval automatically)
+        tryShowScrollInterstitial()
     }
 
     fun onUseThisTemplate(template: VideoTemplate, aspectRatio: AspectRatio) {
@@ -265,6 +285,60 @@ class TemplatePreviewerViewModel(
         _pendingUnlockTemplate.value = null
         _pendingSelectedRatio.value = null
         _errorMessage.value = "AD_NOT_AVAILABLE"
+    }
+
+    // ============================================
+    // SCROLL INTERSTITIAL AD LOGIC
+    // ============================================
+
+    /**
+     * Preload scroll interstitial ad in background (Drama app pattern).
+     *
+     * Aggressive preload strategy:
+     * - Called on screen entry (init)
+     * - Called on every page change
+     * - ACCCore handles duplicate request prevention automatically
+     * - Persistent: Uses ProcessLifecycleOwner scope to survive ViewModel destruction
+     * - No timeout: Loads in background while user browses
+     */
+    private fun preloadScrollInterstitial() {
+        // Use ProcessLifecycleOwner scope - persists beyond ViewModel lifecycle
+        // IMPORTANT: Must use Main dispatcher - ad SDK requires main thread
+        // No job tracking needed - ACCCore prevents duplicate requests
+        ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.Main) {
+            android.util.Log.d("TemplatePreviewerVM", "🔄 Preloading scroll interstitial...")
+            runCatching {
+                InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
+                    loadTimeoutMillis = null,  // No timeout - load as long as needed
+                    showLoadingOverlay = false  // Background load, no UI
+                )
+            }.onSuccess { success ->
+                if (success) {
+                    android.util.Log.d("TemplatePreviewerVM", "✅ Scroll ad preload SUCCESS")
+                } else {
+                    android.util.Log.d("TemplatePreviewerVM", "⚠️ Scroll ad preload FAILED")
+                }
+            }.onFailure { e ->
+                android.util.Log.e("TemplatePreviewerVM", "❌ Scroll ad preload exception: ${e.message}", e)
+            }
+        }
+    }
+
+    /**
+     * Trigger scroll interstitial ad if ready and interval passed.
+     *
+     * ACCCore automatically handles:
+     * - Frequency cap (ad_interstitial_interval_seconds from Remote Config)
+     * - Ad ready check
+     * - Global timing coordination
+     *
+     * If interval hasn't passed, ACCCore skips silently (no ad shown).
+     */
+    private fun tryShowScrollInterstitial() {
+        // Send navigation event - ACCCore will enforce interval in showInterstitial()
+        _navigationEvent.value = TemplatePreviewerNavigationEvent.ShowScrollInterstitial
     }
 
     // ============================================

@@ -53,7 +53,7 @@ class AdPlacementConfigService(
          * Default interstitial interval in seconds
          * Used when Remote Config key is not available
          */
-        private const val DEFAULT_INTERSTITIAL_INTERVAL = 60
+        private const val DEFAULT_INTERSTITIAL_INTERVAL = 10
 
         /**
          * Remote Config key for global interstitial interval
@@ -145,6 +145,19 @@ class AdPlacementConfigService(
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/2213834713",  // Primary
                 "ca-app-pub-7121075950716954/6699874633"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Template previewer scroll interstitial (shown while browsing templates)
+        // Frequency controlled by ad_interstitial_interval_seconds (default 60s)
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1693027679",  // Primary
+                "ca-app-pub-7121075950716954/3084106753"   // Secondary
             ),
             enabled = true
         )

@@ -52,7 +52,7 @@
           },
           "valueType": "JSON"
         },
-        "interstitial_interval_seconds": {
+        "ad_interstitial_interval_seconds": {
           "defaultValue": {
             "value": "10"
           },
