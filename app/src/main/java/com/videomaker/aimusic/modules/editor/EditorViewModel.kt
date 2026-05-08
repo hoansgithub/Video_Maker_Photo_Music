@@ -3,6 +3,8 @@ package com.videomaker.aimusic.modules.editor
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.net.Uri
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -88,6 +90,7 @@ sealed class EditorNavigationEvent {
 
     data class NavigateToPreview(val projectId: String) : EditorNavigationEvent()
     data class NavigateToExport(val projectId: String, val quality: VideoQuality) : EditorNavigationEvent()
+    data object RequestQualityInterstitial : EditorNavigationEvent()
 }
 
 // ============================================
@@ -107,7 +110,8 @@ class EditorViewModel(
     private val effectSetRepository: EffectSetRepository,
     private val beatSyncRepository: com.videomaker.aimusic.domain.repository.BeatSyncRepository,
     private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
-    private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService
+    private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService,
+    private val adPlacementConfigService: AdPlacementConfigService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<EditorUiState>(EditorUiState.Loading)
@@ -616,6 +620,17 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
             _uiState.value = currentState.copy(selectedQuality = quality)
+            // Preload inter if quality is locked and config = interstitial
+            if (isQualityLocked(quality) &&
+                adPlacementConfigService.getAdTypeForQuality(quality) == "interstitial") {
+                viewModelScope.launch {
+                    InterstitialAdHelperExt.preloadInterstitial(
+                        adsLoaderService = adsLoaderService,
+                        placement = AdPlacement.INTERSTITIAL_UNLOCK_QUALITY,
+                        showLoadingOverlay = false
+                    )
+                }
+            }
         }
     }
 
@@ -1383,22 +1398,26 @@ class EditorViewModel(
         if (currentState !is EditorUiState.Success) return
 
         if (isQualityLocked(currentState.selectedQuality)) {
-            // Quality locked - request ad via controller
-            qualityAdController.requestAd(
-                onReward = {
-                    // Unlock quality for session and navigate
-                    android.util.Log.d("EditorViewModel", "✅ Quality unlocked for session")
-                    _isQualityUnlocked.value = true
-                    navigateToExport()
-                },
-                onSkip = {
-                    // Ad disabled - unlock for free and proceed
-                    android.util.Log.d("EditorViewModel", "⏭️ Ad disabled - unlocking quality for free")
-                    _isQualityUnlocked.value = true
-                    navigateToExport()
-                },
-                checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_QUALITY) }
-            )
+            val adType = adPlacementConfigService.getAdTypeForQuality(currentState.selectedQuality)
+            if (adType == "interstitial") {
+                android.util.Log.d("EditorViewModel", "📺 Quality locked → showing interstitial")
+                _navigationEvent.value = EditorNavigationEvent.RequestQualityInterstitial
+            } else {
+                // Rewarded flow (default)
+                qualityAdController.requestAd(
+                    onReward = {
+                        android.util.Log.d("EditorViewModel", "✅ Quality unlocked for session")
+                        _isQualityUnlocked.value = true
+                        navigateToExport()
+                    },
+                    onSkip = {
+                        android.util.Log.d("EditorViewModel", "⏭️ Ad disabled - unlocking quality for free")
+                        _isQualityUnlocked.value = true
+                        navigateToExport()
+                    },
+                    checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_QUALITY) }
+                )
+            }
         } else {
             // Quality unlocked or free - proceed to export
             navigateToExport()
@@ -1431,6 +1450,16 @@ class EditorViewModel(
      */
     fun onQualityAdErrorShown() {
         _qualityAdError.value = null
+    }
+
+    /**
+     * Called by EditorScreen when quality unlock interstitial closes.
+     * Unlocks quality for this session and proceeds to export.
+     */
+    fun onQualityInterstitialClosed() {
+        android.util.Log.d("EditorViewModel", "✅ Quality interstitial closed — unlocking for session")
+        _isQualityUnlocked.value = true
+        navigateToExport()
     }
 
     fun navigateToExport() {

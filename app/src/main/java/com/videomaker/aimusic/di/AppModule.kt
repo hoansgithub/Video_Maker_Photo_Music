@@ -470,7 +470,8 @@ class EditorViewModelFactory(
     private val effectSetRepository: EffectSetRepository,
     private val beatSyncRepository: BeatSyncRepository,
     private val adsLoaderService: AdsLoaderService,
-    private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService
+    private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService,
+    private val adPlacementConfigService: com.videomaker.aimusic.core.ads.AdPlacementConfigService
 ) {
     fun create(
         projectId: String?,
@@ -489,7 +490,8 @@ class EditorViewModelFactory(
             effectSetRepository = effectSetRepository,
             beatSyncRepository = beatSyncRepository,
             adsLoaderService = adsLoaderService,
-            audioPreprocessingService = audioPreprocessingService
+            audioPreprocessingService = audioPreprocessingService,
+            adPlacementConfigService = adPlacementConfigService
         )
     }
 }
@@ -839,7 +841,8 @@ val presentationModule = module {
             effectSetRepository = get(),
             beatSyncRepository = get(),
             adsLoaderService = get(),
-            audioPreprocessingService = get()
+            audioPreprocessingService = get(),
+            adPlacementConfigService = get()
         )
     }
 

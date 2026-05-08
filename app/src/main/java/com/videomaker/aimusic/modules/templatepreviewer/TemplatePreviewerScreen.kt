@@ -1078,6 +1078,12 @@ private fun SelectRatioBottomSheet(
                     .fillMaxWidth()
                     .height(52.dp)
             )
+
+            NativeAdView(
+                placement = AdPlacement.NATIVE_TEMPLATE_RATIO_SHEET,
+                modifier = Modifier.fillMaxWidth(),
+                isDebug = BuildConfig.DEBUG
+            )
         }
     }
 }

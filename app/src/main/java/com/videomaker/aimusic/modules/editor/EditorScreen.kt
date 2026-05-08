@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
@@ -94,6 +95,8 @@ import kotlin.math.roundToInt
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.SnackbarHostState
 
 /**
@@ -273,6 +276,24 @@ fun EditorScreen(
                 }
                 is EditorNavigationEvent.NavigateToPreview -> onNavigateToPreview(event.projectId)
                 is EditorNavigationEvent.NavigateToExport -> onNavigateToExport(event.projectId, event.quality)
+                is EditorNavigationEvent.RequestQualityInterstitial -> {
+                    if (activity != null) {
+                        InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = AdPlacement.INTERSTITIAL_UNLOCK_QUALITY,
+                            action = {
+                                // Fired when user CLOSES the ad (or if ad fails to load)
+                                viewModel.onQualityInterstitialClosed()
+                            },
+                            bypassFrequencyCap = true,
+                            showLoadingOverlay = false
+                        )
+                    } else {
+                        // activity null (rare) — unlock for free and proceed
+                        viewModel.onQualityInterstitialClosed()
+                    }
+                }
             }
             viewModel.onNavigationHandled()
         }
@@ -282,7 +303,8 @@ fun EditorScreen(
     var previewState by remember { mutableStateOf<com.videomaker.aimusic.modules.editor.components.PreviewState>(com.videomaker.aimusic.modules.editor.components.PreviewState.Building) }
     val isPreviewBuilding = previewState is com.videomaker.aimusic.modules.editor.components.PreviewState.Building
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.weight(1f)) {
         // Main editor UI with Scaffold - blur when preview is building
         val editorTitle = stringResource(R.string.editor_title)
         Scaffold(
@@ -734,6 +756,15 @@ fun EditorScreen(
         )
 
     }
+
+    BannerAdView(
+        placement = AdPlacement.BANNER_EDITOR,
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .height(50.dp)
+    )
+}
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

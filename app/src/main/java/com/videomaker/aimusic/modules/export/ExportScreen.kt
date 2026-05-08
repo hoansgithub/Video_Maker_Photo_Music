@@ -11,6 +11,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import androidx.compose.foundation.layout.navigationBarsPadding
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
@@ -458,9 +460,11 @@ fun ExportScreen(
     }
 
     // Full-screen blocking container with dark background (#101313 closest = SplashBackground)
+    Column(modifier = Modifier.fillMaxSize()) {
     Box(
         modifier = Modifier
-            .fillMaxSize()
+            .weight(1f)
+            .fillMaxWidth()
             .background(SplashBackground),
         contentAlignment = Alignment.Center
     ) {
@@ -643,6 +647,14 @@ fun ExportScreen(
             )
         }
     }
+    BannerAdView(
+        placement = AdPlacement.BANNER_EXPORT,
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .height(50.dp)
+    )
+}
 }
 
 @Composable

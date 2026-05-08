@@ -7,6 +7,7 @@ import co.alcheclub.lib.acccore.ads.loader.AdUnitConfig as CoreAdUnitConfig
 import co.alcheclub.lib.acccore.remoteconfig.ConfigContainer
 import co.alcheclub.lib.acccore.remoteconfig.ConfigurableObject
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.domain.model.VideoQuality
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -59,6 +60,10 @@ class AdPlacementConfigService(
          * Remote Config key for global interstitial interval
          */
         private const val KEY_INTERSTITIAL_INTERVAL = "ad_interstitial_interval_seconds"
+
+        private const val KEY_QUALITY_720P_AD_TYPE = "ad_quality_720p_type"
+        private const val KEY_QUALITY_1080P_AD_TYPE = "ad_quality_1080p_type"
+        private const val DEFAULT_QUALITY_AD_TYPE = "rewarded"
     }
 
     /**
@@ -74,6 +79,9 @@ class AdPlacementConfigService(
      */
     var interstitialIntervalSeconds: Int = DEFAULT_INTERSTITIAL_INTERVAL
         private set  // Only update() can modify
+
+    private var quality720pAdType: String = DEFAULT_QUALITY_AD_TYPE
+    private var quality1080pAdType: String = DEFAULT_QUALITY_AD_TYPE
 
     init {
         try {
@@ -107,7 +115,8 @@ class AdPlacementConfigService(
         // APP OPEN ADS
         // ============================================
 
-        // App Open Ad (shown when app comes to foreground)
+        // App Open Ad - Background layer (shown when app comes to foreground)
+        // Triggered on onStop/onStart - full app switches (home button, switch app)
         // Managed by AppOpenAdManager lifecycle observer
         // Waterfall: Primary unit → Secondary unit
         registerPlacementWithMultipleUnits(
@@ -120,11 +129,25 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // App Open Ad - Foreground layer (shown when app loses/regains focus)
+        // Triggered on onPause/onResume - quick interactions (notification, Recent Apps)
+        // Priority system in onResume: Background ad (if available) > Foreground ad (fallback)
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.APP_OPEN_FOREGROUND,
+            type = "appOpen",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4327019161",  // Primary
+                "ca-app-pub-7121075950716954/5945281221"   // Secondary
+            ),
+            enabled = true
+        )
+
         // ============================================
         // INTERSTITIAL ADS
         // ============================================
 
-        // Splash screen interstitial (shown after loading completes)
+        // Splash screen interstitial - first app launch only
         // Waterfall: Primary unit → Secondary unit
         registerPlacementWithMultipleUnits(
             placementId = AdPlacement.INTERSTITIAL_SPLASH,
@@ -132,6 +155,18 @@ class AdPlacementConfigService(
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/4247360286",  // Primary
                 "ca-app-pub-7121075950716954/6785534926"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Open app interstitial - second launch onwards (separate ad unit for independent tracking)
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_OPEN_APP,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/3800316265",  // Inter_high_splash_reopen (Primary)
+                "ca-app-pub-7121075950716954/2822365800"   // Inter_all_splash_reopen (Secondary)
             ),
             enabled = true
         )
@@ -264,6 +299,39 @@ class AdPlacementConfigService(
             type = "banner",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/1313786204"  // Primary (same as home)
+            ),
+            enabled = true
+        )
+
+        // Asset picker banner (shown at bottom of image selector screen)
+        // Temporary: shares home banner unit until dedicated unit is assigned
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.BANNER_ASSET_PICKER,
+            type = "banner",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1313786204"  // Temporary (same as home)
+            ),
+            enabled = true
+        )
+
+        // Editor banner (shown at bottom of editor screen)
+        // Temporary: shares home banner unit until dedicated unit is assigned
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.BANNER_EDITOR,
+            type = "banner",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1313786204"  // Temporary (same as home)
+            ),
+            enabled = true
+        )
+
+        // Export/result banner (shown at bottom of export screen, all states)
+        // Temporary: shares home banner unit until dedicated unit is assigned
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.BANNER_EXPORT,
+            type = "banner",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1313786204"  // Temporary (same as home)
             ),
             enabled = true
         )
@@ -442,6 +510,20 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Template ratio sheet native ad (shown in bottom sheet)
+        // High-engagement placement when selecting ratio to create template
+        // Layout: native_small_bait (small vertical layout to fit in bottom sheet)
+        // Waterfall: Primary unit -> Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_TEMPLATE_RATIO_SHEET,
+            layoutName = "native_small_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6466097345",  // Primary
+                "ca-app-pub-7121075950716954/8422087554"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Projects grid native ad (shown as item in staggered projects list)
         // In-feed placement that blends with project cards
         // Only loads when at least 1 project exists
@@ -473,18 +555,45 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Featured templates carousel native ad (shown at 2nd position)
+        // Layout: native_small_clean (matches 16:9 carousel ratio)
+        // Waterfall: Primary unit -> Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_GALLERY_HOT_TPT,
+            layoutName = "native_small_clean",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6084726491",  // Primary
+                "ca-app-pub-7121075950716954/3468887588"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Songs station native ad (shown as item in station songs list)
         // In-feed placement that blends with song list items
         // Position: 4th position (index 3), or last if < 3 items
         // Persists through genre chip tag filtering
         // Layout: native_small_row (horizontal row, matches song items)
-        // Waterfall: Primary unit → Secondary unit
+        // Waterfall: Primary unit -> Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_SONGS_STATION,
             layoutName = "native_small_row",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/2788549787",  // Primary
                 "ca-app-pub-7121075950716954/1667039805"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Home Banner Native Ad (replaces standard banner)
+        // Shown at the bottom of the Home screen, shared across tabs
+        // Layout: native_small_row (horizontal row) to fit the banner dimensions
+        // Waterfall: Primary unit -> Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_HOME_BANNER,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/8457835867",  // Primary (NA_high_lib)
+                "ca-app-pub-7121075950716954/8266264176"   // Secondary (NA_all_lib)
             ),
             enabled = true
         )
@@ -580,6 +689,22 @@ class AdPlacementConfigService(
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/1281667047",  // Primary (same as template/effect)
                 "ca-app-pub-7121075950716954/4323092928"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // ============================================
+        // INTERSTITIAL — QUALITY UNLOCK
+        // ============================================
+
+        // Interstitial for quality unlock (shown instead of RW when Remote Config = "interstitial")
+        // Placeholder unit IDs — replace via Firebase after AdMob assigns dedicated units
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_UNLOCK_QUALITY,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6949256261",  // Placeholder (borrowed from ASSET_PICKER_EXIT)
+                "ca-app-pub-7121075950716954/1583783907"   // Placeholder Secondary
             ),
             enabled = true
         )
@@ -705,6 +830,10 @@ class AdPlacementConfigService(
         } else {
             Log.d(TAG, "📊 Remote Config updated - Interstitial interval: ${interstitialIntervalSeconds}s (using local default)")
         }
+
+        quality720pAdType = config.getString(KEY_QUALITY_720P_AD_TYPE, DEFAULT_QUALITY_AD_TYPE)
+        quality1080pAdType = config.getString(KEY_QUALITY_1080P_AD_TYPE, DEFAULT_QUALITY_AD_TYPE)
+        Log.d(TAG, "📊 Quality ad types — 720p: $quality720pAdType, 1080p: $quality1080pAdType")
     }
 
     /**
@@ -727,5 +856,16 @@ class AdPlacementConfigService(
      */
     fun isPlacementEnabled(placementId: String): Boolean {
         return placementConfigService.getConfig(placementId)?.enabled == true
+    }
+
+    /**
+     * Returns the ad type to use for quality unlock: "interstitial" or "rewarded".
+     * Controlled by Remote Config; falls back to "rewarded" if key not present.
+     */
+    fun getAdTypeForQuality(quality: VideoQuality): String {
+        return when (quality) {
+            VideoQuality.HD_720 -> quality720pAdType
+            VideoQuality.FHD_1080 -> quality1080pAdType
+        }
     }
 }
