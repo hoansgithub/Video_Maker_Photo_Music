@@ -54,7 +54,10 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import java.nio.ByteBuffer
 import kotlin.math.abs
@@ -223,6 +226,27 @@ fun MusicSettingsBottomSheet(
             musicPlayer.stop()  // ✅ Stop immediately (synchronous)
             musicPlayer.releaseAsync() // Release player async to avoid ANR
         }
+    }
+
+    // Pause/resume when Activity loses focus (AOA, interstitial ads)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        var wasPlayingBeforeActivityPause = false
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    wasPlayingBeforeActivityPause = musicPlayer.isPlaying
+                    if (musicPlayer.isPlaying) musicPlayer.pause()
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    if (wasPlayingBeforeActivityPause) musicPlayer.play()
+                    wasPlayingBeforeActivityPause = false
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     ModalBottomSheet(
