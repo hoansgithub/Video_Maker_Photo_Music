@@ -66,12 +66,13 @@ import com.videomaker.aimusic.ui.theme.PrimaryDark
 import com.videomaker.aimusic.ui.theme.TextInactive
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.launch
-import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.constants.AdPlacement
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.runtime.snapshotFlow
+import com.videomaker.aimusic.BuildConfig
 import org.koin.compose.koinInject
 
 /**
@@ -284,13 +285,15 @@ fun HomeScreen(
             }
         }
 
-        // Banner ad below tab content (at bottom of screen)
+        // Native ad below tab content (at bottom of screen)
         // Fixed height prevents measurement issues after multiple navigations
-        BannerAdView(
-            placement = AdPlacement.BANNER_HOME,
+        // Replaced standard banner with native ad as requested
+        NativeAdView(
+            placement = AdPlacement.NATIVE_HOME_BANNER,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
+                .height(50.dp),
+            isDebug = BuildConfig.DEBUG
         )
     }
 }
