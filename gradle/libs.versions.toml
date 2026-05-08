@@ -58,7 +58,7 @@ koin = "4.2.0"  # Matches ACCCoreAndroid
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.37"  # Latest: v0.0.37 release (AppsFlyer Purchase Connector ROI360 + SDK 6.18.0)
+acccore = "0.0.38"  # Latest: v0.0.38 release (Parallel ad preload support)
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)
