@@ -351,7 +351,7 @@ fun ProjectsTabContent(
                                             songId = project.settings.musicSongId?.toString(),
                                             location = AnalyticsEvent.Value.Location.LIBRARY
                                         )
-                                        onProjectClick(project.id)
+                                        viewModel.onProjectClick(project)
                                     },
                                     onProjectOption = { project ->
                                         Analytics.trackVideoOption(project.id)
