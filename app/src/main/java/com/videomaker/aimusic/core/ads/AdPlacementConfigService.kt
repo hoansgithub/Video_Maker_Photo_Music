@@ -377,6 +377,20 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Template ratio sheet native ad (shown in bottom sheet)
+        // High-engagement placement when selecting ratio to create template
+        // Layout: native_small_bait (small vertical layout to fit in bottom sheet)
+        // Waterfall: Primary unit -> Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_TEMPLATE_RATIO_SHEET,
+            layoutName = "native_small_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6466097345",  // Primary
+                "ca-app-pub-7121075950716954/8422087554"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Projects grid native ad (shown as item in staggered projects list)
         // In-feed placement that blends with project cards
         // Only loads when at least 1 project exists
@@ -408,18 +422,45 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Featured templates carousel native ad (shown at 2nd position)
+        // Layout: native_small_clean (matches 16:9 carousel ratio)
+        // Waterfall: Primary unit -> Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_GALLERY_HOT_TPT,
+            layoutName = "native_small_clean",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6084726491",  // Primary
+                "ca-app-pub-7121075950716954/3468887588"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Songs station native ad (shown as item in station songs list)
         // In-feed placement that blends with song list items
         // Position: 4th position (index 3), or last if < 3 items
         // Persists through genre chip tag filtering
         // Layout: native_small_row (horizontal row, matches song items)
-        // Waterfall: Primary unit → Secondary unit
+        // Waterfall: Primary unit -> Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_SONGS_STATION,
             layoutName = "native_small_row",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/2788549787",  // Primary
                 "ca-app-pub-7121075950716954/1667039805"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Home Banner Native Ad (replaces standard banner)
+        // Shown at the bottom of the Home screen, shared across tabs
+        // Layout: native_small_row (horizontal row) to fit the banner dimensions
+        // Waterfall: Primary unit -> Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_HOME_BANNER,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/8457835867",  // Primary (NA_high_lib)
+                "ca-app-pub-7121075950716954/8266264176"   // Secondary (NA_all_lib)
             ),
             enabled = true
         )
