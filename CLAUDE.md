@@ -1,331 +1,187 @@
 # Android Development Rules
 
 ## Tech Stack
+- **Kotlin 1.9+** with Jetpack Compose
+- **Min SDK**: 24 (Android 7.0)
+- **Navigation**: Navigation 3 with NavDisplay (NOT NavHost)
+- **State**: StateFlow (NOT LiveData)
+- **Concurrency**: Coroutines + Flow (NOT RxJava)
+- **DI**: Hilt
 
-- **Language**: Kotlin 2.0+ | **UI**: Jetpack Compose (BOM 2025.10.01)
-- **Min SDK**: 28 | **Target SDK**: 36 | **Architecture**: Clean Architecture
-- **Navigation**: Navigation 3 (1.0.0-alpha03) - developer-owned back stack
-- **Concurrency**: Coroutines + Flow | **DI**: ACCDI | **Build**: KSP2 (not KAPT)
+## Android CLI (Agent-Optimized Tooling)
 
-**Navigation 3 Key Concepts:**
-- You own the back stack (`SnapshotStateList<AppRoute>`)
-- Routes implement `NavKey` | `NavDisplay` replaces `NavHost`
-- Reference: https://developer.android.com/guide/navigation/navigation-3
+```bash
+android init                     # Initialize CLI
+android update                   # Keep CLI up to date
+android sdk install              # Lean SDK management
+android create                   # New project with templates
+android emulator                 # Create/manage virtual devices
+android run                      # Build & deploy to device/emulator
+android skills list --long       # List all available skills
+android skills add --all         # Add all skills at once
+android docs search 'query'      # Search latest docs
+android docs fetch kb://android/topic/navigation/overview
+```
 
----
+| Task | Use |
+|------|-----|
+| SDK setup, project creation, device management | `android` CLI |
+| Build, test, lint, custom tasks | `./gradlew` |
+| Latest API docs lookup | `android docs` |
+| Migration guidance (Nav3, Compose, AGP9) | `android skills` |
 
-## Project: Video Maker Photo Music
+## Migration & Analysis Skills
 
-**MVP Scope**: Images Only (photos → MP4 slideshow with transitions and music)
+Skills in `.claude/skills/` auto-trigger based on task context.
 
-### Core Libraries
+| Skill | When to Use |
+|-------|-------------|
+| `gradle-build` | Build, test, run Android apps with Gradle and ADB |
+| `edge-to-edge` | Migrate to edge-to-edge display (SDK 35+), fix system bar/IME overlap |
+| `agp9-upgrade` | Upgrade to AGP 9 (built-in Kotlin, new DSL, kapt→KSP) |
+| `camera1-to-camerax` | Migrate Camera1/Camera2 to CameraX |
+| `xml-to-compose` | Convert XML layouts to Jetpack Compose (10-step methodology) |
+| `r8-analyzer` | Analyze R8/ProGuard keep rules for redundancies (read-only) |
+| `play-billing-upgrade` | Upgrade Play Billing Library to latest version |
+| `nav3-recipes` | Navigation 3 code recipes (deep links, scenes, multi-backstack, etc.) |
 
-| Component | Library | Version |
-|-----------|---------|---------|
-| Video Editing | Media3 Transformer | 1.9.0 |
-| Preview | Media3 CompositionPlayer | 1.9.0 |
-| Media Picker | Android Photo Picker | System API |
-| Database | Room + KSP2 | 2.8.4 |
-| Background Work | WorkManager | 2.11.0 |
+## Build Environment (CRITICAL)
 
-### Settings Model
+```bash
+# ALWAYS set before building
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+./gradlew build
+```
 
-| Setting | Options | Description |
-|---------|---------|-------------|
-| **Transition Set** | Classic, Geometric, Cinematic, Creative, Minimal, Dynamic | 20+ transition animations |
-| **Transition Duration** | 2-12 seconds | How long each image is shown |
-| **Overlay Frame** | None, frame1, frame2, ... | Decorative frame overlay |
-| **Background Music** | None, track1, track2, or custom | Audio track |
-| **Audio Volume** | 0-100% | Music volume level |
-| **Aspect Ratio** | 16:9, 9:16, 1:1, 4:3 | Output video dimensions |
+| OS | Android Studio JDK Path |
+|----|------------------------|
+| macOS | `/Applications/Android Studio.app/Contents/jbr/Contents/Home` |
+| Windows | `C:\Program Files\Android\Android Studio\jbr` |
+| Linux | `/opt/android-studio/jbr` |
 
-**Image Rendering**: Blurred background fill (scale-aspect-fill + blur) + sharp foreground (scale-aspect-fit) + optional overlay frame
+## Agent Workflow
 
----
+```
+NEW FEATURE
+  1. ultrathink-planner    → Design approach
+  2. kotlin-architect      → Architecture decisions
+  3. kotlin-developer      → Implementation
+  4. navigation-guardian   → Event-based navigation check
+  5. kotlin-tester         → Unit tests
+
+BUG FIX
+  1. kotlin-debugger       → Root cause
+  2. kotlin-developer      → Fix
+  3. navigation-guardian   → Verify navigation patterns
+
+CODE REVIEW
+  1. navigation-guardian   → Navigation anti-pattern scan
+  2. kotlin-reviewer       → Quality check
+```
 
 ## Critical Rules
 
-### 1. Navigation Events - Channel Pattern (Google Official)
+### 1. Navigation 3 (REQUIRED)
 
-**Source**: [Now in Android](https://github.com/android/nowinandroid), [Architecture Samples](https://github.com/android/architecture-samples)
+Routes: `@Serializable object HomeRoute : NavKey` / `@Serializable data class ProfileRoute(val userId: String) : NavKey`
 
-```kotlin
-// ❌ FORBIDDEN - State-based navigation
-LaunchedEffect(uiState) { if (uiState is Success) navigate() }
+Setup: `val backStack = rememberNavBackStack(HomeRoute)` → `NavDisplay(backStack, entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator(), rememberViewModelStoreNavEntryDecorator()), entryProvider = entryProvider { entry<Route> { key -> ... } }, onBack = { backStack.pop() })`
 
-// ❌ FORBIDDEN - StateFlow for events (causes replay on config change)
-private val _navigationEvent = MutableStateFlow<Event?>(null)
+- ❌ `NavHost(navController, ...) { }` / `navController.navigate(...)` → ✅ `NavDisplay` + `backStack.add(route)`
 
-// ✅ REQUIRED - Channel for one-time events (Google pattern)
-private val _navigationEvent = Channel<NavigationEvent>()
-val navigationEvent = _navigationEvent.receiveAsFlow()
+**ViewModel Scoping**: VMs cached per NavEntry key via `rememberViewModelStoreNavEntryDecorator()`.
+- Created when key added to back stack, retained while on stack, cleared on pop
+- Do NOT scope screen ViewModels to Activity — use NavEntry scoping
 
-fun navigateToNext() {
-    viewModelScope.launch {
-        _navigationEvent.send(NavigationEvent.GoToNext)
-    }
-}
-// No onNavigationHandled() needed - Channel auto-consumes!
+### 2. Channel for One-Time Events (GOLD STANDARD)
 
-// In Composable
-LaunchedEffect(Unit) {  // Key = Unit (not event!)
-    viewModel.navigationEvent.collect { event ->
-        when (event) {
-            is NavigationEvent.GoToNext -> navigateNext()
-        }
-        // Auto-consumed - no manual cleanup
-    }
-}
-```
+- ❌ `LaunchedEffect(uiState) { if (uiState is Success) navigate() }` — breaks on back/rotation!
+- ✅ `Channel<Event>(Channel.BUFFERED)` + `.receiveAsFlow()` in ViewModel, `LaunchedEffect(Unit) { viewModel.event.collect { } }` in Composable
 
-**Why Channel over StateFlow?**
-- StateFlow = state (replays last value) → ❌ causes duplicate navigation
-- Channel = events (consumed once) → ✅ correct for one-time actions
+### 3. collectAsStateWithLifecycle
 
-### 2. Navigation 3 Architecture
+- ❌ `viewModel.uiState.collectAsState()` → ✅ `viewModel.uiState.collectAsStateWithLifecycle()`
 
-| Aspect | Navigation 2.x | Navigation 3 |
-|--------|---------------|--------------|
-| Back stack | Library-managed | Developer-owned `SnapshotStateList` |
-| Navigate | `navController.navigate()` | `navigator.navigate()` (list.add) |
-| Go back | `navController.popBackStack()` | `navigator.goBack()` (list.remove) |
-| Host | `NavHost` | `NavDisplay` |
-| Destinations | `composable<T>` | `entry<T>` in entryProvider |
+### 4. viewModelScope for Coroutines
 
-**Key Patterns:**
-```kotlin
-// Safe saver - prevents crashes on corrupted state
-private fun backStackSaver(): Saver<SnapshotStateList<AppRoute>, Any> {
-    return listSaver(
-        save = { it.toList() },
-        restore = { saved ->
-            val list = (saved as? List<*>)?.filterIsInstance<AppRoute>().orEmpty()
-            mutableStateListOf<AppRoute>().apply { addAll(list) }
-        }
-    )
-}
+- ❌ `GlobalScope.launch { }` / custom `CoroutineScope` → ✅ `viewModelScope.launch { }`
 
-// Parameterized routes - prevent wrong VM reuse
-val factory = remember(route.projectId) { ACCDI.get<EditorViewModelFactory>() }
-val viewModel: EditorViewModel = viewModel(
-    key = "editor_${route.projectId}",
-    factory = createSafeViewModelFactory { factory.create(route.projectId) }
-)
+### 5. Sealed Class State Machines
 
-// Type-safe factory (no unchecked casts)
-private inline fun <reified VM : ViewModel> createSafeViewModelFactory(
-    crossinline creator: () -> VM
-): ViewModelProvider.Factory {
-    return object : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            val viewModel = creator()
-            if (modelClass.isAssignableFrom(viewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return viewModel as T
-            } else {
-                throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
-            }
-        }
-    }
-}
-```
+- ❌ `var isLoading = false; var hasError = false` → ✅ `sealed class UiState { Loading, Success(data), Error(msg) }`
 
-### 3. Essential Android Rules
+### 6. NO CRASHES
 
-```kotlin
-// ❌ FORBIDDEN
-val uiState by viewModel.uiState.collectAsState()
-GlobalScope.launch { }
-val value = nullable!!
-startActivity(intent)  // Without finish()
-composable<AppDestination> { FeatureScreen() }  // Activity as composable
+- ❌ `nullable!!` → ✅ `nullable ?: return`
 
-// ✅ REQUIRED
-val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-viewModelScope.launch { }
-val value = nullable ?: defaultValue
-startActivity(intent); finish()  // Always finish() for forward nav
-// Launch Activity directly for screens with dedicated Activities
-```
+### 7. Activity Navigation
 
-### 4. Sealed Class State Machines
+- ❌ Don't embed Activities as composables
+- ✅ Via Channel event: `startActivity(intent)` + `finish()` for forward nav
 
-```kotlin
-// ❌ FORBIDDEN - Multiple boolean flags
-var isLoading = false; var hasError = false
+### 8. Recomposition Optimization
 
-// ✅ REQUIRED - Single state source
-sealed class FeatureUiState {
-    data object Loading : FeatureUiState()
-    data class Success(val data: Data) : FeatureUiState()
-    data class Error(val message: String) : FeatureUiState()
-}
-```
+- ✅ `@Immutable` + `ImmutableList` for stable data classes
+- ✅ `viewModel::onItemClick` (method reference) for stable lambdas
+- ✅ `items(users, key = { it.id })` for LazyColumn keys
 
-### 5. Database Query Safety (CRITICAL)
+### 9. 3rd-Party SDK Manifest Safety (CRITICAL)
 
-- **NEVER** fetch all records (assume billions of rows)
-- **ALL** queries MUST have LIMIT / pagination
-- **ALL** filtering in query (WHERE), NOT client-side
-- **ALL** sorting in query (ORDER BY), NOT client-side
+- ❌ `<activity android:name="com.thirdparty.SomeActivity" />` (may not exist in APK)
+- ✅ Only declare what you use; analytics-only SDKs: metadata only, no activity declarations
+- Every `<activity>` in AndroidManifest MUST have its class in dependencies
+
+### 10. Compose Side-Effect Safety (CRITICAL)
+
+- ❌ `LaunchedEffect(trigger) { focusRequester.requestFocus() }` — can crash if view changes
+- ✅ `try { delay(100); focusRequester.requestFocus() } catch (e: Exception) { }` — delay + try-catch for view interactions
+
+### 11. Repository Query Safety (CRITICAL)
+
+- ❌ `repository.getById(id)` without status filter — may return soft-deleted/draft records
+- ✅ ALL queries MUST include status/visibility filters; direct ID lookups and related entity queries too
+
+### 12. WeakReference MUST NOT Break Critical Flow (CRITICAL)
+
+- ❌ `WeakReference(action).get()?.invoke()` — may be null, APP FREEZES
+- ✅ `action()` — action callbacks MUST be strong references
+- WeakReference OK only for optional callbacks (onShown), UI elements
+
+### 13. Database Query Safety (CRITICAL)
+- NEVER fetch all records — assume billions of rows
+- ALL queries MUST have LIMIT / pagination
+- ALL filtering in the query (WHERE clauses), NOT client-side
+- ALL sorting in the query (ORDER BY), NOT client-side
 - Applies to: Room, Supabase, Firebase, SQL, MongoDB, etc.
 
-```kotlin
-// ❌ FORBIDDEN
-@Query("SELECT * FROM users")
-suspend fun getAllUsers(): List<User>
+### 14. ANR Prevention (CRITICAL)
 
-// ✅ REQUIRED
-@Query("SELECT * FROM users WHERE is_active = 1 ORDER BY name LIMIT :limit OFFSET :offset")
-suspend fun getActiveUsers(limit: Int, offset: Int): List<User>
-```
+ANR triggers when main thread blocked >5s. Google Play penalizes ≥0.47% ANR rate.
 
----
+- ❌ I/O without dispatcher → ✅ `withContext(Dispatchers.IO) { }`, CPU work on `Dispatchers.Default`
+- ❌ `runBlocking { }` / `Thread.sleep()` on main → ✅ coroutines + `delay()`
+- ❌ `prefs.edit().commit()` → ✅ `.apply()`
+- ❌ Heavy `onReceive()` → ✅ `goAsync()` + IO coroutine + `pendingResult.finish()`
+- ❌ Slow `startForeground()` → ✅ Call within 5s, heavy work in IO coroutine
+- ❌ `synchronized` blocking main → ✅ `Mutex`
+- Repository methods: `suspend` + `withContext(Dispatchers.IO)` internally
+- Application.onCreate(): defer heavy init to background coroutine
 
-## Video Maker Specific Rules
-
-### Media3 Patterns
-
-```kotlin
-// ✅ Media3 Transformer for export
-val transformer = Transformer.Builder(context)
-    .addListener(transformerListener)
-    .build()
-transformer.start(composition, outputPath)
-
-// ✅ Photo Picker (no permissions)
-val pickMedia = rememberLauncherForActivityResult(
-    ActivityResultContracts.PickMultipleVisualMedia()
-) { uris -> /* handle */ }
-pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-
-// ✅ WorkManager for background export
-@HiltWorker
-class VideoExportWorker @AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted params: WorkerParameters,
-) : CoroutineWorker(context, params) {
-    override suspend fun doWork(): Result { /* survives process death */ }
-}
-
-// ✅ Player lifecycle
-DisposableEffect(composition) {
-    val player = CompositionPlayer.Builder(context)
-        .build()
-        .apply { setComposition(composition) }
-    onDispose { player.release() }
-}
-```
-
-### Critical Media Issues
-
-**1. Transition Texture Color Consistency**
-- **Problem**: Mixing Media3's texture with BitmapFactory texture causes color mismatch
-- **Solution**: Load BOTH textures using same method (BitmapFactory + GLUtils.texImage2D)
-- See docs/transition-texture-color-fix.md for details
-
-**2. MediaCodec Resource Exhaustion (Error 4006)**
-- **Problem**: Async release in scrolling lists → resource buildup
-- **Solution**:
-  - Sync release: `player.release()` (NOT `releaseAsync()`)
-  - Debounce: `delay(150)` before `prepare()`
-  - Error 4006: Longer retry delays + `System.gc()`
-- **When**: LazyColumn/LazyRow with video players
-- See docs/mediacodec-exhaustion-fix.md for details
-
----
-
-## Emergency Checklist
-
-**Navigation 3:**
-- [ ] Routes implement `NavKey`
-- [ ] `SnapshotStateList` for back stack
-- [ ] `rememberSaveable` with safe saver (filterIsInstance)
-- [ ] `remember(route.param)` for parameterized factories
-- [ ] `viewModel(key = "...")` for parameterized ViewModels
-- [ ] `createSafeViewModelFactory` (no unchecked cast)
-- [ ] Navigator only in @Composable (NOT in ViewModel)
-
-**ViewModel Navigation:**
-- [ ] `StateFlow<Event?>` (NOT state-based)
-- [ ] `LaunchedEffect(navigationEvent)` observation
-- [ ] `onNavigationHandled()` callback
-
-**General:**
-- [ ] `collectAsStateWithLifecycle()`
-- [ ] `viewModelScope` for coroutines
-- [ ] `finish()` after `startActivity()` for forward nav
-- [ ] Sealed class for UI state
-- [ ] No `!!` force unwrap
-- [ ] No Activities as composables
-
-**Media:**
-- [ ] Media3 Transformer (NOT raw MediaCodec)
-- [ ] Photo Picker (NOT MediaStore permissions)
-- [ ] WorkManager for export (NOT viewModelScope)
-- [ ] Player released in DisposableEffect
-- [ ] Scrolling lists: Sync release + debounce
-
-**Database:**
-- [ ] Every query has LIMIT
-- [ ] Filtering in query (WHERE)
-- [ ] Sorting in query (ORDER BY)
-
----
-
-## Common Gotchas
-
-| Issue | Cause | Fix |
-|-------|-------|-----|
-| Navigation breaks on back | `LaunchedEffect(uiState)` | Use StateFlow events |
-| State not updating | `collectAsState()` | Use `collectAsStateWithLifecycle()` |
-| onBackPressed not called | Activity as composable | Launch Activity directly |
-| Memory leaks | GlobalScope | Use `viewModelScope` |
-| Error 4006 (scrolling) | Async player release | Sync release + debounce |
-
----
-
-## Naming Conventions
-
-| Type | Convention | Example |
-|------|------------|---------|
-| Activity | `*Activity` | `ProfileActivity` |
-| ViewModel | `*ViewModel` | `ProfileViewModel` |
-| UI State | `*UiState` | `ProfileUiState` |
-| Navigation Event | `*NavigationEvent` | `ProfileNavigationEvent` |
-| Repository | No suffix / `*Impl` | `UserRepository` / `UserRepositoryImpl` |
-| Use Case | `*UseCase` | `FetchUserUseCase` |
-
----
-
-## Version Information
-
-| Component | Version | Notes |
-|-----------|---------|-------|
-| Kotlin | 2.1.0 | Stable |
-| Compose BOM | 2025.10.01 | December 2025 |
-| Navigation 3 | 1.0.0-alpha03 | Developer-owned back stack |
-| Media3 | 1.6.1 | Transformer stable |
-| Room | 2.8.4 | KSP2 support |
-| AGP | 8.13.2 | Pangle SDK compatible |
-| Target SDK | 36 | Android 15 |
-| Min SDK | 28 | Android 9 (2018+) |
-
----
+## Context Optimization
+- **Exploration**: haiku | **Implementation**: sonnet | **Architecture**: opus
+- Use subagents to isolate verbose output (Logcat, debugging)
 
 ## Git Workflow
 
-⚠️ **NEVER commit automatically. Always wait for explicit instruction.**
+```
+⚠️ NEVER commit automatically. Always wait for the user's explicit instruction before running git commit.
+```
 
-Commit format: `<type>: <description>`
-- `feat:` new feature | `fix:` bug fix | `refactor:` code restructure | `ui:` UI/UX improvements
+## Verification Loop
 
----
-
-## Documentation Workflow
-
-⚠️ **NEVER write summary files, reports, or documentation automatically.**
-
-- **FORBIDDEN**: Creating summary.md, refactoring_summary.md, report files, or any documentation without explicit user request
-- **REQUIRED**: Only create documentation when user explicitly asks "write a summary" or "create documentation"
-- **EXCEPTION**: Code comments and inline documentation are always allowed
+```
+1. Build: ./gradlew build (or android run)
+2. Test: ./gradlew test
+3. Navigation: Run navigation-guardian agent
+4. Docs: android docs search '<relevant API>'
+```
