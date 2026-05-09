@@ -201,7 +201,6 @@ fun ExportScreen(
     onNavigateToTemplateDetail: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val thumbnailUri by viewModel.thumbnailUri.collectAsStateWithLifecycle()
     val aspectRatio by viewModel.aspectRatio.collectAsStateWithLifecycle()
     val currentQuality by viewModel.currentQuality.collectAsStateWithLifecycle()
@@ -216,12 +215,8 @@ fun ExportScreen(
     val adsLoaderService = koinInject<AdsLoaderService>()
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Extract template navigation data
-    val templateNavigation = remember(navigationEvent) {
-        (navigationEvent as? ExportNavigationEvent.NavigateToTemplateDetail)?.let {
-            it.templateId to it.shouldShowAd
-        }
-    }
+    // Template navigation state (set by Channel event handler)
+    var templateNavigation by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var showNotificationPromoDialog by remember { mutableStateOf(false) }
     var showNotificationSettingsGuideDialog by remember { mutableStateOf(false) }
     var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
@@ -377,23 +372,20 @@ fun ExportScreen(
             onPreloadNext = { viewModel.preloadTemplateGridAd() },
             onNavigate = {
                 onNavigateToTemplateDetail(it)
-                viewModel.onNavigationHandled()
+                templateNavigation = null  // Clear after navigation
             }
         )
     }
 
-    // Handle other navigation events - StateFlow-based (Google recommended pattern)
-    // Observe navigationEvent StateFlow and call onNavigationHandled() after navigating
-    LaunchedEffect(navigationEvent) {
-        navigationEvent?.let { event ->
+    // Handle other navigation events - Channel pattern (Google official) - one-time delivery, no replay
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
             when (event) {
                 is ExportNavigationEvent.NavigateBack -> {
                     onNavigateBack()
-                    viewModel.onNavigationHandled()
                 }
                 is ExportNavigationEvent.NavigateToHomeMyVideos -> {
                     onNavigateToHomeMyVideos()
-                    viewModel.onNavigationHandled()
                 }
 
                 is ExportNavigationEvent.RequestExitWithAd -> {
@@ -424,13 +416,14 @@ fun ExportScreen(
                         }
                         onNavigateToHomeMyVideos()
                     }
-                    viewModel.onNavigationHandled()
                 }
 
                 is ExportNavigationEvent.NavigateToTemplateDetail -> {
-                    // Handled by HandleTemplateNavigation above
+                    // Set state for HandleTemplateNavigation composable
+                    templateNavigation = event.templateId to event.shouldShowAd
                 }
             }
+            // Event auto-consumed by Channel - no manual cleanup needed
         }
     }
 

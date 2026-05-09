@@ -25,12 +25,14 @@ import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -240,9 +242,10 @@ class AssetPickerViewModel(
     // ============================================
     // NAVIGATION EVENTS (StateFlow-based - Google recommended)
     // ============================================
+    // Using Channel for one-time events (Google pattern) - prevents replay on config change
 
-    private val _navigationEvent = MutableStateFlow<AssetPickerNavigationEvent?>(null)
-    val navigationEvent: StateFlow<AssetPickerNavigationEvent?> = _navigationEvent.asStateFlow()
+    private val _navigationEvent = Channel<AssetPickerNavigationEvent>()
+    val navigationEvent = _navigationEvent.receiveAsFlow()
 
     // USER MESSAGE EVENTS (for snackbars/toasts)
     // ============================================
@@ -806,7 +809,7 @@ class AssetPickerViewModel(
                                     analyticsVideoId = analyticsVideoId
                                 )
 
-                                _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditorWithData(initialData)
+                                _navigationEvent.send(AssetPickerNavigationEvent.NavigateToEditorWithData(initialData))
                             } else {
                                 _messageEvent.value = "Template not found"
                             }
@@ -818,16 +821,18 @@ class AssetPickerViewModel(
                 // PRIORITY 2: Song-to-video mode WITHOUT template selected
                 // Navigate directly to Editor - effect set will be fetched from Supabase
                 isSongToVideoMode -> {
-                    _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditorWithData(
-                        initialData = EditorInitialData(
-                            imageUris = uris.map { it.toString() },
-                            effectSetId = null,  // Editor will fetch first effect set from Supabase
-                            templateId = null,
-                            musicSongId = overrideSongId,
-                            musicSongName = null,  // Will be loaded by editor
-                            aspectRatio = AspectRatio.RATIO_9_16,
-                            applyHookStartDefaults = true,  // Apply hook start for song-to-video mode
-                            analyticsVideoId = analyticsVideoId
+                    _navigationEvent.send(
+                        AssetPickerNavigationEvent.NavigateToEditorWithData(
+                            initialData = EditorInitialData(
+                                imageUris = uris.map { it.toString() },
+                                effectSetId = null,  // Editor will fetch first effect set from Supabase
+                                templateId = null,
+                                musicSongId = overrideSongId,
+                                musicSongName = null,  // Will be loaded by editor
+                                aspectRatio = AspectRatio.RATIO_9_16,
+                                applyHookStartDefaults = true,  // Apply hook start for song-to-video mode
+                                analyticsVideoId = analyticsVideoId
+                            )
                         )
                     )
                 }
@@ -835,7 +840,7 @@ class AssetPickerViewModel(
                     // Add mode - add to existing project
                     addAssetsUseCase(projectId, uris)
                         .onSuccess {
-                            _navigationEvent.value = AssetPickerNavigationEvent.AssetsAdded
+                            _navigationEvent.send(AssetPickerNavigationEvent.AssetsAdded)
                         }
                         .onFailure { error ->
                             _messageEvent.value = error.message ?: "Failed to add assets"
@@ -851,7 +856,7 @@ class AssetPickerViewModel(
 
                     createProjectUseCase(uris, settings)
                         .onSuccess { project ->
-                            _navigationEvent.value = AssetPickerNavigationEvent.NavigateToEditor(project.id)
+                            _navigationEvent.send(AssetPickerNavigationEvent.NavigateToEditor(project.id))
                         }
                         .onFailure { error ->
                             _messageEvent.value = error.message ?: "Failed to create project"
@@ -870,16 +875,11 @@ class AssetPickerViewModel(
 
         android.util.Log.d("AssetPickerVM", "🔙 navigateBack - Ad ready: $isAdReady")
 
-        // Send navigation event with ad status
+        // Send navigation event with ad status (Channel - one-time event, no replay)
         // Screen will show ad if ready, otherwise navigate immediately
-        _navigationEvent.value = AssetPickerNavigationEvent.RequestExitWithAd(isAdReady)
-    }
-
-    /**
-     * Called by UI after navigation is handled - clears the event
-     */
-    fun onNavigationHandled() {
-        _navigationEvent.value = null
+        viewModelScope.launch {
+            _navigationEvent.send(AssetPickerNavigationEvent.RequestExitWithAd(isAdReady))
+        }
     }
 
     fun onMessageHandled() {

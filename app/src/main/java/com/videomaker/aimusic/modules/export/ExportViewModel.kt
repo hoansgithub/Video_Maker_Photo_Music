@@ -225,9 +225,10 @@ class ExportViewModel(
     // ============================================
     // NAVIGATION EVENTS (StateFlow-based - Google recommended)
     // ============================================
+    // Using Channel for one-time events (Google pattern) - prevents replay on config change
 
-    private val _navigationEvent = MutableStateFlow<ExportNavigationEvent?>(null)
-    val navigationEvent: StateFlow<ExportNavigationEvent?> = _navigationEvent.asStateFlow()
+    private val _navigationEvent = Channel<ExportNavigationEvent>()
+    val navigationEvent = _navigationEvent.receiveAsFlow()
 
     // ============================================
     // INTERNAL STATE
@@ -463,7 +464,9 @@ class ExportViewModel(
      * Navigate back to editor
      */
     fun navigateBack() {
-        _navigationEvent.value = ExportNavigationEvent.NavigateBack
+        viewModelScope.launch {
+            _navigationEvent.send(ExportNavigationEvent.NavigateBack)
+        }
     }
 
     /**
@@ -496,16 +499,11 @@ class ExportViewModel(
 
         android.util.Log.d("ExportViewModel", "🔙 navigateToHomeMyVideos - Ad ready: $isAdReady")
 
-        // Send navigation event with ad status
+        // Send navigation event with ad status (Channel - one-time event, no replay)
         // Screen will show ad if ready, otherwise navigate immediately
-        _navigationEvent.value = ExportNavigationEvent.RequestExitWithAd(isAdReady)
-    }
-
-    /**
-     * Called by UI after navigation is handled - clears the event
-     */
-    fun onNavigationHandled() {
-        _navigationEvent.value = null
+        viewModelScope.launch {
+            _navigationEvent.send(ExportNavigationEvent.RequestExitWithAd(isAdReady))
+        }
     }
 
     /**
@@ -598,10 +596,14 @@ class ExportViewModel(
         // Check if template grid tap ad is ready
         val isAdReady = adsLoaderService.isInterstitialReady(AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP)
 
-        _navigationEvent.value = ExportNavigationEvent.NavigateToTemplateDetail(
-            templateId = templateId,
-            shouldShowAd = isAdReady
-        )
+        viewModelScope.launch {
+            _navigationEvent.send(
+                ExportNavigationEvent.NavigateToTemplateDetail(
+                    templateId = templateId,
+                    shouldShowAd = isAdReady
+                )
+            )
+        }
     }
 
     fun trackShareAction() {

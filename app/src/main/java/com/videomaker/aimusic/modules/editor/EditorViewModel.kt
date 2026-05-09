@@ -25,10 +25,12 @@ import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -118,8 +120,9 @@ class EditorViewModel(
     val uiState: StateFlow<EditorUiState> = _uiState.asStateFlow()
 
     // Navigation events are separate from UI state — never embedded in high-frequency state
-    private val _navigationEvent = MutableStateFlow<EditorNavigationEvent?>(null)
-    val navigationEvent: StateFlow<EditorNavigationEvent?> = _navigationEvent.asStateFlow()
+    // Using Channel for one-time events (Google pattern) - prevents replay on config change
+    private val _navigationEvent = Channel<EditorNavigationEvent>()
+    val navigationEvent = _navigationEvent.receiveAsFlow()
 
     // Music Trimmer State — modal bottom sheet with isolated music player
     private val _musicTrimmerState = MutableStateFlow<MusicTrimmerState>(MusicTrimmerState.Closed)
@@ -1375,9 +1378,11 @@ class EditorViewModel(
 
         android.util.Log.d("EditorViewModel", "🔙 navigateBack - Ad ready: $isAdReady")
 
-        // Send navigation event with ad status
+        // Send navigation event with ad status (Channel - one-time event, no replay)
         // Screen will show ad if ready, otherwise navigate immediately
-        _navigationEvent.value = EditorNavigationEvent.RequestBackWithAd(isAdReady)
+        viewModelScope.launch {
+            _navigationEvent.send(EditorNavigationEvent.RequestBackWithAd(isAdReady))
+        }
     }
 
     /**
@@ -1401,7 +1406,9 @@ class EditorViewModel(
             val adType = adPlacementConfigService.getAdTypeForQuality(currentState.selectedQuality)
             if (adType == "interstitial") {
                 android.util.Log.d("EditorViewModel", "📺 Quality locked → showing interstitial")
-                _navigationEvent.value = EditorNavigationEvent.RequestQualityInterstitial
+                viewModelScope.launch {
+                    _navigationEvent.send(EditorNavigationEvent.RequestQualityInterstitial)
+                }
             } else {
                 // Rewarded flow (default)
                 qualityAdController.requestAd(
@@ -1471,22 +1478,19 @@ class EditorViewModel(
             if (saveProject()) {
                 currentProjectId?.let { id ->
                     // Pass selected quality to export screen (not saved to DB)
-                    _navigationEvent.value = EditorNavigationEvent.NavigateToExport(id, currentState.selectedQuality)
+                    _navigationEvent.send(EditorNavigationEvent.NavigateToExport(id, currentState.selectedQuality))
                 }
             }
             // If save failed, user sees error message and stays in editor
         }
     }
 
-    /** Called by UI after navigation is handled — clears the event. */
-    fun onNavigationHandled() {
-        _navigationEvent.value = null
-    }
-
     fun onBeatSyncErrorDismissed() {
         _showBeatSyncErrorDialog.value = false
         // Navigate back to home (no ad on error case)
-        _navigationEvent.value = EditorNavigationEvent.RequestBackWithAd(shouldShowAd = false)
+        viewModelScope.launch {
+            _navigationEvent.send(EditorNavigationEvent.RequestBackWithAd(shouldShowAd = false))
+        }
     }
 
     override fun onCleared() {

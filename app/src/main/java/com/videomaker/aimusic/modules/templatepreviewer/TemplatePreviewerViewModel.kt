@@ -21,10 +21,12 @@ import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.storage.UnlockedTemplatesManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -109,9 +111,9 @@ class TemplatePreviewerViewModel(
     private val _uiState = MutableStateFlow<TemplatePreviewerUiState>(TemplatePreviewerUiState.Loading)
     val uiState: StateFlow<TemplatePreviewerUiState> = _uiState.asStateFlow()
 
-    // Navigation Events — StateFlow-based (Gold standard per CLAUDE.md)
-    private val _navigationEvent = MutableStateFlow<TemplatePreviewerNavigationEvent?>(null)
-    val navigationEvent: StateFlow<TemplatePreviewerNavigationEvent?> = _navigationEvent.asStateFlow()
+    // Navigation Events — Channel pattern (Google official) - prevents replay on config change
+    private val _navigationEvent = Channel<TemplatePreviewerNavigationEvent>()
+    val navigationEvent = _navigationEvent.receiveAsFlow()
 
     // Liked template IDs — observed from Room
     val likedTemplateIds: StateFlow<Set<String>> = observeLikedTemplatesUseCase.ids()
@@ -208,11 +210,15 @@ class TemplatePreviewerViewModel(
         if (currentState.isCreatingProject) return
 
         // Navigate to AssetPicker - user needs to select images
-        _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
-            template = template,
-            overrideSongId = overrideSongId,
-            aspectRatio = aspectRatio
-        )
+        viewModelScope.launch {
+            _navigationEvent.send(
+                TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
+                    template = template,
+                    overrideSongId = overrideSongId,
+                    aspectRatio = aspectRatio
+                )
+            )
+        }
     }
 
     fun onNavigateBack() {
@@ -221,14 +227,11 @@ class TemplatePreviewerViewModel(
 
         android.util.Log.d("TemplatePreviewerVM", "🔙 onNavigateBack - Ad ready: $isAdReady")
 
-        // Send navigation event with ad status
+        // Send navigation event with ad status (Channel - one-time event, no replay)
         // Screen will show ad if ready, otherwise navigate immediately
-        _navigationEvent.value = TemplatePreviewerNavigationEvent.RequestBackWithAd(isAdReady)
-    }
-
-    /** Called by UI after navigation is handled — clears the event */
-    fun onNavigationHandled() {
-        _navigationEvent.value = null
+        viewModelScope.launch {
+            _navigationEvent.send(TemplatePreviewerNavigationEvent.RequestBackWithAd(isAdReady))
+        }
     }
 
     fun onLikeTemplate(template: VideoTemplate) {
@@ -259,10 +262,12 @@ class TemplatePreviewerViewModel(
                     unlockedTemplatesManager.unlockTemplate(template.id)
                     android.util.Log.d("TemplatePreviewerVM", "✅ Template unlocked: ${template.id}")
 
-                    _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
-                        template = template,
-                        overrideSongId = overrideSongId,
-                        aspectRatio = selectedRatio
+                    _navigationEvent.send(
+                        TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
+                            template = template,
+                            overrideSongId = overrideSongId,
+                            aspectRatio = selectedRatio
+                        )
                     )
 
                     // Clear pending state
@@ -338,7 +343,9 @@ class TemplatePreviewerViewModel(
      */
     private fun tryShowScrollInterstitial() {
         // Send navigation event - ACCCore will enforce interval in showInterstitial()
-        _navigationEvent.value = TemplatePreviewerNavigationEvent.ShowScrollInterstitial
+        viewModelScope.launch {
+            _navigationEvent.send(TemplatePreviewerNavigationEvent.ShowScrollInterstitial)
+        }
     }
 
     // ============================================

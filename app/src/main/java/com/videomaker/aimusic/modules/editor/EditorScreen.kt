@@ -249,10 +249,9 @@ fun EditorScreen(
         }
     }
 
-    // Navigation events live in their own StateFlow — decoupled from high-frequency UI state
-    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
-    LaunchedEffect(navigationEvent) {
-        navigationEvent?.let { event ->
+    // Navigation events use Channel pattern (Google official) — one-time delivery, no replay
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
             when (event) {
                 is EditorNavigationEvent.RequestBackWithAd -> {
                     if (event.shouldShowAd && activity != null) {
@@ -295,7 +294,7 @@ fun EditorScreen(
                     }
                 }
             }
-            viewModel.onNavigationHandled()
+            // Event auto-consumed by Channel - no manual cleanup needed
         }
     }
 

@@ -286,10 +286,9 @@ fun AssetPickerScreen(
         }
     }
 
-    // Handle navigation events - StateFlow-based (Google recommended pattern)
-    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
-    LaunchedEffect(navigationEvent) {
-        navigationEvent?.let { event ->
+    // Handle navigation events - Channel pattern (Google official) - one-time delivery, no replay
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
             when (event) {
                 is AssetPickerNavigationEvent.NavigateBack -> onNavigateBack()
 
@@ -329,7 +328,7 @@ fun AssetPickerScreen(
                 is AssetPickerNavigationEvent.NavigateToTemplatePreviewer ->
                     onNavigateToTemplatePreviewer(event.templateId, event.imageUris, event.overrideSongId)
             }
-            viewModel.onNavigationHandled()
+            // Event auto-consumed by Channel - no manual cleanup needed
         }
     }
 

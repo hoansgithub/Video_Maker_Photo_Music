@@ -138,7 +138,6 @@ fun TemplatePreviewerScreen(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val likedTemplateIds by viewModel.likedTemplateIds.collectAsStateWithLifecycle()
     val unlockedTemplateIds by viewModel.unlockedTemplateIds.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
@@ -179,9 +178,9 @@ fun TemplatePreviewerScreen(
         viewModel.onNavigateBack()
     }
 
-    // Handle navigation events (StateFlow-based - Gold standard per CLAUDE.md)
-    LaunchedEffect(navigationEvent) {
-        navigationEvent?.let { event ->
+    // Handle navigation events - Channel pattern (Google official) - one-time delivery, no replay
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
             when (event) {
                 is TemplatePreviewerNavigationEvent.NavigateToAssetPicker -> {
                     onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
@@ -246,7 +245,7 @@ fun TemplatePreviewerScreen(
 
                 is TemplatePreviewerNavigationEvent.NavigateBack -> onNavigateBack()
             }
-            viewModel.onNavigationHandled()
+            // Event auto-consumed by Channel - no manual cleanup needed
         }
     }
 
