@@ -182,12 +182,18 @@ internal fun IndiaPage3Carousel(
 ) {
     val pagerState = rememberPagerState(pageCount = { 3 })
 
-    // India page 3 images
     val images = listOf(
         R.drawable.img_onb31_in,
         R.drawable.img_onb32_in,
         R.drawable.img_onb33_in
     )
+
+    val adPlacement = when (pageIndex) {
+        0 -> AdPlacement.NATIVE_ONBOARDING_PAGE1
+        1 -> AdPlacement.NATIVE_ONBOARDING_PAGE2
+        2 -> AdPlacement.NATIVE_ONBOARDING_PAGE3
+        else -> null
+    }
 
     // Auto-scroll every 3 seconds
     LaunchedEffect(pagerState) {
@@ -198,18 +204,99 @@ internal fun IndiaPage3Carousel(
         }
     }
 
-    HorizontalPager(
-        state = pagerState,
-        modifier = Modifier.fillMaxSize(),
-        userScrollEnabled = true  // Allow manual swipe
-    ) { page ->
-        WelcomePage(
-            imageResId = images[page],
-            title = title,
-            subtitle = subtitle,
-            ctaText = ctaText,
-            onCta = onCta,
-            pageIndex = pageIndex
-        )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        // Main content area
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            // Only images swipe — pager contains just images
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = true
+            ) { page ->
+                Image(
+                    painter = painterResource(images[page]),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            // Static content overlay — stays fixed, doesn't swipe
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.0f),
+                                Color.Black.copy(alpha = 0.5f),
+                                Color.Black.copy(alpha = 0.75f),
+                                Color.Black.copy(alpha = 1.0f)
+                            )
+                        )
+                    )
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 40.dp, bottom = 32.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 16.dp)
+                    ) {
+                        Text(
+                            text = title,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            text = subtitle,
+                            fontSize = 16.sp,
+                            color = Color.White.copy(alpha = 0.9f),
+                            lineHeight = 22.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    OnboardingCtaButton(
+                        text = ctaText,
+                        onClick = onCta,
+                        color = Primary,
+                        icon = R.drawable.ic_right_arrow
+                    )
+                }
+            }
+        }
+
+        // Native Ad at bottom
+        if (adPlacement != null) {
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                NativeAdView(
+                    placement = adPlacement,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
+                )
+            }
+        }
     }
 }
