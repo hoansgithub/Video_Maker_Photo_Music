@@ -18,6 +18,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Siguiente</string>
     <string name="onboarding_get_started">Empezar</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Mantente a la vanguardia con plantillas frescas y listas para usar que se actualizan todos los días.</string>
+    <string name="onboarding_india_page3_title">Atrapa las plantillas en tendencia diariamente</string>
+    <string name="onboarding_india_page3_subtitle">Mantente a la vanguardia con plantillas frescas y listas para usar que se actualizan todos los días.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Crea Magia en Segundos</string>
     <string name="onboarding_page1_subtitle">Videos increíbles en pocos clics. Fácil y rápido.</string>

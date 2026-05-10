@@ -21,6 +21,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">পরবর্তী</string>
     <string name="onboarding_get_started">শুরু করুন</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">প্রতিদিন আপডেট হওয় তাজা, ব্যবহারের জন্য প্রস্তুত টেমপ্লেট দিয়ে এগিয়ে থাকুন।</string>
+    <string name="onboarding_india_page3_title">প্রতিদিন ট্রেন্ডিং টেমপ্লেট ধরুন</string>
+    <string name="onboarding_india_page3_subtitle">প্রতিদিন আপডেট হওয় তাজা, ব্যবহারের জন্য প্রস্তুত টেমপ্লেট দিয়ে এগিয়ে থাকুন।</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">কয়েক সেকেন্ডে যাদু তৈরি করুন</string>
     <string name="onboarding_page1_subtitle">কয়েকটি ট্যাপে চমৎকার ভিডিও। সহজ এবং দ্রুত</string>

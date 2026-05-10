@@ -2,6 +2,8 @@ package com.videomaker.aimusic.modules.onboarding.pages
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +43,7 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
 import com.videomaker.aimusic.ui.theme.Primary
+import kotlinx.coroutines.delay
 
 // ============================================
 // WELCOME PAGE TEMPLATE
@@ -160,5 +164,52 @@ internal fun WelcomePage(
                 )
             }
         }
+    }
+}
+
+// ============================================
+// INDIA PAGE 3 CAROUSEL
+// Auto-scrolling carousel for India region page 3
+// ============================================
+
+@Composable
+internal fun IndiaPage3Carousel(
+    title: String,
+    subtitle: String,
+    ctaText: String,
+    onCta: () -> Unit,
+    pageIndex: Int = 0
+) {
+    val pagerState = rememberPagerState(pageCount = { 3 })
+
+    // India page 3 images
+    val images = listOf(
+        R.drawable.img_onb31_in,
+        R.drawable.img_onb32_in,
+        R.drawable.img_onb33_in
+    )
+
+    // Auto-scroll every 3 seconds
+    LaunchedEffect(pagerState) {
+        while (true) {
+            delay(3000)
+            val nextPage = (pagerState.currentPage + 1) % 3
+            pagerState.animateScrollToPage(nextPage)
+        }
+    }
+
+    HorizontalPager(
+        state = pagerState,
+        modifier = Modifier.fillMaxSize(),
+        userScrollEnabled = true  // Allow manual swipe
+    ) { page ->
+        WelcomePage(
+            imageResId = images[page],
+            title = title,
+            subtitle = subtitle,
+            ctaText = ctaText,
+            onCta = onCta,
+            pageIndex = pageIndex
+        )
     }
 }

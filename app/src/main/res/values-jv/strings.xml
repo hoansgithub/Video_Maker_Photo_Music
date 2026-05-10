@@ -21,6 +21,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Selajengipun</string>
     <string name="onboarding_get_started">Mulai</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Tetep ngarep karo template seger sing di-update saben dina.</string>
+    <string name="onboarding_india_page3_title">Tangkap template trending saben dina</string>
+    <string name="onboarding_india_page3_subtitle">Tetep ngarep karo template seger sing di-update saben dina.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Gawe Keajaiban ing Sawetara Detik</string>
     <string name="onboarding_page1_subtitle">Video apik nganggo sawetara tutul. Gampang lan cepet</string>

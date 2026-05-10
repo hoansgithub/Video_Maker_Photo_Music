@@ -18,6 +18,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">التالي</string>
     <string name="onboarding_get_started">ابدأ الآن</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">ابقَ في صدارة المنافسة مع قوالب طازجة وجاهزة للاستخدام يتم تحديثها يوميًا.</string>
+    <string name="onboarding_india_page3_title">التقط القوالب الرائجة يوميًا</string>
+    <string name="onboarding_india_page3_subtitle">ابقَ في صدارة المنافسة مع قوالب طازجة وجاهزة للاستخدام يتم تحديثها يوميًا.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">اصنع السحر في ثوانٍ</string>
     <string name="onboarding_page1_subtitle">فيديو مذهل بنقرات قليلة. سهل وسريع</string>

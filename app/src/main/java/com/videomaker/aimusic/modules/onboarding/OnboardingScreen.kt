@@ -46,7 +46,9 @@ import com.videomaker.aimusic.VideoMakerApplication
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.data.local.RegionProvider
 import com.videomaker.aimusic.modules.onboarding.pages.FullscreenAdStep
+import com.videomaker.aimusic.modules.onboarding.pages.IndiaPage3Carousel
 import com.videomaker.aimusic.modules.onboarding.pages.WelcomePage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -68,13 +70,21 @@ import org.koin.compose.koinInject
 @Composable
 fun OnboardingScreen(
     viewModel: OnboardingViewModel,
+    regionProvider: RegionProvider,
     onExitRequested: () -> Unit,
     onComplete: () -> Unit,
     adsLoaderService: AdsLoaderService = koinInject()
 ) {
     // Build page list dynamically based on remote config
     val pageList = remember {
-        buildOnboardingPageList(adsLoaderService)
+        buildOnboardingPageList(adsLoaderService, regionProvider)
+    }
+
+    // Detect if India region for carousel display
+    val useIndiaImages = try {
+        regionProvider.getRegionCode() == "in"
+    } catch (e: Exception) {
+        false
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -189,37 +199,12 @@ fun OnboardingScreen(
 
             // Regular welcome page
             is OnboardingPage.Welcome -> {
-                val pageModifier = if (isLastPage) {
-                    Modifier.pointerInput(Unit) {
-                        detectHorizontalDragGestures(
-                            onDragStart = {
-                                totalDrag = 0f
-                            },
-                            onHorizontalDrag = { change, dragAmount ->
-                                change.consume()
-                                totalDrag += dragAmount
-                            },
-                            onDragEnd = {
-                                val shouldComplete = totalDrag <= -80f
-                                totalDrag = 0f
-                                if (shouldComplete) onComplete()
-                            },
-                            onDragCancel = {
-                                totalDrag = 0f
-                            }
-                        )
-                    }
-                } else {
-                    Modifier
-                }
+                // Check if this is India page 3 (should show carousel)
+                val isIndiaPage3 = useIndiaImages && pageData.pageIndex == 2
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .then(pageModifier)
-                ) {
-                    WelcomePage(
-                        imageResId = pageData.step.img,
+                if (isIndiaPage3) {
+                    // India page 3: Show carousel
+                    IndiaPage3Carousel(
                         title = stringResource(pageData.step.title),
                         subtitle = stringResource(pageData.step.description),
                         ctaText = stringResource(R.string.onboarding_next),
@@ -236,29 +221,81 @@ fun OnboardingScreen(
                                 }
                             }
                         },
-                        pageIndex = pageData.pageIndex  // Pass page index for ad placement
+                        pageIndex = pageData.pageIndex
                     )
+                } else {
+                    // Default or India pages 1-2: Show static image
+                    val pageModifier = if (isLastPage) {
+                        Modifier.pointerInput(Unit) {
+                            detectHorizontalDragGestures(
+                                onDragStart = {
+                                    totalDrag = 0f
+                                },
+                                onHorizontalDrag = { change, dragAmount ->
+                                    change.consume()
+                                    totalDrag += dragAmount
+                                },
+                                onDragEnd = {
+                                    val shouldComplete = totalDrag <= -80f
+                                    totalDrag = 0f
+                                    if (shouldComplete) onComplete()
+                                },
+                                onDragCancel = {
+                                    totalDrag = 0f
+                                }
+                            )
+                        }
+                    } else {
+                        Modifier
+                    }
 
-                    if (showSwipeHint && pagerState.settledPage == 0) {
-                        Column(
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .background(Color.Black.copy(0.7f), RoundedCornerShape(24.dp))
-                                .padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            LottieAnimation(
-                                composition = swipeHintComposition,
-                                iterations = LottieConstants.IterateForever,
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .then(pageModifier)
+                    ) {
+                        WelcomePage(
+                            imageResId = pageData.step.img,
+                            title = stringResource(pageData.step.title),
+                            subtitle = stringResource(pageData.step.description),
+                            ctaText = stringResource(R.string.onboarding_next),
+                            onCta = {
+                                // Preload Feature Selection ads if this is one of the last 2 pages
+                                preloadFeatureSelectionIfNeeded(page, "tapped Continue")
+
+                                showSwipeHint = false
+                                if (isLastPage) {
+                                    onComplete()
+                                } else {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(page + 1)
+                                    }
+                                }
+                            },
+                            pageIndex = pageData.pageIndex  // Pass page index for ad placement
+                        )
+
+                        if (showSwipeHint && pagerState.settledPage == 0) {
+                            Column(
                                 modifier = Modifier
-                                    .size(90.dp)
-                            )
-                            Text(
-                                text = stringResource(R.string.onboarding_swipe_next),
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.W500,
-                                color = Color.White
-                            )
+                                    .align(Alignment.Center)
+                                    .background(Color.Black.copy(0.7f), RoundedCornerShape(24.dp))
+                                    .padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                LottieAnimation(
+                                    composition = swipeHintComposition,
+                                    iterations = LottieConstants.IterateForever,
+                                    modifier = Modifier
+                                        .size(90.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.onboarding_swipe_next),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.W500,
+                                    color = Color.White
+                                )
+                            }
                         }
                     }
                 }
@@ -304,6 +341,25 @@ private val baseWelcomePages = listOf(
     ),
 )
 
+// India-specific onboarding images
+private val indiaWelcomePages = listOf(
+    StepOnboard(
+        img = R.drawable.img_onb1_in,
+        title = R.string.onboarding_page1_title,
+        description = R.string.onboarding_india_page1_subtitle
+    ),
+    StepOnboard(
+        img = R.drawable.img_onb2_in,
+        title = R.string.onboarding_page2_title,
+        description = R.string.onboarding_page2_subtitle
+    ),
+    StepOnboard(
+        img = R.drawable.img_onb31_in,
+        title = R.string.onboarding_india_page3_title,
+        description = R.string.onboarding_india_page3_subtitle
+    )
+)
+
 // ============================================
 // BUILD ONBOARDING PAGE SEQUENCE
 // Dynamically injects fullscreen ad based on remote config
@@ -320,7 +376,21 @@ private val baseWelcomePages = listOf(
  * - inject_after = 2: Shows ad after page 2 (between pages 2 and 3) [DEFAULT]
  * - inject_after = 3: Shows ad after page 3 (before feature selection)
  */
-private fun buildOnboardingPageList(adsLoaderService: AdsLoaderService): List<OnboardingPage> {
+private fun buildOnboardingPageList(
+    adsLoaderService: AdsLoaderService,
+    regionProvider: RegionProvider
+): List<OnboardingPage> {
+    // Detect user region for India-specific onboarding
+    val region = try {
+        regionProvider.getRegionCode()
+    } catch (e: Exception) {
+        android.util.Log.w("OnboardingScreen", "Region detection failed, using default images", e)
+        null
+    }
+    val useIndiaImages = region == "in"
+
+    android.util.Log.d("OnboardingScreen", "🌍 Detected region: $region, using ${if (useIndiaImages) "India" else "default"} onboarding")
+
     // Read injection position from remote config
     val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
     val injectAfterValue = config?.extras?.get("inject_after")
@@ -340,10 +410,13 @@ private fun buildOnboardingPageList(adsLoaderService: AdsLoaderService): List<On
 
     android.util.Log.d("OnboardingScreen", "🎯 Fullscreen ad will inject after page $injectPosition (raw value: $injectAfterValue)")
 
+    // Select base pages based on region
+    val selectedBasePages = if (useIndiaImages) indiaWelcomePages else baseWelcomePages
+
     // Build page list with fullscreen ad injected at configured position
     val pages = mutableListOf<OnboardingPage>()
 
-    baseWelcomePages.forEachIndexed { index, step ->
+    selectedBasePages.forEachIndexed { index, step ->
         // Add welcome page
         pages.add(OnboardingPage.Welcome(step, index))
 
