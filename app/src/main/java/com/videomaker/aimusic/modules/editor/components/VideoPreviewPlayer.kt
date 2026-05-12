@@ -236,7 +236,8 @@ fun VideoPreviewPlayer(
     // Track composition building job so we can cancel it when app goes to background
     var compositionBuildJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
-    // Trigger to rebuild composition when returning from background
+    // Trigger to rebuild composition on explicit user action (e.g., error retry)
+    // Not used for automatic rebuilds on app resume
     var rebuildTrigger by remember { mutableStateOf(0) }
 
     // Actual music segment duration (updated when audio player is ready with actual duration)
@@ -815,32 +816,22 @@ fun VideoPreviewPlayer(
                     wasPlayingBeforeActivityPause = false
                 }
                 Lifecycle.Event.ON_STOP -> {
-                    // Full cleanup when app goes to background
+                    // Pause players when app goes to background
+                    // Keep players alive for quick resume - no release
                     wasPlayingBeforeActivityPause = false
                     videoPlayer?.pause()
                     audioPlayer?.pause()
                     onPlaybackStateChange(false)
 
-                    // Cancel composition building to free resources
-                    compositionBuildJob?.cancel()
-                    compositionBuildJob = null
-
-                    // Release players to free memory
-                    videoPlayer?.releaseAsync()
-                    audioPlayer?.releaseAsync()
-                    videoPlayer = null
-                    audioPlayer = null
-
-                    // Reset state
-                    previewState = PreviewState.Building
-                    playerReadyFlow.value = false
+                    // Don't release players or cancel composition
+                    // Players stay in memory and can resume immediately
+                    // Only rebuild on explicit user action (settings change, retry, etc.)
                 }
                 Lifecycle.Event.ON_START -> {
-                    // Restart composition building when returning from background
-                    // Only if player was released (null) and we're in Building state
-                    if (videoPlayer == null && previewState is PreviewState.Building) {
-                        rebuildTrigger++
-                    }
+                    // Composition builds on initial load only
+                    // Rebuilds only on explicit user action (error retry button, settings change)
+                    // No automatic rebuild on app resume
+                    // Players stay alive and can resume immediately via ON_RESUME
                 }
                 else -> {}
             }
