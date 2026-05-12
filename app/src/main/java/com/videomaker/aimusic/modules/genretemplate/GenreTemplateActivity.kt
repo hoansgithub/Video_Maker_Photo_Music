@@ -33,10 +33,6 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.delay
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-private const val EVENT_GENRE_TEMPLATE_SHOW = "genre_template_show"
-private const val EVENT_GENRE_TEMPLATE_NEXT = "genre_template_next"
-private const val EVENT_TEMPLATE_PICK = "template_pick"
-
 class GenreTemplateActivity : AppCompatActivity() {
 
     private val viewModel: GenreTemplateViewModel by viewModel()
@@ -44,7 +40,7 @@ class GenreTemplateActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        Analytics.track(name = EVENT_GENRE_TEMPLATE_SHOW)
+        Analytics.track(name = "music_genre_render")
 
         setContent {
             var isSaving by remember { mutableStateOf(false) }
@@ -54,6 +50,14 @@ class GenreTemplateActivity : AppCompatActivity() {
 
             val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
 
+            // Track step transitions
+            LaunchedEffect(currentStep) {
+                when (currentStep) {
+                    GenreTemplateStep.TEMPLATE_PICK -> Analytics.track(name = "vibe_template_render")
+                    else -> {}
+                }
+            }
+
             LaunchedEffect(hasStartedDelay) {
                 if (hasStartedDelay) {
                     delay(500)
@@ -62,7 +66,8 @@ class GenreTemplateActivity : AppCompatActivity() {
             }
 
             LaunchedEffect(viewModel.selectedGenre.value) {
-                val hasSelection = viewModel.selectedGenre.value != null
+                val genre = viewModel.selectedGenre.value
+                val hasSelection = genre != null
                 if (hasSelection && !hasStartedDelay) {
                     hasStartedDelay = true
                 } else if (!hasSelection && hasStartedDelay) {
@@ -99,7 +104,13 @@ class GenreTemplateActivity : AppCompatActivity() {
                                     TemplatePickScreen(
                                         templates = viewModel.suggestedTemplates,
                                         selectedTemplate = viewModel.selectedTemplate.value,
-                                        onTemplateSelect = { viewModel.selectTemplate(it) }
+                                        onTemplateSelect = { template ->
+                                            viewModel.selectTemplate(template)
+                                            Analytics.track(
+                                                name = "vibe_template_select",
+                                                params = mapOf("template_id" to template.id)
+                                            )
+                                        }
                                     )
                                 }
                             }
@@ -137,9 +148,9 @@ class GenreTemplateActivity : AppCompatActivity() {
                                     onClick = {
                                         if (viewModel.isStep1Valid()) {
                                             Analytics.track(
-                                                name = EVENT_GENRE_TEMPLATE_NEXT,
+                                                name = "music_genre_next",
                                                 params = mapOf(
-                                                    "song_genre" to (viewModel.selectedGenre.value?.id ?: "")
+                                                    "genre" to (viewModel.selectedGenre.value?.displayName ?: "")
                                                 )
                                             )
                                             viewModel.goToStep2()
@@ -160,7 +171,7 @@ class GenreTemplateActivity : AppCompatActivity() {
                                         if (isSaving) return@OnboardingCtaButton
                                         isSaving = true
                                         Analytics.track(
-                                            name = EVENT_TEMPLATE_PICK,
+                                            name = "vibe_template_next",
                                             params = mapOf("template_id" to template.id)
                                         )
                                         navigateToFeatureSelection()
