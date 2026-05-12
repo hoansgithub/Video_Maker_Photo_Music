@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,6 +87,7 @@ private fun ExoPlayer.releaseAsync() {
  * @param skipDebounce Skip 150ms debounce delay (use for first video on loading screen)
  * @param onError Callback when video loading fails
  * @param onVideoReady Callback when video is ready to play (STATE_READY reached)
+ * @param volume Playback volume (0.0f = muted, 1.0f = full volume)
  */
 @Composable
 fun TemplateVideoPlayer(
@@ -97,11 +99,17 @@ fun TemplateVideoPlayer(
     skipDebounce: Boolean = false,
     onError: ((String) -> Unit)? = null,
     onVideoReady: (() -> Unit)? = null,
+    volume: Float = 1.0f,
     cacheDataSourceFactory: CacheDataSource.Factory = koinInject()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
+
+    // Keep latest autoPlay accessible inside long-lived listeners (lifecycle observer)
+    // without recreating them. Fixes a stale-closure bug where pages that were once
+    // current resumed playing after an interstitial ad closed.
+    val currentAutoPlay by rememberUpdatedState(autoPlay)
 
     var isLoading by remember { mutableStateOf(true) }
     var hasError by remember { mutableStateOf(false) }
@@ -136,6 +144,7 @@ fun TemplateVideoPlayer(
             .apply {
                 repeatMode = if (loop) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
                 videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
+                this.volume = volume
             }
     }
 
@@ -337,6 +346,12 @@ fun TemplateVideoPlayer(
         player.addListener(listener)
     }
 
+    // Apply volume reactively. The volume set inside remember{} only runs once at
+    // player creation, so changes (e.g., mute on AD show) wouldn't take effect.
+    LaunchedEffect(player, volume) {
+        player.volume = volume
+    }
+
     // Load and prepare video with optional debounce (prevents rapid creation during scroll)
     LaunchedEffect(videoUrl, skipDebounce) {
         try {
@@ -388,10 +403,15 @@ fun TemplateVideoPlayer(
                     player.pause()
                 }
                 Lifecycle.Event.ON_RESUME -> {
-                    // Only resume if this page is currently visible
-                    if (autoPlay) {
+                    // Only resume if this page is currently visible.
+                    // Read latest autoPlay via rememberUpdatedState — observer is created once
+                    // (DisposableEffect keys don't include autoPlay), so capturing the param
+                    // directly would lead to stale values for non-current pages.
+                    if (currentAutoPlay) {
                         android.util.Log.d("TemplateVideoPlayer", "App resumed - playing (visible page)")
                         player.play()
+                    } else {
+                        android.util.Log.d("TemplateVideoPlayer", "App resumed - staying paused (off-screen page)")
                     }
                 }
                 else -> {}

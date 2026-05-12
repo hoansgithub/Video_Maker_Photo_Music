@@ -97,11 +97,11 @@ class VideoExportWorker(
                 android.util.Log.d("VideoExportWorker", "Beat-sync data loaded: BPM=${beatSyncData.bpm}, duration=${totalDurationMs}ms")
             }
 
-            // Preprocess audio with fadeout if needed
+            // Always re-preprocess for export to apply current audioVolume.
+            // processedAudioUri is a preview-only cache; its baked-in volume may be stale.
             if (project.settings.musicSongId != null &&
                 project.settings.musicSongUrl != null &&
-                project.settings.beatSyncData != null &&
-                project.settings.processedAudioUri == null) {
+                project.settings.beatSyncData != null) {
 
                 android.util.Log.d("VideoExportWorker", "Preprocessing audio with fadeout for export")
 

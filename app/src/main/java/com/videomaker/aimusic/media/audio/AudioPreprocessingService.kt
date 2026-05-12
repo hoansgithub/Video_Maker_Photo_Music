@@ -63,7 +63,7 @@ class AudioPreprocessingService(
     ): Uri? {
         try {
             // Check cache first
-            val cacheFile = getCacheFile(songId, trimStartMs, totalDurationMs, fadeoutDurationMs)
+            val cacheFile = getCacheFile(songId, trimStartMs, totalDurationMs, fadeoutDurationMs, baseVolume)
             if (cacheFile.exists() && cacheFile.length() > 0) {
                 Log.d(TAG, "Using cached preprocessed audio: ${cacheFile.name}")
                 return Uri.fromFile(cacheFile)
@@ -196,9 +196,9 @@ class AudioPreprocessingService(
      * Get cache file for preprocessed audio.
      * Filename includes parameters to ensure cache invalidation when settings change.
      */
-    private fun getCacheFile(songId: Long, trimStartMs: Long, totalDurationMs: Long, fadeoutDurationMs: Long): File {
-        // Include all parameters that affect the output
-        val filename = "${songId}_trim${trimStartMs}_dur${totalDurationMs}_fade${fadeoutDurationMs}.m4a"
+    private fun getCacheFile(songId: Long, trimStartMs: Long, totalDurationMs: Long, fadeoutDurationMs: Long, baseVolume: Float = 1.0f): File {
+        val volumeInt = (baseVolume * 100).toInt()
+        val filename = "${songId}_trim${trimStartMs}_dur${totalDurationMs}_fade${fadeoutDurationMs}_vol${volumeInt}.m4a"
         return File(cacheDir, filename)
     }
 
@@ -252,8 +252,8 @@ class AudioPreprocessingService(
     /**
      * Check if preprocessed audio exists in cache.
      */
-    fun hasCachedPreprocessedAudio(songId: Long, trimStartMs: Long, totalDurationMs: Long, fadeoutDurationMs: Long): Boolean {
-        val cacheFile = getCacheFile(songId, trimStartMs, totalDurationMs, fadeoutDurationMs)
+    fun hasCachedPreprocessedAudio(songId: Long, trimStartMs: Long, totalDurationMs: Long, fadeoutDurationMs: Long, baseVolume: Float = 1.0f): Boolean {
+        val cacheFile = getCacheFile(songId, trimStartMs, totalDurationMs, fadeoutDurationMs, baseVolume)
         return cacheFile.exists() && cacheFile.length() > 0
     }
 }

@@ -108,6 +108,7 @@ fun SongsScreen(
     viewModel: SongsViewModel,
     topBarHeight: Dp = 0.dp,
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
+    onNavigateToTemplatePreviewer: (songId: Long) -> Unit = {},
     onNavigateToSuggestedAll: () -> Unit = {},
     onNavigateToWeeklyRankingList: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {}
@@ -142,6 +143,7 @@ fun SongsScreen(
         navigationEvent?.let { event ->
             when (event) {
                 is SongsNavigationEvent.NavigateToAssetPickerForSong -> onNavigateToAssetPicker(event.songId)
+                is SongsNavigationEvent.NavigateToTemplatePreviewer -> onNavigateToTemplatePreviewer(event.songId)
                 is SongsNavigationEvent.NavigateToSuggestedAll -> onNavigateToSuggestedAll()
             }
             viewModel.onNavigationHandled()
