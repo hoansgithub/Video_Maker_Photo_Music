@@ -67,7 +67,7 @@ private val BadgeShape = RoundedCornerShape(999.dp)
  * 1. Thumbnail image (AsyncImage, shimmer while loading)
  * 2. Bottom gradient scrim (ensures name is readable on any image)
  * 3. Template name — bottom-start, max 2 lines
- * 4. PRO badge — top-end (only when isPremium)
+ * 4. ADS/PRO badge — top-end (ADS if premium & locked, nothing if unlocked)
  * 5. Use count badge — bottom-end (only when useCount > 0)
  */
 @Composable
@@ -76,8 +76,9 @@ fun TemplateCard(
     thumbnailPath: String,
     aspectRatio: Float,
     isPremium: Boolean,
+    isUnlocked: Boolean = true,  // Default true for backward compatibility
     isShowOption: Boolean = false,
-    showHotTag: Boolean = false,  // Only show in Gallery tab
+    showHotTag: Boolean = false,  // Show for top 10 templates
     useCount: Long,
     onClickDelete: () -> Unit = {},
     onClick: () -> Unit,
@@ -190,8 +191,8 @@ fun TemplateCard(
                 )
             }
 
-            // PRO badge — top-end
-            if (isPremium) {
+            // ADS badge — top-end (only show for premium templates that are NOT unlocked)
+            if (isPremium && !isUnlocked) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -199,11 +200,22 @@ fun TemplateCard(
                         .background(color = GoldAccent, shape = RoundedCornerShape(dimens.radiusMd))
                         .padding(horizontal = 6.dp, vertical = 3.dp)
                 ) {
-                    Text(
-                        text = "PRO",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = TextOnPrimary
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_play),
+                            contentDescription = "Watch ad to unlock",
+                            tint = TextOnPrimary,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = "ADS",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = TextOnPrimary
+                        )
+                    }
                 }
             }
 

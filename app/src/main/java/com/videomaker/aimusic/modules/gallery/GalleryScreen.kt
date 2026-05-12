@@ -107,7 +107,7 @@ import kotlinx.coroutines.flow.drop
 
 @Immutable
 private sealed class GalleryGridItem {
-    data class TemplateItem(val template: VideoTemplate) : GalleryGridItem()
+    data class TemplateItem(val template: VideoTemplate, val index: Int) : GalleryGridItem()
     data object AdItem : GalleryGridItem()
 }
 
@@ -142,6 +142,8 @@ fun GalleryScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
+    val unlockedTemplatesManager = org.koin.compose.koinInject<com.videomaker.aimusic.core.storage.UnlockedTemplatesManager>()
+    val unlockedTemplateIds by unlockedTemplatesManager.unlockedTemplateIds.collectAsStateWithLifecycle()
 
     // ✅ FIX: Refresh data when locale changes (after language change in settings)
     // Use rememberSaveable to persist previousLocale across Activity recreation
@@ -230,6 +232,7 @@ fun GalleryScreen(
                 vibeTags = state.vibeTags,
                 selectedVibeTagId = state.selectedVibeTagId,
                 templateListState = state.templateListState,
+                unlockedTemplateIds = unlockedTemplateIds,
                 isRefreshing = isRefreshing,
                 isVisible = isVisible,
                 onRefresh = viewModel::refresh,
@@ -321,6 +324,7 @@ private fun GalleryContent(
     vibeTags: List<VibeTag>,
     selectedVibeTagId: String?,
     templateListState: TemplateListState,
+    unlockedTemplateIds: Set<String>,
     isRefreshing: Boolean,
     isVisible: Boolean,
     onRefresh: () -> Unit,
@@ -432,6 +436,7 @@ private fun GalleryContent(
                     is TemplateListState.Success -> {
                         StaggeredTemplateGrid(
                             templates = templateListState.templates,
+                            unlockedTemplateIds = unlockedTemplateIds,
                             isVisible = isVisible,
                             onTemplateClick = onTemplateClick,
                             spacing = dimens.spaceSm,
@@ -898,6 +903,7 @@ private fun TemplateGridSkeleton(modifier: Modifier = Modifier) {
 @Composable
 private fun StaggeredTemplateGrid(
     templates: List<VideoTemplate>,
+    unlockedTemplateIds: Set<String>,
     isVisible: Boolean,
     onTemplateClick: (VideoTemplate, String) -> Unit,
     spacing: Dp,
@@ -912,12 +918,14 @@ private fun StaggeredTemplateGrid(
         buildList {
             if (templates.size < AD_INSERTION_INDEX) {
                 // Show ad at last position if < 3 templates
-                templates.forEach { add(GalleryGridItem.TemplateItem(it)) }
+                templates.forEachIndexed { index, template ->
+                    add(GalleryGridItem.TemplateItem(template, index))
+                }
                 add(GalleryGridItem.AdItem)
             } else {
                 // Insert ad at AD_INSERTION_INDEX (after 3rd template at index 2)
                 templates.forEachIndexed { index, template ->
-                    add(GalleryGridItem.TemplateItem(template))
+                    add(GalleryGridItem.TemplateItem(template, index))
                     if (index == AD_INSERTION_INDEX - 1) {  // After (AD_INSERTION_INDEX - 1)th template
                         add(GalleryGridItem.AdItem)
                     }
@@ -946,6 +954,7 @@ private fun StaggeredTemplateGrid(
         when (item) {
             is GalleryGridItem.TemplateItem -> {
                 val template = item.template
+                val templateIndex = item.index
 
                 // ✅ OPTIMIZED: Pre-calculate aspect ratio for this specific template
                 val aspectRatio = remember(template.aspectRatio) {
@@ -957,7 +966,8 @@ private fun StaggeredTemplateGrid(
                     thumbnailPath = template.thumbnailPath,
                     aspectRatio = aspectRatio,
                     isPremium = template.isPremium,
-                    showHotTag = template.isPremium,  // Show Hot tag only for premium templates
+                    isUnlocked = unlockedTemplateIds.contains(template.id),  // Check if template is unlocked
+                    showHotTag = templateIndex < 10,  // Show HOT tag for top 10 templates
                     useCount = template.useCount,
                     modifier = Modifier,
                     onClick = {
@@ -1043,6 +1053,7 @@ private fun GalleryContentPreview() {
                 ),
                 selectedVibeTagId = null,
                 templateListState = TemplateListState.Success(previewTemplates),
+                unlockedTemplateIds = emptySet(),  // Empty for preview
                 isRefreshing = false,
                 isVisible = true,
                 onRefresh = {},
