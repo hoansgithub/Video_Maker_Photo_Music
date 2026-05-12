@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,7 +29,6 @@ import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
-import kotlinx.coroutines.delay
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class GenreTemplateActivity : AppCompatActivity() {
@@ -44,35 +42,12 @@ class GenreTemplateActivity : AppCompatActivity() {
 
         setContent {
             var isSaving by remember { mutableStateOf(false) }
-
-            var delayedHasSelection by remember { mutableStateOf(false) }
-            var hasStartedDelay by remember { mutableStateOf(false) }
-
             val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
 
-            // Track step transitions
             LaunchedEffect(currentStep) {
                 when (currentStep) {
                     GenreTemplateStep.TEMPLATE_PICK -> Analytics.track(name = "vibe_template_render")
                     else -> {}
-                }
-            }
-
-            LaunchedEffect(hasStartedDelay) {
-                if (hasStartedDelay) {
-                    delay(500)
-                    delayedHasSelection = true
-                }
-            }
-
-            LaunchedEffect(viewModel.selectedGenre.value) {
-                val genre = viewModel.selectedGenre.value
-                val hasSelection = genre != null
-                if (hasSelection && !hasStartedDelay) {
-                    hasStartedDelay = true
-                } else if (!hasSelection && hasStartedDelay) {
-                    hasStartedDelay = false
-                    delayedHasSelection = false
                 }
             }
 
@@ -116,23 +91,16 @@ class GenreTemplateActivity : AppCompatActivity() {
                             }
                         }
 
-                        if (currentStep != GenreTemplateStep.PERSONALIZING) {
-                            Box(modifier = Modifier.fillMaxWidth()) {
-                                NativeAdView(
-                                    placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    isDebug = BuildConfig.DEBUG
-                                )
-
-                                NativeAdView(
-                                    placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .alpha(if (delayedHasSelection) 0f else 1f),
-                                    isDebug = BuildConfig.DEBUG
-                                )
-                            }
+                        val adPlacement = when (currentStep) {
+                            GenreTemplateStep.GENRE_SELECTION -> AdPlacement.NATIVE_ONBOARDING_SELECT_MUSIC
+                            GenreTemplateStep.PERSONALIZING -> AdPlacement.NATIVE_ONBOARDING_PERSONALIZING
+                            GenreTemplateStep.TEMPLATE_PICK -> AdPlacement.NATIVE_ONBOARDING_SELECT_TPT
                         }
+                        NativeAdView(
+                            placement = adPlacement,
+                            modifier = Modifier.fillMaxWidth(),
+                            isDebug = BuildConfig.DEBUG
+                        )
                     }
 
                     Box(

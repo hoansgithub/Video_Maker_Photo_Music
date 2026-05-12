@@ -396,6 +396,36 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_SELECT_MUSIC,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/3016683795",  // NA_high_select_music
+                "ca-app-pub-7121075950716954/8624233693"   // NA_all_select_music
+            ),
+            enabled = true
+        )
+
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_SELECT_TPT,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/3543297405",  // NA_high_select_tpt
+                "ca-app-pub-7121075950716954/7166847649"   // NA_all_select_tpt
+            ),
+            enabled = true
+        )
+
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_PERSONALIZING,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/8979456910",  // NA_high_personalizing
+                "ca-app-pub-7121075950716954/8646238825"   // NA_all_personalizing
+            ),
+            enabled = true
+        )
+
         // Onboarding page 1 native ad (shown at bottom of first welcome page)
         // First page of the onboarding flow
         // Layout: native_big_bait (large vertical layout with clickbait CTA)
