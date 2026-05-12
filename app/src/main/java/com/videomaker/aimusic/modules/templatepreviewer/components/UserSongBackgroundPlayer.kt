@@ -3,6 +3,7 @@ package com.videomaker.aimusic.modules.templatepreviewer.components
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -125,6 +126,12 @@ fun UserSongBackgroundPlayer(
                 }
             }
         }
+    }
+
+    // Apply volume reactively. The volume set inside remember{} only runs once at
+    // player creation, so changes (e.g., mute on AD show) wouldn't take effect.
+    LaunchedEffect(player, volume) {
+        player.volume = volume
     }
 
     // Track whether music was playing before pause (for ad interruption)
