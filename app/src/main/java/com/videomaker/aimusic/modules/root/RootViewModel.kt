@@ -193,11 +193,8 @@ class RootViewModel(
             val startTimeMillis = System.currentTimeMillis()
             var initTimedOut = false
 
-            // Step 1: Brief delay to allow network subsystem to fully initialize on cold start
-            // This prevents race conditions where network is transitioning during app launch
-            delay(300)
-
-            // Step 2: Check internet connection
+            // Step 1: Check internet connection
+            // Note: Modern Android (API 28+) network stack is stable on cold start, no delay needed
             if (!isInternetAvailable()) {
                 // Keep loading indicator visible while showing no-internet dialog
                 isInitialized = false
@@ -209,9 +206,10 @@ class RootViewModel(
             isFirstOpen = preferencesManager.isFirstLaunch()
             android.util.Log.d("RootViewModel", "📊 First open detection: isFirstOpen=$isFirstOpen")
 
-            // Step 3: Get initialization timeout from Remote Config
+            // Step 2: Get initialization timeout from Remote Config (already pre-fetched in Application.onCreate())
             // Default: 45 seconds (can be adjusted remotely without app update)
             // Longer timeout allows for slower networks while still preventing infinite loading
+            // Note: Using cached Remote Config values (pre-fetched during app startup)
             initTimeoutMs = try {
                 val configValue = remoteConfig.getLong(RemoteConfigKeys.APP_INIT_TIMEOUT_MS, 45_000L)
                 // Validate: Remote Config might return 0 or invalid value
@@ -219,7 +217,7 @@ class RootViewModel(
             } catch (e: Exception) {
                 45_000L  // Fallback to 45 seconds if Remote Config fails
             }
-            android.util.Log.d("RootViewModel", "📊 Init timeout: ${initTimeoutMs}ms")
+            android.util.Log.d("RootViewModel", "📊 Init timeout: ${initTimeoutMs}ms (from cached Remote Config)")
 
             // ============================================
             // CRITICAL: Timeout wrapper prevents infinite loading
@@ -230,12 +228,7 @@ class RootViewModel(
             try {
                 withTimeout(initTimeoutMs) {  // Remote Config controlled timeout
                     try {
-                        // Step 3: Load Firebase Remote Config (10s timeout)
-                        // UMP consent is already complete, safe to fetch config
-                        _loadingStep.value = LoadingStep.FETCHING_CONFIG
-                        loadRemoteConfig()
-
-                        // Step 4: Check startup gate status
+                        // Step 3: Check startup gate status
                         // Simplified: Only check if onboarding is complete
                         // If not complete, always start from Language Selection (beginning of flow)
                         _loadingStep.value = LoadingStep.CHECKING_STATUS
@@ -251,12 +244,12 @@ class RootViewModel(
                         android.util.Log.d("RootViewModel", "   - shouldShowOnboarding (from UseCase): $shouldShowOnboarding")
                         android.util.Log.d("RootViewModel", "   - onboardingComplete (saved to class property): ${this@RootViewModel.onboardingComplete}")
 
-                        // Step 5: Preload ads in parallel (native ads + splash interstitial)
+                        // Step 4: Preload ads in parallel (native ads + splash interstitial)
                         // Native ads load on IO thread, interstitial on Main (AdMob requirement)
                         // Uses same timeout as overall initialization (from Remote Config)
                         _loadingStep.value = LoadingStep.LOADING_AD
                         val splashPlacementForLog = if (isFirstOpen) AdPlacement.INTERSTITIAL_SPLASH else AdPlacement.INTERSTITIAL_OPEN_APP
-                        android.util.Log.d("RootViewModel", "🎬 Step 5: Preloading ads (1-step-ahead strategy)...")
+                        android.util.Log.d("RootViewModel", "🎬 Step 4: Preloading ads (1-step-ahead strategy)...")
                         android.util.Log.d("RootViewModel", "   - onboardingComplete: ${this@RootViewModel.onboardingComplete}")
                         android.util.Log.d("RootViewModel", "   - Interstitial: $splashPlacementForLog (isFirstOpen=$isFirstOpen)")
                         android.util.Log.d("RootViewModel", "   - Timeout: ${initTimeoutMs}ms")
@@ -338,7 +331,7 @@ class RootViewModel(
                 android.util.Log.w("RootViewModel", "⏱️ Initialization timed out after ${initTimeoutMs}ms — proceeding to navigation")
             }
 
-            // Step 7: Track initialization time with time buckets
+            // Step 5: Track initialization time with time buckets
             val durationMillis = System.currentTimeMillis() - startTimeMillis
             val durationSeconds = durationMillis / 1000.0
             val timeBucket = when {
@@ -359,43 +352,11 @@ class RootViewModel(
                 )
             )
 
-            // Step 8: Navigate to appropriate screen (ALWAYS happens, even if timeout/error)
+            // Step 6: Navigate to appropriate screen (ALWAYS happens, even if timeout/error)
             // This ensures users never get stuck on loading screen
             proceedToNextScreen()
         }
     }
-
-    // ============================================
-    // PRIVATE: FIREBASE REMOTE CONFIG
-    // ============================================
-
-    /**
-     * Load Firebase Remote Config
-     * Fetches and activates remote config values with a 10-second timeout.
-     * On failure or timeout, continues with cached/default values.
-     */
-    private suspend fun loadRemoteConfig() {
-        try {
-
-            // Fetch with 10 second timeout to prevent blocking on slow networks
-            val result = withTimeoutOrNull(10_000L) {
-                remoteConfig.fetchAndActivate()
-            }
-
-            // fetchAndActivate returns Result<Boolean>
-            val success = result?.getOrNull() ?: false
-            if (success) {
-            } else {
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("RootViewModel", "Remote Config error: ${e.message}")
-            // Continue with cached/default values - don't block app startup
-        }
-    }
-
-    // ============================================
-    // PRIVATE: PLACEHOLDERS (for future implementation)
-    // ============================================
 
     // ============================================
     // PRIVATE: NAVIGATION

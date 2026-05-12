@@ -491,7 +491,7 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
                 // Fetch and activate Remote Config (with timeout)
                 try {
-                    kotlinx.coroutines.withTimeout(15000L) {  // 15s timeout (same as RootViewModel)
+                    kotlinx.coroutines.withTimeout(5000L) {  // 5s timeout for faster startup
                         val remoteConfig = get<co.alcheclub.lib.acccore.remoteconfig.RemoteConfig>()
                         val result = remoteConfig.fetchAndActivate()
 
@@ -511,7 +511,7 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                         }
                     }
                 } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                    android.util.Log.w("VideoMakerApp", "⏱️ Remote Config fetch timeout after 15s - continuing with defaults")
+                    android.util.Log.w("VideoMakerApp", "⏱️ Remote Config fetch timeout after 5s - continuing with defaults")
                 } catch (e: Exception) {
                     android.util.Log.e("VideoMakerApp", "❌ Remote Config fetch error: ${e.message}", e)
                 }
