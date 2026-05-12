@@ -397,6 +397,10 @@ private fun GalleryContent(
 
             // Section 2: Featured Templates Carousel
             if (featuredTemplates.isNotEmpty()) {
+                item(key = "spacer0", contentType = "spacer") {
+                    Spacer(modifier = Modifier.height(dimens.spaceMd))
+                }
+
                 item(key = "featured_templates", contentType = "featured_carousel") {
                     FeaturedTemplatesCarousel(
                         templates = featuredTemplates,
