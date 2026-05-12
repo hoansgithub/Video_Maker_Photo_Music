@@ -809,6 +809,14 @@ val presentationModule = module {
         )
     }
 
+    // Genre Template Onboarding ViewModel
+    viewModel {
+        com.videomaker.aimusic.modules.genretemplate.GenreTemplateViewModel(
+            templateRepository = get(),
+            songRepository = get()
+        )
+    }
+
     // Song Search ViewModel
     viewModel {
         SongSearchViewModel(

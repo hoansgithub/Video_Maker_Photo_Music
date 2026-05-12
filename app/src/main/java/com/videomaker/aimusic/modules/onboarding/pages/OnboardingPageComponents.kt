@@ -77,78 +77,66 @@ internal fun WelcomePage(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // ── Main content area (takes remaining space above ad) ──────────
-        Box(
+        // Banner image — fills entire area with Crop
+        Image(
+            painter = painterResource(imageResId),
+            contentDescription = null,
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)  // Takes all available space, pushing ad to bottom
+                .fillMaxHeight(0.5f),
+            contentScale = ContentScale.Crop
+        )
+        // Title/Subtitle + CTA Button Row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.0f),
+                            Color.Black.copy(alpha = 0.5f),
+                            Color.Black.copy(alpha = 0.75f),
+                            Color.Black.copy(alpha = 1.0f)
+                        )
+                    )
+                )
+                .padding(horizontal = 24.dp)
+                .padding(top = 40.dp, bottom = 32.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Banner image — fills entire area with Crop
-            Image(
-                painter = painterResource(imageResId),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-
-            // Box with dark gradient background containing title and button
-            Box(
+            // Title + Subtitle Column (left side)
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Black.copy(alpha = 0.0f),
-                                Color.Black.copy(alpha = 0.5f),
-                                Color.Black.copy(alpha = 0.75f),
-                                Color.Black.copy(alpha = 1.0f)
-                            )
-                        )
-                    )
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 40.dp, bottom = 32.dp)
+                    .weight(1f)
+                    .padding(end = 16.dp)
             ) {
-                // Title/Subtitle + CTA Button Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // Title + Subtitle Column (left side)
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 16.dp)
-                    ) {
-                        Text(
-                            text = title,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(Modifier.height(12.dp))
-                        Text(
-                            text = subtitle,
-                            fontSize = 16.sp,
-                            color = Color.White.copy(alpha = 0.9f),
-                            lineHeight = 22.sp,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    // CTA Button (right side, vertically centered with title area)
-                    OnboardingCtaButton(
-                        text = ctaText,
-                        onClick = onCta,
-                        color = Primary,
-                        icon = R.drawable.ic_right_arrow
-                    )
-                }
+                Text(
+                    text = title,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = subtitle,
+                    fontSize = 16.sp,
+                    color = Color.White.copy(alpha = 0.9f),
+                    lineHeight = 22.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
+
+            // CTA Button (right side, vertically centered with title area)
+            OnboardingCtaButton(
+                text = ctaText,
+                onClick = onCta,
+                color = Primary,
+                icon = R.drawable.ic_right_arrow
+            )
         }
 
         // ── Native Ad at bottom (takes only needed height) ──────────────

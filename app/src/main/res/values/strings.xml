@@ -554,4 +554,12 @@
     <string name="notif_cta_continue_editing">Continue Editing</string>
     <string name="notif_cta_view_template">View Template</string>
 
+    <!-- Genre Template Onboarding -->
+    <string name="genre_step_title">What music do you like?</string>
+    <string name="genre_step_subtitle">This step helps us suggest better music for you. It won’t affect your personalized content.</string>
+    <string name="personalizing_title">Personalizing your experience…</string>
+    <string name="personalizing_subtitle">Please wait a moment while we prepare the perfect style templates for you.</string>
+    <string name="template_pick_title">What template style do you prefer?</string>
+    <string name="template_pick_subtitle">Pick a template style and let us handle the transitions and effects for you. This step won’t affect your personalized content.</string>
+
 </resources>
