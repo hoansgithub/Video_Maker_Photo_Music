@@ -264,9 +264,7 @@ fun AssetPickerScreen(
         when (decision) {
             FullPermissionPromptDecision.NONE -> Unit
             FullPermissionPromptDecision.SHOW_PROMO -> {
-                if (mode == PermissionMode.LIMITED) {
-                    mediaPermissionCoordinator.markLimitedUpsellShownInCurrentSession()
-                }
+                mediaPermissionCoordinator.markLimitedUpsellShownInCurrentSession()
                 showPermissionSettingsDialog = false
                 showPermissionPromoDialog = true
             }
@@ -423,7 +421,15 @@ fun AssetPickerScreen(
             AssetPickerUiState.DeniedPermission -> {
                 if (!hasHandledEntryDeniedPrompt) {
                     hasHandledEntryDeniedPrompt = true
-                    showPermissionGateForMode(PermissionMode.DENIED)
+                    // Only auto-show on entry if no promo was shown yet this session.
+                    // Prevents a duplicate prompt when: (a) the user already saw the promo
+                    // in a previous picker in the same session, or (b) a stale DENIED cache
+                    // entry briefly appears before the real LIMITED state is applied.
+                    // The manual "Allow Access" button on the denied screen still works
+                    // because it calls showPermissionGateForMode directly (bypasses this guard).
+                    if (!mediaPermissionCoordinator.hasShownLimitedUpsellThisSession()) {
+                        showPermissionGateForMode(PermissionMode.DENIED)
+                    }
                 }
             }
             is AssetPickerUiState.WithAssets.LimitPermission -> {
