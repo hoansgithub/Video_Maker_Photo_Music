@@ -68,9 +68,18 @@ sealed class EditorUiState {
         val displayAssets: List<Asset> get() = pendingAssets ?: project.assets
 
         /**
-         * Project with pending settings/assets applied - use this for preview/display
-         * This allows real-time preview of unsaved changes (e.g., volume slider, image reordering)
-         * Video preview uses displayProject, so pending asset changes don't trigger rebuild until confirmed
+         * Project for video preview composition
+         * Uses pendingSettings for real-time preview (e.g., volume)
+         * Uses actual project.assets (NOT pendingAssets) to prevent rebuild during image editing
+         * Only rebuilds when assets are confirmed via applyPendingAssets()
+         */
+        val previewProject: Project get() = project.copy(
+            settings = pendingSettings ?: project.settings
+            // assets intentionally uses project.assets, not pendingAssets
+        )
+
+        /**
+         * Project with all pending changes for display (used by ImagesBottomSheet)
          */
         val displayProject: Project get() = project.copy(
             settings = pendingSettings ?: project.settings,

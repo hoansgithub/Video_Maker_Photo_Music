@@ -395,7 +395,7 @@ fun EditorScreen(
 
                     is EditorUiState.Success -> {
                         EditorMainContent(
-                            project = state.displayProject, // Use displayProject to show pending changes in preview
+                            project = state.previewProject, // Use previewProject: pendingSettings but actual assets
                             isPlaying = state.isPlaying,
                             currentPositionMs = state.currentPositionMs,
                             durationMs = state.durationMs,
