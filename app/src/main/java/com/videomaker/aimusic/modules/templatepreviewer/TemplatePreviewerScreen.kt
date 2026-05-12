@@ -94,7 +94,10 @@ import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
 import com.videomaker.aimusic.ui.components.NotificationPermissionPromoDialog
 import com.videomaker.aimusic.ui.components.NotificationPermissionSettingsGuideDialog
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.MusicSong
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
+import com.videomaker.aimusic.modules.templatepreviewer.components.UserSongBackgroundPlayer
 import org.koin.compose.koinInject
 import com.videomaker.aimusic.ui.components.PrimaryButton
 import com.videomaker.aimusic.ui.theme.Primary
@@ -142,6 +145,9 @@ fun TemplatePreviewerScreen(
     val unlockedTemplateIds by viewModel.unlockedTemplateIds.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val overrideSongId by viewModel.overrideSongId.collectAsStateWithLifecycle()
+    val userSong by viewModel.userSong.collectAsStateWithLifecycle()
+    val showUserSongPlayer = remember(overrideSongId) { overrideSongId >= 0L }
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val eventLocation = remember(sourceLocation) {
@@ -371,6 +377,8 @@ fun TemplatePreviewerScreen(
                     state = state,
                     likedTemplateIds = likedTemplateIds,
                     unlockedTemplateIds = unlockedTemplateIds,
+                    showUserSongPlayer = showUserSongPlayer,
+                    userSong = userSong,
                     onPageChanged = viewModel::onPageChanged,
                     onUseThisTemplate = viewModel::onUseThisTemplate,
                     onRatioSelected = viewModel::onRatioSelected,
@@ -534,6 +542,8 @@ private fun TemplatePreviewerReadyContent(
     state: TemplatePreviewerUiState.Ready,
     likedTemplateIds: Set<String>,
     unlockedTemplateIds: Set<String>,
+    showUserSongPlayer: Boolean,
+    userSong: MusicSong?,
     onPageChanged: (Int) -> Unit,
     onUseThisTemplate: (VideoTemplate, AspectRatio) -> Unit,
     onRatioSelected: (VideoTemplate, AspectRatio) -> Unit,
@@ -672,6 +682,8 @@ private fun TemplatePreviewerReadyContent(
                 template = templates[pageIndex % templates.size],
                 isCurrentPage = isCurrentPage,
                 isPriorityPage = pageIndex == pagerState.settledPage,  // High priority for visible page
+                showUserSongPlayer = showUserSongPlayer,
+                userSong = userSong,
                 onVideoReady = if (isInitialPage) onFirstVideoReady else null  // Only track first video
             )
         }
@@ -1150,9 +1162,15 @@ private fun TemplateThumbnailPage(
     template: VideoTemplate,
     isCurrentPage: Boolean,
     isPriorityPage: Boolean = false,  // True for visible/settled page (kept for future use)
+    showUserSongPlayer: Boolean = false,
+    userSong: com.videomaker.aimusic.domain.model.MusicSong? = null,
     onVideoReady: (() -> Unit)? = null  // Callback when video is ready (for first video only)
 ) {
     val context = LocalContext.current
+    val audioPreviewCache: AudioPreviewCache = koinInject()
+
+    // Track when template video has loaded successfully before starting user song
+    var isTemplateVideoReady by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier.fillMaxSize().background(Color.Black),
@@ -1170,7 +1188,11 @@ private fun TemplateThumbnailPage(
                 loop = true,
                 showControls = false,
                 skipDebounce = onVideoReady != null,  // Skip 150ms delay for first video only
-                onVideoReady = onVideoReady  // Notify when video is ready (for first video tracking)
+                onVideoReady = {
+                    isTemplateVideoReady = true  // Mark template as ready
+                    onVideoReady?.invoke()  // Notify parent for first video tracking
+                },
+                volume = if (showUserSongPlayer) 0f else 1.0f  // Mute template video when user song plays
             )
         } else {
             // Fallback to image preview
@@ -1212,6 +1234,18 @@ private fun TemplateThumbnailPage(
                 }
             )
         }
+
+        // User song background player - plays when user selected a song AND template video is ready
+        if (showUserSongPlayer && userSong != null && isCurrentPage && isTemplateVideoReady) {
+            UserSongBackgroundPlayer(
+                song = userSong,
+                cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+                autoPlay = true,
+                loop = true,
+                startFromHook = true,
+                volume = 1.0f
+            )
+        }
     }
 }
 
@@ -1241,6 +1275,8 @@ private fun PreviewTemplatePreviewerReady() {
             ),
             likedTemplateIds = emptySet(),
             unlockedTemplateIds = emptySet(),
+            showUserSongPlayer = false,
+            userSong = null,
             onPageChanged = {},
             onUseThisTemplate = { _, _ -> },
             onRatioSelected = { _, _ -> },
@@ -1268,6 +1304,8 @@ private fun PreviewTemplatePreviewerCreating() {
             ),
             likedTemplateIds = setOf("t1"),
             unlockedTemplateIds = emptySet(),
+            showUserSongPlayer = false,
+            userSong = null,
             onPageChanged = {},
             onUseThisTemplate = { _, _ -> },
             onRatioSelected = { _, _ -> },

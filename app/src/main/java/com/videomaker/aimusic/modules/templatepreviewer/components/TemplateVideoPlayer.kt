@@ -86,6 +86,7 @@ private fun ExoPlayer.releaseAsync() {
  * @param skipDebounce Skip 150ms debounce delay (use for first video on loading screen)
  * @param onError Callback when video loading fails
  * @param onVideoReady Callback when video is ready to play (STATE_READY reached)
+ * @param volume Playback volume (0.0f = muted, 1.0f = full volume)
  */
 @Composable
 fun TemplateVideoPlayer(
@@ -97,6 +98,7 @@ fun TemplateVideoPlayer(
     skipDebounce: Boolean = false,
     onError: ((String) -> Unit)? = null,
     onVideoReady: (() -> Unit)? = null,
+    volume: Float = 1.0f,
     cacheDataSourceFactory: CacheDataSource.Factory = koinInject()
 ) {
     val context = LocalContext.current
@@ -136,6 +138,7 @@ fun TemplateVideoPlayer(
             .apply {
                 repeatMode = if (loop) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
                 videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
+                this.volume = volume
             }
     }
 
