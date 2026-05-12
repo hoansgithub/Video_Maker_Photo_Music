@@ -162,6 +162,9 @@
     <string name="editor_effect_sets">Àwọn Ìpín Ipa</string>
     <string name="editor_retry">Gbìyànjú Lẹ́ẹ̀kan Sí</string>
     <string name="editor_no_music_selected">A kò yan orin kankan</string>
+    <string name="editor_images_title">Tẹ lati Ṣatunkọ • Dìímú lati Tun Ṣètò</string>
+    <string name="editor_add_images">Ṣafikun Àwòrán</string>
+    <string name="editor_delete_image">Paárẹ́</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Fídíò Tí A Ṣẹ</string>

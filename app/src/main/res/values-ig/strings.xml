@@ -163,6 +163,9 @@
     <string name="editor_effect_sets">Ndị Mmetụta</string>
     <string name="editor_retry">Nwaa Ọzọ</string>
     <string name="editor_no_music_selected">Enweghị egwu a họrọ</string>
+    <string name="editor_images_title">Pịa ka Idezi • Jide ka Idozie Ọzọ</string>
+    <string name="editor_add_images">Tinye Foto</string>
+    <string name="editor_delete_image">Hichapụ</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Video Emepụtara</string>

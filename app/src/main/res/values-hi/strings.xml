@@ -159,6 +159,9 @@
     <string name="editor_effect_sets">इफेक्ट सेट्स</string>
     <string name="editor_retry">पुनः प्रयास करें</string>
     <string name="editor_no_music_selected">कोई संगीत चयनित नहीं</string>
+    <string name="editor_images_title">संपादित करने के लिए टैप करें • पुनर्व्यवस्थित करने के लिए दबाए रखें</string>
+    <string name="editor_add_images">छवियाँ जोड़ें</string>
+    <string name="editor_delete_image">हटाएं</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">बनाए गए वीडियो</string>

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Video Maker - AI Music</string>
+    <string name="app_name">Muvio Video Maker</string>
 
     <!-- Facebook SDK (Analytics only) -->
     <string name="facebook_app_id">2394935491027358</string>
@@ -162,6 +162,9 @@
     <string name="editor_effect_sets">Effect Sets</string>
     <string name="editor_retry">Retry</string>
     <string name="editor_no_music_selected">No music selected</string>
+    <string name="editor_images_title">Tap to Edit • Hold to Rearrange</string>
+    <string name="editor_add_images">Add Images</string>
+    <string name="editor_delete_image">Delete</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Created Video</string>

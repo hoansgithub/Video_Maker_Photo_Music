@@ -157,6 +157,9 @@
     <string name="editor_effect_sets">Efekt Setleri</string>
     <string name="editor_retry">Tekrar Dene</string>
     <string name="editor_no_music_selected">Müzik seçilmedi</string>
+    <string name="editor_images_title">Düzenlemek için Dokun • Yeniden Düzenlemek için Basılı Tut</string>
+    <string name="editor_add_images">Resim Ekle</string>
+    <string name="editor_delete_image">Sil</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Oluşturulan Video</string>

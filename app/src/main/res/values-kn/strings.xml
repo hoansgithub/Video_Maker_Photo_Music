@@ -162,6 +162,9 @@
     <string name="editor_effect_sets">ಎಫೆಕ್ಟ್ ಸೆಟ್‌ಗಳು</string>
     <string name="editor_retry">ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ</string>
     <string name="editor_no_music_selected">ಸಂಗೀತ ಆಯ್ಕೆ ಮಾಡಿಲ್ಲ</string>
+    <string name="editor_images_title">ಸಂಪಾದಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ • ಮರುಹೊಂದಿಸಲು ಹಿಡಿದುಕೊಳ್ಳಿ</string>
+    <string name="editor_add_images">ಚಿತ್ರಗಳನ್ನು ಸೇರಿಸಿ</string>
+    <string name="editor_delete_image">ಅಳಿಸಿ</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">ರಚಿಸಿದ ವೀಡಿಯೋ</string>

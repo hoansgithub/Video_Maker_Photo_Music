@@ -162,6 +162,9 @@
     <string name="editor_effect_sets">ইফেক্ট সেট</string>
     <string name="editor_retry">আবার চেষ্টা করুন</string>
     <string name="editor_no_music_selected">কোনো সঙ্গীত নির্বাচিত নেই</string>
+    <string name="editor_images_title">সম্পাদনা করতে ট্যাপ করুন • পুনর্বিন্যাস করতে ধরে রাখুন</string>
+    <string name="editor_add_images">ছবি যোগ করুন</string>
+    <string name="editor_delete_image">মুছুন</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">তৈরি করা ভিডিও</string>

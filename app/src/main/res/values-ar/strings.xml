@@ -157,6 +157,9 @@
     <string name="editor_effect_sets">مجموعات التأثيرات</string>
     <string name="editor_retry">إعادة المحاولة</string>
     <string name="editor_no_music_selected">لم يتم اختيار موسيقى</string>
+    <string name="editor_images_title">انقر للتحرير • اضغط مع الاستمرار لإعادة الترتيب</string>
+    <string name="editor_add_images">إضافة صور</string>
+    <string name="editor_delete_image">حذف</string>
 
     <!-- Projects Tabs -->
     <!-- Projects Tabs -->

@@ -52,6 +52,7 @@ sealed class EditorUiState {
         val isPlaying: Boolean = false,
         val showSettingsPanel: Boolean = false,
         val pendingSettings: ProjectSettings? = null,
+        val pendingAssets: List<Asset>? = null, // Temporary assets for ImagesBottomSheet - not saved/rebuilt until confirmed
         val currentPositionMs: Long = 0L,
         val durationMs: Long = 0L,
         val seekToPosition: Long? = null,
@@ -62,18 +63,19 @@ sealed class EditorUiState {
         val isMusicCached: Boolean = true, // Music fully downloaded and ready for export
         val isCachingMusic: Boolean = false // Currently downloading music to cache
     ) : EditorUiState() {
-        val hasPendingChanges: Boolean get() = pendingSettings != null || isUnsavedProject
+        val hasPendingChanges: Boolean get() = pendingSettings != null || pendingAssets != null || isUnsavedProject
         val displaySettings: ProjectSettings get() = pendingSettings ?: project.settings
+        val displayAssets: List<Asset> get() = pendingAssets ?: project.assets
 
         /**
-         * Project with pending settings applied - use this for preview/display
-         * This allows real-time preview of unsaved changes (e.g., volume slider)
+         * Project with pending settings/assets applied - use this for preview/display
+         * This allows real-time preview of unsaved changes (e.g., volume slider, image reordering)
+         * Video preview uses displayProject, so pending asset changes don't trigger rebuild until confirmed
          */
-        val displayProject: Project get() = if (pendingSettings != null) {
-            project.copy(settings = pendingSettings)
-        } else {
-            project
-        }
+        val displayProject: Project get() = project.copy(
+            settings = pendingSettings ?: project.settings,
+            assets = pendingAssets ?: project.assets
+        )
     }
 
     data class Error(val message: String) : EditorUiState()
@@ -996,6 +998,54 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
             _uiState.value = currentState.copy(pendingSettings = null)
+        }
+    }
+
+    // ============================================
+    // PENDING ASSETS (for ImagesBottomSheet)
+    // ============================================
+
+    /**
+     * Set pending assets for temporary editing in ImagesBottomSheet
+     * This creates a temporary copy that won't trigger video rebuild until confirmed
+     */
+    fun setPendingAssets(assets: List<Asset>) {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success) {
+            _uiState.value = currentState.copy(pendingAssets = assets)
+        }
+    }
+
+    /**
+     * Apply pending assets to the project - this will trigger video rebuild
+     */
+    suspend fun applyPendingAssets() {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success && currentState.pendingAssets != null) {
+            val newAssets = currentState.pendingAssets
+            android.util.Log.d("EditorViewModel", "applyPendingAssets: Applying ${newAssets.size} assets")
+
+            val updatedProject = currentState.project.copy(
+                assets = newAssets,
+                updatedAt = System.currentTimeMillis()
+            )
+            _uiState.value = currentState.copy(project = updatedProject, pendingAssets = null)
+
+            // Note: Assets are already saved to DB by asset picker
+            // This just updates the project reference and triggers video rebuild
+            android.util.Log.d("EditorViewModel", "applyPendingAssets: Assets applied, video will rebuild")
+        } else {
+            android.util.Log.d("EditorViewModel", "applyPendingAssets: No pending assets to apply")
+        }
+    }
+
+    /**
+     * Discard pending assets without applying
+     */
+    fun discardPendingAssets() {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success) {
+            _uiState.value = currentState.copy(pendingAssets = null)
         }
     }
 

@@ -157,6 +157,9 @@
     <string name="editor_effect_sets">Conjuntos de Efectos</string>
     <string name="editor_retry">Reintentar</string>
     <string name="editor_no_music_selected">No se seleccionó música</string>
+    <string name="editor_images_title">Toca para Editar • Mantén para Reorganizar</string>
+    <string name="editor_add_images">Añadir Imágenes</string>
+    <string name="editor_delete_image">Eliminar</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Video Creado</string>

@@ -162,6 +162,9 @@
     <string name="editor_effect_sets">Set Efek</string>
     <string name="editor_retry">Coba Maneh</string>
     <string name="editor_no_music_selected">Ora ana musik sing dipilih</string>
+    <string name="editor_images_title">Tutul kanggo Nyunting • Tahan kanggo Nata Maneh</string>
+    <string name="editor_add_images">Tambahake Gambar</string>
+    <string name="editor_delete_image">Busak</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Video Digawe</string>

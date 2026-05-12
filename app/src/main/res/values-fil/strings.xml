@@ -157,6 +157,9 @@
     <string name="editor_effect_sets">Mga Set ng Epekto</string>
     <string name="editor_retry">Subukan Muli</string>
     <string name="editor_no_music_selected">Walang napiling musika</string>
+    <string name="editor_images_title">I-tap para I-edit • Pindutin nang Matagal para Ayusin</string>
+    <string name="editor_add_images">Magdagdag ng Larawan</string>
+    <string name="editor_delete_image">Tanggalin</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Nilikha na Video</string>

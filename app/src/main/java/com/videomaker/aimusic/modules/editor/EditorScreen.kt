@@ -74,6 +74,7 @@ import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.modules.editor.components.EffectSetBottomSheet
+import com.videomaker.aimusic.modules.editor.components.ImagesBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSection
 import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
@@ -137,6 +138,8 @@ fun EditorScreen(
     var showEffectSetSheet by remember { mutableStateOf(false) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
+    var showImagesSheet by remember { mutableStateOf(false) }
+    var isEditingImages by remember { mutableStateOf(false) } // Track when user is editing images to prevent video rebuild
     var wasPlayingBeforeMusicSheet by remember { mutableStateOf(false) }
     var wasPlayingBeforeQualityAd by remember { mutableStateOf(false) }
     var hasTrackedVideoPreview by remember { mutableStateOf(false) }
@@ -416,6 +419,9 @@ fun EditorScreen(
                             onSeekComplete = viewModel::clearSeekRequest,
                             onScrubComplete = viewModel::clearScrubRequest,
                             onPreviewStateChange = { previewState = it },
+                            onImagesClick = {
+                                showImagesSheet = true
+                            },
                             onEffectClick = {
                                 Analytics.trackEffectEdit(
                                     videoId = state.project.id,
@@ -709,6 +715,50 @@ fun EditorScreen(
                 )
             }
 
+            // Images Bottom Sheet
+            if (showImagesSheet) {
+                val successState = uiState as? EditorUiState.Success
+                if (successState != null) {
+                    // Set pending assets when sheet opens (first time only)
+                    LaunchedEffect(Unit) {
+                        if (successState.pendingAssets == null) {
+                            viewModel.setPendingAssets(successState.project.assets)
+                            isEditingImages = true
+                        }
+                    }
+
+                    // Watch for asset changes while editing (from asset picker returning)
+                    LaunchedEffect(successState.project.assets.size, isEditingImages) {
+                        if (isEditingImages && successState.pendingAssets != null) {
+                            // Assets changed (new images added from picker), update pending assets
+                            viewModel.setPendingAssets(successState.project.assets)
+                        }
+                    }
+
+                    ImagesBottomSheet(
+                        currentAssets = successState.displayAssets,
+                        onDismiss = {
+                            viewModel.discardPendingAssets()
+                            isEditingImages = false
+                            showImagesSheet = false
+                        },
+                        onAddImages = {
+                            // Keep editing mode active, navigate to asset picker
+                            onNavigateToAddAssets(successState.project.id)
+                            // Don't close sheet - it will reopen with new assets
+                        },
+                        onConfirm = { updatedAssets ->
+                            scope.launch {
+                                // Apply pending assets - this triggers video rebuild
+                                viewModel.applyPendingAssets()
+                                isEditingImages = false
+                                showImagesSheet = false
+                            }
+                        }
+                    )
+                }
+            }
+
             // Fullscreen Processing Overlay - blocks all interactions, content is blurred
             if (isPreviewBuilding) {
                 Box(
@@ -913,6 +963,7 @@ internal fun EditorMainContent(
     onSeekComplete: () -> Unit,
     onScrubComplete: () -> Unit,
     onPreviewStateChange: (com.videomaker.aimusic.modules.editor.components.PreviewState) -> Unit,
+    onImagesClick: () -> Unit,
     onEffectClick: () -> Unit,
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit = {},
@@ -981,14 +1032,16 @@ internal fun EditorMainContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Settings Tab Bar - Effect, Music Clip, Duration, Ratio, Volume (horizontally scrollable)
+        // Settings Tab Bar - Images, Effect, Ratio, Volume (horizontally scrollable)
         val hasMusic =
             project.settings.musicSongId != null || project.settings.customAudioUri != null
         SettingsTabBar(
+            currentImageCount = project.assets.size,
             currentEffectSetName = effectSetName,
             currentRatio = project.settings.aspectRatio,
             showMusicControls = hasMusic,
             currentVolume = project.settings.audioVolume,
+            onImagesClick = onImagesClick,
             onEffectClick = onEffectClick,
             onRatioClick = onRatioClick,
             onVolumeClick = onVolumeClick,

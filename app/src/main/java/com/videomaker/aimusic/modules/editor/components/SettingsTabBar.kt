@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,16 +36,18 @@ import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 
 /**
- * Settings Tab Bar - Effect, Ratio, Volume
+ * Settings Tab Bar - Images, Effect, Ratio, Volume
  * Each tab opens its own bottom sheet
  * Horizontally scrollable with equal-width tabs
  */
 @Composable
 internal fun SettingsTabBar(
+    currentImageCount: Int,
     currentEffectSetName: String,
     currentRatio: AspectRatio,
     showMusicControls: Boolean, // Show volume tab if music is selected
     currentVolume: Float, // 0.0 to 1.0
+    onImagesClick: () -> Unit,
     onEffectClick: () -> Unit,
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit,
@@ -58,6 +61,14 @@ internal fun SettingsTabBar(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
+        // Images button - shows image count
+        SettingsTabButton(
+            icon = Icons.Default.Image,
+            label = "$currentImageCount",
+            onClick = onImagesClick,
+            modifier = Modifier.width(70.dp)
+        )
+
         // Effect button - displays effect set name
         SettingsTabButton(
             icon = Icons.Default.AutoAwesome,

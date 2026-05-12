@@ -162,6 +162,9 @@
     <string name="editor_effect_sets">Set Épék</string>
     <string name="editor_retry">Cobaan Deui</string>
     <string name="editor_no_music_selected">Teu aya musik nu dipilih</string>
+    <string name="editor_images_title">Pencét pikeun Édit • Tahan pikeun Nyusun Deui</string>
+    <string name="editor_add_images">Tambihkeun Gambar</string>
+    <string name="editor_delete_image">Hapus</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Video Dijieun</string>
