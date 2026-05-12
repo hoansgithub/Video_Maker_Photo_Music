@@ -190,11 +190,18 @@ val dataModule = module {
     // Supabase client (singleton)
     single { SupabaseClientProvider.instance }
 
-    // Region provider (singleton - auto-detected from system: SIM → Network → Locale)
+    // Region detection config service (singleton - ConfigurableObject for Remote Config)
+    // Centralized registration: Explicitly registered in VideoMakerApplication.kt
+    single {
+        com.videomaker.aimusic.core.data.remote.RegionDetectionConfig()
+    }
+
+    // Region provider (singleton - auto-detected from system: SIM → Network → Locale → IP)
     single {
         RegionProvider(
             context = androidContext(),
-            preferencesManager = get()
+            preferencesManager = get(),
+            regionDetectionConfig = get()
         )
     }
 
