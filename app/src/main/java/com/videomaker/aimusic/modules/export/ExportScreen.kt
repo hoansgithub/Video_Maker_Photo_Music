@@ -1139,17 +1139,13 @@ private fun SuccessContent(
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(16.dp)
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         // Main watermark content
                         Row(
                             modifier = Modifier
-                                .background(
-                                    color = Color.Black.copy(alpha = 0.75f),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
                                 .clickable { onWatermarkClick() }
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                                .padding(horizontal = 16.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
@@ -1159,37 +1155,42 @@ private fun SuccessContent(
                                 modifier = Modifier.size(48.dp),
                                 tint = Color.Unspecified
                             )
-                            Text(
-                                text = stringResource(R.string.app_name),
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                maxLines = 1
-                            )
                         }
 
+
+                        com.videomaker.aimusic.ui.components.AdBadge(
+                            style = com.videomaker.aimusic.ui.components.AdBadgeStyle.Small(
+                                textColor = SurfaceDark,
+                                backgroundColor = Color.White
+                            ),
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                        )
+
                         // Close button - circular at top right corner
-                        Box(
+                        Row(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .offset(x = 6.dp, y = (-6).dp)
-                                .size(28.dp)
-                                .background(
-                                    color = Color.White,
-                                    shape = CircleShape
-                                )
-                                .border(
-                                    width = 2.dp,
-                                    color = Color.Black.copy(alpha = 0.2f),
-                                    shape = CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
+                                .offset(x = 6.dp, y = (-6).dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Remove watermark",
                                 tint = Color.Black,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .background(
+                                        color = Color.White,
+                                        shape = CircleShape
+                                    )
+                                    .border(
+                                        width = 2.dp,
+                                        color = Color.Black.copy(alpha = 0.2f),
+                                        shape = CircleShape
+                                    )
+                                    .padding(2.dp)
                             )
                         }
                     }
