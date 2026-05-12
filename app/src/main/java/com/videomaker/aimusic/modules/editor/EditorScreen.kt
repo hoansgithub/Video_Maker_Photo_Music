@@ -293,11 +293,13 @@ fun EditorScreen(
                             activity = activity,
                             placement = AdPlacement.INTERSTITIAL_UNLOCK_QUALITY,
                             action = {
-                                // Fired when user CLOSES the ad (or if ad fails to load)
+                                // Called after user closes the ad or ad fails to show
+                                android.util.Log.d("EditorScreen", "✅ Quality interstitial closed - proceeding to export")
                                 viewModel.onQualityInterstitialClosed()
                             },
                             bypassFrequencyCap = true,
-                            showLoadingOverlay = false
+                            loadTimeoutMillis = 30_000L, // 30 second timeout (matches rewarded ad)
+                            showLoadingOverlay = true // Show loading indicator while ad loads
                         )
                     } else {
                         // activity null (rare) — unlock for free and proceed

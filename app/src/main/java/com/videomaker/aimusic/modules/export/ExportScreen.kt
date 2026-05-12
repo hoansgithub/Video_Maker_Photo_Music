@@ -329,6 +329,24 @@ fun ExportScreen(
         }
     }
 
+    // Preload exit interstitial ad when Success state is reached (background, non-blocking)
+    LaunchedEffect(uiState) {
+        if (uiState is ExportUiState.Success) {
+            android.util.Log.d("ExportScreen", "📺 Preloading exit interstitial ad...")
+            val success = InterstitialAdHelperExt.preloadInterstitial(
+                adsLoaderService = adsLoaderService,
+                placement = AdPlacement.INTERSTITIAL_EXPORT_RESULT_EXIT,
+                loadTimeoutMillis = null,  // No timeout - preload as long as needed
+                showLoadingOverlay = false  // Silent background preload, never block user
+            )
+            if (success) {
+                android.util.Log.d("ExportScreen", "✅ Exit ad preloaded successfully")
+            } else {
+                android.util.Log.d("ExportScreen", "⚠️ Exit ad preload failed - user can still close")
+            }
+        }
+    }
+
     // Intercept system back gesture (swipe) in Success state - same ad logic as close button
     BackHandler(enabled = uiState is ExportUiState.Success) {
         viewModel.onResultExitClick()
@@ -407,7 +425,8 @@ fun ExportScreen(
                                 onNavigateToHomeMyVideos()
                             },
                             bypassFrequencyCap = true,  // Exit ads always show
-                            showLoadingOverlay = false  // Ad already preloaded
+                            // No loadTimeout - ad must be preloaded, if not ready user navigates immediately
+                            showLoadingOverlay = false  // Never block user with loading
                         )
                     } else {
                         // Ad not ready or no activity - navigate immediately
