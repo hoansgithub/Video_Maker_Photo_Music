@@ -152,6 +152,30 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         }
 
         /**
+         * Preload native ad with delay (non-suspend version)
+         * Launches coroutine in application scope with initial delay
+         * Used to prioritize other operations (like splash ad) before native ad loading
+         *
+         * @param placement Placement ID to preload
+         * @param delayMs Delay in milliseconds before starting ad load
+         */
+        fun preloadNativeAdDelayed(placement: String, delayMs: Long) {
+            appScope?.launch(Dispatchers.IO) {
+                try {
+                    kotlinx.coroutines.delay(delayMs)
+                    val adsLoaderService = org.koin.core.context.GlobalContext.get()
+                        .get<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
+                    adsLoaderService.loadNative(placement)
+                    android.util.Log.d("VideoMakerApp", "✅ Native ad preloaded (delayed ${delayMs}ms): $placement")
+                } catch (e: AdsLoaderException) {
+                    android.util.Log.w("VideoMakerApp", "⚠️ Failed to preload native ad: $placement - ${e.message}")
+                } catch (e: Exception) {
+                    android.util.Log.e("VideoMakerApp", "⚠️ Unexpected error preloading native ad: $placement", e)
+                }
+            }
+        }
+
+        /**
          * Preload native ad (suspend version)
          * Waits for ad to load or fail before returning
          *
@@ -487,12 +511,25 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         // Bug fix learned from Drama app production issues
         applicationScope.launch {
             try {
-                android.util.Log.d("VideoMakerApp", "🚀 Step 1: Fetching Remote Config...")
+                android.util.Log.d("VideoMakerApp", "🚀 Step 1: Setting Remote Config defaults...")
+
+                // Set default values FIRST (instant, works offline, survives fetch failures)
+                val remoteConfig = get<co.alcheclub.lib.acccore.remoteconfig.RemoteConfig>()
+                try {
+                    // ACCCore RemoteConfig wraps Firebase RemoteConfig
+                    // Set defaults using XML resource
+                    remoteConfig.setDefaults(R.xml.remote_config_defaults)
+                    android.util.Log.d("VideoMakerApp", "✅ Remote Config defaults set from XML")
+                } catch (e: Exception) {
+                    android.util.Log.e("VideoMakerApp", "❌ Failed to set Remote Config defaults: ${e.message}", e)
+                    // Continue anyway - app will use inline defaults when reading values
+                }
+
+                android.util.Log.d("VideoMakerApp", "🚀 Step 2: Fetching Remote Config...")
 
                 // Fetch and activate Remote Config (with timeout)
                 try {
                     kotlinx.coroutines.withTimeout(5000L) {  // 5s timeout for faster startup
-                        val remoteConfig = get<co.alcheclub.lib.acccore.remoteconfig.RemoteConfig>()
                         val result = remoteConfig.fetchAndActivate()
 
                         when {
@@ -516,7 +553,7 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                     android.util.Log.e("VideoMakerApp", "❌ Remote Config fetch error: ${e.message}", e)
                 }
 
-                android.util.Log.d("VideoMakerApp", "🚀 Step 2: Registering services...")
+                android.util.Log.d("VideoMakerApp", "🚀 Step 3: Registering services...")
 
                 // CENTRALIZED REGISTRATION: All ConfigurableObjects in one place
                 // Now services will receive the fetched config via firstOrNull()
