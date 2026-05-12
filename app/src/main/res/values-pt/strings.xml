@@ -270,6 +270,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Player de Música</string>
     <string name="music_player_use_to_create">Usar para Criar Vídeo</string>
+    <string name="music_player_free_unlock">Desbloquear Grátis</string>
     <string name="picker_exit_confirm_title">Sair da seleção de imagens?</string>
     <string name="picker_exit_confirm_message">Você selecionou imagens. Se sair agora, as imagens selecionadas serão descartadas.</string>
     <string name="picker_exit_confirm">Sair</string>
@@ -461,6 +462,7 @@
     <string name="template_swipe_subtitle">Para aproveitar seus modelos</string>
     <string name="template_select_ratio_title">Selecionar Proporção de Vídeo</string>
     <string name="template_create_now">Criar agora</string>
+    <string name="template_free_unlock">Desbloquear Grátis</string>
     <string name="template_error_load_failed">Falha ao carregar modelos. Tente novamente.</string>
 
     <!-- Unified Search -->

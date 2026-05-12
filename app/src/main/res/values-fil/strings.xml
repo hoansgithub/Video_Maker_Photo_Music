@@ -270,6 +270,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Music Player</string>
     <string name="music_player_use_to_create">Gamitin para Gumawa ng Video</string>
+    <string name="music_player_free_unlock">Libreng I-unlock</string>
     <string name="picker_exit_confirm_title">Lumabas sa pagpili ng larawan?</string>
     <string name="picker_exit_confirm_message">May napili ka nang mga larawan. Kapag lumabas ka ngayon, mawawala ang mga napiling larawan.</string>
     <string name="picker_exit_confirm">Lumabas</string>
@@ -461,6 +462,7 @@
     <string name="template_swipe_subtitle">Para tamasahin ang iyong mga template</string>
     <string name="template_select_ratio_title">Pumili ng Video Ratio</string>
     <string name="template_create_now">Lumikha ngayon</string>
+    <string name="template_free_unlock">Libreng I-unlock</string>
     <string name="template_error_load_failed">Nabigo ang pag-load ng mga template. Subukan ulit.</string>
 
     <!-- Unified Search -->

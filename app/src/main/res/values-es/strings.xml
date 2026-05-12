@@ -274,6 +274,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Reproductor de Música</string>
     <string name="music_player_use_to_create">Usar para Crear Video</string>
+    <string name="music_player_free_unlock">Desbloquear Gratis</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Seleccionar Música</string>
@@ -461,6 +462,7 @@
     <string name="template_swipe_subtitle">Para disfrutar tus plantillas</string>
     <string name="template_select_ratio_title">Seleccionar Relación de Video</string>
     <string name="template_create_now">Crear ahora</string>
+    <string name="template_free_unlock">Desbloquear Gratis</string>
     <string name="template_error_load_failed">Error al cargar plantillas. Intenta de nuevo.</string>
 
     <!-- Unified Search -->

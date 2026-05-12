@@ -279,6 +279,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">ಮ್ಯೂಸಿಕ್ ಪ್ಲೇಯರ್</string>
     <string name="music_player_use_to_create">ವೀಡಿಯೋ ರಚಿಸಲು ಬಳಸಿ</string>
+    <string name="music_player_free_unlock">ಉಚಿತ ಅನ್‌ಲಾಕ್</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">ಸಂಗೀತ ಆಯ್ಕೆಮಾಡಿ</string>
@@ -467,6 +468,7 @@
     <string name="template_swipe_subtitle">ನಿಮ್ಮ ಟೆಂಪ್ಲೇಟ್‌ಗಳನ್ನು ಆನಂದಿಸಲು</string>
     <string name="template_select_ratio_title">ವೀಡಿಯೋ ರೇಶಿಯೋ ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="template_create_now">ಈಗ ರಚಿಸಿ</string>
+    <string name="template_free_unlock">ಉಚಿತ ಅನ್‌ಲಾಕ್</string>
     <string name="template_error_load_failed">ಟೆಂಪ್ಲೇಟ್‌ಗಳು ಲೋಡ್ ವಿಫಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
 
     <!-- Unified Search -->

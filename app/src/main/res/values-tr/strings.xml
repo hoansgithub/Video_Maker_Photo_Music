@@ -270,6 +270,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Müzik Çalar</string>
     <string name="music_player_use_to_create">Video Oluşturmak İçin Kullan</string>
+    <string name="music_player_free_unlock">Ücretsiz Kilidi Aç</string>
     <string name="picker_exit_confirm_title">Görsel seçiminden çıkılsın mı?</string>
     <string name="picker_exit_confirm_message">Görseller seçtiniz. Şimdi çıkarsanız seçili görseller silinecek.</string>
     <string name="picker_exit_confirm">Çık</string>
@@ -461,6 +462,7 @@
     <string name="template_swipe_subtitle">Şablonlarınızın keyfini çıkarın</string>
     <string name="template_select_ratio_title">Video Oranı Seç</string>
     <string name="template_create_now">Şimdi oluştur</string>
+    <string name="template_free_unlock">Ücretsiz Kilidi Aç</string>
     <string name="template_error_load_failed">Şablonlar yüklenemedi. Lütfen tekrar deneyin.</string>
 
     <!-- Unified Search -->

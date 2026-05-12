@@ -279,6 +279,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">মিউজিক প্লেয়ার</string>
     <string name="music_player_use_to_create">ভিডিও তৈরিতে ব্যবহার করুন</string>
+    <string name="music_player_free_unlock">ফ্রি আনলক</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">সঙ্গীত নির্বাচন করুন</string>
@@ -467,6 +468,7 @@
     <string name="template_swipe_subtitle">আপনার টেমপ্লেট উপভোগ করতে</string>
     <string name="template_select_ratio_title">ভিডিও রেশিও বেছে নিন</string>
     <string name="template_create_now">এখনই তৈরি করুন</string>
+    <string name="template_free_unlock">ফ্রি আনলক</string>
     <string name="template_error_load_failed">টেমপ্লেট লোড করতে ব্যর্থ। আবার চেষ্টা করুন।</string>
 
     <!-- Unified Search -->

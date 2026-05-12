@@ -270,6 +270,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Pemutar Musik</string>
     <string name="music_player_use_to_create">Gunakan untuk Buat Video</string>
+    <string name="music_player_free_unlock">Buka Gratis</string>
     <string name="picker_exit_confirm_title">Keluar dari pemilihan gambar?</string>
     <string name="picker_exit_confirm_message">Anda telah memilih gambar. Jika keluar sekarang, gambar yang dipilih akan dibuang.</string>
     <string name="picker_exit_confirm">Keluar</string>
@@ -461,6 +462,7 @@
     <string name="template_swipe_subtitle">Untuk menikmati template Anda</string>
     <string name="template_select_ratio_title">Pilih Rasio Video</string>
     <string name="template_create_now">Buat sekarang</string>
+    <string name="template_free_unlock">Buka Gratis</string>
     <string name="template_error_load_failed">Gagal memuat template. Silakan coba lagi.</string>
 
     <!-- Unified Search -->

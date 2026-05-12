@@ -31,5 +31,6 @@ data class VideoTemplate(
     val isPremium: Boolean = false,
     val isFeatured: Boolean = false,
     val isActive: Boolean = true,
-    val useCount: Long = 0
+    val useCount: Long = 0,  // For sorting/ranking (internal metric)
+    val viewCount: Long = 0  // For display to users (badge count)
 )

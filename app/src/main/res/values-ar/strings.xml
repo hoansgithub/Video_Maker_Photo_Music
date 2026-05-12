@@ -270,6 +270,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">مشغل الموسيقى</string>
     <string name="music_player_use_to_create">استخدام لإنشاء فيديو</string>
+    <string name="music_player_free_unlock">فتح مجاني</string>
     <string name="picker_exit_confirm_title">الخروج من اختيار الصور؟</string>
     <string name="picker_exit_confirm_message">لقد اخترت صورًا. إذا خرجت الآن، سيتم تجاهل الصور التي اخترتها.</string>
     <string name="picker_exit_confirm">خروج</string>
@@ -461,6 +462,7 @@
     <string name="template_swipe_subtitle">للاستمتاع بقوالبك</string>
     <string name="template_select_ratio_title">اختر نسبة الفيديو</string>
     <string name="template_create_now">إنشاء الآن</string>
+    <string name="template_free_unlock">فتح مجاني</string>
     <string name="template_error_load_failed">فشل تحميل القوالب. حاول مرة أخرى.</string>
 
     <!-- Unified Search -->

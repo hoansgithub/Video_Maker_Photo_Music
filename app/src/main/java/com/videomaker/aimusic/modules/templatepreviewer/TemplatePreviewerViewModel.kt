@@ -209,6 +209,11 @@ class TemplatePreviewerViewModel(
         val currentState = _uiState.value as? TemplatePreviewerUiState.Ready ?: return
         if (currentState.isCreatingProject) return
 
+        // Increment use_count for analytics/ranking
+        viewModelScope.launch(Dispatchers.IO) {
+            templateRepository.incrementUseCount(template.id)
+        }
+
         // Navigate to AssetPicker - user needs to select images
         viewModelScope.launch {
             _navigationEvent.send(

@@ -272,6 +272,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">संगीत प्लेयर</string>
     <string name="music_player_use_to_create">वीडियो बनाने के लिए उपयोग करें</string>
+    <string name="music_player_free_unlock">फ्री अनलॉक</string>
     <string name="picker_exit_confirm_title">छवि चयन से बाहर निकलें?</string>
     <string name="picker_exit_confirm_message">आपने तस्वीरें चुनी हैं। अभी बाहर निकलने पर चुनी हुई तस्वीरें हटा दी जाएंगी।</string>
     <string name="picker_exit_confirm">बाहर निकलें</string>
@@ -463,6 +464,7 @@
     <string name="template_swipe_subtitle">अपने टेम्पलेट का आनंद लेने के लिए</string>
     <string name="template_select_ratio_title">वीडियो अनुपात चुनें</string>
     <string name="template_create_now">अभी बनाएं</string>
+    <string name="template_free_unlock">फ्री अनलॉक</string>
     <string name="template_error_load_failed">टेम्पलेट लोड करने में विफल। पुनः प्रयास करें।</string>
 
     <!-- Unified Search -->

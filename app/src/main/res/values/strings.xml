@@ -279,6 +279,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Music Player</string>
     <string name="music_player_use_to_create">Use to Create Video</string>
+    <string name="music_player_free_unlock">Free Unlock</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Select Music</string>
@@ -467,6 +468,7 @@
     <string name="template_swipe_subtitle">To enjoy your templates</string>
     <string name="template_select_ratio_title">Select Video Ratio</string>
     <string name="template_create_now">Create now</string>
+    <string name="template_free_unlock">Free Unlock</string>
     <string name="template_error_load_failed">Failed to load templates. Please try again.</string>
 
     <!-- Unified Search -->

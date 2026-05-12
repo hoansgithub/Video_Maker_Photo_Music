@@ -724,7 +724,8 @@ class MusicPlayerViewModelFactory(
     private val unlikeSongUseCase: UnlikeSongUseCase,
     private val likedSongRepository: LikedSongRepository,
     private val unlockedSongsManager: com.videomaker.aimusic.core.storage.UnlockedSongsManager,
-    private val adsLoaderService: AdsLoaderService
+    private val adsLoaderService: AdsLoaderService,
+    private val songRepository: com.videomaker.aimusic.domain.repository.SongRepository
 ) {
     fun create(songId: Long, song: com.videomaker.aimusic.domain.model.MusicSong): MusicPlayerViewModel = MusicPlayerViewModel(
         songId = songId,
@@ -733,7 +734,8 @@ class MusicPlayerViewModelFactory(
         unlikeSongUseCase = unlikeSongUseCase,
         likedSongRepository = likedSongRepository,
         unlockedSongsManager = unlockedSongsManager,
-        adsLoaderService = adsLoaderService
+        adsLoaderService = adsLoaderService,
+        songRepository = songRepository
     )
 }
 
@@ -998,7 +1000,8 @@ val presentationModule = module {
             unlikeSongUseCase = get(),
             likedSongRepository = get(),
             unlockedSongsManager = get(),
-            adsLoaderService = get()
+            adsLoaderService = get(),
+            songRepository = get()
         )
     }
 }

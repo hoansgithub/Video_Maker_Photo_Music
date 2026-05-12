@@ -279,6 +279,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Musik-Player</string>
     <string name="music_player_use_to_create">Zur Videoerstellung verwenden</string>
+    <string name="music_player_free_unlock">Kostenlos freischalten</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Musik auswählen</string>
@@ -467,6 +468,7 @@
     <string name="template_swipe_subtitle">Um deine Vorlagen zu genießen</string>
     <string name="template_select_ratio_title">Videoverhältnis wählen</string>
     <string name="template_create_now">Jetzt erstellen</string>
+    <string name="template_free_unlock">Kostenlos freischalten</string>
     <string name="template_error_load_failed">Vorlagen konnten nicht geladen werden. Bitte versuche es erneut.</string>
 
     <!-- Unified Search -->

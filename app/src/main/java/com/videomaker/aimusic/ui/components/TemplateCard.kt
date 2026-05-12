@@ -79,7 +79,8 @@ fun TemplateCard(
     isUnlocked: Boolean = true,  // Default true for backward compatibility
     isShowOption: Boolean = false,
     showHotTag: Boolean = false,  // Show for top 10 templates
-    useCount: Long,
+    useCount: Long,  // Kept for backward compatibility, prefer viewCount
+    viewCount: Long = useCount,  // Display count (defaults to useCount if not provided)
     onClickDelete: () -> Unit = {},
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -231,13 +232,13 @@ fun TemplateCard(
                     .align(Alignment.BottomStart)
                     .padding(
                         start = 10.dp,
-                        end = if (useCount > 0) 64.dp else 10.dp,
+                        end = if (viewCount > 0) 64.dp else 10.dp,
                         bottom = 10.dp
                     )
             )
 
-            // Use count badge — bottom-end
-            if (useCount > 0) {
+            // View count badge — bottom-end (shows viewCount, not useCount)
+            if (viewCount > 0) {
                 Row(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -255,7 +256,7 @@ fun TemplateCard(
                         modifier = Modifier.size(10.dp)
                     )
                     Text(
-                        text = formatUseCount(useCount),
+                        text = formatViewCount(viewCount),
                         fontSize = 10.sp,
                         color = Gray200,
                         maxLines = 1
@@ -318,7 +319,7 @@ fun TemplateMore(
     }
 }
 
-private fun formatUseCount(count: Long): String = when {
+private fun formatViewCount(count: Long): String = when {
     count >= 1_000_000 -> {
         val v = count / 1_000_000.0
         if (v % 1.0 == 0.0) "${v.toLong()}M" else "%.1fM".format(v)

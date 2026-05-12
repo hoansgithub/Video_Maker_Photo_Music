@@ -279,6 +279,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Olùṣe Orin</string>
     <string name="music_player_use_to_create">Lò Láti Ṣẹ Fídíò</string>
+    <string name="music_player_free_unlock">Ṣí Ọfẹ</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Yan Orin</string>
@@ -467,6 +468,7 @@
     <string name="template_swipe_subtitle">Láti gbádùn àwọn àpẹẹrẹ rẹ</string>
     <string name="template_select_ratio_title">Yan Ìwọ̀n Fídíò</string>
     <string name="template_create_now">Ṣẹ báyìí</string>
+    <string name="template_free_unlock">Ṣí Ọfẹ</string>
     <string name="template_error_load_failed">Kùnà láti gba àwọn àpẹẹrẹ. Gbìyànjú lẹ́ẹ̀kan sí.</string>
 
     <!-- Unified Search -->

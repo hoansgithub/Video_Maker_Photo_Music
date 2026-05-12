@@ -44,6 +44,12 @@ interface TemplateRepository {
      */
     suspend fun searchTemplates(query: String, limit: Int, offset: Int): Result<List<VideoTemplate>>
 
+    /**
+     * Increment use_count for a template when user selects it to create a project.
+     * This is used for ranking/sorting templates by popularity.
+     */
+    suspend fun incrementUseCount(templateId: String): Result<Unit>
+
     /** Clears cached template data. Call before pull-to-refresh. */
     suspend fun clearCache()
 }

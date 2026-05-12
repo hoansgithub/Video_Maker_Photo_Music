@@ -968,7 +968,8 @@ private fun StaggeredTemplateGrid(
                     isPremium = template.isPremium,
                     isUnlocked = unlockedTemplateIds.contains(template.id),  // Check if template is unlocked
                     showHotTag = templateIndex < 10,  // Show HOT tag for top 10 templates
-                    useCount = template.useCount,
+                    useCount = template.useCount,  // For backward compatibility
+                    viewCount = template.viewCount,  // Display count shown to users
                     modifier = Modifier,
                     onClick = {
                         Analytics.trackTemplateClick(

@@ -279,6 +279,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Mai Kunna Kiɗa</string>
     <string name="music_player_use_to_create">Yi amfani don Ƙirƙiri Bidiyo</string>
+    <string name="music_player_free_unlock">Buɗe Kyauta</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Zaɓi Kiɗa</string>
@@ -467,6 +468,7 @@
     <string name="template_swipe_subtitle">Don jin daɗin templates ɗinku</string>
     <string name="template_select_ratio_title">Zaɓi Rabo na Bidiyo</string>
     <string name="template_create_now">Ƙirƙira yanzu</string>
+    <string name="template_free_unlock">Buɗe Kyauta</string>
     <string name="template_error_load_failed">Kasa lodi templates. Sake gwadawa.</string>
 
     <!-- Unified Search -->

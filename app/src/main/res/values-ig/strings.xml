@@ -280,6 +280,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Onye Egwu</string>
     <string name="music_player_use_to_create">Jiri Mepụta Video</string>
+    <string name="music_player_free_unlock">Mepee N\'efu</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Họrọ Egwu</string>
@@ -468,6 +469,7 @@
     <string name="template_swipe_subtitle">Iji nwee ihe ụtọ n\'ụkpụrụ gị</string>
     <string name="template_select_ratio_title">Họrọ Ọkwa Video</string>
     <string name="template_create_now">Mepụta ugbu a</string>
+    <string name="template_free_unlock">Mepee N\'efu</string>
     <string name="template_error_load_failed">Ọ dara n\'ike ibugharị ụkpụrụ. Biko nwaa ọzọ.</string>
 
     <!-- Unified Search -->

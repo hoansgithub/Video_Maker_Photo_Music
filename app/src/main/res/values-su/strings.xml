@@ -279,6 +279,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Pamuter Musik</string>
     <string name="music_player_use_to_create">Gunakeun pikeun Nyieun Video</string>
+    <string name="music_player_free_unlock">Muka Gratis</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Pilih Musik</string>
@@ -467,6 +468,7 @@
     <string name="template_swipe_subtitle">Pikeun ngarasakeun citakan anjeun</string>
     <string name="template_select_ratio_title">Pilih Rasio Video</string>
     <string name="template_create_now">Nyieun ayeuna</string>
+    <string name="template_free_unlock">Muka Gratis</string>
     <string name="template_error_load_failed">Gagal ngunggah citakan. Cobaan deui.</string>
 
     <!-- Unified Search -->

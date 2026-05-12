@@ -1060,7 +1060,10 @@ private fun SelectRatioBottomSheet(
 
             // "Create Now" button with [AD] badge if locked
             PrimaryButton(
-                text = stringResource(R.string.template_create_now),
+                text = stringResource(
+                    if (isLocked) R.string.template_free_unlock
+                    else R.string.template_create_now
+                ),
                 onClick = { onConfirm(selected) },
                 leadingIcon = if (isLocked) {
                     {

@@ -605,7 +605,10 @@ fun MusicPlayerBottomSheet(
                     }
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = stringResource(R.string.music_player_use_to_create),
+                        text = stringResource(
+                            if (isSongUnlocked) R.string.music_player_use_to_create
+                            else R.string.music_player_free_unlock
+                        ),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = TextOnPrimary
