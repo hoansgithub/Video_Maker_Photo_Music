@@ -1027,15 +1027,15 @@ class EditorViewModel(
 
     /**
      * Apply pending assets to the project - this will trigger video rebuild
+     * @param assets The reordered/updated assets list from ImagesBottomSheet
      */
-    suspend fun applyPendingAssets() {
+    suspend fun applyPendingAssets(assets: List<Asset>) {
         val currentState = _uiState.value
-        if (currentState is EditorUiState.Success && currentState.pendingAssets != null) {
-            val newAssets = currentState.pendingAssets
-            android.util.Log.d("EditorViewModel", "applyPendingAssets: Applying ${newAssets.size} assets")
+        if (currentState is EditorUiState.Success) {
+            android.util.Log.d("EditorViewModel", "applyPendingAssets: Applying ${assets.size} assets")
 
             val updatedProject = currentState.project.copy(
-                assets = newAssets,
+                assets = assets,
                 updatedAt = System.currentTimeMillis()
             )
             _uiState.value = currentState.copy(project = updatedProject, pendingAssets = null)
@@ -1044,7 +1044,7 @@ class EditorViewModel(
             // This just updates the project reference and triggers video rebuild
             android.util.Log.d("EditorViewModel", "applyPendingAssets: Assets applied, video will rebuild")
         } else {
-            android.util.Log.d("EditorViewModel", "applyPendingAssets: No pending assets to apply")
+            android.util.Log.d("EditorViewModel", "applyPendingAssets: Not in Success state")
         }
     }
 

@@ -750,7 +750,7 @@ fun EditorScreen(
                         onConfirm = { updatedAssets ->
                             scope.launch {
                                 // Apply pending assets - this triggers video rebuild
-                                viewModel.applyPendingAssets()
+                                viewModel.applyPendingAssets(updatedAssets)
                                 isEditingImages = false
                                 showImagesSheet = false
                             }
