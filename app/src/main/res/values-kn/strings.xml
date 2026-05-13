@@ -147,6 +147,7 @@
     <string name="editor_music_trim_skip_to_start">ಆರಂಭಕ್ಕೆ ಹೋಗಿ</string>
     <string name="editor_music_trim_skip_to_end">ಅಂತ್ಯಕ್ಕೆ ಹೋಗಿ</string>
     <string name="editor_photos_count">%d ಫೋಟೋಗಳು</string>
+    <string name="editor_photos_label">ಫೋಟೋಗಳು</string>
     <string name="editor_save_dialog_title">ಪ್ರಾಜೆಕ್ಟ್ ಉಳಿಸಿ?</string>
     <string name="editor_save_dialog_message">ನಿಮ್ಮ ಪ್ರಾಜೆಕ್ಟ್ ಉಳಿಸಲಾಗುತ್ತದೆ ಮತ್ತು ನನ್ನ ಪ್ರಾಜೆಕ್ಟ್‌ಗಳಲ್ಲಿ ಲಭ್ಯವಿರುತ್ತದೆ.</string>
     <string name="editor_save_and_exit">ಉಳಿಸಿ ಮತ್ತು ನಿರ್ಗಮಿಸಿ</string>
@@ -162,6 +163,9 @@
     <string name="editor_effect_sets">ಎಫೆಕ್ಟ್ ಸೆಟ್‌ಗಳು</string>
     <string name="editor_retry">ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ</string>
     <string name="editor_no_music_selected">ಸಂಗೀತ ಆಯ್ಕೆ ಮಾಡಿಲ್ಲ</string>
+    <string name="editor_images_title">ಸಂಪಾದಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ • ಮರುಹೊಂದಿಸಲು ಹಿಡಿದುಕೊಳ್ಳಿ</string>
+    <string name="editor_add_images">ಚಿತ್ರಗಳನ್ನು ಸೇರಿಸಿ</string>
+    <string name="editor_delete_image">ಅಳಿಸಿ</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">ರಚಿಸಿದ ವೀಡಿಯೋ</string>

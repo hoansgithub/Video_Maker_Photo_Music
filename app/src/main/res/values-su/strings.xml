@@ -147,6 +147,7 @@
     <string name="editor_music_trim_skip_to_start">Loncat ka Awal</string>
     <string name="editor_music_trim_skip_to_end">Loncat ka Ahir</string>
     <string name="editor_photos_count">%d poto</string>
+    <string name="editor_photos_label">Poto</string>
     <string name="editor_save_dialog_title">Simpen Proyek?</string>
     <string name="editor_save_dialog_message">Proyek anjeun bakal disimpen sareng sayogi dina Proyek Kuring.</string>
     <string name="editor_save_and_exit">Simpen &amp; Kaluar</string>
@@ -162,6 +163,9 @@
     <string name="editor_effect_sets">Set Épék</string>
     <string name="editor_retry">Cobaan Deui</string>
     <string name="editor_no_music_selected">Teu aya musik nu dipilih</string>
+    <string name="editor_images_title">Pencét pikeun Édit • Tahan pikeun Nyusun Deui</string>
+    <string name="editor_add_images">Tambihkeun Gambar</string>
+    <string name="editor_delete_image">Hapus</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Video Dijieun</string>

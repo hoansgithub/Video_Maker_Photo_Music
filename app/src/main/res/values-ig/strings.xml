@@ -148,6 +148,7 @@
     <string name="editor_music_trim_skip_to_start">Wefu gaa Mmalite</string>
     <string name="editor_music_trim_skip_to_end">Wefu gaa Ọtụtụ</string>
     <string name="editor_photos_count">foto %d</string>
+    <string name="editor_photos_label">Foto</string>
     <string name="editor_save_dialog_title">Chekwaa Ọrụ?</string>
     <string name="editor_save_dialog_message">A ga-echekwa ọrụ gị ma ọ dị n\'ime Ọrụ m.</string>
     <string name="editor_save_and_exit">Chekwaa &amp; Pụọ</string>
@@ -163,6 +164,9 @@
     <string name="editor_effect_sets">Ndị Mmetụta</string>
     <string name="editor_retry">Nwaa Ọzọ</string>
     <string name="editor_no_music_selected">Enweghị egwu a họrọ</string>
+    <string name="editor_images_title">Pịa ka Idezi • Jide ka Idozie Ọzọ</string>
+    <string name="editor_add_images">Tinye Foto</string>
+    <string name="editor_delete_image">Hichapụ</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Video Emepụtara</string>

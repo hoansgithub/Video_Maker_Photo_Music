@@ -147,6 +147,7 @@
     <string name="editor_music_trim_skip_to_start">Zum Anfang springen</string>
     <string name="editor_music_trim_skip_to_end">Zum Ende springen</string>
     <string name="editor_photos_count">%d Fotos</string>
+    <string name="editor_photos_label">Fotos</string>
     <string name="editor_save_dialog_title">Projekt speichern?</string>
     <string name="editor_save_dialog_message">Dein Projekt wird gespeichert und ist unter Meine Projekte verfügbar.</string>
     <string name="editor_save_and_exit">Speichern &amp; Verlassen</string>
@@ -162,6 +163,9 @@
     <string name="editor_effect_sets">Effektsets</string>
     <string name="editor_retry">Erneut versuchen</string>
     <string name="editor_no_music_selected">Keine Musik ausgewählt</string>
+    <string name="editor_images_title">Tippen zum Bearbeiten • Halten zum Neu Anordnen</string>
+    <string name="editor_add_images">Bilder hinzufügen</string>
+    <string name="editor_delete_image">Löschen</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Erstellte Videos</string>

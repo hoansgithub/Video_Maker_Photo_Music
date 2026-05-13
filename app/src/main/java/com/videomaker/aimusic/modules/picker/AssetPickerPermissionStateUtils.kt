@@ -40,10 +40,11 @@ internal fun shouldRequestPermissionDialog(
 }
 
 internal fun retainSelectedUrisAfterReload(
-    selectedUris: Set<String>,
+    selectedUris: List<String>,
     availableUris: Set<String>
-): Set<String> {
-    return selectedUris.intersect(availableUris)
+): List<String> {
+    // Preserve order of selectedUris while filtering to only available URIs
+    return selectedUris.filter { it in availableUris }
 }
 
 internal fun resolveFullPermissionPromptDecision(

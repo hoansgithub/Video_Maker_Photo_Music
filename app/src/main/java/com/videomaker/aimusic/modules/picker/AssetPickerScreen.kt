@@ -325,6 +325,13 @@ fun AssetPickerScreen(
                 is AssetPickerNavigationEvent.NavigateToEditor -> onNavigateToEditor(event.projectId)
                 is AssetPickerNavigationEvent.NavigateToEditorWithData -> onNavigateToEditorWithData(event.initialData)
                 is AssetPickerNavigationEvent.AssetsAdded -> onAssetsAdded()
+                is AssetPickerNavigationEvent.SelectionConfirmed -> {
+                    // Store selection in cache and navigate back
+                    android.util.Log.d("AssetPickerScreen", "📦 Storing ${event.selectedUris.size} URIs in cache: ${event.selectedUris.joinToString()}")
+                    AssetSelectionCache.setSelection(event.selectedUris)
+                    android.util.Log.d("AssetPickerScreen", "🔙 Navigating back to EditorScreen")
+                    onNavigateBack()
+                }
                 is AssetPickerNavigationEvent.NavigateToTemplatePreviewer ->
                     onNavigateToTemplatePreviewer(event.templateId, event.imageUris, event.overrideSongId)
             }

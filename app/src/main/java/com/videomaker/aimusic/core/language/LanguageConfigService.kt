@@ -17,9 +17,14 @@ import kotlinx.serialization.json.jsonPrimitive
  * Language Configuration Service
  *
  * Handles intelligent language sorting based on:
- * 1. User's detected country (SIM → Network → Locale)
- * 2. Remote Config priorities (updatable without app release)
- * 3. Hardcoded fallback priorities
+ * 1. Device language (respects user's explicit choice)
+ * 2. User's detected country with priority order:
+ *    - SIM card country (most reliable, permanent)
+ *    - Network operator country (changes when roaming)
+ *    - IP-based geolocation (VPN-aware, 3s timeout)
+ *    - System locale country (last fallback)
+ * 3. Remote Config priorities (updatable without app release)
+ * 4. Hardcoded fallback priorities
  *
  * Remote Config Format:
  * ```json
@@ -50,19 +55,19 @@ class LanguageConfigService(
     private val remotePriorities = mutableMapOf<String, List<String>>()
 
     /**
-     * Sort languages based on user's country and configured priorities.
+     * Sort languages based on device language and user's country.
      *
      * Language source priority:
      * 1. Remote Config languages (if available)
      * 2. Hardcoded fallback languages
      *
      * Sorting priority:
-     * 1. SIM card country (most reliable)
-     * 2. Network country (fallback)
-     * 3. System locale country (second fallback)
-     * 4. Device language (last fallback)
+     * 1. Device language (TOP PRIORITY - respects user's explicit choice)
+     * 2. SIM card country (location-based)
+     * 3. Network country (fallback)
+     * 4. System locale country (second fallback)
      *
-     * @return Sorted list with prioritized languages first, rest alphabetically
+     * @return Sorted list with device language first, then country priorities, rest after
      */
     fun getSortedLanguages(): List<SupportedLanguage> {
         // Use remote languages if available, otherwise fallback to hardcoded
@@ -72,8 +77,29 @@ class LanguageConfigService(
             LanguageManager.getAllLanguages()
         }
 
+        // Get device language (top priority)
+        val deviceLanguage = getDeviceLanguage()
+        android.util.Log.d(TAG, "📱 Device language for sorting: $deviceLanguage")
+
+        // Check if device language is in available languages
+        val deviceLanguageAvailable = deviceLanguage?.let { lang ->
+            availableLanguages.any { it.code == lang }
+        } ?: false
+        android.util.Log.d(TAG, "🔍 Device language available in list: $deviceLanguageAvailable")
+        android.util.Log.d(TAG, "📚 Available language codes: ${availableLanguages.map { it.code }}")
+
+        // Get country-based priorities
         val country = detectUserCountry()
-        val priorityCodes = getLanguagePriorityForCountry(country)
+        android.util.Log.d(TAG, "🌍 Detected country: $country")
+
+        val countryPriorities = getLanguagePriorityForCountry(country)
+        android.util.Log.d(TAG, "🎯 Country priorities: $countryPriorities")
+
+        // Combine: device language first (only if available), then country priorities (excluding device language to avoid duplicates)
+        val priorityCodes = listOfNotNull(deviceLanguage?.takeIf { deviceLanguageAvailable }) +
+                           countryPriorities.filter { it != deviceLanguage }
+
+        android.util.Log.d(TAG, "🔢 Final priority codes: $priorityCodes")
 
         // Prioritized languages (maintain priority order)
         val prioritized = priorityCodes.mapNotNull { code ->
@@ -83,29 +109,117 @@ class LanguageConfigService(
         // Rest of languages (not in priority list)
         val rest = availableLanguages.filter { it.code !in priorityCodes }
 
-        return prioritized + rest
+        val result = prioritized + rest
+        android.util.Log.d(TAG, "📋 Sorted languages: ${result.map { it.code }}")
+
+        return result
+    }
+
+    /**
+     * Get device's current language setting.
+     *
+     * @return Language code (e.g., "en", "es", "fil") or null if unsupported
+     */
+    private fun getDeviceLanguage(): String? {
+        val config = context.resources.configuration
+        val locale = ConfigurationCompat.getLocales(config).get(0)
+        val rawCode = locale?.language
+
+        android.util.Log.d(TAG, "🌐 Device locale: $locale")
+        android.util.Log.d(TAG, "🌐 Raw language code: $rawCode")
+
+        if (rawCode == null) {
+            android.util.Log.w(TAG, "⚠️ No device language detected")
+            return null
+        }
+
+        // Handle legacy language codes
+        val deviceCode = when (rawCode) {
+            "tl" -> "fil"  // Android/Java reports Tagalog for Filipino
+            "in" -> "id"   // Java legacy ISO 639-1 code for Indonesian
+            else -> rawCode
+        }
+
+        android.util.Log.d(TAG, "✅ Device language: $deviceCode")
+        return deviceCode
     }
 
     /**
      * Detect user's country code using multiple fallback strategies.
+     *
+     * Priority order:
+     * 1. SIM card country (most reliable, permanent)
+     * 2. Network operator country (reliable, changes when roaming)
+     * 3. IP-based geolocation (VPN-aware, can be changed)
+     * 4. System locale country (last fallback, user setting)
      *
      * @return Country code (e.g., "US", "BR", "ID") or empty string if unknown
      */
     private fun detectUserCountry(): String {
         val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
 
-        // Try SIM card country (most reliable)
-        tm?.simCountryIso?.uppercase()?.takeIf { it.isNotEmpty() }?.let { return it }
+        // 1. Try SIM card country (most reliable)
+        tm?.simCountryIso?.uppercase()?.takeIf { it.isNotEmpty() }?.let {
+            android.util.Log.d(TAG, "📱 Country from SIM: $it")
+            return it
+        }
 
-        // Try network country (fallback)
-        tm?.networkCountryIso?.uppercase()?.takeIf { it.isNotEmpty() }?.let { return it }
+        // 2. Try network country (changes when roaming)
+        tm?.networkCountryIso?.uppercase()?.takeIf { it.isNotEmpty() }?.let {
+            android.util.Log.d(TAG, "📡 Country from Network: $it")
+            return it
+        }
 
-        // Try system locale country (second fallback)
+        // 3. Try IP-based geolocation (VPN-aware)
+        try {
+            val ipCountry = detectCountryFromIP()
+            if (ipCountry != null) {
+                android.util.Log.d(TAG, "🌐 Country from IP: $ipCountry")
+                return ipCountry
+            }
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "IP detection failed: ${e.message}")
+        }
+
+        // 4. Try system locale country (last fallback)
         val config = context.resources.configuration
-        ConfigurationCompat.getLocales(config).get(0)?.country?.uppercase()?.takeIf { it.isNotEmpty() }?.let { return it }
+        ConfigurationCompat.getLocales(config).get(0)?.country?.uppercase()?.takeIf { it.isNotEmpty() }?.let {
+            android.util.Log.d(TAG, "🌍 Country from Locale: $it")
+            return it
+        }
 
         // Unknown country
+        android.util.Log.d(TAG, "⚠️ No country detected")
         return ""
+    }
+
+    /**
+     * Detect country from IP address (VPN-aware).
+     * Uses lightweight HTTP request with 3-second timeout.
+     *
+     * @return Country code or null if detection fails
+     */
+    private fun detectCountryFromIP(): String? {
+        return try {
+            val url = java.net.URL("https://ipinfo.io/country")
+            val connection = url.openConnection() as java.net.HttpURLConnection
+            connection.connectTimeout = 3000  // 3 seconds
+            connection.readTimeout = 3000
+            connection.requestMethod = "GET"
+            connection.setRequestProperty("User-Agent", "VideoMaker-Android")
+
+            val response = connection.inputStream.bufferedReader().use { it.readText() }
+            val country = response.trim().uppercase()
+
+            // Validate ISO 3166-1 alpha-2 code (2 characters)
+            if (country.length == 2 && country.all { it.isLetter() }) {
+                country
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null  // Fail silently and continue to next fallback
+        }
     }
 
     /**

@@ -74,6 +74,7 @@ import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.modules.editor.components.EffectSetBottomSheet
+import com.videomaker.aimusic.modules.editor.components.ImagesBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSection
 import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
@@ -123,7 +124,7 @@ fun EditorScreen(
     onNavigateBack: () -> Unit,
     onNavigateToPreview: (String) -> Unit,
     onNavigateToExport: (String, com.videomaker.aimusic.domain.model.VideoQuality) -> Unit,
-    onNavigateToAddAssets: (String) -> Unit
+    onNavigateToAddAssets: (String, List<String>) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val shouldPresentQualityAd by viewModel.shouldPresentQualityAd.collectAsStateWithLifecycle()
@@ -137,6 +138,8 @@ fun EditorScreen(
     var showEffectSetSheet by remember { mutableStateOf(false) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
+    var showImagesSheet by remember { mutableStateOf(false) }
+    var isEditingImages by remember { mutableStateOf(false) } // Track when user is editing images to prevent video rebuild
     var wasPlayingBeforeMusicSheet by remember { mutableStateOf(false) }
     var wasPlayingBeforeQualityAd by remember { mutableStateOf(false) }
     var hasTrackedVideoPreview by remember { mutableStateOf(false) }
@@ -319,6 +322,8 @@ fun EditorScreen(
     }
     val isPreviewBuilding =
         previewState is com.videomaker.aimusic.modules.editor.components.PreviewState.Building
+    val isProcessingAudio = (uiState as? EditorUiState.Success)?.isProcessingAudio == true
+    val showComposingOverlay = isPreviewBuilding || isProcessingAudio
 
     Column(
         modifier = Modifier
@@ -334,7 +339,7 @@ fun EditorScreen(
                     val selectedQuality = successState?.selectedQuality ?: VideoQuality.DEFAULT
                     EditorTopBar(
                         selectedQuality = selectedQuality,
-                        canExport = !isPreviewBuilding &&
+                        canExport = !showComposingOverlay &&
                                 (successState?.isMusicCached ?: true) &&
                                 !(successState?.isCachingMusic ?: false),
                         isQualityLocked = viewModel.isQualityLocked(selectedQuality),
@@ -376,7 +381,7 @@ fun EditorScreen(
                 },
                 containerColor = SplashBackground, // #101010 (closest to #101313)
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                modifier = if (isPreviewBuilding) Modifier.blur(16.dp) else Modifier
+                modifier = if (showComposingOverlay) Modifier.blur(16.dp) else Modifier
             ) { paddingValues ->
                 when (val state = uiState) {
                     is EditorUiState.Loading -> {
@@ -392,7 +397,7 @@ fun EditorScreen(
 
                     is EditorUiState.Success -> {
                         EditorMainContent(
-                            project = state.displayProject, // Use displayProject to show pending changes in preview
+                            project = state.previewProject, // Use previewProject: pendingSettings but actual assets
                             isPlaying = state.isPlaying,
                             currentPositionMs = state.currentPositionMs,
                             durationMs = state.durationMs,
@@ -416,6 +421,9 @@ fun EditorScreen(
                             onSeekComplete = viewModel::clearSeekRequest,
                             onScrubComplete = viewModel::clearScrubRequest,
                             onPreviewStateChange = { previewState = it },
+                            onImagesClick = {
+                                showImagesSheet = true
+                            },
                             onEffectClick = {
                                 Analytics.trackEffectEdit(
                                     videoId = state.project.id,
@@ -709,8 +717,55 @@ fun EditorScreen(
                 )
             }
 
+            // Collect selections from AssetPicker via Flow
+            // Flow-based approach: reactive, no polling, no cancellation issues
+            LaunchedEffect(Unit) {
+                com.videomaker.aimusic.modules.picker.AssetSelectionCache.selectionFlow.collect { selectedUris ->
+                    android.util.Log.d("EditorScreen", "✅ Received ${selectedUris.size} selected assets from AssetPicker")
+                    viewModel.replaceAssetsFromUris(selectedUris)
+                    isEditingImages = false
+                    showImagesSheet = false
+                }
+            }
+
+            // Images Bottom Sheet
+            if (showImagesSheet) {
+                val successState = uiState as? EditorUiState.Success
+                if (successState != null) {
+                    // Set pending assets when sheet opens (first time only)
+                    LaunchedEffect(Unit) {
+                        if (successState.pendingAssets == null) {
+                            viewModel.setPendingAssets(successState.project.assets)
+                            isEditingImages = true
+                        }
+                    }
+
+                    ImagesBottomSheet(
+                        currentAssets = successState.displayAssets,
+                        onDismiss = {
+                            viewModel.discardPendingAssets()
+                            isEditingImages = false
+                            showImagesSheet = false
+                        },
+                        onAddImages = {
+                            // Navigate to asset picker in editing mode
+                            val currentAssetUris = successState.displayAssets.map { it.uri.toString() }
+                            onNavigateToAddAssets(successState.project.id, currentAssetUris)
+                        },
+                        onConfirm = { updatedAssets ->
+                            scope.launch {
+                                // Apply pending assets - this triggers video rebuild
+                                viewModel.applyPendingAssets(updatedAssets)
+                                isEditingImages = false
+                                showImagesSheet = false
+                            }
+                        }
+                    )
+                }
+            }
+
             // Fullscreen Processing Overlay - blocks all interactions, content is blurred
-            if (isPreviewBuilding) {
+            if (showComposingOverlay) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -913,6 +968,7 @@ internal fun EditorMainContent(
     onSeekComplete: () -> Unit,
     onScrubComplete: () -> Unit,
     onPreviewStateChange: (com.videomaker.aimusic.modules.editor.components.PreviewState) -> Unit,
+    onImagesClick: () -> Unit,
     onEffectClick: () -> Unit,
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit = {},
@@ -981,14 +1037,16 @@ internal fun EditorMainContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Settings Tab Bar - Effect, Music Clip, Duration, Ratio, Volume (horizontally scrollable)
+        // Settings Tab Bar - Images, Effect, Ratio, Volume (horizontally scrollable)
         val hasMusic =
             project.settings.musicSongId != null || project.settings.customAudioUri != null
         SettingsTabBar(
+            currentImageCount = project.assets.size,
             currentEffectSetName = effectSetName,
             currentRatio = project.settings.aspectRatio,
             showMusicControls = hasMusic,
             currentVolume = project.settings.audioVolume,
+            onImagesClick = onImagesClick,
             onEffectClick = onEffectClick,
             onRatioClick = onRatioClick,
             onVolumeClick = onVolumeClick,

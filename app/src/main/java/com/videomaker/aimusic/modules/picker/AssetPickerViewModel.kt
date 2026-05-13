@@ -166,6 +166,8 @@ sealed class AssetPickerNavigationEvent {
     data class NavigateToEditorWithData(val initialData: EditorInitialData) : AssetPickerNavigationEvent()
     /** Assets added to existing project - just go back */
     data object AssetsAdded : AssetPickerNavigationEvent()
+    /** Editing mode: return selected URIs without saving to DB */
+    data class SelectionConfirmed(val selectedUris: List<String>) : AssetPickerNavigationEvent()
     /** Template mode / song-to-video mode: confirm selection with URIs directly */
     data class NavigateToTemplatePreviewer(
         val templateId: String,
@@ -197,7 +199,9 @@ class AssetPickerViewModel(
     private val templateId: String? = null,  // non-null = template mode, bypasses project creation
     private val overrideSongId: Long = -1L,   // >= 0 = song-to-video mode, overrides template song
     private val aspectRatio: AspectRatio? = null,  // User's selected aspect ratio from template previewer
-    private val resumeDraftId: String? = null
+    private val resumeDraftId: String? = null,
+    private val selectedAssetUris: List<String> = emptyList(),  // URIs to auto-select (for editing mode)
+    private val isEditingMode: Boolean = false  // true = return URIs without saving to DB
 ) : ViewModel() {
 
     // Use applicationContext to prevent Activity memory leak
@@ -222,7 +226,7 @@ class AssetPickerViewModel(
     val isSongToVideoMode: Boolean get() = overrideSongId >= 0L
 
     /** Minimum number of images required before confirming */
-    val minSelection: Int get() = if (isAddMode) 1 else 2
+    val minSelection: Int get() = 3
 
     // ============================================
     // STATE
@@ -265,10 +269,18 @@ class AssetPickerViewModel(
                     _uiState.value = AssetPickerUiState.DeniedPermission
                 }
                 cached.assets.isNotEmpty() -> {
+                    // Prioritize selectedAssetUris parameter (editing mode) over cached selection
+                    val initialSelection = if (selectedAssetUris.isNotEmpty()) {
+                        android.util.Log.d("AssetPickerViewModel", "Init with ${selectedAssetUris.size} pre-selected URIs from parameter")
+                        selectedAssetUris
+                    } else {
+                        android.util.Log.d("AssetPickerViewModel", "Init with ${cached.selectedUris.size} cached selected URIs")
+                        cached.selectedUris
+                    }
                     _uiState.value = createWithAssetsState(
                         permissionMode = cached.permissionMode,
                         assets = cached.assets,
-                        selectedUris = cached.selectedUris,
+                        selectedUris = initialSelection,
                         preferredAlbumId = cached.selectedAlbumId
                     )
                 }
@@ -429,7 +441,7 @@ class AssetPickerViewModel(
             return
         }
         AssetPickerSessionCache.snapshot = AssetPickerSessionCache.snapshot?.copy(
-            selectedUris = emptySet(),
+            selectedUris = emptyList(),
             selectedAlbumId = AlbumFilterType.ALL
         )
     }
@@ -479,8 +491,7 @@ class AssetPickerViewModel(
         val preferredSelectedUris = currentWithAssets
             ?.selectedAssets
             ?.map { it.uri.toString() }
-            ?.toSet()
-            .orEmpty()
+            ?: selectedAssetUris  // Use initial selectedAssetUris if no current state (preserves order)
         val preferredAlbumId = currentWithAssets?.selectedAlbumId
         loadImages(
             permissionMode = newMode,
@@ -496,7 +507,7 @@ class AssetPickerViewModel(
      */
     private fun loadImages(
         permissionMode: PermissionMode,
-        preferredSelectedUris: Set<String>,
+        preferredSelectedUris: List<String>,
         preferredAlbumId: String?,
         forceShowLoading: Boolean
     ) {
@@ -533,8 +544,7 @@ class AssetPickerViewModel(
                     previousState
                         ?.selectedAssets
                         ?.map { it.uri.toString() }
-                        ?.toSet()
-                        .orEmpty()
+                        ?: emptyList()
                 }
                 val availableUris = images.map { it.uri.toString() }.toSet()
                 val retainedSelectedUris = retainSelectedUrisAfterReload(
@@ -566,7 +576,7 @@ class AssetPickerViewModel(
     private fun createWithAssetsState(
         permissionMode: PermissionMode,
         assets: List<GalleryAsset>,
-        selectedUris: Set<String>,
+        selectedUris: List<String>,
         preferredAlbumId: String?
     ): AssetPickerUiState.WithAssets {
         val albums = buildAlbumFilters(assets)
@@ -576,8 +586,13 @@ class AssetPickerViewModel(
             }
             ?: AlbumFilterType.ALL
         val filteredAssets = filterAssetsByAlbum(assets, selectedAlbumId, albums)
-        val selectedAssets = assets
-            .filter { it.uri.toString() in selectedUris }
+
+        // Create a map for quick lookup
+        val assetMap = assets.associateBy { it.uri.toString() }
+
+        // Preserve order of selectedUris
+        val selectedAssets = selectedUris
+            .mapNotNull { uri -> assetMap[uri] }
             .take(MAX_SELECTION)
 
         return if (permissionMode == PermissionMode.LIMITED) {
@@ -614,7 +629,7 @@ class AssetPickerViewModel(
             permissionMode = mode,
             assets = state.assets,
             // Do not keep selected items between picker openings.
-            selectedUris = emptySet(),
+            selectedUris = emptyList(),
             selectedAlbumId = state.selectedAlbumId,
             gridScrollState = _gridScrollState.value
         )
@@ -624,7 +639,7 @@ class AssetPickerViewModel(
         AssetPickerSessionCache.snapshot = AssetPickerSessionSnapshot(
             permissionMode = PermissionMode.DENIED,
             assets = emptyList(),
-            selectedUris = emptySet(),
+            selectedUris = emptyList(),
             selectedAlbumId = AlbumFilterType.ALL,
             gridScrollState = _gridScrollState.value
         )
@@ -833,6 +848,15 @@ class AssetPickerViewModel(
                                 applyHookStartDefaults = true,  // Apply hook start for song-to-video mode
                                 analyticsVideoId = analyticsVideoId
                             )
+                        )
+                    )
+                }
+                isEditingMode -> {
+                    // Editing mode - return selected URIs without saving to DB
+                    // Used by ImagesBottomSheet to replace current assets list
+                    _navigationEvent.send(
+                        AssetPickerNavigationEvent.SelectionConfirmed(
+                            selectedUris = uris.map { it.toString() }
                         )
                     )
                 }

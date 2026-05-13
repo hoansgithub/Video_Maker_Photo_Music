@@ -142,6 +142,7 @@
     <string name="editor_music_trim_skip_to_start">Lompat ke Awal</string>
     <string name="editor_music_trim_skip_to_end">Lompat ke Akhir</string>
     <string name="editor_photos_count">%d foto</string>
+    <string name="editor_photos_label">Foto</string>
     <string name="editor_save_dialog_title">Simpan Proyek?</string>
     <string name="editor_save_dialog_message">Proyek Anda akan disimpan dan tersedia di Proyek Saya.</string>
     <string name="editor_save_and_exit">Simpan &amp; Keluar</string>
@@ -157,6 +158,9 @@
     <string name="editor_effect_sets">Set Efek</string>
     <string name="editor_retry">Coba Lagi</string>
     <string name="editor_no_music_selected">Tidak ada musik dipilih</string>
+    <string name="editor_images_title">Ketuk untuk Edit • Tahan untuk Menyusun Ulang</string>
+    <string name="editor_add_images">Tambah Gambar</string>
+    <string name="editor_delete_image">Hapus</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Video Dibuat</string>

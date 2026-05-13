@@ -452,14 +452,16 @@ fun AppNavigation(
             entry<AppRoute.AssetPicker> { route ->
                 val factory: AssetPickerViewModelFactory = koinInject()
                 val pickerViewModel: AssetPickerViewModel = viewModel(
-                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}_${route.aspectRatio}_${route.sourceLocation}_${route.resumeDraftId}",
+                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}_${route.aspectRatio}_${route.sourceLocation}_${route.resumeDraftId}_${route.selectedAssetUris.size}_${route.isEditingMode}",
                     factory = createSafeViewModelFactory {
                         factory.create(
                             projectId = route.projectId,
                             templateId = route.templateId,
                             overrideSongId = route.overrideSongId,
                             aspectRatio = route.aspectRatio,
-                            resumeDraftId = route.resumeDraftId
+                            resumeDraftId = route.resumeDraftId,
+                            selectedAssetUris = route.selectedAssetUris,
+                            isEditingMode = route.isEditingMode
                         )
                     }
                 )
@@ -519,8 +521,12 @@ fun AppNavigation(
                     onNavigateToExport = { projectId, quality ->
                         backStack.add(AppRoute.Export(projectId, quality))
                     },
-                    onNavigateToAddAssets = { projectId ->
-                        backStack.add(AppRoute.AssetPicker(projectId))
+                    onNavigateToAddAssets = { projectId, assetUris ->
+                        backStack.add(AppRoute.AssetPicker(
+                            projectId = projectId,
+                            selectedAssetUris = assetUris,
+                            isEditingMode = true  // Editing mode: return URIs without saving
+                        ))
                     }
                 )
             }
