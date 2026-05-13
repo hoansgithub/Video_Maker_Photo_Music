@@ -41,6 +41,7 @@ class OnboardingActivity : AppCompatActivity() {
     private val completeOnboardingUseCase: CompleteOnboardingUseCase by inject()
     private val regionProvider: RegionProvider by inject()
     private val onboardingViewModel: OnboardingViewModel by viewModel()
+    private val onboardingContentViewModel: OnboardingContentViewModel by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +68,7 @@ class OnboardingActivity : AppCompatActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     OnboardingScreen(
                         viewModel = onboardingViewModel,
-                        regionProvider = regionProvider,
+                        contentViewModel = onboardingContentViewModel,
                         onExitRequested = { showExitDialog = true },
                         onComplete = { completeOnboardingAndNavigate() }
                     )

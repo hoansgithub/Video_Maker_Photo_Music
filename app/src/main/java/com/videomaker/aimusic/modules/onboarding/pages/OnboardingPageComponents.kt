@@ -2,9 +2,6 @@ package com.videomaker.aimusic.modules.onboarding.pages
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +12,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,12 +26,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,10 +41,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
+import coil.size.Precision
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
+import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
 
@@ -145,6 +152,322 @@ internal fun WelcomePage(
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
+                NativeAdView(
+                    placement = adPlacement,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
+                )
+            }
+        }
+    }
+}
+
+// ============================================
+// DYNAMIC WELCOME PAGE (URL-based image)
+// Same layout as WelcomePage but loads from URL with shimmer
+// ============================================
+
+@Composable
+internal fun WelcomePageDynamic(
+    thumbnailUrl: String?,
+    localFallbackResId: Int,
+    title: String,
+    subtitle: String,
+    ctaText: String,
+    onCta: () -> Unit,
+    pageIndex: Int = 0
+) {
+    val adPlacement = when (pageIndex) {
+        0 -> AdPlacement.NATIVE_ONBOARDING_PAGE1
+        1 -> AdPlacement.NATIVE_ONBOARDING_PAGE2
+        2 -> AdPlacement.NATIVE_ONBOARDING_PAGE3
+        else -> null
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        // Banner image — URL-based or local fallback
+        if (thumbnailUrl != null) {
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(thumbnailUrl)
+                    .size(200, 350)
+                    .precision(Precision.INEXACT)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.5f),
+                contentScale = ContentScale.Crop,
+                loading = {
+                    ShimmerPlaceholder(modifier = Modifier.fillMaxSize())
+                },
+                error = {
+                    Image(
+                        painter = painterResource(localFallbackResId),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.5f),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            )
+        } else {
+            Image(
+                painter = painterResource(localFallbackResId),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.5f),
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        // Title/Subtitle + CTA Button Row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.0f),
+                            Color.Black.copy(alpha = 0.5f),
+                            Color.Black.copy(alpha = 0.75f),
+                            Color.Black.copy(alpha = 1.0f)
+                        )
+                    )
+                )
+                .padding(horizontal = 24.dp)
+                .padding(top = 40.dp, bottom = 32.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 16.dp)
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = subtitle,
+                    fontSize = 16.sp,
+                    color = Color.White.copy(alpha = 0.9f),
+                    lineHeight = 22.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            OnboardingCtaButton(
+                text = ctaText,
+                onClick = onCta,
+                color = Primary,
+                icon = R.drawable.ic_right_arrow
+            )
+        }
+
+        // Native Ad at bottom
+        if (adPlacement != null) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                NativeAdView(
+                    placement = adPlacement,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
+                )
+            }
+        }
+    }
+}
+
+// ============================================
+// DYNAMIC CAROUSEL (all geos)
+// Auto-swipe carousel with URL-based thumbnails
+// ============================================
+
+@Composable
+internal fun DynamicCarousel(
+    thumbnailUrls: List<String>,
+    localFallbackResIds: List<Int>,
+    title: String,
+    subtitle: String,
+    ctaText: String,
+    onCta: () -> Unit,
+    pageIndex: Int = 0
+) {
+    val totalSlides = maxOf(1, thumbnailUrls.size + localFallbackResIds.size)
+    val pagerState = rememberPagerState(pageCount = { totalSlides })
+
+    val adPlacement = when (pageIndex) {
+        0 -> AdPlacement.NATIVE_ONBOARDING_PAGE1
+        1 -> AdPlacement.NATIVE_ONBOARDING_PAGE2
+        2 -> AdPlacement.NATIVE_ONBOARDING_PAGE3
+        else -> null
+    }
+
+    // Auto-swipe every 3 seconds (matches IndiaPage3Carousel pattern).
+    // Key on totalSlides so the loop re-launches when content state arrives,
+    // and guard against tight-loop ANR when there is only one slide.
+    LaunchedEffect(totalSlides) {
+        if (totalSlides <= 1) return@LaunchedEffect
+        while (true) {
+            delay(3000)
+            val nextPage = (pagerState.currentPage + 1) % totalSlides
+            pagerState.animateScrollToPage(nextPage)
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = false
+            ) { page ->
+                val url = thumbnailUrls.getOrNull(page)
+                val localResId = if (url == null) {
+                    val localIndex = page - thumbnailUrls.size
+                    localFallbackResIds.getOrNull(localIndex)
+                } else null
+
+                if (url != null) {
+                    SubcomposeAsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(url)
+                            .size(200, 350)
+                            .precision(Precision.INEXACT)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        loading = {
+                            ShimmerPlaceholder(modifier = Modifier.fillMaxSize())
+                        },
+                        error = {
+                            val errorLocal = localFallbackResIds.firstOrNull()
+                            if (errorLocal != null) {
+                                Image(
+                                    painter = painterResource(errorLocal),
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+                    )
+                } else if (localResId != null) {
+                    Image(
+                        painter = painterResource(localResId),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+
+            // Dot indicators
+            if (totalSlides > 1) {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 100.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    repeat(totalSlides) { index ->
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(
+                                    if (index == pagerState.currentPage) Color.White
+                                    else Color.White.copy(alpha = 0.4f)
+                                )
+                        )
+                    }
+                }
+            }
+
+            // Title/Subtitle + CTA overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.0f),
+                                Color.Black.copy(alpha = 0.5f),
+                                Color.Black.copy(alpha = 0.75f),
+                                Color.Black.copy(alpha = 1.0f)
+                            )
+                        )
+                    )
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 40.dp, bottom = 32.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 16.dp)
+                    ) {
+                        Text(
+                            text = title,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            text = subtitle,
+                            fontSize = 16.sp,
+                            color = Color.White.copy(alpha = 0.9f),
+                            lineHeight = 22.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    OnboardingCtaButton(
+                        text = ctaText,
+                        onClick = onCta,
+                        color = Primary,
+                        icon = R.drawable.ic_right_arrow
+                    )
+                }
+            }
+        }
+
+        // Native Ad at bottom
+        if (adPlacement != null) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 NativeAdView(
                     placement = adPlacement,
                     modifier = Modifier.fillMaxWidth(),

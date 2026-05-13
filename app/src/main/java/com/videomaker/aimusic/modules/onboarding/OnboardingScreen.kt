@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,8 +26,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
@@ -44,47 +41,27 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.VideoMakerApplication
 import com.videomaker.aimusic.core.analytics.Analytics
-import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
-import com.videomaker.aimusic.core.data.local.RegionProvider
+import com.videomaker.aimusic.modules.onboarding.pages.DynamicCarousel
 import com.videomaker.aimusic.modules.onboarding.pages.FullscreenAdStep
-import com.videomaker.aimusic.modules.onboarding.pages.IndiaPage3Carousel
-import com.videomaker.aimusic.modules.onboarding.pages.WelcomePage
+import com.videomaker.aimusic.modules.onboarding.pages.WelcomePageDynamic
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.compose.koinInject
 
-/**
- * OnboardingScreen — swipe-driven welcome flow backed by HorizontalPager.
- *
- * Pages (0-based index maps to OnboardingStep ordinal):
- *   0 → WELCOME_1, 1 → WELCOME_2, 2 → WELCOME_3
- *
- * Bidirectional sync:
- *   • CTA "Next" tapped  → viewModel.onNext() → currentStep ↑ → pager animates forward
- *   • User swipes pager  → settledPage changes → viewModel.goToStep() syncs state
- *
- * Back: WELCOME_3 → WELCOME_2 → WELCOME_1 → exits via [onExitRequested].
- */
 @Composable
 fun OnboardingScreen(
     viewModel: OnboardingViewModel,
-    regionProvider: RegionProvider,
+    contentViewModel: OnboardingContentViewModel,
     onExitRequested: () -> Unit,
     onComplete: () -> Unit,
     adsLoaderService: AdsLoaderService = koinInject()
 ) {
-    // Build page list dynamically based on remote config
-    val pageList = remember {
-        buildOnboardingPageList(adsLoaderService, regionProvider)
-    }
+    val contentState by contentViewModel.contentState.collectAsStateWithLifecycle()
 
-    // Detect if India region for carousel display
-    val useIndiaImages = try {
-        regionProvider.getRegionCode() == "in"
-    } catch (e: Exception) {
-        false
+    val pageList = remember(adsLoaderService) {
+        buildOnboardingPageList(adsLoaderService)
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -106,7 +83,6 @@ fun OnboardingScreen(
             .distinctUntilChanged()
             .collect { page ->
                 if (page > 0) showSwipeHint = false
-                // Track page view (1-indexed for analytics)
                 val onboardingStep = page + 1
                 Analytics.track(
                     name = "onboarding_$onboardingStep",
@@ -121,18 +97,13 @@ fun OnboardingScreen(
         }
     }
 
-    // Track Feature Selection ads preloading status
-    // Preload triggered when user LEAVES one of the last 2 pages (via Continue or Swipe)
     var hasPreloadedFeatureSelection by remember { mutableStateOf(false) }
 
-    // Helper function to preload Feature Selection ads
     fun preloadFeatureSelectionIfNeeded(triggeredFromPage: Int, action: String) {
         if (!hasPreloadedFeatureSelection) {
-            // Preload when user LEAVES one of the last 2 pages
             val isNearEnd = triggeredFromPage >= pageList.size - 2
-
             if (isNearEnd) {
-                android.util.Log.d("OnboardingScreen", "🔄 User ${action} from page ${triggeredFromPage}/${pageList.lastIndex}, preloading Feature Selection ads")
+                android.util.Log.d("OnboardingScreen", "User $action from page $triggeredFromPage/${pageList.lastIndex}, preloading Feature Selection ads")
                 VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION)
                 VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT)
                 hasPreloadedFeatureSelection = true
@@ -140,24 +111,18 @@ fun OnboardingScreen(
         }
     }
 
-    // Monitor page changes to catch SWIPE gestures (backup to Continue button)
     LaunchedEffect(pagerState) {
         var previousPage = pagerState.currentPage
-
         snapshotFlow { pagerState.currentPage }.collect { currentPage ->
-            // User navigated away from previous page (either via swipe or button)
-            // Check if they LEFT one of the last 2 pages
             if (previousPage != currentPage && previousPage >= 0) {
                 preloadFeatureSelectionIfNeeded(previousPage, "swiped")
             }
-
             previousPage = currentPage
         }
     }
 
     BackHandler {
         if (pagerState.currentPage > 0) {
-            // Go back one page
             coroutineScope.launch {
                 pagerState.animateScrollToPage(pagerState.currentPage - 1)
             }
@@ -176,15 +141,11 @@ fun OnboardingScreen(
         val isLastPage = page == pageList.lastIndex
 
         when (pageData) {
-            // Fullscreen native ad page
             is OnboardingPage.FullscreenAd -> {
                 FullscreenAdStep(
                     isCurrentPage = page == pagerState.currentPage,
                     onClose = {
-                        // Preload Feature Selection ads if this is one of the last 2 pages
                         preloadFeatureSelectionIfNeeded(page, "closed ad")
-
-                        // Navigate to next page when user closes the ad
                         showSwipeHint = false
                         coroutineScope.launch {
                             if (page < pageList.lastIndex) {
@@ -197,21 +158,19 @@ fun OnboardingScreen(
                 )
             }
 
-            // Regular welcome page
             is OnboardingPage.Welcome -> {
-                // Check if this is India page 3 (should show carousel)
-                val isIndiaPage3 = useIndiaImages && pageData.pageIndex == 2
+                val isPage3 = pageData.pageIndex == 2
 
-                if (isIndiaPage3) {
-                    // India page 3: Show carousel
-                    IndiaPage3Carousel(
-                        title = stringResource(pageData.step.title),
-                        subtitle = stringResource(pageData.step.description),
+                if (isPage3) {
+                    // Page 3: Dynamic carousel for ALL geos
+                    DynamicCarousel(
+                        thumbnailUrls = contentState.page3Thumbnails,
+                        localFallbackResIds = contentState.page3LocalFallbacks,
+                        title = stringResource(R.string.onboarding_page3_title),
+                        subtitle = stringResource(R.string.onboarding_page3_subtitle),
                         ctaText = stringResource(R.string.onboarding_next),
                         onCta = {
-                            // Preload Feature Selection ads if this is one of the last 2 pages
                             preloadFeatureSelectionIfNeeded(page, "tapped Continue")
-
                             showSwipeHint = false
                             if (isLastPage) {
                                 onComplete()
@@ -224,13 +183,32 @@ fun OnboardingScreen(
                         pageIndex = pageData.pageIndex
                     )
                 } else {
-                    // Default or India pages 1-2: Show static image
+                    // Pages 1-2: Dynamic thumbnail or local fallback
+                    val thumbnailUrl = if (pageData.pageIndex == 0) {
+                        contentState.page1ThumbnailUrl
+                    } else {
+                        contentState.page2ThumbnailUrl
+                    }
+                    val localFallback = if (pageData.pageIndex == 0) {
+                        contentState.page1LocalFallback ?: R.drawable.ob_page1
+                    } else {
+                        contentState.page2LocalFallback ?: R.drawable.ob_page2
+                    }
+                    val titleRes = if (pageData.pageIndex == 0) {
+                        R.string.onboarding_page1_title
+                    } else {
+                        R.string.onboarding_page2_title
+                    }
+                    val subtitleRes = if (pageData.pageIndex == 0) {
+                        R.string.onboarding_page1_subtitle
+                    } else {
+                        R.string.onboarding_page2_subtitle
+                    }
+
                     val pageModifier = if (isLastPage) {
                         Modifier.pointerInput(Unit) {
                             detectHorizontalDragGestures(
-                                onDragStart = {
-                                    totalDrag = 0f
-                                },
+                                onDragStart = { totalDrag = 0f },
                                 onHorizontalDrag = { change, dragAmount ->
                                     change.consume()
                                     totalDrag += dragAmount
@@ -240,9 +218,7 @@ fun OnboardingScreen(
                                     totalDrag = 0f
                                     if (shouldComplete) onComplete()
                                 },
-                                onDragCancel = {
-                                    totalDrag = 0f
-                                }
+                                onDragCancel = { totalDrag = 0f }
                             )
                         }
                     } else {
@@ -254,15 +230,14 @@ fun OnboardingScreen(
                             .fillMaxSize()
                             .then(pageModifier)
                     ) {
-                        WelcomePage(
-                            imageResId = pageData.step.img,
-                            title = stringResource(pageData.step.title),
-                            subtitle = stringResource(pageData.step.description),
+                        WelcomePageDynamic(
+                            thumbnailUrl = thumbnailUrl,
+                            localFallbackResId = localFallback,
+                            title = stringResource(titleRes),
+                            subtitle = stringResource(subtitleRes),
                             ctaText = stringResource(R.string.onboarding_next),
                             onCta = {
-                                // Preload Feature Selection ads if this is one of the last 2 pages
                                 preloadFeatureSelectionIfNeeded(page, "tapped Continue")
-
                                 showSwipeHint = false
                                 if (isLastPage) {
                                     onComplete()
@@ -272,7 +247,7 @@ fun OnboardingScreen(
                                     }
                                 }
                             },
-                            pageIndex = pageData.pageIndex  // Pass page index for ad placement
+                            pageIndex = pageData.pageIndex
                         )
 
                         if (showSwipeHint && pagerState.settledPage == 0) {
@@ -286,8 +261,7 @@ fun OnboardingScreen(
                                 LottieAnimation(
                                     composition = swipeHintComposition,
                                     iterations = LottieConstants.IterateForever,
-                                    modifier = Modifier
-                                        .size(90.dp)
+                                    modifier = Modifier.size(90.dp)
                                 )
                                 Text(
                                     text = stringResource(R.string.onboarding_swipe_next),
@@ -313,118 +287,33 @@ sealed class OnboardingPage {
     data object FullscreenAd : OnboardingPage()
 }
 
-data class StepOnboard(
-    val img: Int,
-    val title: Int,
-    val description: Int
-)
-
-// ============================================
-// BASE WELCOME PAGES (without fullscreen ad)
-// ============================================
-
-private val baseWelcomePages = listOf(
-    StepOnboard(
-        img = R.drawable.ob_page1,
-        title = R.string.onboarding_page1_title,
-        description = R.string.onboarding_page1_subtitle
-    ),
-    StepOnboard(
-        img = R.drawable.ob_page2,
-        title = R.string.onboarding_page2_title,
-        description = R.string.onboarding_page2_subtitle
-    ),
-    StepOnboard(
-        img = R.drawable.ob_page3,
-        title = R.string.onboarding_page3_title,
-        description = R.string.onboarding_page3_subtitle
-    ),
-)
-
-// India-specific onboarding images
-private val indiaWelcomePages = listOf(
-    StepOnboard(
-        img = R.drawable.img_onb1_in,
-        title = R.string.onboarding_page1_title,
-        description = R.string.onboarding_india_page1_subtitle
-    ),
-    StepOnboard(
-        img = R.drawable.img_onb2_in,
-        title = R.string.onboarding_page2_title,
-        description = R.string.onboarding_page2_subtitle
-    ),
-    StepOnboard(
-        img = R.drawable.img_onb31_in,
-        title = R.string.onboarding_india_page3_title,
-        description = R.string.onboarding_india_page3_subtitle
-    )
-)
+data class StepOnboard(val pageIndex: Int)
 
 // ============================================
 // BUILD ONBOARDING PAGE SEQUENCE
 // Dynamically injects fullscreen ad based on remote config
 // ============================================
 
-/**
- * Builds the onboarding page list with fullscreen ad injected at configured position.
- *
- * Remote Config (ad_native_onboarding_fullscreen.extras):
- * - inject_after: Which page to show after (1, 2, or 3, default: 2)
- *
- * Example configurations:
- * - inject_after = 1: Shows ad after page 1 (between pages 1 and 2)
- * - inject_after = 2: Shows ad after page 2 (between pages 2 and 3) [DEFAULT]
- * - inject_after = 3: Shows ad after page 3 (before feature selection)
- */
 private fun buildOnboardingPageList(
-    adsLoaderService: AdsLoaderService,
-    regionProvider: RegionProvider
+    adsLoaderService: AdsLoaderService
 ): List<OnboardingPage> {
-    // Detect user region for India-specific onboarding
-    val region = try {
-        regionProvider.getRegionCode()
-    } catch (e: Exception) {
-        android.util.Log.w("OnboardingScreen", "Region detection failed, using default images", e)
-        null
-    }
-    val useIndiaImages = region == "in"
-
-    android.util.Log.d("OnboardingScreen", "🌍 Detected region: $region, using ${if (useIndiaImages) "India" else "default"} onboarding")
-
-    // Read injection position from remote config
     val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
     val injectAfterValue = config?.extras?.get("inject_after")
-
-    // Support both string "2" and number 2 formats
     val injectAfter = when {
         injectAfterValue == null -> 2
         else -> {
-            // Try parsing: handles both "2" (string) and 2 (number)
             val stringValue = injectAfterValue.toString().trim('"')
             stringValue.toIntOrNull() ?: 2
         }
     }
-
-    // Clamp to valid range (1-3)
     val injectPosition = injectAfter.coerceIn(1, 3)
 
-    android.util.Log.d("OnboardingScreen", "🎯 Fullscreen ad will inject after page $injectPosition (raw value: $injectAfterValue)")
-
-    // Select base pages based on region
-    val selectedBasePages = if (useIndiaImages) indiaWelcomePages else baseWelcomePages
-
-    // Build page list with fullscreen ad injected at configured position
     val pages = mutableListOf<OnboardingPage>()
-
-    selectedBasePages.forEachIndexed { index, step ->
-        // Add welcome page
-        pages.add(OnboardingPage.Welcome(step, index))
-
-        // Insert fullscreen ad after the configured page
+    repeat(3) { index ->
+        pages.add(OnboardingPage.Welcome(StepOnboard(index), index))
         if (index + 1 == injectPosition) {
             pages.add(OnboardingPage.FullscreenAd)
         }
     }
-
     return pages
 }

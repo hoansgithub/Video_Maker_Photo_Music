@@ -100,4 +100,11 @@ object RemoteConfigKeys {
      */
     const val NOTIFICATION_SCHEDULE_CONFIG = "notification_schedule_config"
 
+    // ============================================
+    // ONBOARDING DYNAMIC CONTENT
+    // ============================================
+
+    const val ONBOARDING_PAGE1_TEMPLATE_ID = "onboarding_page1_template_id"
+    const val ONBOARDING_PAGE2_SONG_ID = "onboarding_page2_song_id"
+
 }
