@@ -3,6 +3,8 @@ package com.videomaker.aimusic.modules.language
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.EaseInCubic
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -67,6 +69,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -92,6 +96,7 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.featureselection.EVENT_GENRE_SHOW
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * LanguageSelectionScreen - Language picker for onboarding and settings.
@@ -234,7 +239,7 @@ fun LanguageSelectionScreen(
                                     ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
                                 }
                             ) {
-                                OnboardingCtaButton(
+                                OnboardingCtaButtonV1(
                                     text = stringResource(R.string.done),
                                     onClick = {
                                         onContinue.invoke()
@@ -311,31 +316,41 @@ fun LanguageSelectionScreen(
                 if (!showBackButton) {
                     Box(
                         modifier = Modifier
-                            .navigationBarsPadding()
+                            .fillMaxWidth()
                             .align(Alignment.BottomEnd)
-                            .padding(24.dp)
-                            .onGloballyPositioned { coords ->
-                                val topLeft = coords.positionInRoot()
-                                ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
-                            }
+                            .paint(
+                                painter = painterResource(R.drawable.img_bg_cta_onboard),
+                                contentScale = ContentScale.Crop
+                            )
                     ) {
-                        OnboardingCtaButton(
-                            text = stringResource(R.string.onboarding_next),
-                            icon = R.drawable.ic_right_arrow,
-                            color = Primary,
-                            onClick = {
-                                onContinue.invoke()
-                                selectedLanguage?.let {
-                                    Analytics.track(
-                                        name = "language_next",
-                                        params = mapOf(
-                                            "language" to it
-                                        )
-                                    )
+                        Box(
+                            modifier = Modifier
+                                .navigationBarsPadding()
+                                .align(Alignment.BottomEnd)
+                                .padding(top = 18.dp, end = 24.dp)
+                                .onGloballyPositioned { coords ->
+                                    val topLeft = coords.positionInRoot()
+                                    ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
                                 }
-                            },
-                            enabled = selectedLanguage != null && delayedButtonEnabled
-                        )
+                        ) {
+                            OnboardingCtaButton(
+                                text = stringResource(R.string.onboarding_next),
+                                icon = R.drawable.ic_right_arrow,
+                                color = Primary,
+                                onClick = {
+                                    onContinue.invoke()
+                                    selectedLanguage?.let {
+                                        Analytics.track(
+                                            name = "language_next",
+                                            params = mapOf(
+                                                "language" to it
+                                            )
+                                        )
+                                    }
+                                },
+                                enabled = selectedLanguage != null && delayedButtonEnabled
+                            )
+                        }
                     }
                 }
             }
@@ -454,6 +469,41 @@ private fun LanguageCard(
 
 @Composable
 internal fun OnboardingCtaButton(
+    text: String,
+    onClick: () -> Unit,
+    icon: Int? = null,
+    color: Color = MaterialTheme.colorScheme.onBackground,
+    enabled: Boolean = true
+) {
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier
+            .clickableSingle(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 20.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = color
+        )
+
+        icon?.let {
+            Icon(
+                painter = painterResource(it),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier
+                    .size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+internal fun OnboardingCtaButtonV1(
     text: String,
     onClick: () -> Unit,
     icon: Int? = null,
@@ -585,6 +635,7 @@ private fun CursorOverlay(
 ) {
     val density = LocalDensity.current
     val cursorAnim = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
+    var atCta by remember { mutableStateOf(false) }
 
     LaunchedEffect(visible) {
         if (!visible) return@LaunchedEffect
@@ -592,6 +643,10 @@ private fun CursorOverlay(
 
         val bouncePx = with(density) { 12.dp.toPx() }
         val hotspot = with(density) { Offset(8.dp.toPx(), 4.dp.toPx()) }
+        // Mirrored hotspot for flipped cursor at CTA (image is 48dp wide, mirror x around center)
+        val ctaHotspot = with(density) { Offset((65.dp).toPx(), 70.dp.toPx()) }
+
+        atCta = false
 
         if (selectedLanguage == null) {
             val firstVisibleCode = languageCardOffsets
@@ -617,7 +672,8 @@ private fun CursorOverlay(
             }
         }
 
-        val ctaTarget = ctaButtonOffset - hotspot
+        atCta = true
+        val ctaTarget = ctaButtonOffset - ctaHotspot
 
         cursorAnim.animateTo(ctaTarget, animationSpec = tween(450, easing = EaseInOutCubic))
 
@@ -635,7 +691,7 @@ private fun CursorOverlay(
         exit = fadeOut(tween(200))
     ) {
         Image(
-            painter = painterResource(R.drawable.img_hand_point),
+            painter = painterResource(if (atCta) R.drawable.img_hand_point_1 else R.drawable.img_hand_point),
             contentDescription = null,
             modifier = Modifier
                 .size(48.dp)
