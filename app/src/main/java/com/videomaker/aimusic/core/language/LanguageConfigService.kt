@@ -18,13 +18,15 @@ import kotlinx.serialization.json.jsonPrimitive
  *
  * Handles intelligent language sorting based on:
  * 1. Device language (respects user's explicit choice)
- * 2. User's detected country with priority order:
- *    - SIM card country (most reliable, permanent)
- *    - Network operator country (changes when roaming)
- *    - IP-based geolocation (VPN-aware, 3s timeout)
+ * 2. User's physical location (NO VPN, device-based only):
+ *    - SIM card country (physical location, permanent)
+ *    - Network operator country (physical location, ignores VPN)
  *    - System locale country (last fallback)
  * 3. Remote Config priorities (updatable without app release)
  * 4. Hardcoded fallback priorities
+ *
+ * Note: Does NOT use IP-based geolocation or VPN-aware detection.
+ * Uses actual device location only for accurate physical region.
  *
  * Remote Config Format:
  * ```json
@@ -145,43 +147,33 @@ class LanguageConfigService(
     }
 
     /**
-     * Detect user's country code using multiple fallback strategies.
+     * Detect user's country code using device-based detection (NO VPN).
      *
      * Priority order:
-     * 1. SIM card country (most reliable, permanent)
-     * 2. Network operator country (reliable, changes when roaming)
-     * 3. IP-based geolocation (VPN-aware, can be changed)
-     * 4. System locale country (last fallback, user setting)
+     * 1. SIM card country (physical location, permanent)
+     * 2. Network operator country (physical location, ignores VPN)
+     * 3. System locale country (user setting fallback)
+     *
+     * Note: Does NOT use IP geolocation - uses actual device location only
      *
      * @return Country code (e.g., "US", "BR", "ID") or empty string if unknown
      */
     private fun detectUserCountry(): String {
         val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
 
-        // 1. Try SIM card country (most reliable)
+        // 1. Try SIM card country (physical location)
         tm?.simCountryIso?.uppercase()?.takeIf { it.isNotEmpty() }?.let {
             android.util.Log.d(TAG, "📱 Country from SIM: $it")
             return it
         }
 
-        // 2. Try network country (changes when roaming)
+        // 2. Try network country (physical location, ignores VPN)
         tm?.networkCountryIso?.uppercase()?.takeIf { it.isNotEmpty() }?.let {
             android.util.Log.d(TAG, "📡 Country from Network: $it")
             return it
         }
 
-        // 3. Try IP-based geolocation (VPN-aware)
-        try {
-            val ipCountry = detectCountryFromIP()
-            if (ipCountry != null) {
-                android.util.Log.d(TAG, "🌐 Country from IP: $ipCountry")
-                return ipCountry
-            }
-        } catch (e: Exception) {
-            android.util.Log.w(TAG, "IP detection failed: ${e.message}")
-        }
-
-        // 4. Try system locale country (last fallback)
+        // 3. Try system locale country (user setting fallback)
         val config = context.resources.configuration
         ConfigurationCompat.getLocales(config).get(0)?.country?.uppercase()?.takeIf { it.isNotEmpty() }?.let {
             android.util.Log.d(TAG, "🌍 Country from Locale: $it")
@@ -191,35 +183,6 @@ class LanguageConfigService(
         // Unknown country
         android.util.Log.d(TAG, "⚠️ No country detected")
         return ""
-    }
-
-    /**
-     * Detect country from IP address (VPN-aware).
-     * Uses lightweight HTTP request with 3-second timeout.
-     *
-     * @return Country code or null if detection fails
-     */
-    private fun detectCountryFromIP(): String? {
-        return try {
-            val url = java.net.URL("https://ipinfo.io/country")
-            val connection = url.openConnection() as java.net.HttpURLConnection
-            connection.connectTimeout = 3000  // 3 seconds
-            connection.readTimeout = 3000
-            connection.requestMethod = "GET"
-            connection.setRequestProperty("User-Agent", "VideoMaker-Android")
-
-            val response = connection.inputStream.bufferedReader().use { it.readText() }
-            val country = response.trim().uppercase()
-
-            // Validate ISO 3166-1 alpha-2 code (2 characters)
-            if (country.length == 2 && country.all { it.isLetter() }) {
-                country
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            null  // Fail silently and continue to next fallback
-        }
     }
 
     /**

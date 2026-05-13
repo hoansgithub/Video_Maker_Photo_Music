@@ -62,8 +62,9 @@ class RegionProvider(
     fun getRegionCode(): String {
         cached?.let { return it }
 
-        // Check if IP detection is enabled (remote config OR debug mode)
-        val shouldUseIp = regionDetectionConfig?.useIpGeolocation == true || BuildConfig.DEBUG
+        // Check if IP detection is enabled (remote config only)
+        // Removed BuildConfig.DEBUG to prevent 5s blocking delay in debug builds
+        val shouldUseIp = regionDetectionConfig?.useIpGeolocation == true
 
         if (shouldUseIp) {
             // Start IP detection in background (if not already started)

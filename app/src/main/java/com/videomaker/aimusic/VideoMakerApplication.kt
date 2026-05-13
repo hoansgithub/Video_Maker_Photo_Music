@@ -259,17 +259,24 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                     // This ensures all Remote Config values are available when RootViewModel reads them
                     // Remote Config network fetch should run on IO thread (already correct)
                     android.util.Log.d("VideoMakerApp", "⏳ Waiting for Remote Config to be ready...")
+                    val startTime = System.currentTimeMillis()
                     try {
+                        android.util.Log.d("VideoMakerApp", "🔄 Starting Remote Config fetch...")
+
                         withTimeout(60_000L) {  // 1 minute timeout for Remote Config
                             val remoteConfig = org.koin.core.context.GlobalContext.get()
                                 .get<co.alcheclub.lib.acccore.remoteconfig.RemoteConfig>()
                             remoteConfig.fetchAndActivate()
-                            android.util.Log.d("VideoMakerApp", "✅ Remote Config ready!")
+
+                            val duration = System.currentTimeMillis() - startTime
+                            android.util.Log.d("VideoMakerApp", "✅ Remote Config ready! (took ${duration}ms)")
                         }
                     } catch (e: TimeoutCancellationException) {
-                        android.util.Log.w("VideoMakerApp", "⏱️ Remote Config fetch timed out after 60 seconds - continuing anyway")
+                        val duration = System.currentTimeMillis() - startTime
+                        android.util.Log.w("VideoMakerApp", "⏱️ Remote Config fetch timed out after ${duration}ms - continuing anyway")
                     } catch (e: Exception) {
-                        android.util.Log.w("VideoMakerApp", "⚠️ Remote Config fetch failed: ${e.message} - continuing anyway")
+                        val duration = System.currentTimeMillis() - startTime
+                        android.util.Log.w("VideoMakerApp", "⚠️ Remote Config fetch failed after ${duration}ms: ${e.message} - continuing anyway")
                     }
 
                     android.util.Log.d("VideoMakerApp", "🔄 Starting UMP consent flow...")
@@ -415,6 +422,9 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
             )
         }
 
+        // Language sorting uses device-based location (SIM/Network/Locale)
+        // IP-based detection removed - uses physical location only, no VPN detection
+
         runCatching {
             val appSessionTracker = org.koin.core.context.GlobalContext.get().get<AppSessionTracker>()
             ProcessLifecycleOwner.get().lifecycle.addObserver(appSessionTracker)
@@ -529,18 +539,22 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
                 // Fetch and activate Remote Config (with timeout)
                 try {
+                    val startTime = System.currentTimeMillis()
+                    android.util.Log.d("VideoMakerApp", "🔄 Starting Remote Config fetch (5s timeout)...")
+
                     kotlinx.coroutines.withTimeout(5000L) {  // 5s timeout for faster startup
                         val result = remoteConfig.fetchAndActivate()
+                        val duration = System.currentTimeMillis() - startTime
 
                         when {
                             result.isSuccess && result.getOrNull() == true -> {
-                                android.util.Log.d("VideoMakerApp", "✅ Remote Config fetched and activated")
+                                android.util.Log.d("VideoMakerApp", "✅ Remote Config fetched and activated (took ${duration}ms)")
                             }
                             result.isSuccess && result.getOrNull() == false -> {
-                                android.util.Log.w("VideoMakerApp", "⚠️ Remote Config returned false (using cached values)")
+                                android.util.Log.w("VideoMakerApp", "⚠️ Remote Config returned false after ${duration}ms (using cached values)")
                             }
                             result.isFailure -> {
-                                android.util.Log.w("VideoMakerApp", "⚠️ Remote Config fetch failed: ${result.exceptionOrNull()?.message}")
+                                android.util.Log.w("VideoMakerApp", "⚠️ Remote Config fetch failed after ${duration}ms: ${result.exceptionOrNull()?.message}")
                             }
                             else -> {
                                 android.util.Log.w("VideoMakerApp", "⚠️ Remote Config returned null")

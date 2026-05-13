@@ -30,7 +30,7 @@ import kotlinx.serialization.json.jsonPrimitive
 class RegionDetectionConfig : ConfigurableObject {
 
     @Volatile
-    var useIpGeolocation: Boolean = false
+    var useIpGeolocation: Boolean = false  // Default: false (controlled by Remote Config)
         private set
 
     @Volatile
