@@ -94,7 +94,10 @@ import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
 import com.videomaker.aimusic.ui.components.NotificationPermissionPromoDialog
 import com.videomaker.aimusic.ui.components.NotificationPermissionSettingsGuideDialog
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.MusicSong
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
+import com.videomaker.aimusic.modules.templatepreviewer.components.UserSongBackgroundPlayer
 import org.koin.compose.koinInject
 import com.videomaker.aimusic.ui.components.PrimaryButton
 import com.videomaker.aimusic.ui.theme.Primary
@@ -142,6 +145,9 @@ fun TemplatePreviewerScreen(
     val unlockedTemplateIds by viewModel.unlockedTemplateIds.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val overrideSongId by viewModel.overrideSongId.collectAsStateWithLifecycle()
+    val userSong by viewModel.userSong.collectAsStateWithLifecycle()
+    val showUserSongPlayer = remember(overrideSongId) { overrideSongId >= 0L }
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val eventLocation = remember(sourceLocation) {
@@ -155,6 +161,12 @@ fun TemplatePreviewerScreen(
     var showNotificationPromoDialog by remember { mutableStateOf(false) }
     var showNotificationSettingsGuideDialog by remember { mutableStateOf(false) }
     var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
+
+    // True while ANY ad is on screen (scroll/back interstitial or rewarded). Drives
+    // mute on TemplateVideoPlayer + UserSongBackgroundPlayer. Set explicitly via the
+    // ad SDK's onShown / close callbacks — lifecycle events alone are not reliable
+    // for in-process interstitials (ProcessLifecycleOwner doesn't fire ON_STOP).
+    var isAdShowing by remember { mutableStateOf(false) }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -196,11 +208,15 @@ fun TemplatePreviewerScreen(
                             activity = activity,
                             placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
                             action = {
-                                // Ad closed - navigate back
+                                // Ad closed - navigate back. We left the screen on onShown,
+                                // so isAdShowing reset is mostly defensive (this composable is
+                                // being disposed anyway).
+                                isAdShowing = false
                                 android.util.Log.d("TemplatePreviewerScreen", "✅ Back ad closed - navigating")
                             },
                             onShown = {
-                                // Navigate immediately when ad shows (parallel)
+                                // Mute players while ad is on screen, then navigate.
+                                isAdShowing = true
                                 android.util.Log.d("TemplatePreviewerScreen", "🎬 Back ad shown - navigating")
                                 onNavigateBack()
                             },
@@ -228,11 +244,15 @@ fun TemplatePreviewerScreen(
                             activity = activity,
                             placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
                             action = {
-                                // Ad closed or skipped - no action needed, user continues browsing
+                                // Ad closed or skipped - restore audio. Always runs (even if
+                                // ad was skipped by frequency cap and onShown never fired), so
+                                // this is safe to set to false unconditionally.
+                                isAdShowing = false
                                 android.util.Log.d("TemplatePreviewerScreen", "✅ Scroll ad action callback")
                             },
                             onShown = {
-                                // Ad actually shown (not skipped by frequency cap)
+                                // Ad actually shown (not skipped by frequency cap) - mute audio.
+                                isAdShowing = true
                                 android.util.Log.d("TemplatePreviewerScreen", "🎬 Scroll ad shown to user")
                             },
                             bypassFrequencyCap = false,  // ✅ Let ACCCore enforce interval
@@ -255,7 +275,9 @@ fun TemplatePreviewerScreen(
         placement = AdPlacement.REWARD_UNLOCK_TEMPLATE,
         adsLoaderService = adsLoaderService,
         onRewardEarned = viewModel::onRewardEarned,
-        onAdFailed = viewModel::onAdFailed
+        onAdFailed = viewModel::onAdFailed,
+        onAdShown = { isAdShowing = true },
+        onAdClosed = { isAdShowing = false }
     )
 
     // Track loading state
@@ -371,6 +393,9 @@ fun TemplatePreviewerScreen(
                     state = state,
                     likedTemplateIds = likedTemplateIds,
                     unlockedTemplateIds = unlockedTemplateIds,
+                    showUserSongPlayer = showUserSongPlayer,
+                    userSong = userSong,
+                    isAdShowing = isAdShowing,
                     onPageChanged = viewModel::onPageChanged,
                     onUseThisTemplate = viewModel::onUseThisTemplate,
                     onRatioSelected = viewModel::onRatioSelected,
@@ -534,6 +559,9 @@ private fun TemplatePreviewerReadyContent(
     state: TemplatePreviewerUiState.Ready,
     likedTemplateIds: Set<String>,
     unlockedTemplateIds: Set<String>,
+    showUserSongPlayer: Boolean,
+    userSong: MusicSong?,
+    isAdShowing: Boolean = false,
     onPageChanged: (Int) -> Unit,
     onUseThisTemplate: (VideoTemplate, AspectRatio) -> Unit,
     onRatioSelected: (VideoTemplate, AspectRatio) -> Unit,
@@ -672,6 +700,9 @@ private fun TemplatePreviewerReadyContent(
                 template = templates[pageIndex % templates.size],
                 isCurrentPage = isCurrentPage,
                 isPriorityPage = pageIndex == pagerState.settledPage,  // High priority for visible page
+                showUserSongPlayer = showUserSongPlayer,
+                userSong = userSong,
+                isAdShowing = isAdShowing,
                 onVideoReady = if (isInitialPage) onFirstVideoReady else null  // Only track first video
             )
         }
@@ -1150,9 +1181,16 @@ private fun TemplateThumbnailPage(
     template: VideoTemplate,
     isCurrentPage: Boolean,
     isPriorityPage: Boolean = false,  // True for visible/settled page (kept for future use)
+    showUserSongPlayer: Boolean = false,
+    userSong: com.videomaker.aimusic.domain.model.MusicSong? = null,
+    isAdShowing: Boolean = false,  // When true, mute both video and user-song audio (volume = 0f)
     onVideoReady: (() -> Unit)? = null  // Callback when video is ready (for first video only)
 ) {
     val context = LocalContext.current
+    val audioPreviewCache: AudioPreviewCache = koinInject()
+
+    // Track when template video has loaded successfully before starting user song
+    var isTemplateVideoReady by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier.fillMaxSize().background(Color.Black),
@@ -1170,7 +1208,12 @@ private fun TemplateThumbnailPage(
                 loop = true,
                 showControls = false,
                 skipDebounce = onVideoReady != null,  // Skip 150ms delay for first video only
-                onVideoReady = onVideoReady  // Notify when video is ready (for first video tracking)
+                onVideoReady = {
+                    isTemplateVideoReady = true  // Mark template as ready
+                    onVideoReady?.invoke()  // Notify parent for first video tracking
+                },
+                // Mute template video when an ad is on screen or when user song is playing.
+                volume = if (isAdShowing || showUserSongPlayer) 0f else 1.0f
             )
         } else {
             // Fallback to image preview
@@ -1212,6 +1255,20 @@ private fun TemplateThumbnailPage(
                 }
             )
         }
+
+        // User song background player - plays when user selected a song AND template video is ready
+        if (showUserSongPlayer && userSong != null && isCurrentPage && isTemplateVideoReady) {
+            UserSongBackgroundPlayer(
+                song = userSong,
+                cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+                autoPlay = true,
+                loop = true,
+                startFromHook = true,
+                // Mute (but keep playing) while an ad is on screen, so playback resumes
+                // seamlessly when the ad closes — per product spec.
+                volume = if (isAdShowing) 0f else 1.0f
+            )
+        }
     }
 }
 
@@ -1241,6 +1298,8 @@ private fun PreviewTemplatePreviewerReady() {
             ),
             likedTemplateIds = emptySet(),
             unlockedTemplateIds = emptySet(),
+            showUserSongPlayer = false,
+            userSong = null,
             onPageChanged = {},
             onUseThisTemplate = { _, _ -> },
             onRatioSelected = { _, _ -> },
@@ -1268,6 +1327,8 @@ private fun PreviewTemplatePreviewerCreating() {
             ),
             likedTemplateIds = setOf("t1"),
             unlockedTemplateIds = emptySet(),
+            showUserSongPlayer = false,
+            userSong = null,
             onPageChanged = {},
             onUseThisTemplate = { _, _ -> },
             onRatioSelected = { _, _ -> },

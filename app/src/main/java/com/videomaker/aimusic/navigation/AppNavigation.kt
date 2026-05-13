@@ -362,6 +362,15 @@ fun AppNavigation(
                         ))
                     },
                     onNavigateToAllSongs = { backStack.add(AppRoute.SuggestedSongsList) },
+                    onNavigateToTemplatePreviewerWithSong = { songId ->
+                        // Song-to-template flow: browse templates with selected song, then select images
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "",  // Empty = start from first template
+                            imageUris = emptyList(),
+                            overrideSongId = songId,
+                            sourceLocation = AnalyticsEvent.Value.Location.SONG
+                        ))
+                    },
                     onProjectClick = { projectId ->
                         backStack.add(AppRoute.Editor(projectId))
                     }
@@ -405,9 +414,12 @@ fun AppNavigation(
                     viewModel = suggestedSongsViewModel,
                     onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToAssetPicker = { songId ->
-                        // Song-to-video flow: select images, then go to editor (skip templates)
-                        backStack.add(AppRoute.AssetPicker(
-                            overrideSongId = songId
+                        // Song-to-template flow: browse templates with selected song
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "",
+                            imageUris = emptyList(),
+                            overrideSongId = songId,
+                            sourceLocation = AnalyticsEvent.Value.Location.SUGGESTED_SONGS
                         ))
                     }
                 )
@@ -423,9 +435,12 @@ fun AppNavigation(
                     viewModel = weeklyRankingViewModel,
                     onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToAssetPicker = { songId ->
-                        // Song-to-video flow: select images, then go to editor (skip templates)
-                        backStack.add(AppRoute.AssetPicker(
-                            overrideSongId = songId
+                        // Song-to-template flow: browse templates with selected song
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "",
+                            imageUris = emptyList(),
+                            overrideSongId = songId,
+                            sourceLocation = AnalyticsEvent.Value.Location.WEEKLY_RANKING
                         ))
                     }
                 )

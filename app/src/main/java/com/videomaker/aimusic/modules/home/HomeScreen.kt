@@ -106,7 +106,8 @@ fun HomeScreen(
     onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTemplates: (String?) -> Unit = {},
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
-    onNavigateToAllSongs: () -> Unit = {}
+    onNavigateToAllSongs: () -> Unit = {},
+    onNavigateToTemplatePreviewerWithSong: (songId: Long) -> Unit = {}
 ) {
     val context = LocalContext.current
     val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
@@ -227,7 +228,8 @@ fun HomeScreen(
                         onNavigateToSearch = onNavigateToSongSearch,
                         onNavigateToSuggestedSongsList = onNavigateToSuggestedSongsList,
                         onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
-                        onNavigateToAssetPicker = onNavigateToAssetPicker
+                        onNavigateToAssetPicker = onNavigateToAssetPicker,
+                        onNavigateToTemplatePreviewerWithSong = onNavigateToTemplatePreviewerWithSong
                     )
                     2 -> ProjectsTabContent(
                         viewModel = projectsViewModel,
@@ -435,12 +437,14 @@ private fun SongsTabContent(
     onNavigateToSearch: () -> Unit = {},
     onNavigateToSuggestedSongsList: () -> Unit = {},
     onNavigateToWeeklyRankingList: () -> Unit = {},
-    onNavigateToAssetPicker: (Long) -> Unit = {}
+    onNavigateToAssetPicker: (Long) -> Unit = {},
+    onNavigateToTemplatePreviewerWithSong: (Long) -> Unit = {}
 ) {
     SongsScreen(
         viewModel = viewModel,
         topBarHeight = topBarHeight,
         onNavigateToAssetPicker = onNavigateToAssetPicker,
+        onNavigateToTemplatePreviewer = onNavigateToTemplatePreviewerWithSong,
         onNavigateToSuggestedAll = onNavigateToSuggestedSongsList,
         onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
         onNavigateToSearch = onNavigateToSearch

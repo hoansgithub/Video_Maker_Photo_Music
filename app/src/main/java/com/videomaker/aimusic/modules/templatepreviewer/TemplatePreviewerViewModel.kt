@@ -6,9 +6,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.VideoTemplate
 
+import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import com.videomaker.aimusic.domain.usecase.LikeTemplateUseCase
@@ -89,8 +91,9 @@ class TemplatePreviewerViewModel(
     imageUrisStr: List<String>,
     /** When >= 0, this song is played on every page and applied on project creation,
      *  overriding each template's embedded song. -1 = use template's own song. */
-    private val overrideSongId: Long = -1L,
+    overrideSongId: Long = -1L,
     private val templateRepository: TemplateRepository,
+    private val songRepository: SongRepository,
     private val createProjectUseCase: CreateProjectUseCase,
     private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase,
     private val likeTemplateUseCase: LikeTemplateUseCase,
@@ -147,6 +150,13 @@ class TemplatePreviewerViewModel(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    // Override song ID (exposed for UI to check if user song should be played)
+    val overrideSongId: StateFlow<Long> = MutableStateFlow(overrideSongId).asStateFlow()
+
+    // User's selected song (for background playback in TemplatePreviewer)
+    private val _userSong = MutableStateFlow<MusicSong?>(null)
+    val userSong: StateFlow<MusicSong?> = _userSong.asStateFlow()
+
     // Pagination tracking
     private var currentOffset = 0
     private var isLoadingMore = false
@@ -181,6 +191,11 @@ class TemplatePreviewerViewModel(
         // Preload scroll interstitial ad (Drama app pattern: preload on entry)
         // Frequency controlled by ACCCore's ad_interstitial_interval_seconds
         preloadScrollInterstitial()
+
+        // Load user's selected song if overrideSongId is provided
+        if (overrideSongId >= 0L) {
+            loadUserSong(overrideSongId)
+        }
     }
 
     // ============================================
@@ -216,10 +231,11 @@ class TemplatePreviewerViewModel(
 
         // Navigate to AssetPicker - user needs to select images
         viewModelScope.launch {
+            val currentOverrideSongId = overrideSongId.value  // Get current value from StateFlow
             _navigationEvent.send(
                 TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
                     template = template,
-                    overrideSongId = overrideSongId,
+                    overrideSongId = currentOverrideSongId,
                     aspectRatio = aspectRatio
                 )
             )
@@ -267,10 +283,11 @@ class TemplatePreviewerViewModel(
                     unlockedTemplatesManager.unlockTemplate(template.id)
                     android.util.Log.d("TemplatePreviewerVM", "✅ Template unlocked: ${template.id}")
 
+                    val currentOverrideSongId = overrideSongId.value  // Get current value from StateFlow
                     _navigationEvent.send(
                         TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
                             template = template,
-                            overrideSongId = overrideSongId,
+                            overrideSongId = currentOverrideSongId,
                             aspectRatio = selectedRatio
                         )
                     )
@@ -439,12 +456,26 @@ class TemplatePreviewerViewModel(
     }
 
     private fun buildSettingsFromTemplate(template: VideoTemplate, aspectRatio: AspectRatio): ProjectSettings {
+        val currentOverrideSongId = overrideSongId.value  // Get current value from StateFlow
         return ProjectSettings(
             effectSetId = template.effectSetId,
-            musicSongId = if (overrideSongId >= 0L) overrideSongId
+            musicSongId = if (currentOverrideSongId >= 0L) currentOverrideSongId
                           else template.songId.takeIf { it > 0L },
             aspectRatio = aspectRatio
         )
+    }
+
+    private fun loadUserSong(songId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            songRepository.getSongById(songId)
+                .onSuccess { song ->
+                    _userSong.value = song
+                    android.util.Log.d("TemplatePreviewerVM", "✅ Loaded user song: ${song.name}")
+                }
+                .onFailure { e ->
+                    android.util.Log.e("TemplatePreviewerVM", "❌ Failed to load user song: $songId", e)
+                }
+        }
     }
 
     companion object {
