@@ -50,19 +50,19 @@ class LanguageConfigService(
     private val remotePriorities = mutableMapOf<String, List<String>>()
 
     /**
-     * Sort languages based on user's country and configured priorities.
+     * Sort languages based on device language and user's country.
      *
      * Language source priority:
      * 1. Remote Config languages (if available)
      * 2. Hardcoded fallback languages
      *
      * Sorting priority:
-     * 1. SIM card country (most reliable)
-     * 2. Network country (fallback)
-     * 3. System locale country (second fallback)
-     * 4. Device language (last fallback)
+     * 1. Device language (TOP PRIORITY - respects user's explicit choice)
+     * 2. SIM card country (location-based)
+     * 3. Network country (fallback)
+     * 4. System locale country (second fallback)
      *
-     * @return Sorted list with prioritized languages first, rest alphabetically
+     * @return Sorted list with device language first, then country priorities, rest after
      */
     fun getSortedLanguages(): List<SupportedLanguage> {
         // Use remote languages if available, otherwise fallback to hardcoded
@@ -72,8 +72,29 @@ class LanguageConfigService(
             LanguageManager.getAllLanguages()
         }
 
+        // Get device language (top priority)
+        val deviceLanguage = getDeviceLanguage()
+        android.util.Log.d(TAG, "📱 Device language for sorting: $deviceLanguage")
+
+        // Check if device language is in available languages
+        val deviceLanguageAvailable = deviceLanguage?.let { lang ->
+            availableLanguages.any { it.code == lang }
+        } ?: false
+        android.util.Log.d(TAG, "🔍 Device language available in list: $deviceLanguageAvailable")
+        android.util.Log.d(TAG, "📚 Available language codes: ${availableLanguages.map { it.code }}")
+
+        // Get country-based priorities
         val country = detectUserCountry()
-        val priorityCodes = getLanguagePriorityForCountry(country)
+        android.util.Log.d(TAG, "🌍 Detected country: $country")
+
+        val countryPriorities = getLanguagePriorityForCountry(country)
+        android.util.Log.d(TAG, "🎯 Country priorities: $countryPriorities")
+
+        // Combine: device language first (only if available), then country priorities (excluding device language to avoid duplicates)
+        val priorityCodes = listOfNotNull(deviceLanguage?.takeIf { deviceLanguageAvailable }) +
+                           countryPriorities.filter { it != deviceLanguage }
+
+        android.util.Log.d(TAG, "🔢 Final priority codes: $priorityCodes")
 
         // Prioritized languages (maintain priority order)
         val prioritized = priorityCodes.mapNotNull { code ->
@@ -83,7 +104,39 @@ class LanguageConfigService(
         // Rest of languages (not in priority list)
         val rest = availableLanguages.filter { it.code !in priorityCodes }
 
-        return prioritized + rest
+        val result = prioritized + rest
+        android.util.Log.d(TAG, "📋 Sorted languages: ${result.map { it.code }}")
+
+        return result
+    }
+
+    /**
+     * Get device's current language setting.
+     *
+     * @return Language code (e.g., "en", "es", "fil") or null if unsupported
+     */
+    private fun getDeviceLanguage(): String? {
+        val config = context.resources.configuration
+        val locale = ConfigurationCompat.getLocales(config).get(0)
+        val rawCode = locale?.language
+
+        android.util.Log.d(TAG, "🌐 Device locale: $locale")
+        android.util.Log.d(TAG, "🌐 Raw language code: $rawCode")
+
+        if (rawCode == null) {
+            android.util.Log.w(TAG, "⚠️ No device language detected")
+            return null
+        }
+
+        // Handle legacy language codes
+        val deviceCode = when (rawCode) {
+            "tl" -> "fil"  // Android/Java reports Tagalog for Filipino
+            "in" -> "id"   // Java legacy ISO 639-1 code for Indonesian
+            else -> rawCode
+        }
+
+        android.util.Log.d(TAG, "✅ Device language: $deviceCode")
+        return deviceCode
     }
 
     /**
