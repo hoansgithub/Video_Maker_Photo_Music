@@ -181,7 +181,7 @@ fun LanguageSelectionScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Color(0xFF1A1A1A))
             .windowInsetsPadding(
                 WindowInsets.safeDrawing.only(
                     WindowInsetsSides.Horizontal + WindowInsetsSides.Top
