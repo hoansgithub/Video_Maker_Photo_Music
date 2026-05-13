@@ -147,6 +147,7 @@
     <string name="editor_music_trim_skip_to_start">শুরুতে যান</string>
     <string name="editor_music_trim_skip_to_end">শেষে যান</string>
     <string name="editor_photos_count">%d টি ছবি</string>
+    <string name="editor_photos_label">ফটো</string>
     <string name="editor_save_dialog_title">প্রজেক্ট সংরক্ষণ করবেন?</string>
     <string name="editor_save_dialog_message">আপনার প্রজেক্ট সংরক্ষিত হবে এবং আমার প্রজেক্টে পাওয়া যাবে।</string>
     <string name="editor_save_and_exit">সংরক্ষণ করুন এবং বের হন</string>

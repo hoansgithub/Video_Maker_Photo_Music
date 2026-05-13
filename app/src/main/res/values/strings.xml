@@ -147,6 +147,7 @@
     <string name="editor_music_trim_skip_to_start">Jump to Start</string>
     <string name="editor_music_trim_skip_to_end">Jump to End</string>
     <string name="editor_photos_count">%d photos</string>
+    <string name="editor_photos_label">Photos</string>
     <string name="editor_save_dialog_title">Save Project?</string>
     <string name="editor_save_dialog_message">Your project will be saved and available in My Projects.</string>
     <string name="editor_save_and_exit">Save &amp; Exit</string>

@@ -212,12 +212,13 @@ internal fun ImagesBottomSheet(
                                 dropIndex = rawIndex.toInt().coerceIn(0, assets.size)
                             },
                             onDragEnd = {
-                                if (draggedAssetId != null && dropIndex != null) {
+                                val finalDropIndex = dropIndex
+                                if (draggedAssetId != null && finalDropIndex != null) {
                                     val fromIndex = assets.indexOfFirst { it.id == draggedAssetId }
-                                    if (fromIndex != -1 && dropIndex!! != fromIndex) {
+                                    if (fromIndex != -1 && finalDropIndex != fromIndex) {
                                         val newList = assets.toMutableList()
                                         val item = newList.removeAt(fromIndex)
-                                        val targetIndex = if (dropIndex!! > fromIndex) dropIndex!! - 1 else dropIndex!!
+                                        val targetIndex = if (finalDropIndex > fromIndex) finalDropIndex - 1 else finalDropIndex
                                         newList.add(targetIndex.coerceIn(0, newList.size), item)
                                         assets = newList
                                     }

@@ -142,6 +142,7 @@
     <string name="editor_music_trim_skip_to_start">Ir para o Início</string>
     <string name="editor_music_trim_skip_to_end">Ir para o Final</string>
     <string name="editor_photos_count">%d fotos</string>
+    <string name="editor_photos_label">Fotos</string>
     <string name="editor_save_dialog_title">Salvar Projeto?</string>
     <string name="editor_save_dialog_message">Seu projeto será salvo e ficará disponível em Meus Projetos.</string>
     <string name="editor_save_and_exit">Salvar e Sair</string>

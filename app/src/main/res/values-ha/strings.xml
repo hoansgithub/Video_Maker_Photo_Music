@@ -147,6 +147,7 @@
     <string name="editor_music_trim_skip_to_start">Tsallake zuwa Farko</string>
     <string name="editor_music_trim_skip_to_end">Tsallake zuwa Ƙarshe</string>
     <string name="editor_photos_count">Hotuna %d</string>
+    <string name="editor_photos_label">Hotuna</string>
     <string name="editor_save_dialog_title">Adana Aiki?</string>
     <string name="editor_save_dialog_message">Za a adana aikin ku kuma za a samu a Ayyukana.</string>
     <string name="editor_save_and_exit">Adana &amp; Fita</string>

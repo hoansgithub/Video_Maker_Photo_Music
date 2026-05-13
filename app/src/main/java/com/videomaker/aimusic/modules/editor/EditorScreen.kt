@@ -124,7 +124,7 @@ fun EditorScreen(
     onNavigateBack: () -> Unit,
     onNavigateToPreview: (String) -> Unit,
     onNavigateToExport: (String, com.videomaker.aimusic.domain.model.VideoQuality) -> Unit,
-    onNavigateToAddAssets: (String) -> Unit
+    onNavigateToAddAssets: (String, List<String>) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val shouldPresentQualityAd by viewModel.shouldPresentQualityAd.collectAsStateWithLifecycle()
@@ -322,6 +322,8 @@ fun EditorScreen(
     }
     val isPreviewBuilding =
         previewState is com.videomaker.aimusic.modules.editor.components.PreviewState.Building
+    val isProcessingAudio = (uiState as? EditorUiState.Success)?.isProcessingAudio == true
+    val showComposingOverlay = isPreviewBuilding || isProcessingAudio
 
     Column(
         modifier = Modifier
@@ -337,7 +339,7 @@ fun EditorScreen(
                     val selectedQuality = successState?.selectedQuality ?: VideoQuality.DEFAULT
                     EditorTopBar(
                         selectedQuality = selectedQuality,
-                        canExport = !isPreviewBuilding &&
+                        canExport = !showComposingOverlay &&
                                 (successState?.isMusicCached ?: true) &&
                                 !(successState?.isCachingMusic ?: false),
                         isQualityLocked = viewModel.isQualityLocked(selectedQuality),
@@ -379,7 +381,7 @@ fun EditorScreen(
                 },
                 containerColor = SplashBackground, // #101010 (closest to #101313)
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                modifier = if (isPreviewBuilding) Modifier.blur(16.dp) else Modifier
+                modifier = if (showComposingOverlay) Modifier.blur(16.dp) else Modifier
             ) { paddingValues ->
                 when (val state = uiState) {
                     is EditorUiState.Loading -> {
@@ -715,6 +717,17 @@ fun EditorScreen(
                 )
             }
 
+            // Collect selections from AssetPicker via Flow
+            // Flow-based approach: reactive, no polling, no cancellation issues
+            LaunchedEffect(Unit) {
+                com.videomaker.aimusic.modules.picker.AssetSelectionCache.selectionFlow.collect { selectedUris ->
+                    android.util.Log.d("EditorScreen", "✅ Received ${selectedUris.size} selected assets from AssetPicker")
+                    viewModel.replaceAssetsFromUris(selectedUris)
+                    isEditingImages = false
+                    showImagesSheet = false
+                }
+            }
+
             // Images Bottom Sheet
             if (showImagesSheet) {
                 val successState = uiState as? EditorUiState.Success
@@ -727,14 +740,6 @@ fun EditorScreen(
                         }
                     }
 
-                    // Watch for asset changes while editing (from asset picker returning)
-                    LaunchedEffect(successState.project.assets.size, isEditingImages) {
-                        if (isEditingImages && successState.pendingAssets != null) {
-                            // Assets changed (new images added from picker), update pending assets
-                            viewModel.setPendingAssets(successState.project.assets)
-                        }
-                    }
-
                     ImagesBottomSheet(
                         currentAssets = successState.displayAssets,
                         onDismiss = {
@@ -743,9 +748,9 @@ fun EditorScreen(
                             showImagesSheet = false
                         },
                         onAddImages = {
-                            // Keep editing mode active, navigate to asset picker
-                            onNavigateToAddAssets(successState.project.id)
-                            // Don't close sheet - it will reopen with new assets
+                            // Navigate to asset picker in editing mode
+                            val currentAssetUris = successState.displayAssets.map { it.uri.toString() }
+                            onNavigateToAddAssets(successState.project.id, currentAssetUris)
                         },
                         onConfirm = { updatedAssets ->
                             scope.launch {
@@ -760,7 +765,7 @@ fun EditorScreen(
             }
 
             // Fullscreen Processing Overlay - blocks all interactions, content is blurred
-            if (isPreviewBuilding) {
+            if (showComposingOverlay) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

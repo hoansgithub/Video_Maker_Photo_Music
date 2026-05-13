@@ -144,6 +144,7 @@
     <string name="editor_music_trim_skip_to_start">शुरुआत पर जाएं</string>
     <string name="editor_music_trim_skip_to_end">अंत पर जाएं</string>
     <string name="editor_photos_count">%d फ़ोटो</string>
+    <string name="editor_photos_label">फ़ोटो</string>
     <string name="editor_save_dialog_title">प्रोजेक्ट सहेजें?</string>
     <string name="editor_save_dialog_message">आपका प्रोजेक्ट सहेजा जाएगा और मेरे प्रोजेक्ट्स में उपलब्ध होगा।</string>
     <string name="editor_save_and_exit">सहेजें और बाहर निकलें</string>

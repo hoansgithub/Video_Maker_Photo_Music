@@ -441,7 +441,9 @@ class AssetPickerViewModelFactory(
         templateId: String? = null,
         overrideSongId: Long = -1L,
         aspectRatio: com.videomaker.aimusic.domain.model.AspectRatio? = null,
-        resumeDraftId: String? = null
+        resumeDraftId: String? = null,
+        selectedAssetUris: List<String> = emptyList(),
+        isEditingMode: Boolean = false
     ): AssetPickerViewModel {
         return AssetPickerViewModel(
             context = application,
@@ -456,7 +458,9 @@ class AssetPickerViewModelFactory(
             templateId = templateId,
             overrideSongId = overrideSongId,
             aspectRatio = aspectRatio,
-            resumeDraftId = resumeDraftId
+            resumeDraftId = resumeDraftId,
+            selectedAssetUris = selectedAssetUris,
+            isEditingMode = isEditingMode
         )
     }
 }
@@ -476,6 +480,7 @@ class EditorViewModelFactory(
     private val songRepository: SongRepository,
     private val effectSetRepository: EffectSetRepository,
     private val beatSyncRepository: BeatSyncRepository,
+    private val projectRepository: ProjectRepository,
     private val adsLoaderService: AdsLoaderService,
     private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService,
     private val adPlacementConfigService: com.videomaker.aimusic.core.ads.AdPlacementConfigService
@@ -496,6 +501,7 @@ class EditorViewModelFactory(
             songRepository = songRepository,
             effectSetRepository = effectSetRepository,
             beatSyncRepository = beatSyncRepository,
+            projectRepository = projectRepository,
             adsLoaderService = adsLoaderService,
             audioPreprocessingService = audioPreprocessingService,
             adPlacementConfigService = adPlacementConfigService
@@ -846,6 +852,7 @@ val presentationModule = module {
             updateSettingsUseCase = get(),
             addAssetsUseCase = get(),
             removeAssetUseCase = get(),
+            projectRepository = get(),
             songRepository = get(),
             effectSetRepository = get(),
             beatSyncRepository = get(),

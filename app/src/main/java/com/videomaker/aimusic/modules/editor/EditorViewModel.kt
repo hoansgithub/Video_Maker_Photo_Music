@@ -61,7 +61,8 @@ sealed class EditorUiState {
         val selectedQuality: VideoQuality = VideoQuality.DEFAULT,
         val effectSetName: String = "Effect",
         val isMusicCached: Boolean = true, // Music fully downloaded and ready for export
-        val isCachingMusic: Boolean = false // Currently downloading music to cache
+        val isCachingMusic: Boolean = false, // Currently downloading music to cache
+        val isProcessingAudio: Boolean = false // Currently preprocessing audio with fadeout
     ) : EditorUiState() {
         val hasPendingChanges: Boolean get() = pendingSettings != null || pendingAssets != null || isUnsavedProject
         val displaySettings: ProjectSettings get() = pendingSettings ?: project.settings
@@ -122,6 +123,7 @@ class EditorViewModel(
     private val songRepository: SongRepository,
     private val effectSetRepository: EffectSetRepository,
     private val beatSyncRepository: com.videomaker.aimusic.domain.repository.BeatSyncRepository,
+    private val projectRepository: com.videomaker.aimusic.domain.repository.ProjectRepository,
     private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
     private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService,
     private val adPlacementConfigService: AdPlacementConfigService
@@ -1055,6 +1057,136 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
             _uiState.value = currentState.copy(pendingAssets = null)
+        }
+    }
+
+    /**
+     * Replace project assets with selected URIs from AssetPicker (editing mode)
+     * Handles both existing assets (reordered) and new assets (added from gallery)
+     * Triggers only ONE video rebuild
+     */
+    suspend fun replaceAssetsFromUris(selectedUris: List<String>) {
+        val currentState = _uiState.value
+        if (currentState !is EditorUiState.Success) return
+
+        android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Processing ${selectedUris.size} URIs")
+
+        // Map existing assets by URI for quick lookup
+        val existingAssetsByUri = currentState.project.assets.associateBy { it.uri.toString() }
+
+        // Build final asset list maintaining selection order
+        val finalAssets = selectedUris.mapIndexedNotNull { index, uriString ->
+            // Try to use existing asset first (preserves ID and metadata)
+            existingAssetsByUri[uriString]?.copy(orderIndex = index)
+                ?: android.net.Uri.parse(uriString)?.let { uri ->
+                    // New asset - create with new ID
+                    Asset(
+                        id = UUID.randomUUID().toString(),
+                        uri = uri,
+                        orderIndex = index
+                    )
+                }
+        }
+
+        if (finalAssets.isEmpty()) {
+            android.util.Log.w("EditorViewModel", "replaceAssetsFromUris: No valid assets to apply")
+            return
+        }
+
+        // Check if assets actually changed to avoid unnecessary rebuild
+        val currentAssetUris = currentState.project.assets.map { it.uri.toString() }
+        if (currentAssetUris == selectedUris) {
+            android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Assets unchanged, skipping update")
+            // Clear pending assets but don't update project
+            _uiState.value = currentState.copy(pendingAssets = null)
+            return
+        }
+
+        // Recalculate duration and reprocess audio if beat-sync music is present
+        val beatSyncData = currentState.project.settings.beatSyncData
+        val updatedSettings = if (beatSyncData != null && currentState.project.settings.musicSongId != null) {
+            val newDuration = Project.calculateBeatSyncDuration(
+                beatData = beatSyncData,
+                assetCount = finalAssets.size,
+                trimStartMs = currentState.project.settings.hookStartTimeMs
+            ) ?: currentState.project.settings.totalDurationMs
+
+            val durationChanged = newDuration != currentState.project.settings.totalDurationMs
+
+            android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Recalculated duration for ${finalAssets.size} assets: ${newDuration}ms (was ${currentState.project.settings.totalDurationMs}ms)")
+
+            val songId = currentState.project.settings.musicSongId
+            val songUrl = currentState.project.settings.musicSongUrl
+
+            if (durationChanged && songId != null && songUrl != null) {
+                // Show loading overlay during preprocessing
+                _uiState.value = currentState.copy(isProcessingAudio = true)
+
+                // Reprocess audio with new duration and fadeout
+                android.util.Log.d("EditorViewModel", "🎵 replaceAssetsFromUris: Duration changed from ${currentState.project.settings.totalDurationMs}ms to ${newDuration}ms")
+                android.util.Log.d("EditorViewModel", "🎵 Old processedAudioUri: ${currentState.project.settings.processedAudioUri}")
+                android.util.Log.d("EditorViewModel", "🎵 Starting audio preprocessing with new duration...")
+
+                val newProcessedUri = try {
+                    preprocessBeatSyncAudio(
+                        songId = songId,
+                        songUrl = songUrl,
+                        beatSyncData = beatSyncData,
+                        totalDurationMs = newDuration,
+                        baseVolume = currentState.project.settings.audioVolume,
+                        trimStartMs = currentState.project.settings.hookStartTimeMs
+                    )
+                } catch (e: Exception) {
+                    android.util.Log.e("EditorViewModel", "🎵 Audio preprocessing FAILED: ${e.message}", e)
+                    null
+                }
+
+                android.util.Log.d("EditorViewModel", "🎵 New processedAudioUri: $newProcessedUri")
+                android.util.Log.d("EditorViewModel", "🎵 Audio reprocessing complete!")
+
+                currentState.project.settings.copy(
+                    totalDurationMs = newDuration,
+                    processedAudioUri = newProcessedUri  // Updated with new fadeout
+                )
+            } else {
+                android.util.Log.d("EditorViewModel", "⚠️ Duration not changed or no music URL - durationChanged=$durationChanged, musicUrl=${currentState.project.settings.musicSongUrl != null}")
+                currentState.project.settings.copy(totalDurationMs = newDuration)
+            }
+        } else {
+            currentState.project.settings
+        }
+
+        // Apply directly to project - triggers ONE rebuild with updated duration
+        val updatedProject = currentState.project.copy(
+            assets = finalAssets,
+            settings = updatedSettings,
+            updatedAt = System.currentTimeMillis()
+        )
+
+        android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Applying ${finalAssets.size} assets - VIDEO WILL REBUILD")
+
+        _uiState.value = currentState.copy(
+            project = updatedProject,
+            pendingAssets = null,
+            isProcessingAudio = false  // Clear loading overlay
+        )
+
+        // Save to database (unless unsaved project)
+        if (!currentState.isUnsavedProject) {
+            withContext(Dispatchers.IO) {
+                try {
+                    projectRepository.reorderAssets(updatedProject.id, finalAssets)
+                    android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Saved ${finalAssets.size} assets to database")
+
+                    // Save updated settings if duration changed
+                    if (updatedSettings != currentState.project.settings) {
+                        updateSettingsUseCase(updatedProject.id, updatedSettings)
+                        android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Saved updated duration to database")
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("EditorViewModel", "replaceAssetsFromUris: Failed to save - ${e.message}")
+                }
+            }
         }
     }
 

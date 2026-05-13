@@ -142,6 +142,7 @@
     <string name="editor_music_trim_skip_to_start">Tumalon sa Simula</string>
     <string name="editor_music_trim_skip_to_end">Tumalon sa Dulo</string>
     <string name="editor_photos_count">%d larawan</string>
+    <string name="editor_photos_label">Mga Larawan</string>
     <string name="editor_save_dialog_title">I-save ang Proyekto?</string>
     <string name="editor_save_dialog_message">Mase-save ang iyong proyekto at makikita sa Aking mga Proyekto.</string>
     <string name="editor_save_and_exit">I-save at Lumabas</string>

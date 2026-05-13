@@ -147,6 +147,7 @@
     <string name="editor_music_trim_skip_to_start">Fo sí Ìbẹ̀rẹ̀</string>
     <string name="editor_music_trim_skip_to_end">Fo sí Òpin</string>
     <string name="editor_photos_count">Fọ́tò %d</string>
+    <string name="editor_photos_label">Àwọn fọ́tò</string>
     <string name="editor_save_dialog_title">Tọ́jú Iṣẹ́?</string>
     <string name="editor_save_dialog_message">A óò tọ́jú iṣẹ́ rẹ tí ó sì wà nínú Àwọn Iṣẹ́ Mi.</string>
     <string name="editor_save_and_exit">Tọ́jú &amp; Jáde</string>

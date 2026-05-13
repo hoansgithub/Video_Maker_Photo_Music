@@ -61,10 +61,10 @@ internal fun SettingsTabBar(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        // Images button - shows image count
+        // Images button - shows "Photos" label
         SettingsTabButton(
             icon = Icons.Default.Image,
-            label = "$currentImageCount",
+            label = stringResource(R.string.editor_photos_label),
             onClick = onImagesClick,
             modifier = Modifier.width(70.dp)
         )

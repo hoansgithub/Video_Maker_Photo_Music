@@ -414,11 +414,12 @@ fun VideoPreviewPlayer(
         project.settings.aspectRatio,
         project.settings.beatSyncData?.bpm,  // Beat-sync: rebuild when BPM changes
         project.settings.hookStartTimeMs,     // Beat-sync: rebuild when hook start changes
+        project.settings.totalDurationMs,     // Rebuild when duration changes (e.g., asset count changed)
         project.settings.processedAudioUri,   // Beat-sync: rebuild when preprocessed audio ready
         rebuildTrigger
         // audioVolume intentionally excluded - handled separately
     ) {
-        "${project.id}_${project.assets.joinToString(",") { it.id }}_${project.settings.effectSetId}_${project.settings.overlayFrameId}_${project.settings.musicSongId}_${project.settings.customAudioUri}_${project.settings.aspectRatio}_${project.settings.beatSyncData?.bpm}_${project.settings.hookStartTimeMs}_${project.settings.processedAudioUri}_${rebuildTrigger}"
+        "${project.id}_${project.assets.joinToString(",") { it.id }}_${project.settings.effectSetId}_${project.settings.overlayFrameId}_${project.settings.musicSongId}_${project.settings.customAudioUri}_${project.settings.aspectRatio}_${project.settings.beatSyncData?.bpm}_${project.settings.hookStartTimeMs}_${project.settings.totalDurationMs}_${project.settings.processedAudioUri}_${rebuildTrigger}"
     }
 
     // Build composition when key changes
@@ -887,24 +888,6 @@ fun VideoPreviewPlayer(
             }
 
             // Play/Pause button removed - using the one in Music Section instead
-
-            // Asset counter overlay
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp)
-                    .background(
-                        color = Color.Black.copy(alpha = 0.6f),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = "${project.assets.size} photos",
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
         }
     }
 }

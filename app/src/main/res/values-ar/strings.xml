@@ -142,6 +142,7 @@
     <string name="editor_music_trim_skip_to_start">الانتقال إلى البداية</string>
     <string name="editor_music_trim_skip_to_end">الانتقال إلى النهاية</string>
     <string name="editor_photos_count">%d صور</string>
+    <string name="editor_photos_label">صور</string>
     <string name="editor_save_dialog_title">حفظ المشروع؟</string>
     <string name="editor_save_dialog_message">سيتم حفظ مشروعك وسيكون متاحاً في مشاريعي.</string>
     <string name="editor_save_and_exit">حفظ والخروج</string>

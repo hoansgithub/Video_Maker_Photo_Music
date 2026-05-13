@@ -147,6 +147,7 @@
     <string name="editor_music_trim_skip_to_start">Loncat menyang Wiwitan</string>
     <string name="editor_music_trim_skip_to_end">Loncat menyang Pungkasan</string>
     <string name="editor_photos_count">%d foto</string>
+    <string name="editor_photos_label">Foto</string>
     <string name="editor_save_dialog_title">Simpen Proyek?</string>
     <string name="editor_save_dialog_message">Proyek sampeyan bakal disimpen lan kasedhiya ing Proyek Saya.</string>
     <string name="editor_save_and_exit">Simpen &amp; Metu</string>
