@@ -337,7 +337,7 @@ internal fun DynamicCarousel(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .fillMaxHeight(0.5f),
         ) {
             HorizontalPager(
                 state = pagerState,
@@ -385,83 +385,60 @@ internal fun DynamicCarousel(
                     )
                 }
             }
+        }
 
-            // Dot indicators
-            if (totalSlides > 1) {
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 100.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    repeat(totalSlides) { index ->
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(
-                                    if (index == pagerState.currentPage) Color.White
-                                    else Color.White.copy(alpha = 0.4f)
-                                )
-                        )
-                    }
-                }
-            }
-
-            // Title/Subtitle + CTA overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Black.copy(alpha = 0.0f),
-                                Color.Black.copy(alpha = 0.5f),
-                                Color.Black.copy(alpha = 0.75f),
-                                Color.Black.copy(alpha = 1.0f)
-                            )
+        // Title/Subtitle + CTA overlay
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.0f),
+                            Color.Black.copy(alpha = 0.5f),
+                            Color.Black.copy(alpha = 0.75f),
+                            Color.Black.copy(alpha = 1.0f)
                         )
                     )
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 40.dp, bottom = 32.dp)
+                )
+                .padding(horizontal = 24.dp)
+                .padding(top = 40.dp, bottom = 32.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 16.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 16.dp)
-                    ) {
-                        Text(
-                            text = title,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(Modifier.height(12.dp))
-                        Text(
-                            text = subtitle,
-                            fontSize = 16.sp,
-                            color = Color.White.copy(alpha = 0.9f),
-                            lineHeight = 22.sp,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    OnboardingCtaButton(
-                        text = ctaText,
-                        onClick = onCta,
-                        color = Primary,
-                        icon = R.drawable.ic_right_arrow
+                    Text(
+                        text = title,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = subtitle,
+                        fontSize = 16.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        lineHeight = 22.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                OnboardingCtaButton(
+                    text = ctaText,
+                    onClick = onCta,
+                    color = Primary,
+                    icon = R.drawable.ic_right_arrow
+                )
             }
         }
 

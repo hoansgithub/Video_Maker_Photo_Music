@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.LaunchedEffect
@@ -89,6 +90,57 @@ class GenreTemplateActivity : AppCompatActivity() {
                                     )
                                 }
                             }
+
+                            Box(
+                                modifier = Modifier
+                                    .navigationBarsPadding()
+                                    .align(Alignment.BottomEnd)
+                                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                            ) {
+                                when (currentStep) {
+                                    GenreTemplateStep.GENRE_SELECTION -> {
+                                        OnboardingCtaButton(
+                                            text = stringResource(R.string.onboarding_next),
+                                            onClick = {
+                                                if (viewModel.isStep1Valid()) {
+                                                    Analytics.track(
+                                                        name = "music_genre_next",
+                                                        params = mapOf(
+                                                            "genre" to (viewModel.selectedGenre.value?.displayName ?: "")
+                                                        )
+                                                    )
+                                                    viewModel.goToStep2()
+                                                }
+                                            },
+                                            enabled = viewModel.isStep1Valid(),
+                                            color = Primary,
+                                            icon = R.drawable.ic_right_arrow
+                                        )
+                                    }
+
+                                    GenreTemplateStep.TEMPLATE_PICK -> {
+                                        OnboardingCtaButton(
+                                            text = stringResource(R.string.onboarding_next),
+                                            onClick = {
+                                                val template = viewModel.selectedTemplate.value
+                                                    ?: return@OnboardingCtaButton
+                                                if (isSaving) return@OnboardingCtaButton
+                                                isSaving = true
+                                                Analytics.track(
+                                                    name = "vibe_template_next",
+                                                    params = mapOf("template_id" to template.id)
+                                                )
+                                                navigateToFeatureSelection()
+                                            },
+                                            enabled = viewModel.selectedTemplate.value != null && !isSaving,
+                                            color = Primary,
+                                            icon = R.drawable.ic_right_arrow
+                                        )
+                                    }
+
+                                    else -> { /* No button during personalizing */ }
+                                }
+                            }
                         }
 
                         val adPlacement = when (currentStep) {
@@ -101,57 +153,6 @@ class GenreTemplateActivity : AppCompatActivity() {
                             modifier = Modifier.fillMaxWidth(),
                             isDebug = BuildConfig.DEBUG
                         )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .statusBarsPadding()
-                            .align(Alignment.TopEnd)
-                            .padding(horizontal = 24.dp, vertical = 12.dp),
-                    ) {
-                        when (currentStep) {
-                            GenreTemplateStep.GENRE_SELECTION -> {
-                                OnboardingCtaButton(
-                                    text = stringResource(R.string.onboarding_next),
-                                    onClick = {
-                                        if (viewModel.isStep1Valid()) {
-                                            Analytics.track(
-                                                name = "music_genre_next",
-                                                params = mapOf(
-                                                    "genre" to (viewModel.selectedGenre.value?.displayName ?: "")
-                                                )
-                                            )
-                                            viewModel.goToStep2()
-                                        }
-                                    },
-                                    enabled = viewModel.isStep1Valid(),
-                                    color = Primary,
-                                    icon = R.drawable.ic_right_arrow
-                                )
-                            }
-
-                            GenreTemplateStep.TEMPLATE_PICK -> {
-                                OnboardingCtaButton(
-                                    text = stringResource(R.string.onboarding_next),
-                                    onClick = {
-                                        val template = viewModel.selectedTemplate.value
-                                            ?: return@OnboardingCtaButton
-                                        if (isSaving) return@OnboardingCtaButton
-                                        isSaving = true
-                                        Analytics.track(
-                                            name = "vibe_template_next",
-                                            params = mapOf("template_id" to template.id)
-                                        )
-                                        navigateToFeatureSelection()
-                                    },
-                                    enabled = viewModel.selectedTemplate.value != null && !isSaving,
-                                    color = Primary,
-                                    icon = R.drawable.ic_right_arrow
-                                )
-                            }
-
-                            else -> { /* No button during personalizing */ }
-                        }
                     }
                 }
             }
