@@ -21,6 +21,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Tókàn</string>
     <string name="onboarding_get_started">Bẹ̀rẹ̀</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Dúró níwájú pẹ̀lú àwọn àpẹẹrẹ tuntun tí a ń ṣe àgbéyẹwọ̀ lójoojúmọ́.</string>
+    <string name="onboarding_india_page3_title">Mu àwọn àpẹẹrẹ trending lójoojúmọ́</string>
+    <string name="onboarding_india_page3_subtitle">Dúró níwájú pẹ̀lú àwọn àpẹẹrẹ tuntun tí a ń ṣe àgbéyẹwọ̀ lójoojúmọ́.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Ṣẹ Ìyanu ní Ìṣẹ́jú Àáárọ̀</string>
     <string name="onboarding_page1_subtitle">Fídíò tó dára pẹ̀lú ìtẹ̀ díẹ̀. Rọrùn àti yára</string>

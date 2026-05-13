@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -99,29 +100,99 @@ class FeatureSelectionActivity : AppCompatActivity() {
             }
 
             VideoMakerTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier.fillMaxSize()) {
                     // Scrollable content with dynamic bottom padding
-                    FeatureSurveyPage(
-                        selectedFeatures = onboardingViewModel.selectedFeatures,
-                        onFeatureToggle = { selectedFeature ->
-                            onboardingViewModel.toggleFeature(selectedFeature)
-                            onboardingViewModel.selectedFeatures.firstOrNull()?.let { genre ->
-                                Analytics.track(
-                                    name = EVENT_GENRE_SELECT,
-                                    params = mapOf(PARAM_GENRE_SELECT to if (genre == "music_video_instant") "music" else "photo")
-                                )
-                            }
-                        },
-                        bottomPaddingDp = bottomPaddingDp  // Pass dynamic padding
-                    )
+                    Box(modifier = Modifier.weight(1f)) {
+                        FeatureSurveyPage(
+                            selectedFeatures = onboardingViewModel.selectedFeatures,
+                            onFeatureToggle = { selectedFeature ->
+                                onboardingViewModel.toggleFeature(selectedFeature)
+                                onboardingViewModel.selectedFeatures.firstOrNull()?.let { genre ->
+                                    Analytics.track(
+                                        name = EVENT_GENRE_SELECT,
+                                        params = mapOf(PARAM_GENRE_SELECT to if (genre == "music_video_instant") "music" else "photo")
+                                    )
+                                }
+                            },
+                            bottomPaddingDp = bottomPaddingDp  // Pass dynamic padding
+                        )
+                        // Button at top right (outside measured section)
+                        Box(
+                            modifier = Modifier
+                                .navigationBarsPadding()
+                                .align(Alignment.BottomEnd)
+                                .padding(horizontal = 24.dp)
+                        ) {
+                            OnboardingCtaButton(
+                                text = stringResource(R.string.onboarding_get_started),
+                                onClick = {
+                                    if (isSaving) return@OnboardingCtaButton
+                                    isSaving = true
+                                    Analytics.track(
+                                        name = EVENT_GENRE_NEXT,
+                                        params = mapOf(
+                                            PARAM_GENRE_SELECT to toGenreAnalyticsValue(
+                                                onboardingViewModel.selectedFeatures
+                                            )
+                                        )
+                                    )
+                                    onboardingViewModel.saveFeatures { result ->
+                                        runOnUiThread {
+                                            result.onSuccess {
+                                                val selectedFeature =
+                                                    onboardingViewModel.selectedFeatures.firstOrNull()
+                                                val initialTab =
+                                                    mapFeatureToInitialTab(selectedFeature)
+                                                preferencesManager.setHomeInitialTabFromOnboarding(
+                                                    initialTab
+                                                )
+
+                                                // Mark onboarding as COMPLETE (simplified flow)
+                                                // This is the END of the full flow: Language → Onboarding → Feature Selection
+                                                android.util.Log.d(
+                                                    "FeatureSelection",
+                                                    "🎯 Marking onboarding as COMPLETE"
+                                                )
+
+                                                // ✅ Launch coroutine to call suspend function
+                                                lifecycleScope.launch {
+                                                    preferencesManager.setOnboardingComplete(true)
+
+                                                    // Verify it was saved
+                                                    val isComplete =
+                                                        preferencesManager.isOnboardingComplete()
+                                                    android.util.Log.d(
+                                                        "FeatureSelection",
+                                                        "🎯 Verified onboarding complete: $isComplete"
+                                                    )
+
+                                                    navigateToMain(initialTab)
+                                                }
+                                            }.onFailure {
+                                                isSaving = false
+                                                Toast.makeText(
+                                                    this@FeatureSelectionActivity,
+                                                    getString(R.string.root_try_again),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                    }
+                                },
+                                enabled = onboardingViewModel.selectedFeatures.isNotEmpty() && delayedButtonEnabled && !isSaving,
+                                color = Primary,
+                                icon = R.drawable.ic_checkmark
+                            )
+                        }
+                    }
 
                     // Bottom section: Native ad only (measures its own height)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .align(Alignment.BottomCenter)
                             .onSizeChanged { size ->
-                                bottomSectionHeight = size.height  // Measure actual height dynamically!
+                                bottomSectionHeight =
+                                    size.height  // Measure actual height dynamically!
                             }
                     ) {
                         // ALT ad - bottom layer, always at full opacity
@@ -138,63 +209,6 @@ class FeatureSelectionActivity : AppCompatActivity() {
                                 .fillMaxWidth()
                                 .alpha(if (delayedHasSelection) 0f else 1f),
                             isDebug = BuildConfig.DEBUG
-                        )
-                    }
-
-                    // Button at top right (outside measured section)
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(horizontal = 24.dp, vertical = 48.dp)
-                    ) {
-                        OnboardingCtaButton(
-                            text = stringResource(R.string.onboarding_get_started),
-                            onClick = {
-                                if (isSaving) return@OnboardingCtaButton
-                                isSaving = true
-                                Analytics.track(
-                                    name = EVENT_GENRE_NEXT,
-                                    params = mapOf(
-                                        PARAM_GENRE_SELECT to toGenreAnalyticsValue(
-                                            onboardingViewModel.selectedFeatures
-                                        )
-                                    )
-                                )
-                                onboardingViewModel.saveFeatures { result ->
-                                    runOnUiThread {
-                                        result.onSuccess {
-                                            val selectedFeature = onboardingViewModel.selectedFeatures.firstOrNull()
-                                            val initialTab = mapFeatureToInitialTab(selectedFeature)
-                                            preferencesManager.setHomeInitialTabFromOnboarding(initialTab)
-
-                                            // Mark onboarding as COMPLETE (simplified flow)
-                                            // This is the END of the full flow: Language → Onboarding → Feature Selection
-                                            android.util.Log.d("FeatureSelection", "🎯 Marking onboarding as COMPLETE")
-
-                                            // ✅ Launch coroutine to call suspend function
-                                            lifecycleScope.launch {
-                                                preferencesManager.setOnboardingComplete(true)
-
-                                                // Verify it was saved
-                                                val isComplete = preferencesManager.isOnboardingComplete()
-                                                android.util.Log.d("FeatureSelection", "🎯 Verified onboarding complete: $isComplete")
-
-                                                navigateToMain(initialTab)
-                                            }
-                                        }.onFailure {
-                                            isSaving = false
-                                            Toast.makeText(
-                                                this@FeatureSelectionActivity,
-                                                getString(R.string.root_try_again),
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    }
-                                }
-                            },
-                            enabled = onboardingViewModel.selectedFeatures.isNotEmpty() && delayedButtonEnabled && !isSaving,
-                            color = Primary,
-                            icon = R.drawable.ic_checkmark
                         )
                     }
                 }

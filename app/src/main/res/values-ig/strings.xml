@@ -22,6 +22,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Ọzọ</string>
     <string name="onboarding_get_started">Bido</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Gaa n\'ihu nke ụkpụrụ ọhụrụ a na-emegharị kwa ụbọchị, a na-emegharị kwa ụbọchị kwa ụbọchị.</string>
+    <string name="onboarding_india_page3_title">Jidee ụkpụrụ na-ewu kwa ubochị n\'abalị</string>
+    <string name="onboarding_india_page3_subtitle">Gaa n\'ihu nke ụkpụrụ ọhụrụ a na-emegharị kwa ụbọchị, a na-emegharị kwa ụbọchị kwa ụbọchị.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Mepụta Ihe Ọgụgọ N\'ime Sekọnd</string>
     <string name="onboarding_page1_subtitle">Video dị mma n\'ọtụtụ tapụ. Dị mfe ma osiso</string>

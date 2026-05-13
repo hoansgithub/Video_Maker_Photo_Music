@@ -224,4 +224,14 @@
     <key>ad_quality_1080p_type</key>
     <value>interstitial</value>
   </entry>
+
+  <!-- Onboarding Dynamic Content -->
+  <entry>
+    <key>onboarding_page1_template_id</key>
+    <value></value>
+  </entry>
+  <entry>
+    <key>onboarding_page2_song_id</key>
+    <value>0</value>
+  </entry>
 </defaults>

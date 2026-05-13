@@ -18,6 +18,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Próximo</string>
     <string name="onboarding_get_started">Começar</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Mantenha-se à frente com modelos frescos e prontos para usar atualizados todos os dias.</string>
+    <string name="onboarding_india_page3_title">Acompanhe os modelos em tendências diariamente</string>
+    <string name="onboarding_india_page3_subtitle">Mantenha-se à frente com modelos frescos e prontos para usar atualizados todos os dias.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Crie Magia em Segundos</string>
     <string name="onboarding_page1_subtitle">Vídeos incríveis em poucos cliques. Fácil e rápido.</string>

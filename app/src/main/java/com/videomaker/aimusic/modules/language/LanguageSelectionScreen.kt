@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -195,38 +196,133 @@ fun LanguageSelectionScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(
-                    top = 16.dp,
-                    bottom = bottomPaddingDp + 24.dp  // Dynamic padding based on measured bottom section height
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (showBackButton) {
-                // Top bar with back button (left) and done button (right)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp)
+                        .padding(
+                            top = 16.dp,
+                            bottom = bottomPaddingDp + 24.dp  // Dynamic padding based on measured bottom section height
+                        ),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
+                    if (showBackButton) {
+                        // Top bar with back button (left) and done button (right)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = onBackClick) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = stringResource(R.string.back),
+                                    tint = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
+
+                            // Done button in top right
+                            Box(
+                                modifier = Modifier.onGloballyPositioned { coords ->
+                                    val topLeft = coords.positionInRoot()
+                                    ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
+                                }
+                            ) {
+                                OnboardingCtaButton(
+                                    text = stringResource(R.string.done),
+                                    onClick = {
+                                        onContinue.invoke()
+                                        selectedLanguage?.let {
+                                            Analytics.track(
+                                                name = "language_next",
+                                                params = mapOf(
+                                                    "language" to it
+                                                )
+                                            )
+                                        }
+                                    },
+                                    color = Primary,
+                                    enabled = selectedLanguage != null && delayedButtonEnabled
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    } else {
+                        Spacer(modifier = Modifier.height(70.dp))
                     }
 
-                    // Done button in top right
-                    Box(
-                        modifier = Modifier.onGloballyPositioned { coords ->
-                            val topLeft = coords.positionInRoot()
-                            ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
+                    Text(
+                        text = stringResource(R.string.language_select_title),
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = stringResource(R.string.language_select_subtitle),
+                        fontSize = 17.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(36.dp))
+
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        languages.forEach { language ->
+                            LanguageCard(
+                                language = language,
+                                isSelected = selectedLanguage == language.code,
+                                modifier = Modifier.onGloballyPositioned { coords ->
+                                    val topLeft = coords.positionInRoot()
+                                    languageCardOffsets[language.code] =
+                                        topLeft + Offset(coords.size.width / 2f, 0f)
+                                },
+                                onClick = {
+                                    selectedLanguage = language.code
+                                    onLanguageSelected(language.code)
+                                    Analytics.track(
+                                        name = "language_select",
+                                        params = mapOf(
+                                            "language" to language.code
+                                        )
+                                    )
+                                }
+                            )
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+                // Top-right button for settings flow (outside bottom section)
+                if (!showBackButton) {
+                    Box(
+                        modifier = Modifier
+                            .navigationBarsPadding()
+                            .align(Alignment.BottomEnd)
+                            .padding(24.dp)
+                            .onGloballyPositioned { coords ->
+                                val topLeft = coords.positionInRoot()
+                                ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
+                            }
                     ) {
                         OnboardingCtaButton(
-                            text = stringResource(R.string.done),
+                            text = stringResource(R.string.onboarding_next),
+                            icon = R.drawable.ic_right_arrow,
+                            color = Primary,
                             onClick = {
                                 onContinue.invoke()
                                 selectedLanguage?.let {
@@ -238,119 +334,34 @@ fun LanguageSelectionScreen(
                                     )
                                 }
                             },
-                            color = Primary,
                             enabled = selectedLanguage != null && delayedButtonEnabled
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-            } else {
-                Spacer(modifier = Modifier.height(70.dp))
             }
 
-            Text(
-                text = stringResource(R.string.language_select_title),
-                fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = stringResource(R.string.language_select_subtitle),
-                fontSize = 17.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(36.dp))
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                languages.forEach { language ->
-                    LanguageCard(
-                        language = language,
-                        isSelected = selectedLanguage == language.code,
-                        modifier = Modifier.onGloballyPositioned { coords ->
-                            val topLeft = coords.positionInRoot()
-                            languageCardOffsets[language.code] = topLeft + Offset(coords.size.width / 2f, 0f)
-                        },
-                        onClick = {
-                            selectedLanguage = language.code
-                            onLanguageSelected(language.code)
-                            Analytics.track(
-                                name = "language_select",
-                                params = mapOf(
-                                    "language" to language.code
-                                )
-                            )
-                        }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        // Bottom section: Native ad only (button moved to top right for showBackButton=true)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .onSizeChanged { size ->
-                    bottomSectionHeight = size.height  // Measure actual height dynamically!
-                }
-        ) {
-            // ALT ad - bottom layer, always at full opacity
-            NativeAdView(
-                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
-                modifier = Modifier.fillMaxWidth(),
-                isDebug = BuildConfig.DEBUG
-            )
-
-            // PRIMARY ad - top layer, fades out when user selects
-            NativeAdView(
-                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .alpha(if (delayedHasSelection) 0f else 1f),
-                isDebug = BuildConfig.DEBUG
-            )
-        }
-
-        // Top-right button for settings flow (outside bottom section)
-        if (!showBackButton) {
+            // Bottom section: Native ad only (button moved to top right for showBackButton=true)
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(24.dp)
-                    .onGloballyPositioned { coords ->
-                        val topLeft = coords.positionInRoot()
-                        ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
+                    .fillMaxWidth()
+                    .onSizeChanged { size ->
+                        bottomSectionHeight = size.height  // Measure actual height dynamically!
                     }
             ) {
-                OnboardingCtaButton(
-                    text = stringResource(R.string.onboarding_next),
-                    icon = R.drawable.ic_right_arrow,
-                    color = Primary,
-                    onClick = {
-                        onContinue.invoke()
-                        selectedLanguage?.let {
-                            Analytics.track(
-                                name = "language_next",
-                                params = mapOf(
-                                    "language" to it
-                                )
-                            )
-                        }
-                    },
-                    enabled = selectedLanguage != null && delayedButtonEnabled
+                // ALT ad - bottom layer, always at full opacity
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
+                )
+
+                // PRIMARY ad - top layer, fades out when user selects
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .alpha(if (delayedHasSelection) 0f else 1f),
+                    isDebug = BuildConfig.DEBUG
                 )
             }
         }
@@ -489,7 +500,7 @@ internal fun OnboardingCtaButton(
             color = color
         )
 
-        icon?.let { 
+        icon?.let {
             Icon(
                 painter = painterResource(it),
                 contentDescription = null,

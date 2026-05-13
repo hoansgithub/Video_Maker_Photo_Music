@@ -18,6 +18,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Susunod</string>
     <string name="onboarding_get_started">Magsimula</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Maging hari nai-update na sari at handang gamitin na mga template na pangunguna sa uso.</string>
+    <string name="onboarding_india_page3_title">Makuha sa mga trending template araw-araw</string>
+    <string name="onboarding_india_page3_subtitle">Maging hari nai-update na sari at handang gamitin na mga template na pangunguna sa uso.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Gumawa ng Mahika sa Ilang Segundo</string>
     <string name="onboarding_page1_subtitle">Kamangha-manghang video sa ilang click. Madali at mabilis.</string>

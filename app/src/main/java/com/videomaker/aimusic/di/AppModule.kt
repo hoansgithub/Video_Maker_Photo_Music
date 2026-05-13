@@ -809,6 +809,28 @@ val presentationModule = module {
         )
     }
 
+    // Onboarding Content ViewModel — registered as a singleton so that the
+    // preload kicked off in LanguageSelectionActivity stays alive and its state
+    // is visible to OnboardingActivity (the spec's "centralized" intent). Using
+    // viewModel { } would create a fresh per-Activity instance and lose the data.
+    single {
+        com.videomaker.aimusic.modules.onboarding.OnboardingContentViewModel(
+            application = androidContext() as android.app.Application,
+            templateRepository = get(),
+            songRepository = get(),
+            regionProvider = get(),
+            remoteConfig = get()
+        )
+    }
+
+    // Genre Template Onboarding ViewModel
+    viewModel {
+        com.videomaker.aimusic.modules.genretemplate.GenreTemplateViewModel(
+            templateRepository = get(),
+            songRepository = get()
+        )
+    }
+
     // Song Search ViewModel
     viewModel {
         SongSearchViewModel(

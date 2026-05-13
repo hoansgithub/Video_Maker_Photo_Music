@@ -21,6 +21,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Weiter</string>
     <string name="onboarding_get_started">Loslegen</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Bleib mit frischen, einsatzbereiten Vorlagen, die täglich aktualisiert werden, einen Schritt voraus.</string>
+    <string name="onboarding_india_page3_title">Tägliche trendige Vorlagen entdecken</string>
+    <string name="onboarding_india_page3_subtitle">Bleib mit frischen, einsatzbereiten Vorlagen, die täglich aktualisiert werden, einen Schritt voraus.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Magie in Sekunden erschaffen</string>
     <string name="onboarding_page1_subtitle">Atemberaubende Videos mit wenigen Tipps. Einfach und schnell</string>

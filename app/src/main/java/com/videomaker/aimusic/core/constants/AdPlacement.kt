@@ -603,6 +603,42 @@ object AdPlacement {
     const val NATIVE_TEMPLATE_RATIO_SHEET = "ad_native_template_ratio_sheet"
 
     /**
+     * Native ad shown at bottom of onboarding genre selection screen.
+     * NA_high_select_music (primary) → NA_all_select_music (secondary waterfall).
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/3016683795  (NA_high_select_music)
+     * - Secondary: ca-app-pub-7121075950716954/8624233693  (NA_all_select_music)
+     *
+     * Remote Config key: ad_native_onboarding_select_music
+     */
+    const val NATIVE_ONBOARDING_SELECT_MUSIC = "ad_native_onboarding_select_music"
+
+    /**
+     * Native ad shown at bottom of onboarding template pick screen.
+     * NA_high_select_tpt (primary) → NA_all_select_tpt (secondary waterfall).
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/3543297405  (NA_high_select_tpt)
+     * - Secondary: ca-app-pub-7121075950716954/7166847649  (NA_all_select_tpt)
+     *
+     * Remote Config key: ad_native_onboarding_select_tpt
+     */
+    const val NATIVE_ONBOARDING_SELECT_TPT = "ad_native_onboarding_select_tpt"
+
+    /**
+     * Native ad shown at bottom of onboarding personalizing/loading screen.
+     * NA_high_personalizing (primary) → NA_all_personalizing (secondary waterfall).
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/8979456910  (NA_high_personalizing)
+     * - Secondary: ca-app-pub-7121075950716954/8646238825  (NA_all_personalizing)
+     *
+     * Remote Config key: ad_native_onboarding_personalizing
+     */
+    const val NATIVE_ONBOARDING_PERSONALIZING = "ad_native_onboarding_personalizing"
+
+    /**
      * Rewarded ad shown when user wants to download video to gallery.
      * Timing: User clicks download button → dialog appears → user watches ad → download proceeds.
      * User MUST watch the full ad to earn the reward (download permission).
@@ -795,6 +831,9 @@ object AdPlacement {
         NATIVE_TEMPLATE_PREVIEWER_LOADING,
         NATIVE_TEMPLATE_RATIO_SHEET,
         NATIVE_EXPORT_GENERATING,
+        NATIVE_ONBOARDING_SELECT_MUSIC,
+        NATIVE_ONBOARDING_SELECT_TPT,
+        NATIVE_ONBOARDING_PERSONALIZING,
         REWARD_DOWNLOAD_VIDEO,
         REWARD_REMOVE_WATERMARK,
         REWARD_UNLOCK_QUALITY,
