@@ -51,6 +51,10 @@ class GenreTemplateActivity : AppCompatActivity() {
             var isSaving by remember { mutableStateOf(false) }
             val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
 
+            LaunchedEffect(Unit) {
+                viewModel.navToNext.collect { navigateToFeatureSelection() }
+            }
+
             LaunchedEffect(currentStep) {
                 when (currentStep) {
                     GenreTemplateStep.TEMPLATE_PICK -> Analytics.track(name = "vibe_template_render")
@@ -132,7 +136,7 @@ class GenreTemplateActivity : AppCompatActivity() {
                                                         viewModel.goToStep2()
                                                     }
                                                 },
-                                                enabled = viewModel.isStep1Valid(),
+                                                enabled = viewModel.isStep1Valid() && !viewModel.isTemplatesLoading.value,
                                                 color = Primary,
                                                 icon = R.drawable.ic_right_arrow
                                             )
@@ -165,16 +169,23 @@ class GenreTemplateActivity : AppCompatActivity() {
                             }
                         }
 
+                        val stepEnabled = when (currentStep) {
+                            GenreTemplateStep.GENRE_SELECTION -> viewModel.isGenreSelectionEnabled
+                            GenreTemplateStep.PERSONALIZING -> viewModel.isPersonalizingEnabled
+                            GenreTemplateStep.TEMPLATE_PICK -> viewModel.isTemplatePickEnabled
+                        }
                         val adPlacement = when (currentStep) {
                             GenreTemplateStep.GENRE_SELECTION -> AdPlacement.NATIVE_ONBOARDING_SELECT_MUSIC
                             GenreTemplateStep.PERSONALIZING -> AdPlacement.NATIVE_ONBOARDING_PERSONALIZING
                             GenreTemplateStep.TEMPLATE_PICK -> AdPlacement.NATIVE_ONBOARDING_SELECT_TPT
                         }
-                        NativeAdView(
-                            placement = adPlacement,
-                            modifier = Modifier.fillMaxWidth(),
-                            isDebug = BuildConfig.DEBUG
-                        )
+                        if (stepEnabled) {
+                            NativeAdView(
+                                placement = adPlacement,
+                                modifier = Modifier.fillMaxWidth(),
+                                isDebug = BuildConfig.DEBUG
+                            )
+                        }
                     }
                 }
             }
