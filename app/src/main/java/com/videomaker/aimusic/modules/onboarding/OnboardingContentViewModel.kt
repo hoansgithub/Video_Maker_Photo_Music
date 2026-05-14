@@ -155,10 +155,10 @@ class OnboardingContentViewModel(
     }
 
     private fun localPage1(): Int =
-        if (isInGeo) R.drawable.img_onb1_in else R.drawable.ob_page1
+        if (isInGeo) R.drawable.img_fall_back_onb1 else R.drawable.ob_page1
 
     private fun localPage2(): Int =
-        if (isInGeo) R.drawable.img_onb2_in else R.drawable.ob_page2
+        if (isInGeo) R.drawable.img_fall_back_onb2 else R.drawable.img_song1
 
     companion object {
         private const val TAG = "OnboardingContentVM"
