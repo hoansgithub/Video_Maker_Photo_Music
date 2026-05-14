@@ -97,8 +97,8 @@ class VideoExportWorker(
                 android.util.Log.d("VideoExportWorker", "Beat-sync data loaded: BPM=${beatSyncData.bpm}, duration=${totalDurationMs}ms")
             }
 
-            // Always re-preprocess for export to apply current audioVolume.
-            // processedAudioUri is a preview-only cache; its baked-in volume may be stale.
+            // Re-preprocess to ensure processedAudioUri points to a valid cached file.
+            // Volume is applied by VolumeAudioProcessor in CompositionFactory, NOT baked in here.
             if (project.settings.musicSongId != null &&
                 project.settings.musicSongUrl != null &&
                 project.settings.beatSyncData != null) {
@@ -115,8 +115,7 @@ class VideoExportWorker(
                     songId = project.settings.musicSongId,
                     trimStartMs = hookStartTimeMs,
                     totalDurationMs = project.settings.totalDurationMs,
-                    fadeoutDurationMs = fadeoutDurationMs,
-                    baseVolume = project.settings.audioVolume
+                    fadeoutDurationMs = fadeoutDurationMs
                 )
 
                 if (preprocessedUri != null) {

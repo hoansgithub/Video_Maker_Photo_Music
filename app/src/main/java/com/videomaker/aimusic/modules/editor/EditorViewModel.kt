@@ -320,6 +320,37 @@ class EditorViewModel(
                             }
                         }
 
+                        // Refresh processedAudioUri so it points to the volume-agnostic cache file.
+                        // Stored URIs from older builds may target stale per-volume cache files
+                        // (e.g. *_vol0.m4a) or files that were evicted by the LRU cleanup.
+                        val onlyOnFirstLoad = prev == null
+                        if (onlyOnFirstLoad &&
+                            project.settings.musicSongId != null &&
+                            project.settings.musicSongUrl != null &&
+                            project.settings.beatSyncData != null &&
+                            project.settings.totalDurationMs > 0
+                        ) {
+                            val refreshedUri = try {
+                                withContext(Dispatchers.IO) {
+                                    preprocessBeatSyncAudio(
+                                        songId = project.settings.musicSongId,
+                                        songUrl = project.settings.musicSongUrl,
+                                        beatSyncData = project.settings.beatSyncData,
+                                        totalDurationMs = project.settings.totalDurationMs,
+                                        trimStartMs = project.settings.hookStartTimeMs
+                                    )
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("EditorViewModel", "Failed to refresh preprocessed audio on load", e)
+                                project.settings.processedAudioUri
+                            }
+                            if (refreshedUri != project.settings.processedAudioUri) {
+                                project = project.copy(
+                                    settings = project.settings.copy(processedAudioUri = refreshedUri)
+                                )
+                            }
+                        }
+
                         // Load effect set name
                         val effectSetName = getEffectSetName(project.settings.effectSetId)
 
@@ -440,7 +471,6 @@ class EditorViewModel(
                                 songUrl = song.mp3Url,
                                 beatSyncData = beatSyncData,
                                 totalDurationMs = totalDurationMs,
-                                baseVolume = 1.0f,  // Default volume
                                 trimStartMs = hookStartTimeMs
                             )
                         }.also {
@@ -707,7 +737,6 @@ class EditorViewModel(
                 // Preprocess audio BEFORE updating settings (wait for all assets ready)
                 // This prevents double "Preparing video" by ensuring everything is ready before update
                 val preprocessedUri = if (beatSyncData != null && songId != null && song?.mp3Url != null && totalDurationMs > 0) {
-                    val currentVolume = currentState?.displaySettings?.audioVolume ?: 1.0f
                     val trimStartMs = song.hookStartTimeMs ?: 0L
                     withContext(Dispatchers.IO) {
                         preprocessBeatSyncAudio(
@@ -715,7 +744,6 @@ class EditorViewModel(
                             songUrl = song.mp3Url,
                             beatSyncData = beatSyncData,
                             totalDurationMs = totalDurationMs,
-                            baseVolume = currentVolume,
                             trimStartMs = trimStartMs
                         )
                     }.also {
@@ -785,7 +813,6 @@ class EditorViewModel(
 
                 // Preprocess audio BEFORE updating settings (wait for all assets ready)
                 // This prevents double "Preparing video" by ensuring everything is ready before update
-                val currentVolume = currentState?.displaySettings?.audioVolume ?: 1.0f
                 val trimStartMs = song?.hookStartTimeMs ?: 0L
                 val preprocessedUri = withContext(Dispatchers.IO) {
                     preprocessBeatSyncAudio(
@@ -793,7 +820,6 @@ class EditorViewModel(
                         songUrl = songUrl,
                         beatSyncData = beatSyncData,
                         totalDurationMs = totalDurationMs,
-                        baseVolume = currentVolume,
                         trimStartMs = trimStartMs
                     )
                 }.also {
@@ -874,14 +900,13 @@ class EditorViewModel(
     /**
      * Preprocess audio with beat-sync fadeout.
      *
-     * Creates a preprocessed audio file with fadeout over last 6 beats.
-     * Throws exception on failure (triggers error dialog + navigation back).
+     * Creates a volume-agnostic preprocessed audio file with fadeout over last 6 beats.
+     * Volume is applied separately at preview/export time, NOT baked in here.
      *
      * @param songId Song ID for cache key
      * @param songUrl Original song URL
      * @param beatSyncData Beat-sync data (for calculating fadeout duration)
      * @param totalDurationMs Total video duration
-     * @param baseVolume Base volume multiplier
      * @return Preprocessed audio URI
      * @throws Exception if preprocessing fails
      */
@@ -890,7 +915,6 @@ class EditorViewModel(
         songUrl: String,
         beatSyncData: com.videomaker.aimusic.domain.model.BeatSyncData,
         totalDurationMs: Long,
-        baseVolume: Float,
         trimStartMs: Long = 0L
     ): Uri {
         android.util.Log.d("EditorViewModel", "Preprocessing audio with fadeout: songId=$songId, trimStart=${trimStartMs}ms, duration=${totalDurationMs}ms")
@@ -904,8 +928,7 @@ class EditorViewModel(
             songId = songId,
             trimStartMs = trimStartMs,
             totalDurationMs = totalDurationMs,
-            fadeoutDurationMs = fadeoutDurationMs,
-            baseVolume = baseVolume
+            fadeoutDurationMs = fadeoutDurationMs
         ) ?: throw Exception("Audio preprocessing failed: service returned null")
 
         android.util.Log.d("EditorViewModel", "✅ Audio preprocessing successful: $preprocessedUri")
@@ -1133,7 +1156,6 @@ class EditorViewModel(
                         songUrl = songUrl,
                         beatSyncData = beatSyncData,
                         totalDurationMs = newDuration,
-                        baseVolume = currentState.project.settings.audioVolume,
                         trimStartMs = currentState.project.settings.hookStartTimeMs
                     )
                 } catch (e: Exception) {
