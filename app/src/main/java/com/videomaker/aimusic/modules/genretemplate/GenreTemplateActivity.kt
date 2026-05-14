@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -169,17 +170,15 @@ class GenreTemplateActivity : AppCompatActivity() {
                             }
                         }
 
-                        val stepEnabled = when (currentStep) {
-                            GenreTemplateStep.GENRE_SELECTION -> viewModel.isGenreSelectionEnabled
-                            GenreTemplateStep.PERSONALIZING -> viewModel.isPersonalizingEnabled
-                            GenreTemplateStep.TEMPLATE_PICK -> viewModel.isTemplatePickEnabled
-                        }
                         val adPlacement = when (currentStep) {
                             GenreTemplateStep.GENRE_SELECTION -> AdPlacement.NATIVE_ONBOARDING_SELECT_MUSIC
                             GenreTemplateStep.PERSONALIZING -> AdPlacement.NATIVE_ONBOARDING_PERSONALIZING
                             GenreTemplateStep.TEMPLATE_PICK -> AdPlacement.NATIVE_ONBOARDING_SELECT_TPT
                         }
-                        if (stepEnabled) {
+                        // key(adPlacement) forces NativeAdView to remount when placement changes,
+                        // resetting its internal isAdLoaded/adRevision state. Without this, stale
+                        // state from the previous step keeps the slot empty until the new ad loads.
+                        key(adPlacement) {
                             NativeAdView(
                                 placement = adPlacement,
                                 modifier = Modifier.fillMaxWidth(),
