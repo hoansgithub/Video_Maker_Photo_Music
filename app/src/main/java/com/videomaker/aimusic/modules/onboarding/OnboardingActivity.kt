@@ -15,10 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.VideoMakerApplication
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.data.local.RegionProvider
+import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.genretemplate.GenreTemplateActivity
+import com.videomaker.aimusic.modules.genretemplate.isGenreTemplateFlowAllOff
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.launch
@@ -40,6 +43,7 @@ class OnboardingActivity : AppCompatActivity() {
 
     private val completeOnboardingUseCase: CompleteOnboardingUseCase by inject()
     private val regionProvider: RegionProvider by inject()
+    private val remoteConfig: RemoteConfig by inject()
     private val onboardingViewModel: OnboardingViewModel by viewModel()
     private val onboardingContentViewModel: OnboardingContentViewModel by inject()
 
@@ -91,7 +95,12 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     private fun navigateToFeatureSelection() {
-        startActivity(Intent(this, GenreTemplateActivity::class.java))
+        val destination = if (remoteConfig.isGenreTemplateFlowAllOff()) {
+            FeatureSelectionActivity::class.java
+        } else {
+            GenreTemplateActivity::class.java
+        }
+        startActivity(Intent(this, destination))
         finish()
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 
 @Immutable
 data class OnboardingContentState(
+    val page1VideoUrl: String? = null,
     val page1ThumbnailUrl: String? = null,
     val page1LocalFallback: Int? = null,
     val page2ThumbnailUrl: String? = null,
