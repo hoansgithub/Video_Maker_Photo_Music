@@ -322,6 +322,7 @@ fun LanguageSelectionScreen(
                                 painter = painterResource(R.drawable.img_bg_cta_onboard),
                                 contentScale = ContentScale.Crop
                             )
+                            .clickableSingle{}
                     ) {
                         Box(
                             modifier = Modifier

@@ -45,6 +45,7 @@ import kotlinx.coroutines.delay
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import androidx.lifecycle.lifecycleScope
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import kotlinx.coroutines.launch
 
 class FeatureSelectionActivity : AppCompatActivity() {
@@ -134,6 +135,7 @@ class FeatureSelectionActivity : AppCompatActivity() {
                                     painter = painterResource(R.drawable.img_bg_cta_onboard),
                                     contentScale = ContentScale.Crop
                                 )
+                                .clickableSingle{}
                         ) {
                             Box(
                                 modifier = Modifier

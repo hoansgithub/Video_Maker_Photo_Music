@@ -33,6 +33,7 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -107,6 +108,7 @@ class GenreTemplateActivity : AppCompatActivity() {
                                         painter = painterResource(R.drawable.img_bg_cta_onboard),
                                         contentScale = ContentScale.Crop
                                     )
+                                    .clickableSingle{}
                             ) {
                                 Box(
                                     modifier = Modifier
