@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -50,6 +51,7 @@ class GenreTemplateActivity : AppCompatActivity() {
 
         setContent {
             var isSaving by remember { mutableStateOf(false) }
+            var bottomSectionHeight by remember { mutableStateOf(0) }
             val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
 
             LaunchedEffect(Unit) {
@@ -113,13 +115,16 @@ class GenreTemplateActivity : AppCompatActivity() {
                                         painter = painterResource(R.drawable.img_bg_cta_onboard),
                                         contentScale = ContentScale.Crop
                                     )
+                                    .then(
+                                        if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
+                                        else Modifier
+                                    )
                                     .clickableSingle{}
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .navigationBarsPadding()
                                         .align(Alignment.BottomEnd)
-                                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                                        .padding(18.dp),
                                 ) {
                                     when (currentStep) {
                                         GenreTemplateStep.GENRE_SELECTION -> {
@@ -178,12 +183,20 @@ class GenreTemplateActivity : AppCompatActivity() {
                         // key(adPlacement) forces NativeAdView to remount when placement changes,
                         // resetting its internal isAdLoaded/adRevision state. Without this, stale
                         // state from the previous step keeps the slot empty until the new ad loads.
-                        key(adPlacement) {
-                            NativeAdView(
-                                placement = adPlacement,
-                                modifier = Modifier.fillMaxWidth(),
-                                isDebug = BuildConfig.DEBUG
-                            )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onSizeChanged { size ->
+                                    bottomSectionHeight = size.height
+                                }
+                        ) {
+                            key(adPlacement) {
+                                NativeAdView(
+                                    placement = adPlacement,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    isDebug = BuildConfig.DEBUG
+                                )
+                            }
                         }
                     }
                 }

@@ -10,6 +10,7 @@ import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -104,6 +105,9 @@ class GenreTemplateViewModel(
     private val _navToNext = Channel<Unit>(Channel.BUFFERED)
     val navToNext = _navToNext.receiveAsFlow()
 
+    private var personalizingStartedAt = 0L
+    private val personalizingMinDurationMs = 2500L
+
     // Initial visible step: first enabled screen in the fixed order
     private val _currentStep = MutableStateFlow(
         when {
@@ -135,6 +139,7 @@ class GenreTemplateViewModel(
                 // No genre selection screen; auto-start template loading (no genre → hot/geo templates)
                 if (isPersonalizingEnabled) {
                     _currentStep.value = GenreTemplateStep.PERSONALIZING
+                    personalizingStartedAt = System.currentTimeMillis()
                 }
                 loadTemplates()
             }
@@ -166,6 +171,7 @@ class GenreTemplateViewModel(
         if (isTemplatesLoading.value) return
         if (isPersonalizingEnabled) {
             _currentStep.value = GenreTemplateStep.PERSONALIZING
+            personalizingStartedAt = System.currentTimeMillis()
         }
         // When PERSONALIZING is off the user stays on GENRE_SELECTION while loading;
         // isTemplatesLoading.value = true will disable the CTA button during that time.
@@ -195,14 +201,17 @@ class GenreTemplateViewModel(
             when {
                 !isTemplatePickEnabled -> {
                     // Template pick screen is off → proceed directly to next activity
+                    awaitPersonalizingMinDuration()
                     _navToNext.send(Unit)
                 }
                 templates.isNotEmpty() -> {
+                    awaitPersonalizingMinDuration()
                     _currentStep.value = GenreTemplateStep.TEMPLATE_PICK
                 }
                 else -> {
                     // Templates unavailable and we can't go back to pick a genre → skip forward
                     if (!isGenreSelectionEnabled) {
+                        awaitPersonalizingMinDuration()
                         _navToNext.send(Unit)
                     } else {
                         templatesError.value = "No templates available"
@@ -220,5 +229,12 @@ class GenreTemplateViewModel(
         if (!isGenreSelectionEnabled) return
         selectedGenre.value = null
         _currentStep.value = GenreTemplateStep.GENRE_SELECTION
+    }
+
+    private suspend fun awaitPersonalizingMinDuration() {
+        if (!isPersonalizingEnabled || personalizingStartedAt == 0L) return
+        val elapsed = System.currentTimeMillis() - personalizingStartedAt
+        val remaining = personalizingMinDurationMs - elapsed
+        if (remaining > 0) delay(remaining)
     }
 }
