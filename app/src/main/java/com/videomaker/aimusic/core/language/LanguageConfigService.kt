@@ -231,6 +231,7 @@ class LanguageConfigService(
             // Asia - Southeast
             "ID" -> listOf("id", "jv", "su")
             "PH" -> listOf("fil", "en")
+            "VN" -> listOf("vi", "en")
 
             // Asia - South
             "IN" -> listOf("hi", "bn", "en", "kn")
