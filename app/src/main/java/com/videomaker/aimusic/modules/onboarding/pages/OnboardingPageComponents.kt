@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
@@ -182,6 +183,7 @@ internal fun WelcomePage(
 @Composable
 internal fun WelcomePageDynamic(
     thumbnailUrl: String?,
+    videoUrl: String? = null,
     localFallbackResId: Int,
     title: String,
     subtitle: String,
@@ -207,14 +209,40 @@ internal fun WelcomePageDynamic(
                 .fillMaxHeight(0.5f),
         ) {
             // Banner image — URL-based or local fallback
-            if (thumbnailUrl != null) {
+            if (thumbnailUrl != null || videoUrl != null) {
+                var videoReady by remember(videoUrl) { mutableStateOf(false) }
+                val videoAlpha by animateFloatAsState(
+                    targetValue = if (videoReady) 1f else 0f,
+                    animationSpec = tween(durationMillis = 300),
+                    label = "video_alpha"
+                )
                 if (pageIndex == 0) {
-                    TemplateItem(
-                        thumbnailPath = thumbnailUrl,
-                        errorLocal = localFallbackResId,
-                        onSuccess = {
+                    if (videoUrl != null) {
+                        // Base: local image always visible while video loads
+                        Image(
+                            painter = painterResource(localFallbackResId),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                        // Video fades in on ready
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer { alpha = videoAlpha }
+                        ) {
+                            TemplateVideoPlayer(
+                                videoUrl = videoUrl,
+                                autoPlay = true,
+                                loop = true,
+                                showControls = false,
+                                volume = 0f,
+                                onVideoReady = { videoReady = true },
+                                modifier = Modifier.matchParentSize()
+                            )
                         }
-                    )
+                    }
+
                     Image(
                         painter = painterResource(R.drawable.img_bg_onboard_page1),
                         contentDescription = null,
@@ -285,11 +313,9 @@ internal fun WelcomePageDynamic(
                                     .clip(RoundedCornerShape(10.dp))
                             ){
                                 TemplateItem(
-                                    thumbnailPath = thumbnailUrl,
+                                    thumbnailPath = thumbnailUrl ?: "",
                                     errorLocal = localFallbackResId,
-                                    onSuccess = {
-
-                                    }
+                                    onSuccess = {}
                                 )
                             }
 
