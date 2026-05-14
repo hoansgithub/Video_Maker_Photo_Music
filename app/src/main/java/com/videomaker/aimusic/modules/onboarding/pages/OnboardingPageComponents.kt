@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.onboarding.pages
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -7,34 +8,38 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,15 +47,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
+import coil.size.Size
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
+import com.videomaker.aimusic.ui.theme.FoundationBlack
 import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 // ============================================
 // WELCOME PAGE TEMPLATE
@@ -189,43 +199,131 @@ internal fun WelcomePageDynamic(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Banner image — URL-based or local fallback
-        if (thumbnailUrl != null) {
-            SubcomposeAsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(thumbnailUrl)
-                    .size(200, 350)
-                    .precision(Precision.INEXACT)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.5f),
-                contentScale = ContentScale.Crop,
-                loading = {
-                    ShimmerPlaceholder(modifier = Modifier.fillMaxSize())
-                },
-                error = {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.5f),
+        ) {
+            // Banner image — URL-based or local fallback
+            if (thumbnailUrl != null) {
+                var showSuccess by remember { mutableStateOf(false) }
+                if (pageIndex == 0) {
+                    TemplateItem(
+                        thumbnailPath = thumbnailUrl,
+                        errorLocal = localFallbackResId,
+                        onSuccess = {
+                            showSuccess = true
+                        }
+                    )
+                    if (showSuccess) {
+                        Image(
+                            painter = painterResource(R.drawable.img_bg_onboard_page1),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            alignment = Alignment.BottomCenter,
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+
+                if (pageIndex == 1){
                     Image(
-                        painter = painterResource(localFallbackResId),
+                        painter = painterResource(R.drawable.img_bg_ob2),
                         contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(0.5f),
+                        modifier = Modifier.fillMaxSize(),
+                        alignment = Alignment.TopCenter,
                         contentScale = ContentScale.Crop
                     )
+
+                    val gradientBrush = Brush.linearGradient(
+                        colors = listOf(
+                            Color(0x29CCFF00),
+                            Color(0x29F751C8)
+                        ),
+                        start = Offset(0f, 0f),
+                        end = Offset(1000f, 100f) // nghiêng nhẹ ~95deg
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth(0.72f)
+                            .aspectRatio(283.66f/148.1f)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(gradientBrush)
+                            .drawBehind {
+                                drawRect(
+                                    Color(0x52171717)
+                                )
+                            }
+                            .drawBehind {
+                                drawRect(Color(0x52171717))
+
+                                drawRoundRect(
+                                    brush = Brush.horizontalGradient(
+                                        listOf(
+                                            Color(0xFFCCFF00),
+                                            Color(0xFFF751C8)
+                                        )
+                                    ),
+                                    style = Stroke(1.57.dp.toPx()),
+                                    cornerRadius = CornerRadius(16.dp.toPx())
+                                )
+                            }
+                            .align(Alignment.Center),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(78f/283.66f)
+                                    .aspectRatio(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                            ){
+                                TemplateItem(
+                                    thumbnailPath = thumbnailUrl,
+                                    errorLocal = localFallbackResId,
+                                    onSuccess = {
+
+                                    }
+                                )
+                            }
+
+                            Image(
+                                painter = painterResource(R.drawable.img_text_ob2),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .weight(1f),
+                                contentScale = ContentScale.FillWidth
+                            )
+                        }
+
+                        Spacer(Modifier.padding(horizontal = 12.dp).fillMaxWidth().height(2.dp).background(Color(0xff373737)))
+                        Image(
+                            painter = painterResource(R.drawable.img_slide_ob2),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            contentScale = ContentScale.FillWidth
+                        )
+                    }
                 }
-            )
-        } else {
-            Image(
-                painter = painterResource(localFallbackResId),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.5f),
-                contentScale = ContentScale.Crop
-            )
+
+            } else {
+                Image(
+                    painter = painterResource(localFallbackResId),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
 
         // Title/Subtitle + CTA Button Row
@@ -351,31 +449,43 @@ internal fun DynamicCarousel(
                 } else null
 
                 if (url != null) {
-                    SubcomposeAsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(url)
-                            .size(200, 350)
-                            .precision(Precision.INEXACT)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = null,
+                    Box(
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
-                        loading = {
-                            ShimmerPlaceholder(modifier = Modifier.fillMaxSize())
-                        },
-                        error = {
-                            val errorLocal = localFallbackResIds.firstOrNull()
-                            if (errorLocal != null) {
-                                Image(
-                                    painter = painterResource(errorLocal),
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            }
+                    ) {
+                        var showSuccess by remember(url) { mutableStateOf(false) }
+                        val errorLocal = localFallbackResIds.firstOrNull()
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.65f)
+                                .aspectRatio(258/379f)
+                                .align(Alignment.Center)
+                                .clip(RoundedCornerShape(14.dp))
+                        ) {
+                            TemplateItem(
+                                thumbnailPath = url,
+                                errorLocal = errorLocal,
+                                onSuccess = {
+                                    showSuccess = true
+                                }
+                            )
                         }
-                    )
+
+                        if (showSuccess) {
+                            Image(
+                                painter = painterResource(
+                                    when(page){
+                                        0 -> R.drawable.img_bg_ob_sl1
+                                        1 -> R.drawable.img_bg_ob_sl2
+                                        else -> R.drawable.img_bg_ob_sl3
+                                    }
+                                ),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                alignment = Alignment.Center,
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
                 } else if (localResId != null) {
                     Image(
                         painter = painterResource(localResId),
@@ -586,5 +696,86 @@ internal fun IndiaPage3Carousel(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun TemplateItem(
+    thumbnailPath: String,
+    errorLocal: Int?,
+    onSuccess: () -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // Simple retry mechanism (3 attempts max) - keyed to thumbnailPath for lazy list safety
+    var retryCount by remember(thumbnailPath) { mutableIntStateOf(0) }
+    var retryTrigger by remember(thumbnailPath) { mutableIntStateOf(0) }
+
+    val imageRequest = remember(thumbnailPath, retryTrigger) {
+        ImageRequest.Builder(context)
+            .data(thumbnailPath)
+            .size(Size(200, 350))  // Reduced from 400x700 to 200x350 (4x less data!)
+            .precision(Precision.INEXACT)
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .crossfade(true)  // Smooth fade-in animation
+            .crossfade(200)  // 200ms crossfade duration
+            .listener(
+                onError = { request, result ->
+                    Log.e("TemplateCard", "Failed to load thumbnail (attempt ${retryCount + 1}/3): ${thumbnailPath}, error: ${result.throwable.message}")
+
+                    // Auto-retry silently (no user message)
+                    if (retryCount < 2) {  // 0, 1 = retry; 2 = give up
+                        retryCount++
+                        coroutineScope.launch {
+                            delay(1000L * retryCount)  // 1s, 2s delay
+                            retryTrigger++  // Trigger reload
+                        }
+                    }
+                },
+                onSuccess = { _, _ ->
+                    retryCount = 0  // Reset on success
+                }
+            )
+            .build()
+    }
+
+    if (thumbnailPath.isNotEmpty()) {
+        SubcomposeAsyncImage(
+            model = imageRequest,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+            loading = {
+                // Show shimmer while loading
+                ShimmerPlaceholder(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    cornerRadius = 0.dp
+                )
+            },
+            error = { errorState ->
+                if (errorLocal != null) {
+                    Image(
+                        painter = painterResource(errorLocal),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            },
+            success = {
+                onSuccess.invoke()
+                // Show the loaded image
+                SubcomposeAsyncImageContent()
+            }
+        )
+    } else {
+        ShimmerPlaceholder(
+            modifier = Modifier
+                .fillMaxSize(),
+            cornerRadius = 0.dp
+        )
     }
 }

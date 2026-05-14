@@ -1080,6 +1080,14 @@ private fun SuccessContent(
                             setBackgroundColor(android.graphics.Color.BLACK)
                         }
                     },
+                    update = { playerView ->
+                        // Reconnect PlayerView when ExoPlayer instance changes (e.g. after
+                        // switching to the watermark-free output path). Without this, the
+                        // old released player stays attached → black video, audio only.
+                        if (playerView.player != exoPlayer) {
+                            playerView.player = exoPlayer
+                        }
+                    },
                     modifier = Modifier
                         .width(actualVideoWidth)
                         .height(actualVideoHeight)

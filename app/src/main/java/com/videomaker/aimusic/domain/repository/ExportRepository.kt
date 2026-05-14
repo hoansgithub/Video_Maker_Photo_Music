@@ -11,9 +11,11 @@ interface ExportRepository {
      * Start exporting a project
      *
      * @param projectId The project to export
+     * @param forceWatermarkFree When true, export without watermark regardless of project status.
+     *   Used for pre-generating the clean version in parallel with the watermarked export.
      * @return Work ID for tracking progress
      */
-    fun startExport(projectId: String): UUID
+    fun startExport(projectId: String, forceWatermarkFree: Boolean = false): UUID
 
     /**
      * Observe export progress

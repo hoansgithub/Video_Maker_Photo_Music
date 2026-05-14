@@ -634,10 +634,16 @@ class CompositionFactory(
             return null
         }
 
-        android.util.Log.d("CompositionFactory", "Using preprocessed audio with baked-in fadeout: $preprocessedUri")
+        android.util.Log.d("CompositionFactory", "Using preprocessed audio with baked-in fadeout: $preprocessedUri (volume=${settings.audioVolume})")
 
-        // No audio effects needed - fadeout already baked in
-        val audioEffects = Effects(emptyList(), emptyList())
+        // Fadeout is baked into the preprocessed file; volume is applied here so a single
+        // volume-agnostic cache file can serve every audioVolume value.
+        val volumeProcessors = if (settings.audioVolume != 1.0f) {
+            listOf(VolumeAudioProcessor(settings.audioVolume))
+        } else {
+            emptyList()
+        }
+        val audioEffects = Effects(volumeProcessors, emptyList())
 
         val mediaItem = MediaItem.Builder()
             .setUri(preprocessedUri)
