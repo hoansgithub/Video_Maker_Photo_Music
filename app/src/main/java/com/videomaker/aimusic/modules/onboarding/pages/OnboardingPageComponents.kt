@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -38,6 +39,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -45,6 +47,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
@@ -56,7 +61,6 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
-import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.FoundationBlack
 import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
@@ -180,6 +184,7 @@ internal fun WelcomePage(
 @Composable
 internal fun WelcomePageDynamic(
     thumbnailUrl: String?,
+    videoUrl: String? = null,
     localFallbackResId: Int,
     title: String,
     subtitle: String,
@@ -202,28 +207,67 @@ internal fun WelcomePageDynamic(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.5f),
+                .fillMaxHeight(0.5f)
+                .clipToBounds(),
         ) {
             // Banner image — URL-based or local fallback
-            if (thumbnailUrl != null) {
-                var showSuccess by remember { mutableStateOf(false) }
+            if (thumbnailUrl != null || videoUrl != null) {
+                var videoReady by remember(videoUrl) { mutableStateOf(false) }
+                val videoAlpha by animateFloatAsState(
+                    targetValue = if (videoReady) 1f else 0f,
+                    animationSpec = tween(durationMillis = 300),
+                    label = "video_alpha"
+                )
                 if (pageIndex == 0) {
-                    TemplateItem(
-                        thumbnailPath = thumbnailUrl,
-                        errorLocal = localFallbackResId,
-                        onSuccess = {
-                            showSuccess = true
-                        }
-                    )
-                    if (showSuccess) {
+                    if (videoUrl != null) {
+                        // Base: local image always visible while video loads
                         Image(
-                            painter = painterResource(R.drawable.img_bg_onboard_page1),
+                            painter = painterResource(localFallbackResId),
                             contentDescription = null,
                             modifier = Modifier.fillMaxSize(),
-                            alignment = Alignment.BottomCenter,
                             contentScale = ContentScale.Crop
                         )
+                        // Video fades in on ready
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer { alpha = videoAlpha }
+                        ) {
+                            TemplateVideoPlayer(
+                                videoUrl = videoUrl,
+                                autoPlay = true,
+                                loop = true,
+                                showControls = false,
+                                volume = 0f,
+                                onVideoReady = { videoReady = true },
+                                modifier = Modifier.matchParentSize()
+                            )
+                        }
                     }
+
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.35f)
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(0.65f),
+                                        Color.Black,
+                                    )
+                                )
+                            )
+                            .align(Alignment.BottomCenter)
+                    )
+
+                    Image(
+                        painter = painterResource(R.drawable.img_bg_onboard_page1),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        alignment = Alignment.BottomCenter,
+                        contentScale = ContentScale.Crop
+                    )
                 }
 
                 if (pageIndex == 1){
@@ -287,11 +331,9 @@ internal fun WelcomePageDynamic(
                                     .clip(RoundedCornerShape(10.dp))
                             ){
                                 TemplateItem(
-                                    thumbnailPath = thumbnailUrl,
+                                    thumbnailPath = thumbnailUrl ?: "",
                                     errorLocal = localFallbackResId,
-                                    onSuccess = {
-
-                                    }
+                                    onSuccess = {}
                                 )
                             }
 
@@ -452,7 +494,6 @@ internal fun DynamicCarousel(
                     Box(
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        var showSuccess by remember(url) { mutableStateOf(false) }
                         val errorLocal = localFallbackResIds.firstOrNull()
                         Box(
                             modifier = Modifier
@@ -463,28 +504,29 @@ internal fun DynamicCarousel(
                         ) {
                             TemplateItem(
                                 thumbnailPath = url,
-                                errorLocal = errorLocal,
+                                errorLocal = when(page){
+                                    0 -> R.drawable.img_fall_back_onb3_sl1
+                                    1 -> R.drawable.img_fall_back_onb3_sl2
+                                    else -> R.drawable.img_fall_back_onb3_sl3
+                                },
                                 onSuccess = {
-                                    showSuccess = true
                                 }
                             )
                         }
 
-                        if (showSuccess) {
-                            Image(
-                                painter = painterResource(
-                                    when(page){
-                                        0 -> R.drawable.img_bg_ob_sl1
-                                        1 -> R.drawable.img_bg_ob_sl2
-                                        else -> R.drawable.img_bg_ob_sl3
-                                    }
-                                ),
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                alignment = Alignment.Center,
-                                contentScale = ContentScale.Crop
-                            )
-                        }
+                        Image(
+                            painter = painterResource(
+                                when(page){
+                                    0 -> R.drawable.img_bg_ob_sl1
+                                    1 -> R.drawable.img_bg_ob_sl2
+                                    else -> R.drawable.img_bg_ob_sl3
+                                }
+                            ),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            alignment = Alignment.Center,
+                            contentScale = ContentScale.Crop
+                        )
                     }
                 } else if (localResId != null) {
                     Image(
@@ -708,74 +750,67 @@ private fun TemplateItem(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    // Simple retry mechanism (3 attempts max) - keyed to thumbnailPath for lazy list safety
     var retryCount by remember(thumbnailPath) { mutableIntStateOf(0) }
     var retryTrigger by remember(thumbnailPath) { mutableIntStateOf(0) }
+    var isRemoteLoaded by remember(thumbnailPath) { mutableStateOf(false) }
 
     val imageRequest = remember(thumbnailPath, retryTrigger) {
         ImageRequest.Builder(context)
             .data(thumbnailPath)
-            .size(Size(200, 350))  // Reduced from 400x700 to 200x350 (4x less data!)
+            .size(Size(200, 350))
             .precision(Precision.INEXACT)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .diskCachePolicy(CachePolicy.ENABLED)
-            .crossfade(true)  // Smooth fade-in animation
-            .crossfade(200)  // 200ms crossfade duration
             .listener(
-                onError = { request, result ->
-                    Log.e("TemplateCard", "Failed to load thumbnail (attempt ${retryCount + 1}/3): ${thumbnailPath}, error: ${result.throwable.message}")
-
-                    // Auto-retry silently (no user message)
-                    if (retryCount < 2) {  // 0, 1 = retry; 2 = give up
+                onError = { _, result ->
+                    Log.e("TemplateCard", "Failed to load (attempt ${retryCount + 1}/3): $thumbnailPath, error: ${result.throwable.message}")
+                    if (retryCount < 2) {
                         retryCount++
                         coroutineScope.launch {
-                            delay(1000L * retryCount)  // 1s, 2s delay
-                            retryTrigger++  // Trigger reload
+                            delay(1000L * retryCount)
+                            retryTrigger++
                         }
                     }
                 },
-                onSuccess = { _, _ ->
-                    retryCount = 0  // Reset on success
-                }
+                onSuccess = { _, _ -> retryCount = 0 }
             )
             .build()
     }
 
-    if (thumbnailPath.isNotEmpty()) {
-        SubcomposeAsyncImage(
-            model = imageRequest,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-            loading = {
-                // Show shimmer while loading
-                ShimmerPlaceholder(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    cornerRadius = 0.dp
-                )
-            },
-            error = { errorState ->
-                if (errorLocal != null) {
-                    Image(
-                        painter = painterResource(errorLocal),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
+    val remoteAlpha by animateFloatAsState(
+        targetValue = if (isRemoteLoaded) 1f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "remote_alpha"
+    )
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Layer 1: local image always visible — instant placeholder while loading, fallback on error
+        if (errorLocal != null) {
+            Image(
+                painter = painterResource(errorLocal),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        // Layer 2: remote image fades in on success
+        if (thumbnailPath.isNotEmpty()) {
+            SubcomposeAsyncImage(
+                model = imageRequest,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = remoteAlpha },
+                loading = { /* local layer visible beneath */ },
+                error = { /* local layer visible beneath, retrying silently */ },
+                success = {
+                    isRemoteLoaded = true
+                    onSuccess()
+                    SubcomposeAsyncImageContent()
                 }
-            },
-            success = {
-                onSuccess.invoke()
-                // Show the loaded image
-                SubcomposeAsyncImageContent()
-            }
-        )
-    } else {
-        ShimmerPlaceholder(
-            modifier = Modifier
-                .fillMaxSize(),
-            cornerRadius = 0.dp
-        )
+            )
+        }
     }
 }

@@ -4,12 +4,17 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
+import com.videomaker.aimusic.core.constants.RemoteConfigKeys
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 data class OnboardingGenre(
@@ -75,21 +80,70 @@ val ONBOARDING_GENRES = listOf(
     OnboardingGenre("meme", "Meme", genreImageRes("meme")),
 )
 
+// Firebase RC getBoolean(key) returns false silently for missing keys (defaultValue is only used
+// in the exception path). This helper returns true when the key hasn't been published yet.
+fun RemoteConfig.getStepEnabled(key: String): Boolean =
+    if (key in getAllKeys()) getBoolean(key, true) else true
+
+fun RemoteConfig.isGenreTemplateFlowAllOff(): Boolean =
+    !getStepEnabled(RemoteConfigKeys.ONBOARDING_GENRE_SELECTION_ENABLED) &&
+    !getStepEnabled(RemoteConfigKeys.ONBOARDING_PERSONALIZING_ENABLED) &&
+    !getStepEnabled(RemoteConfigKeys.ONBOARDING_TEMPLATE_PICK_ENABLED)
+
 class GenreTemplateViewModel(
     private val templateRepository: TemplateRepository,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    remoteConfig: RemoteConfig
 ) : ViewModel() {
 
-    private val _currentStep = MutableStateFlow(GenreTemplateStep.GENRE_SELECTION)
+    // Feature flags - default true so existing behaviour is preserved when keys not set in RC
+    val isGenreSelectionEnabled = remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_GENRE_SELECTION_ENABLED)
+    val isPersonalizingEnabled = remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_PERSONALIZING_ENABLED)
+    val isTemplatePickEnabled = remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_TEMPLATE_PICK_ENABLED)
+
+    // Fired when the flow should proceed to FeatureSelectionActivity (all remaining steps done/skipped)
+    private val _navToNext = Channel<Unit>(Channel.BUFFERED)
+    val navToNext = _navToNext.receiveAsFlow()
+
+    private var personalizingStartedAt = 0L
+    private val personalizingMinDurationMs = 2500L
+
+    // Initial visible step: first enabled screen in the fixed order
+    private val _currentStep = MutableStateFlow(
+        when {
+            isGenreSelectionEnabled -> GenreTemplateStep.GENRE_SELECTION
+            isPersonalizingEnabled -> GenreTemplateStep.PERSONALIZING
+            else -> GenreTemplateStep.TEMPLATE_PICK
+        }
+    )
     val currentStep: StateFlow<GenreTemplateStep> = _currentStep.asStateFlow()
 
-    // Step 1: Genre list from server, fallback to hardcoded
     val genres = mutableStateListOf<OnboardingGenre>()
     val selectedGenre = mutableStateOf<OnboardingGenre?>(null)
     val isGenresLoading = mutableStateOf(false)
 
+    // Must be declared before init{} — loadTemplates() is called from init when GENRE_SELECTION is off
+    val suggestedTemplates = mutableStateListOf<VideoTemplate>()
+    val selectedTemplate = mutableStateOf<VideoTemplate?>(null)
+    val isTemplatesLoading = mutableStateOf(false)
+    val templatesError = mutableStateOf<String?>(null)
+
     init {
         loadGenres()
+        when {
+            !isGenreSelectionEnabled && !isPersonalizingEnabled && !isTemplatePickEnabled -> {
+                // All steps off → skip the whole activity immediately
+                viewModelScope.launch { _navToNext.send(Unit) }
+            }
+            !isGenreSelectionEnabled -> {
+                // No genre selection screen; auto-start template loading (no genre → hot/geo templates)
+                if (isPersonalizingEnabled) {
+                    _currentStep.value = GenreTemplateStep.PERSONALIZING
+                    personalizingStartedAt = System.currentTimeMillis()
+                }
+                loadTemplates()
+            }
+        }
     }
 
     private fun loadGenres() {
@@ -106,10 +160,6 @@ class GenreTemplateViewModel(
             isGenresLoading.value = false
         }
     }
-    val suggestedTemplates = mutableStateListOf<VideoTemplate>()
-    val selectedTemplate = mutableStateOf<VideoTemplate?>(null)
-    val isTemplatesLoading = mutableStateOf(false)
-    val templatesError = mutableStateOf<String?>(null)
 
     fun selectGenre(genre: OnboardingGenre) {
         selectedGenre.value = if (selectedGenre.value?.id == genre.id) null else genre
@@ -118,31 +168,56 @@ class GenreTemplateViewModel(
     fun isStep1Valid(): Boolean = selectedGenre.value != null
 
     fun goToStep2() {
-        _currentStep.value = GenreTemplateStep.PERSONALIZING
+        if (isTemplatesLoading.value) return
+        if (isPersonalizingEnabled) {
+            _currentStep.value = GenreTemplateStep.PERSONALIZING
+            personalizingStartedAt = System.currentTimeMillis()
+        }
+        // When PERSONALIZING is off the user stays on GENRE_SELECTION while loading;
+        // isTemplatesLoading.value = true will disable the CTA button during that time.
         loadTemplates()
     }
 
     private fun loadTemplates() {
         isTemplatesLoading.value = true
         templatesError.value = null
-        val genre = selectedGenre.value ?: return
+        val genre = selectedGenre.value // null when GENRE_SELECTION is off
 
         viewModelScope.launch {
-            // Try to get templates by genre (used as vibe tag)
-            val result = templateRepository.getTemplatesByVibeTag(genre.id, limit = 4)
-
-            val templates = result.getOrNull().takeIf { !it.isNullOrEmpty() }
-                ?: templateRepository.getFeaturedTemplates(limit = 4).getOrNull().orEmpty()
+            val templates = if (genre != null) {
+                // Genre was selected: prefer genre-tagged templates, fall back to featured
+                val result = templateRepository.getTemplatesByVibeTag(genre.id, limit = 4)
+                result.getOrNull().takeIf { !it.isNullOrEmpty() }
+                    ?: templateRepository.getFeaturedTemplates(limit = 4).getOrNull().orEmpty()
+            } else {
+                // No genre (GENRE_SELECTION was off): use geo hot/featured templates
+                templateRepository.getFeaturedTemplates(limit = 4).getOrNull().orEmpty()
+            }
 
             suggestedTemplates.clear()
             suggestedTemplates.addAll(templates)
-
-            if (templates.isNotEmpty()) {
-                _currentStep.value = GenreTemplateStep.TEMPLATE_PICK
-            } else {
-                templatesError.value = "No templates available"
-            }
             isTemplatesLoading.value = false
+
+            when {
+                !isTemplatePickEnabled -> {
+                    // Template pick screen is off → proceed directly to next activity
+                    awaitPersonalizingMinDuration()
+                    _navToNext.send(Unit)
+                }
+                templates.isNotEmpty() -> {
+                    awaitPersonalizingMinDuration()
+                    _currentStep.value = GenreTemplateStep.TEMPLATE_PICK
+                }
+                else -> {
+                    // Templates unavailable and we can't go back to pick a genre → skip forward
+                    if (!isGenreSelectionEnabled) {
+                        awaitPersonalizingMinDuration()
+                        _navToNext.send(Unit)
+                    } else {
+                        templatesError.value = "No templates available"
+                    }
+                }
+            }
         }
     }
 
@@ -151,7 +226,15 @@ class GenreTemplateViewModel(
     }
 
     fun goBackToStep1() {
+        if (!isGenreSelectionEnabled) return
         selectedGenre.value = null
         _currentStep.value = GenreTemplateStep.GENRE_SELECTION
+    }
+
+    private suspend fun awaitPersonalizingMinDuration() {
+        if (!isPersonalizingEnabled || personalizingStartedAt == 0L) return
+        val elapsed = System.currentTimeMillis() - personalizingStartedAt
+        val remaining = personalizingMinDurationMs - elapsed
+        if (remaining > 0) delay(remaining)
     }
 }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -49,7 +51,12 @@ class GenreTemplateActivity : AppCompatActivity() {
 
         setContent {
             var isSaving by remember { mutableStateOf(false) }
+            var bottomSectionHeight by remember { mutableStateOf(0) }
             val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) {
+                viewModel.navToNext.collect { navigateToFeatureSelection() }
+            }
 
             LaunchedEffect(currentStep) {
                 when (currentStep) {
@@ -108,13 +115,16 @@ class GenreTemplateActivity : AppCompatActivity() {
                                         painter = painterResource(R.drawable.img_bg_cta_onboard),
                                         contentScale = ContentScale.Crop
                                     )
+                                    .then(
+                                        if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
+                                        else Modifier
+                                    )
                                     .clickableSingle{}
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .navigationBarsPadding()
                                         .align(Alignment.BottomEnd)
-                                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                                        .padding(18.dp),
                                 ) {
                                     when (currentStep) {
                                         GenreTemplateStep.GENRE_SELECTION -> {
@@ -132,7 +142,7 @@ class GenreTemplateActivity : AppCompatActivity() {
                                                         viewModel.goToStep2()
                                                     }
                                                 },
-                                                enabled = viewModel.isStep1Valid(),
+                                                enabled = viewModel.isStep1Valid() && !viewModel.isTemplatesLoading.value,
                                                 color = Primary,
                                                 icon = R.drawable.ic_right_arrow
                                             )
@@ -170,11 +180,24 @@ class GenreTemplateActivity : AppCompatActivity() {
                             GenreTemplateStep.PERSONALIZING -> AdPlacement.NATIVE_ONBOARDING_PERSONALIZING
                             GenreTemplateStep.TEMPLATE_PICK -> AdPlacement.NATIVE_ONBOARDING_SELECT_TPT
                         }
-                        NativeAdView(
-                            placement = adPlacement,
-                            modifier = Modifier.fillMaxWidth(),
-                            isDebug = BuildConfig.DEBUG
-                        )
+                        // key(adPlacement) forces NativeAdView to remount when placement changes,
+                        // resetting its internal isAdLoaded/adRevision state. Without this, stale
+                        // state from the previous step keeps the slot empty until the new ad loads.
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onSizeChanged { size ->
+                                    bottomSectionHeight = size.height
+                                }
+                        ) {
+                            key(adPlacement) {
+                                NativeAdView(
+                                    placement = adPlacement,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    isDebug = BuildConfig.DEBUG
+                                )
+                            }
+                        }
                     }
                 }
             }

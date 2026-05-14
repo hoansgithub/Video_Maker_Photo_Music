@@ -829,7 +829,8 @@ val presentationModule = module {
     viewModel {
         com.videomaker.aimusic.modules.genretemplate.GenreTemplateViewModel(
             templateRepository = get(),
-            songRepository = get()
+            songRepository = get(),
+            remoteConfig = get()
         )
     }
 

@@ -135,13 +135,16 @@ class FeatureSelectionActivity : AppCompatActivity() {
                                     painter = painterResource(R.drawable.img_bg_cta_onboard),
                                     contentScale = ContentScale.Crop
                                 )
+                                .then(
+                                    if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
+                                    else Modifier
+                                )
                                 .clickableSingle{}
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .navigationBarsPadding()
                                     .align(Alignment.BottomEnd)
-                                    .padding(top = 18.dp, end = 24.dp)
+                                    .padding(18.dp)
                             ) {
                                 OnboardingCtaButton(
                                     text = stringResource(R.string.onboarding_get_started),
@@ -229,8 +232,7 @@ class FeatureSelectionActivity : AppCompatActivity() {
                         NativeAdView(
                             placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .alpha(if (delayedHasSelection) 0f else 1f),
+                                .fillMaxWidth(),
                             isDebug = BuildConfig.DEBUG
                         )
                     }

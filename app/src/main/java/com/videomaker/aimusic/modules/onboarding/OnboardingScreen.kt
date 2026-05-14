@@ -189,6 +189,7 @@ fun OnboardingScreen(
                     } else {
                         contentState.page2ThumbnailUrl
                     }
+                    val videoUrl = if (pageData.pageIndex == 0) contentState.page1VideoUrl else null
                     val localFallback = if (pageData.pageIndex == 0) {
                         contentState.page1LocalFallback ?: R.drawable.ob_page1
                     } else {
@@ -232,6 +233,7 @@ fun OnboardingScreen(
                     ) {
                         WelcomePageDynamic(
                             thumbnailUrl = thumbnailUrl,
+                            videoUrl = videoUrl,
                             localFallbackResId = localFallback,
                             title = stringResource(titleRes),
                             subtitle = stringResource(subtitleRes),

@@ -45,9 +45,9 @@ class OnboardingContentViewModel(
                 // 1. Fetch page 3 templates first (priority for dedup)
                 val page3Templates = fetchPage3Templates()
 
-                // 2. Resolve page 1 thumbnail (exclude page 3 template IDs)
+                // 2. Resolve page 1 content (exclude page 3 template IDs)
                 val page3Ids = page3Templates.map { it.id }.toSet()
-                val (page1Url, page1Local) = resolvePage1Thumbnail(page3Ids)
+                val (page1Video, page1Url, page1Local) = resolvePage1Content(page3Ids)
 
                 // 3. Resolve page 2 thumbnail (songs, no overlap with templates)
                 val (page2Url, page2Local) = resolvePage2Thumbnail()
@@ -57,6 +57,7 @@ class OnboardingContentViewModel(
                 val page3Locals = buildPage3LocalFallbacks(page3Templates.size)
 
                 _contentState.value = OnboardingContentState(
+                    page1VideoUrl = page1Video,
                     page1ThumbnailUrl = page1Url,
                     page1LocalFallback = page1Local,
                     page2ThumbnailUrl = page2Url,
@@ -66,7 +67,7 @@ class OnboardingContentViewModel(
                     isReady = true
                 )
 
-                Log.d(TAG, "Preload complete: p1=${page1Url != null}, p2=${page2Url != null}, p3=${page3Urls.size} thumbnails")
+                Log.d(TAG, "Preload complete: p1video=${page1Video != null}, p1thumb=${page1Url != null}, p2=${page2Url != null}, p3=${page3Urls.size} thumbnails")
             } catch (e: Exception) {
                 Log.e(TAG, "Preload failed, using local fallbacks", e)
                 _contentState.value = OnboardingContentState(
@@ -83,10 +84,10 @@ class OnboardingContentViewModel(
         templateRepository.getFeaturedTemplates(limit = 3)
             .getOrElse { emptyList() }
 
-    private suspend fun resolvePage1Thumbnail(excludeIds: Set<String>): Pair<String?, Int> {
+    // Returns (videoUrl, thumbnailUrl, localFallback)
+    private suspend fun resolvePage1Content(excludeIds: Set<String>): Triple<String?, String?, Int> {
         val localFallback = localPage1()
 
-        // Try remote config template ID
         val configTemplateId = try {
             val id = remoteConfig.getString(RemoteConfigKeys.ONBOARDING_PAGE1_TEMPLATE_ID)
             id.ifBlank { null }
@@ -97,7 +98,7 @@ class OnboardingContentViewModel(
         if (configTemplateId != null) {
             val template = templateRepository.getTemplateById(configTemplateId).getOrNull()
             if (template != null && template.thumbnailPath.isNotBlank() && template.id !in excludeIds) {
-                return Pair(template.thumbnailPath, localFallback)
+                return Triple(template.videoUrl, template.thumbnailPath, localFallback)
             }
         }
 
@@ -107,10 +108,10 @@ class OnboardingContentViewModel(
             .firstOrNull { it.id !in excludeIds && it.thumbnailPath.isNotBlank() }
 
         if (featured != null) {
-            return Pair(featured.thumbnailPath, localFallback)
+            return Triple(featured.videoUrl, featured.thumbnailPath, localFallback)
         }
 
-        return Pair(null, localFallback)
+        return Triple(null, null, localFallback)
     }
 
     private suspend fun resolvePage2Thumbnail(): Pair<String?, Int> {
@@ -155,10 +156,10 @@ class OnboardingContentViewModel(
     }
 
     private fun localPage1(): Int =
-        if (isInGeo) R.drawable.img_onb1_in else R.drawable.ob_page1
+        if (isInGeo) R.drawable.img_fall_back_onb1 else R.drawable.ob_page1
 
     private fun localPage2(): Int =
-        if (isInGeo) R.drawable.img_onb2_in else R.drawable.ob_page2
+        if (isInGeo) R.drawable.img_fall_back_onb2 else R.drawable.img_song1
 
     companion object {
         private const val TAG = "OnboardingContentVM"
