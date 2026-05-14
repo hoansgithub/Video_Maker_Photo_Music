@@ -721,8 +721,11 @@ fun EditorScreen(
             // Flow-based approach: reactive, no polling, no cancellation issues
             LaunchedEffect(Unit) {
                 com.videomaker.aimusic.modules.picker.AssetSelectionCache.selectionFlow.collect { selectedUris ->
-                    android.util.Log.d("EditorScreen", "✅ Received ${selectedUris.size} selected assets from AssetPicker")
+                    android.util.Log.d("EditorScreen", "Received ${selectedUris.size} selected assets from AssetPicker")
+                    // Save project and rebuild video with new assets
                     viewModel.replaceAssetsFromUris(selectedUris)
+                    // Clear pending assets and close sheet
+                    viewModel.discardPendingAssets()
                     isEditingImages = false
                     showImagesSheet = false
                 }

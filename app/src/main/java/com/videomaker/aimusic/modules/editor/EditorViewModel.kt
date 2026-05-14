@@ -280,6 +280,7 @@ class EditorViewModel(
                     if (loadedProject != null) {
                         val currentState = _uiState.value
                         val prev = currentState as? EditorUiState.Success
+
                         val selectedIndex = prev?.selectedAssetIndex
                             ?.coerceIn(0, loadedProject.assets.lastIndex.coerceAtLeast(0)) ?: 0
 
@@ -1092,7 +1093,7 @@ class EditorViewModel(
         val currentState = _uiState.value
         if (currentState !is EditorUiState.Success) return
 
-        android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Processing ${selectedUris.size} URIs")
+        android.util.Log.d("EditorViewModel", "Replace assets: ${currentState.project.assets.size} → ${selectedUris.size} images")
 
         // Map existing assets by URI for quick lookup
         val existingAssetsByUri = currentState.project.assets.associateBy { it.uri.toString() }
@@ -1136,7 +1137,7 @@ class EditorViewModel(
 
             val durationChanged = newDuration != currentState.project.settings.totalDurationMs
 
-            android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Recalculated duration for ${finalAssets.size} assets: ${newDuration}ms (was ${currentState.project.settings.totalDurationMs}ms)")
+            android.util.Log.d("EditorViewModel", "Duration recalculated: ${currentState.project.settings.totalDurationMs}ms → ${newDuration}ms (${finalAssets.size} images)")
 
             val songId = currentState.project.settings.musicSongId
             val songUrl = currentState.project.settings.musicSongUrl
@@ -1185,28 +1186,45 @@ class EditorViewModel(
             updatedAt = System.currentTimeMillis()
         )
 
-        android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Applying ${finalAssets.size} assets - VIDEO WILL REBUILD")
+        android.util.Log.d("EditorViewModel", "Applying changes: ${finalAssets.size} images, ${updatedSettings.totalDurationMs}ms - video will rebuild")
 
+        // Update state immediately with new project (don't wait for database)
         _uiState.value = currentState.copy(
             project = updatedProject,
             pendingAssets = null,
-            isProcessingAudio = false  // Clear loading overlay
+            isProcessingAudio = false
         )
 
-        // Save to database (unless unsaved project)
+        // Save to database in background (saved projects only)
         if (!currentState.isUnsavedProject) {
-            withContext(Dispatchers.IO) {
+            viewModelScope.launch(Dispatchers.IO) {
                 try {
+                    val existingAssetIds = currentState.project.assets.map { it.id }.toSet()
+                    val newAssetIds = finalAssets.map { it.id }.toSet()
+
+                    // 1. Delete assets that are no longer in the list
+                    val assetsToRemove = currentState.project.assets.filter { it.id !in newAssetIds }
+                    assetsToRemove.forEach { asset ->
+                        projectRepository.removeAsset(updatedProject.id, asset.id)
+                    }
+
+                    // 2. Find new assets that need to be inserted
+                    val newAssets = finalAssets.filter { it.id !in existingAssetIds }
+                    if (newAssets.isNotEmpty()) {
+                        projectRepository.addAssets(updatedProject.id, newAssets.map { it.uri })
+                    }
+
+                    // 3. Update/reorder all assets (including newly inserted ones)
                     projectRepository.reorderAssets(updatedProject.id, finalAssets)
-                    android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Saved ${finalAssets.size} assets to database")
 
                     // Save updated settings if duration changed
                     if (updatedSettings != currentState.project.settings) {
                         updateSettingsUseCase(updatedProject.id, updatedSettings)
-                        android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Saved updated duration to database")
                     }
+
+                    android.util.Log.d("EditorViewModel", "Saved ${finalAssets.size} assets to database (removed: ${assetsToRemove.size}, added: ${newAssets.size})")
                 } catch (e: Exception) {
-                    android.util.Log.e("EditorViewModel", "replaceAssetsFromUris: Failed to save - ${e.message}")
+                    android.util.Log.e("EditorViewModel", "❌ Failed to save - ${e.message}", e)
                 }
             }
         }

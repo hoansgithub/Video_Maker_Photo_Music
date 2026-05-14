@@ -181,14 +181,19 @@ internal fun ImagesBottomSheet(
                             asset = asset,
                             isSelected = selectedAssetId == asset.id,
                             isDragging = draggedAssetId == asset.id,
+                            canDelete = assets.size > 3,
                             onClick = {
-                                if (draggedAssetId == null) {
+                                if (draggedAssetId == null && assets.size > 3) {
+                                    // Only allow selection for delete if more than 3 images
                                     selectedAssetId = if (selectedAssetId == asset.id) null else asset.id
                                 }
                             },
                             onRemove = {
-                                assets = assets.filter { it.id != asset.id }
-                                selectedAssetId = null
+                                // Only allow deletion if more than 3 images
+                                if (assets.size > 3) {
+                                    assets = assets.filter { it.id != asset.id }
+                                    selectedAssetId = null
+                                }
                             },
                             onDragStart = { offset ->
                                 draggedAssetId = asset.id
@@ -314,6 +319,7 @@ private fun ImageItem(
     asset: Asset,
     isSelected: Boolean,
     isDragging: Boolean,
+    canDelete: Boolean,
     onClick: () -> Unit,
     onRemove: () -> Unit,
     onDragStart: (Offset) -> Unit,
@@ -388,7 +394,7 @@ private fun ImageItem(
             }
         }
 
-        // Delete menu inside the item when selected
+        // Delete menu inside the item when selected (only shown if canDelete)
         if (isSelected) {
             Box(
                 modifier = Modifier
