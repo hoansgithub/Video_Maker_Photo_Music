@@ -17,16 +17,18 @@ import kotlinx.serialization.json.jsonPrimitive
  * Language Configuration Service
  *
  * Handles intelligent language sorting based on:
- * 1. Device language (respects user's explicit choice)
- * 2. User's physical location (NO VPN, device-based only):
+ * 1. Device language (ALWAYS FIRST - respects user's explicit choice)
+ * 2. User's region detection (uses RegionProvider with region_detection_config):
+ *    - IP-based geolocation (if enabled via remote config, VPN-aware)
  *    - SIM card country (physical location, permanent)
  *    - Network operator country (physical location, ignores VPN)
  *    - System locale country (last fallback)
  * 3. Remote Config priorities (updatable without app release)
  * 4. Hardcoded fallback priorities
  *
- * Note: Does NOT use IP-based geolocation or VPN-aware detection.
- * Uses actual device location only for accurate physical region.
+ * Region detection respects region_detection_config:
+ * - When use_ip_geolocation = true: Uses IP detection first, falls back to SIM/Network/Locale
+ * - When use_ip_geolocation = false: Uses SIM → Network → Locale only
  *
  * Remote Config Format:
  * ```json
@@ -44,10 +46,12 @@ import kotlinx.serialization.json.jsonPrimitive
  * Implements ConfigurableObject for automatic Remote Config updates.
  * Registration happens centrally in VideoMakerApplication.kt.
  *
- * @param context Application context for country detection
+ * @param context Application context for device language detection
+ * @param regionProvider Provides region code with IP detection support
  */
 class LanguageConfigService(
-    private val context: Context
+    private val context: Context,
+    private val regionProvider: com.videomaker.aimusic.core.data.local.RegionProvider
 ) : ConfigurableObject {
 
     // Cache for remote languages (code → SupportedLanguage)
@@ -57,19 +61,24 @@ class LanguageConfigService(
     private val remotePriorities = mutableMapOf<String, List<String>>()
 
     /**
-     * Sort languages based on device language and user's country.
+     * Sort languages based on device language and user's region.
      *
      * Language source priority:
      * 1. Remote Config languages (if available)
      * 2. Hardcoded fallback languages
      *
      * Sorting priority:
-     * 1. Device language (TOP PRIORITY - respects user's explicit choice)
-     * 2. SIM card country (location-based)
-     * 3. Network country (fallback)
-     * 4. System locale country (second fallback)
+     * 1. Device language (ALWAYS FIRST - respects user's explicit choice)
+     * 2. Region-based priorities (uses RegionProvider with IP detection if enabled)
+     * 3. Rest of languages in default order
      *
-     * @return Sorted list with device language first, then country priorities, rest after
+     * Region detection (via RegionProvider):
+     * - If region_detection_config.use_ip_geolocation = true:
+     *   IP → Persisted → SIM → Network → Locale → "us"
+     * - If region_detection_config.use_ip_geolocation = false:
+     *   Persisted → SIM → Network → Locale → "us"
+     *
+     * @return Sorted list with device language first, then region priorities, rest after
      */
     fun getSortedLanguages(): List<SupportedLanguage> {
         // Use remote languages if available, otherwise fallback to hardcoded
@@ -79,7 +88,7 @@ class LanguageConfigService(
             LanguageManager.getAllLanguages()
         }
 
-        // Get device language (top priority)
+        // Get device language (ALWAYS FIRST)
         val deviceLanguage = getDeviceLanguage()
         android.util.Log.d(TAG, "📱 Device language for sorting: $deviceLanguage")
 
@@ -90,16 +99,16 @@ class LanguageConfigService(
         android.util.Log.d(TAG, "🔍 Device language available in list: $deviceLanguageAvailable")
         android.util.Log.d(TAG, "📚 Available language codes: ${availableLanguages.map { it.code }}")
 
-        // Get country-based priorities
-        val country = detectUserCountry()
-        android.util.Log.d(TAG, "🌍 Detected country: $country")
+        // Get region from RegionProvider (includes IP detection if enabled)
+        val region = regionProvider.getRegionCode().uppercase()
+        android.util.Log.d(TAG, "🌍 Detected region from RegionProvider: $region")
 
-        val countryPriorities = getLanguagePriorityForCountry(country)
-        android.util.Log.d(TAG, "🎯 Country priorities: $countryPriorities")
+        val regionPriorities = getLanguagePriorityForCountry(region)
+        android.util.Log.d(TAG, "🎯 Region priorities: $regionPriorities")
 
-        // Combine: device language first (only if available), then country priorities (excluding device language to avoid duplicates)
+        // Combine: device language ALWAYS first (if available), then region priorities (excluding device language to avoid duplicates)
         val priorityCodes = listOfNotNull(deviceLanguage?.takeIf { deviceLanguageAvailable }) +
-                           countryPriorities.filter { it != deviceLanguage }
+                           regionPriorities.filter { it != deviceLanguage }
 
         android.util.Log.d(TAG, "🔢 Final priority codes: $priorityCodes")
 
@@ -144,45 +153,6 @@ class LanguageConfigService(
 
         android.util.Log.d(TAG, "✅ Device language: $deviceCode")
         return deviceCode
-    }
-
-    /**
-     * Detect user's country code using device-based detection (NO VPN).
-     *
-     * Priority order:
-     * 1. SIM card country (physical location, permanent)
-     * 2. Network operator country (physical location, ignores VPN)
-     * 3. System locale country (user setting fallback)
-     *
-     * Note: Does NOT use IP geolocation - uses actual device location only
-     *
-     * @return Country code (e.g., "US", "BR", "ID") or empty string if unknown
-     */
-    private fun detectUserCountry(): String {
-        val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
-
-        // 1. Try SIM card country (physical location)
-        tm?.simCountryIso?.uppercase()?.takeIf { it.isNotEmpty() }?.let {
-            android.util.Log.d(TAG, "📱 Country from SIM: $it")
-            return it
-        }
-
-        // 2. Try network country (physical location, ignores VPN)
-        tm?.networkCountryIso?.uppercase()?.takeIf { it.isNotEmpty() }?.let {
-            android.util.Log.d(TAG, "📡 Country from Network: $it")
-            return it
-        }
-
-        // 3. Try system locale country (user setting fallback)
-        val config = context.resources.configuration
-        ConfigurationCompat.getLocales(config).get(0)?.country?.uppercase()?.takeIf { it.isNotEmpty() }?.let {
-            android.util.Log.d(TAG, "🌍 Country from Locale: $it")
-            return it
-        }
-
-        // Unknown country
-        android.util.Log.d(TAG, "⚠️ No country detected")
-        return ""
     }
 
     /**
@@ -231,6 +201,7 @@ class LanguageConfigService(
             // Asia - Southeast
             "ID" -> listOf("id", "jv", "su")
             "PH" -> listOf("fil", "en")
+            "VN" -> listOf("vi", "en")
 
             // Asia - South
             "IN" -> listOf("hi", "bn", "en", "kn")

@@ -149,10 +149,11 @@ val dataModule = module {
 
     // Language config service (singleton - ConfigurableObject for Remote Config)
     // Centralized registration: Explicitly registered in VideoMakerApplication.kt
-    // Uses device-based location only (SIM/Network/Locale), no IP/VPN detection
+    // Uses RegionProvider for region detection (includes IP detection if enabled via region_detection_config)
     single {
         com.videomaker.aimusic.core.language.LanguageConfigService(
-            context = androidContext()
+            context = androidContext(),
+            regionProvider = get()
         )
     }
 
