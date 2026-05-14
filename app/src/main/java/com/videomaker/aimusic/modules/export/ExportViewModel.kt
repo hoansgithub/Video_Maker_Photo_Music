@@ -242,6 +242,14 @@ class ExportViewModel(
     // parallel observers watching different work items simultaneously.
     private var exportJob: kotlinx.coroutines.Job? = null
 
+    // Parallel watermark-free export — pre-generates the clean version in background.
+    // When user earns the remove-watermark reward, we switch to this path instantly
+    // instead of triggering a re-export at download time.
+    private var cleanWorkId: UUID? = null
+    private var cleanExportJob: kotlinx.coroutines.Job? = null
+    private var cleanOutputPath: String? = null
+    private var pendingCleanSwitch: Boolean = false
+
     // ============================================
     // INITIALIZATION
     // ============================================
@@ -261,21 +269,18 @@ class ExportViewModel(
             _thumbnailUri.value = project?.thumbnailUri ?: project?.assets?.firstOrNull()?.uri
             _aspectRatio.value = project?.settings?.aspectRatio ?: AspectRatio.RATIO_9_16
 
-            // Load watermark status from database
-            // Show watermark only if project is NOT watermark-free
-            try {
-                _showWatermark.value = !(project?.isWatermarkFree ?: false)
-                android.util.Log.d("ExportViewModel", "Loaded watermark status: isWatermarkFree=${project?.isWatermarkFree}, showWatermark=${_showWatermark.value}")
-            } catch (e: Exception) {
-                android.util.Log.e("ExportViewModel", "Failed to load project watermark status", e)
-                // Default to showing watermark on error
-                _showWatermark.value = true
-            }
+            // Watermark is always shown on ExportScreen entry regardless of past sessions.
+            // _showWatermark defaults to true; it only changes within this session after
+            // the user earns the remove-watermark reward.
         }
     }
 
     private fun startExport() {
         exportJob?.cancel()
+        cleanExportJob?.cancel()
+        cleanOutputPath = null
+        pendingCleanSwitch = false
+
         exportJob = viewModelScope.launch {
             val project = currentProjectSnapshot ?: projectRepository.getProject(projectId)
             currentProjectSnapshot = project
@@ -283,12 +288,16 @@ class ExportViewModel(
             // workId is guaranteed to be set before observeProgress reads it.
             val id = exportRepository.startExport(projectId)
             workId = id
+
+            // Pre-generate the watermark-free version in parallel so switching is instant
+            // after the user earns the remove-watermark reward.
+            startCleanExport()
             exportRepository.observeExportProgress(id).collect { progress ->
                 _uiState.value = when (progress) {
                     is ExportProgress.Preparing -> ExportUiState.Preparing
                     is ExportProgress.Processing -> ExportUiState.Processing(progress.percent)
                     is ExportProgress.Success -> {
-                        currentOutputWatermarkFree = project?.isWatermarkFree == true
+                        currentOutputWatermarkFree = false // main export always has watermark
                         Analytics.trackVideoExportComplete(
                             videoId = projectId,
                             templateId = project?.settings?.templateId,
@@ -360,6 +369,35 @@ class ExportViewModel(
                 }
             }
         }
+    }
+
+    private fun startCleanExport() {
+        cleanExportJob?.cancel()
+        cleanExportJob = viewModelScope.launch {
+            val cleanId = exportRepository.startExport(projectId, forceWatermarkFree = true)
+            cleanWorkId = cleanId
+            android.util.Log.d("ExportViewModel", "🎬 Clean export started: $cleanId")
+            exportRepository.observeExportProgress(cleanId).collect { progress ->
+                if (progress is ExportProgress.Success) {
+                    cleanOutputPath = progress.outputPath
+                    android.util.Log.d("ExportViewModel", "✅ Clean export ready: ${progress.outputPath}")
+                    // Auto-switch if user already earned the reward in this session
+                    // (pendingCleanSwitch) or previously earned then changed quality
+                    // (!_showWatermark.value means reward was already granted).
+                    if (pendingCleanSwitch || !_showWatermark.value) {
+                        pendingCleanSwitch = false
+                        switchToCleanOutput(progress.outputPath)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun switchToCleanOutput(cleanPath: String) {
+        val currentState = _uiState.value as? ExportUiState.Success ?: return
+        _uiState.value = currentState.copy(outputPath = cleanPath, savedToGallery = false)
+        currentOutputWatermarkFree = true
+        android.util.Log.d("ExportViewModel", "🔄 Switched preview to watermark-free output")
     }
 
     // ============================================
@@ -441,6 +479,7 @@ class ExportViewModel(
      */
     fun cancelExport() {
         workId?.let { exportRepository.cancelExport(it) }
+        cleanWorkId?.let { exportRepository.cancelExport(it) }
     }
 
     /**
@@ -706,18 +745,26 @@ class ExportViewModel(
     fun onWatermarkClick() {
         watermarkAdController.requestAd(
             onReward = {
-                // Remove watermark and save status
                 _showWatermark.value = false
-                currentProjectSnapshot = currentProjectSnapshot?.copy(isWatermarkFree = true)
-                saveWatermarkFreeStatus()
                 android.util.Log.d("ExportViewModel", "✅ Watermark removed after ad")
+                val cleanPath = cleanOutputPath
+                if (cleanPath != null) {
+                    switchToCleanOutput(cleanPath)
+                } else {
+                    // Clean export still in progress — switch preview when it finishes
+                    pendingCleanSwitch = true
+                }
             },
             onSkip = {
                 // Ad disabled - remove watermark immediately
                 android.util.Log.d("ExportViewModel", "⏭️ Ad disabled - removing watermark")
                 _showWatermark.value = false
-                currentProjectSnapshot = currentProjectSnapshot?.copy(isWatermarkFree = true)
-                saveWatermarkFreeStatus()
+                val cleanPath = cleanOutputPath
+                if (cleanPath != null) {
+                    switchToCleanOutput(cleanPath)
+                } else {
+                    pendingCleanSwitch = true
+                }
             },
             checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_REMOVE_WATERMARK) }
         )
@@ -855,37 +902,11 @@ class ExportViewModel(
     }
 
     private suspend fun resolveOutputPathForDownload(currentState: ExportUiState.Success): Result<String> {
-        val projectIsWatermarkFree = currentProjectSnapshot?.isWatermarkFree == true
-        if (!shouldPrepareWatermarkFreeOutputForDownload(projectIsWatermarkFree, currentOutputWatermarkFree)) {
-            return Result.success(currentState.outputPath)
-        }
-
-        // Ensure persisted status is updated before triggering a new export worker read.
-        watermarkStatusUpdateJob?.join()
-
-        val downloadWorkId = exportRepository.startExport(projectId)
-        val terminalProgress = exportRepository.observeExportProgress(downloadWorkId).first { progress ->
-            progress is ExportProgress.Success ||
-                progress is ExportProgress.Error ||
-                progress is ExportProgress.Cancelled
-        }
-
-        return when (terminalProgress) {
-            is ExportProgress.Success -> {
-                currentOutputWatermarkFree = true
-                val outputPath = terminalProgress.outputPath
-                _uiState.value = currentState.copy(
-                    outputPath = outputPath,
-                    savedToGallery = false,
-                    saveError = null
-                )
-                Result.success(outputPath)
-            }
-
-            is ExportProgress.Error -> Result.failure(IllegalStateException(terminalProgress.message))
-            is ExportProgress.Cancelled -> Result.failure(IllegalStateException("Export cancelled"))
-            else -> Result.failure(IllegalStateException("Unexpected export terminal state"))
-        }
+        // outputPath in state is always the correct version to download:
+        // - Watermarked by default after initial export
+        // - Switched to the pre-generated clean version via switchToCleanOutput() when
+        //   the user earns the remove-watermark reward (no re-export required at download time)
+        return Result.success(currentState.outputPath)
     }
 
     /**

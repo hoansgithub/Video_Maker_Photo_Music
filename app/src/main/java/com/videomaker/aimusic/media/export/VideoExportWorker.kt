@@ -46,6 +46,7 @@ class VideoExportWorker(
         const val KEY_PROGRESS = "progress"
         const val KEY_OUTPUT_PATH = "output_path"
         const val KEY_ERROR = "error"
+        const val KEY_FORCE_WATERMARK_FREE = "force_watermark_free"
     }
 
     private var transformer: Transformer? = null
@@ -57,10 +58,17 @@ class VideoExportWorker(
             ?: return Result.failure(workDataOf(KEY_ERROR to "Missing project ID"))
 
         return try {
+            val forceWatermarkFree = inputData.getBoolean(KEY_FORCE_WATERMARK_FREE, false)
+
             var project = projectRepository.getProject(projectId)
                 ?: return Result.failure(workDataOf(KEY_ERROR to "Project not found"))
 
-            android.util.Log.d("VideoExportWorker", "Loaded project: id=$projectId")
+            // Watermark removal is per-session: main export always includes watermark,
+            // clean export (forceWatermarkFree=true) always excludes it — regardless of
+            // the persisted isWatermarkFree flag so old projects are treated the same.
+            project = project.copy(isWatermarkFree = forceWatermarkFree)
+
+            android.util.Log.d("VideoExportWorker", "Loaded project: id=$projectId, forceWatermarkFree=$forceWatermarkFree, isWatermarkFree=${project.isWatermarkFree}")
 
             if (project.assets.isEmpty()) {
                 return Result.failure(workDataOf(KEY_ERROR to "Project has no assets"))
@@ -130,7 +138,7 @@ class VideoExportWorker(
                 }
             }
 
-            val outputFile = createOutputFile(projectId)
+            val outputFile = createOutputFile(projectId, isClean = forceWatermarkFree)
             val composition = compositionFactory.createComposition(project, includeAudio = true, forExport = true)
 
             try {
@@ -148,11 +156,12 @@ class VideoExportWorker(
         }
     }
 
-    private fun createOutputFile(projectId: String): File {
+    private fun createOutputFile(projectId: String, isClean: Boolean = false): File {
         val moviesDir = applicationContext.getExternalFilesDir(Environment.DIRECTORY_MOVIES)
             ?: applicationContext.filesDir
 
-        val fileName = "video_${projectId}_${System.currentTimeMillis()}.mp4"
+        val suffix = if (isClean) "_clean" else ""
+        val fileName = "video_${projectId}${suffix}_${System.currentTimeMillis()}.mp4"
         return File(moviesDir, fileName)
     }
 
