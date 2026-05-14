@@ -245,6 +245,22 @@ internal fun WelcomePageDynamic(
                         }
                     }
 
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.35f)
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(0.65f),
+                                        Color.Black,
+                                    )
+                                )
+                            )
+                            .align(Alignment.BottomCenter)
+                    )
+
                     Image(
                         painter = painterResource(R.drawable.img_bg_onboard_page1),
                         contentDescription = null,

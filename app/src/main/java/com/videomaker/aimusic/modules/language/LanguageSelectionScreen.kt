@@ -322,13 +322,16 @@ fun LanguageSelectionScreen(
                                 painter = painterResource(R.drawable.img_bg_cta_onboard),
                                 contentScale = ContentScale.Crop
                             )
+                            .then(
+                                if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
+                                else Modifier
+                            )
                             .clickableSingle{}
                     ) {
                         Box(
                             modifier = Modifier
-                                .navigationBarsPadding()
                                 .align(Alignment.BottomEnd)
-                                .padding(top = 18.dp, end = 24.dp)
+                                .padding(18.dp)
                                 .onGloballyPositioned { coords ->
                                     val topLeft = coords.positionInRoot()
                                     ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
@@ -482,6 +485,7 @@ internal fun OnboardingCtaButton(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier
             .clickableSingle(enabled = enabled, onClick = onClick)
+            .alpha(if (enabled) 1f else 0.35f)
             .padding(horizontal = 20.dp)
     ) {
         Text(
