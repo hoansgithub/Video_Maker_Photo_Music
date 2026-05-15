@@ -100,5 +100,6 @@
       "Bash(chmod:*)",
       "Bash(/tmp/final_pagination_test.sh)"
     ]
-  }
+  },
+  "model": "opus"
 }

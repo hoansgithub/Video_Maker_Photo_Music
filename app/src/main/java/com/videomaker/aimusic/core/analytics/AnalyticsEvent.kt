@@ -370,6 +370,10 @@ object AnalyticsEvent {
             const val VIDEO_EDITOR_SEARCH = "video_editor_search"
             const val VIDEO_EDITOR_RCM = "video_editor_rcm"
             const val UNINSTALL = "uninstall"
+
+            // Song list screens
+            const val SUGGESTED_SONGS = "suggested_songs"
+            const val WEEKLY_RANKING = "weekly_ranking"
         }
 
         object Section {

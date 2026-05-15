@@ -21,18 +21,18 @@ class ExportRepositoryImpl(
     private val workManager: WorkManager
 ) : ExportRepository {
 
-    override fun startExport(projectId: String): UUID {
+    override fun startExport(projectId: String, forceWatermarkFree: Boolean): UUID {
         val request = OneTimeWorkRequestBuilder<VideoExportWorker>()
             .setInputData(
-                workDataOf(VideoExportWorker.KEY_PROJECT_ID to projectId)
+                workDataOf(
+                    VideoExportWorker.KEY_PROJECT_ID to projectId,
+                    VideoExportWorker.KEY_FORCE_WATERMARK_FREE to forceWatermarkFree
+                )
             )
             .build()
 
-        workManager.enqueueUniqueWork(
-            "export_$projectId",
-            ExistingWorkPolicy.REPLACE,
-            request
-        )
+        val workName = if (forceWatermarkFree) "export_clean_$projectId" else "export_$projectId"
+        workManager.enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, request)
 
         return request.id
     }

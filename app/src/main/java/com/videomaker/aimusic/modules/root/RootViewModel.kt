@@ -96,6 +96,11 @@ class RootViewModel(
     @Volatile
     private var onboardingComplete = false
 
+    // Captured once in loadInitialData() before any ad logic runs.
+    // true = first ever launch → INTERSTITIAL_SPLASH; false = second+ → INTERSTITIAL_OPEN_APP
+    @Volatile
+    private var isFirstOpen = false
+
     @Volatile
     private var isInitialized = false
 
@@ -188,11 +193,8 @@ class RootViewModel(
             val startTimeMillis = System.currentTimeMillis()
             var initTimedOut = false
 
-            // Step 1: Brief delay to allow network subsystem to fully initialize on cold start
-            // This prevents race conditions where network is transitioning during app launch
-            delay(300)
-
-            // Step 2: Check internet connection
+            // Step 1: Check internet connection
+            // Note: Modern Android (API 28+) network stack is stable on cold start, no delay needed
             if (!isInternetAvailable()) {
                 // Keep loading indicator visible while showing no-internet dialog
                 isInitialized = false
@@ -200,9 +202,14 @@ class RootViewModel(
                 return@launch
             }
 
-            // Step 3: Get initialization timeout from Remote Config
+            // Capture once — isFirstLaunch() auto-marks false on first call
+            isFirstOpen = preferencesManager.isFirstLaunch()
+            android.util.Log.d("RootViewModel", "📊 First open detection: isFirstOpen=$isFirstOpen")
+
+            // Step 2: Get initialization timeout from Remote Config (already pre-fetched in Application.onCreate())
             // Default: 45 seconds (can be adjusted remotely without app update)
             // Longer timeout allows for slower networks while still preventing infinite loading
+            // Note: Using cached Remote Config values (pre-fetched during app startup)
             initTimeoutMs = try {
                 val configValue = remoteConfig.getLong(RemoteConfigKeys.APP_INIT_TIMEOUT_MS, 45_000L)
                 // Validate: Remote Config might return 0 or invalid value
@@ -210,7 +217,7 @@ class RootViewModel(
             } catch (e: Exception) {
                 45_000L  // Fallback to 45 seconds if Remote Config fails
             }
-            android.util.Log.d("RootViewModel", "📊 Init timeout: ${initTimeoutMs}ms")
+            android.util.Log.d("RootViewModel", "📊 Init timeout: ${initTimeoutMs}ms (from cached Remote Config)")
 
             // ============================================
             // CRITICAL: Timeout wrapper prevents infinite loading
@@ -221,12 +228,7 @@ class RootViewModel(
             try {
                 withTimeout(initTimeoutMs) {  // Remote Config controlled timeout
                     try {
-                        // Step 3: Load Firebase Remote Config (10s timeout)
-                        // UMP consent is already complete, safe to fetch config
-                        _loadingStep.value = LoadingStep.FETCHING_CONFIG
-                        loadRemoteConfig()
-
-                        // Step 4: Check startup gate status
+                        // Step 3: Check startup gate status
                         // Simplified: Only check if onboarding is complete
                         // If not complete, always start from Language Selection (beginning of flow)
                         _loadingStep.value = LoadingStep.CHECKING_STATUS
@@ -242,79 +244,79 @@ class RootViewModel(
                         android.util.Log.d("RootViewModel", "   - shouldShowOnboarding (from UseCase): $shouldShowOnboarding")
                         android.util.Log.d("RootViewModel", "   - onboardingComplete (saved to class property): ${this@RootViewModel.onboardingComplete}")
 
-                        // Step 5: Preload ads in parallel (native ads + splash interstitial)
-                        // Native ads load on IO thread, interstitial on Main (AdMob requirement)
-                        // Uses same timeout as overall initialization (from Remote Config)
+                        // Step 4: Preload ads (optimized strategy)
+                        // Native ads: Load in Application scope (background, survives ViewModel lifecycle)
+                        // Splash interstitial: Wait for it (we show it immediately before navigation)
                         _loadingStep.value = LoadingStep.LOADING_AD
-                        android.util.Log.d("RootViewModel", "🎬 Step 5: Preloading ads (1-step-ahead strategy)...")
+                        val splashPlacement = if (isFirstOpen) AdPlacement.INTERSTITIAL_SPLASH else AdPlacement.INTERSTITIAL_OPEN_APP
+                        android.util.Log.d("RootViewModel", "🎬 Step 4: Preloading ads (optimized 1-step-ahead strategy)...")
                         android.util.Log.d("RootViewModel", "   - onboardingComplete: ${this@RootViewModel.onboardingComplete}")
-                        android.util.Log.d("RootViewModel", "   - Interstitial: ${AdPlacement.INTERSTITIAL_SPLASH}")
-                        android.util.Log.d("RootViewModel", "   - Timeout: ${initTimeoutMs}ms")
+                        android.util.Log.d("RootViewModel", "   - Splash interstitial: $splashPlacement (isFirstOpen=$isFirstOpen)")
+                        android.util.Log.d("RootViewModel", "   - Splash timeout: ${initTimeoutMs}ms")
 
-                        coroutineScope {
-                            // Parallel loading strategy:
-                            // 1. Native ads on IO thread (current step preloading)
-                            // 2. Splash interstitial on Main thread (AdMob requirement)
+                        /*
+                         * OPTIMIZED AD LOADING STRATEGY (Delayed Parallel)
+                         *
+                         * 1. Splash interstitial (CRITICAL PATH):
+                         *    - Starts immediately (blocking) - we show it right away
+                         *    - Gets initial network bandwidth priority
+                         *    - Uses main thread (AdMob requirement)
+                         *
+                         * 2. Native ads (BACKGROUND):
+                         *    - Starts after 1.5s delay (gives splash a head start)
+                         *    - Launch in Application scope (survives ViewModel lifecycle)
+                         *    - Won't compete with splash on slow networks
+                         *    - On fast networks: splash finishes quickly, native ads still load early
+                         *
+                         * Why 1.5s delay?
+                         * - Typical splash ad load: 1.5-4s
+                         * - On slow networks: 1.5s gives splash exclusive bandwidth
+                         * - On fast networks: splash finishes before native ads start anyway
+                         * - Native ads still have plenty of time (load during splash display + navigation)
+                         *
+                         * Full onboarding flow:
+                         * Step 0: Language Selection
+                         * Step 1: OnboardingActivity (welcome pages, NO ads)
+                         * Step 2: Feature Selection
+                         * Then: Home
+                         */
 
-                            val nativeAdsJob = async(Dispatchers.IO) {
-                                runCatching {
-                                    /*
-                                     * SIMPLIFIED 1-STEP-AHEAD PRELOADING
-                                     *
-                                     * Full onboarding flow (always the same):
-                                     * Step 0: Language Selection
-                                     * Step 1: OnboardingActivity (welcome pages, NO ads)
-                                     * Step 2: Feature Selection
-                                     * Then: Home
-                                     *
-                                     * Preloading rules:
-                                     * - If onboarding NOT complete: Preload Language ads (Step 0)
-                                     * - If onboarding complete: No preload needed (go to Home)
-                                     *
-                                     * Why this works:
-                                     * - User always starts at Language Selection if onboarding incomplete
-                                     * - OnboardingActivity preloads Feature Selection ads (Step 2) when it starts
-                                     * - No need to check individual completion flags
-                                     */
-                                    if (!this@RootViewModel.onboardingComplete) {
-                                        // Onboarding not complete → Start from Language Selection
-                                        // Preload Language ads (Step 0)
-                                        android.util.Log.d("RootViewModel", "🔄 Preloading Language Selection ads (Step 0)")
-                                        awaitAll(
-                                            async { com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdSuspend(AdPlacement.NATIVE_ONBOARDING_LANGUAGE) },
-                                            async { com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdSuspend(AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT) }
-                                        )
-                                        android.util.Log.d("RootViewModel", "✅ Language Selection ads preloaded (both variants)")
-                                    } else {
-                                        // Onboarding complete → Go to Home (no ads to preload)
-                                        android.util.Log.d("RootViewModel", "⏭️ Onboarding complete, no native ads to preload")
-                                    }
-                                }.onFailure {
-                                    android.util.Log.w("RootViewModel", "⚠️ Native ad preload failed (non-blocking): ${it.message}")
+                        // Launch native ads with delay (Application scope, survives navigation)
+                        if (!this@RootViewModel.onboardingComplete) {
+                            // Onboarding not complete → Preload Language Selection ads (Step 0)
+                            // Using Application scope with 1.5s delay to prioritize splash ad
+                            android.util.Log.d("RootViewModel", "🔄 Launching native ads in background (Application scope, 1.5s delay)")
+                            com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdDelayed(
+                                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
+                                delayMs = 1500L
+                            )
+                            com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdDelayed(
+                                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
+                                delayMs = 1500L
+                            )
+                        } else {
+                            // Onboarding complete → Go to Home (no native ads needed)
+                            android.util.Log.d("RootViewModel", "⏭️ Onboarding complete, skipping native ad preload")
+                        }
+
+                        // Load splash interstitial (starts immediately, blocking)
+                        android.util.Log.d("RootViewModel", "📺 Loading splash interstitial (priority)")
+                        withContext(Dispatchers.Main) {
+                            runCatching {
+                                val success = InterstitialAdHelperExt.preloadInterstitial(
+                                    adsLoaderService = adsLoaderService,
+                                    placement = splashPlacement,
+                                    loadTimeoutMillis = initTimeoutMs,
+                                    showLoadingOverlay = false
+                                )
+                                if (success) {
+                                    android.util.Log.d("RootViewModel", "✅ Splash interstitial loaded ($splashPlacement)")
+                                } else {
+                                    android.util.Log.w("RootViewModel", "⚠️ Splash interstitial load failed ($splashPlacement)")
                                 }
+                            }.onFailure {
+                                android.util.Log.e("RootViewModel", "❌ Splash interstitial exception: ${it.message}", it)
                             }
-
-                            val splashAdJob = async(Dispatchers.Main) {
-                                runCatching {
-                                    val success = InterstitialAdHelperExt.preloadInterstitial(
-                                        adsLoaderService = adsLoaderService,
-                                        placement = AdPlacement.INTERSTITIAL_SPLASH,
-                                        loadTimeoutMillis = initTimeoutMs,
-                                        showLoadingOverlay = false
-                                    )
-                                    if (success) {
-                                        android.util.Log.d("RootViewModel", "✅ Splash interstitial preloaded")
-                                    } else {
-                                        android.util.Log.w("RootViewModel", "⚠️ Splash interstitial preload failed")
-                                    }
-                                    success
-                                }.onFailure {
-                                    android.util.Log.e("RootViewModel", "❌ Splash interstitial exception: ${it.message}", it)
-                                }
-                            }
-
-                            // Wait for both jobs to complete
-                            awaitAll(nativeAdsJob, splashAdJob)
                         }
 
                     } catch (e: Exception) {
@@ -327,7 +329,7 @@ class RootViewModel(
                 android.util.Log.w("RootViewModel", "⏱️ Initialization timed out after ${initTimeoutMs}ms — proceeding to navigation")
             }
 
-            // Step 7: Track initialization time with time buckets
+            // Step 5: Track initialization time with time buckets
             val durationMillis = System.currentTimeMillis() - startTimeMillis
             val durationSeconds = durationMillis / 1000.0
             val timeBucket = when {
@@ -348,43 +350,11 @@ class RootViewModel(
                 )
             )
 
-            // Step 8: Navigate to appropriate screen (ALWAYS happens, even if timeout/error)
+            // Step 6: Navigate to appropriate screen (ALWAYS happens, even if timeout/error)
             // This ensures users never get stuck on loading screen
             proceedToNextScreen()
         }
     }
-
-    // ============================================
-    // PRIVATE: FIREBASE REMOTE CONFIG
-    // ============================================
-
-    /**
-     * Load Firebase Remote Config
-     * Fetches and activates remote config values with a 10-second timeout.
-     * On failure or timeout, continues with cached/default values.
-     */
-    private suspend fun loadRemoteConfig() {
-        try {
-
-            // Fetch with 10 second timeout to prevent blocking on slow networks
-            val result = withTimeoutOrNull(10_000L) {
-                remoteConfig.fetchAndActivate()
-            }
-
-            // fetchAndActivate returns Result<Boolean>
-            val success = result?.getOrNull() ?: false
-            if (success) {
-            } else {
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("RootViewModel", "Remote Config error: ${e.message}")
-            // Continue with cached/default values - don't block app startup
-        }
-    }
-
-    // ============================================
-    // PRIVATE: PLACEHOLDERS (for future implementation)
-    // ============================================
 
     // ============================================
     // PRIVATE: NAVIGATION
@@ -402,9 +372,10 @@ class RootViewModel(
 
         // Show splash interstitial ad (if loaded) before navigating
         // Ad shows on top of loading screen, then navigates when closed
+        val splashPlacement = if (isFirstOpen) AdPlacement.INTERSTITIAL_SPLASH else AdPlacement.INTERSTITIAL_OPEN_APP
         activityRef?.get()?.let { activity ->
             android.util.Log.d("RootViewModel", "📺 Attempting to show splash interstitial ad...")
-            android.util.Log.d("RootViewModel", "   - Placement: ${AdPlacement.INTERSTITIAL_SPLASH}")
+            android.util.Log.d("RootViewModel", "   - Placement: $splashPlacement (isFirstOpen=$isFirstOpen)")
             android.util.Log.d("RootViewModel", "   - Bypass frequency cap: true")
             android.util.Log.d("RootViewModel", "   - Load timeout: ${initTimeoutMs}ms")
 
@@ -414,7 +385,7 @@ class RootViewModel(
             InterstitialAdHelperExt.showInterstitial(
                 adsLoaderService = adsLoaderService,
                 activity = activity,
-                placement = AdPlacement.INTERSTITIAL_SPLASH,
+                placement = splashPlacement,
                 action = {
                     if (callbackCalled.compareAndSet(false, true)) {
                         // Navigate when ad closes (or if ad fails to show)

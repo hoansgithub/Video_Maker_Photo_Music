@@ -8,7 +8,7 @@ internal data class AssetPickerGridScrollState(
 internal data class AssetPickerSessionSnapshot(
     val permissionMode: PermissionMode,
     val assets: List<GalleryAsset>,
-    val selectedUris: Set<String>,
+    val selectedUris: List<String>,  // Changed to List to preserve order
     val selectedAlbumId: String,
     val gridScrollState: AssetPickerGridScrollState
 )

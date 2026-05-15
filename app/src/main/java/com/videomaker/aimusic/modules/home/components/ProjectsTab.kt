@@ -132,9 +132,44 @@ fun ProjectsTabContent(
     var showRemovedMessage by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val activity = context as? Activity
+    val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
 
     // Ad states
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
+
+    // Preload template grid tap ad when view appears
+    LaunchedEffect(Unit) {
+        com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+            adsLoaderService = adsLoaderService,
+            placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+            loadTimeoutMillis = null,
+            showLoadingOverlay = false
+        )
+    }
+
+    // Preload library project tap ad when view appears
+    LaunchedEffect(Unit) {
+        com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+            adsLoaderService = adsLoaderService,
+            placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP,
+            loadTimeoutMillis = null,
+            showLoadingOverlay = false
+        )
+    }
+
+    // Extract template navigation data
+    val templateNavigation = remember(navigationEvent) {
+        (navigationEvent as? ProjectsNavigationEvent.NavigateToTemplateDetail)?.let {
+            it.templateId to it.shouldShowAd
+        }
+    }
+
+    // Extract editor navigation data
+    val editorNavigation = remember(navigationEvent) {
+        (navigationEvent as? ProjectsNavigationEvent.NavigateToEditor)?.let {
+            it.projectId to it.shouldShowAd
+        }
+    }
 
     LaunchedEffect(showRemovedMessage) {
         if (showRemovedMessage) {
@@ -143,19 +178,76 @@ fun ProjectsTabContent(
         }
     }
 
+    // Handle template navigation with reusable helper
+    templateNavigation?.let { (templateId, shouldShowAd) ->
+        com.videomaker.aimusic.core.ads.HandleTemplateNavigation(
+            templateId = templateId,
+            shouldShowAd = shouldShowAd,
+            onPreloadNext = { viewModel.preloadTemplateGridAd() },
+            onNavigate = {
+                onNavigateToTemplateDetail(it, null)
+                viewModel.onNavigationHandled()
+            }
+        )
+    }
+
+    // Handle editor navigation with ad
+    editorNavigation?.let { (projectId, shouldShowAd) ->
+        LaunchedEffect(projectId, shouldShowAd) {
+            if (shouldShowAd && activity != null) {
+                com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.showInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    activity = activity,
+                    placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP,
+                    action = {
+                        onProjectClick(projectId)
+                        viewModel.onNavigationHandled()
+                    },
+                    onShown = {
+                        viewModel.preloadLibraryProjectAd()
+                    },
+                    bypassFrequencyCap = true,  // Show every time, ignore frequency cap
+                    showLoadingOverlay = false
+                )
+            } else {
+                onProjectClick(projectId)
+                viewModel.onNavigationHandled()
+            }
+        }
+    }
+
+    // Handle other navigation events
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
-                is ProjectsNavigationEvent.NavigateToSongSearch -> onNavigateToSongSearch()
-                is ProjectsNavigationEvent.NavigateToAllSongs -> onNavigateToAllSongs()
-                is ProjectsNavigationEvent.NavigateToTemplateSearch -> onNavigateToTemplateSearch()
-                is ProjectsNavigationEvent.NavigateToAllTemplates -> onNavigateToAllTemplates()
-                is ProjectsNavigationEvent.NavigateToAssetPickerForSong -> onNavigateToAssetPicker(event.songId)
-                is ProjectsNavigationEvent.NavigateToEditor -> { /* handled by caller */ }
-                is ProjectsNavigationEvent.NavigateToTemplateDetail -> { /* handled by caller */ }
+                is ProjectsNavigationEvent.NavigateToSongSearch -> {
+                    onNavigateToSongSearch()
+                    viewModel.onNavigationHandled()
+                }
+                is ProjectsNavigationEvent.NavigateToAllSongs -> {
+                    onNavigateToAllSongs()
+                    viewModel.onNavigationHandled()
+                }
+                is ProjectsNavigationEvent.NavigateToTemplateSearch -> {
+                    onNavigateToTemplateSearch()
+                    viewModel.onNavigationHandled()
+                }
+                is ProjectsNavigationEvent.NavigateToAllTemplates -> {
+                    onNavigateToAllTemplates()
+                    viewModel.onNavigationHandled()
+                }
+                is ProjectsNavigationEvent.NavigateToAssetPickerForSong -> {
+                    onNavigateToAssetPicker(event.songId)
+                    viewModel.onNavigationHandled()
+                }
+                is ProjectsNavigationEvent.NavigateToEditor -> {
+                    // Handled by editor navigation handler above
+                }
+                is ProjectsNavigationEvent.NavigateToTemplateDetail -> {
+                    // Handled by HandleTemplateNavigation above
+                }
                 is ProjectsNavigationEvent.NavigateBack -> { /* handled by caller */ }
             }
-            viewModel.onNavigationHandled()
         }
     }
 
@@ -278,7 +370,7 @@ fun ProjectsTabContent(
                                             songId = project.settings.musicSongId?.toString(),
                                             location = AnalyticsEvent.Value.Location.LIBRARY
                                         )
-                                        onProjectClick(project.id)
+                                        viewModel.onProjectClick(project)
                                     },
                                     onProjectOption = { project ->
                                         Analytics.trackVideoOption(project.id)

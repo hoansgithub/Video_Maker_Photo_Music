@@ -21,6 +21,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Weiter</string>
     <string name="onboarding_get_started">Loslegen</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Bleib mit frischen, einsatzbereiten Vorlagen, die täglich aktualisiert werden, einen Schritt voraus.</string>
+    <string name="onboarding_india_page3_title">Tägliche trendige Vorlagen entdecken</string>
+    <string name="onboarding_india_page3_subtitle">Bleib mit frischen, einsatzbereiten Vorlagen, die täglich aktualisiert werden, einen Schritt voraus.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Magie in Sekunden erschaffen</string>
     <string name="onboarding_page1_subtitle">Atemberaubende Videos mit wenigen Tipps. Einfach und schnell</string>
@@ -147,6 +151,7 @@
     <string name="editor_music_trim_skip_to_start">Zum Anfang springen</string>
     <string name="editor_music_trim_skip_to_end">Zum Ende springen</string>
     <string name="editor_photos_count">%d Fotos</string>
+    <string name="editor_photos_label">Fotos</string>
     <string name="editor_save_dialog_title">Projekt speichern?</string>
     <string name="editor_save_dialog_message">Dein Projekt wird gespeichert und ist unter Meine Projekte verfügbar.</string>
     <string name="editor_save_and_exit">Speichern &amp; Verlassen</string>
@@ -162,6 +167,9 @@
     <string name="editor_effect_sets">Effektsets</string>
     <string name="editor_retry">Erneut versuchen</string>
     <string name="editor_no_music_selected">Keine Musik ausgewählt</string>
+    <string name="editor_images_title">Tippen zum Bearbeiten • Halten zum Neu Anordnen</string>
+    <string name="editor_add_images">Bilder hinzufügen</string>
+    <string name="editor_delete_image">Löschen</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Erstellte Videos</string>
@@ -279,6 +287,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Musik-Player</string>
     <string name="music_player_use_to_create">Zur Videoerstellung verwenden</string>
+    <string name="music_player_free_unlock">Kostenlos freischalten</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Musik auswählen</string>
@@ -467,6 +476,7 @@
     <string name="template_swipe_subtitle">Um deine Vorlagen zu genießen</string>
     <string name="template_select_ratio_title">Videoverhältnis wählen</string>
     <string name="template_create_now">Jetzt erstellen</string>
+    <string name="template_free_unlock">Kostenlos freischalten</string>
     <string name="template_error_load_failed">Vorlagen konnten nicht geladen werden. Bitte versuche es erneut.</string>
 
     <!-- Unified Search -->

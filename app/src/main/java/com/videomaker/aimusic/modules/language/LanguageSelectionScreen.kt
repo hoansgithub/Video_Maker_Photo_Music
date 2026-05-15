@@ -3,6 +3,8 @@ package com.videomaker.aimusic.modules.language
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.EaseInCubic
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -66,6 +69,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -91,6 +96,7 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.featureselection.EVENT_GENRE_SHOW
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * LanguageSelectionScreen - Language picker for onboarding and settings.
@@ -175,7 +181,7 @@ fun LanguageSelectionScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Color(0xFF1A1A1A))
             .windowInsetsPadding(
                 WindowInsets.safeDrawing.only(
                     WindowInsetsSides.Horizontal + WindowInsetsSides.Top
@@ -195,162 +201,186 @@ fun LanguageSelectionScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(
-                    top = 16.dp,
-                    bottom = bottomPaddingDp + 24.dp  // Dynamic padding based on measured bottom section height
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (showBackButton) {
-                // Top bar with back button (left) and done button (right)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp)
+                        .padding(
+                            top = 16.dp,
+                            bottom = bottomPaddingDp + 24.dp  // Dynamic padding based on measured bottom section height
+                        ),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
+                    if (showBackButton) {
+                        // Top bar with back button (left) and done button (right)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = onBackClick) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = stringResource(R.string.back),
+                                    tint = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
+
+                            // Done button in top right
+                            Box(
+                                modifier = Modifier.onGloballyPositioned { coords ->
+                                    val topLeft = coords.positionInRoot()
+                                    ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
+                                }
+                            ) {
+                                OnboardingCtaButtonV1(
+                                    text = stringResource(R.string.done),
+                                    onClick = {
+                                        onContinue.invoke()
+                                        selectedLanguage?.let {
+                                            Analytics.track(
+                                                name = "language_next",
+                                                params = mapOf(
+                                                    "language" to it
+                                                )
+                                            )
+                                        }
+                                    },
+                                    color = Primary,
+                                    enabled = selectedLanguage != null && delayedButtonEnabled
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    } else {
+                        Spacer(modifier = Modifier.height(70.dp))
                     }
 
-                    // Done button in top right
-                    Box(
-                        modifier = Modifier.onGloballyPositioned { coords ->
-                            val topLeft = coords.positionInRoot()
-                            ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
-                        }
+                    Text(
+                        text = stringResource(R.string.language_select_title),
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = stringResource(R.string.language_select_subtitle),
+                        fontSize = 17.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(36.dp))
+
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        OnboardingCtaButton(
-                            text = stringResource(R.string.done),
-                            onClick = {
-                                onContinue.invoke()
-                                selectedLanguage?.let {
+                        languages.forEach { language ->
+                            LanguageCard(
+                                language = language,
+                                isSelected = selectedLanguage == language.code,
+                                modifier = Modifier.onGloballyPositioned { coords ->
+                                    val topLeft = coords.positionInRoot()
+                                    languageCardOffsets[language.code] =
+                                        topLeft + Offset(coords.size.width / 2f, 0f)
+                                },
+                                onClick = {
+                                    selectedLanguage = language.code
+                                    onLanguageSelected(language.code)
                                     Analytics.track(
-                                        name = "language_next",
+                                        name = "language_select",
                                         params = mapOf(
-                                            "language" to it
+                                            "language" to language.code
                                         )
                                     )
                                 }
-                            },
-                            color = Primary,
-                            enabled = selectedLanguage != null && delayedButtonEnabled
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-            } else {
-                Spacer(modifier = Modifier.height(70.dp))
-            }
-
-            Text(
-                text = stringResource(R.string.language_select_title),
-                fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = stringResource(R.string.language_select_subtitle),
-                fontSize = 17.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(36.dp))
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                languages.forEach { language ->
-                    LanguageCard(
-                        language = language,
-                        isSelected = selectedLanguage == language.code,
-                        modifier = Modifier.onGloballyPositioned { coords ->
-                            val topLeft = coords.positionInRoot()
-                            languageCardOffsets[language.code] = topLeft + Offset(coords.size.width / 2f, 0f)
-                        },
-                        onClick = {
-                            selectedLanguage = language.code
-                            onLanguageSelected(language.code)
-                            Analytics.track(
-                                name = "language_select",
-                                params = mapOf(
-                                    "language" to language.code
-                                )
                             )
                         }
-                    )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+                // Top-right button for settings flow (outside bottom section)
+                if (!showBackButton) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomEnd)
+                            .paint(
+                                painter = painterResource(R.drawable.img_bg_cta_onboard),
+                                contentScale = ContentScale.Crop
+                            )
+                            .then(
+                                if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
+                                else Modifier
+                            )
+                            .clickableSingle{}
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(18.dp)
+                                .onGloballyPositioned { coords ->
+                                    val topLeft = coords.positionInRoot()
+                                    ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
+                                }
+                        ) {
+                            OnboardingCtaButton(
+                                text = stringResource(R.string.onboarding_next),
+                                icon = R.drawable.ic_right_arrow,
+                                color = Primary,
+                                onClick = {
+                                    onContinue.invoke()
+                                    selectedLanguage?.let {
+                                        Analytics.track(
+                                            name = "language_next",
+                                            params = mapOf(
+                                                "language" to it
+                                            )
+                                        )
+                                    }
+                                },
+                                enabled = selectedLanguage != null && delayedButtonEnabled
+                            )
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        // Bottom section: Native ad only (button moved to top right for showBackButton=true)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .onSizeChanged { size ->
-                    bottomSectionHeight = size.height  // Measure actual height dynamically!
-                }
-        ) {
-            // ALT ad - bottom layer, always at full opacity
-            NativeAdView(
-                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
-                modifier = Modifier.fillMaxWidth(),
-                isDebug = BuildConfig.DEBUG
-            )
-
-            // PRIMARY ad - top layer, fades out when user selects
-            NativeAdView(
-                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .alpha(if (delayedHasSelection) 0f else 1f),
-                isDebug = BuildConfig.DEBUG
-            )
-        }
-
-        // Top-right button for settings flow (outside bottom section)
-        if (!showBackButton) {
+            // Bottom section: Native ad only (button moved to top right for showBackButton=true)
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(24.dp)
-                    .onGloballyPositioned { coords ->
-                        val topLeft = coords.positionInRoot()
-                        ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
+                    .fillMaxWidth()
+                    .onSizeChanged { size ->
+                        bottomSectionHeight = size.height  // Measure actual height dynamically!
                     }
             ) {
-                OnboardingCtaButton(
-                    text = stringResource(R.string.onboarding_next),
-                    icon = R.drawable.ic_right_arrow,
-                    color = Primary,
-                    onClick = {
-                        onContinue.invoke()
-                        selectedLanguage?.let {
-                            Analytics.track(
-                                name = "language_next",
-                                params = mapOf(
-                                    "language" to it
-                                )
-                            )
-                        }
-                    },
-                    enabled = selectedLanguage != null && delayedButtonEnabled
+                // ALT ad - bottom layer, always at full opacity
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
+                )
+
+                // PRIMARY ad - top layer, fades out when user selects
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .alpha(if (delayedHasSelection) 0f else 1f),
+                    isDebug = BuildConfig.DEBUG
                 )
             }
         }
@@ -449,6 +479,42 @@ internal fun OnboardingCtaButton(
     color: Color = MaterialTheme.colorScheme.onBackground,
     enabled: Boolean = true
 ) {
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier
+            .clickableSingle(enabled = enabled, onClick = onClick)
+            .alpha(if (enabled) 1f else 0.35f)
+            .padding(horizontal = 20.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = color
+        )
+
+        icon?.let {
+            Icon(
+                painter = painterResource(it),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier
+                    .size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+internal fun OnboardingCtaButtonV1(
+    text: String,
+    onClick: () -> Unit,
+    icon: Int? = null,
+    color: Color = MaterialTheme.colorScheme.onBackground,
+    enabled: Boolean = true
+) {
     val shape = RoundedCornerShape(50)
     val baseColor = MaterialTheme.colorScheme.primaryContainer
 
@@ -489,7 +555,7 @@ internal fun OnboardingCtaButton(
             color = color
         )
 
-        icon?.let { 
+        icon?.let {
             Icon(
                 painter = painterResource(it),
                 contentDescription = null,
@@ -574,6 +640,7 @@ private fun CursorOverlay(
 ) {
     val density = LocalDensity.current
     val cursorAnim = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
+    var atCta by remember { mutableStateOf(false) }
 
     LaunchedEffect(visible) {
         if (!visible) return@LaunchedEffect
@@ -581,6 +648,10 @@ private fun CursorOverlay(
 
         val bouncePx = with(density) { 12.dp.toPx() }
         val hotspot = with(density) { Offset(8.dp.toPx(), 4.dp.toPx()) }
+        // Mirrored hotspot for flipped cursor at CTA (image is 48dp wide, mirror x around center)
+        val ctaHotspot = with(density) { Offset((65.dp).toPx(), 70.dp.toPx()) }
+
+        atCta = false
 
         if (selectedLanguage == null) {
             val firstVisibleCode = languageCardOffsets
@@ -606,7 +677,8 @@ private fun CursorOverlay(
             }
         }
 
-        val ctaTarget = ctaButtonOffset - hotspot
+        atCta = true
+        val ctaTarget = ctaButtonOffset - ctaHotspot
 
         cursorAnim.animateTo(ctaTarget, animationSpec = tween(450, easing = EaseInOutCubic))
 
@@ -624,7 +696,7 @@ private fun CursorOverlay(
         exit = fadeOut(tween(200))
     ) {
         Image(
-            painter = painterResource(R.drawable.img_hand_point),
+            painter = painterResource(if (atCta) R.drawable.img_hand_point_1 else R.drawable.img_hand_point),
             contentDescription = null,
             modifier = Modifier
                 .size(48.dp)

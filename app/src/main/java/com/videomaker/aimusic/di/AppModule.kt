@@ -149,9 +149,11 @@ val dataModule = module {
 
     // Language config service (singleton - ConfigurableObject for Remote Config)
     // Centralized registration: Explicitly registered in VideoMakerApplication.kt
+    // Uses RegionProvider for region detection (includes IP detection if enabled via region_detection_config)
     single {
         com.videomaker.aimusic.core.language.LanguageConfigService(
-            context = androidContext()
+            context = androidContext(),
+            regionProvider = get()
         )
     }
 
@@ -190,11 +192,18 @@ val dataModule = module {
     // Supabase client (singleton)
     single { SupabaseClientProvider.instance }
 
-    // Region provider (singleton - auto-detected from system: SIM → Network → Locale)
+    // Region detection config service (singleton - ConfigurableObject for Remote Config)
+    // Centralized registration: Explicitly registered in VideoMakerApplication.kt
+    single {
+        com.videomaker.aimusic.core.data.remote.RegionDetectionConfig()
+    }
+
+    // Region provider (singleton - auto-detected from system: SIM → Network → Locale → IP)
     single {
         RegionProvider(
             context = androidContext(),
-            preferencesManager = get()
+            preferencesManager = get(),
+            regionDetectionConfig = get()
         )
     }
 
@@ -434,7 +443,9 @@ class AssetPickerViewModelFactory(
         templateId: String? = null,
         overrideSongId: Long = -1L,
         aspectRatio: com.videomaker.aimusic.domain.model.AspectRatio? = null,
-        resumeDraftId: String? = null
+        resumeDraftId: String? = null,
+        selectedAssetUris: List<String> = emptyList(),
+        isEditingMode: Boolean = false
     ): AssetPickerViewModel {
         return AssetPickerViewModel(
             context = application,
@@ -449,7 +460,9 @@ class AssetPickerViewModelFactory(
             templateId = templateId,
             overrideSongId = overrideSongId,
             aspectRatio = aspectRatio,
-            resumeDraftId = resumeDraftId
+            resumeDraftId = resumeDraftId,
+            selectedAssetUris = selectedAssetUris,
+            isEditingMode = isEditingMode
         )
     }
 }
@@ -469,8 +482,10 @@ class EditorViewModelFactory(
     private val songRepository: SongRepository,
     private val effectSetRepository: EffectSetRepository,
     private val beatSyncRepository: BeatSyncRepository,
+    private val projectRepository: ProjectRepository,
     private val adsLoaderService: AdsLoaderService,
-    private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService
+    private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService,
+    private val adPlacementConfigService: com.videomaker.aimusic.core.ads.AdPlacementConfigService
 ) {
     fun create(
         projectId: String?,
@@ -488,8 +503,10 @@ class EditorViewModelFactory(
             songRepository = songRepository,
             effectSetRepository = effectSetRepository,
             beatSyncRepository = beatSyncRepository,
+            projectRepository = projectRepository,
             adsLoaderService = adsLoaderService,
-            audioPreprocessingService = audioPreprocessingService
+            audioPreprocessingService = audioPreprocessingService,
+            adPlacementConfigService = adPlacementConfigService
         )
     }
 }
@@ -586,13 +603,15 @@ class ProjectsViewModelFactory(
 class GalleryViewModelFactory(
     private val application: android.app.Application,
     private val imageLoader: coil.ImageLoader,
-    private val templateRepository: TemplateRepository
+    private val templateRepository: TemplateRepository,
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 ) {
     fun create(): GalleryViewModel {
         return GalleryViewModel(
             application = application,
             imageLoader = imageLoader,
-            templateRepository = templateRepository
+            templateRepository = templateRepository,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -644,6 +663,7 @@ class TemplatePreviewerViewModelFactory(
             imageUrisStr = imageUris,
             overrideSongId = overrideSongId,
             templateRepository = templateRepository,
+            songRepository = songRepository,
             createProjectUseCase = createProjectUseCase,
             updateProjectSettingsUseCase = updateProjectSettingsUseCase,
             likeTemplateUseCase = likeTemplateUseCase,
@@ -720,7 +740,8 @@ class MusicPlayerViewModelFactory(
     private val unlikeSongUseCase: UnlikeSongUseCase,
     private val likedSongRepository: LikedSongRepository,
     private val unlockedSongsManager: com.videomaker.aimusic.core.storage.UnlockedSongsManager,
-    private val adsLoaderService: AdsLoaderService
+    private val adsLoaderService: AdsLoaderService,
+    private val songRepository: com.videomaker.aimusic.domain.repository.SongRepository
 ) {
     fun create(songId: Long, song: com.videomaker.aimusic.domain.model.MusicSong): MusicPlayerViewModel = MusicPlayerViewModel(
         songId = songId,
@@ -729,7 +750,8 @@ class MusicPlayerViewModelFactory(
         unlikeSongUseCase = unlikeSongUseCase,
         likedSongRepository = likedSongRepository,
         unlockedSongsManager = unlockedSongsManager,
-        adsLoaderService = adsLoaderService
+        adsLoaderService = adsLoaderService,
+        songRepository = songRepository
     )
 }
 
@@ -741,6 +763,7 @@ class UninstallViewModelFactory(
     private val observeLikedSongsUseCase: ObserveLikedSongsUseCase,
     private val templateRepository: TemplateRepository,
     private val songRepository: SongRepository,
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
 ) {
     fun create(): UninstallViewModel {
         return UninstallViewModel(
@@ -748,6 +771,7 @@ class UninstallViewModelFactory(
             observeLikedSongsUseCase = observeLikedSongsUseCase,
             templateRepository = templateRepository,
             songRepository = songRepository,
+            adsLoaderService = adsLoaderService,
         )
     }
 }
@@ -784,6 +808,29 @@ val presentationModule = module {
     viewModel {
         com.videomaker.aimusic.modules.onboarding.OnboardingViewModel(
             onboardingRepository = get()
+        )
+    }
+
+    // Onboarding Content ViewModel — registered as a singleton so that the
+    // preload kicked off in LanguageSelectionActivity stays alive and its state
+    // is visible to OnboardingActivity (the spec's "centralized" intent). Using
+    // viewModel { } would create a fresh per-Activity instance and lose the data.
+    single {
+        com.videomaker.aimusic.modules.onboarding.OnboardingContentViewModel(
+            application = androidContext() as android.app.Application,
+            templateRepository = get(),
+            songRepository = get(),
+            regionProvider = get(),
+            remoteConfig = get()
+        )
+    }
+
+    // Genre Template Onboarding ViewModel
+    viewModel {
+        com.videomaker.aimusic.modules.genretemplate.GenreTemplateViewModel(
+            templateRepository = get(),
+            songRepository = get(),
+            remoteConfig = get()
         )
     }
 
@@ -831,11 +878,13 @@ val presentationModule = module {
             updateSettingsUseCase = get(),
             addAssetsUseCase = get(),
             removeAssetUseCase = get(),
+            projectRepository = get(),
             songRepository = get(),
             effectSetRepository = get(),
             beatSyncRepository = get(),
             adsLoaderService = get(),
-            audioPreprocessingService = get()
+            audioPreprocessingService = get(),
+            adPlacementConfigService = get()
         )
     }
 
@@ -888,7 +937,8 @@ val presentationModule = module {
             application = (androidContext().applicationContext as? android.app.Application)
                 ?: error("applicationContext is not an Application instance"),
             imageLoader = get(),
-            templateRepository = get()
+            templateRepository = get(),
+            adsLoaderService = get()
         )
     }
 
@@ -914,7 +964,8 @@ val presentationModule = module {
             templateRepository = get(),
             getGenresUseCase = get(),
             getSuggestedSongsUseCase = get(),
-            getSongsByGenreUseCase = get()
+            getSongsByGenreUseCase = get(),
+            adsLoaderService = get()
         )
     }
 
@@ -970,6 +1021,7 @@ val presentationModule = module {
             observeLikedSongsUseCase = get(),
             templateRepository = get(),
             songRepository = get(),
+            adsLoaderService = get(),
         )
     }
 
@@ -988,7 +1040,8 @@ val presentationModule = module {
             unlikeSongUseCase = get(),
             likedSongRepository = get(),
             unlockedSongsManager = get(),
-            adsLoaderService = get()
+            adsLoaderService = get(),
+            songRepository = get()
         )
     }
 }

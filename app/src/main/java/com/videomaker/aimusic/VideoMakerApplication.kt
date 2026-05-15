@@ -84,6 +84,10 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
     // ✅ Guard to ensure shader preloading happens only once (not on every foreground)
     private val shaderPreloadedOnce = AtomicBoolean(false)
 
+    // Tracks whether the app has been backgrounded at least once (warm return detection)
+    // Set to true in onStop, consumed atomically in AppOpenAdManager.shouldShowCallback
+    private val wasBackgrounded = AtomicBoolean(false)
+
     companion object {
         // Track if ads have been initialized (global, survives Activity destruction)
         private val adsInitialized = AtomicBoolean(false)
@@ -139,6 +143,30 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                         .get<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
                     adsLoaderService.loadNative(placement)
                     android.util.Log.d("VideoMakerApp", "✅ Native ad preloaded: $placement")
+                } catch (e: AdsLoaderException) {
+                    android.util.Log.w("VideoMakerApp", "⚠️ Failed to preload native ad: $placement - ${e.message}")
+                } catch (e: Exception) {
+                    android.util.Log.e("VideoMakerApp", "⚠️ Unexpected error preloading native ad: $placement", e)
+                }
+            }
+        }
+
+        /**
+         * Preload native ad with delay (non-suspend version)
+         * Launches coroutine in application scope with initial delay
+         * Used to prioritize other operations (like splash ad) before native ad loading
+         *
+         * @param placement Placement ID to preload
+         * @param delayMs Delay in milliseconds before starting ad load
+         */
+        fun preloadNativeAdDelayed(placement: String, delayMs: Long) {
+            appScope?.launch(Dispatchers.IO) {
+                try {
+                    kotlinx.coroutines.delay(delayMs)
+                    val adsLoaderService = org.koin.core.context.GlobalContext.get()
+                        .get<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
+                    adsLoaderService.loadNative(placement)
+                    android.util.Log.d("VideoMakerApp", "✅ Native ad preloaded (delayed ${delayMs}ms): $placement")
                 } catch (e: AdsLoaderException) {
                     android.util.Log.w("VideoMakerApp", "⚠️ Failed to preload native ad: $placement - ${e.message}")
                 } catch (e: Exception) {
@@ -231,17 +259,24 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                     // This ensures all Remote Config values are available when RootViewModel reads them
                     // Remote Config network fetch should run on IO thread (already correct)
                     android.util.Log.d("VideoMakerApp", "⏳ Waiting for Remote Config to be ready...")
+                    val startTime = System.currentTimeMillis()
                     try {
+                        android.util.Log.d("VideoMakerApp", "🔄 Starting Remote Config fetch...")
+
                         withTimeout(60_000L) {  // 1 minute timeout for Remote Config
                             val remoteConfig = org.koin.core.context.GlobalContext.get()
                                 .get<co.alcheclub.lib.acccore.remoteconfig.RemoteConfig>()
                             remoteConfig.fetchAndActivate()
-                            android.util.Log.d("VideoMakerApp", "✅ Remote Config ready!")
+
+                            val duration = System.currentTimeMillis() - startTime
+                            android.util.Log.d("VideoMakerApp", "✅ Remote Config ready! (took ${duration}ms)")
                         }
                     } catch (e: TimeoutCancellationException) {
-                        android.util.Log.w("VideoMakerApp", "⏱️ Remote Config fetch timed out after 60 seconds - continuing anyway")
+                        val duration = System.currentTimeMillis() - startTime
+                        android.util.Log.w("VideoMakerApp", "⏱️ Remote Config fetch timed out after ${duration}ms - continuing anyway")
                     } catch (e: Exception) {
-                        android.util.Log.w("VideoMakerApp", "⚠️ Remote Config fetch failed: ${e.message} - continuing anyway")
+                        val duration = System.currentTimeMillis() - startTime
+                        android.util.Log.w("VideoMakerApp", "⚠️ Remote Config fetch failed after ${duration}ms: ${e.message} - continuing anyway")
                     }
 
                     android.util.Log.d("VideoMakerApp", "🔄 Starting UMP consent flow...")
@@ -387,6 +422,9 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
             )
         }
 
+        // Language sorting uses device-based location (SIM/Network/Locale)
+        // IP-based detection removed - uses physical location only, no VPN detection
+
         runCatching {
             val appSessionTracker = org.koin.core.context.GlobalContext.get().get<AppSessionTracker>()
             ProcessLifecycleOwner.get().lifecycle.addObserver(appSessionTracker)
@@ -402,6 +440,14 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                     TransitionShaderLibrary.preload()
                     android.util.Log.d("VideoMakerApp", "✅ Deferred shader preloading started (first time)")
                 }
+            }
+        })
+
+        // AOA_MINIMIZE: track when app goes to background (warm return detection)
+        // PROCESS-LIFETIME OBSERVER: intentionally not removed (matches ProcessLifecycleOwner lifetime)
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : androidx.lifecycle.DefaultLifecycleObserver {
+            override fun onStop(owner: androidx.lifecycle.LifecycleOwner) {
+                wasBackgrounded.set(true)
             }
         })
 
@@ -438,10 +484,20 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         val adInitializer = org.koin.core.context.GlobalContext.get().get<com.videomaker.aimusic.core.ads.AdInitializer>()
         android.util.Log.d("VideoMakerApp", "Ad system initialized: ${adInitializer.getDiagnostics()}")
 
-        // Initialize app open ad manager (lifecycle-based)
+        // Initialize app open ad manager (lifecycle-based, two-layer system)
         val appOpenAdManager = org.koin.core.context.GlobalContext.get().get<co.alcheclub.lib.acccore.ads.helpers.AppOpenAdManager>()
-        appOpenAdManager.setForegroundPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_AOA)
-        android.util.Log.d("VideoMakerApp", "✅ App open ad manager initialized")
+
+        // Set background placement (onStop/onStart - full app switches)
+        appOpenAdManager.setBackgroundPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_AOA)
+
+        // Set foreground placement (onPause/onResume - quick interactions)
+        appOpenAdManager.setForegroundPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_FOREGROUND)
+
+        // Suppress callback: only show AOA on warm returns (not first launch)
+        // wasBackgrounded is set to true when app goes to background, consumed here
+        appOpenAdManager.setShouldShowCallback { wasBackgrounded.getAndSet(false) }
+
+        android.util.Log.d("VideoMakerApp", "✅ App open ad manager initialized (2-layer: background + foreground, minimize mode)")
 
         configureNotifications()
         primeNotificationScheduleConfigFromCache()
@@ -465,23 +521,40 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         // Bug fix learned from Drama app production issues
         applicationScope.launch {
             try {
-                android.util.Log.d("VideoMakerApp", "🚀 Step 1: Fetching Remote Config...")
+                android.util.Log.d("VideoMakerApp", "🚀 Step 1: Setting Remote Config defaults...")
+
+                // Set default values FIRST (instant, works offline, survives fetch failures)
+                val remoteConfig = get<co.alcheclub.lib.acccore.remoteconfig.RemoteConfig>()
+                try {
+                    // ACCCore RemoteConfig wraps Firebase RemoteConfig
+                    // Set defaults using XML resource
+                    remoteConfig.setDefaults(R.xml.remote_config_defaults)
+                    android.util.Log.d("VideoMakerApp", "✅ Remote Config defaults set from XML")
+                } catch (e: Exception) {
+                    android.util.Log.e("VideoMakerApp", "❌ Failed to set Remote Config defaults: ${e.message}", e)
+                    // Continue anyway - app will use inline defaults when reading values
+                }
+
+                android.util.Log.d("VideoMakerApp", "🚀 Step 2: Fetching Remote Config...")
 
                 // Fetch and activate Remote Config (with timeout)
                 try {
-                    kotlinx.coroutines.withTimeout(15000L) {  // 15s timeout (same as RootViewModel)
-                        val remoteConfig = get<co.alcheclub.lib.acccore.remoteconfig.RemoteConfig>()
+                    val startTime = System.currentTimeMillis()
+                    android.util.Log.d("VideoMakerApp", "🔄 Starting Remote Config fetch (5s timeout)...")
+
+                    kotlinx.coroutines.withTimeout(5000L) {  // 5s timeout for faster startup
                         val result = remoteConfig.fetchAndActivate()
+                        val duration = System.currentTimeMillis() - startTime
 
                         when {
                             result.isSuccess && result.getOrNull() == true -> {
-                                android.util.Log.d("VideoMakerApp", "✅ Remote Config fetched and activated")
+                                android.util.Log.d("VideoMakerApp", "✅ Remote Config fetched and activated (took ${duration}ms)")
                             }
                             result.isSuccess && result.getOrNull() == false -> {
-                                android.util.Log.w("VideoMakerApp", "⚠️ Remote Config returned false (using cached values)")
+                                android.util.Log.w("VideoMakerApp", "⚠️ Remote Config returned false after ${duration}ms (using cached values)")
                             }
                             result.isFailure -> {
-                                android.util.Log.w("VideoMakerApp", "⚠️ Remote Config fetch failed: ${result.exceptionOrNull()?.message}")
+                                android.util.Log.w("VideoMakerApp", "⚠️ Remote Config fetch failed after ${duration}ms: ${result.exceptionOrNull()?.message}")
                             }
                             else -> {
                                 android.util.Log.w("VideoMakerApp", "⚠️ Remote Config returned null")
@@ -489,12 +562,12 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                         }
                     }
                 } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                    android.util.Log.w("VideoMakerApp", "⏱️ Remote Config fetch timeout after 15s - continuing with defaults")
+                    android.util.Log.w("VideoMakerApp", "⏱️ Remote Config fetch timeout after 5s - continuing with defaults")
                 } catch (e: Exception) {
                     android.util.Log.e("VideoMakerApp", "❌ Remote Config fetch error: ${e.message}", e)
                 }
 
-                android.util.Log.d("VideoMakerApp", "🚀 Step 2: Registering services...")
+                android.util.Log.d("VideoMakerApp", "🚀 Step 3: Registering services...")
 
                 // CENTRALIZED REGISTRATION: All ConfigurableObjects in one place
                 // Now services will receive the fetched config via firstOrNull()
@@ -502,6 +575,7 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                     // App ConfigurableObjects
                     get<com.videomaker.aimusic.core.ads.AdPlacementConfigService>(),
                     get<com.videomaker.aimusic.core.language.LanguageConfigService>(),
+                    get<com.videomaker.aimusic.core.data.remote.RegionDetectionConfig>(),
                     get<com.videomaker.aimusic.core.notification.NotificationScheduleConfigService>(),
                     // ACCCore ConfigurableObjects
                     get<co.alcheclub.lib.acccore.ads.loader.PlacementConfigService>()

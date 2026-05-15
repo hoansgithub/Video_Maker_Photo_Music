@@ -58,7 +58,7 @@ koin = "4.2.0"  # Matches ACCCoreAndroid
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.36"  # Latest: v0.0.36 release
+acccore = "0.0.39"  # Latest: v0.0.39 release
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)

@@ -57,6 +57,12 @@ interface SongRepository {
     suspend fun getRandomSongs(limit: Int = 10): Result<List<MusicSong>>
 
     /**
+     * Increment use_count for a song when user selects it to create a project.
+     * This is used for ranking/sorting songs by popularity.
+     */
+    suspend fun incrementUseCount(songId: Long): Result<Unit>
+
+    /**
      * Clears all cached song data from disk.
      * Call before pull-to-refresh to force fresh network fetches.
      */

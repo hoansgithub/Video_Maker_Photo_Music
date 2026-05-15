@@ -2,8 +2,10 @@ package com.videomaker.aimusic.modules.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.SongRepository
@@ -40,7 +42,7 @@ sealed class UninstallUiState {
 
 sealed class UninstallNavigationEvent {
     data object NavigateBack : UninstallNavigationEvent()
-    data class NavigateToTemplatePreviewer(val templateId: String) : UninstallNavigationEvent()
+    data class NavigateToTemplatePreviewer(val templateId: String, val shouldShowAd: Boolean) : UninstallNavigationEvent()
     data object NavigateToTemplates : UninstallNavigationEvent()
     data object NavigateToAllSongs : UninstallNavigationEvent()
     data class NavigateToTemplatePreviewerWithSong(val songId: Long) : UninstallNavigationEvent()
@@ -55,6 +57,7 @@ class UninstallViewModel(
     observeLikedSongsUseCase: ObserveLikedSongsUseCase,
     private val templateRepository: TemplateRepository,
     private val songRepository: SongRepository,
+    private val adsLoaderService: AdsLoaderService,
 ) : ViewModel() {
 
     private val _navigationEvent = MutableStateFlow<UninstallNavigationEvent?>(null)
@@ -108,7 +111,21 @@ class UninstallViewModel(
             templateName = template.name,
             location = AnalyticsEvent.Value.Location.UNINSTALL
         )
-        _navigationEvent.value = UninstallNavigationEvent.NavigateToTemplatePreviewer(template.id)
+
+        // Always show ad (bypass frequency cap like template grid tap ads)
+        val shouldShowAd = true
+        _navigationEvent.value = UninstallNavigationEvent.NavigateToTemplatePreviewer(template.id, shouldShowAd)
+    }
+
+    fun preloadUninstallTemplateAd() {
+        viewModelScope.launch {
+            com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                adsLoaderService = adsLoaderService,
+                placement = AdPlacement.INTERSTITIAL_UNINSTALL_TEMPLATE_TAP,
+                loadTimeoutMillis = null,
+                showLoadingOverlay = false
+            )
+        }
     }
 
     fun onSeeMoreTemplatesClick() {

@@ -67,7 +67,7 @@ private val BadgeShape = RoundedCornerShape(999.dp)
  * 1. Thumbnail image (AsyncImage, shimmer while loading)
  * 2. Bottom gradient scrim (ensures name is readable on any image)
  * 3. Template name — bottom-start, max 2 lines
- * 4. PRO badge — top-end (only when isPremium)
+ * 4. ADS/PRO badge — top-end (ADS if premium & locked, nothing if unlocked)
  * 5. Use count badge — bottom-end (only when useCount > 0)
  */
 @Composable
@@ -76,9 +76,11 @@ fun TemplateCard(
     thumbnailPath: String,
     aspectRatio: Float,
     isPremium: Boolean,
+    isUnlocked: Boolean = true,  // Default true for backward compatibility
     isShowOption: Boolean = false,
-    showHotTag: Boolean = false,  // Only show in Gallery tab
-    useCount: Long,
+    showHotTag: Boolean = false,  // Show for top 10 templates
+    useCount: Long,  // Kept for backward compatibility, prefer viewCount
+    viewCount: Long = useCount,  // Display count (defaults to useCount if not provided)
     onClickDelete: () -> Unit = {},
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -190,8 +192,8 @@ fun TemplateCard(
                 )
             }
 
-            // PRO badge — top-end
-            if (isPremium) {
+            // ADS badge — top-end (only show for premium templates that are NOT unlocked)
+            if (isPremium && !isUnlocked) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -199,11 +201,22 @@ fun TemplateCard(
                         .background(color = GoldAccent, shape = RoundedCornerShape(dimens.radiusMd))
                         .padding(horizontal = 6.dp, vertical = 3.dp)
                 ) {
-                    Text(
-                        text = "PRO",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = TextOnPrimary
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_play),
+                            contentDescription = "Watch ad to unlock",
+                            tint = TextOnPrimary,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = "ADS",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = TextOnPrimary
+                        )
+                    }
                 }
             }
 
@@ -219,13 +232,13 @@ fun TemplateCard(
                     .align(Alignment.BottomStart)
                     .padding(
                         start = 10.dp,
-                        end = if (useCount > 0) 64.dp else 10.dp,
+                        end = if (viewCount > 0) 64.dp else 10.dp,
                         bottom = 10.dp
                     )
             )
 
-            // Use count badge — bottom-end
-            if (useCount > 0) {
+            // View count badge — bottom-end (shows viewCount, not useCount)
+            if (viewCount > 0) {
                 Row(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -243,7 +256,7 @@ fun TemplateCard(
                         modifier = Modifier.size(10.dp)
                     )
                     Text(
-                        text = formatUseCount(useCount),
+                        text = formatViewCount(viewCount),
                         fontSize = 10.sp,
                         color = Gray200,
                         maxLines = 1
@@ -306,7 +319,7 @@ fun TemplateMore(
     }
 }
 
-private fun formatUseCount(count: Long): String = when {
+private fun formatViewCount(count: Long): String = when {
     count >= 1_000_000 -> {
         val v = count / 1_000_000.0
         if (v % 1.0 == 0.0) "${v.toLong()}M" else "%.1fM".format(v)

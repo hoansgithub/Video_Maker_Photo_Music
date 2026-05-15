@@ -18,6 +18,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Siguiente</string>
     <string name="onboarding_get_started">Empezar</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Mantente a la vanguardia con plantillas frescas y listas para usar que se actualizan todos los días.</string>
+    <string name="onboarding_india_page3_title">Atrapa las plantillas en tendencia diariamente</string>
+    <string name="onboarding_india_page3_subtitle">Mantente a la vanguardia con plantillas frescas y listas para usar que se actualizan todos los días.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Crea Magia en Segundos</string>
     <string name="onboarding_page1_subtitle">Videos increíbles en pocos clics. Fácil y rápido.</string>
@@ -142,6 +146,7 @@
     <string name="editor_music_trim_skip_to_start">Ir al Inicio</string>
     <string name="editor_music_trim_skip_to_end">Ir al Final</string>
     <string name="editor_photos_count">%d fotos</string>
+    <string name="editor_photos_label">Fotos</string>
     <string name="editor_save_dialog_title">¿Guardar Proyecto?</string>
     <string name="editor_save_dialog_message">Tu proyecto se guardará y estará disponible en Mis Proyectos.</string>
     <string name="editor_save_and_exit">Guardar y Salir</string>
@@ -157,6 +162,9 @@
     <string name="editor_effect_sets">Conjuntos de Efectos</string>
     <string name="editor_retry">Reintentar</string>
     <string name="editor_no_music_selected">No se seleccionó música</string>
+    <string name="editor_images_title">Toca para Editar • Mantén para Reorganizar</string>
+    <string name="editor_add_images">Añadir Imágenes</string>
+    <string name="editor_delete_image">Eliminar</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Video Creado</string>
@@ -274,6 +282,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Reproductor de Música</string>
     <string name="music_player_use_to_create">Usar para Crear Video</string>
+    <string name="music_player_free_unlock">Desbloquear Gratis</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Seleccionar Música</string>
@@ -461,6 +470,7 @@
     <string name="template_swipe_subtitle">Para disfrutar tus plantillas</string>
     <string name="template_select_ratio_title">Seleccionar Relación de Video</string>
     <string name="template_create_now">Crear ahora</string>
+    <string name="template_free_unlock">Desbloquear Gratis</string>
     <string name="template_error_load_failed">Error al cargar plantillas. Intenta de nuevo.</string>
 
     <!-- Unified Search -->

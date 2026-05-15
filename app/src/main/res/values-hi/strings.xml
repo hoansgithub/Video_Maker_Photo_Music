@@ -18,6 +18,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">अगला</string>
     <string name="onboarding_get_started">शुरू करें</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">हर दिन अपडेट किए जाने वाले ताज़ा, उपयोग के लिए तैयार टेम्पलेट्स के साथ आगे बने रहें।</string>
+    <string name="onboarding_india_page3_title">रोज़ाना ट्रेंडिंग टेम्पलेट्स पकड़ें</string>
+    <string name="onboarding_india_page3_subtitle">हर दिन अपडेट किए जाने वाले ताज़ा, उपयोग के लिए तैयार टेम्पलेट्स के साथ आगे बने रहें।</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">सेकंड में जादू बनाएं</string>
     <string name="onboarding_page1_subtitle">कुछ क्लिक में शानदार वीडियो। आसान और तेज़।</string>
@@ -144,6 +148,7 @@
     <string name="editor_music_trim_skip_to_start">शुरुआत पर जाएं</string>
     <string name="editor_music_trim_skip_to_end">अंत पर जाएं</string>
     <string name="editor_photos_count">%d फ़ोटो</string>
+    <string name="editor_photos_label">फ़ोटो</string>
     <string name="editor_save_dialog_title">प्रोजेक्ट सहेजें?</string>
     <string name="editor_save_dialog_message">आपका प्रोजेक्ट सहेजा जाएगा और मेरे प्रोजेक्ट्स में उपलब्ध होगा।</string>
     <string name="editor_save_and_exit">सहेजें और बाहर निकलें</string>
@@ -159,6 +164,9 @@
     <string name="editor_effect_sets">इफेक्ट सेट्स</string>
     <string name="editor_retry">पुनः प्रयास करें</string>
     <string name="editor_no_music_selected">कोई संगीत चयनित नहीं</string>
+    <string name="editor_images_title">संपादित करने के लिए टैप करें • पुनर्व्यवस्थित करने के लिए दबाए रखें</string>
+    <string name="editor_add_images">छवियाँ जोड़ें</string>
+    <string name="editor_delete_image">हटाएं</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">बनाए गए वीडियो</string>
@@ -272,6 +280,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">संगीत प्लेयर</string>
     <string name="music_player_use_to_create">वीडियो बनाने के लिए उपयोग करें</string>
+    <string name="music_player_free_unlock">फ्री अनलॉक</string>
     <string name="picker_exit_confirm_title">छवि चयन से बाहर निकलें?</string>
     <string name="picker_exit_confirm_message">आपने तस्वीरें चुनी हैं। अभी बाहर निकलने पर चुनी हुई तस्वीरें हटा दी जाएंगी।</string>
     <string name="picker_exit_confirm">बाहर निकलें</string>
@@ -463,6 +472,7 @@
     <string name="template_swipe_subtitle">अपने टेम्पलेट का आनंद लेने के लिए</string>
     <string name="template_select_ratio_title">वीडियो अनुपात चुनें</string>
     <string name="template_create_now">अभी बनाएं</string>
+    <string name="template_free_unlock">फ्री अनलॉक</string>
     <string name="template_error_load_failed">टेम्पलेट लोड करने में विफल। पुनः प्रयास करें।</string>
 
     <!-- Unified Search -->

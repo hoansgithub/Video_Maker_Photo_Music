@@ -108,21 +108,67 @@ fun UninstallScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
     val audioPreviewCache: AudioPreviewCache = koinInject()
+    val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
 
     LaunchedEffect(Unit) {
         Analytics.trackUninstallView()
     }
 
+    // Preload uninstall template tap ad when screen launches
+    LaunchedEffect(Unit) {
+        com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+            adsLoaderService = adsLoaderService,
+            placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_UNINSTALL_TEMPLATE_TAP,
+            loadTimeoutMillis = null,
+            showLoadingOverlay = false
+        )
+    }
+
+    // Extract template navigation data
+    val templateNavigation = remember(navigationEvent) {
+        (navigationEvent as? UninstallNavigationEvent.NavigateToTemplatePreviewer)?.let {
+            it.templateId to it.shouldShowAd
+        }
+    }
+
+    // Handle template navigation with reusable helper
+    templateNavigation?.let { (templateId, shouldShowAd) ->
+        com.videomaker.aimusic.core.ads.HandleTemplateNavigation(
+            templateId = templateId,
+            shouldShowAd = shouldShowAd,
+            placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_UNINSTALL_TEMPLATE_TAP,
+            onPreloadNext = { viewModel.preloadUninstallTemplateAd() },
+            onNavigate = {
+                onNavigateToTemplatePreviewer(it)
+                viewModel.onNavigationHandled()
+            }
+        )
+    }
+
+    // Handle other navigation events
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
-                is UninstallNavigationEvent.NavigateBack -> onNavigateBack()
-                is UninstallNavigationEvent.NavigateToTemplatePreviewer -> onNavigateToTemplatePreviewer(event.templateId)
-                is UninstallNavigationEvent.NavigateToTemplates -> onNavigateToTemplates()
-                is UninstallNavigationEvent.NavigateToAllSongs -> onNavigateToAllSongs()
-                is UninstallNavigationEvent.NavigateToTemplatePreviewerWithSong -> onNavigateToTemplatePreviewerWithSong(event.songId)
+                is UninstallNavigationEvent.NavigateBack -> {
+                    onNavigateBack()
+                    viewModel.onNavigationHandled()
+                }
+                is UninstallNavigationEvent.NavigateToTemplatePreviewer -> {
+                    // Handled by HandleTemplateNavigation above
+                }
+                is UninstallNavigationEvent.NavigateToTemplates -> {
+                    onNavigateToTemplates()
+                    viewModel.onNavigationHandled()
+                }
+                is UninstallNavigationEvent.NavigateToAllSongs -> {
+                    onNavigateToAllSongs()
+                    viewModel.onNavigationHandled()
+                }
+                is UninstallNavigationEvent.NavigateToTemplatePreviewerWithSong -> {
+                    onNavigateToTemplatePreviewerWithSong(event.songId)
+                    viewModel.onNavigationHandled()
+                }
             }
-            viewModel.onNavigationHandled()
         }
     }
 

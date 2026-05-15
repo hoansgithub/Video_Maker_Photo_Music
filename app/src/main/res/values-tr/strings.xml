@@ -18,6 +18,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">İleri</string>
     <string name="onboarding_get_started">Başla</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Her gün güncellenen taze, kullanıma hazır şablonlarla bir adım önde olun.</string>
+    <string name="onboarding_india_page3_title">Günlük trend şablonları yakalayın</string>
+    <string name="onboarding_india_page3_subtitle">Her gün güncellenen taze, kullanıma hazır şablonlarla bir adım önde olun.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Saniyeler İçinde Sihir Yarat</string>
     <string name="onboarding_page1_subtitle">Birkaç tıklamayla etkileyici videolar. Kolay ve hızlı.</string>
@@ -142,6 +146,7 @@
     <string name="editor_music_trim_skip_to_start">Başa Atla</string>
     <string name="editor_music_trim_skip_to_end">Sona Atla</string>
     <string name="editor_photos_count">%d fotoğraf</string>
+    <string name="editor_photos_label">Fotoğraflar</string>
     <string name="editor_save_dialog_title">Proje Kaydedilsin mi?</string>
     <string name="editor_save_dialog_message">Projeniz kaydedilecek ve Projelerim bölümünde kullanılabilir olacak.</string>
     <string name="editor_save_and_exit">Kaydet ve Çık</string>
@@ -157,6 +162,9 @@
     <string name="editor_effect_sets">Efekt Setleri</string>
     <string name="editor_retry">Tekrar Dene</string>
     <string name="editor_no_music_selected">Müzik seçilmedi</string>
+    <string name="editor_images_title">Düzenlemek için Dokun • Yeniden Düzenlemek için Basılı Tut</string>
+    <string name="editor_add_images">Resim Ekle</string>
+    <string name="editor_delete_image">Sil</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Oluşturulan Video</string>
@@ -270,6 +278,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Müzik Çalar</string>
     <string name="music_player_use_to_create">Video Oluşturmak İçin Kullan</string>
+    <string name="music_player_free_unlock">Ücretsiz Kilidi Aç</string>
     <string name="picker_exit_confirm_title">Görsel seçiminden çıkılsın mı?</string>
     <string name="picker_exit_confirm_message">Görseller seçtiniz. Şimdi çıkarsanız seçili görseller silinecek.</string>
     <string name="picker_exit_confirm">Çık</string>
@@ -461,6 +470,7 @@
     <string name="template_swipe_subtitle">Şablonlarınızın keyfini çıkarın</string>
     <string name="template_select_ratio_title">Video Oranı Seç</string>
     <string name="template_create_now">Şimdi oluştur</string>
+    <string name="template_free_unlock">Ücretsiz Kilidi Aç</string>
     <string name="template_error_load_failed">Şablonlar yüklenemedi. Lütfen tekrar deneyin.</string>
 
     <!-- Unified Search -->

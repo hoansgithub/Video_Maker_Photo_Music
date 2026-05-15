@@ -100,4 +100,19 @@ object RemoteConfigKeys {
      */
     const val NOTIFICATION_SCHEDULE_CONFIG = "notification_schedule_config"
 
+    // ============================================
+    // ONBOARDING DYNAMIC CONTENT
+    // ============================================
+
+    const val ONBOARDING_PAGE1_TEMPLATE_ID = "onboarding_page1_template_id"
+    const val ONBOARDING_PAGE2_SONG_ID = "onboarding_page2_song_id"
+
+    // ============================================
+    // ONBOARDING GENRE TEMPLATE STEPS
+    // ============================================
+
+    const val ONBOARDING_GENRE_SELECTION_ENABLED = "onboarding_genre_selection_enabled"
+    const val ONBOARDING_PERSONALIZING_ENABLED = "onboarding_personalizing_enabled"
+    const val ONBOARDING_TEMPLATE_PICK_ENABLED = "onboarding_template_pick_enabled"
+
 }

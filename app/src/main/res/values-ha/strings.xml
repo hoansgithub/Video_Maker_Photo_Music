@@ -21,6 +21,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Na gaba</string>
     <string name="onboarding_get_started">Fara</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Kasance a gaban kowane kamya da sababbin templates masu sabuntawa kullum.</string>
+    <string name="onboarding_india_page3_title">Kama templates masu trending kullum</string>
+    <string name="onboarding_india_page3_subtitle">Kasance a gaban kowane kamya da sababbin templates masu sabuntawa kullum.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Ƙirƙira Al\'ajabi a Daƙiƙa Kaɗan</string>
     <string name="onboarding_page1_subtitle">Bidiyo mai kyau da ɗan taɓawa kaɗan. Sauƙi kuma da sauri</string>
@@ -147,6 +151,7 @@
     <string name="editor_music_trim_skip_to_start">Tsallake zuwa Farko</string>
     <string name="editor_music_trim_skip_to_end">Tsallake zuwa Ƙarshe</string>
     <string name="editor_photos_count">Hotuna %d</string>
+    <string name="editor_photos_label">Hotuna</string>
     <string name="editor_save_dialog_title">Adana Aiki?</string>
     <string name="editor_save_dialog_message">Za a adana aikin ku kuma za a samu a Ayyukana.</string>
     <string name="editor_save_and_exit">Adana &amp; Fita</string>
@@ -162,6 +167,9 @@
     <string name="editor_effect_sets">Saitunan Tasiri</string>
     <string name="editor_retry">Sake gwadawa</string>
     <string name="editor_no_music_selected">Ba a zaɓi kiɗa ba</string>
+    <string name="editor_images_title">Danna don Gyara • Riƙe don Sake Tsara</string>
+    <string name="editor_add_images">Ƙara Hotuna</string>
+    <string name="editor_delete_image">Goge</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Bidiyon da aka ƙirƙira</string>
@@ -279,6 +287,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Mai Kunna Kiɗa</string>
     <string name="music_player_use_to_create">Yi amfani don Ƙirƙiri Bidiyo</string>
+    <string name="music_player_free_unlock">Buɗe Kyauta</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Zaɓi Kiɗa</string>
@@ -467,6 +476,7 @@
     <string name="template_swipe_subtitle">Don jin daɗin templates ɗinku</string>
     <string name="template_select_ratio_title">Zaɓi Rabo na Bidiyo</string>
     <string name="template_create_now">Ƙirƙira yanzu</string>
+    <string name="template_free_unlock">Buɗe Kyauta</string>
     <string name="template_error_load_failed">Kasa lodi templates. Sake gwadawa.</string>
 
     <!-- Unified Search -->

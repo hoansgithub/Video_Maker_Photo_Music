@@ -94,7 +94,10 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.theme.White16
 import kotlinx.coroutines.delay
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -602,7 +605,10 @@ fun MusicPlayerBottomSheet(
                     }
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = stringResource(R.string.music_player_use_to_create),
+                        text = stringResource(
+                            if (isSongUnlocked) R.string.music_player_use_to_create
+                            else R.string.music_player_free_unlock
+                        ),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = TextOnPrimary
@@ -615,6 +621,33 @@ fun MusicPlayerBottomSheet(
             AdsLoadingOverlay()
         }  // End Box
     }  // End ModalBottomSheet
+
+    // Pause/resume when Activity loses focus (AOA, interstitial ads)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        var wasPlayingBeforeActivityPause = false
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    wasPlayingBeforeActivityPause = player.isPlaying
+                    if (player.isPlaying) {
+                        player.pause()
+                        isPlaying = false
+                    }
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    if (wasPlayingBeforeActivityPause) {
+                        player.play()
+                        isPlaying = true
+                    }
+                    wasPlayingBeforeActivityPause = false
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     // Handle rewarded ad presentation
     RewardedAdPresenter(

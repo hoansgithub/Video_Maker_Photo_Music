@@ -18,6 +18,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Berikutnya</string>
     <string name="onboarding_get_started">Mulai</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Tetaplah terdepan dengan template segar yang siap digunakan dan diperbarui setiap hari.</string>
+    <string name="onboarding_india_page3_title">Dapatkan template trending setiap hari</string>
+    <string name="onboarding_india_page3_subtitle">Tetaplah terdepan dengan template segar yang siap digunakan dan diperbarui setiap hari.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Buat Keajaiban dalam Hitungan Detik</string>
     <string name="onboarding_page1_subtitle">Video menakjubkan dalam beberapa klik. Mudah dan cepat.</string>
@@ -142,6 +146,7 @@
     <string name="editor_music_trim_skip_to_start">Lompat ke Awal</string>
     <string name="editor_music_trim_skip_to_end">Lompat ke Akhir</string>
     <string name="editor_photos_count">%d foto</string>
+    <string name="editor_photos_label">Foto</string>
     <string name="editor_save_dialog_title">Simpan Proyek?</string>
     <string name="editor_save_dialog_message">Proyek Anda akan disimpan dan tersedia di Proyek Saya.</string>
     <string name="editor_save_and_exit">Simpan &amp; Keluar</string>
@@ -157,6 +162,9 @@
     <string name="editor_effect_sets">Set Efek</string>
     <string name="editor_retry">Coba Lagi</string>
     <string name="editor_no_music_selected">Tidak ada musik dipilih</string>
+    <string name="editor_images_title">Ketuk untuk Edit • Tahan untuk Menyusun Ulang</string>
+    <string name="editor_add_images">Tambah Gambar</string>
+    <string name="editor_delete_image">Hapus</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Video Dibuat</string>
@@ -270,6 +278,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Pemutar Musik</string>
     <string name="music_player_use_to_create">Gunakan untuk Buat Video</string>
+    <string name="music_player_free_unlock">Buka Gratis</string>
     <string name="picker_exit_confirm_title">Keluar dari pemilihan gambar?</string>
     <string name="picker_exit_confirm_message">Anda telah memilih gambar. Jika keluar sekarang, gambar yang dipilih akan dibuang.</string>
     <string name="picker_exit_confirm">Keluar</string>
@@ -461,6 +470,7 @@
     <string name="template_swipe_subtitle">Untuk menikmati template Anda</string>
     <string name="template_select_ratio_title">Pilih Rasio Video</string>
     <string name="template_create_now">Buat sekarang</string>
+    <string name="template_free_unlock">Buka Gratis</string>
     <string name="template_error_load_failed">Gagal memuat template. Silakan coba lagi.</string>
 
     <!-- Unified Search -->

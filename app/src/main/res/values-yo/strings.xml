@@ -21,6 +21,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Tókàn</string>
     <string name="onboarding_get_started">Bẹ̀rẹ̀</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Dúró níwájú pẹ̀lú àwọn àpẹẹrẹ tuntun tí a ń ṣe àgbéyẹwọ̀ lójoojúmọ́.</string>
+    <string name="onboarding_india_page3_title">Mu àwọn àpẹẹrẹ trending lójoojúmọ́</string>
+    <string name="onboarding_india_page3_subtitle">Dúró níwájú pẹ̀lú àwọn àpẹẹrẹ tuntun tí a ń ṣe àgbéyẹwọ̀ lójoojúmọ́.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Ṣẹ Ìyanu ní Ìṣẹ́jú Àáárọ̀</string>
     <string name="onboarding_page1_subtitle">Fídíò tó dára pẹ̀lú ìtẹ̀ díẹ̀. Rọrùn àti yára</string>
@@ -147,6 +151,7 @@
     <string name="editor_music_trim_skip_to_start">Fo sí Ìbẹ̀rẹ̀</string>
     <string name="editor_music_trim_skip_to_end">Fo sí Òpin</string>
     <string name="editor_photos_count">Fọ́tò %d</string>
+    <string name="editor_photos_label">Àwọn fọ́tò</string>
     <string name="editor_save_dialog_title">Tọ́jú Iṣẹ́?</string>
     <string name="editor_save_dialog_message">A óò tọ́jú iṣẹ́ rẹ tí ó sì wà nínú Àwọn Iṣẹ́ Mi.</string>
     <string name="editor_save_and_exit">Tọ́jú &amp; Jáde</string>
@@ -162,6 +167,9 @@
     <string name="editor_effect_sets">Àwọn Ìpín Ipa</string>
     <string name="editor_retry">Gbìyànjú Lẹ́ẹ̀kan Sí</string>
     <string name="editor_no_music_selected">A kò yan orin kankan</string>
+    <string name="editor_images_title">Tẹ lati Ṣatunkọ • Dìímú lati Tun Ṣètò</string>
+    <string name="editor_add_images">Ṣafikun Àwòrán</string>
+    <string name="editor_delete_image">Paárẹ́</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Fídíò Tí A Ṣẹ</string>
@@ -279,6 +287,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Olùṣe Orin</string>
     <string name="music_player_use_to_create">Lò Láti Ṣẹ Fídíò</string>
+    <string name="music_player_free_unlock">Ṣí Ọfẹ</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">Yan Orin</string>
@@ -467,6 +476,7 @@
     <string name="template_swipe_subtitle">Láti gbádùn àwọn àpẹẹrẹ rẹ</string>
     <string name="template_select_ratio_title">Yan Ìwọ̀n Fídíò</string>
     <string name="template_create_now">Ṣẹ báyìí</string>
+    <string name="template_free_unlock">Ṣí Ọfẹ</string>
     <string name="template_error_load_failed">Kùnà láti gba àwọn àpẹẹrẹ. Gbìyànjú lẹ́ẹ̀kan sí.</string>
 
     <!-- Unified Search -->

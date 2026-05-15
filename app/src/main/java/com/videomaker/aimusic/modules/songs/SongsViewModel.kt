@@ -37,6 +37,8 @@ sealed class SectionState<out T> {
 sealed class SongsNavigationEvent {
     /** Navigate to the image picker so the user can build a video with the chosen song. */
     data class NavigateToAssetPickerForSong(val songId: Long) : SongsNavigationEvent()
+    /** Navigate to TemplatePreviewer with the selected song so user can browse templates with their music. */
+    data class NavigateToTemplatePreviewer(val songId: Long) : SongsNavigationEvent()
     data object NavigateToSuggestedAll : SongsNavigationEvent()
 }
 
@@ -177,10 +179,10 @@ class SongsViewModel(
         _selectedSong.value = null
     }
 
-    /** Called when user taps "Use to Create Video" — closes sheet and navigates. */
+    /** Called when user taps "Use to Create Video" — closes sheet and navigates to TemplatePreviewer. */
     fun onUseToCreateVideo(song: MusicSong) {
         _selectedSong.value = null
-        _navigationEvent.value = SongsNavigationEvent.NavigateToAssetPickerForSong(song.id)
+        _navigationEvent.value = SongsNavigationEvent.NavigateToTemplatePreviewer(song.id)
     }
 
     fun onSeeMoreSuggestedClick() {

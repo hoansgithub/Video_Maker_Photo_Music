@@ -2,75 +2,62 @@ package com.videomaker.aimusic.modules.songs
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Radio
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
-import org.koin.compose.koinInject
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
-import com.videomaker.aimusic.media.audio.AudioPreviewCache
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
-import com.videomaker.aimusic.ui.components.AppAsyncImage
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.RankingSongCard
@@ -83,23 +70,12 @@ import com.videomaker.aimusic.ui.components.SongsSearchField
 import com.videomaker.aimusic.ui.components.SuggestSongCard
 import com.videomaker.aimusic.ui.components.SuggestSongCardPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
-import com.videomaker.aimusic.ui.theme.Black40
 import com.videomaker.aimusic.ui.theme.GoldAccent
-import com.videomaker.aimusic.ui.theme.Gray400
-import com.videomaker.aimusic.ui.theme.PlaceholderBackground
 import com.videomaker.aimusic.ui.theme.Primary
-import com.videomaker.aimusic.ui.theme.TextBright
-import com.videomaker.aimusic.ui.theme.TextPrimary
-import com.videomaker.aimusic.ui.theme.TextSecondary
-import com.videomaker.aimusic.ui.theme.TextTertiary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
-import androidx.compose.runtime.snapshotFlow
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.distinctUntilChanged
-import androidx.compose.runtime.Immutable
-import co.alcheclub.lib.acccore.ads.compose.NativeAdView
-import com.videomaker.aimusic.BuildConfig
-import com.videomaker.aimusic.core.constants.AdPlacement
+import kotlinx.coroutines.flow.drop
+import org.koin.compose.koinInject
 
 // ============================================
 // STATION GRID ITEM (Song + Ad)
@@ -132,6 +108,7 @@ fun SongsScreen(
     viewModel: SongsViewModel,
     topBarHeight: Dp = 0.dp,
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
+    onNavigateToTemplatePreviewer: (songId: Long) -> Unit = {},
     onNavigateToSuggestedAll: () -> Unit = {},
     onNavigateToWeeklyRankingList: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {}
@@ -166,6 +143,7 @@ fun SongsScreen(
         navigationEvent?.let { event ->
             when (event) {
                 is SongsNavigationEvent.NavigateToAssetPickerForSong -> onNavigateToAssetPicker(event.songId)
+                is SongsNavigationEvent.NavigateToTemplatePreviewer -> onNavigateToTemplatePreviewer(event.songId)
                 is SongsNavigationEvent.NavigateToSuggestedAll -> onNavigateToSuggestedAll()
             }
             viewModel.onNavigationHandled()
@@ -331,6 +309,23 @@ private fun SongsContent(
                     state = rankingState,
                     onSongClick = onSongClick
                 )
+                Spacer(modifier = Modifier.height(dimens.spaceMd))
+            }
+
+            item(key = "ranking_ad", contentType = "ad") {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = dimens.spaceLg)
+                        .clip(RoundedCornerShape(dimens.radiusXl))
+                        .background(MaterialTheme.colorScheme.surface)
+                ) {
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_SONGS_STATION,
+                        autoLoad = true,
+                        isDebug = BuildConfig.DEBUG
+                    )
+                }
                 Spacer(modifier = Modifier.height(dimens.spaceMd))
             }
 
@@ -574,55 +569,23 @@ private fun StationSongsSection(
             }
         }
         is SectionState.Success -> {
-            // ✅ Build grid items list (songs + ad)
-            // Position: STATION_AD_INSERTION_INDEX (4th position), or last if < 3 songs
-            val gridItems = remember(state.data) {
-                buildList {
-                    if (state.data.size < STATION_AD_INSERTION_INDEX) {
-                        // Show ad at last position if < 3 songs
-                        state.data.forEach { add(StationGridItem.SongItem(it)) }
-                        add(StationGridItem.AdItem)
-                    } else {
-                        // Insert ad at STATION_AD_INSERTION_INDEX (after 3rd song at index 2)
-                        state.data.forEachIndexed { index, song ->
-                            add(StationGridItem.SongItem(song))
-                            if (index == STATION_AD_INSERTION_INDEX - 1) {
-                                add(StationGridItem.AdItem)
-                            }
-                        }
-                    }
-                }
-            }
-
             Column(modifier = modifier) {
-                gridItems.forEach { item ->
-                    when (item) {
-                        is StationGridItem.SongItem -> {
-                            StationSongItem(
-                                song = item.song,
-                                onSongClick = {
-                                    Analytics.trackSongClick(
-                                        songId = item.song.id.toString(),
-                                        songName = item.song.name,
-                                        location = AnalyticsEvent.Value.Location.SONG_STATIONS
-                                    )
-                                    onSongClick(item.song, AnalyticsEvent.Value.Location.SONG_STATIONS)
-                                },
-                                modifier = Modifier.padding(
-                                    horizontal = dimens.spaceLg,
-                                    vertical = dimens.spaceXs
-                                )
+                state.data.forEach { song ->
+                    StationSongItem(
+                        song = song,
+                        onSongClick = {
+                            Analytics.trackSongClick(
+                                songId = song.id.toString(),
+                                songName = song.name,
+                                location = AnalyticsEvent.Value.Location.SONG_STATIONS
                             )
-                        }
-                        is StationGridItem.AdItem -> {
-                            // Native ad item (horizontal row, matches song items)
-                            NativeAdView(
-                                placement = AdPlacement.NATIVE_SONGS_STATION,
-                                modifier = Modifier.fillMaxWidth(),
-                                isDebug = BuildConfig.DEBUG
-                            )
-                        }
-                    }
+                            onSongClick(song, AnalyticsEvent.Value.Location.SONG_STATIONS)
+                        },
+                        modifier = Modifier.padding(
+                            horizontal = dimens.spaceLg,
+                            vertical = dimens.spaceXs
+                        )
+                    )
                 }
             }
         }

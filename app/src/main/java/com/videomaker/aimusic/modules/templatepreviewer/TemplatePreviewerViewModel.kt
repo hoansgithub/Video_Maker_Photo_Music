@@ -1,12 +1,16 @@
 package com.videomaker.aimusic.modules.templatepreviewer
 
 import android.net.Uri
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.VideoTemplate
 
+import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import com.videomaker.aimusic.domain.usecase.LikeTemplateUseCase
@@ -18,10 +22,13 @@ import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.storage.UnlockedTemplatesManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -62,6 +69,12 @@ sealed class TemplatePreviewerNavigationEvent {
      */
     data class RequestBackWithAd(val shouldShowAd: Boolean) : TemplatePreviewerNavigationEvent()
 
+    /**
+     * Show scroll interstitial ad while browsing templates
+     * Frequency controlled by ad_interstitial_interval_seconds (ACCCore handles timing)
+     */
+    data object ShowScrollInterstitial : TemplatePreviewerNavigationEvent()
+
     data class NavigateToAssetPicker(
         val template: VideoTemplate,
         val overrideSongId: Long,
@@ -78,8 +91,9 @@ class TemplatePreviewerViewModel(
     imageUrisStr: List<String>,
     /** When >= 0, this song is played on every page and applied on project creation,
      *  overriding each template's embedded song. -1 = use template's own song. */
-    private val overrideSongId: Long = -1L,
+    overrideSongId: Long = -1L,
     private val templateRepository: TemplateRepository,
+    private val songRepository: SongRepository,
     private val createProjectUseCase: CreateProjectUseCase,
     private val updateProjectSettingsUseCase: UpdateProjectSettingsUseCase,
     private val likeTemplateUseCase: LikeTemplateUseCase,
@@ -100,9 +114,9 @@ class TemplatePreviewerViewModel(
     private val _uiState = MutableStateFlow<TemplatePreviewerUiState>(TemplatePreviewerUiState.Loading)
     val uiState: StateFlow<TemplatePreviewerUiState> = _uiState.asStateFlow()
 
-    // Navigation Events — StateFlow-based (Gold standard per CLAUDE.md)
-    private val _navigationEvent = MutableStateFlow<TemplatePreviewerNavigationEvent?>(null)
-    val navigationEvent: StateFlow<TemplatePreviewerNavigationEvent?> = _navigationEvent.asStateFlow()
+    // Navigation Events — Channel pattern (Google official) - prevents replay on config change
+    private val _navigationEvent = Channel<TemplatePreviewerNavigationEvent>()
+    val navigationEvent = _navigationEvent.receiveAsFlow()
 
     // Liked template IDs — observed from Room
     val likedTemplateIds: StateFlow<Set<String>> = observeLikedTemplatesUseCase.ids()
@@ -136,6 +150,13 @@ class TemplatePreviewerViewModel(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    // Override song ID (exposed for UI to check if user song should be played)
+    val overrideSongId: StateFlow<Long> = MutableStateFlow(overrideSongId).asStateFlow()
+
+    // User's selected song (for background playback in TemplatePreviewer)
+    private val _userSong = MutableStateFlow<MusicSong?>(null)
+    val userSong: StateFlow<MusicSong?> = _userSong.asStateFlow()
+
     // Pagination tracking
     private var currentOffset = 0
     private var isLoadingMore = false
@@ -166,6 +187,15 @@ class TemplatePreviewerViewModel(
                 android.util.Log.e("TemplatePreviewerVM", "❌ Back button ad preload exception: ${e.message}", e)
             }
         }
+
+        // Preload scroll interstitial ad (Drama app pattern: preload on entry)
+        // Frequency controlled by ACCCore's ad_interstitial_interval_seconds
+        preloadScrollInterstitial()
+
+        // Load user's selected song if overrideSongId is provided
+        if (overrideSongId >= 0L) {
+            loadUserSong(overrideSongId)
+        }
     }
 
     // ============================================
@@ -181,18 +211,35 @@ class TemplatePreviewerViewModel(
             loadMoreTemplates()
         }
         // No music loading needed - videos have built-in music
+
+        // Preload scroll interstitial on every page change (Drama app pattern)
+        // Library handles duplicate checks - safe to call repeatedly
+        preloadScrollInterstitial()
+
+        // Trigger scroll ad check (ACCCore enforces interval automatically)
+        tryShowScrollInterstitial()
     }
 
     fun onUseThisTemplate(template: VideoTemplate, aspectRatio: AspectRatio) {
         val currentState = _uiState.value as? TemplatePreviewerUiState.Ready ?: return
         if (currentState.isCreatingProject) return
 
+        // Increment use_count for analytics/ranking
+        viewModelScope.launch(Dispatchers.IO) {
+            templateRepository.incrementUseCount(template.id)
+        }
+
         // Navigate to AssetPicker - user needs to select images
-        _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
-            template = template,
-            overrideSongId = overrideSongId,
-            aspectRatio = aspectRatio
-        )
+        viewModelScope.launch {
+            val currentOverrideSongId = overrideSongId.value  // Get current value from StateFlow
+            _navigationEvent.send(
+                TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
+                    template = template,
+                    overrideSongId = currentOverrideSongId,
+                    aspectRatio = aspectRatio
+                )
+            )
+        }
     }
 
     fun onNavigateBack() {
@@ -201,14 +248,11 @@ class TemplatePreviewerViewModel(
 
         android.util.Log.d("TemplatePreviewerVM", "🔙 onNavigateBack - Ad ready: $isAdReady")
 
-        // Send navigation event with ad status
+        // Send navigation event with ad status (Channel - one-time event, no replay)
         // Screen will show ad if ready, otherwise navigate immediately
-        _navigationEvent.value = TemplatePreviewerNavigationEvent.RequestBackWithAd(isAdReady)
-    }
-
-    /** Called by UI after navigation is handled — clears the event */
-    fun onNavigationHandled() {
-        _navigationEvent.value = null
+        viewModelScope.launch {
+            _navigationEvent.send(TemplatePreviewerNavigationEvent.RequestBackWithAd(isAdReady))
+        }
     }
 
     fun onLikeTemplate(template: VideoTemplate) {
@@ -239,10 +283,13 @@ class TemplatePreviewerViewModel(
                     unlockedTemplatesManager.unlockTemplate(template.id)
                     android.util.Log.d("TemplatePreviewerVM", "✅ Template unlocked: ${template.id}")
 
-                    _navigationEvent.value = TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
-                        template = template,
-                        overrideSongId = overrideSongId,
-                        aspectRatio = selectedRatio
+                    val currentOverrideSongId = overrideSongId.value  // Get current value from StateFlow
+                    _navigationEvent.send(
+                        TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
+                            template = template,
+                            overrideSongId = currentOverrideSongId,
+                            aspectRatio = selectedRatio
+                        )
                     )
 
                     // Clear pending state
@@ -265,6 +312,62 @@ class TemplatePreviewerViewModel(
         _pendingUnlockTemplate.value = null
         _pendingSelectedRatio.value = null
         _errorMessage.value = "AD_NOT_AVAILABLE"
+    }
+
+    // ============================================
+    // SCROLL INTERSTITIAL AD LOGIC
+    // ============================================
+
+    /**
+     * Preload scroll interstitial ad in background (Drama app pattern).
+     *
+     * Aggressive preload strategy:
+     * - Called on screen entry (init)
+     * - Called on every page change
+     * - ACCCore handles duplicate request prevention automatically
+     * - Persistent: Uses ProcessLifecycleOwner scope to survive ViewModel destruction
+     * - No timeout: Loads in background while user browses
+     */
+    private fun preloadScrollInterstitial() {
+        // Use ProcessLifecycleOwner scope - persists beyond ViewModel lifecycle
+        // IMPORTANT: Must use Main dispatcher - ad SDK requires main thread
+        // No job tracking needed - ACCCore prevents duplicate requests
+        ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.Main) {
+            android.util.Log.d("TemplatePreviewerVM", "🔄 Preloading scroll interstitial...")
+            runCatching {
+                InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
+                    loadTimeoutMillis = null,  // No timeout - load as long as needed
+                    showLoadingOverlay = false  // Background load, no UI
+                )
+            }.onSuccess { success ->
+                if (success) {
+                    android.util.Log.d("TemplatePreviewerVM", "✅ Scroll ad preload SUCCESS")
+                } else {
+                    android.util.Log.d("TemplatePreviewerVM", "⚠️ Scroll ad preload FAILED")
+                }
+            }.onFailure { e ->
+                android.util.Log.e("TemplatePreviewerVM", "❌ Scroll ad preload exception: ${e.message}", e)
+            }
+        }
+    }
+
+    /**
+     * Trigger scroll interstitial ad if ready and interval passed.
+     *
+     * ACCCore automatically handles:
+     * - Frequency cap (ad_interstitial_interval_seconds from Remote Config)
+     * - Ad ready check
+     * - Global timing coordination
+     *
+     * If interval hasn't passed, ACCCore skips silently (no ad shown).
+     */
+    private fun tryShowScrollInterstitial() {
+        // Send navigation event - ACCCore will enforce interval in showInterstitial()
+        viewModelScope.launch {
+            _navigationEvent.send(TemplatePreviewerNavigationEvent.ShowScrollInterstitial)
+        }
     }
 
     // ============================================
@@ -353,12 +456,26 @@ class TemplatePreviewerViewModel(
     }
 
     private fun buildSettingsFromTemplate(template: VideoTemplate, aspectRatio: AspectRatio): ProjectSettings {
+        val currentOverrideSongId = overrideSongId.value  // Get current value from StateFlow
         return ProjectSettings(
             effectSetId = template.effectSetId,
-            musicSongId = if (overrideSongId >= 0L) overrideSongId
+            musicSongId = if (currentOverrideSongId >= 0L) currentOverrideSongId
                           else template.songId.takeIf { it > 0L },
             aspectRatio = aspectRatio
         )
+    }
+
+    private fun loadUserSong(songId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            songRepository.getSongById(songId)
+                .onSuccess { song ->
+                    _userSong.value = song
+                    android.util.Log.d("TemplatePreviewerVM", "✅ Loaded user song: ${song.name}")
+                }
+                .onFailure { e ->
+                    android.util.Log.e("TemplatePreviewerVM", "❌ Failed to load user song: $songId", e)
+                }
+        }
     }
 
     companion object {

@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.core.content.FileProvider
 import java.io.File
 import androidx.activity.compose.BackHandler
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -263,9 +264,7 @@ fun AssetPickerScreen(
         when (decision) {
             FullPermissionPromptDecision.NONE -> Unit
             FullPermissionPromptDecision.SHOW_PROMO -> {
-                if (mode == PermissionMode.LIMITED) {
-                    mediaPermissionCoordinator.markLimitedUpsellShownInCurrentSession()
-                }
+                mediaPermissionCoordinator.markLimitedUpsellShownInCurrentSession()
                 showPermissionSettingsDialog = false
                 showPermissionPromoDialog = true
             }
@@ -285,10 +284,9 @@ fun AssetPickerScreen(
         }
     }
 
-    // Handle navigation events - StateFlow-based (Google recommended pattern)
-    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
-    LaunchedEffect(navigationEvent) {
-        navigationEvent?.let { event ->
+    // Handle navigation events - Channel pattern (Google official) - one-time delivery, no replay
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
             when (event) {
                 is AssetPickerNavigationEvent.NavigateBack -> onNavigateBack()
 
@@ -325,10 +323,17 @@ fun AssetPickerScreen(
                 is AssetPickerNavigationEvent.NavigateToEditor -> onNavigateToEditor(event.projectId)
                 is AssetPickerNavigationEvent.NavigateToEditorWithData -> onNavigateToEditorWithData(event.initialData)
                 is AssetPickerNavigationEvent.AssetsAdded -> onAssetsAdded()
+                is AssetPickerNavigationEvent.SelectionConfirmed -> {
+                    // Store selection in cache and navigate back
+                    android.util.Log.d("AssetPickerScreen", "📦 Storing ${event.selectedUris.size} URIs in cache: ${event.selectedUris.joinToString()}")
+                    AssetSelectionCache.setSelection(event.selectedUris)
+                    android.util.Log.d("AssetPickerScreen", "🔙 Navigating back to EditorScreen")
+                    onNavigateBack()
+                }
                 is AssetPickerNavigationEvent.NavigateToTemplatePreviewer ->
                     onNavigateToTemplatePreviewer(event.templateId, event.imageUris, event.overrideSongId)
             }
-            viewModel.onNavigationHandled()
+            // Event auto-consumed by Channel - no manual cleanup needed
         }
     }
 
@@ -416,7 +421,15 @@ fun AssetPickerScreen(
             AssetPickerUiState.DeniedPermission -> {
                 if (!hasHandledEntryDeniedPrompt) {
                     hasHandledEntryDeniedPrompt = true
-                    showPermissionGateForMode(PermissionMode.DENIED)
+                    // Only auto-show on entry if no promo was shown yet this session.
+                    // Prevents a duplicate prompt when: (a) the user already saw the promo
+                    // in a previous picker in the same session, or (b) a stale DENIED cache
+                    // entry briefly appears before the real LIMITED state is applied.
+                    // The manual "Allow Access" button on the denied screen still works
+                    // because it calls showPermissionGateForMode directly (bypasses this guard).
+                    if (!mediaPermissionCoordinator.hasShownLimitedUpsellThisSession()) {
+                        showPermissionGateForMode(PermissionMode.DENIED)
+                    }
                 }
             }
             is AssetPickerUiState.WithAssets.LimitPermission -> {
@@ -548,31 +561,39 @@ fun AssetPickerScreen(
     }
 
     // Full-screen content
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
-        AssetPickerContent(
-            uiState = uiState,
-            minSelection = viewModel.minSelection,
-            initialGridScrollState = gridScrollState,
-            onAlbumSelect = { albumId -> viewModel.selectAlbum(albumId) },
-            onAssetClick = { asset -> viewModel.toggleAssetSelection(asset) },
-            onGridScrollChanged = { index, offset ->
-                viewModel.onGridScrollChanged(index, offset)
-            },
-            onConfirmClick = { viewModel.confirmSelection() },
-            onClearSelection = {viewModel.clearSelection()},
-            onCloseClick = {
-                requestExit()
-            },
-            onRequestFullPermission = {
-                showPermissionGateForMode(PermissionMode.DENIED)
-            },
-            onAddMorePhotos = onAddMorePhotos,
-            onCameraClick = onCameraClick
+        Box(modifier = Modifier.weight(1f)) {
+            AssetPickerContent(
+                uiState = uiState,
+                minSelection = viewModel.minSelection,
+                initialGridScrollState = gridScrollState,
+                onAlbumSelect = { albumId -> viewModel.selectAlbum(albumId) },
+                onAssetClick = { asset -> viewModel.toggleAssetSelection(asset) },
+                onGridScrollChanged = { index, offset ->
+                    viewModel.onGridScrollChanged(index, offset)
+                },
+                onConfirmClick = { viewModel.confirmSelection() },
+                onClearSelection = {viewModel.clearSelection()},
+                onCloseClick = {
+                    requestExit()
+                },
+                onRequestFullPermission = {
+                    showPermissionGateForMode(PermissionMode.DENIED)
+                },
+                onAddMorePhotos = onAddMorePhotos,
+                onCameraClick = onCameraClick
+            )
+        }
+        BannerAdView(
+            placement = AdPlacement.BANNER_ASSET_PICKER,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
         )
     }
 

@@ -91,6 +91,10 @@ sealed interface AppRoute : NavKey {
      *   template's embedded song. Used by the song → image picker → previewer flow.
      * @param aspectRatio User's selected aspect ratio from template previewer.
      *   null = use template's default or fallback to RATIO_9_16.
+     * @param selectedAssetUris URIs of currently selected assets (for editing mode).
+     *   When non-empty, these assets will be auto-selected in the picker.
+     * @param isEditingMode When true, selection returns URIs without saving to DB.
+     *   Used by ImagesBottomSheet to replace current assets list.
      */
     @Serializable
     data class AssetPicker(
@@ -99,7 +103,9 @@ sealed interface AppRoute : NavKey {
         val overrideSongId: Long = -1L,
         val aspectRatio: AspectRatio? = null,
         val sourceLocation: String? = null,
-        val resumeDraftId: String? = null
+        val resumeDraftId: String? = null,
+        val selectedAssetUris: List<String> = emptyList(),
+        val isEditingMode: Boolean = false
     ) : AppRoute
 
     /**

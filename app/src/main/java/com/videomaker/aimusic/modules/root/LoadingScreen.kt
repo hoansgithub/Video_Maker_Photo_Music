@@ -38,6 +38,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,10 +69,8 @@ fun LoadingScreen(
     loadingStep: LoadingStep,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val appName = remember {
-        context.applicationInfo.loadLabel(context.packageManager).toString()
-    }
+    // Hardcoded splash screen text
+    val appName = "Muvio - AI Music\nVideo Maker & Editor"
 
     val message = when (loadingStep) {
         LoadingStep.INITIALIZING -> stringResource(R.string.root_loading_initializing)
@@ -100,11 +99,12 @@ fun LoadingScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // App Name with decoration - auto-scaled to fit one line
+            // App Name with decoration - auto-scaled to fit two lines
             AutoSizeText(
                 text = appName,  // Real app name from manifest
                 maxFontSize = 32.sp,
                 minFontSize = 16.sp,
+                maxLines = 2,
                 style = TextStyle(
                     fontWeight = FontWeight.Bold,
                     brush = Brush.linearGradient(
@@ -115,7 +115,8 @@ fun LoadingScreen(
                         offset = Offset(3f, 3f),
                         blurRadius = 6f
                     ),
-                    letterSpacing = 1.5.sp
+                    letterSpacing = 1.5.sp,
+                    textAlign = TextAlign.Center
                 ),
                 modifier = Modifier.padding(horizontal = 24.dp)
             )
@@ -150,7 +151,7 @@ fun LoadingScreen(
 }
 
 /**
- * Auto-sizing text that scales font size to fit available width in one line
+ * Auto-sizing text that scales font size to fit available width
  * Uses remember(text) to reset font size when text changes
  */
 @Composable
@@ -159,7 +160,8 @@ private fun AutoSizeText(
     maxFontSize: androidx.compose.ui.unit.TextUnit,
     minFontSize: androidx.compose.ui.unit.TextUnit,
     style: TextStyle,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    maxLines: Int = 1
 ) {
     BoxWithConstraints(modifier = modifier) {
         var fontSize by remember(text) { mutableStateOf(maxFontSize) }
@@ -168,8 +170,8 @@ private fun AutoSizeText(
         Text(
             text = text,
             style = style.copy(fontSize = fontSize),
-            maxLines = 1,
-            softWrap = false,
+            maxLines = maxLines,
+            softWrap = true,
             modifier = Modifier.alpha(if (readyToDraw) 1f else 0f),
             onTextLayout = { textLayoutResult ->
                 if (textLayoutResult.hasVisualOverflow && fontSize > minFontSize) {

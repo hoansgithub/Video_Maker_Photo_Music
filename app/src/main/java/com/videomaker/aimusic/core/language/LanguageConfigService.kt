@@ -17,9 +17,18 @@ import kotlinx.serialization.json.jsonPrimitive
  * Language Configuration Service
  *
  * Handles intelligent language sorting based on:
- * 1. User's detected country (SIM → Network → Locale)
- * 2. Remote Config priorities (updatable without app release)
- * 3. Hardcoded fallback priorities
+ * 1. Device language (ALWAYS FIRST - respects user's explicit choice)
+ * 2. User's region detection (uses RegionProvider with region_detection_config):
+ *    - IP-based geolocation (if enabled via remote config, VPN-aware)
+ *    - SIM card country (physical location, permanent)
+ *    - Network operator country (physical location, ignores VPN)
+ *    - System locale country (last fallback)
+ * 3. Remote Config priorities (updatable without app release)
+ * 4. Hardcoded fallback priorities
+ *
+ * Region detection respects region_detection_config:
+ * - When use_ip_geolocation = true: Uses IP detection first, falls back to SIM/Network/Locale
+ * - When use_ip_geolocation = false: Uses SIM → Network → Locale only
  *
  * Remote Config Format:
  * ```json
@@ -37,10 +46,12 @@ import kotlinx.serialization.json.jsonPrimitive
  * Implements ConfigurableObject for automatic Remote Config updates.
  * Registration happens centrally in VideoMakerApplication.kt.
  *
- * @param context Application context for country detection
+ * @param context Application context for device language detection
+ * @param regionProvider Provides region code with IP detection support
  */
 class LanguageConfigService(
-    private val context: Context
+    private val context: Context,
+    private val regionProvider: com.videomaker.aimusic.core.data.local.RegionProvider
 ) : ConfigurableObject {
 
     // Cache for remote languages (code → SupportedLanguage)
@@ -50,19 +61,24 @@ class LanguageConfigService(
     private val remotePriorities = mutableMapOf<String, List<String>>()
 
     /**
-     * Sort languages based on user's country and configured priorities.
+     * Sort languages based on device language and user's region.
      *
      * Language source priority:
      * 1. Remote Config languages (if available)
      * 2. Hardcoded fallback languages
      *
      * Sorting priority:
-     * 1. SIM card country (most reliable)
-     * 2. Network country (fallback)
-     * 3. System locale country (second fallback)
-     * 4. Device language (last fallback)
+     * 1. Device language (ALWAYS FIRST - respects user's explicit choice)
+     * 2. Region-based priorities (uses RegionProvider with IP detection if enabled)
+     * 3. Rest of languages in default order
      *
-     * @return Sorted list with prioritized languages first, rest alphabetically
+     * Region detection (via RegionProvider):
+     * - If region_detection_config.use_ip_geolocation = true:
+     *   IP → Persisted → SIM → Network → Locale → "us"
+     * - If region_detection_config.use_ip_geolocation = false:
+     *   Persisted → SIM → Network → Locale → "us"
+     *
+     * @return Sorted list with device language first, then region priorities, rest after
      */
     fun getSortedLanguages(): List<SupportedLanguage> {
         // Use remote languages if available, otherwise fallback to hardcoded
@@ -72,8 +88,29 @@ class LanguageConfigService(
             LanguageManager.getAllLanguages()
         }
 
-        val country = detectUserCountry()
-        val priorityCodes = getLanguagePriorityForCountry(country)
+        // Get device language (ALWAYS FIRST)
+        val deviceLanguage = getDeviceLanguage()
+        android.util.Log.d(TAG, "📱 Device language for sorting: $deviceLanguage")
+
+        // Check if device language is in available languages
+        val deviceLanguageAvailable = deviceLanguage?.let { lang ->
+            availableLanguages.any { it.code == lang }
+        } ?: false
+        android.util.Log.d(TAG, "🔍 Device language available in list: $deviceLanguageAvailable")
+        android.util.Log.d(TAG, "📚 Available language codes: ${availableLanguages.map { it.code }}")
+
+        // Get region from RegionProvider (includes IP detection if enabled)
+        val region = regionProvider.getRegionCode().uppercase()
+        android.util.Log.d(TAG, "🌍 Detected region from RegionProvider: $region")
+
+        val regionPriorities = getLanguagePriorityForCountry(region)
+        android.util.Log.d(TAG, "🎯 Region priorities: $regionPriorities")
+
+        // Combine: device language ALWAYS first (if available), then region priorities (excluding device language to avoid duplicates)
+        val priorityCodes = listOfNotNull(deviceLanguage?.takeIf { deviceLanguageAvailable }) +
+                           regionPriorities.filter { it != deviceLanguage }
+
+        android.util.Log.d(TAG, "🔢 Final priority codes: $priorityCodes")
 
         // Prioritized languages (maintain priority order)
         val prioritized = priorityCodes.mapNotNull { code ->
@@ -83,29 +120,39 @@ class LanguageConfigService(
         // Rest of languages (not in priority list)
         val rest = availableLanguages.filter { it.code !in priorityCodes }
 
-        return prioritized + rest
+        val result = prioritized + rest
+        android.util.Log.d(TAG, "📋 Sorted languages: ${result.map { it.code }}")
+
+        return result
     }
 
     /**
-     * Detect user's country code using multiple fallback strategies.
+     * Get device's current language setting.
      *
-     * @return Country code (e.g., "US", "BR", "ID") or empty string if unknown
+     * @return Language code (e.g., "en", "es", "fil") or null if unsupported
      */
-    private fun detectUserCountry(): String {
-        val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
-
-        // Try SIM card country (most reliable)
-        tm?.simCountryIso?.uppercase()?.takeIf { it.isNotEmpty() }?.let { return it }
-
-        // Try network country (fallback)
-        tm?.networkCountryIso?.uppercase()?.takeIf { it.isNotEmpty() }?.let { return it }
-
-        // Try system locale country (second fallback)
+    private fun getDeviceLanguage(): String? {
         val config = context.resources.configuration
-        ConfigurationCompat.getLocales(config).get(0)?.country?.uppercase()?.takeIf { it.isNotEmpty() }?.let { return it }
+        val locale = ConfigurationCompat.getLocales(config).get(0)
+        val rawCode = locale?.language
 
-        // Unknown country
-        return ""
+        android.util.Log.d(TAG, "🌐 Device locale: $locale")
+        android.util.Log.d(TAG, "🌐 Raw language code: $rawCode")
+
+        if (rawCode == null) {
+            android.util.Log.w(TAG, "⚠️ No device language detected")
+            return null
+        }
+
+        // Handle legacy language codes
+        val deviceCode = when (rawCode) {
+            "tl" -> "fil"  // Android/Java reports Tagalog for Filipino
+            "in" -> "id"   // Java legacy ISO 639-1 code for Indonesian
+            else -> rawCode
+        }
+
+        android.util.Log.d(TAG, "✅ Device language: $deviceCode")
+        return deviceCode
     }
 
     /**
@@ -154,6 +201,7 @@ class LanguageConfigService(
             // Asia - Southeast
             "ID" -> listOf("id", "jv", "su")
             "PH" -> listOf("fil", "en")
+            "VN" -> listOf("vi", "en")
 
             // Asia - South
             "IN" -> listOf("hi", "bn", "en", "kn")

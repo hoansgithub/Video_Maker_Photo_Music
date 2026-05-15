@@ -73,6 +73,7 @@ fun UnifiedSearchScreen(
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
     val audioPreviewCache: AudioPreviewCache = koinInject()
+    val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
     var selectedSongLocation by rememberSaveable {
         mutableStateOf(AnalyticsEvent.Value.Location.SEARCH_RCM)
     }
@@ -89,16 +90,52 @@ fun UnifiedSearchScreen(
         previousLocale = locale
     }
 
+    // Preload template grid tap ad when view appears
+    LaunchedEffect(Unit) {
+        com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+            adsLoaderService = adsLoaderService,
+            placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+            loadTimeoutMillis = null,
+            showLoadingOverlay = false
+        )
+    }
+
+    // Extract template navigation data
+    val templateNavigation = remember(navigationEvent) {
+        (navigationEvent as? UnifiedSearchNavigationEvent.NavigateToTemplateDetail)?.let {
+            it.templateId to it.shouldShowAd
+        }
+    }
+
+    // Handle template navigation with reusable helper
+    templateNavigation?.let { (templateId, shouldShowAd) ->
+        com.videomaker.aimusic.core.ads.HandleTemplateNavigation(
+            templateId = templateId,
+            shouldShowAd = shouldShowAd,
+            onPreloadNext = { viewModel.preloadTemplateGridAd() },
+            onNavigate = {
+                onNavigateToTemplateDetail(it)
+                viewModel.onNavigationHandled()
+            }
+        )
+    }
+
+    // Handle other navigation events
     LaunchedEffect(navigationEvent) {
         navigationEvent?.let { event ->
             when (event) {
-                is UnifiedSearchNavigationEvent.NavigateBack -> onNavigateBack()
-                is UnifiedSearchNavigationEvent.NavigateToTemplateDetail ->
-                    onNavigateToTemplateDetail(event.templateId)
-                is UnifiedSearchNavigationEvent.NavigateToSongDetail ->
+                is UnifiedSearchNavigationEvent.NavigateBack -> {
+                    onNavigateBack()
+                    viewModel.onNavigationHandled()
+                }
+                is UnifiedSearchNavigationEvent.NavigateToSongDetail -> {
                     onNavigateToSongDetail(event.songId)
+                    viewModel.onNavigationHandled()
+                }
+                is UnifiedSearchNavigationEvent.NavigateToTemplateDetail -> {
+                    // Handled by HandleTemplateNavigation above
+                }
             }
-            viewModel.onNavigationHandled()
         }
     }
 

@@ -1,0 +1,550 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Video Maker</string>
+
+    <!-- Loading -->
+    <string name="loading">Đang tải…</string>
+    <string name="ad_loading">Đang tải quảng cáo…</string>
+
+    <!-- Language Selection -->
+    <string name="language_select_title">Chọn Ngôn ngữ</string>
+    <string name="language_select_subtitle">Vui lòng chọn ngôn ngữ hiển thị.</string>
+    <string name="language_continue">Tiếp tục</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Tiếp theo</string>
+    <string name="onboarding_get_started">Bắt đầu</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">Luôn dẫn đầu với các mẫu mới sẵn sàng sử dụng và cập nhật hàng ngày.</string>
+    <string name="onboarding_india_page3_title">Nhận mẫu xu hướng mỗi ngày</string>
+    <string name="onboarding_india_page3_subtitle">Luôn dẫn đầu với các mẫu mới sẵn sàng sử dụng và cập nhật hàng ngày.</string>
+    <!-- Page 1 -->
+    <string name="onboarding_page1_title">Tạo Điều Kỳ Diệu trong Vài Giây</string>
+    <string name="onboarding_page1_subtitle">Video tuyệt vời chỉ với vài cú nhấp chuột. Dễ dàng và nhanh chóng.</string>
+    <!-- Page 2 -->
+    <string name="onboarding_page2_title">Tìm Nhịp Điệu Của Bạn</string>
+    <string name="onboarding_page2_subtitle">Âm thanh xu hướng cho mọi tâm trạng.</string>
+    <!-- Page 3 -->
+    <string name="onboarding_page3_title">Tuyệt Hơn Khi Cùng Nhau!</string>
+    <string name="onboarding_page3_subtitle">Tuyệt hơn khi cùng nhau. Mời bạn bè của bạn để chia sẻ niềm vui.</string>
+    <string name="onboarding_swipe_next">Vuốt để tiếp tục</string>
+    <string name="onboarding_exit_title">Thoát khỏi cài đặt?</string>
+    <string name="onboarding_exit_message">Bạn luôn có thể thay đổi tùy chọn sau trong Cài đặt.</string>
+    <string name="onboarding_exit_confirm">Thoát</string>
+    <string name="onboarding_exit_dismiss">Tiếp tục</string>
+    <string name="root_no_internet_title">Không Có Kết Nối Internet</string>
+    <string name="root_no_internet_message">Thiết bị của bạn đang ngoại tuyến. Vui lòng kết nối lại để tiếp tục.</string>
+    <string name="root_try_again">Thử Lại</string>
+    <string name="root_loading_initializing">Đang khởi tạo...</string>
+    <string name="root_loading_fetching_config">Đang tải cấu hình...</string>
+    <string name="root_loading_ad">Có thể chứa quảng cáo</string>
+    <string name="root_loading_checking_status">Đang kiểm tra trạng thái...</string>
+    <string name="root_loading_preparing">Đang chuẩn bị...</string>
+
+    <!-- Home Tabs -->
+    <string name="home_tab_gallery">Thư viện</string>
+    <string name="home_tab_songs">Bài hát</string>
+    <string name="home_tab_projects">Thư viện</string>
+
+    <!-- Gallery Tab -->
+    <string name="gallery_filter_for_you">Dành cho bạn</string>
+    <string name="gallery_hot_songs">Bài Hát Hot</string>
+    <string name="gallery_templates">Mẫu</string>
+    <string name="gallery_coming_soon">Sắp Ra Mắt</string>
+    <string name="gallery_search_hint">Tìm phong cách của bạn</string>
+    <string name="gallery_create_new_video">Tạo Video Mới</string>
+
+    <!-- Songs Tab -->
+    <string name="songs_title">Bài hát</string>
+    <string name="songs_all">Tất Cả Bài Hát</string>
+    <string name="songs_categories">Danh Mục</string>
+    <string name="songs_search_hint">Tìm bài hát</string>
+    <string name="songs_suggest_for_you">Gợi Ý Cho Bạn</string>
+    <string name="songs_weekly_ranking">Xếp Hạng Tuần</string>
+    <string name="songs_station">Đài Được Đề Xuất</string>
+
+    <!-- Legacy Home -->
+    <string name="home_title">Video Maker</string>
+    <string name="home_welcome">Bạn muốn làm gì?</string>
+    <string name="home_create">Tạo</string>
+    <string name="home_create_description">Tạo slideshow từ ảnh của bạn</string>
+    <string name="home_my_projects">Dự Án Của Tôi</string>
+    <string name="home_my_projects_description">Xem các dự án đã lưu</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Cài đặt</string>
+    <string name="settings_language">Ngôn ngữ</string>
+    <string name="settings_language_description">Thay đổi ngôn ngữ ứng dụng</string>
+    <string name="settings_about">Về</string>
+    <string name="settings_version">Phiên bản</string>
+    <string name="settings_uninstall">Gỡ Cài Đặt</string>
+    <string name="settings_share_subject">Xem ứng dụng này!</string>
+    <string name="settings_share_message">Xin chào! Tôi đang sử dụng ứng dụng tuyệt vời này. Hãy thử nhé:\n%s</string>
+    <string name="notification_permission_trending_title">Đừng bỏ lỡ xu hướng!</string>
+    <string name="notification_permission_trending_message">Bật thông báo để nhận cảnh báo ngay khi có mẫu viral mới được thêm vào.</string>
+    <string name="notification_permission_notify_me">Thông báo cho tôi</string>
+    <string name="notification_permission_maybe_later">Để sau</string>
+    <string name="notification_permission_settings_title">Thông báo\nhiện đang bị tắt.</string>
+    <string name="notification_permission_settings_message">Vui lòng bật trong cài đặt thiết bị để nhận cập nhật mẫu.</string>
+    <string name="notification_permission_open_settings">Mở Cài Đặt</string>
+
+    <!-- Uninstall Screen -->
+    <string name="uninstall_title">Thử lại</string>
+    <string name="uninstall_description">Bạn có chắc chắn muốn gỡ cài đặt không?</string>
+    <string name="uninstall_confirm">Vẫn gỡ cài đặt</string>
+    <string name="uninstall_cancel">Không gỡ. Khám phá thêm</string>
+    <string name="settings_app_widet">Thêm Widget</string>
+    <string name="settings_rate_us">Đánh Giá Ứng Dụng</string>
+    <string name="settings_share_with_friends">Chia Sẻ Với Bạn Bè</string>
+    <string name="settings_report">Báo Cáo</string>
+    <string name="settings_term_of_service">Điều Khoản Dịch Vụ</string>
+    <string name="settings_privacy_policy">Chính Sách Bảo Mật</string>
+    <string name="settings_account">Tài khoản</string>
+    <string name="settings_legal">Pháp lý</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Chỉnh Sửa Dự Án</string>
+    <string name="editor_add_photos">Thêm Ảnh</string>
+    <string name="editor_settings">Cài đặt</string>
+    <string name="editor_preview">Xem Trước</string>
+    <string name="editor_export">Xuất</string>
+    <string name="editor_transition">Chuyển Cảnh</string>
+    <string name="editor_duration">Thời Lượng</string>
+    <string name="editor_music">Nhạc</string>
+    <string name="editor_frame">Khung</string>
+    <string name="editor_aspect_ratio">Tỷ Lệ Khung Hình</string>
+    <string name="editor_volume">Âm Lượng</string>
+    <string name="editor_effect">Hiệu Ứng</string>
+    <string name="editor_select_video_ratio">Chọn Tỷ Lệ Video</string>
+    <string name="editor_apply">Áp Dụng</string>
+    <string name="editor_image_duration">Thời Lượng Hình Ảnh</string>
+    <string name="editor_change_music">Đổi nhạc</string>
+    <string name="editor_select_quality">Chọn chất lượng</string>
+    <string name="editor_hd">HD</string>
+    <string name="editor_play">Phát</string>
+    <string name="editor_pause">Tạm Dừng</string>
+    <string name="editor_duration_format">Thời lượng: %s</string>
+
+    <!-- Music Trim Feature (NOT video trim) -->
+    <string name="editor_music_trim">Cắt Nhạc</string>
+    <string name="editor_music_trim_from_start">Cắt Từ Đầu</string>
+    <string name="editor_music_trim_from_end">Cắt Từ Cuối</string>
+    <string name="editor_music_trim_edit">Chỉnh Sửa Cắt Nhạc</string>
+    <string name="editor_music_trim_title">Cắt Nhạc</string>
+    <string name="editor_music_trim_subtitle">Chọn phần bài hát để sử dụng</string>
+    <string name="editor_music_trim_start">Bắt Đầu Nhạc</string>
+    <string name="editor_music_trim_end">Kết Thúc Nhạc</string>
+    <string name="editor_music_trim_duration">Thời Lượng Nhạc</string>
+    <string name="editor_music_trim_min_duration">Nhạc phải dài ít nhất 5 giây</string>
+    <string name="editor_music_trim_will_loop">Nhạc sẽ lặp lại nếu cần cho video của bạn</string>
+    <string name="editor_music_trimmed_info">Nhạc: %1$s</string>
+    <string name="editor_music_trim_play_selection">Phát Phần Chọn</string>
+    <string name="editor_music_trim_skip_to_start">Chuyển Về Đầu</string>
+    <string name="editor_music_trim_skip_to_end">Chuyển Về Cuối</string>
+    <string name="editor_photos_count">%d ảnh</string>
+    <string name="editor_photos_label">Ảnh</string>
+    <string name="editor_save_dialog_title">Lưu Dự Án?</string>
+    <string name="editor_save_dialog_message">Dự án của bạn sẽ được lưu và có sẵn trong Dự Án Của Tôi.</string>
+    <string name="editor_save_and_exit">Lưu &amp; Thoát</string>
+    <string name="editor_discard_changes">Hủy Thay Đổi</string>
+    <string name="editor_processing">Đang xử lý…</string>
+    <string name="editor_preparing_video">Đang chuẩn bị video…</string>
+    <string name="editor_unsaved_project_title">Lưu Dự Án Của Bạn?</string>
+    <string name="editor_unsaved_project_message">Dự án của bạn chưa được lưu. Lưu ngay hoặc hủy công việc của bạn?</string>
+    <string name="editor_unsaved_changes_title">Thay Đổi Chưa Lưu</string>
+    <string name="editor_unsaved_changes_message">Nếu thoát bây giờ, các thay đổi của bạn sẽ bị mất. Chắc chắn muốn thoát?</string>
+    <string name="editor_keep_editing">Tiếp Tục Chỉnh Sửa</string>
+    <string name="editor_discard">Hủy</string>
+    <string name="editor_effect_sets">Bộ Hiệu Ứng</string>
+    <string name="editor_retry">Thử Lại</string>
+    <string name="editor_no_music_selected">Chưa chọn nhạc</string>
+    <string name="editor_images_title">Chạm để Chỉnh Sửa • Giữ để Sắp Xếp Lại</string>
+    <string name="editor_add_images">Thêm Hình Ảnh</string>
+    <string name="editor_delete_image">Xóa</string>
+
+    <!-- Projects Tabs -->
+    <string name="projects_tab_created_video">Video Đã Tạo</string>
+    <string name="projects_tab_liked_template">Mẫu Đã Thích</string>
+    <string name="projects_tab_liked_song">Bài Hát Đã Thích</string>
+
+    <!-- Liked Songs Empty -->
+    <string name="like_song_empty_title">Bài Hát Trống</string>
+    <string name="like_song_search_button">Tìm Bài Hát</string>
+    <string name="like_song_section_header">Nhạc Dành Cho Bạn</string>
+
+    <!-- Liked Templates Empty -->
+    <string name="like_template_empty_title">Mẫu Trống</string>
+    <string name="like_template_search_button">Tìm Mẫu</string>
+    <string name="like_template_section_header">Mẫu Video</string>
+
+    <!-- Projects -->
+    <string name="projects_title">Dự Án Của Tôi</string>
+    <string name="projects_menu">Menu dự án</string>
+    <string name="projects_download">Tải Xuống</string>
+    <string name="projects_share">Chia Sẻ</string>
+    <string name="projects_delete">Xóa</string>
+    <string name="projects_delete_confirmation_title">Xóa Video?</string>
+    <string name="projects_delete_confirmation_message">Video này sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.</string>
+    <string name="projects_delete_confirm">Xóa</string>
+    <string name="projects_delete_cancel">Hủy</string>
+    <string name="projects_empty">Chưa có dự án nào</string>
+    <string name="projects_empty_description">Tạo dự án đầu tiên của bạn để xem ở đây</string>
+    <string name="projects_empty_title">Bắt đầu hành trình của bạn</string>
+    <string name="projects_empty_subtitle">Có vẻ hơi trống ở đây. Hãy tạo tác phẩm đầu tiên của bạn hôm nay.</string>
+    <string name="projects_create_new_video">Tạo Video Mới</string>
+    <string name="projects_item_info">%1$d ảnh • %2$s</string>
+    <string name="projects_create_description">Bắt đầu dự án slideshow mới</string>
+    <string name="projects_delete_title">Xóa Dự Án?</string>
+    <string name="projects_delete_message">\"%s\" sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.</string>
+    <string name="projects_removed_from_list">Đã xóa khỏi danh sách</string>
+
+    <!-- Export -->
+    <string name="export_title">Xuất Video</string>
+    <string name="export_processing">Đang xử lý…</string>
+    <string name="export_complete">Xuất Hoàn Tất!</string>
+    <string name="export_share">Chia Sẻ</string>
+    <string name="export_save">Lưu Vào Thư Viện</string>
+    <string name="export_preparing">Đang chuẩn bị xuất…</string>
+    <string name="export_generating">Đang tạo</string>
+    <string name="export_please_wait">Chờ một chút, đang chuẩn bị video của bạn!\nVui lòng không đóng ứng dụng</string>
+    <string name="export_exporting">Đang xuất video…</string>
+    <string name="export_dont_close">Vui lòng không đóng ứng dụng</string>
+    <string name="export_tip_1">Đang tạo kiệt tác của bạn…</string>
+    <string name="export_tip_2">Đang thêm phép thuật điện ảnh…</string>
+    <string name="export_tip_3">Đang làm sống dậy kỷ niệm của bạn…</string>
+    <string name="export_tip_4">Đang đánh bóng từng khung hình…</string>
+    <string name="export_tip_5">Đang hoàn thiện…</string>
+    <string name="export_tip_6">Đang dệt nên câu chuyện của bạn…</string>
+    <string name="export_tip_7">Đang tạo điều gì đó đặc biệt…</string>
+    <string name="export_tip_8">Sắp xong rồi! Trông thật tuyệt…</string>
+    <string name="export_tip_9">Đang hoàn thiện chi tiết…</string>
+    <string name="export_tip_10">Những nét chấm phá cuối cùng…</string>
+    <string name="export_video_saved">Video của bạn đã được lưu</string>
+    <string name="export_saved_to_gallery">Đã lưu vào Thư viện</string>
+    <string name="export_saving_to_gallery">Đang lưu vào thư viện…</string>
+    <string name="export_error_save_failed">Không thể lưu vào thư viện</string>
+    <string name="export_share_video">Chia Sẻ Video</string>
+    <string name="export_failed">Xuất Thất Bại</string>
+    <string name="export_try_again">Thử Lại</string>
+    <string name="export_go_back">Quay Lại</string>
+    <string name="export_cancelled">Đã Hủy Xuất</string>
+    <string name="export_cancelled_message">Xuất video đã bị hủy</string>
+    <string name="export_back_to_editor">Quay Lại Trình Chỉnh Sửa</string>
+    <string name="export_cancel_title">Hủy Xuất?</string>
+    <string name="export_cancel_message">Bạn có chắc chắn muốn hủy xuất không? Tất cả tiến trình sẽ bị mất.</string>
+    <string name="export_continue">Tiếp Tục</string>
+    <string name="export_cancel_export">Hủy Xuất</string>
+    <string name="export_error_file_not_found">Không tìm thấy file video</string>
+    <string name="export_error_share_failed">Không thể chia sẻ video</string>
+    <string name="export_try_another_templates">Thử Mẫu Khác</string>
+    <string name="export_templates_load_failed">Không thể tải mẫu</string>
+    <string name="export_watch_ad_title">Xem quảng cáo để tải xuống?</string>
+    <string name="export_watch_ad_subtitle">Giúp chúng tôi giữ ứng dụng này miễn phí bằng cách xem một quảng cáo ngắn. Video của bạn sẽ được tải xuống ngay sau đó!</string>
+    <string name="watch_ad_dialog_title">Mở Tính Năng Độc Quyền! ✨</string>
+    <string name="watch_ad_dialog_subtitle">Xem một quảng cáo ngắn để mở khóa tính năng này và tiếp tục chỉnh sửa video tuyệt vời của bạn!</string>
+    <string name="export_watch_ad_button">Xem Quảng Cáo (1/1)</string>
+    <string name="export_watch_ad_close">Đóng</string>
+    <string name="export_watermark_remove_title">Xóa hình mờ?</string>
+    <string name="export_watermark_remove_subtitle">Xem một quảng cáo ngắn để xóa hình mờ khỏi bản xem trước video của bạn.</string>
+    <string name="export_watermark_remove_button">Xem Quảng Cáo</string>
+    <string name="export_watermark_remove_close">Đóng</string>
+
+    <!-- Asset Picker -->
+    <string name="picker_title">Chọn Ảnh</string>
+    <string name="picker_done">Xong (%1$d/%2$d)</string>
+    <string name="picker_close">Đóng</string>
+    <string name="picker_selected">Đã chọn</string>
+    <string name="picker_no_photos">Không có ảnh</string>
+    <string name="picker_no_photos_hint">Chụp một số ảnh để bắt đầu</string>
+    <string name="picker_permission_title">Cần Quyền Truy Cập Ảnh</string>
+    <string name="picker_permission_message">Để tạo video từ ảnh của bạn, chúng tôi cần quyền truy cập vào thư viện ảnh của bạn.</string>
+    <string name="picker_allow_access">Cho Phép Truy Cập</string>
+    <string name="picker_give_access">Cho Truy Cập</string>
+    <string name="picker_give_access_settings">Quyền truy cập ảnh của bạn\nhiện đang bị tắt.</string>
+    <string name="picker_give_access_permission">Sẵn sàng sáng tạo?</string>
+    <string name="picker_not_now">Để Sau</string>
+    <string name="picker_full_access_custom_message">Để duyệt video và ảnh của bạn, chúng tôi cần quyền truy cập vào thư viện của bạn.</string>
+    <string name="picker_full_access_settings_message">Để bắt đầu chỉnh sửa, hãy bật \'Ảnh\' hoặc \'Bộ nhớ\' trong cài đặt thiết bị của bạn.</string>
+    <string name="picker_limited_access_message">Bạn đã cấp cho Video Maker quyền truy cập vào một số lượng ảnh giới hạn.</string>
+    <string name="picker_add_more_photos">Thêm</string>
+    <string name="picker_go_to_settings">Đến Cài Đặt</string>
+    <string name="picker_min_selection">Vui lòng chọn ít nhất %d hình ảnh.</string>
+    <string name="picker_current_selection">Đã chọn %d hình ảnh</string>
+
+    <!-- Music Player Bottom Sheet -->
+    <string name="music_player_title">Trình Phát Nhạc</string>
+    <string name="music_player_use_to_create">Dùng để Tạo Video</string>
+    <string name="music_player_free_unlock">Mở Khóa Miễn Phí</string>
+    <string name="picker_exit_confirm_title">Thoát khỏi chọn hình ảnh?</string>
+    <string name="picker_exit_confirm_message">Bạn đã chọn hình ảnh. Nếu thoát bây giờ, các hình ảnh đã chọn sẽ bị hủy.</string>
+    <string name="picker_exit_confirm">Thoát</string>
+    <string name="picker_exit_stay">Ở Lại</string>
+
+    <!-- Music Picker -->
+    <string name="music_picker_title">Chọn Nhạc</string>
+    <string name="music_picker_loading">Đang tải nhạc…</string>
+    <string name="music_picker_no_music">Không tìm thấy nhạc</string>
+    <string name="music_picker_no_music_hint">Thêm file nhạc vào thiết bị của bạn để sử dụng ở đây</string>
+    <string name="music_picker_permission_title">Cần Quyền Truy Cập Âm Thanh</string>
+    <string name="music_picker_permission_message">Để sử dụng nhạc của bạn làm âm thanh nền, chúng tôi cần quyền truy cập vào các file âm thanh của bạn.</string>
+    <string name="music_picker_allow_access">Cho Phép Truy Cập</string>
+    <string name="music_picker_preview">Xem Trước</string>
+    <string name="music_picker_stop_preview">Dừng</string>
+    <string name="music_picker_select">Chọn</string>
+
+    <!-- Settings Panel -->
+    <string name="settings_panel_title">Cài đặt</string>
+    <string name="settings_panel_apply">Áp Dụng</string>
+    <string name="settings_panel_close">Đóng</string>
+    <string name="settings_apply">Áp Dụng</string>
+    <string name="settings_effect_set">Bộ Hiệu Ứng</string>
+    <string name="settings_all">Tất Cả</string>
+    <string name="settings_off">Tắt</string>
+    <string name="settings_none">Không có</string>
+    <string name="settings_pro">Pro</string>
+    <string name="settings_duration_per_image">Thời Lượng Mỗi Ảnh</string>
+    <string name="settings_seconds_format">%dg</string>
+    <string name="settings_duration_seconds">%dg</string>
+    <string name="settings_overlay_frame">Khung Phủ</string>
+    <string name="settings_background_music">Nhạc Nền</string>
+    <string name="settings_custom">Tùy Chỉnh</string>
+    <string name="settings_add">+ Thêm</string>
+    <string name="settings_add_audio">+ Thêm</string>
+    <string name="settings_volume">Âm Lượng</string>
+    <string name="settings_clip_music">Cắt Nhạc</string>
+    <string name="settings_aspect_ratio">Tỷ Lệ Khung Hình</string>
+
+    <!-- Tab labels -->
+    <string name="tab_volume">Âm Lượng</string>
+    <string name="tab_music_clip">Cắt Nhạc</string>
+    <string name="settings_transition_effect">Hiệu Ứng Chuyển Cảnh</string>
+    <string name="settings_transition_duration">Thời Lượng Chuyển Cảnh</string>
+    <string name="settings_transition_duration_value">%.1fg</string>
+
+    <!-- Search -->
+    <string name="search_hint">Tìm phong cách hoàn hảo của bạn…</string>
+    <string name="search_recent">Tìm Kiếm Gần Đây</string>
+    <string name="search_clear_all">Xóa Tất Cả</string>
+    <string name="search_no_results">Không tìm thấy phong cách</string>
+    <string name="search_no_results_hint">Thử từ khác hoặc chọn vibe bên dưới</string>
+    <string name="search_suggestions">Gợi Ý</string>
+    <string name="search_browse_by_theme">Duyệt theo Vibe</string>
+    <string name="search_trending_templates">Đang Hot Ngay Bây Giờ</string>
+    <string name="search_tag_aesthetic">Thẩm Mỹ</string>
+    <string name="search_tag_birthday">Sinh Nhật</string>
+    <string name="search_tag_travel">Du Lịch</string>
+    <string name="search_tag_lofi">Lofi</string>
+    <string name="search_tag_cinematic">Điện Ảnh</string>
+    <string name="search_tag_vintage">Vintage</string>
+
+    <!-- Featured Effects -->
+    <string name="effect_dreamy_vibes_title">Dreamy Vibes</string>
+    <string name="effect_dreamy_vibes_desc">Ánh sáng dịu nhẹ và màu pastel</string>
+    <string name="effect_cyberpunk_title">Cyberpunk</string>
+    <string name="effect_cyberpunk_desc">Đèn neon và hiệu ứng glitch</string>
+    <string name="effect_vintage_film_title">Film Vintage</string>
+    <string name="effect_vintage_film_desc">Hạt phim retro và tông màu ấm</string>
+    <string name="effect_ocean_breeze_title">Ocean Breeze</string>
+    <string name="effect_ocean_breeze_desc">Gradient xanh mát</string>
+    <string name="effect_golden_hour_title">Golden Hour</string>
+    <string name="effect_golden_hour_desc">Lớp phủ hoàng hôn ấm áp</string>
+    <string name="effect_noir_title">Noir</string>
+    <string name="effect_noir_desc">Trắng đen tương phản cao</string>
+    <string name="effect_sakura_title">Sakura</string>
+    <string name="effect_sakura_desc">Hồng hoa anh đào</string>
+    <string name="effect_aurora_title">Aurora</string>
+    <string name="effect_aurora_desc">Ánh sáng cực quang lung linh</string>
+
+    <!-- Common -->
+    <string name="cancel">Hủy</string>
+    <string name="confirm">Xác Nhận</string>
+    <string name="delete">Xóa</string>
+    <string name="save">Lưu</string>
+    <string name="back">Quay Lại</string>
+    <string name="done">Xong</string>
+    <string name="error">Lỗi</string>
+    <string name="retry">Thử Lại</string>
+    <string name="seconds">%d giây</string>
+    <string name="none">Không có</string>
+    <string name="close">Đóng</string>
+    <string name="remove">Xóa</string>
+    <string name="badge_pro">PRO</string>
+    <string name="settings">Cài đặt</string>
+
+    <!-- Error states -->
+    <string name="error_load_failed">Không thể tải. Kéo xuống để thử lại.</string>
+    <string name="error_video_playback_failed">Không thể tải bản xem trước video. Kiểm tra kết nối và thử lại.</string>
+    <string name="error_video_network">Lỗi mạng khi tải video. Kiểm tra kết nối và thử lại.</string>
+    <string name="video_retrying">Đang tải bản xem trước…</string>
+    <string name="error_network_title">Lỗi Mạng</string>
+    <string name="loading_building_feed">Đang Xây Dựng Feed Của Bạn</string>
+    <string name="error_network_message">Không thể tải nhạc. Kiểm tra kết nối và thử lại.</string>
+    <string name="error_network_timeout">Hết thời gian kết nối mạng. Kiểm tra kết nối và thử lại.</string>
+    <string name="error_preview_title">Lỗi Xem Trước</string>
+    <string name="error_preview_music_network">Lỗi mạng khi tải nhạc. Kiểm tra kết nối và thử lại.</string>
+    <string name="error_preview_music_failed">Không thể tải nhạc. Vui lòng thử lại.</string>
+    <string name="error_template_music_failed">Không thể tải bài hát. Kiểm tra kết nối và thử lại.</string>
+    <string name="dialog_ok">OK</string>
+
+    <!-- Songs -->
+    <string name="start_project">Bắt đầu dự án</string>
+
+    <!-- Song Search -->
+    <string name="song_search_hint">Tìm bài hát…</string>
+    <string name="song_search_explore_by_genre">Khám Phá Theo Thể Loại</string>
+    <string name="song_search_suggested">Được Đề Xuất Cho Bạn</string>
+    <string name="song_search_no_results">Không tìm thấy bài hát</string>
+    <string name="song_search_change_music">Đổi Nhạc</string>
+    <string name="song_search_idle_hint">Bắt đầu nhập để tìm bài hát</string>
+
+    <!-- Onboarding Page 4 — Feature Survey -->
+    <string name="onboarding_page4_title">Bắt Đầu Hành Trình Của Bạn</string>
+    <string name="onboarding_page4_subtitle">Điều này giúp chúng tôi đề xuất nội dung phù hợp nhất cho bạn.</string>
+    <string name="feature_music_video_instant">Khám Phá Mẫu Video</string>
+    <string name="feature_photos_to_video">Bắt Đầu Với Bài Hát</string>
+    <string name="feature_trending_templates">Dùng mẫu xu hướng</string>
+    <string name="feature_trending_music">Thêm nhạc xu hướng</string>
+
+    <!-- Music Genres -->
+    <string name="genre_pop">Pop</string>
+    <string name="genre_rock">Rock</string>
+    <string name="genre_hiphop">Hip-Hop</string>
+    <string name="genre_rnb">R&amp;B</string>
+    <string name="genre_electronic">Electronic</string>
+    <string name="genre_jazz">Jazz</string>
+    <string name="genre_classical">Classical</string>
+    <string name="genre_country">Country</string>
+    <string name="genre_latin">Latin</string>
+    <string name="genre_kpop">K-Pop</string>
+    <string name="genre_dance">Dance</string>
+    <string name="genre_edm">EDM</string>
+    <string name="genre_blues">Blues</string>
+    <string name="genre_metal">Metal</string>
+    <string name="genre_soul">Soul</string>
+
+    <!--  Widget  -->
+    <string name="widget_title">Widget</string>
+    <string name="widget_bts">Thêm Widget</string>
+    <string name="widget_smart_search">Tìm Kiếm Thông Minh</string>
+    <string name="widget_smart_search_description">Tìm kiếm phong cách của bạn</string>
+    <string name="widget_smart_search_trending">Xu Hướng ❤️‍🔥</string>
+    <string name="widget_trending_template">Mẫu xu hướng</string>
+    <string name="widget_recently">Gần Đây</string>
+    <string name="widget_trending_song">Bài Hát Xu Hướng</string>
+    <string name="widget_trending_song_hot">Hot</string>
+    <string name="widget_search_hint">Tìm mẫu...</string>
+    <string name="widget_pin_request_sent">Đã thêm widget vào màn hình chính</string>
+    <string name="widget_pin_not_supported">Thêm widget không được hỗ trợ trên thiết bị này</string>
+    <string name="widget_add_failed">Không thể thêm widget: %s</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_trending_search_long">Tìm kiếm xu hướng</string>
+    <string name="shortcut_create_video_long">Tạo video</string>
+    <string name="shortcut_choose_template_long">Chọn mẫu video</string>
+    <string name="shortcut_uninstall_long">Gỡ cài đặt ứng dụng</string>
+
+    <!-- Unified search   -->
+    <string name="unified_search_templates">Mẫu</string>
+    <string name="unified_search_music">Nhạc</string>
+    <string name="unified_search_see_more">Xem thêm</string>
+    <string name="unified_search_loading_more">Đang tải…</string>
+    <string name="unified_search_explore_more">Khám Phá Thêm</string>
+    <string name="unified_search_explore_suggestions">Khám Phá Gợi Ý</string>
+    <string name="unified_search_no_results_title">Không tìm thấy kết quả</string>
+    <string name="unified_search_keep_typing">Tiếp tục nhập để cải thiện tìm kiếm của bạn</string>
+
+    <!-- Content Tags -->
+    <string name="tag_hot">Hot</string>
+    <string name="tag_trending">Xu Hướng</string>
+    <string name="tag_new">Mới</string>
+    <string name="tag_featured">Nổi Bật</string>
+
+    <!-- Template Previewer -->
+    <string name="template_add_to_favorites">Thêm</string>
+    <string name="template_use_button">Dùng Mẫu Này</string>
+    <string name="template_swipe_hint">Vuốt lên</string>
+    <string name="template_swipe_subtitle">Để thưởng thức mẫu của bạn</string>
+    <string name="template_select_ratio_title">Chọn Tỷ Lệ Video</string>
+    <string name="template_create_now">Tạo ngay</string>
+    <string name="template_free_unlock">Mở Khóa Miễn Phí</string>
+    <string name="template_error_load_failed">Không thể tải mẫu. Vui lòng thử lại.</string>
+
+    <!-- Unified Search -->
+    <string name="search_templates_suggestions">Gợi Ý Mẫu</string>
+    <string name="search_music_suggestion">Gợi Ý Nhạc</string>
+    <string name="search_empty_subtitle">Hãy thử cái gì đó khác hoặc khám phá\nvibes đang xu hướng</string>
+    <string name="search_typing_result_header">Kết Quả</string>
+    <string name="search_loading_title">Đang tìm kiếm kết quả…</string>
+    <string name="search_loading_message">Chúng tôi đang quét cơ sở dữ liệu để\nmang đến cho bạn thông tin chính xác nhất.\nVui lòng đợi một chút.</string>
+    <string name="search_placeholder">Tìm bất cứ thứ gì</string>
+    <string name="search_pro_badge">PRO</string>
+
+    <!-- Editor Volume -->
+    <string name="volume_title">Âm Lượng</string>
+
+    <!-- Rating Popup -->
+    <string name="rating_satisfaction_title">Chúng tôi cảm ơn thời gian của bạn dành cho Video Generating</string>
+    <string name="rating_satisfaction_subtitle">Bạn có hài lòng với ứng dụng của chúng tôi không?</string>
+    <string name="rating_not_really">Không lắm</string>
+    <string name="rating_good">Tốt</string>
+    <string name="rating_experience_title">Đánh giá trải nghiệm\ncủa bạn với chúng tôi</string>
+    <string name="rating_submit">Gửi</string>
+    <string name="rating_feedback_title">Rất tiếc khi nghe điều đó 🥲</string>
+    <string name="rating_feedback_subtitle">Chúng tôi sẽ cố gắng hơn nữa để cải thiện trải nghiệm của bạn</string>
+    <string name="rating_feedback_type_hint">Viết phản hồi của bạn</string>
+    <string name="rating_feedback_reason_music_quality">Không có bài hát yêu thích / Chất lượng nhạc kém</string>
+    <string name="rating_feedback_reason_translation">Chất lượng dịch thuật quá kém</string>
+    <string name="rating_feedback_reason_tools">Công cụ chỉnh sửa không đáp ứng nhu cầu của tôi</string>
+    <string name="rating_feedback_reason_output_quality">Chất lượng video xuất ra quá thấp</string>
+    <string name="rating_feedback_reason_performance">Ứng dụng chậm hoặc hay bị treo</string>
+    <string name="rating_feedback_reason_templates">Mẫu không đủ / cập nhật nội dung ít</string>
+    <string name="rating_feedback_reason_other">Khác</string>
+
+    <!-- Ads -->
+    <string name="ad_badge">Quảng Cáo</string>
+    <string name="ad_icon">Biểu tượng quảng cáo</string>
+
+    <!-- Effect Set Unlock Rewarded Ad -->
+    <string name="effect_set_watch_ad_title">Xem quảng cáo để mở khóa hiệu ứng này?</string>
+    <string name="effect_set_watch_ad_subtitle">Mở khóa bộ hiệu ứng này vĩnh viễn bằng cách xem một quảng cáo ngắn</string>
+    <string name="effect_set_ad_not_available">Quảng cáo hiện không khả dụng. Thử lại sau.</string>
+    <string name="effect_set_locked">Bộ hiệu ứng bị khóa</string>
+    <string name="ad_not_available">Quảng cáo hiện không khả dụng. Thử lại sau.</string>
+
+    <!-- Quality Export Rewarded Ad -->
+    <string name="quality_watch_ad_title">Xem quảng cáo để xuất chất lượng cao?</string>
+    <string name="quality_watch_ad_subtitle">Mở khóa xuất 720p/1080p cho phiên này bằng cách xem một quảng cáo ngắn</string>
+
+    <!-- Template Unlock Rewarded Ad -->
+    <string name="template_watch_ad_title">Xem quảng cáo để mở khóa mẫu này?</string>
+    <string name="template_watch_ad_subtitle">Mở khóa mẫu này vĩnh viễn bằng cách xem một quảng cáo ngắn</string>
+
+    <!-- Song Watch Ad Dialog -->
+    <string name="song_watch_ad_title">Xem quảng cáo để mở khóa bài hát này?</string>
+    <string name="song_watch_ad_subtitle">Sau khi xem, bạn có thể sử dụng bài hát này để tạo video. Mở khóa vĩnh viễn.</string>
+
+    <!-- Smart Notification Copy -->
+    <string name="notif_trending_song_title">Bài Hát Xu Hướng Mới!</string>
+    <string name="notif_trending_song_body">\'%2$s\' của %1$s đang viral! Tạo video của bạn chỉ với 1 chạm trước khi xu hướng đạt đỉnh.</string>
+    <string name="notif_viral_template_title">Mẫu xu hướng dành cho bạn. Thử ngay!</string>
+    <string name="notif_viral_template_body">1,000,000 người đang dùng %1$s hôm nay. Đừng bỏ lỡ!</string>
+    <string name="notif_forgotten_masterpiece_title">Tác phẩm của bạn đang chờ đợi!</string>
+    <string name="notif_forgotten_masterpiece_body">Bạn đã hoàn thành phần khó, giờ là lúc tỏa sáng. Video của bạn sẵn sàng chia sẻ với thế giới!</string>
+    <string name="notif_quick_save_title">Đừng để tác phẩm của bạn bị mất!</string>
+    <string name="notif_quick_save_body">Video chỉnh sửa của bạn thật tuyệt! Lưu vào thư viện ngay để đồng bộ nhịp hoàn hảo không bị mất.</string>
+    <string name="notif_share_encouragement_title">Sẵn Sàng Nhận \'Likes\'?</string>
+    <string name="notif_share_encouragement_body">Video \'%1$s\' của bạn đã 100%% đồng bộ nhịp và sẵn sàng đăng. Đăng lên TikTok ngay!</string>
+    <string name="notif_abandoned_select_photos_title">Đừng bỏ quên nhịp điệu!</string>
+    <string name="notif_abandoned_select_photos_body">Video \'Not Like Us\' của bạn gần hoàn thành. Chỉ cần chọn vài ảnh để thấy điều kỳ diệu!</string>
+    <string name="notif_draft_completion_nudge_title">Hoàn thành những gì bạn đã bắt đầu!</string>
+    <string name="notif_draft_completion_nudge_body">Bạn chỉ cách video viral một bước. Quay lại và thêm ảnh của bạn ngay.</string>
+    <string name="notif_cta_play_song">Phát Bài Hát</string>
+    <string name="notif_cta_discover_templates">Xem Mẫu</string>
+    <string name="notif_cta_continue_editing">Tiếp Tục Chỉnh Sửa</string>
+    <string name="notif_cta_view_template">Xem Mẫu</string>
+
+</resources>

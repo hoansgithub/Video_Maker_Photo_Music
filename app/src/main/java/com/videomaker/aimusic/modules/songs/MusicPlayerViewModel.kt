@@ -27,7 +27,8 @@ class MusicPlayerViewModel(
     private val unlikeSongUseCase: UnlikeSongUseCase,
     likedSongRepository: LikedSongRepository,
     private val unlockedSongsManager: UnlockedSongsManager,
-    private val adsLoaderService: AdsLoaderService
+    private val adsLoaderService: AdsLoaderService,
+    private val songRepository: com.videomaker.aimusic.domain.repository.SongRepository
 ) : ViewModel() {
 
     val isLiked: StateFlow<Boolean> = likedSongRepository
@@ -68,6 +69,11 @@ class MusicPlayerViewModel(
     }
 
     fun onUseToCreateClick(onProceed: () -> Unit) {
+        // Increment usage_count for analytics/ranking
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            songRepository.incrementUseCount(song.id)
+        }
+
         if (song.isPremium && !unlockedSongsManager.isUnlocked(song.id)) {
             // Song is locked - request ad
             onSongUnlockedCallback = onProceed

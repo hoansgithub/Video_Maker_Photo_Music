@@ -362,6 +362,15 @@ fun AppNavigation(
                         ))
                     },
                     onNavigateToAllSongs = { backStack.add(AppRoute.SuggestedSongsList) },
+                    onNavigateToTemplatePreviewerWithSong = { songId ->
+                        // Song-to-template flow: browse templates with selected song, then select images
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "",  // Empty = start from first template
+                            imageUris = emptyList(),
+                            overrideSongId = songId,
+                            sourceLocation = AnalyticsEvent.Value.Location.SONG
+                        ))
+                    },
                     onProjectClick = { projectId ->
                         backStack.add(AppRoute.Editor(projectId))
                     }
@@ -405,9 +414,12 @@ fun AppNavigation(
                     viewModel = suggestedSongsViewModel,
                     onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToAssetPicker = { songId ->
-                        // Song-to-video flow: select images, then go to editor (skip templates)
-                        backStack.add(AppRoute.AssetPicker(
-                            overrideSongId = songId
+                        // Song-to-template flow: browse templates with selected song
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "",
+                            imageUris = emptyList(),
+                            overrideSongId = songId,
+                            sourceLocation = AnalyticsEvent.Value.Location.SUGGESTED_SONGS
                         ))
                     }
                 )
@@ -423,9 +435,12 @@ fun AppNavigation(
                     viewModel = weeklyRankingViewModel,
                     onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToAssetPicker = { songId ->
-                        // Song-to-video flow: select images, then go to editor (skip templates)
-                        backStack.add(AppRoute.AssetPicker(
-                            overrideSongId = songId
+                        // Song-to-template flow: browse templates with selected song
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "",
+                            imageUris = emptyList(),
+                            overrideSongId = songId,
+                            sourceLocation = AnalyticsEvent.Value.Location.WEEKLY_RANKING
                         ))
                     }
                 )
@@ -437,14 +452,16 @@ fun AppNavigation(
             entry<AppRoute.AssetPicker> { route ->
                 val factory: AssetPickerViewModelFactory = koinInject()
                 val pickerViewModel: AssetPickerViewModel = viewModel(
-                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}_${route.aspectRatio}_${route.sourceLocation}_${route.resumeDraftId}",
+                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}_${route.aspectRatio}_${route.sourceLocation}_${route.resumeDraftId}_${route.selectedAssetUris.size}_${route.isEditingMode}",
                     factory = createSafeViewModelFactory {
                         factory.create(
                             projectId = route.projectId,
                             templateId = route.templateId,
                             overrideSongId = route.overrideSongId,
                             aspectRatio = route.aspectRatio,
-                            resumeDraftId = route.resumeDraftId
+                            resumeDraftId = route.resumeDraftId,
+                            selectedAssetUris = route.selectedAssetUris,
+                            isEditingMode = route.isEditingMode
                         )
                     }
                 )
@@ -504,8 +521,12 @@ fun AppNavigation(
                     onNavigateToExport = { projectId, quality ->
                         backStack.add(AppRoute.Export(projectId, quality))
                     },
-                    onNavigateToAddAssets = { projectId ->
-                        backStack.add(AppRoute.AssetPicker(projectId))
+                    onNavigateToAddAssets = { projectId, assetUris ->
+                        backStack.add(AppRoute.AssetPicker(
+                            projectId = projectId,
+                            selectedAssetUris = assetUris,
+                            isEditingMode = true  // Editing mode: return URIs without saving
+                        ))
                     }
                 )
             }

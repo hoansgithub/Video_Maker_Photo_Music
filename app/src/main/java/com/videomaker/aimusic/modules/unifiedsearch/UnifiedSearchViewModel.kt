@@ -86,7 +86,10 @@ sealed class UnifiedSearchUiState {
 
 sealed class UnifiedSearchNavigationEvent {
     data object NavigateBack : UnifiedSearchNavigationEvent()
-    data class NavigateToTemplateDetail(val templateId: String) : UnifiedSearchNavigationEvent()
+    data class NavigateToTemplateDetail(
+        val templateId: String,
+        val shouldShowAd: Boolean = false
+    ) : UnifiedSearchNavigationEvent()
     data class NavigateToSongDetail(val songId: Long) : UnifiedSearchNavigationEvent()
 }
 
@@ -99,7 +102,8 @@ class UnifiedSearchViewModel(
     private val templateRepository: TemplateRepository,
     private val getGenresUseCase: GetGenresUseCase,
     private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
-    private val getSongsByGenreUseCase: GetSongsByGenreUseCase
+    private val getSongsByGenreUseCase: GetSongsByGenreUseCase,
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 ) : ViewModel() {
 
     companion object {
@@ -384,7 +388,14 @@ class UnifiedSearchViewModel(
         if (currentQuery.isNotBlank()) {
             rememberQuery(currentQuery)
         }
-        _navigationEvent.value = UnifiedSearchNavigationEvent.NavigateToTemplateDetail(templateId)
+
+        // Check if template grid tap ad is ready
+        val isAdReady = adsLoaderService.isInterstitialReady(com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP)
+
+        _navigationEvent.value = UnifiedSearchNavigationEvent.NavigateToTemplateDetail(
+            templateId = templateId,
+            shouldShowAd = isAdReady
+        )
     }
 
     fun onSongClick(song: MusicSong) {
@@ -497,6 +508,19 @@ class UnifiedSearchViewModel(
     fun onNavigateBack() {
         Analytics.trackSearchCancel(_displayText.value.trim())
         _navigationEvent.value = UnifiedSearchNavigationEvent.NavigateBack
+    }
+
+    fun preloadTemplateGridAd() {
+        viewModelScope.launch {
+            runCatching {
+                com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+                    loadTimeoutMillis = null,
+                    showLoadingOverlay = false
+                )
+            }
+        }
     }
 
     fun onNavigationHandled() {
@@ -715,7 +739,8 @@ class UnifiedSearchViewModelFactory(
     private val templateRepository: TemplateRepository,
     private val getGenresUseCase: GetGenresUseCase,
     private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
-    private val getSongsByGenreUseCase: GetSongsByGenreUseCase
+    private val getSongsByGenreUseCase: GetSongsByGenreUseCase,
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 ) {
     fun create(initialSection: SearchSection): UnifiedSearchViewModel {
         return UnifiedSearchViewModel(
@@ -726,7 +751,8 @@ class UnifiedSearchViewModelFactory(
             templateRepository = templateRepository,
             getGenresUseCase = getGenresUseCase,
             getSuggestedSongsUseCase = getSuggestedSongsUseCase,
-            getSongsByGenreUseCase = getSongsByGenreUseCase
+            getSongsByGenreUseCase = getSongsByGenreUseCase,
+            adsLoaderService = adsLoaderService
         )
     }
 }

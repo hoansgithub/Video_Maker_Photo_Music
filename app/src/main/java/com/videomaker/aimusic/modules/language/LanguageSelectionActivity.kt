@@ -17,6 +17,7 @@ import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCa
 import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
 import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
+import com.videomaker.aimusic.modules.onboarding.OnboardingContentViewModel
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
 /**
@@ -45,6 +46,7 @@ class LanguageSelectionActivity : AppCompatActivity() {
     private val saveLanguagePreferenceUseCase: SaveLanguagePreferenceUseCase by inject()
     private val applyLanguageUseCase: ApplyLanguageUseCase by inject()
     private val completeLanguageSelectionUseCase: CompleteLanguageSelectionUseCase by inject()
+    private val onboardingContentViewModel: OnboardingContentViewModel by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +58,9 @@ class LanguageSelectionActivity : AppCompatActivity() {
         android.util.Log.d("LanguageSelection", "🔄 Preloading onboarding page ads (1-step-ahead)")
         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
+
+        // Pre-fetch onboarding thumbnails (data ready when OnboardingActivity opens)
+        onboardingContentViewModel.preloadContent()
 
         setContent {
             VideoMakerTheme {

@@ -12,14 +12,20 @@ import java.net.URL
  * Single source of truth for the user's region code (ISO 3166-1 alpha-2, lowercase).
  *
  * PRODUCTION BUILDS:
- * Resolution order:
+ * Resolution order (when IP geolocation disabled via remote config):
  * 1. In-memory cache (set once per process)
  * 2. Persisted value in PreferencesManager (set on first run)
  * 3. Auto-detected from system: SIM → Network → Locale → Fallback "us"
  *
- * DEBUG BUILDS ONLY (for QC testing with VPN):
- * Uses IP-based geolocation to detect region, allowing VPN testing.
- * Waits up to 15 seconds for IP detection to complete before falling back to system detection.
+ * IP-BASED DETECTION (when enabled via remote config OR debug builds):
+ * Resolution order:
+ * 1. IP geolocation (VPN-aware, configurable timeout)
+ * 2. Fallback to persisted region
+ * 3. Fallback to system detection (SIM → Network → Locale)
+ *
+ * Remote Config:
+ * - region_detection_config.use_ip_geolocation: Enable IP detection in production
+ * - region_detection_config.ip_timeout_ms: Timeout for IP detection (default: 5000ms)
  *
  * Used by SongRepositoryImpl and TemplateRepositoryImpl to filter and prioritize content:
  * - Priority 1: Content targeting user's region (target_regions = ["us"])
@@ -28,7 +34,8 @@ import java.net.URL
  */
 class RegionProvider(
     private val context: Context,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val regionDetectionConfig: com.videomaker.aimusic.core.data.remote.RegionDetectionConfig? = null
 ) {
     @Volatile
     private var cached: String? = null
@@ -46,44 +53,52 @@ class RegionProvider(
      * Returns the resolved region code. Safe to call from any thread.
      * Result is cached in memory after first call.
      *
-     * DEBUG MODE: Waits for IP-based detection (VPN-aware) before returning.
-     * RELEASE MODE: Uses fast system-based detection (SIM/Network/Locale).
+     * IP DETECTION MODE (when enabled via remote config OR debug builds):
+     * Waits for IP-based detection (VPN-aware) before returning.
+     *
+     * SYSTEM DETECTION MODE (default):
+     * Uses fast system-based detection (SIM/Network/Locale).
      */
     fun getRegionCode(): String {
         cached?.let { return it }
 
-        // DEBUG MODE: Use IP detection (VPN-aware)
-        if (BuildConfig.DEBUG) {
+        // Check if IP detection is enabled (remote config only)
+        // Removed BuildConfig.DEBUG to prevent 5s blocking delay in debug builds
+        val shouldUseIp = regionDetectionConfig?.useIpGeolocation == true
+
+        if (shouldUseIp) {
             // Start IP detection in background (if not already started)
             if (!ipDetectionStarted) {
                 ipDetectionStarted = true
-                startIPDetectionInBackground()
-                Log.d(TAG, "🌐 [DEBUG] IP detection started in background")
+                val timeout = regionDetectionConfig?.ipTimeoutMs ?: 15_000
+                startIPDetectionInBackground(timeout)
+                Log.d(TAG, "🌐 IP detection started (timeout: ${timeout}ms)")
             }
 
             // Use cached IP region if available (from previous detection)
             ipRegionCached?.let {
-                Log.d(TAG, "🔍 [DEBUG] Region from IP cache: $it")
+                Log.d(TAG, "🔍 Region from IP cache: $it")
                 cached = it
                 return it
             }
 
-            // Wait for IP detection to complete (max 15 seconds)
+            // Wait for IP detection to complete
             if (!ipDetectionComplete) {
-                Log.d(TAG, "⏳ [DEBUG] Waiting for IP detection to complete (max 15s)...")
+                val timeout = regionDetectionConfig?.ipTimeoutMs ?: 15_000
+                Log.d(TAG, "⏳ Waiting for IP detection (max ${timeout}ms)...")
                 val startTime = System.currentTimeMillis()
-                while (!ipDetectionComplete && System.currentTimeMillis() - startTime < 15_000) {
+                while (!ipDetectionComplete && System.currentTimeMillis() - startTime < timeout) {
                     Thread.sleep(100) // Poll every 100ms
                 }
 
                 if (ipDetectionComplete) {
                     ipRegionCached?.let {
-                        Log.d(TAG, "✅ [DEBUG] IP detection complete, using: $it")
+                        Log.d(TAG, "✅ IP detection complete: $it")
                         cached = it
                         return it
                     }
                 } else {
-                    Log.w(TAG, "⏱️ [DEBUG] IP detection timeout after 15s, falling back to system")
+                    Log.w(TAG, "⏱️ IP detection timeout after ${timeout}ms, falling back to system")
                 }
             }
 
@@ -91,15 +106,15 @@ class RegionProvider(
             val persistedRegion = preferencesManager.getUserRegion()?.takeIf { it.isNotBlank() }
             val systemRegion = detectRegionFromSystem()
             val region = persistedRegion ?: systemRegion
-            Log.d(TAG, "⏳ [DEBUG] IP detection incomplete")
-            Log.d(TAG, "  ├─ Persisted region: ${persistedRegion ?: "null"}")
-            Log.d(TAG, "  ├─ System region: $systemRegion")
-            Log.d(TAG, "  └─ Using: $region (${if (persistedRegion != null) "persisted" else "system"})")
+            Log.d(TAG, "⚠️ IP detection incomplete, using fallback")
+            Log.d(TAG, "  ├─ Persisted: ${persistedRegion ?: "null"}")
+            Log.d(TAG, "  ├─ System: $systemRegion")
+            Log.d(TAG, "  └─ Final: $region")
             cached = region
             return region
         }
 
-        // RELEASE MODE: Use persisted system region or detect from system
+        // SYSTEM DETECTION MODE: Use persisted region or detect from system
         val cachedRegion = preferencesManager.getUserRegion()?.takeIf { it.isNotBlank() }
 
         val region = if (shouldMigrateCache(cachedRegion)) {
@@ -148,15 +163,12 @@ class RegionProvider(
     }
 
     /**
-     * Start IP-based region detection in background thread (DEBUG BUILDS ONLY).
+     * Start IP-based region detection in background thread.
      * Tries multiple IP geolocation services until one works (VPN-friendly).
+     *
+     * @param timeoutMs Timeout for each HTTP request (from remote config)
      */
-    private fun startIPDetectionInBackground() {
-        if (!BuildConfig.DEBUG) {
-            Log.e(TAG, "❌ IP detection called in RELEASE build - should never happen!")
-            return
-        }
-
+    private fun startIPDetectionInBackground(timeoutMs: Long = 15_000) {
         Thread {
             val services = listOf(
                 IPGeoService("https://ipinfo.io/country", "ipinfo.io") { it.trim().lowercase() },
@@ -172,8 +184,8 @@ class RegionProvider(
                 try {
                     val url = URL(service.url)
                     val connection = url.openConnection() as HttpURLConnection
-                    connection.connectTimeout = 10000  // 10s timeout (VPN-friendly)
-                    connection.readTimeout = 10000
+                    connection.connectTimeout = timeoutMs.toInt()
+                    connection.readTimeout = timeoutMs.toInt()
                     connection.requestMethod = "GET"
                     connection.setRequestProperty("User-Agent", "VideoMaker-Android")
 
@@ -189,7 +201,7 @@ class RegionProvider(
                         break  // Success - stop trying other services
                     }
                 } catch (e: Exception) {
-                    Log.d(TAG, "🌐 [DEBUG] ${service.name} failed: ${e.message}")
+                    Log.d(TAG, "🌐 ${service.name} failed: ${e.message}")
                     // Continue to next service
                 }
             }
@@ -199,14 +211,14 @@ class RegionProvider(
                 ipRegionCached = detectedCountry
                 cached = detectedCountry
                 preferencesManager.setUserRegion(detectedCountry)
-                Log.d(TAG, "🌐 [DEBUG] IP detection complete via $workingService: $detectedCountry (updated cache)")
+                Log.d(TAG, "🌐 IP detection complete via $workingService: $detectedCountry")
 
                 // Log region change for debugging
                 if (previousRegion != null && previousRegion != detectedCountry) {
                     Log.w(TAG, "⚠️ Region changed: $previousRegion → $detectedCountry")
                 }
             } else {
-                Log.w(TAG, "🌐 [DEBUG] All IP geolocation services failed - using system detection")
+                Log.w(TAG, "🌐 All IP geolocation services failed - using system detection")
             }
 
             ipDetectionComplete = true

@@ -21,6 +21,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">ಮುಂದೆ</string>
     <string name="onboarding_get_started">ಪ್ರಾರಂಭಿಸಿ</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">ಪ್ರತಿದಿನ ನವೀಕರಿಸಲಾದ ತಾಜಾ ಟೆಂಪ್ಲೇಟ್‌ಗಳೊಂದಿಗೆ ಮುಂಚೂಣಿಯಲ್ಲಿರಿ.</string>
+    <string name="onboarding_india_page3_title">ಪ್ರತಿದಿನ ಟ್ರೆಂಡಿಂಗ್ ಟೆಂಪ್ಲೇಟ್‌ಗಳನ್ನು ಹಿಡಿಯಿರಿ</string>
+    <string name="onboarding_india_page3_subtitle">ಪ್ರತಿದಿನ ನವೀಕರಿಸಲಾದ ತಾಜಾ ಟೆಂಪ್ಲೇಟ್‌ಗಳೊಂದಿಗೆ ಮುಂಚೂಣಿಯಲ್ಲಿರಿ.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">ಕೆಲವೇ ಸೆಕೆಂಡ್‌ಗಳಲ್ಲಿ ಮ್ಯಾಜಿಕ್ ರಚಿಸಿ</string>
     <string name="onboarding_page1_subtitle">ಕೆಲವು ಟ್ಯಾಪ್‌ಗಳಲ್ಲಿ ಅದ್ಭುತ ವೀಡಿಯೋ. ಸರಳ ಮತ್ತು ವೇಗ</string>
@@ -147,6 +151,7 @@
     <string name="editor_music_trim_skip_to_start">ಆರಂಭಕ್ಕೆ ಹೋಗಿ</string>
     <string name="editor_music_trim_skip_to_end">ಅಂತ್ಯಕ್ಕೆ ಹೋಗಿ</string>
     <string name="editor_photos_count">%d ಫೋಟೋಗಳು</string>
+    <string name="editor_photos_label">ಫೋಟೋಗಳು</string>
     <string name="editor_save_dialog_title">ಪ್ರಾಜೆಕ್ಟ್ ಉಳಿಸಿ?</string>
     <string name="editor_save_dialog_message">ನಿಮ್ಮ ಪ್ರಾಜೆಕ್ಟ್ ಉಳಿಸಲಾಗುತ್ತದೆ ಮತ್ತು ನನ್ನ ಪ್ರಾಜೆಕ್ಟ್‌ಗಳಲ್ಲಿ ಲಭ್ಯವಿರುತ್ತದೆ.</string>
     <string name="editor_save_and_exit">ಉಳಿಸಿ ಮತ್ತು ನಿರ್ಗಮಿಸಿ</string>
@@ -162,6 +167,9 @@
     <string name="editor_effect_sets">ಎಫೆಕ್ಟ್ ಸೆಟ್‌ಗಳು</string>
     <string name="editor_retry">ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ</string>
     <string name="editor_no_music_selected">ಸಂಗೀತ ಆಯ್ಕೆ ಮಾಡಿಲ್ಲ</string>
+    <string name="editor_images_title">ಸಂಪಾದಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ • ಮರುಹೊಂದಿಸಲು ಹಿಡಿದುಕೊಳ್ಳಿ</string>
+    <string name="editor_add_images">ಚಿತ್ರಗಳನ್ನು ಸೇರಿಸಿ</string>
+    <string name="editor_delete_image">ಅಳಿಸಿ</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">ರಚಿಸಿದ ವೀಡಿಯೋ</string>
@@ -279,6 +287,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">ಮ್ಯೂಸಿಕ್ ಪ್ಲೇಯರ್</string>
     <string name="music_player_use_to_create">ವೀಡಿಯೋ ರಚಿಸಲು ಬಳಸಿ</string>
+    <string name="music_player_free_unlock">ಉಚಿತ ಅನ್‌ಲಾಕ್</string>
 
     <!-- Music Picker -->
     <string name="music_picker_title">ಸಂಗೀತ ಆಯ್ಕೆಮಾಡಿ</string>
@@ -467,6 +476,7 @@
     <string name="template_swipe_subtitle">ನಿಮ್ಮ ಟೆಂಪ್ಲೇಟ್‌ಗಳನ್ನು ಆನಂದಿಸಲು</string>
     <string name="template_select_ratio_title">ವೀಡಿಯೋ ರೇಶಿಯೋ ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="template_create_now">ಈಗ ರಚಿಸಿ</string>
+    <string name="template_free_unlock">ಉಚಿತ ಅನ್‌ಲಾಕ್</string>
     <string name="template_error_load_failed">ಟೆಂಪ್ಲೇಟ್‌ಗಳು ಲೋಡ್ ವಿಫಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
 
     <!-- Unified Search -->

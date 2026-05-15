@@ -36,7 +36,7 @@ class TemplateRepositoryImpl(
         private const val FN_FEATURED_TEMPLATES = "get_featured_templates"
         private val COLUMNS_TEMPLATE = Columns.raw(
             "id,name,name_i18n,thumbnail_path,preview_path,song_id,effect_set_id,aspect_ratio," +
-            "image_duration_ms,transition_pct,is_premium,is_featured,is_active,sort_order,use_count," +
+            "image_duration_ms,transition_pct,is_premium,is_featured,is_active,sort_order,use_count,view_count," +
             "template_vibe_tags(vibe_tag_id,sort_order)"
         )
     }
@@ -247,6 +247,24 @@ class TemplateRepositoryImpl(
     ): Result<List<VideoTemplate>> = searchTemplates(query)
         .map { templates -> templates.drop(offset).take(limit) }
 
+    override suspend fun incrementUseCount(templateId: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                // Increment use_count by 1 using Supabase RPC function
+                supabaseClient.postgrest.rpc(
+                    "increment_template_use_count",
+                    buildJsonObject {
+                        put("template_id", templateId)
+                    }
+                )
+                android.util.Log.d("TemplateRepository", "✅ Incremented use_count for template: $templateId")
+                Result.success(Unit)
+            } catch (e: Exception) {
+                android.util.Log.e("TemplateRepository", "❌ Failed to increment use_count: ${e.message}")
+                Result.failure(e)
+            }
+        }
+
     override suspend fun clearCache() {
         apiCacheManager.clearTemplateCache()
     }
@@ -285,6 +303,7 @@ private data class TemplateDto(
     @SerialName("is_active") val isActive: Boolean = true,
     @SerialName("sort_order") val sortOrder: Int = 0,
     @SerialName("use_count") val useCount: Long = 0,
+    @SerialName("view_count") val viewCount: Long = 0,
     @SerialName("template_vibe_tags") val vibeTags: List<VibeTagRef> = emptyList(),
     @SerialName("target_regions") val targetRegions: List<String> = emptyList()
 ) {
@@ -312,7 +331,8 @@ private data class TemplateDto(
             isPremium = isPremium,
             isFeatured = isFeatured,
             isActive = isActive,
-            useCount = useCount
+            useCount = useCount,
+            viewCount = viewCount
         )
     }
 }

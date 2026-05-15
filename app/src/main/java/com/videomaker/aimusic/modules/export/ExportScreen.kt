@@ -11,6 +11,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import androidx.compose.foundation.layout.navigationBarsPadding
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
@@ -199,7 +201,6 @@ fun ExportScreen(
     onNavigateToTemplateDetail: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val thumbnailUri by viewModel.thumbnailUri.collectAsStateWithLifecycle()
     val aspectRatio by viewModel.aspectRatio.collectAsStateWithLifecycle()
     val currentQuality by viewModel.currentQuality.collectAsStateWithLifecycle()
@@ -210,16 +211,27 @@ fun ExportScreen(
     val showWatermark by viewModel.showWatermark.collectAsStateWithLifecycle()
     val shouldPresentWatermarkAd by viewModel.shouldPresentWatermarkAd.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val activity = context as? Activity
+    val adsLoaderService = koinInject<AdsLoaderService>()
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Template navigation state (set by Channel event handler)
+    var templateNavigation by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var showNotificationPromoDialog by remember { mutableStateOf(false) }
     var showNotificationSettingsGuideDialog by remember { mutableStateOf(false) }
     var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
     var pauseSuccessPreviewForAd by remember { mutableStateOf(false) }
-
-    // Get dependencies for ad showing
-    val activity = context as? Activity
-    val adsLoaderService = koinInject<AdsLoaderService>()
     val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
+
+    // Preload template grid tap ad when view appears
+    LaunchedEffect(Unit) {
+        InterstitialAdHelperExt.preloadInterstitial(
+            adsLoaderService = adsLoaderService,
+            placement = AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+            loadTimeoutMillis = null,
+            showLoadingOverlay = false
+        )
+    }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -317,6 +329,24 @@ fun ExportScreen(
         }
     }
 
+    // Preload exit interstitial ad when Success state is reached (background, non-blocking)
+    LaunchedEffect(uiState) {
+        if (uiState is ExportUiState.Success) {
+            android.util.Log.d("ExportScreen", "📺 Preloading exit interstitial ad...")
+            val success = InterstitialAdHelperExt.preloadInterstitial(
+                adsLoaderService = adsLoaderService,
+                placement = AdPlacement.INTERSTITIAL_EXPORT_RESULT_EXIT,
+                loadTimeoutMillis = null,  // No timeout - preload as long as needed
+                showLoadingOverlay = false  // Silent background preload, never block user
+            )
+            if (success) {
+                android.util.Log.d("ExportScreen", "✅ Exit ad preloaded successfully")
+            } else {
+                android.util.Log.d("ExportScreen", "⚠️ Exit ad preload failed - user can still close")
+            }
+        }
+    }
+
     // Intercept system back gesture (swipe) in Success state - same ad logic as close button
     BackHandler(enabled = uiState is ExportUiState.Success) {
         viewModel.onResultExitClick()
@@ -352,13 +382,29 @@ fun ExportScreen(
         }
     }
 
-    // Handle navigation events - StateFlow-based (Google recommended pattern)
-    // Observe navigationEvent StateFlow and call onNavigationHandled() after navigating
-    LaunchedEffect(navigationEvent) {
-        navigationEvent?.let { event ->
+    // Handle template navigation with reusable helper
+    templateNavigation?.let { (templateId, shouldShowAd) ->
+        com.videomaker.aimusic.core.ads.HandleTemplateNavigation(
+            templateId = templateId,
+            shouldShowAd = shouldShowAd,
+            onPreloadNext = { viewModel.preloadTemplateGridAd() },
+            onNavigate = {
+                onNavigateToTemplateDetail(it)
+                templateNavigation = null  // Clear after navigation
+            }
+        )
+    }
+
+    // Handle other navigation events - Channel pattern (Google official) - one-time delivery, no replay
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
             when (event) {
-                is ExportNavigationEvent.NavigateBack -> onNavigateBack()
-                is ExportNavigationEvent.NavigateToHomeMyVideos -> onNavigateToHomeMyVideos()
+                is ExportNavigationEvent.NavigateBack -> {
+                    onNavigateBack()
+                }
+                is ExportNavigationEvent.NavigateToHomeMyVideos -> {
+                    onNavigateToHomeMyVideos()
+                }
 
                 is ExportNavigationEvent.RequestExitWithAd -> {
                     // Show ad if ready, otherwise navigate immediately (non-blocking)
@@ -379,7 +425,8 @@ fun ExportScreen(
                                 onNavigateToHomeMyVideos()
                             },
                             bypassFrequencyCap = true,  // Exit ads always show
-                            showLoadingOverlay = false  // Ad already preloaded
+                            // No loadTimeout - ad must be preloaded, if not ready user navigates immediately
+                            showLoadingOverlay = false  // Never block user with loading
                         )
                     } else {
                         // Ad not ready or no activity - navigate immediately
@@ -391,10 +438,11 @@ fun ExportScreen(
                 }
 
                 is ExportNavigationEvent.NavigateToTemplateDetail -> {
-                    onNavigateToTemplateDetail(event.templateId)
+                    // Set state for HandleTemplateNavigation composable
+                    templateNavigation = event.templateId to event.shouldShowAd
                 }
             }
-            viewModel.onNavigationHandled()
+            // Event auto-consumed by Channel - no manual cleanup needed
         }
     }
 
@@ -424,9 +472,11 @@ fun ExportScreen(
     }
 
     // Full-screen blocking container with dark background (#101313 closest = SplashBackground)
+    Column(modifier = Modifier.fillMaxSize()) {
     Box(
         modifier = Modifier
-            .fillMaxSize()
+            .weight(1f)
+            .fillMaxWidth()
             .background(SplashBackground),
         contentAlignment = Alignment.Center
     ) {
@@ -609,6 +659,14 @@ fun ExportScreen(
             )
         }
     }
+    BannerAdView(
+        placement = AdPlacement.BANNER_EXPORT,
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .height(50.dp)
+    )
+}
 }
 
 @Composable
@@ -1022,6 +1080,14 @@ private fun SuccessContent(
                             setBackgroundColor(android.graphics.Color.BLACK)
                         }
                     },
+                    update = { playerView ->
+                        // Reconnect PlayerView when ExoPlayer instance changes (e.g. after
+                        // switching to the watermark-free output path). Without this, the
+                        // old released player stays attached → black video, audio only.
+                        if (playerView.player != exoPlayer) {
+                            playerView.player = exoPlayer
+                        }
+                    },
                     modifier = Modifier
                         .width(actualVideoWidth)
                         .height(actualVideoHeight)
@@ -1081,17 +1147,13 @@ private fun SuccessContent(
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(16.dp)
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         // Main watermark content
                         Row(
                             modifier = Modifier
-                                .background(
-                                    color = Color.Black.copy(alpha = 0.75f),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
                                 .clickable { onWatermarkClick() }
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                                .padding(horizontal = 16.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
@@ -1101,37 +1163,42 @@ private fun SuccessContent(
                                 modifier = Modifier.size(48.dp),
                                 tint = Color.Unspecified
                             )
-                            Text(
-                                text = stringResource(R.string.app_name),
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                maxLines = 1
-                            )
                         }
 
+
+                        com.videomaker.aimusic.ui.components.AdBadge(
+                            style = com.videomaker.aimusic.ui.components.AdBadgeStyle.Small(
+                                textColor = SurfaceDark,
+                                backgroundColor = Color.White
+                            ),
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                        )
+
                         // Close button - circular at top right corner
-                        Box(
+                        Row(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .offset(x = 6.dp, y = (-6).dp)
-                                .size(28.dp)
-                                .background(
-                                    color = Color.White,
-                                    shape = CircleShape
-                                )
-                                .border(
-                                    width = 2.dp,
-                                    color = Color.Black.copy(alpha = 0.2f),
-                                    shape = CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
+                                .offset(x = 6.dp, y = (-6).dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Remove watermark",
                                 tint = Color.Black,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .background(
+                                        color = Color.White,
+                                        shape = CircleShape
+                                    )
+                                    .border(
+                                        width = 2.dp,
+                                        color = Color.Black.copy(alpha = 0.2f),
+                                        shape = CircleShape
+                                    )
+                                    .padding(2.dp)
                             )
                         }
                     }

@@ -117,17 +117,25 @@ grep -rn "BitmapFactory.decode" --include="*.kt"
 grep -rn "synchronized" --include="*.kt"
 ```
 
-### 12. Database Queries Feeding Navigation (HIGH)
+### 12. Stale ViewModel — Activity-Scoped Instead of NavEntry-Scoped (CRITICAL)
 
-- Also check that repository queries feeding navigation screens have LIMIT / pagination
-- Unbounded queries can cause ANR before navigation even occurs
-- ❌ `val items = repository.getAll()` then navigate to list screen
-- ✅ `val items = repository.getPage(page, limit)` with paginated loading
+- ❌ ViewModel workarounds for stale state: `ensureStarted()`, `resetState()`, `clearState()`, `reinitialize()`
+- ❌ Manual state reset in `LaunchedEffect(Unit)` to work around ViewModel surviving navigation
+- ❌ ViewModels that should be per-screen but are scoped to Activity (persist forever, show old data)
+- ✅ NavEntry-scoped VMs via `rememberViewModelStoreNavEntryDecorator()` — auto-cleared on pop, always fresh
 
 ```bash
-grep -rn 'SELECT \*.*FROM' --include="*.kt" | grep -vi "limit\|where"
-grep -rn "\.select()" --include="*.kt" | grep -v "range\|limit"
+# Detect workaround methods for stale ViewModel state
+grep -rn "ensureStarted\|ensureLoaded\|ensureExportStarted\|resetState\|clearState\|reinitialize" --include="*.kt"
+
+# Detect manual state reset called from composables (code smell)
+grep -rn "viewModel\.reset\|viewModel\.clear\|viewModel\.reinit\|viewModel\.ensure" --include="*.kt"
+
+# Verify entryDecorators includes ViewModel store decorator
+grep -rn "NavDisplay" --include="*.kt" -A5 | grep -v "rememberViewModelStoreNavEntryDecorator"
 ```
+
+**Why this matters**: When ViewModels are scoped to Activity, they persist for the Activity's entire lifetime. Navigating away and back shows old/stale state (e.g., old export results). The fix is NavEntry scoping — each navigation creates a fresh ViewModel, no workaround code needed.
 
 ## Quick Scan Commands
 
@@ -161,6 +169,10 @@ grep -rn "synchronized" --include="*.kt"
 # Missing Channel in ViewModels
 grep -rn "class.*ViewModel" --include="*.kt" | grep -v "Channel"
 
+# Stale ViewModel workarounds (code smell)
+grep -rn "ensureStarted\|ensureLoaded\|resetState\|clearState\|reinitialize" --include="*.kt"
+grep -rn "viewModel\.reset\|viewModel\.clear\|viewModel\.reinit\|viewModel\.ensure" --include="*.kt"
+
 # Verify Navigation 3 usage
 grep -rn "NavDisplay\|rememberNavBackStack\|entryProvider" --include="*.kt"
 ```
@@ -187,4 +199,8 @@ No BackStack in Composables: ✅/❌
 collectAsStateWithLifecycle: ✅/❌
 Activity vs Composable:      ✅/❌
 No ANR Risks:                ✅/❌
+No Stale VM Workarounds:     ✅/❌
+VMs NavEntry-Scoped:         ✅/❌
 ```
+
+**For Nav3 implementation patterns and recipes**, see the `nav3-recipes` skill.

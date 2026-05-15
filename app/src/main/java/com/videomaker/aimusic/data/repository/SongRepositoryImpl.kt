@@ -348,6 +348,24 @@ class SongRepositoryImpl(
         }
     }
 
+    override suspend fun incrementUseCount(songId: Long): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                // Increment usage_count by 1 using Supabase RPC function
+                supabaseClient.postgrest.rpc(
+                    "increment_song_usage_count",
+                    buildJsonObject {
+                        put("song_id", songId)
+                    }
+                )
+                android.util.Log.d("SongRepository", "✅ Incremented usage_count for song: $songId")
+                Result.success(Unit)
+            } catch (e: Exception) {
+                android.util.Log.e("SongRepository", "❌ Failed to increment usage_count: ${e.message}")
+                Result.failure(e)
+            }
+        }
+
     override suspend fun clearCache() {
         apiCacheManager.clearSongCache()
     }

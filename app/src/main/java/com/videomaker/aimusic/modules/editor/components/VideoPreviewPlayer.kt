@@ -236,7 +236,8 @@ fun VideoPreviewPlayer(
     // Track composition building job so we can cancel it when app goes to background
     var compositionBuildJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
-    // Trigger to rebuild composition when returning from background
+    // Trigger to rebuild composition on explicit user action (e.g., error retry)
+    // Not used for automatic rebuilds on app resume
     var rebuildTrigger by remember { mutableStateOf(0) }
 
     // Actual music segment duration (updated when audio player is ready with actual duration)
@@ -413,11 +414,12 @@ fun VideoPreviewPlayer(
         project.settings.aspectRatio,
         project.settings.beatSyncData?.bpm,  // Beat-sync: rebuild when BPM changes
         project.settings.hookStartTimeMs,     // Beat-sync: rebuild when hook start changes
+        project.settings.totalDurationMs,     // Rebuild when duration changes (e.g., asset count changed)
         project.settings.processedAudioUri,   // Beat-sync: rebuild when preprocessed audio ready
         rebuildTrigger
         // audioVolume intentionally excluded - handled separately
     ) {
-        "${project.id}_${project.assets.joinToString(",") { it.id }}_${project.settings.effectSetId}_${project.settings.overlayFrameId}_${project.settings.musicSongId}_${project.settings.customAudioUri}_${project.settings.aspectRatio}_${project.settings.beatSyncData?.bpm}_${project.settings.hookStartTimeMs}_${project.settings.processedAudioUri}_${rebuildTrigger}"
+        "${project.id}_${project.assets.joinToString(",") { it.id }}_${project.settings.effectSetId}_${project.settings.overlayFrameId}_${project.settings.musicSongId}_${project.settings.customAudioUri}_${project.settings.aspectRatio}_${project.settings.beatSyncData?.bpm}_${project.settings.hookStartTimeMs}_${project.settings.totalDurationMs}_${project.settings.processedAudioUri}_${rebuildTrigger}"
     }
 
     // Build composition when key changes
@@ -796,34 +798,41 @@ fun VideoPreviewPlayer(
     // Cancel all processing when app goes to background
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
+        var wasPlayingBeforeActivityPause = false
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    // Pause only (no release) — covers interstitial ads and AOA overlay
+                    wasPlayingBeforeActivityPause = videoPlayer?.isPlaying == true
+                    videoPlayer?.pause()
+                    audioPlayer?.pause()
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    // Resume if player is still alive (not released by ON_STOP)
+                    if (wasPlayingBeforeActivityPause && videoPlayer != null) {
+                        videoPlayer?.play()
+                        audioPlayer?.play()
+                        onPlaybackStateChange(true)
+                    }
+                    wasPlayingBeforeActivityPause = false
+                }
                 Lifecycle.Event.ON_STOP -> {
-                    // Pause playback
+                    // Pause players when app goes to background
+                    // Keep players alive for quick resume - no release
+                    wasPlayingBeforeActivityPause = false
                     videoPlayer?.pause()
                     audioPlayer?.pause()
                     onPlaybackStateChange(false)
 
-                    // Cancel composition building to free resources
-                    compositionBuildJob?.cancel()
-                    compositionBuildJob = null
-
-                    // Release players to free memory
-                    videoPlayer?.releaseAsync()
-                    audioPlayer?.releaseAsync()
-                    videoPlayer = null
-                    audioPlayer = null
-
-                    // Reset state
-                    previewState = PreviewState.Building
-                    playerReadyFlow.value = false
+                    // Don't release players or cancel composition
+                    // Players stay in memory and can resume immediately
+                    // Only rebuild on explicit user action (settings change, retry, etc.)
                 }
                 Lifecycle.Event.ON_START -> {
-                    // Restart composition building when returning from background
-                    // Only if player was released (null) and we're in Building state
-                    if (videoPlayer == null && previewState is PreviewState.Building) {
-                        rebuildTrigger++
-                    }
+                    // Composition builds on initial load only
+                    // Rebuilds only on explicit user action (error retry button, settings change)
+                    // No automatic rebuild on app resume
+                    // Players stay alive and can resume immediately via ON_RESUME
                 }
                 else -> {}
             }
@@ -879,24 +888,6 @@ fun VideoPreviewPlayer(
             }
 
             // Play/Pause button removed - using the one in Music Section instead
-
-            // Asset counter overlay
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp)
-                    .background(
-                        color = Color.Black.copy(alpha = 0.6f),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = "${project.assets.size} photos",
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
         }
     }
 }

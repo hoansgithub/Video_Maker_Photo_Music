@@ -68,8 +68,14 @@ sealed class ProjectsUiState {
 
 sealed class ProjectsNavigationEvent {
     data object NavigateBack : ProjectsNavigationEvent()
-    data class NavigateToEditor(val projectId: String) : ProjectsNavigationEvent()
-    data class NavigateToTemplateDetail(val templateId: String) : ProjectsNavigationEvent()
+    data class NavigateToEditor(
+        val projectId: String,
+        val shouldShowAd: Boolean = false
+    ) : ProjectsNavigationEvent()
+    data class NavigateToTemplateDetail(
+        val templateId: String,
+        val shouldShowAd: Boolean = false
+    ) : ProjectsNavigationEvent()
     data object NavigateToSongSearch : ProjectsNavigationEvent()
     data object NavigateToAllSongs : ProjectsNavigationEvent()
     data object NavigateToTemplateSearch : ProjectsNavigationEvent()
@@ -208,11 +214,22 @@ class ProjectsViewModel(
     }
 
     fun onProjectClick(project: Project) {
-        _navigationEvent.value = ProjectsNavigationEvent.NavigateToEditor(project.id)
+        // Check if library project tap ad is ready
+        val isAdReady = adsLoaderService.isInterstitialReady(com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP)
+        _navigationEvent.value = ProjectsNavigationEvent.NavigateToEditor(
+            projectId = project.id,
+            shouldShowAd = isAdReady
+        )
     }
 
     fun onTemplateClick(template: VideoTemplate) {
-        _navigationEvent.value = ProjectsNavigationEvent.NavigateToTemplateDetail(template.id)
+        // Check if template grid tap ad is ready
+        val isAdReady = adsLoaderService.isInterstitialReady(com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP)
+
+        _navigationEvent.value = ProjectsNavigationEvent.NavigateToTemplateDetail(
+            templateId = template.id,
+            shouldShowAd = isAdReady
+        )
     }
 
     fun onDeleteProject(project: Project) {
@@ -441,6 +458,37 @@ class ProjectsViewModel(
      */
     fun onToastDismissed() {
         _toastState.value = null
+    }
+
+    /**
+     * Preload template grid tap interstitial ad.
+     * Called after ad is shown to prepare the next one (Drama app pattern).
+     * ACCCore handles duplicate prevention automatically.
+     */
+    fun preloadTemplateGridAd() {
+        viewModelScope.launch {
+            runCatching {
+                com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
+                    loadTimeoutMillis = null,
+                    showLoadingOverlay = false
+                )
+            }
+        }
+    }
+
+    fun preloadLibraryProjectAd() {
+        viewModelScope.launch {
+            runCatching {
+                com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP,
+                    loadTimeoutMillis = null,
+                    showLoadingOverlay = false
+                )
+            }
+        }
     }
 
     /**

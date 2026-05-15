@@ -52,7 +52,7 @@
           },
           "valueType": "JSON"
         },
-        "interstitial_interval_seconds": {
+        "ad_interstitial_interval_seconds": {
           "defaultValue": {
             "value": "10"
           },
@@ -155,9 +155,21 @@
           },
           "valueType": "JSON"
         },
+        "ad_native_template_ratio_sheet": {
+          "defaultValue": {
+            "value": "{\"enabled\":true,\"type\":\"native\",\"units\":[{\"id\":\"ca-app-pub-7121075950716954/6466097345\",\"enabled\":true},{\"id\":\"ca-app-pub-7121075950716954/8422087554\",\"enabled\":true}],\"extras\":{\"layout\":\"native_small_bait\"}}"
+          },
+          "valueType": "JSON"
+        },
         "ad_native_projects_grid": {
           "defaultValue": {
             "value": "{\"enabled\":true,\"type\":\"native\",\"units\":[{\"id\":\"ca-app-pub-7121075950716954/6293185105\",\"enabled\":true},{\"id\":\"ca-app-pub-7121075950716954/6536223106\",\"enabled\":true}],\"extras\":{\"layout\":\"native_project_card\"}}"
+          },
+          "valueType": "JSON"
+        },
+        "ad_native_gallery_hot_tpt": {
+          "defaultValue": {
+            "value": "{\"enabled\":true,\"type\":\"native\",\"units\":[{\"id\":\"ca-app-pub-7121075950716954/6084726491\",\"enabled\":true},{\"id\":\"ca-app-pub-7121075950716954/3468887588\",\"enabled\":true}],\"extras\":{\"layout\":\"native_small_clean\"}}"
           },
           "valueType": "JSON"
         },
@@ -176,6 +188,12 @@
         "ad_native_songs_station": {
           "defaultValue": {
             "value": "{\"enabled\":true,\"type\":\"native\",\"units\":[{\"id\":\"ca-app-pub-7121075950716954/2788549787\",\"enabled\":true},{\"id\":\"ca-app-pub-7121075950716954/1667039805\",\"enabled\":true}],\"extras\":{\"layout\":\"native_small_row\"}}"
+          },
+          "valueType": "JSON"
+        },
+        "ad_native_home_banner": {
+          "defaultValue": {
+            "value": "{\"enabled\":true,\"type\":\"native\",\"units\":[{\"id\":\"ca-app-pub-7121075950716954/8457835867\",\"enabled\":true},{\"id\":\"ca-app-pub-7121075950716954/8266264176\",\"enabled\":true}],\"extras\":{\"layout\":\"native_small_row\"}}"
           },
           "valueType": "JSON"
         },

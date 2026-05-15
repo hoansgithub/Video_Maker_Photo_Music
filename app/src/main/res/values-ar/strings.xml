@@ -18,6 +18,10 @@
     <!-- Onboarding -->
     <string name="onboarding_next">التالي</string>
     <string name="onboarding_get_started">ابدأ الآن</string>
+    <!-- India-specific onboarding -->
+    <string name="onboarding_india_page1_subtitle">ابقَ في صدارة المنافسة مع قوالب طازجة وجاهزة للاستخدام يتم تحديثها يوميًا.</string>
+    <string name="onboarding_india_page3_title">التقط القوالب الرائجة يوميًا</string>
+    <string name="onboarding_india_page3_subtitle">ابقَ في صدارة المنافسة مع قوالب طازجة وجاهزة للاستخدام يتم تحديثها يوميًا.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">اصنع السحر في ثوانٍ</string>
     <string name="onboarding_page1_subtitle">فيديو مذهل بنقرات قليلة. سهل وسريع</string>
@@ -142,6 +146,7 @@
     <string name="editor_music_trim_skip_to_start">الانتقال إلى البداية</string>
     <string name="editor_music_trim_skip_to_end">الانتقال إلى النهاية</string>
     <string name="editor_photos_count">%d صور</string>
+    <string name="editor_photos_label">صور</string>
     <string name="editor_save_dialog_title">حفظ المشروع؟</string>
     <string name="editor_save_dialog_message">سيتم حفظ مشروعك وسيكون متاحاً في مشاريعي.</string>
     <string name="editor_save_and_exit">حفظ والخروج</string>
@@ -157,6 +162,9 @@
     <string name="editor_effect_sets">مجموعات التأثيرات</string>
     <string name="editor_retry">إعادة المحاولة</string>
     <string name="editor_no_music_selected">لم يتم اختيار موسيقى</string>
+    <string name="editor_images_title">انقر للتحرير • اضغط مع الاستمرار لإعادة الترتيب</string>
+    <string name="editor_add_images">إضافة صور</string>
+    <string name="editor_delete_image">حذف</string>
 
     <!-- Projects Tabs -->
     <!-- Projects Tabs -->
@@ -270,6 +278,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">مشغل الموسيقى</string>
     <string name="music_player_use_to_create">استخدام لإنشاء فيديو</string>
+    <string name="music_player_free_unlock">فتح مجاني</string>
     <string name="picker_exit_confirm_title">الخروج من اختيار الصور؟</string>
     <string name="picker_exit_confirm_message">لقد اخترت صورًا. إذا خرجت الآن، سيتم تجاهل الصور التي اخترتها.</string>
     <string name="picker_exit_confirm">خروج</string>
@@ -461,6 +470,7 @@
     <string name="template_swipe_subtitle">للاستمتاع بقوالبك</string>
     <string name="template_select_ratio_title">اختر نسبة الفيديو</string>
     <string name="template_create_now">إنشاء الآن</string>
+    <string name="template_free_unlock">فتح مجاني</string>
     <string name="template_error_load_failed">فشل تحميل القوالب. حاول مرة أخرى.</string>
 
     <!-- Unified Search -->

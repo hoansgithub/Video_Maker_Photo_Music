@@ -23,6 +23,7 @@ import androidx.core.os.LocaleListCompat
  * - Indonesian (id)
  * - Filipino (fil)
  * - Turkish (tr)
+ * - Vietnamese (vi)
  * - Bengali (bn)
  * - Kannada (kn)
  * - German (de)
@@ -54,6 +55,7 @@ class LanguageManager(private val context: Context) {
         const val LANGUAGE_INDONESIAN = "id"
         const val LANGUAGE_FILIPINO = "fil"
         const val LANGUAGE_TURKISH = "tr"
+        const val LANGUAGE_VIETNAMESE = "vi"
         const val LANGUAGE_BENGALI = "bn"
         const val LANGUAGE_KANNADA = "kn"
         const val LANGUAGE_GERMAN = "de"
@@ -72,6 +74,7 @@ class LanguageManager(private val context: Context) {
             LANGUAGE_INDONESIAN,
             LANGUAGE_FILIPINO,
             LANGUAGE_TURKISH,
+            LANGUAGE_VIETNAMESE,
             LANGUAGE_BENGALI,
             LANGUAGE_KANNADA,
             LANGUAGE_GERMAN,
@@ -185,6 +188,7 @@ fun LanguageManager.Companion.getAllLanguages(): List<SupportedLanguage> {
         SupportedLanguage(LANGUAGE_INDONESIAN, "Bahasa Indonesia", "🇮🇩"),
         SupportedLanguage(LANGUAGE_FILIPINO, "Filipino", "🇵🇭"),
         SupportedLanguage(LANGUAGE_TURKISH, "Türkçe", "🇹🇷"),
+        SupportedLanguage(LANGUAGE_VIETNAMESE, "Tiếng Việt", "🇻🇳"),
         SupportedLanguage(LANGUAGE_BENGALI, "বাংলা", "🇧🇩"),
         SupportedLanguage(LANGUAGE_KANNADA, "ಕನ್ನಡ", "🇮🇳"),
         SupportedLanguage(LANGUAGE_GERMAN, "Deutsch", "🇩🇪"),
