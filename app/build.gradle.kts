@@ -38,7 +38,7 @@ android {
         applicationId = "com.videomaker.aimusic"
         minSdk = 28
         targetSdk = 36
-        versionCode = 28
+        versionCode = 29
         versionName = "1.0.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -272,7 +272,10 @@ dependencies {
     implementation("com.google.ads.mediation:pangle:7.9.1.2.0")
 
     // AppLovin MAX - Requires BOTH SDK and adapter
-    implementation("com.applovin:applovin-sdk:13.6.2")
+    // Exclude native crash reporter to save 1.3MB (using Firebase Crashlytics instead)
+    implementation("com.applovin:applovin-sdk:13.6.2") {
+        exclude(group = "com.applovin", module = "applovin-native-crash-reporter")
+    }
     implementation("com.google.ads.mediation:applovin:13.6.2.0")
 
     // Meta Audience Network (Facebook) - Bidding only
