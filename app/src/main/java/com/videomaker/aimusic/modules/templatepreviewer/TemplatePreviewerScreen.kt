@@ -578,9 +578,6 @@ private fun TemplatePreviewerReadyContent(
         pageCount = { VIRTUAL_PAGE_COUNT }
     )
 
-    // Bottom sheet state — non-null while the sheet is visible
-    var pendingTemplate by remember { mutableStateOf<VideoTemplate?>(null) }
-
     // First-user swipe hint — shown only on first launch, hidden after 3s or on swipe
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE) }
@@ -849,8 +846,19 @@ private fun TemplatePreviewerReadyContent(
                         templateName = template.name,
                         location = templateEventLocation
                     )
-                    // Always show ratio selection bottom sheet
-                    pendingTemplate = template
+                    val defaultRatio = aspectRatioFromString(template.aspectRatio)
+                    Analytics.trackRatioSelect(defaultRatio.shortLabel)
+                    Analytics.trackTemplateSelect(
+                        templateId = template.id,
+                        templateName = template.name,
+                        location = templateEventLocation
+                    )
+                    val isLocked = template.isPremium && !unlockedTemplateIds.contains(template.id)
+                    if (isLocked) {
+                        onRatioSelected(template, defaultRatio)
+                    } else {
+                        onUseThisTemplate(template, defaultRatio)
+                    }
                 },
                 enabled = ctaEnabled,
                 isLoading = ctaLoading,
@@ -877,36 +885,6 @@ private fun TemplatePreviewerReadyContent(
                 .navigationBarsPadding()  // Respect safe area
                 .height(50.dp)
         )
-
-        // Ratio selection bottom sheet
-        val template = pendingTemplate
-        if (template != null) {
-            val isLocked = template.isPremium && !unlockedTemplateIds.contains(template.id)
-            SelectRatioBottomSheet(
-                defaultRatio = aspectRatioFromString(template.aspectRatio),
-                isLocked = isLocked,
-                onDismiss = { pendingTemplate = null },
-                onConfirm = { selectedRatio ->
-                    Analytics.trackRatioSelect(selectedRatio.shortLabel)
-                    Analytics.trackTemplateSelect(
-                        templateId = template.id,
-                        templateName = template.name,
-                        location = templateEventLocation
-                    )
-
-                    if (isLocked) {
-                        // Template is locked - show watch ad dialog
-                        // Store the selected ratio for after ad completes
-                        pendingTemplate = null  // Dismiss ratio sheet
-                        onRatioSelected(template, selectedRatio)
-                    } else {
-                        // Template is unlocked - navigate immediately
-                        pendingTemplate = null
-                        onUseThisTemplate(template, selectedRatio)
-                    }
-                }
-            )
-        }
 
         AnimatedVisibility(
             visible = showSwipeHint,
