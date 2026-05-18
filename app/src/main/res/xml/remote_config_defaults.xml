@@ -244,4 +244,13 @@
     <key>trending_popup_daily_cap</key>
     <value>3</value>
   </entry>
+  <!-- Trending Popup native ads — temporary fallback units from template_previewer_loading / songs_station -->
+  <entry>
+    <key>ad_native_popup_trending_template</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/8424019843","enabled":true},{"id":"ca-app-pub-7121075950716954/1431594877","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_popup_trending_song</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/2788549787","enabled":true},{"id":"ca-app-pub-7121075950716954/1667039805","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
 </defaults>

@@ -215,7 +215,7 @@ fun PopupTrendingSong(
                     .align(Alignment.BottomCenter)
             ){
                 NativeAdView(
-                    placement = "",
+                    placement = AdPlacement.NATIVE_POPUP_TRENDING_SONG,
                     modifier = Modifier.fillMaxWidth(),
                     isDebug = BuildConfig.DEBUG
                 )
