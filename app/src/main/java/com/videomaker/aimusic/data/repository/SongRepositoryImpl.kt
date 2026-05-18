@@ -187,7 +187,7 @@ class SongRepositoryImpl(
                         eq("type", "genre")
                         eq("is_active", true)
                     }
-                    order("sort_order", Order.DESCENDING)
+                    order("sort_order", Order.ASCENDING)
                     limit(100)  // ✅ FIX: Prevent fetching billions of genres
                 }
                 .decodeList<GenreDto>()
@@ -224,7 +224,7 @@ class SongRepositoryImpl(
                         eq("is_active", true)
                         contains("genres", listOf(genre))
                     }
-                    order("sort_order", Order.DESCENDING)
+                    order("sort_order", Order.ASCENDING)
                     limit(limit.toLong())
                 }
                 .decodeList<SongDto>()
@@ -383,7 +383,7 @@ class SongRepositoryImpl(
                     filter {
                         eq("is_active", true)
                     }
-                    order("sort_order", Order.DESCENDING)
+                    order("sort_order", Order.ASCENDING)
                     limit(fetchCount)
                 }
                 .decodeList<SongDto>()
