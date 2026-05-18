@@ -162,10 +162,14 @@ fun TemplatePreviewerScreen(
     var showNotificationSettingsGuideDialog by remember { mutableStateOf(false) }
     var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
 
-    // True while ANY ad is on screen (scroll/back interstitial or rewarded). Drives
-    // mute on TemplateVideoPlayer + UserSongBackgroundPlayer. Set explicitly via the
+    // True while an interstitial or rewarded ad is on screen. Set explicitly via the
     // ad SDK's onShown / close callbacks — lifecycle events alone are not reliable
     // for in-process interstitials (ProcessLifecycleOwner doesn't fire ON_STOP).
+    //
+    // Combined with `showLoadingOverlay` at the TemplatePreviewerReadyContent call site
+    // (search "isAdShowing = isAdShowing || showLoadingOverlay") so the template video
+    // is held paused + muted under either the loading-native overlay or an interstitial,
+    // and plays from frame 0 the moment the overlay hides.
     var isAdShowing by remember { mutableStateOf(false) }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -284,55 +288,101 @@ fun TemplatePreviewerScreen(
     var showLoadingOverlay by remember { mutableStateOf(true) }
     var firstVideoReady by remember { mutableStateOf(false) }
 
-    // Loading overlay timing:
-    // - Video starts buffering immediately (in TemplatePreviewerReadyContent below)
-    // - Wait for ad to be ready (up to 10s timeout)
-    // - Show ad for 2 seconds (impression + user sees it)
-    // - Video will be ready by then (loads in ~1s in background)
+    // Phase 2 late-ad: shows ONLY the native ad strip at bottom (no full overlay/spinner),
+    // while the video underneath is paused + muted via the isAdShowing combined flag.
+    var showPhase2NativeAd by remember { mutableStateOf(false) }
+
+    // Hoisted from TemplatePreviewerReadyContent so the loading LaunchedEffect (below)
+    // can read it from the background poll loop and skip the late-ad overlay if the
+    // user has already engaged with the pager.
+    var hasSwipedTemplate by remember { mutableStateOf(false) }
+
+    // Loading overlay timing — two-phase race(ad-ready, 2s budget) with late-ad followup.
+    //
+    // Phase 1 (initial overlay, 0..2s):
+    //   - Video starts buffering under the overlay (TemplatePreviewerReadyContent is already
+    //     mounted; player.prepare() runs immediately for the first page).
+    //   - If ad cached on entry from Home preload: hold 1s for impression → reveal video.
+    //   - Otherwise poll every 200ms up to 2s. If ad becomes ready in-window, hold 1s for
+    //     impression. If 2s elapses, hide overlay so the user starts watching the video.
+    //
+    // Phase 2 (background poll, only if Phase 1 timed out, 2..15s):
+    //   - Keep polling for the ad in the background (200ms interval) up to 15s total.
+    //   - If the ad becomes ready AND the user hasn't swiped to another template
+    //     (hasSwipedTemplate == false): mount the native ad strip at the bottom for 1s
+    //     impression, then unmount. No fullscreen overlay/spinner — only the ad shows.
+    //     The video underneath is paused + muted via the
+    //     `isAdShowing = isAdShowing || showLoadingOverlay || showPhase2NativeAd` plumbing,
+    //     and resumes from its current position when the ad strip hides.
+    //   - If the user swipes before the ad loads: skip the late ad (don't interrupt
+    //     active engagement). The native ad stays in the SDK cache for next placement.
+    //
+    // Compose cancels this coroutine when the composable leaves, so navigating away
+    // automatically stops the background poll — no leaks.
     LaunchedEffect(Unit) {
         val startTime = System.currentTimeMillis()
-        var adReady = false
+        val adCachedOnEntry = adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)
+        var adReady = adCachedOnEntry
 
-        // Check if ad is already loaded (cached from preload)
-        adReady = adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)
-
-        if (adReady) {
-            android.util.Log.d("TemplatePreviewerLoading", "✅ Ad already cached - showing for 2s")
+        if (adCachedOnEntry) {
+            android.util.Log.d("TemplatePreviewerLoading", "✅ Ad cached on entry - 1s impression hold")
         } else {
-            android.util.Log.d("TemplatePreviewerLoading", "⏳ Ad not ready, polling...")
-
-            // Poll for ad ready state (or timeout after 10s)
-            while (!adReady && (System.currentTimeMillis() - startTime) < 10_000) {
-                delay(500) // Check every 500ms
-
-                // Check if native ad has loaded
+            android.util.Log.d("TemplatePreviewerLoading", "⏳ Ad not cached, racing 2s budget...")
+            while (!adReady && (System.currentTimeMillis() - startTime) < 2_000) {
+                delay(200)
                 if (adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)) {
-                    val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000.0
-                    android.util.Log.d("TemplatePreviewerLoading", "✅ Ad loaded after ${elapsedSeconds}s")
+                    val elapsedMs = System.currentTimeMillis() - startTime
+                    android.util.Log.d("TemplatePreviewerLoading", "✅ Ad loaded after ${elapsedMs}ms")
                     adReady = true
                 }
             }
         }
 
-        // Show ad for 2 seconds when ready (impression + visibility)
+        val initialTimeoutHit = !adReady
         if (adReady) {
-            android.util.Log.d("TemplatePreviewerLoading", "📊 Ad ready - showing for 2s (impression + display)")
-            delay(2_000) // Show for 2 seconds
+            delay(1_000) // Impression hold — networks generally count at ≥1s visible.
         } else {
-            android.util.Log.d("TemplatePreviewerLoading", "⏱️ Ad timeout (10s) - proceeding immediately")
+            android.util.Log.d("TemplatePreviewerLoading", "⏱️ Ad timeout (2s) - showing video, will retry in background")
         }
 
-        val totalTime = System.currentTimeMillis() - startTime
-        android.util.Log.d("TemplatePreviewerLoading", "✅ LOADING COMPLETE (${totalTime}ms)")
-
-        // Log video status
-        if (firstVideoReady) {
-            android.util.Log.d("TemplatePreviewerLoading", "✅ First video is ready")
-        } else {
-            android.util.Log.d("TemplatePreviewerLoading", "⏳ First video still loading (will continue in background)")
-        }
+        val initialOverlayMs = System.currentTimeMillis() - startTime
+        android.util.Log.d("TemplatePreviewerLoading", "✅ INITIAL OVERLAY DONE (${initialOverlayMs}ms, firstVideoReady=$firstVideoReady)")
 
         showLoadingOverlay = false
+
+        // Phase 2: late-ad followup only if the initial 2s budget expired without an ad.
+        if (!initialTimeoutHit) return@LaunchedEffect
+
+        android.util.Log.d("TemplatePreviewerLoading", "🔁 Phase 2: polling for late ad up to 15s total...")
+        while ((System.currentTimeMillis() - startTime) < 15_000) {
+            delay(200)
+            if (hasSwipedTemplate) {
+                val elapsedMs = System.currentTimeMillis() - startTime
+                android.util.Log.d("TemplatePreviewerLoading", "↩️ Late ad skipped (user swiped) at ${elapsedMs}ms")
+                Analytics.track(
+                    name = "template_previewer_late_ad",
+                    params = mapOf("outcome" to "skipped_swiped", "elapsed_ms" to elapsedMs)
+                )
+                return@LaunchedEffect
+            }
+            if (adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)) {
+                val elapsedMs = System.currentTimeMillis() - startTime
+                android.util.Log.d("TemplatePreviewerLoading", "✅ Late ad ready at ${elapsedMs}ms - showing native ad strip")
+                showPhase2NativeAd = true
+                delay(1_000) // Impression hold (video pauses+mutes via isAdShowing combined flag).
+                showPhase2NativeAd = false
+                Analytics.track(
+                    name = "template_previewer_late_ad",
+                    params = mapOf("outcome" to "shown", "elapsed_ms" to elapsedMs)
+                )
+                return@LaunchedEffect
+            }
+        }
+        android.util.Log.d("TemplatePreviewerLoading", "⏱️ Late ad gave up at 15s - no impression this session")
+        Analytics.track(
+            name = "template_previewer_late_ad",
+            params = mapOf("outcome" to "skipped_timeout", "elapsed_ms" to 15_000L)
+        )
     }
 
     // Show notification permission dialog only after loading complete
@@ -395,11 +445,16 @@ fun TemplatePreviewerScreen(
                     unlockedTemplateIds = unlockedTemplateIds,
                     showUserSongPlayer = showUserSongPlayer,
                     userSong = userSong,
-                    isAdShowing = isAdShowing,
+                    // Treat the loading-native overlay AND the Phase 2 ad strip as
+                    // "ad showing" so the video pauses+mutes underneath either one,
+                    // then auto-resumes once both hide.
+                    isAdShowing = isAdShowing || showLoadingOverlay || showPhase2NativeAd,
+                    hasSwipedTemplate = hasSwipedTemplate,
                     onPageChanged = viewModel::onPageChanged,
                     onUseThisTemplate = viewModel::onUseThisTemplate,
                     onRatioSelected = viewModel::onRatioSelected,
                     onLikeTemplate = viewModel::onLikeTemplate,
+                    onSwipeTemplate = { hasSwipedTemplate = true },
                     eventLocation = eventLocation,
                     onNavigateBack = viewModel::onNavigateBack,
                     onFirstVideoReady = { firstVideoReady = true }
@@ -408,6 +463,22 @@ fun TemplatePreviewerScreen(
                 // Show loading overlay on top until ad display completes
                 if (showLoadingOverlay) {
                     LoadingStateWithAd()
+                }
+
+                // Phase 2 late-ad strip: only the native ad mounts at the bottom.
+                // Video underneath pauses+mutes via the combined isAdShowing flag above.
+                if (showPhase2NativeAd) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                    ) {
+                        NativeAdView(
+                            placement = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING,
+                            modifier = Modifier.fillMaxWidth(),
+                            isDebug = BuildConfig.DEBUG
+                        )
+                    }
                 }
             }
         }
@@ -562,24 +633,22 @@ private fun TemplatePreviewerReadyContent(
     showUserSongPlayer: Boolean,
     userSong: MusicSong?,
     isAdShowing: Boolean = false,
+    hasSwipedTemplate: Boolean = false,
     onPageChanged: (Int) -> Unit,
     onUseThisTemplate: (VideoTemplate, AspectRatio) -> Unit,
     onRatioSelected: (VideoTemplate, AspectRatio) -> Unit,
     onLikeTemplate: (VideoTemplate) -> Unit,
+    onSwipeTemplate: () -> Unit = {},
     eventLocation: String = AnalyticsEvent.Value.Location.PREVIEW_SWIPE,
     onNavigateBack: () -> Unit,
     onFirstVideoReady: () -> Unit
 ) {
     val templates = state.templates
     val screenSessionId = remember { Analytics.newScreenSessionId() }
-    var hasSwipedTemplate by remember { mutableStateOf(false) }
     val pagerState = rememberPagerState(
         initialPage = initialVirtualPage(state.initialPage, templates.size),
         pageCount = { VIRTUAL_PAGE_COUNT }
     )
-
-    // Bottom sheet state — non-null while the sheet is visible
-    var pendingTemplate by remember { mutableStateOf<VideoTemplate?>(null) }
 
     // First-user swipe hint — shown only on first launch, hidden after 3s or on swipe
     val context = LocalContext.current
@@ -600,7 +669,7 @@ private fun TemplatePreviewerReadyContent(
             .distinctUntilChanged()
             .drop(1)
             .collect {
-                hasSwipedTemplate = true
+                onSwipeTemplate()
                 onPageChanged(it)
             }
     }
@@ -849,8 +918,19 @@ private fun TemplatePreviewerReadyContent(
                         templateName = template.name,
                         location = templateEventLocation
                     )
-                    // Always show ratio selection bottom sheet
-                    pendingTemplate = template
+                    val defaultRatio = aspectRatioFromString(template.aspectRatio)
+                    Analytics.trackRatioSelect(defaultRatio.shortLabel)
+                    Analytics.trackTemplateSelect(
+                        templateId = template.id,
+                        templateName = template.name,
+                        location = templateEventLocation
+                    )
+                    val isLocked = template.isPremium && !unlockedTemplateIds.contains(template.id)
+                    if (isLocked) {
+                        onRatioSelected(template, defaultRatio)
+                    } else {
+                        onUseThisTemplate(template, defaultRatio)
+                    }
                 },
                 enabled = ctaEnabled,
                 isLoading = ctaLoading,
@@ -877,36 +957,6 @@ private fun TemplatePreviewerReadyContent(
                 .navigationBarsPadding()  // Respect safe area
                 .height(50.dp)
         )
-
-        // Ratio selection bottom sheet
-        val template = pendingTemplate
-        if (template != null) {
-            val isLocked = template.isPremium && !unlockedTemplateIds.contains(template.id)
-            SelectRatioBottomSheet(
-                defaultRatio = aspectRatioFromString(template.aspectRatio),
-                isLocked = isLocked,
-                onDismiss = { pendingTemplate = null },
-                onConfirm = { selectedRatio ->
-                    Analytics.trackRatioSelect(selectedRatio.shortLabel)
-                    Analytics.trackTemplateSelect(
-                        templateId = template.id,
-                        templateName = template.name,
-                        location = templateEventLocation
-                    )
-
-                    if (isLocked) {
-                        // Template is locked - show watch ad dialog
-                        // Store the selected ratio for after ad completes
-                        pendingTemplate = null  // Dismiss ratio sheet
-                        onRatioSelected(template, selectedRatio)
-                    } else {
-                        // Template is unlocked - navigate immediately
-                        pendingTemplate = null
-                        onUseThisTemplate(template, selectedRatio)
-                    }
-                }
-            )
-        }
 
         AnimatedVisibility(
             visible = showSwipeHint,
@@ -1199,12 +1249,16 @@ private fun TemplateThumbnailPage(
         // Use video player if videoUrl is available, otherwise fall back to image
         if (!template.videoUrl.isNullOrEmpty()) {
             android.util.Log.d("TemplatePreviewer", "Showing VIDEO for ${template.name}: ${template.videoUrl} (isCurrentPage=$isCurrentPage)")
-            // Video preview (720p quality with lazy loading and disk caching)
-            // Only auto-play when this page is visible to save performance
+            // Video preview (720p quality with lazy loading and disk caching).
+            // While an ad/loading overlay is on top: prepare() still runs (mounted under
+            // overlay) so buffering proceeds, but autoPlay is gated so the player stays
+            // paused at frame 0 — no wasted decode under the overlay, and when the
+            // overlay hides autoPlay flips true → LaunchedEffect(autoPlay, isPrepared)
+            // calls play() for a clean frame-0 start.
             TemplateVideoPlayer(
                 videoUrl = template.videoUrl,
                 modifier = Modifier.fillMaxSize(),
-                autoPlay = isCurrentPage,  // Only play when visible
+                autoPlay = isCurrentPage && !isAdShowing,
                 loop = true,
                 showControls = false,
                 skipDebounce = onVideoReady != null,  // Skip 150ms delay for first video only
