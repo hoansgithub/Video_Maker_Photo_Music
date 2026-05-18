@@ -74,6 +74,14 @@ class TrendingPopupCoordinator(
     private val _navigationEvent = Channel<TrendingPopupNavEvent>(Channel.BUFFERED)
     val navigationEvent = _navigationEvent.receiveAsFlow()
 
+    /**
+     * Emitted ONLY when user explicitly dismisses a popup (taps X).
+     * NOT emitted on CTA path (since user is navigating away).
+     * Subscribers (e.g. MusicPlayerBottomSheet) use this to auto-resume audio.
+     */
+    private val _popupUserDismissEvent = Channel<Unit>(Channel.BUFFERED)
+    val popupUserDismissEvent = _popupUserDismissEvent.receiveAsFlow()
+
     fun onTabFocused(tab: TrendingPopupTab) {
         scope.launch { evaluateAndMaybeShow(tab) }
     }
@@ -192,6 +200,7 @@ class TrendingPopupCoordinator(
         trackDismiss(contentType = "template", contentId = showing.content.id,
             location = AnalyticsEvent.Value.Location.POPUP_TRENDING_TEMPLATE)
         _templatePopup.value = TrendingPopupState.Hidden
+        _popupUserDismissEvent.trySend(Unit)
     }
 
     fun onSongPopupDismissed() {
@@ -199,5 +208,6 @@ class TrendingPopupCoordinator(
         trackDismiss(contentType = "song", contentId = showing.content.id.toString(),
             location = AnalyticsEvent.Value.Location.POPUP_TRENDING_SONG)
         _songPopup.value = TrendingPopupState.Hidden
+        _popupUserDismissEvent.trySend(Unit)
     }
 }
