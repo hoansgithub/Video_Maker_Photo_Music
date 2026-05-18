@@ -8,37 +8,30 @@ Native Ad Layout: Project Card (9:16 Portrait)
 <com.google.android.gms.ads.nativead.NativeAdView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:background="@android:color/transparent">
 
     <!-- Container matching ProjectCard style -->
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
         android:background="@color/foundation_black">
 
-        <!-- Media View (top section - compact) -->
-        <FrameLayout
+        <!-- Ad Media (stretches to fill available height) -->
+        <com.google.android.gms.ads.nativead.MediaView
+            android:id="@+id/ad_media"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <!-- Ad Media (compact portrait view) -->
-            <com.google.android.gms.ads.nativead.MediaView
-                android:id="@+id/ad_media"
-                android:layout_width="match_parent"
-                android:layout_height="180dp"
-                android:scaleType="centerCrop"
-                android:background="@color/foundation_black" />
-
-        </FrameLayout>
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:scaleType="centerCrop"
+            android:background="@color/foundation_black" />
 
         <!-- Info Section (bottom - very compact) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
             android:orientation="vertical"
-            android:layout_marginTop="180dp"
             android:padding="8dp"
             android:background="@color/foundation_black">
 
@@ -115,12 +108,13 @@ Native Ad Layout: Project Card (9:16 Portrait)
                 android:visibility="gone" />
         </LinearLayout>
 
-        <!-- AdChoices overlay at top-right -->
-        <FrameLayout
-            android:id="@+id/ad_choices_container"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|end"
-            android:padding="4dp" />
-    </FrameLayout>
+        <!-- AdChoices overlay at top-right (absolute positioning usually handled by NativeAdView, but since we are using a LinearLayout as root, we should put AdChoices overlay in a FrameLayout wrapping everything, OR keep it as a sibling to the LinearLayout) -->
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/ad_choices_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:padding="4dp" />
 </com.google.android.gms.ads.nativead.NativeAdView>

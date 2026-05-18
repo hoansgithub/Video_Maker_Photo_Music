@@ -50,8 +50,9 @@ import com.videomaker.aimusic.navigation.AppNavigation
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.widget.appwidget.WidgetActions
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import com.videomaker.aimusic.core.data.local.PreferencesManager
+import kotlinx.coroutines.launch
 
 /**
  * MainActivity — Main app content host
@@ -81,6 +82,7 @@ class MainActivity : AppCompatActivity() {
     // Set to true when launched via the "Uninstall App" shortcut.
     private var navigateToUninstall: Boolean by mutableStateOf(false)
     private var startupInitialTab: Int by mutableIntStateOf(0)
+    private var showWelcomeBack: Boolean by mutableStateOf(false)
 
     // Track if we're ready to show UI (ads must be initialized first on cold start)
     private var isReadyToShowUI: Boolean by mutableStateOf(false)
@@ -96,6 +98,13 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null) {
             startupInitialTab = intent.getIntExtra(EXTRA_INITIAL_TAB, 0).coerceIn(0, 2)
             handleEntryIntent(intent)
+            
+            // Show Welcome Back screen on cold start if session >= 2 and no deep links are active
+            val preferencesManager: PreferencesManager by inject()
+            val isNormalLaunch = intent.action == Intent.ACTION_MAIN || intent.action == null
+            if (isNormalLaunch && pendingDeepLink == null && !navigateToUninstall && preferencesManager.getAppSessionId() >= 2) {
+                showWelcomeBack = true
+            }
         } else {
             // Restore state after process death
             startupInitialTab = savedInstanceState.getInt(KEY_STARTUP_TAB, 0)
@@ -150,7 +159,8 @@ class MainActivity : AppCompatActivity() {
                             pendingDeepLink = pendingDeepLink,
                             onDeepLinkConsumed = { pendingDeepLink = null },
                             navigateToUninstall = navigateToUninstall,
-                            onUninstallNavigationConsumed = { navigateToUninstall = false }
+                            onUninstallNavigationConsumed = { navigateToUninstall = false },
+                            showWelcomeBack = showWelcomeBack
                         )
                     }
                 }

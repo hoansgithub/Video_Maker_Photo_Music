@@ -6,6 +6,7 @@ import co.alcheclub.lib.acccore.ads.loader.AdPlacementConfig as CorePlacementCon
 import co.alcheclub.lib.acccore.ads.loader.AdUnitConfig as CoreAdUnitConfig
 import co.alcheclub.lib.acccore.remoteconfig.ConfigContainer
 import co.alcheclub.lib.acccore.remoteconfig.ConfigurableObject
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.VideoQuality
 import kotlinx.serialization.json.JsonPrimitive
@@ -525,6 +526,20 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Welcome Back screen native ad (shown when reopening app, session >= 2)
+        // High-engagement placement for returning users
+        // Layout: native_big_bait_reversed
+        // Waterfall: Primary unit -> Secondary unit (temporarily reusing widget units)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_WELCOME_BACK,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9525024469",  // Primary
+                "ca-app-pub-7121075950716954/1552989505"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Template previewer loading state native ad (shown during loading)
         // Displayed at bottom with "Building Your Feed" message
         // Timing: 2s display (preloaded at home launch, video buffers in parallel)
@@ -560,11 +575,11 @@ class AdPlacementConfigService(
         // Layout: native_project_card (matches ProjectCard layout with media + info)
         // Waterfall: Primary unit → Secondary unit
         registerNativePlacement(
-            placementId = AdPlacement.NATIVE_PROJECTS_GRID,
+            placementId = AdPlacement.NATIVE_LIBRARY_CREATED_VIDEO,
             layoutName = "native_project_card",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/6293185105",  // Primary
-                "ca-app-pub-7121075950716954/6536223106"   // Secondary
+                "ca-app-pub-7121075950716954/4667301062",  // Pro_NA_high_liked content
+                "ca-app-pub-7121075950716954/6996887879"   // Pro_NA_all_liked content
             ),
             enabled = true
         )
@@ -651,11 +666,17 @@ class AdPlacementConfigService(
         // User must watch full ad to earn reward (download permission)
         // Waterfall: Primary unit → Secondary unit
         registerPlacementWithMultipleUnits(
-            placementId = AdPlacement.REWARD_DOWNLOAD_VIDEO,
-            type = "reward",
+            placementId = AdPlacement.REWARD_INTER_DOWNLOAD_VIDEO,
+            type = "rewardedInterstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/4051154821",  // Primary
-                "ca-app-pub-7121075950716954/6681333380"   // Secondary
+                "ca-app-pub-7121075950716954/4370724539",  // Pro_RI_high_download
+                "ca-app-pub-7121075950716954/6805316184"   // Pro_RI_all_download
+            ),
+            extras = mapOf(
+                "gating_enabled" to BuildConfig.DEBUG,                      // true in debug, false in release
+                "interval_seconds" to if (BuildConfig.DEBUG) 10L else 60L, // 10s in debug for quick testing
+                "cap" to if (BuildConfig.DEBUG) 3 else 5,
+                "countdown_seconds" to 5
             ),
             enabled = true
         )
@@ -755,6 +776,7 @@ class AdPlacementConfigService(
         placementId: String,
         type: String,
         adUnitIds: List<String>,
+        extras: Map<String, Any> = emptyMap(),
         enabled: Boolean = true
     ) {
         try {
@@ -762,11 +784,23 @@ class AdPlacementConfigService(
             // It will fetch from Remote Config using exact placementId
             placementConfigService.registerPlacement(placementId)
 
+            // Convert extras to typed JsonPrimitive so all getExtra* methods work
+            val jsonExtras = extras.mapValues { (_, v) ->
+                when (v) {
+                    is Boolean -> JsonPrimitive(v)
+                    is Long    -> JsonPrimitive(v)
+                    is Int     -> JsonPrimitive(v)
+                    is String  -> JsonPrimitive(v)
+                    else       -> JsonPrimitive(v.toString())
+                }
+            }
+
             // Create ad unit configs (tried in priority order)
             val units = adUnitIds.map { unitId ->
                 CoreAdUnitConfig(
                     id = unitId,
-                    enabled = enabled
+                    enabled = enabled,
+                    extras = jsonExtras
                 )
             }
 
@@ -774,7 +808,8 @@ class AdPlacementConfigService(
             val config = CorePlacementConfig(
                 enabled = enabled,
                 type = type,
-                units = units
+                units = units,
+                extras = jsonExtras
             )
             placementConfigService.setLocalConfig(placementId, config)
 
@@ -785,6 +820,7 @@ class AdPlacementConfigService(
             Log.d(TAG, "    - Type: $type")
             Log.d(TAG, "    - Units: ${units.size}")
             Log.d(TAG, "    - Enabled: $enabled")
+            Log.d(TAG, "    - Extras: $extras")
             Log.d(TAG, "    - Ad Unit IDs: ${adUnitIds.joinToString(", ")}")
         } catch (e: Exception) {
             Log.e(TAG, "  ✗ Failed to register: $placementId", e)

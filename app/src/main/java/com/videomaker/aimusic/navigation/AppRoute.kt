@@ -49,6 +49,10 @@ sealed interface AppRoute : NavKey {
     // HOME LEVEL ROUTES
     // ============================================
 
+    /** Welcome back screen (shown on cold start for session >= 2) */
+    @Serializable
+    data object WelcomeBack : AppRoute
+
     /**
      * Home screen with optional initial tab
      * @param initialTab Tab index: 0=Gallery, 1=Songs, 2=My Videos

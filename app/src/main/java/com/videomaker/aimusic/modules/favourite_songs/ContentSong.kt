@@ -11,13 +11,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.theme.AppDimens
+
+@Stable
+private sealed class SongListItemType {
+    data class SongItem(val song: MusicSong) : SongListItemType()
+    data object AdItem : SongListItemType()
+}
 
 @Composable
 fun ContentSong(
@@ -26,6 +36,17 @@ fun ContentSong(
     onDeleteSongClick: (MusicSong) -> Unit,
 ) {
     val dimens = AppDimens.current
+
+    val listItems = remember(songs) {
+        buildList {
+            songs.forEachIndexed { index, song ->
+                add(SongListItemType.SongItem(song))
+                if (index == 0) {
+                    add(SongListItemType.AdItem)
+                }
+            }
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -37,21 +58,41 @@ fun ContentSong(
         ),
         verticalArrangement = Arrangement.spacedBy(dimens.spaceSm)
     ) {
-
-        items(songs, key = { song -> song.id }) { song ->
-            SongListItem(
-                name = song.name,
-                artist = song.artist,
-                coverUrl = song.coverUrl,
-                isShowOption = true,
-                onClickDelete = {
-                    onDeleteSongClick.invoke(song)
-                },
-                onSongClick = { onSongClick(song) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 22.dp)
-            )
+        items(
+            count = listItems.size,
+            key = { index ->
+                when (val item = listItems[index]) {
+                    is SongListItemType.SongItem -> item.song.id
+                    is SongListItemType.AdItem -> "ad_liked_songs"
+                }
+            }
+        ) { index ->
+            when (val item = listItems[index]) {
+                is SongListItemType.SongItem -> {
+                    SongListItem(
+                        name = item.song.name,
+                        artist = item.song.artist,
+                        coverUrl = item.song.coverUrl,
+                        isShowOption = true,
+                        onClickDelete = {
+                            onDeleteSongClick.invoke(item.song)
+                        },
+                        onSongClick = { onSongClick(item.song) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 22.dp)
+                    )
+                }
+                is SongListItemType.AdItem -> {
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_LIBRARY_CREATED_VIDEO,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 22.dp),
+                        isDebug = BuildConfig.DEBUG
+                    )
+                }
+            }
         }
     }
 }

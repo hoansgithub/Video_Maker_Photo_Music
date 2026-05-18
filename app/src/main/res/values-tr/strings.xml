@@ -547,4 +547,9 @@
     <string name="notif_cta_continue_editing">Düzenlemeye Devam Et</string>
     <string name="notif_cta_view_template">Şablonu Gör</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Tekrar hoş geldiniz!</string>
+    <string name="welcome_back_subtitle">Bu haftanın yenilikleri:</string>
+    <string name="welcome_back_vibe_tags">• 12 yeni sürüm • 3 popüler roket 🚀</string>
+    <string name="welcome_back_continue">Devam Et</string>
 </resources>

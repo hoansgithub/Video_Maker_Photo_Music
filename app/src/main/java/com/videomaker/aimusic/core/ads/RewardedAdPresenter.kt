@@ -49,7 +49,8 @@ fun RewardedAdPresenter(
     onAdFailed: () -> Unit,
     onAdShown: (() -> Unit)? = null,
     onAdClosed: (() -> Unit)? = null,
-    loadTimeoutMs: Long = 60_000L
+    loadTimeoutMs: Long = 60_000L,
+    isInterstitial: Boolean = false
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
@@ -73,7 +74,11 @@ fun RewardedAdPresenter(
 
                 // 3. Load ad with timeout
                 withTimeout(loadTimeoutMs) {
-                    adsLoaderService.loadRewarded(placement)
+                    if (isInterstitial) {
+                        adsLoaderService.loadRewardedInterstitial(placement)
+                    } else {
+                        adsLoaderService.loadRewarded(placement)
+                    }
                 }
 
                 // 4. Hide loading overlay
@@ -83,10 +88,17 @@ fun RewardedAdPresenter(
             // 5. Present ad and wait for result (blocking)
             onAdShown?.invoke()
             adShown = true
-            val result = adsLoaderService.presentRewarded(
-                placement = placement,
-                activity = activity
-            )
+            val result = if (isInterstitial) {
+                adsLoaderService.presentRewardedInterstitial(
+                    placement = placement,
+                    activity = activity
+                )
+            } else {
+                adsLoaderService.presentRewarded(
+                    placement = placement,
+                    activity = activity
+                )
+            }
 
             // 6. Check if user earned reward
             if (result.earnedReward) {

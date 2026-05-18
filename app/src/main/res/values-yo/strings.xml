@@ -554,4 +554,9 @@
     <string name="notif_cta_continue_editing">Tẹ̀síwájú Ṣíṣàtúnṣe</string>
     <string name="notif_cta_view_template">Wo Àpẹẹrẹ</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Kaabọ pada!</string>
+    <string name="welcome_back_subtitle">Eyi ni kini tuntun ni ọsẹ yii:</string>
+    <string name="welcome_back_vibe_tags">• 12 orin tuntun • 3 rọkẹti aṣa 🚀</string>
+    <string name="welcome_back_continue">Tẹsiwaju</string>
 </resources>

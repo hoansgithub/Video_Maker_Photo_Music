@@ -5,11 +5,9 @@ import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,7 +27,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -88,15 +85,11 @@ import com.videomaker.aimusic.modules.favourite_templates.LikeTemplateEmpty
 import com.videomaker.aimusic.modules.projects.ProjectsNavigationEvent
 import com.videomaker.aimusic.modules.projects.ProjectsUiState
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
-import com.videomaker.aimusic.modules.projects.SongTabState
-import com.videomaker.aimusic.modules.projects.TemplateTabState
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ProcessToast
 import com.videomaker.aimusic.ui.components.ProjectCard
-import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.StaggeredGrid
-import com.videomaker.aimusic.ui.components.TemplateCard
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Neutral_Black
 import com.videomaker.aimusic.ui.theme.Primary
@@ -585,10 +578,11 @@ fun ProjectsTabContent(
     // Handle rewarded ad presentation using reusable presenter
     RewardedAdPresenter(
         shouldPresent = shouldPresentAd,
-        placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+        placement = AdPlacement.REWARD_INTER_DOWNLOAD_VIDEO,
         adsLoaderService = koinInject(),
         onRewardEarned = viewModel::onRewardEarned,
-        onAdFailed = viewModel::onAdFailed
+        onAdFailed = viewModel::onAdFailed,
+        isInterstitial = true
     )
 
     // Music player bottom sheet — shown when a song is tapped
@@ -905,8 +899,8 @@ private fun ProjectsStaggeredGrid(
             }
             is ProjectGridItem.AdItem -> {
                 NativeAdView(
-                    placement = AdPlacement.NATIVE_PROJECTS_GRID,
-                    modifier = Modifier.fillMaxWidth(),
+                    placement = AdPlacement.NATIVE_LIBRARY_CREATED_VIDEO,
+                    modifier = Modifier.fillMaxSize(),
                     isDebug = BuildConfig.DEBUG
                 )
             }

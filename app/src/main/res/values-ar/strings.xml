@@ -547,4 +547,9 @@
     <string name="notif_cta_continue_editing">متابعة التعديل</string>
     <string name="notif_cta_view_template">عرض القالب</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">مرحبًا بعودتك!</string>
+    <string name="welcome_back_subtitle">إليك ما هو جديد هذا الأسبوع:</string>
+    <string name="welcome_back_vibe_tags">• 12 إصدارًا جديدًا • 3 صواريخ رائجة 🚀</string>
+    <string name="welcome_back_continue">متابعة</string>
 </resources>

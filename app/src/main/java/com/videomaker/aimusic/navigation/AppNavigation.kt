@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.navigation
 
+// import com.videomaker.aimusic.di.MusicPickerViewModelFactory // Commented out - using Supabase only
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
@@ -7,7 +8,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -18,64 +18,63 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
-import com.videomaker.aimusic.core.analytics.Analytics
-import com.videomaker.aimusic.core.analytics.AnalyticsEvent
-import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
-import com.videomaker.aimusic.widget.appwidget.WidgetActions
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
-import org.koin.compose.koinInject
-import com.videomaker.aimusic.media.audio.AudioPreviewCache
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.di.AssetPickerViewModelFactory
 import com.videomaker.aimusic.di.EditorViewModelFactory
 import com.videomaker.aimusic.di.ExportViewModelFactory
 import com.videomaker.aimusic.di.GalleryViewModelFactory
-// import com.videomaker.aimusic.di.MusicPickerViewModelFactory // Commented out - using Supabase only
 import com.videomaker.aimusic.di.ProjectsViewModelFactory
 import com.videomaker.aimusic.di.SongsViewModelFactory
 import com.videomaker.aimusic.di.SuggestedSongsListViewModelFactory
-import com.videomaker.aimusic.di.WeeklyRankingListViewModelFactory
 import com.videomaker.aimusic.di.TemplateListViewModelFactory
 import com.videomaker.aimusic.di.TemplatePreviewerViewModelFactory
-import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchViewModelFactory
 import com.videomaker.aimusic.di.UninstallViewModelFactory
+import com.videomaker.aimusic.di.WeeklyRankingListViewModelFactory
 import com.videomaker.aimusic.di.WidgetViewModelFactory
-import com.videomaker.aimusic.modules.settings.UninstallViewModel
-import com.videomaker.aimusic.widget.WidgetViewModel
 import com.videomaker.aimusic.modules.editor.EditorScreen
 import com.videomaker.aimusic.modules.editor.EditorViewModel
-import com.videomaker.aimusic.modules.gallery.GalleryViewModel
-import com.videomaker.aimusic.modules.songs.SongsViewModel
 import com.videomaker.aimusic.modules.export.ExportScreen
 import com.videomaker.aimusic.modules.export.ExportViewModel
-import com.videomaker.aimusic.modules.templatelist.TemplateListScreen
-import com.videomaker.aimusic.modules.templatelist.TemplateListViewModel
+import com.videomaker.aimusic.modules.gallery.GalleryViewModel
 import com.videomaker.aimusic.modules.home.HomeScreen
-import com.videomaker.aimusic.modules.picker.AssetPickerScreen
-import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
-import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.language.LanguageSelectionScreen
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
-import com.videomaker.aimusic.modules.settings.SettingsScreen
+import com.videomaker.aimusic.modules.picker.AssetPickerScreen
+import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
+import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.settings.NotificationTestScreen
+import com.videomaker.aimusic.modules.settings.SettingsScreen
 import com.videomaker.aimusic.modules.settings.UninstallScreen
+import com.videomaker.aimusic.modules.settings.UninstallViewModel
+import com.videomaker.aimusic.modules.songs.SongsViewModel
+import com.videomaker.aimusic.modules.templatelist.TemplateListScreen
+import com.videomaker.aimusic.modules.templatelist.TemplateListViewModel
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerScreen
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
 import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchScreen
 import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchViewModel
+import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchViewModelFactory
+import com.videomaker.aimusic.modules.welcomeback.WelcomeBackScreen
 import com.videomaker.aimusic.widget.WidgetScreen
+import com.videomaker.aimusic.widget.WidgetViewModel
+import com.videomaker.aimusic.widget.appwidget.WidgetActions
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 private val slideAnimSpec = tween<IntOffset>(300)
 
@@ -117,10 +116,17 @@ fun AppNavigation(
     pendingDeepLink: Intent? = null,
     onDeepLinkConsumed: () -> Unit = {},
     navigateToUninstall: Boolean = false,
-    onUninstallNavigationConsumed: () -> Unit = {}
+    onUninstallNavigationConsumed: () -> Unit = {},
+    showWelcomeBack: Boolean = false
 ) {
     val activity = LocalContext.current as? Activity
     val backStack = rememberNavBackStack(AppRoute.Home(initialTab = initialHomeTab.coerceIn(0, 2)))
+
+    LaunchedEffect(showWelcomeBack) {
+        if (showWelcomeBack) {
+            backStack.add(AppRoute.WelcomeBack)
+        }
+    }
 
     // Handle "Uninstall App" shortcut tap
     LaunchedEffect(navigateToUninstall) {
@@ -374,6 +380,12 @@ fun AppNavigation(
                     onProjectClick = { projectId ->
                         backStack.add(AppRoute.Editor(projectId))
                     }
+                )
+            }
+
+            entry<AppRoute.WelcomeBack> {
+                WelcomeBackScreen(
+                    onContinue = { backStack.safeRemoveLast() }
                 )
             }
 

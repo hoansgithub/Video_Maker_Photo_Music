@@ -547,4 +547,9 @@
     <string name="notif_cta_continue_editing">Ipagpatuloy ang Edit</string>
     <string name="notif_cta_view_template">Tingnan ang Template</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Maligayang pagbabalik!</string>
+    <string name="welcome_back_subtitle">Heto ang bago ngayong linggo:</string>
+    <string name="welcome_back_vibe_tags">• 12 na bagong release • 3 trending na rocket 🚀</string>
+    <string name="welcome_back_continue">Ipatuloy</string>
 </resources>

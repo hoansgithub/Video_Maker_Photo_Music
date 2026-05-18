@@ -554,4 +554,9 @@
     <string name="notif_cta_continue_editing">Terus Nyunting</string>
     <string name="notif_cta_view_template">Deleng Template</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Sugeng rawuh bali!</string>
+    <string name="welcome_back_subtitle">Iki sing anyar minggu iki:</string>
+    <string name="welcome_back_vibe_tags">• 12 rilis anyar • 3 roket tren 🚀</string>
+    <string name="welcome_back_continue">Terusake</string>
 </resources>
