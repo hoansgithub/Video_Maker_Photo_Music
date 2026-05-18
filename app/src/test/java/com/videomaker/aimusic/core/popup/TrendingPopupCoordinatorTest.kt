@@ -1,0 +1,174 @@
+package com.videomaker.aimusic.core.popup
+
+import com.videomaker.aimusic.domain.model.MusicSong
+import com.videomaker.aimusic.domain.model.SongGenre
+import com.videomaker.aimusic.domain.model.VibeTag
+import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.domain.repository.SongRepository
+import com.videomaker.aimusic.domain.repository.TemplateRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import kotlin.random.Random
+
+class TrendingPopupCoordinatorTest {
+
+    private val nowMs = 1_700_000_000_000L
+    private val todayEpochDay = 19_676L
+
+    private fun template(id: String) = VideoTemplate(
+        id = id, name = "T-$id", songId = 1, effectSetId = "e", aspectRatio = "9:16"
+    )
+
+    private fun song(id: Long) = MusicSong(
+        id = id, name = "S-$id", artist = "A", durationMs = 1000, usageCount = 0
+    )
+
+    private class FakeTemplateRepo(val items: List<VideoTemplate>) : TemplateRepository {
+        override suspend fun getTemplateById(id: String) = Result.success<VideoTemplate?>(null)
+        override suspend fun getTemplates(limit: Int, offset: Int) =
+            Result.success(items.drop(offset).take(limit))
+        override suspend fun getTemplatesByVibeTag(tag: String, limit: Int, offset: Int) = Result.success(emptyList<VideoTemplate>())
+        override suspend fun getVibeTags() = Result.success(emptyList<VibeTag>())
+        override suspend fun getFeaturedTemplates(limit: Int) = Result.success(emptyList<VideoTemplate>())
+        override suspend fun searchTemplates(query: String) = Result.success(emptyList<VideoTemplate>())
+        override suspend fun searchTemplates(query: String, limit: Int, offset: Int) = Result.success(emptyList<VideoTemplate>())
+        override suspend fun incrementUseCount(templateId: String) = Result.success(Unit)
+        override suspend fun clearCache() {}
+    }
+
+    private class FakeSongRepo(val items: List<MusicSong>) : SongRepository {
+        override suspend fun getFeaturedSongs(limit: Int, offset: Int) =
+            Result.success(items.drop(offset).take(limit))
+        override suspend fun getSongById(id: Long) = Result.success(items.first { it.id == id })
+        override suspend fun searchSongs(query: String) = Result.success(emptyList<MusicSong>())
+        override suspend fun getGenres() = Result.success(emptyList<SongGenre>())
+        override suspend fun getSongsByGenre(genre: String, limit: Int) = Result.success(emptyList<MusicSong>())
+        override suspend fun getSongsPaged(offset: Int, limit: Int) = Result.success(emptyList<MusicSong>())
+        override suspend fun getSuggestedSongs(preferredGenres: List<String>, offset: Int, limit: Int) = Result.success(emptyList<MusicSong>())
+        override suspend fun getRandomSongs(limit: Int) = Result.success(emptyList<MusicSong>())
+        override suspend fun incrementUseCount(songId: Long) = Result.success(Unit)
+        override suspend fun clearCache() {}
+    }
+
+    private class InMemoryPrefs : PopupSnapshotStore {
+        private val map = mutableMapOf<TrendingPopupTab, TrendingPopupDailySnapshot>()
+        override fun get(tab: TrendingPopupTab) = map[tab]
+        override fun set(tab: TrendingPopupTab, snapshot: TrendingPopupDailySnapshot) {
+            map[tab] = snapshot
+        }
+    }
+
+    private class FakeClock(var currentNowMs: Long, val today: Long) : PopupClock {
+        override fun nowMs() = currentNowMs
+        override fun todayEpochDay() = today
+    }
+
+    /**
+     * Build a coordinator using Dispatchers.Unconfined so [TrendingPopupCoordinator.onTabFocused]
+     * runs synchronously inside the same test thread — no need for kotlinx-coroutines-test.
+     */
+    private fun coordinator(
+        templates: List<VideoTemplate> = (1..3).map { template(it.toString()) },
+        songs: List<MusicSong> = (1L..3L).map { song(it) },
+        config: TrendingPopupConfigValues = TrendingPopupConfigValues(300L, 3L),
+        prefs: InMemoryPrefs = InMemoryPrefs(),
+        clock: FakeClock = FakeClock(nowMs, todayEpochDay)
+    ): TrendingPopupCoordinator = TrendingPopupCoordinator(
+        templateRepository = FakeTemplateRepo(templates),
+        songRepository = FakeSongRepo(songs),
+        snapshotStore = prefs,
+        config = object : PopupConfigSource {
+            override fun read() = config
+        },
+        clock = clock,
+        gate = TrendingPopupGate(),
+        selectorRandom = Random(seed = 42L),
+        scope = CoroutineScope(Dispatchers.Unconfined)
+    )
+
+    @Test
+    fun `tab focus emits Showing when eligible`() = runBlocking {
+        val coord = coordinator()
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        val state = coord.templatePopup.first()
+        assertTrue(state is TrendingPopupState.Showing)
+    }
+
+    @Test
+    fun `second tab focus does not refire while showing`() = runBlocking {
+        val coord = coordinator()
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        val firstPick = (coord.templatePopup.first() as TrendingPopupState.Showing).content
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        val secondPick = (coord.templatePopup.first() as TrendingPopupState.Showing).content
+        assertEquals(firstPick.id, secondPick.id)
+    }
+
+    @Test
+    fun `song popup is blocked while template popup is showing`() = runBlocking {
+        val coord = coordinator()
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        coord.onTabFocused(TrendingPopupTab.SONGS)
+        assertEquals(TrendingPopupState.Hidden, coord.songPopup.first())
+    }
+
+    @Test
+    fun `dismiss returns to Hidden`() = runBlocking {
+        val coord = coordinator()
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        coord.onTemplatePopupDismissed()
+        assertEquals(TrendingPopupState.Hidden, coord.templatePopup.first())
+    }
+
+    @Test
+    fun `cap reached after dailyCap fires`() = runBlocking {
+        val clock = FakeClock(nowMs, todayEpochDay)
+        val coord = coordinator(
+            templates = (1..5).map { template(it.toString()) },
+            config = TrendingPopupConfigValues(intervalMinutes = 60L, dailyCap = 2L),
+            clock = clock
+        )
+
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        coord.onTemplatePopupDismissed()
+        clock.currentNowMs += 2 * 60 * 60 * 1000L
+
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        coord.onTemplatePopupDismissed()
+        clock.currentNowMs += 2 * 60 * 60 * 1000L
+
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        assertEquals(TrendingPopupState.Hidden, coord.templatePopup.first())
+    }
+
+    @Test
+    fun `cta emits OpenTemplatePreviewer for template`() = runBlocking {
+        val coord = coordinator()
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        val pick = (coord.templatePopup.first() as TrendingPopupState.Showing).content
+
+        coord.onTemplatePopupCta(pick)
+        val nav = coord.navigationEvent.first()
+        check(nav is TrendingPopupNavEvent.OpenTemplatePreviewer)
+        assertEquals(pick.id, nav.templateId)
+        assertEquals(-1L, nav.overrideSongId)
+    }
+
+    @Test
+    fun `cta emits OpenTemplatePreviewer for song with overrideSongId`() = runBlocking {
+        val coord = coordinator()
+        coord.onTabFocused(TrendingPopupTab.SONGS)
+        val pick = (coord.songPopup.first() as TrendingPopupState.Showing).content
+
+        coord.onSongPopupCta(pick)
+        val nav = coord.navigationEvent.first()
+        check(nav is TrendingPopupNavEvent.OpenTemplatePreviewer)
+        assertEquals("", nav.templateId)
+        assertEquals(pick.id, nav.overrideSongId)
+    }
+}

@@ -3,8 +3,12 @@ package com.videomaker.aimusic.core.data.local
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.videomaker.aimusic.core.popup.TrendingPopupDailySnapshot
+import com.videomaker.aimusic.core.popup.TrendingPopupTab
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -21,6 +25,27 @@ class PreferencesManager(context: Context) {
         Context.MODE_PRIVATE
     )
     private val stringSetLock = Any()
+    private val trendingPopupJson = Json { ignoreUnknownKeys = true }
+
+    private fun trendingPopupKey(tab: TrendingPopupTab): String = when (tab) {
+        TrendingPopupTab.GALLERY -> KEY_TRENDING_POPUP_TEMPLATE_SNAPSHOT
+        TrendingPopupTab.SONGS -> KEY_TRENDING_POPUP_SONG_SNAPSHOT
+    }
+
+    /**
+     * Read the per-tab trending-popup snapshot, or `null` if absent / unparseable.
+     * Callers should also treat an `epochDay != today` snapshot as empty (cap reset).
+     */
+    fun getTrendingPopupSnapshot(tab: TrendingPopupTab): TrendingPopupDailySnapshot? {
+        val raw = prefs.getString(trendingPopupKey(tab), null) ?: return null
+        return runCatching { trendingPopupJson.decodeFromString<TrendingPopupDailySnapshot>(raw) }
+            .getOrNull()
+    }
+
+    fun setTrendingPopupSnapshot(tab: TrendingPopupTab, snapshot: TrendingPopupDailySnapshot) {
+        val raw = trendingPopupJson.encodeToString(snapshot)
+        prefs.edit { putString(trendingPopupKey(tab), raw) }
+    }
 
     companion object {
         private const val PREFS_NAME = "video_maker_prefs"
@@ -50,6 +75,8 @@ class PreferencesManager(context: Context) {
         private const val KEY_VIRAL_TEMPLATE_SNAPSHOT_DATE = "viral_template_snapshot_date"
         private const val KEY_VIRAL_TEMPLATE_SNAPSHOT_ID = "viral_template_snapshot_id"
         private const val KEY_VIRAL_TEMPLATE_SNAPSHOT_USAGE = "viral_template_snapshot_usage"
+        private const val KEY_TRENDING_POPUP_TEMPLATE_SNAPSHOT = "trending_popup_template_snapshot"
+        private const val KEY_TRENDING_POPUP_SONG_SNAPSHOT = "trending_popup_song_snapshot"
         private const val KEY_APP_SESSION_ID = "notification_app_session_id"
         private const val KEY_APP_LAST_BACKGROUND_AT_MS = "notification_app_last_background_at_ms"
         private const val KEY_VIDEO_REMINDER_GENERATED_AT_PREFIX = "video_reminder_generated_at_"

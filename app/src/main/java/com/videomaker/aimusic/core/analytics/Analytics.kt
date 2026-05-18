@@ -300,6 +300,39 @@ object Analytics {
         )
     }
 
+    fun trackTrendingPopupShow(contentType: String, contentId: String, location: String) {
+        track(
+            AnalyticsEvent.TRENDING_POPUP_SHOW,
+            mapOf(
+                "content_type" to contentType,
+                "content_id" to contentId,
+                AnalyticsEvent.Param.LOCATION to location
+            )
+        )
+    }
+
+    fun trackTrendingPopupCta(contentType: String, contentId: String, location: String) {
+        track(
+            AnalyticsEvent.TRENDING_POPUP_CTA,
+            mapOf(
+                "content_type" to contentType,
+                "content_id" to contentId,
+                AnalyticsEvent.Param.LOCATION to location
+            )
+        )
+    }
+
+    fun trackTrendingPopupDismiss(contentType: String, contentId: String, location: String) {
+        track(
+            AnalyticsEvent.TRENDING_POPUP_DISMISS,
+            mapOf(
+                "content_type" to contentType,
+                "content_id" to contentId,
+                AnalyticsEvent.Param.LOCATION to location
+            )
+        )
+    }
+
     fun trackTemplateClick(templateId: String, templateName: String, location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_CLICK,

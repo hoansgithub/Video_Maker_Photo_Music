@@ -234,4 +234,14 @@
     <key>onboarding_page2_song_id</key>
     <value>0</value>
   </entry>
+
+  <!-- Trending Popup -->
+  <entry>
+    <key>trending_popup_interval</key>
+    <value>{"hour":5,"minute":0}</value>
+  </entry>
+  <entry>
+    <key>trending_popup_daily_cap</key>
+    <value>3</value>
+  </entry>
 </defaults>
