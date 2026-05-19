@@ -16,8 +16,8 @@ import kotlin.random.Random
 
 class TrendingPopupSelectorTest {
 
-    private fun template(id: String) = VideoTemplate(
-        id = id, name = "T-$id", songId = 1, effectSetId = "e", aspectRatio = "9:16"
+    private fun template(id: String, songId: Long = 1) = VideoTemplate(
+        id = id, name = "T-$id", songId = songId, effectSetId = "e", aspectRatio = "9:16"
     )
 
     private fun song(id: Long) = MusicSong(
@@ -96,6 +96,35 @@ class TrendingPopupSelectorTest {
     fun `returns null on empty repo result`() = runBlocking {
         val selector = TrendingPopupSelector(
             templateRepository = FakeTemplateRepo(emptyList()),
+            songRepository = FakeSongRepo(emptyList()),
+            random = Random(seed = 42L)
+        )
+        val pick = selector.pickTemplate(excludeIds = emptySet())
+        assertNull(pick)
+    }
+
+    @Test
+    fun `excludes templates with non-positive songId so popup never applies empty music`() = runBlocking {
+        // Only template "3" has a valid song; "1" (0) and "2" (-1) would yield no music downstream.
+        val templates = listOf(
+            template("1", songId = 0),
+            template("2", songId = -1),
+            template("3", songId = 7)
+        )
+        val selector = TrendingPopupSelector(
+            templateRepository = FakeTemplateRepo(templates),
+            songRepository = FakeSongRepo(emptyList()),
+            random = Random(seed = 42L)
+        )
+        val pick = selector.pickTemplate(excludeIds = emptySet())
+        assertEquals("3", pick?.id)
+    }
+
+    @Test
+    fun `returns null when every top K template has non-positive songId`() = runBlocking {
+        val templates = listOf(template("1", songId = 0), template("2", songId = 0))
+        val selector = TrendingPopupSelector(
+            templateRepository = FakeTemplateRepo(templates),
             songRepository = FakeSongRepo(emptyList()),
             random = Random(seed = 42L)
         )
