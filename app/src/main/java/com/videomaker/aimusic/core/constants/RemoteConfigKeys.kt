@@ -115,4 +115,31 @@ object RemoteConfigKeys {
     const val ONBOARDING_PERSONALIZING_ENABLED = "onboarding_personalizing_enabled"
     const val ONBOARDING_TEMPLATE_PICK_ENABLED = "onboarding_template_pick_enabled"
 
+    // ============================================
+    // TRENDING POPUP
+    // ============================================
+
+    /**
+     * Minimum interval between trending-popup displays, per tab.
+     *
+     * JSON object: `{"hour": H, "minute": M}` — total interval is `H*60 + M` minutes.
+     * Both 0 → disabled (acts as kill-switch).
+     *
+     * Examples:
+     * - 2 minutes (test): `{"hour":0,"minute":2}`
+     * - 30 minutes (test): `{"hour":0,"minute":30}`
+     * - 5 hours (prod): `{"hour":5,"minute":0}`
+     * - 1 hour 30 min: `{"hour":1,"minute":30}`
+     * - Kill switch: `{"hour":0,"minute":0}`
+     *
+     * Default: `{"hour":5,"minute":0}` (5 hours).
+     */
+    const val TRENDING_POPUP_INTERVAL = "trending_popup_interval"
+
+    /**
+     * Maximum number of trending popups shown per tab per local day.
+     * Default: 3.
+     */
+    const val TRENDING_POPUP_DAILY_CAP = "trending_popup_daily_cap"
+
 }

@@ -53,8 +53,16 @@ class SongsViewModel(
     private val getGenresUseCase: GetGenresUseCase,
     private val getSongsByGenreUseCase: GetSongsByGenreUseCase,
     private val clearSongCacheUseCase: ClearSongCacheUseCase,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
 ) : ViewModel() {
+
+    /** Called by HomeScreen when the Songs tab settles into focus. */
+    fun onTabFocused() {
+        trendingPopupCoordinator.onTabFocused(
+            com.videomaker.aimusic.core.popup.TrendingPopupTab.SONGS
+        )
+    }
 
     private val _suggestedState =
         MutableStateFlow<SectionState<List<MusicSong>>>(SectionState.Loading)

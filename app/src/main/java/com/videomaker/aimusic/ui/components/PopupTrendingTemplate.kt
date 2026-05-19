@@ -1,1 +1,217 @@
-package com.videomaker.aimusic.ui.componentsimport androidx.compose.foundation.Imageimport androidx.compose.foundation.backgroundimport androidx.compose.foundation.layout.Arrangementimport androidx.compose.foundation.layout.Boximport androidx.compose.foundation.layout.Columnimport androidx.compose.foundation.layout.Rowimport androidx.compose.foundation.layout.Spacerimport androidx.compose.foundation.layout.fillMaxSizeimport androidx.compose.foundation.layout.fillMaxWidthimport androidx.compose.foundation.layout.heightimport androidx.compose.foundation.layout.paddingimport androidx.compose.foundation.layout.sizeimport androidx.compose.foundation.layout.widthimport androidx.compose.foundation.shape.RoundedCornerShapeimport androidx.compose.material3.Iconimport androidx.compose.material3.MaterialThemeimport androidx.compose.material3.Textimport androidx.compose.runtime.Composableimport androidx.compose.ui.Alignmentimport androidx.compose.ui.Modifierimport androidx.compose.ui.graphics.Colorimport androidx.compose.ui.layout.ContentScaleimport androidx.compose.ui.res.painterResourceimport androidx.compose.ui.res.stringResourceimport androidx.compose.ui.text.font.FontWeightimport androidx.compose.ui.text.style.TextAlignimport androidx.compose.ui.tooling.preview.Previewimport androidx.compose.ui.unit.dpimport androidx.compose.ui.unit.spimport androidx.compose.ui.window.Dialogimport androidx.compose.ui.window.DialogPropertiesimport com.videomaker.aimusic.Rimport com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingleimport com.videomaker.aimusic.ui.theme.FoundationBlackimport com.videomaker.aimusic.ui.theme.FoundationBlack_200import com.videomaker.aimusic.ui.theme.Neutral_N500import com.videomaker.aimusic.ui.theme.Primaryimport com.videomaker.aimusic.ui.theme.SplashBackgroundimport com.videomaker.aimusic.ui.theme.TextPrimaryimport com.videomaker.aimusic.ui.theme.VideoMakerTheme@Composablefun PopupTrendingTemplate(modifier: Modifier = Modifier) {    Dialog(        onDismissRequest = {        },        properties = DialogProperties(usePlatformDefaultWidth = false)    ) {        Box(            modifier = Modifier                .clickableSingle {                }                .fillMaxSize()                .padding(top = 106.dp, start = 16.dp, end = 16.dp),            contentAlignment = Alignment.TopCenter        ) {            Box {                Spacer(                    Modifier                        .padding(top = 130.dp)                        .matchParentSize()                        .background(Color(0xff373737), RoundedCornerShape(16.dp))                        .align(Alignment.BottomCenter)                )                Column(                    modifier = Modifier                        .fillMaxWidth()                        .padding(horizontal = 16.dp),                    horizontalAlignment = Alignment.CenterHorizontally                ) {                    Image(                        painter = painterResource(R.drawable.img_popup_noti_permission),                        contentDescription = null,                        contentScale = ContentScale.FillWidth,                        modifier = Modifier                            .fillMaxWidth()                    )                    Text(                        text = stringResource(R.string.notification_permission_trending_title),                        style = MaterialTheme.typography.titleLarge,                        fontWeight = FontWeight.W600,                        fontSize = 24.sp,                        color = TextPrimary,                        textAlign = TextAlign.Center                    )                    Spacer(Modifier.height(12.dp))                    Text(                        text = stringResource(R.string.notification_permission_trending_message),                        style = MaterialTheme.typography.bodyMedium,                        fontWeight = FontWeight.W500,                        fontSize = 15.sp,                        color = FoundationBlack_200,                        textAlign = TextAlign.Center                    )                    Spacer(Modifier.height(40.dp))                    Row(                        modifier = Modifier                            .fillMaxWidth()                            .background(Primary, RoundedCornerShape(160.dp))                            .clickableSingle {                            }                            .padding(16.dp),                        verticalAlignment = Alignment.CenterVertically,                        horizontalArrangement = Arrangement.Center                    ) {                        Icon(                            painter = painterResource(R.drawable.ic_notification_outline),                            contentDescription = null,                            tint = FoundationBlack,                            modifier = Modifier                                .size(24.dp)                        )                        Spacer(Modifier.width(12.dp))                        Text(                            text = stringResource(R.string.notification_permission_notify_me),                            fontWeight = FontWeight.W600,                            fontSize = 16.sp,                            color = FoundationBlack,                        )                    }                    Spacer(Modifier.height(12.dp))                    Text(                        text = stringResource(R.string.notification_permission_maybe_later),                        fontWeight = FontWeight.W600,                        fontSize = 16.sp,                        color = Neutral_N500,                        modifier = Modifier                            .clickableSingle {                            }                            .padding(16.dp)                    )                    Spacer(Modifier.height(16.dp))                }            }        }    }}@Preview(showBackground = true)@Composableprivate fun PopupTrendingTemplatePreview() {    VideoMakerTheme {        Box(            modifier = Modifier                .fillMaxSize()                .background(SplashBackground)        ) {            NotificationPermissionSettingsGuideDialog(                onOpenSettings = {},                onDismiss = {}            )        }    }}
+package com.videomaker.aimusic.ui.components
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import com.videomaker.aimusic.ui.theme.Neutral_N200
+import com.videomaker.aimusic.ui.theme.Neutral_N800
+import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.SplashBackground
+import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+
+@Composable
+fun PopupTrendingTemplate(
+    item: VideoTemplate,
+    onCTA: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = {
+        },
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .clickableSingle {
+                }
+                .fillMaxSize()
+                .background(Color(0xFF000000).copy(0.8f))
+                .padding(top = 81.dp),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 34.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(74.5.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_circle_cross),
+                        contentDescription = null,
+                        tint = Neutral_N800,
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clickableSingle {
+                                onDismiss.invoke()
+                            }
+                            .align(Alignment.TopEnd)
+                            .padding(4.dp)
+                    )
+                    Image(
+                        painter = painterResource(R.drawable.img_start_trending),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(31.dp)
+                            .align(Alignment.BottomStart),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                Text(
+                    text = "DON'T MISS IT",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.W900,
+                    fontSize = 34.sp,
+                    color = Primary,
+                    textAlign = TextAlign.Center
+                )
+
+                Box(
+                    modifier = Modifier
+                        .width(246.dp)
+                        .height(260.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 18.dp, end = 26.dp)
+                            .rotate(-10.8f)
+                            .clip(RoundedCornerShape(18.35.dp))
+                            .width(159.64.dp)
+                            .height(220.19.dp)
+                            .border(1.dp, Color.White, RoundedCornerShape(18.35.dp))
+                            .align(Alignment.TopEnd),
+                    ) {
+                        TemplateCard(
+                            name = "",
+                            thumbnailPath = item.thumbnailPath,
+                            aspectRatio = (159.64f / 220.19f),
+                            isPremium = false,
+                            showHotTag = true,
+                            useCount = 0,
+                            viewCount = 0,
+                            modifier = Modifier,
+                            onClick = { onCTA() }
+                        )
+                    }
+
+                    Image(
+                        painter = painterResource(R.drawable.img_bg_template_trend),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
+                }
+
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    text = "Premium Template".uppercase(),
+                    fontWeight = FontWeight.W500,
+                    fontStyle = FontStyle.Italic,
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFFFE3B5),
+                                Color(0xFFFF970E)
+                            )
+                        )
+                    ),
+                    modifier = Modifier
+                        .background(Color.White.copy(0.12f))
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                )
+
+                Spacer(Modifier.height(11.dp))
+
+                Text(
+                    text = item.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.W700,
+                    fontSize = 28.sp,
+                    color = Neutral_N200,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(32.dp))
+                CTAPrimaryButton(
+                    text = "Try it now"
+                ) {
+                    onCTA.invoke()
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+            ){
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_POPUP_TRENDING_TEMPLATE,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PopupTrendingTemplatePreview() {
+    VideoMakerTheme {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(SplashBackground)
+        ) {
+            PopupTrendingTemplate(
+                VideoTemplate(id = "10", name = "Vintage Love", songId = 10, effectSetId = "e10", aspectRatio = "1:1"),
+                onCTA = {},
+                onDismiss = {}
+            )
+        }
+    }
+}
