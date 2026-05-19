@@ -210,7 +210,6 @@ fun PopupTrendingSong(
 
             Box(
                 modifier = Modifier
-                    .navigationBarsPadding()
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
             ){

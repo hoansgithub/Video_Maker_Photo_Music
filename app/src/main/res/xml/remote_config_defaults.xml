@@ -244,13 +244,15 @@
     <key>trending_popup_daily_cap</key>
     <value>3</value>
   </entry>
-  <!-- Trending Popup native ads — temporary fallback units from template_previewer_loading / songs_station -->
+  <!-- Trending Popup native ads — TEMP units borrowed from onboarding_select_tpt / onboarding_select_music
+       (onboarding-only placements, never load concurrently with Gallery/Songs browsing → no ad-unit contention).
+       TODO: replace with dedicated AdMob native units. -->
   <entry>
     <key>ad_native_popup_trending_template</key>
-    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/8424019843","enabled":true},{"id":"ca-app-pub-7121075950716954/1431594877","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/3543297405","enabled":true},{"id":"ca-app-pub-7121075950716954/7166847649","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
     <key>ad_native_popup_trending_song</key>
-    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/2788549787","enabled":true},{"id":"ca-app-pub-7121075950716954/1667039805","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/3016683795","enabled":true},{"id":"ca-app-pub-7121075950716954/8624233693","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
 </defaults>
