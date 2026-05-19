@@ -624,8 +624,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_POPUP_TRENDING_TEMPLATE,
             layoutName = "native_small_row",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/3543297405",  // NA_high_select_tpt
-                "ca-app-pub-7121075950716954/7166847649"   // NA_all_select_tpt
+                "ca-app-pub-7121075950716954/8457835867",  // Primary (NA_high_lib)
+                "ca-app-pub-7121075950716954/8266264176"   // Secondary (NA_all_lib)
             ),
             enabled = true
         )
@@ -640,8 +640,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_POPUP_TRENDING_SONG,
             layoutName = "native_small_row",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/3016683795",  // NA_high_select_music
-                "ca-app-pub-7121075950716954/8624233693"   // NA_all_select_music
+                "ca-app-pub-7121075950716954/8457835867",  // NA_high_select_music
+                "ca-app-pub-7121075950716954/8266264176"   // NA_all_select_music
             ),
             enabled = true
         )
