@@ -406,12 +406,12 @@ class CompositionFactory(
             val isLast = !clip.hasTransition
 
             // Get transition for this clip (cycles through effect set)
-            val selectedTransition = if (clip.hasTransition && clipIdx < effectSetTransitions.size) {
-                effectSetTransitions[clip.transitionShaderIndex]
-            } else if (clip.hasTransition) {
-                effectSetTransitions.getOrNull(clip.transitionShaderIndex % effectSetTransitions.size)
-            } else {
+            val selectedTransition = if (!clip.hasTransition) {
                 null
+            } else if (effectSetTransitions.isNotEmpty()) {
+                effectSetTransitions[clip.transitionShaderIndex % effectSetTransitions.size]
+            } else {
+                null  // No transitions available - skip transition effect
             }
 
             val transition = when {
@@ -479,9 +479,14 @@ class CompositionFactory(
      */
     private fun getTransitionsFromEffectSet(settings: ProjectSettings): List<Transition> {
         val effectSetId = settings.effectSetId ?: return emptyList()
-        val effectSet = TransitionSetLibrary.getById(effectSetId) ?: return emptyList()
+        val effectSet = TransitionSetLibrary.getById(effectSetId)
+        if (effectSet == null) {
+            // Effect set not found in local JSON - fall back to default transition
+            android.util.Log.w("CompositionFactory", "Effect set '$effectSetId' not found, using default")
+            return listOfNotNull(TransitionShaderLibrary.getDefault())
+        }
         return effectSet.transitions.ifEmpty {
-            // Fallback to default if effect set has no transitions
+            // Effect set exists but has no transitions - fall back to default
             listOfNotNull(TransitionShaderLibrary.getDefault())
         }
     }

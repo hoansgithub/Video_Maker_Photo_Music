@@ -4,6 +4,8 @@ import com.videomaker.aimusic.core.data.local.ApiCacheManager
 import com.videomaker.aimusic.core.data.local.RegionProvider
 import com.videomaker.aimusic.domain.model.EffectSet
 import com.videomaker.aimusic.domain.repository.EffectSetRepository
+import com.videomaker.aimusic.media.library.TransitionSetLibrary
+import com.videomaker.aimusic.media.library.TransitionShaderLibrary
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
@@ -71,6 +73,9 @@ class EffectSetRepositoryImpl(
 
                 val effectSets = dtos.map { it.toEffectSet(::getThumbnailUrl) }
 
+                // Register in TransitionSetLibrary so CompositionFactory can resolve them
+                TransitionSetLibrary.registerRemote(effectSets)
+
                 // Cache first page only
                 if (offset == 0) {
                     apiCacheManager.put(cacheKey, effectSets)
@@ -94,6 +99,7 @@ class EffectSetRepositoryImpl(
                     .select {
                         filter {
                             eq("id", id)
+                            eq("is_active", true)
                         }
                         limit(1)
                     }
@@ -132,10 +138,13 @@ class EffectSetRepositoryImpl(
         @SerialName("is_active")
         val isActive: Boolean = true,
         @SerialName("sort_order")
-        val sortOrder: Int = 0
+        val sortOrder: Int = 0,
+        @SerialName("transition_ids")
+        val transitionIds: List<String>? = null
     ) {
         /**
          * Maps DTO to domain model.
+         * Resolves transition IDs to Transition objects via TransitionShaderLibrary.
          * @param getThumbnailUrl Function to construct full URL from filename
          */
         fun toEffectSet(getThumbnailUrl: (String) -> String) = EffectSet(
@@ -145,7 +154,9 @@ class EffectSetRepositoryImpl(
             thumbnailUrl = getThumbnailUrl(thumbnailPath),
             isPremium = isPremium,
             isActive = isActive,
-            transitions = emptyList() // Transitions loaded separately if needed
+            transitions = transitionIds
+                ?.mapNotNull { TransitionShaderLibrary.getById(it) }
+                ?: emptyList()
         )
     }
 }
