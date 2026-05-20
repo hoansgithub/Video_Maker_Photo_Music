@@ -276,25 +276,7 @@ fun CTAPrimaryButton(
                     .background(Color.White.copy(alpha = 0.06f))
             )
 
-            // Glass highlight + border
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .clip(innerShape)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.18f),
-                                Color.White.copy(alpha = 0.04f)
-                            )
-                        )
-                    )
-                    .glassBorderWithInsetShadow(
-                        cornerRadius = 32f,
-                        borderWidth = 1.5f,
-                        insetBlurRadius = 8f
-                    )
-            )
+
         }
 
         // ── Layer 4: Content ────────────────────────────────
@@ -312,7 +294,7 @@ fun CTAPrimaryButton(
                 text = text,
                 style = TextStyle(
                     color = Color.Black.copy(alpha = 0.85f),
-                    fontSize = 22.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
                     letterSpacing = (-0.3).sp
                 )

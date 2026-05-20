@@ -234,6 +234,8 @@ fun OnboardingScreen(
                     ) {
                         WelcomePageDynamic(
                             thumbnailUrl = thumbnailUrl,
+                            nameSong = contentState.nameSong,
+                            nameArtist = contentState.nameArtist,
                             videoUrl = videoUrl,
                             localFallbackResId = localFallback,
                             title = stringResource(titleRes),

@@ -62,6 +62,8 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
 import com.videomaker.aimusic.ui.theme.FoundationBlack
+import com.videomaker.aimusic.ui.theme.Neutral_N100
+import com.videomaker.aimusic.ui.theme.Neutral_N600
 import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -184,6 +186,8 @@ internal fun WelcomePage(
 @Composable
 internal fun WelcomePageDynamic(
     thumbnailUrl: String?,
+    nameSong: String?,
+    nameArtist: String?,
     videoUrl: String? = null,
     localFallbackResId: Int,
     title: String,
@@ -337,13 +341,41 @@ internal fun WelcomePageDynamic(
                                 )
                             }
 
-                            Image(
-                                painter = painterResource(R.drawable.img_text_ob2),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .weight(1f),
-                                contentScale = ContentScale.FillWidth
-                            )
+                            if (nameSong.isNullOrBlank() && nameArtist.isNullOrBlank()) {
+                                Image(
+                                    painter = painterResource(R.drawable.img_text_ob2),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .weight(1f),
+                                    contentScale = ContentScale.FillWidth
+                                )
+                            } else {
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(vertical = 10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = nameSong.orEmpty(),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.W600,
+                                        color = Color.White,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = nameArtist.orEmpty(),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.W400,
+                                        color = Neutral_N600,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
                         }
 
                         Spacer(Modifier.padding(horizontal = 12.dp).fillMaxWidth().height(2.dp).background(Color(0xff373737)))
