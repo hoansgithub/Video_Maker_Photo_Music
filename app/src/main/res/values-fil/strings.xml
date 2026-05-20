@@ -552,4 +552,10 @@
     <string name="welcome_back_subtitle">Heto ang bago ngayong linggo:</string>
     <string name="welcome_back_vibe_tags">• 12 na bagong release • 3 trending na rocket 🚀</string>
     <string name="welcome_back_continue">Ipatuloy</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Huwag palampasin</string>
+    <string name="popup_premium_song">Premium na Kanta</string>
+    <string name="popup_premium_template">Premium na Template</string>
+    <string name="popup_try_it_now">Subukan ngayon</string>
 </resources>

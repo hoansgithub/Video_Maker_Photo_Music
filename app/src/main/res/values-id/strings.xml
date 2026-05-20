@@ -552,4 +552,10 @@
     <string name="welcome_back_subtitle">Ini yang baru minggu ini:</string>
     <string name="welcome_back_vibe_tags">• 12 rilisan baru • 3 roket tren 🚀</string>
     <string name="welcome_back_continue">Lanjutkan</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Jangan dilewatkan</string>
+    <string name="popup_premium_song">Lagu Premium</string>
+    <string name="popup_premium_template">Template Premium</string>
+    <string name="popup_try_it_now">Coba sekarang</string>
 </resources>

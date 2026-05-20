@@ -559,4 +559,10 @@
     <string name="welcome_back_subtitle">Das gibt es diese Woche Neues:</string>
     <string name="welcome_back_vibe_tags">• 12 Releases • 3 Trend-Raketen 🚀</string>
     <string name="welcome_back_continue">Weiter</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Nicht verpassen</string>
+    <string name="popup_premium_song">Premium-Song</string>
+    <string name="popup_premium_template">Premium-Vorlage</string>
+    <string name="popup_try_it_now">Jetzt ausprobieren</string>
 </resources>

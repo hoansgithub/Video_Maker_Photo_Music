@@ -552,4 +552,10 @@
     <string name="welcome_back_subtitle">Esto es lo nuevo de esta semana:</string>
     <string name="welcome_back_vibe_tags">• 12 lanzamientos • 3 cohetes de tendencia 🚀</string>
     <string name="welcome_back_continue">Continuar</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">¡No te lo pierdas!</string>
+    <string name="popup_premium_song">Canción Premium</string>
+    <string name="popup_premium_template">Plantilla Premium</string>
+    <string name="popup_try_it_now">Pruébalo ahora</string>
 </resources>

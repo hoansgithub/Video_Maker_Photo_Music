@@ -559,4 +559,10 @@
     <string name="welcome_back_subtitle">এই সপ্তাহে নতুন কী আছে দেখুন:</string>
     <string name="welcome_back_vibe_tags">• ১২টি নতুন রিলিজ • ৩টি ট্রেন্ডিং রকেট 🚀</string>
     <string name="welcome_back_continue">চালিয়ে যান</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">মিস করবেন না</string>
+    <string name="popup_premium_song">প্রিমিয়াম গান</string>
+    <string name="popup_premium_template">প্রিমিয়াম টেমপ্লেট</string>
+    <string name="popup_try_it_now">এখনই চেষ্টা করুন</string>
 </resources>

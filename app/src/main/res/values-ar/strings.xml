@@ -552,4 +552,10 @@
     <string name="welcome_back_subtitle">إليك ما هو جديد هذا الأسبوع:</string>
     <string name="welcome_back_vibe_tags">• 12 إصدارًا جديدًا • 3 صواريخ رائجة 🚀</string>
     <string name="welcome_back_continue">متابعة</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">لا تفوّتها</string>
+    <string name="popup_premium_song">أغنية مميزة</string>
+    <string name="popup_premium_template">قالب مميز</string>
+    <string name="popup_try_it_now">جرّبه الآن</string>
 </resources>
