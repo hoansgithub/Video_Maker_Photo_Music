@@ -559,4 +559,10 @@
     <string name="welcome_back_subtitle">Iki sing anyar minggu iki:</string>
     <string name="welcome_back_vibe_tags">• 12 rilis anyar • 3 roket tren 🚀</string>
     <string name="welcome_back_continue">Terusake</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Aja Dilewati</string>
+    <string name="popup_premium_song">Lagu Premium</string>
+    <string name="popup_premium_template">Template Premium</string>
+    <string name="popup_try_it_now">Coba saiki</string>
 </resources>

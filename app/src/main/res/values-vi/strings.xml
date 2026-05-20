@@ -552,4 +552,10 @@
     <string name="welcome_back_subtitle">Đây là những nội dung mới trong tuần này:</string>
     <string name="welcome_back_vibe_tags">• 12 bản nhạc mới • 3 tên lửa thịnh hành 🚀</string>
     <string name="welcome_back_continue">Tiếp tục</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Đừng bỏ lỡ</string>
+    <string name="popup_premium_song">Bài hát Premium</string>
+    <string name="popup_premium_template">Mẫu Premium</string>
+    <string name="popup_try_it_now">Dùng thử ngay</string>
 </resources>

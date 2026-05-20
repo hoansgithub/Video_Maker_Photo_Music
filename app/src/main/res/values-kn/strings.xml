@@ -559,4 +559,10 @@
     <string name="welcome_back_subtitle">ಈ ವಾರದ ಹೊಸದೇನು ಇಲ್ಲಿದೆ:</string>
     <string name="welcome_back_vibe_tags">• 12 ಹೊಸ ಹಾಡುಗಳು • 3 ಟ್ರೆಂಡಿಂಗ್ ರಾಕೆಟ್‌ಗಳು 🚀</string>
     <string name="welcome_back_continue">ಮುಂದುವರಿಸಿ</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">ತಪ್ಪಿಸಿಕೊಳ್ಳಬೇಡಿ</string>
+    <string name="popup_premium_song">ಪ್ರೀಮಿಯಂ ಹಾಡು</string>
+    <string name="popup_premium_template">ಪ್ರೀಮಿಯಂ ಟೆಂಪ್ಲೇಟ್</string>
+    <string name="popup_try_it_now">ಈಗ ಪ್ರಯತ್ನಿಸಿ</string>
 </resources>

@@ -559,4 +559,10 @@
     <string name="welcome_back_subtitle">Eyi ni kini tuntun ni ọsẹ yii:</string>
     <string name="welcome_back_vibe_tags">• 12 orin tuntun • 3 rọkẹti aṣa 🚀</string>
     <string name="welcome_back_continue">Tẹsiwaju</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Má Jẹ́ Kó Kọjá</string>
+    <string name="popup_premium_song">Orin Premium</string>
+    <string name="popup_premium_template">Àpẹẹrẹ Premium</string>
+    <string name="popup_try_it_now">Gbiyanju rẹ̀ báyìí</string>
 </resources>
