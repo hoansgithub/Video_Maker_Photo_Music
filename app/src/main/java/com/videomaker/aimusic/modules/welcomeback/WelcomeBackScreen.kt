@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -89,9 +90,14 @@ fun WelcomeBackScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            Box(
+            BoxWithConstraints(
                 modifier = Modifier.weight(1f)
             ) {
+                // Adjust spacers dynamically when ad loads and reduces available height
+                val isCompact = maxHeight < 600.dp
+                val topSpacerHeight = if (isCompact) 48.dp else 150.dp
+                val bottomSpacerHeight = if (isCompact) 24.dp else 40.dp
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -108,7 +114,7 @@ fun WelcomeBackScreen(
                         ),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Spacer(modifier = Modifier.height(150.dp))
+                    Spacer(modifier = Modifier.height(topSpacerHeight))
 
                     // Center Icon with soft premium glow
                     Box(
@@ -186,7 +192,7 @@ fun WelcomeBackScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(40.dp))
+                    Spacer(modifier = Modifier.height(bottomSpacerHeight))
                 }
             }
 

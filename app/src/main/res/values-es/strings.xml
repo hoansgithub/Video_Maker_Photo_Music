@@ -550,7 +550,7 @@
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">¡Bienvenido de nuevo!</string>
     <string name="welcome_back_subtitle">Esto es lo nuevo de esta semana:</string>
-    <string name="welcome_back_vibe_tags">• 12 lanzamientos • 3 cohetes de tendencia 🚀</string>
+    <string name="welcome_back_vibe_tags">• 8 canciones nuevas • 3 plantillas populares 🚀</string>
     <string name="welcome_back_continue">Continuar</string>
 
     <!-- Popup Trending -->
