@@ -20,7 +20,7 @@
     <string name="onboarding_get_started">Bắt đầu</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Luôn dẫn đầu với các mẫu mới sẵn sàng sử dụng và cập nhật hàng ngày.</string>
-    <string name="onboarding_india_page3_title">Nhận mẫu xu hướng mỗi ngày</string>
+    <string name="onboarding_india_page3_title">Nhận mẫu xu hướng</string>
     <string name="onboarding_india_page3_subtitle">Luôn dẫn đầu với các mẫu mới sẵn sàng sử dụng và cập nhật hàng ngày.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Tạo Điều Kỳ Diệu trong Vài Giây</string>

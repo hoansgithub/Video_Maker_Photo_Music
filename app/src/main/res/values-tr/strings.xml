@@ -20,7 +20,7 @@
     <string name="onboarding_get_started">Başla</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Her gün güncellenen taze, kullanıma hazır şablonlarla bir adım önde olun.</string>
-    <string name="onboarding_india_page3_title">Günlük trend şablonları yakalayın</string>
+    <string name="onboarding_india_page3_title">Trend şablonları yakalayın</string>
     <string name="onboarding_india_page3_subtitle">Her gün güncellenen taze, kullanıma hazır şablonlarla bir adım önde olun.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Saniyeler İçinde Sihir Yarat</string>
