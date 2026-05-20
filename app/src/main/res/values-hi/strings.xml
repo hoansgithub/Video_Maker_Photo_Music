@@ -549,4 +549,9 @@
     <string name="notif_cta_continue_editing">एडिट जारी रखें</string>
     <string name="notif_cta_view_template">टेम्पलेट देखें</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">आपका स्वागत है!</string>
+    <string name="welcome_back_subtitle">इस सप्ताह नया क्या है:</string>
+    <string name="welcome_back_vibe_tags">• 12 नए गाने • 3 ट्रेंडिंग रॉकेट 🚀</string>
+    <string name="welcome_back_continue">जारी रखें</string>
 </resources>

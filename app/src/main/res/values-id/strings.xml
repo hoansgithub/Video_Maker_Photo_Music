@@ -547,4 +547,9 @@
     <string name="notif_cta_continue_editing">Lanjutkan Edit</string>
     <string name="notif_cta_view_template">Lihat Template</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Selamat datang kembali!</string>
+    <string name="welcome_back_subtitle">Ini yang baru minggu ini:</string>
+    <string name="welcome_back_vibe_tags">• 12 rilisan baru • 3 roket tren 🚀</string>
+    <string name="welcome_back_continue">Lanjutkan</string>
 </resources>

@@ -19,6 +19,19 @@ import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.ui.components.StaggeredGrid
 import com.videomaker.aimusic.ui.components.TemplateCard
 import com.videomaker.aimusic.ui.theme.AppDimens
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.draw.clip
+import androidx.compose.runtime.Stable
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.core.constants.AdPlacement
+
+@Stable
+private sealed class TemplateGridItem {
+    data class TemplateItem(val template: VideoTemplate) : TemplateGridItem()
+    data object AdItem : TemplateGridItem()
+}
 
 @Composable
 fun ContentTemplate(
@@ -38,13 +51,32 @@ fun ContentTemplate(
         ),
         verticalArrangement = Arrangement.spacedBy(dimens.spaceSm)
     ) {
+        if (state.isEmpty()) return@LazyColumn
+
         item(key = "template_grid", contentType = "grid") {
-            val aspectRatios = remember(state) {
-                state.map { parseTemplateAspectRatio(it.aspectRatio) }
+            val gridItems = remember(state) {
+                buildList {
+                    state.forEachIndexed { index, template ->
+                        add(TemplateGridItem.TemplateItem(template))
+                        if (index == 0) {
+                            add(TemplateGridItem.AdItem)
+                        }
+                    }
+                }
+            }
+
+            val adAspectRatio = 9f / 16f
+            val aspectRatios = remember(gridItems) {
+                gridItems.map { item ->
+                    when (item) {
+                        is TemplateGridItem.TemplateItem -> parseTemplateAspectRatio(item.template.aspectRatio)
+                        is TemplateGridItem.AdItem -> adAspectRatio
+                    }
+                }
             }
 
             StaggeredGrid(
-                itemCount = state.size,
+                itemCount = gridItems.size,
                 aspectRatios = aspectRatios,
                 columns = 2,
                 spacing = dimens.spaceSm,
@@ -53,18 +85,35 @@ fun ContentTemplate(
                     .padding(horizontal = 12.dp)
 
             ) { index ->
-                TemplateCard(
-                    name = state[index].name,
-                    thumbnailPath = state[index].thumbnailPath,
-                    aspectRatio = aspectRatios[index],
-                    isPremium = state[index].isPremium,
-                    isShowOption = true,
-                    useCount = state[index].useCount,
-                    onClickDelete = {
-                        onDeleteTemplateClick.invoke(state[index].id)
-                    },
-                    onClick = { onTemplateClick(state[index].id) }
-                )
+                when (val item = gridItems[index]) {
+                    is TemplateGridItem.TemplateItem -> {
+                        TemplateCard(
+                            name = item.template.name,
+                            thumbnailPath = item.template.thumbnailPath,
+                            aspectRatio = aspectRatios[index],
+                            isPremium = item.template.isPremium,
+                            isShowOption = true,
+                            useCount = item.template.useCount,
+                            onClickDelete = {
+                                onDeleteTemplateClick.invoke(item.template.id)
+                            },
+                            onClick = { onTemplateClick(item.template.id) }
+                        )
+                    }
+                    is TemplateGridItem.AdItem -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(12.dp))
+                        ) {
+                            NativeAdView(
+                                placement = AdPlacement.NATIVE_LIBRARY_CREATED_VIDEO,
+                                modifier = Modifier.fillMaxSize(),
+                                isDebug = BuildConfig.DEBUG
+                            )
+                        }
+                    }
+                }
             }
         }
     }

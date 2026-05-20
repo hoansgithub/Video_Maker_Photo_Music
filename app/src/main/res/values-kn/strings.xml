@@ -554,4 +554,9 @@
     <string name="notif_cta_continue_editing">ಸಂಪಾದನೆ ಮುಂದುವರಿಸಿ</string>
     <string name="notif_cta_view_template">ಟೆಂಪ್ಲೇಟ್ ನೋಡಿ</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">ಮತ್ತೆ ಸ್ವಾಗತ!</string>
+    <string name="welcome_back_subtitle">ಈ ವಾರದ ಹೊಸದೇನು ಇಲ್ಲಿದೆ:</string>
+    <string name="welcome_back_vibe_tags">• 12 ಹೊಸ ಹಾಡುಗಳು • 3 ಟ್ರೆಂಡಿಂಗ್ ರಾಕೆಟ್‌ಗಳು 🚀</string>
+    <string name="welcome_back_continue">ಮುಂದುವರಿಸಿ</string>
 </resources>

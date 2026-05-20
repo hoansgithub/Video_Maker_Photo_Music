@@ -555,4 +555,9 @@
     <string name="notif_cta_continue_editing">Gaa n\'ihu Idezi</string>
     <string name="notif_cta_view_template">Lelee Ụkpụrụ</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Nnọọ ọzọ!</string>
+    <string name="welcome_back_subtitle">Ihe ọhụrụ n\'izu a:</string>
+    <string name="welcome_back_vibe_tags">• 12 egwu ọhụrụ • 3 rọketi na-ewu ewu 🚀</string>
+    <string name="welcome_back_continue">Gaa n\'ihu</string>
 </resources>

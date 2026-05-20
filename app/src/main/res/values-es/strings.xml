@@ -547,4 +547,9 @@
     <string name="notif_cta_continue_editing">Seguir editando</string>
     <string name="notif_cta_view_template">Ver plantilla</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">¡Bienvenido de nuevo!</string>
+    <string name="welcome_back_subtitle">Esto es lo nuevo de esta semana:</string>
+    <string name="welcome_back_vibe_tags">• 12 lanzamientos • 3 cohetes de tendencia 🚀</string>
+    <string name="welcome_back_continue">Continuar</string>
 </resources>

@@ -554,4 +554,9 @@
     <string name="notif_cta_continue_editing">Bearbeitung fortsetzen</string>
     <string name="notif_cta_view_template">Vorlage anzeigen</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Willkommen zurück!</string>
+    <string name="welcome_back_subtitle">Das gibt es diese Woche Neues:</string>
+    <string name="welcome_back_vibe_tags">• 12 Releases • 3 Trend-Raketen 🚀</string>
+    <string name="welcome_back_continue">Weiter</string>
 </resources>

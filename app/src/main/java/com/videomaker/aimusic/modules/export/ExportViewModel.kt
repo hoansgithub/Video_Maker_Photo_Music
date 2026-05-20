@@ -1,6 +1,5 @@
 package com.videomaker.aimusic.modules.export
 
-import android.app.Activity
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
@@ -30,7 +29,6 @@ import com.videomaker.aimusic.modules.rate.RatingStep
 import com.videomaker.aimusic.ui.components.ProcessToastState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -184,7 +182,7 @@ class ExportViewModel(
 
     // Rewarded ad controller for video download
     private val downloadAdController = RewardedAdController(
-        placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+        placement = AdPlacement.REWARD_INTER_DOWNLOAD_VIDEO,
         viewModelScope = viewModelScope
     )
 
@@ -715,7 +713,7 @@ class ExportViewModel(
                 pendingDownloadRequest?.invoke()
                 pendingDownloadRequest = null
             },
-            checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_DOWNLOAD_VIDEO) }
+            checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_INTER_DOWNLOAD_VIDEO) }
         )
     }
 

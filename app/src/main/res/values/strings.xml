@@ -562,4 +562,10 @@
     <string name="template_pick_title">What template style do you prefer?</string>
     <string name="template_pick_subtitle">Pick a template style and let us handle the transitions and effects for you. This step won’t affect your personalized content.</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Welcome back!</string>
+    <string name="welcome_back_subtitle">Here\'s what new this week:</string>
+    <string name="welcome_back_vibe_tags">• 12 drops • 3 trending rockets 🚀</string>
+    <string name="welcome_back_continue">Continue</string>
+
 </resources>

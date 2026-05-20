@@ -404,6 +404,17 @@ object AdPlacement {
      */
     const val NATIVE_ONBOARDING_PAGE3 = "ad_native_onboarding_page3"
 
+    /**
+     * Native ad shown on WelcomeBackScreen.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/9525024469
+     * - Secondary: ca-app-pub-7121075950716954/1552989505
+     *
+     * Remote Config key: ad_native_welcome_back
+     */
+    const val NATIVE_WELCOME_BACK = "ad_native_welcome_back"
+
     // ==========================================
     // NATIVE ADS (In-feed, Dialogs, Bottom Sheets, Banners)
     // ==========================================
@@ -520,6 +531,25 @@ object AdPlacement {
      * Remote Config key: ad_native_projects_grid
      */
     const val NATIVE_PROJECTS_GRID = "ad_native_projects_grid"
+
+    /**
+     * Native ad shown in created projects grid, template, song (in-feed placement).
+     * Displayed as an item within the staggered projects grid.
+     * Only loaded when at least 1 project exists (never shown on empty state).
+     *
+     * Layout: native_project_card (matches ProjectCard layout)
+     * - Media view at top (ad creative)
+     * - Icon + headline + CTA at bottom
+     * - Ad badge at top-right corner
+     * - Blends with project cards in staggered grid
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/4667301062
+     * - Secondary: ca-app-pub-7121075950716954/6996887879
+     *
+     * Remote Config key: ad_native_library_created_video
+     */
+    const val NATIVE_LIBRARY_CREATED_VIDEO = "ad_native_library_created_video"
 
     /**
      * Native ad shown in gallery templates staggered grid (in-feed placement).
@@ -672,7 +702,27 @@ object AdPlacement {
      *
      * Remote Config key: ad_reward_download_video
      */
-    const val REWARD_DOWNLOAD_VIDEO = "ad_reward_download_video"
+    const val REWARD_DOWNLOAD_VIDEO_1 = "ad_reward_download_video"
+
+    /**
+     * Rewarded ad shown when user wants to download video to gallery.
+     * Timing: User clicks download button → dialog appears → user watches ad → download proceeds.
+     * User MUST watch the full ad to earn the reward (download permission).
+     *
+     * Flow:
+     * 1. User clicks download button (ad icon instead of download icon)
+     * 2. Dialog shows: "Watch an ad to download your video?"
+     * 3. User taps "Watch Ad" → Ad loads and plays
+     * 4. User watches full ad → onUserEarnedReward callback
+     * 5. Download proceeds automatically
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/4370724539  (Pro_RI_high_download)
+     * - Secondary: ca-app-pub-7121075950716954/6805316184  (Pro_RI_all_download)
+     *
+     * Remote Config key: ad_reward_inter_download_video
+     */
+    const val REWARD_INTER_DOWNLOAD_VIDEO = "ad_reward_inter_download_video"
 
     /**
      * Rewarded ad shown when user taps watermark to remove it.
@@ -828,6 +878,7 @@ object AdPlacement {
         BANNER_ASSET_PICKER,
         BANNER_EDITOR,
         BANNER_EXPORT,
+        NATIVE_WELCOME_BACK,
         NATIVE_ONBOARDING_LANGUAGE,
         NATIVE_ONBOARDING_LANGUAGE_ALT,
         NATIVE_ONBOARDING_PAGE1,
@@ -839,7 +890,7 @@ object AdPlacement {
         NATIVE_SEARCH_INFEED,
         NATIVE_UNINSTALL_BOTTOM,
         NATIVE_WIDGET_BOTTOM,
-        NATIVE_PROJECTS_GRID,
+        NATIVE_LIBRARY_CREATED_VIDEO,
         NATIVE_HOME_BANNER,
         NATIVE_GALLERY_GRID,
         NATIVE_GALLERY_HOT_TPT,
@@ -852,7 +903,7 @@ object AdPlacement {
         NATIVE_ONBOARDING_SELECT_MUSIC,
         NATIVE_ONBOARDING_SELECT_TPT,
         NATIVE_ONBOARDING_PERSONALIZING,
-        REWARD_DOWNLOAD_VIDEO,
+        REWARD_INTER_DOWNLOAD_VIDEO,
         REWARD_REMOVE_WATERMARK,
         REWARD_UNLOCK_QUALITY,
         REWARD_UNLOCK_EFFECT_SET,

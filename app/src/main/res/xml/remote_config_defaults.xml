@@ -125,8 +125,8 @@
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/6084726491","enabled":true},{"id":"ca-app-pub-7121075950716954/3468887588","enabled":true}],"extras":{"layout":"native_big_clean","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
-    <key>ad_native_projects_grid</key>
-    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/6293185105","enabled":true},{"id":"ca-app-pub-7121075950716954/6536223106","enabled":true}],"extras":{"layout":"native_project_card","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+    <key>ad_native_library_created_video</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/4667301062","enabled":true},{"id":"ca-app-pub-7121075950716954/6996887879","enabled":true}],"extras":{"layout":"native_project_card","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
     <key>ad_native_export_generating</key>
@@ -179,8 +179,8 @@
     <value>{"enabled":true,"type":"rewarded","units":[{"id":"ca-app-pub-7121075950716954/1281667047","enabled":true},{"id":"ca-app-pub-7121075950716954/4323092928","enabled":true}]}</value>
   </entry>
   <entry>
-    <key>ad_reward_download_video</key>
-    <value>{"enabled":true,"type":"rewarded","units":[{"id":"ca-app-pub-7121075950716954/4051154821","enabled":true},{"id":"ca-app-pub-7121075950716954/6681333380","enabled":true}]}</value>
+    <key>ad_reward_inter_download_video</key>
+    <value>{"enabled":true,"type":"rewardedInterstitial","units":[{"id":"ca-app-pub-7121075950716954/4370724539","enabled":true},{"id":"ca-app-pub-7121075950716954/6805316184","enabled":true}]}</value>
   </entry>
 
   <!-- Ad Placements - Banner -->

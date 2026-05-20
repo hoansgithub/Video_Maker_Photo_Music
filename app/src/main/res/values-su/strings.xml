@@ -554,4 +554,9 @@
     <string name="notif_cta_continue_editing">Terus Nyunting</string>
     <string name="notif_cta_view_template">Tingali Citakan</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Wilujeng sumping deui!</string>
+    <string name="welcome_back_subtitle">Ieu anu anyar dina minggu ieu:</string>
+    <string name="welcome_back_vibe_tags">• 12 rilis anyar • 3 rokét tren 🚀</string>
+    <string name="welcome_back_continue">Teraskeun</string>
 </resources>

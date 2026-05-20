@@ -44,7 +44,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -55,21 +54,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.shadow
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -92,7 +85,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.text.font.FontWeight
@@ -119,7 +111,6 @@ import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.modules.rate.RatingFeedbackPopup
 import com.videomaker.aimusic.modules.rate.RatingSatisfactionPopup
 import com.videomaker.aimusic.modules.rate.RatingStarsPopup
-import com.videomaker.aimusic.modules.rate.RatingStep
 import com.videomaker.aimusic.modules.rate.RatingStep.*
 import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
 import com.videomaker.aimusic.ui.components.NotificationPermissionPromoDialog
@@ -586,12 +577,13 @@ fun ExportScreen(
         // Handle download ad presentation using reusable presenter
         RewardedAdPresenter(
             shouldPresent = shouldPresentDownloadAd,
-            placement = AdPlacement.REWARD_DOWNLOAD_VIDEO,
+            placement = AdPlacement.REWARD_INTER_DOWNLOAD_VIDEO,
             adsLoaderService = adsLoaderService,
             onRewardEarned = viewModel::onDownloadRewardEarned,
             onAdFailed = viewModel::onDownloadAdFailed,
             onAdShown = { pauseSuccessPreviewForAd = true },
-            onAdClosed = { pauseSuccessPreviewForAd = false }
+            onAdClosed = { pauseSuccessPreviewForAd = false },
+            isInterstitial = true
         )
 
         // Handle watermark ad presentation using reusable presenter
