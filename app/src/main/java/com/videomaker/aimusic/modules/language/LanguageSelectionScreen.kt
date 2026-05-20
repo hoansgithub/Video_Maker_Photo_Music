@@ -267,7 +267,6 @@ fun LanguageSelectionScreen(
                         fontSize = 32.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onBackground,
-                        textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -277,7 +276,6 @@ fun LanguageSelectionScreen(
                         text = stringResource(R.string.language_select_subtitle),
                         fontSize = 17.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
 
