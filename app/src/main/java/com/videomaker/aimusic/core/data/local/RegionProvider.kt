@@ -4,7 +4,6 @@ import android.content.Context
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.core.os.ConfigurationCompat
-import com.videomaker.aimusic.BuildConfig
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -27,10 +26,10 @@ import java.net.URL
  * - region_detection_config.use_ip_geolocation: Enable IP detection in production
  * - region_detection_config.ip_timeout_ms: Timeout for IP detection (default: 5000ms)
  *
- * Used by SongRepositoryImpl and TemplateRepositoryImpl to filter and prioritize content:
- * - Priority 1: Content targeting user's region (target_regions = ["us"])
- * - Priority 2: Explicit global content (target_regions = ["all"])
- * - Priority 3: Implicit global content (target_regions = [] empty)
+ * Used by SongRepositoryImpl and TemplateRepositoryImpl to filter and prioritize content.
+ * Region-based sorting is handled by `song_region_sort` table (JOIN in RPC functions).
+ * `songs.target_regions` is metadata — a song can belong to multiple catalogs:
+ * - ["gl"] = global catalog, ["us"] = US catalog, ["gl","us"] = both, etc.
  */
 class RegionProvider(
     private val context: Context,

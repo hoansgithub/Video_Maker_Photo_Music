@@ -58,7 +58,7 @@ koin = "4.2.0"  # Matches ACCCoreAndroid
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.41"  # Latest: v0.0.41 release
+acccore = "0.0.42"  # Latest: v0.0.42 - fix(ads): remove hardcoded OnboardingActivity checks
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)
