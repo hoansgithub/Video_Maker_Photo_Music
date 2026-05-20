@@ -23,7 +23,10 @@ class TrendingPopupSelector(
         val candidates = templateRepository.getTemplates(limit = TOP_K, offset = 0)
             .getOrNull()
             .orEmpty()
-        val eligible = candidates.filter { it.id !in excludeIds }
+        // songId <= 0 means the template carries no music; the popup CTA path
+        // (overrideSongId = -1) would then create a project with NO music applied.
+        // Exclude such templates so the popup never showcases a silent template.
+        val eligible = candidates.filter { it.id !in excludeIds && it.songId > 0L }
         return eligible.randomOrNull(random)
     }
 

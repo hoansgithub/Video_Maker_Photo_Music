@@ -166,8 +166,8 @@ fun OnboardingScreen(
                     DynamicCarousel(
                         thumbnailUrls = contentState.page3Thumbnails,
                         localFallbackResIds = contentState.page3LocalFallbacks,
-                        title = stringResource(R.string.onboarding_page3_title),
-                        subtitle = stringResource(R.string.onboarding_page3_subtitle),
+                        title = stringResource(R.string.onboarding_india_page3_title),
+                        subtitle = stringResource(R.string.onboarding_india_page3_subtitle),
                         ctaText = stringResource(R.string.onboarding_next),
                         onCta = {
                             Analytics.track(name = "onboarding_3_next", params = emptyMap())
@@ -202,7 +202,7 @@ fun OnboardingScreen(
                         R.string.onboarding_page2_title
                     }
                     val subtitleRes = if (pageData.pageIndex == 0) {
-                        R.string.onboarding_page1_subtitle
+                        R.string.onboarding_india_page1_subtitle
                     } else {
                         R.string.onboarding_page2_subtitle
                     }
