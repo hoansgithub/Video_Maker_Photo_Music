@@ -20,7 +20,7 @@
     <string name="onboarding_get_started">शुरू करें</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">हर दिन अपडेट किए जाने वाले ताज़ा, उपयोग के लिए तैयार टेम्पलेट्स के साथ आगे बने रहें।</string>
-    <string name="onboarding_india_page3_title">रोज़ाना ट्रेंडिंग टेम्पलेट्स पकड़ें</string>
+    <string name="onboarding_india_page3_title">ट्रेंडिंग टेम्पलेट्स पकड़ें</string>
     <string name="onboarding_india_page3_subtitle">हर दिन अपडेट किए जाने वाले ताज़ा, उपयोग के लिए तैयार टेम्पलेट्स के साथ आगे बने रहें।</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">सेकंड में जादू बनाएं</string>
@@ -554,4 +554,10 @@
     <string name="welcome_back_subtitle">इस सप्ताह नया क्या है:</string>
     <string name="welcome_back_vibe_tags">• 12 नए गाने • 3 ट्रेंडिंग रॉकेट 🚀</string>
     <string name="welcome_back_continue">जारी रखें</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">मिस मत करो</string>
+    <string name="popup_premium_song">प्रीमियम गाना</string>
+    <string name="popup_premium_template">प्रीमियम टेम्पलेट</string>
+    <string name="popup_try_it_now">अभी आज़माएं</string>
 </resources>

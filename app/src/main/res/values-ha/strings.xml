@@ -23,7 +23,7 @@
     <string name="onboarding_get_started">Fara</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Kasance a gaban kowane kamya da sababbin templates masu sabuntawa kullum.</string>
-    <string name="onboarding_india_page3_title">Kama templates masu trending kullum</string>
+    <string name="onboarding_india_page3_title">Kama templates masu trending</string>
     <string name="onboarding_india_page3_subtitle">Kasance a gaban kowane kamya da sababbin templates masu sabuntawa kullum.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Ƙirƙira Al\'ajabi a Daƙiƙa Kaɗan</string>
@@ -559,4 +559,10 @@
     <string name="welcome_back_subtitle">Ga abin da ke sabo a wannan makon:</string>
     <string name="welcome_back_vibe_tags">• 12 sabbin fitarwa • 3 roka masu tasiri 🚀</string>
     <string name="welcome_back_continue">Ci gaba</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Kar ka rasa shi</string>
+    <string name="popup_premium_song">Waƙar Premium</string>
+    <string name="popup_premium_template">Template na Premium</string>
+    <string name="popup_try_it_now">Gwada yanzu</string>
 </resources>

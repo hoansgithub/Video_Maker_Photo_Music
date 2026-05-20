@@ -32,7 +32,7 @@
     <string name="onboarding_page3_subtitle">Better together. Invite friends to share the fun</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Stay ahead of the curve with fresh, ready-to-use templates updated every day.</string>
-    <string name="onboarding_india_page3_title">Catch trending templates daily</string>
+    <string name="onboarding_india_page3_title">Catch Trending Templates</string>
     <string name="onboarding_india_page3_subtitle">Stay ahead of the curve with fresh, ready-to-use templates updated every day.</string>
     <string name="onboarding_swipe_next">Swipe to next</string>
     <string name="onboarding_exit_title">Exit Setup?</string>
@@ -567,5 +567,11 @@
     <string name="welcome_back_subtitle">Here\'s what new this week:</string>
     <string name="welcome_back_vibe_tags">• 12 drops • 3 trending rockets 🚀</string>
     <string name="welcome_back_continue">Continue</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">DON\'T MISS IT</string>
+    <string name="popup_premium_song">Premium Song</string>
+    <string name="popup_premium_template">Premium Template</string>
+    <string name="popup_try_it_now">Try it now</string>
 
 </resources>

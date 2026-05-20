@@ -259,7 +259,7 @@ fun LanguageSelectionScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                     } else {
-                        Spacer(modifier = Modifier.height(25.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
                     }
 
                     Text(
@@ -267,7 +267,6 @@ fun LanguageSelectionScreen(
                         fontSize = 32.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onBackground,
-                        textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -277,7 +276,6 @@ fun LanguageSelectionScreen(
                         text = stringResource(R.string.language_select_subtitle),
                         fontSize = 17.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -318,20 +316,22 @@ fun LanguageSelectionScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .align(Alignment.BottomEnd)
-                            .paint(
-                                painter = painterResource(R.drawable.img_bg_cta_onboard),
-                                contentScale = ContentScale.Crop
-                            )
                             .then(
                                 if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
                                 else Modifier
                             )
                             .clickableSingle{}
                     ) {
+                        Image(
+                            painter = painterResource(R.drawable.img_bg_cta_onboard),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.matchParentSize()
+                        )
                         Box(
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
-                                .padding(18.dp)
+                                .padding(top = 10.dp, bottom = 12.dp)
                                 .onGloballyPositioned { coords ->
                                     val topLeft = coords.positionInRoot()
                                     ctaButtonOffset = topLeft + Offset(coords.size.width / 2f, 0f)
@@ -663,17 +663,21 @@ private fun CursorOverlay(
                 val rawTarget = languageCardOffsets[firstVisibleCode] ?: return@LaunchedEffect
                 val target = rawTarget - hotspot
 
-                // Appear above target then slide in
-                cursorAnim.snapTo(Offset(target.x, target.y - with(density) { 48.dp.toPx() }))
-                cursorAnim.animateTo(target, animationSpec = tween(450, easing = EaseInOutCubic))
+                    // Appear above target then slide in
+                    cursorAnim.snapTo(Offset(target.x, target.y - with(density) { 48.dp.toPx() }))
+                    cursorAnim.animateTo(
+                        target,
+                        animationSpec = tween(450, easing = EaseInOutCubic)
+                    )
+                while (true) {
+                    // Single tap bounce
+                    cursorAnim.animateTo(target + Offset(0f, bouncePx), animationSpec = tween(150))
+                    cursorAnim.animateTo(target, animationSpec = tween(150))
+                    delay(300)
+                }
 
-                // Single tap bounce
-                cursorAnim.animateTo(target + Offset(0f, bouncePx), animationSpec = tween(150))
-                cursorAnim.animateTo(target, animationSpec = tween(150))
-                delay(300)
-
-                onSelectLanguage(firstVisibleCode)
-                delay(400)
+//                onSelectLanguage(firstVisibleCode)
+//                delay(400)
             }
         }
 

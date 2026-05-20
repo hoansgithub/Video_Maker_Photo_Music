@@ -23,7 +23,7 @@
     <string name="onboarding_get_started">Mimitian</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Tetep di payun kalawan citakan seger anu di-update unggal poé.</string>
-    <string name="onboarding_india_page3_title">Panggihan citakan trending unggal poé</string>
+    <string name="onboarding_india_page3_title">Panggihan citakan trending</string>
     <string name="onboarding_india_page3_subtitle">Tetep di payun kalawan citakan seger anu di-update unggal poé.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Nyieun Kajaiban dina Sababaraha Detik</string>
@@ -559,4 +559,10 @@
     <string name="welcome_back_subtitle">Ieu anu anyar dina minggu ieu:</string>
     <string name="welcome_back_vibe_tags">• 12 rilis anyar • 3 rokét tren 🚀</string>
     <string name="welcome_back_continue">Teraskeun</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Ulah Kaleungitan</string>
+    <string name="popup_premium_song">Lagu Premium</string>
+    <string name="popup_premium_template">Template Premium</string>
+    <string name="popup_try_it_now">Coba ayeuna</string>
 </resources>

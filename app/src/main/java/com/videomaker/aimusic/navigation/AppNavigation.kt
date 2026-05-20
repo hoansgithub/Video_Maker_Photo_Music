@@ -18,12 +18,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
@@ -33,6 +35,11 @@ import androidx.navigation3.ui.NavDisplay
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
+import com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
+import com.videomaker.aimusic.core.popup.TrendingPopupNavEvent
+import com.videomaker.aimusic.core.popup.TrendingPopupState
+import com.videomaker.aimusic.ui.components.PopupTrendingSong
+import com.videomaker.aimusic.ui.components.PopupTrendingTemplate
 import com.videomaker.aimusic.di.AssetPickerViewModelFactory
 import com.videomaker.aimusic.di.EditorViewModelFactory
 import com.videomaker.aimusic.di.ExportViewModelFactory
@@ -121,6 +128,39 @@ fun AppNavigation(
 ) {
     val activity = LocalContext.current as? Activity
     val backStack = rememberNavBackStack(AppRoute.Home(initialTab = initialHomeTab.coerceIn(0, 2)))
+
+    // Trending popup rendered at the navigation level so it survives navigation pushes
+    // (e.g., shortcut deep-link pushes TemplateList; Dialog must persist across that switch).
+    val trendingPopupCoordinator = koinInject<TrendingPopupCoordinator>()
+    val templatePopupState by trendingPopupCoordinator.templatePopup.collectAsStateWithLifecycle()
+    val songPopupState by trendingPopupCoordinator.songPopup.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        trendingPopupCoordinator.navigationEvent.collect { event ->
+            when (event) {
+                is TrendingPopupNavEvent.OpenTemplatePreviewer -> {
+                    if (event.overrideSongId > 0L) {
+                        backStack.add(
+                            AppRoute.TemplatePreviewer(
+                                templateId = "",
+                                imageUris = emptyList(),
+                                overrideSongId = event.overrideSongId,
+                                sourceLocation = AnalyticsEvent.Value.Location.SONG
+                            )
+                        )
+                    } else {
+                        backStack.add(
+                            AppRoute.TemplatePreviewer(
+                                templateId = event.templateId,
+                                imageUris = emptyList(),
+                                sourceLocation = event.sourceLocation
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     LaunchedEffect(showWelcomeBack) {
         if (showWelcomeBack) {
@@ -732,6 +772,24 @@ fun AppNavigation(
             }
         }
     )
+
+    // Trending popups rendered at navigation level (outside NavDisplay) so the Dialog
+    // persists when the back stack changes (e.g., shortcut pushing TemplateList).
+    (templatePopupState as? TrendingPopupState.Showing)?.let { showing ->
+        PopupTrendingTemplate(
+            item = showing.content,
+            onCTA = { trendingPopupCoordinator.onTemplatePopupCta(showing.content) },
+            onDismiss = { trendingPopupCoordinator.onTemplatePopupDismissed() }
+        )
+    }
+
+    (songPopupState as? TrendingPopupState.Showing)?.let { showing ->
+        PopupTrendingSong(
+            item = showing.content,
+            onCTA = { trendingPopupCoordinator.onSongPopupCta(showing.content) },
+            onDismiss = { trendingPopupCoordinator.onSongPopupDismissed() }
+        )
+    }
 }
 
 /**

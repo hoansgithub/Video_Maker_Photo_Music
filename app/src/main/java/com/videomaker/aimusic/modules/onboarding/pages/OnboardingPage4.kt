@@ -112,7 +112,7 @@ fun FeatureSurveyPage(
             fontSize = 28.sp,
             fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(Modifier.height(10.dp))
@@ -121,7 +121,7 @@ fun FeatureSurveyPage(
             text = stringResource(R.string.onboarding_page4_subtitle),
             fontSize = 17.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(Modifier.height(32.dp))  // Reduced from 36dp to 32dp

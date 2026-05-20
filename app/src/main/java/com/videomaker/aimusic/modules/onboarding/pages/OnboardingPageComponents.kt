@@ -49,6 +49,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.text.style.TextAlign
 import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import coil.compose.SubcomposeAsyncImage
@@ -196,6 +199,7 @@ internal fun WelcomePageDynamic(
     onCta: () -> Unit,
     pageIndex: Int = 0
 ) {
+    var bottomSectionHeight by remember { mutableStateOf(0) }
     val adPlacement = when (pageIndex) {
         0 -> AdPlacement.NATIVE_ONBOARDING_PAGE1
         1 -> AdPlacement.NATIVE_ONBOARDING_PAGE2
@@ -399,49 +403,31 @@ internal fun WelcomePageDynamic(
                 )
             }
         }
+        if (bottomSectionHeight == 0){
+            Spacer(Modifier.height(32.dp))
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
 
         // Title/Subtitle + CTA Button Row
-        Row(
+        Text(
+            text = title,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color.White,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.0f),
-                            Color.Black.copy(alpha = 0.5f),
-                            Color.Black.copy(alpha = 0.75f),
-                            Color.Black.copy(alpha = 1.0f)
-                        )
-                    )
-                )
-                .padding(horizontal = 24.dp)
-                .padding(top = 40.dp, bottom = 32.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = 16.dp)
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 32.dp, bottom = 16.dp),
+            contentAlignment = Alignment.BottomEnd
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 16.dp)
-            ) {
-                Text(
-                    text = title,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = subtitle,
-                    fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.9f),
-                    lineHeight = 22.sp,
-                    maxLines = 4,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
 
             OnboardingCtaButton(
                 text = ctaText,
@@ -451,9 +437,20 @@ internal fun WelcomePageDynamic(
             )
         }
 
+        if (bottomSectionHeight == 0){
+            Spacer(Modifier.weight(1f))
+        }
+
         // Native Ad at bottom
         if (adPlacement != null) {
-            Box(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { size ->
+                        bottomSectionHeight =
+                            size.height  // Measure actual height dynamically!
+                    }
+            ) {
                 NativeAdView(
                     placement = adPlacement,
                     modifier = Modifier.fillMaxWidth(),
@@ -479,6 +476,7 @@ internal fun DynamicCarousel(
     onCta: () -> Unit,
     pageIndex: Int = 0
 ) {
+    var bottomSectionHeight by remember { mutableStateOf(0) }
     val totalSlides = maxOf(1, thumbnailUrls.size + localFallbackResIds.size)
     val pagerState = rememberPagerState(pageCount = { totalSlides })
 
@@ -571,64 +569,54 @@ internal fun DynamicCarousel(
             }
         }
 
-        // Title/Subtitle + CTA overlay
+        if (bottomSectionHeight == 0){
+            Spacer(Modifier.height(32.dp))
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
+        // Title/Subtitle + CTA Button Row
+        Text(
+            text = title,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color.White,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.0f),
-                            Color.Black.copy(alpha = 0.5f),
-                            Color.Black.copy(alpha = 0.75f),
-                            Color.Black.copy(alpha = 1.0f)
-                        )
-                    )
-                )
-                .padding(horizontal = 24.dp)
-                .padding(top = 40.dp, bottom = 32.dp)
+                .padding(top = 32.dp, bottom = 16.dp),
+            contentAlignment = Alignment.BottomEnd
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 16.dp)
-                ) {
-                    Text(
-                        text = title,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color.White,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        text = subtitle,
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.9f),
-                        lineHeight = 22.sp,
-                        maxLines = 4,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
 
-                OnboardingCtaButton(
-                    text = ctaText,
-                    onClick = onCta,
-                    color = Primary,
-                    icon = R.drawable.ic_right_arrow
-                )
-            }
+            OnboardingCtaButton(
+                text = ctaText,
+                onClick = onCta,
+                color = Primary,
+                icon = R.drawable.ic_right_arrow
+            )
+        }
+
+
+        if (bottomSectionHeight == 0){
+            Spacer(Modifier.weight(1f))
         }
 
         // Native Ad at bottom
         if (adPlacement != null) {
-            Box(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { size ->
+                        bottomSectionHeight =
+                            size.height  // Measure actual height dynamically!
+                    }
+            ) {
                 NativeAdView(
                     placement = adPlacement,
                     modifier = Modifier.fillMaxWidth(),

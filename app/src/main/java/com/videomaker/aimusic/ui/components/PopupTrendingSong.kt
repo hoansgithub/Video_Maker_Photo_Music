@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -100,7 +101,7 @@ fun PopupTrendingSong(
                 }
 
                 Text(
-                    text = "DON'T MISS IT",
+                    text = stringResource(R.string.popup_dont_miss_it),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.W900,
                     fontSize = 34.sp,
@@ -161,7 +162,7 @@ fun PopupTrendingSong(
 
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    text = "Premium Song".uppercase(),
+                    text = stringResource(R.string.popup_premium_song).uppercase(),
                     fontWeight = FontWeight.W500,
                     fontStyle = FontStyle.Italic,
                     fontSize = 12.sp,
@@ -202,7 +203,7 @@ fun PopupTrendingSong(
                 )
                 Spacer(Modifier.height(32.dp))
                 CTAPrimaryButton(
-                    text = "Try it now"
+                    text = stringResource(R.string.popup_try_it_now)
                 ) {
                     onCTA()
                 }
