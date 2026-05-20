@@ -629,6 +629,38 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Trending template popup native ad (bottom of "Don't miss it" popup, Gallery tab)
+        // TEMP units borrowed from NATIVE_ONBOARDING_SELECT_TPT: onboarding-only,
+        // never loads concurrently with Gallery browsing → avoids ad-unit contention.
+        // TODO: replace with dedicated AdMob native units.
+        // Layout: native_big_bait (matches remote_config_defaults.xml)
+        // Waterfall: Primary unit -> Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_POPUP_TRENDING_TEMPLATE,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/8457835867",  // Primary (NA_high_lib)
+                "ca-app-pub-7121075950716954/8266264176"   // Secondary (NA_all_lib)
+            ),
+            enabled = true
+        )
+
+        // Trending song popup native ad (bottom of "Don't miss it" popup, Songs tab)
+        // TEMP units borrowed from NATIVE_ONBOARDING_SELECT_MUSIC: onboarding-only,
+        // never loads concurrently with Songs browsing → avoids ad-unit contention.
+        // TODO: replace with dedicated AdMob native units.
+        // Layout: native_big_bait (matches remote_config_defaults.xml)
+        // Waterfall: Primary unit -> Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_POPUP_TRENDING_SONG,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/8457835867",  // NA_high_select_music
+                "ca-app-pub-7121075950716954/8266264176"   // NA_all_select_music
+            ),
+            enabled = true
+        )
+
         // Home Banner Native Ad (replaces standard banner)
         // Shown at the bottom of the Home screen, shared across tabs
         // Layout: native_small_row (horizontal row) to fit the banner dimensions

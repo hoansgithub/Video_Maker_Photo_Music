@@ -229,6 +229,13 @@ object AnalyticsEvent {
     const val REWARD_POPUP_BTN = "reward_popup_btn"
 
     // ============================================
+    // 23. TRENDING POPUP
+    // ============================================
+    const val TRENDING_POPUP_SHOW = "trending_popup_show"
+    const val TRENDING_POPUP_CTA = "trending_popup_cta"
+    const val TRENDING_POPUP_DISMISS = "trending_popup_dismiss"
+
+    // ============================================
     // PARAMETER KEYS
     // ============================================
     object Param {
@@ -374,6 +381,10 @@ object AnalyticsEvent {
             // Song list screens
             const val SUGGESTED_SONGS = "suggested_songs"
             const val WEEKLY_RANKING = "weekly_ranking"
+
+            // Trending popup source locations
+            const val POPUP_TRENDING_TEMPLATE = "popup_trending_template"
+            const val POPUP_TRENDING_SONG = "popup_trending_song"
         }
 
         object Section {

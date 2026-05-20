@@ -394,7 +394,7 @@ internal fun WelcomePageDynamic(
             ) {
                 Text(
                     text = title,
-                    fontSize = 28.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White,
                     maxLines = 2,
@@ -403,10 +403,10 @@ internal fun WelcomePageDynamic(
                 Spacer(Modifier.height(12.dp))
                 Text(
                     text = subtitle,
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     color = Color.White.copy(alpha = 0.9f),
                     lineHeight = 22.sp,
-                    maxLines = 2,
+                    maxLines = 4,
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -568,7 +568,7 @@ internal fun DynamicCarousel(
                 ) {
                     Text(
                         text = title,
-                        fontSize = 28.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = Color.White,
                         maxLines = 2,
@@ -577,10 +577,10 @@ internal fun DynamicCarousel(
                     Spacer(Modifier.height(12.dp))
                     Text(
                         text = subtitle,
-                        fontSize = 16.sp,
+                        fontSize = 14.sp,
                         color = Color.White.copy(alpha = 0.9f),
                         lineHeight = 22.sp,
-                        maxLines = 2,
+                        maxLines = 4,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
@@ -699,7 +699,7 @@ internal fun IndiaPage3Carousel(
                     ) {
                         Text(
                             text = title,
-                            fontSize = 28.sp,
+                            fontSize = 24.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White,
                             maxLines = 2,
@@ -708,10 +708,10 @@ internal fun IndiaPage3Carousel(
                         Spacer(Modifier.height(12.dp))
                         Text(
                             text = subtitle,
-                            fontSize = 16.sp,
+                            fontSize = 14.sp,
                             color = Color.White.copy(alpha = 0.9f),
                             lineHeight = 22.sp,
-                            maxLines = 2,
+                            maxLines = 4,
                             overflow = TextOverflow.Ellipsis
                         )
                     }

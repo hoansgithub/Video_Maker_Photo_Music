@@ -633,6 +633,22 @@ object AdPlacement {
     const val NATIVE_TEMPLATE_RATIO_SHEET = "ad_native_template_ratio_sheet"
 
     /**
+     * Native ad shown at the bottom of the trending template popup (Gallery tab).
+     * Fallback default: ad units of NATIVE_TEMPLATE_PREVIEWER_LOADING.
+     *
+     * Remote Config key: ad_native_popup_trending_template
+     */
+    const val NATIVE_POPUP_TRENDING_TEMPLATE = "ad_native_popup_trending_template"
+
+    /**
+     * Native ad shown at the bottom of the trending song popup (Songs tab).
+     * Fallback default: ad units of NATIVE_SONGS_STATION.
+     *
+     * Remote Config key: ad_native_popup_trending_song
+     */
+    const val NATIVE_POPUP_TRENDING_SONG = "ad_native_popup_trending_song"
+
+    /**
      * Native ad shown at bottom of onboarding genre selection screen.
      * NA_high_select_music (primary) → NA_all_select_music (secondary waterfall).
      *
@@ -881,6 +897,8 @@ object AdPlacement {
         NATIVE_SONGS_STATION,
         NATIVE_TEMPLATE_PREVIEWER_LOADING,
         NATIVE_TEMPLATE_RATIO_SHEET,
+        NATIVE_POPUP_TRENDING_TEMPLATE,
+        NATIVE_POPUP_TRENDING_SONG,
         NATIVE_EXPORT_GENERATING,
         NATIVE_ONBOARDING_SELECT_MUSIC,
         NATIVE_ONBOARDING_SELECT_TPT,

@@ -6,17 +6,22 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
- * TransitionSetLibrary - Loads effect sets from JSON
+ * TransitionSetLibrary - Resolves effect set IDs to EffectSet objects with transitions.
  *
- * Each set contains multiple transitions with a common visual theme.
- * When a set is selected, transitions are cycled through for variety.
- *
- * Effect sets are loaded from assets/effect_sets.json
+ * Priority: Supabase (remote cache) -> Local JSON (fallback).
+ * Remote cache is populated by EffectSetRepositoryImpl after fetching from Supabase.
+ * Local JSON serves as offline fallback only.
  */
 object TransitionSetLibrary {
 
     private var context: Context? = null
-    private var cachedSets: List<EffectSet>? = null
+
+    /** Local JSON cache (offline fallback). */
+    private var localCache: List<EffectSet>? = null
+
+    /** Remote cache from Supabase — prioritized over local JSON. Thread-safe via volatile + immutable map. */
+    @Volatile
+    private var remoteCache: Map<String, EffectSet> = emptyMap()
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -32,10 +37,24 @@ object TransitionSetLibrary {
     }
 
     /**
-     * Load effect sets from JSON file
+     * Register effect sets fetched from Supabase.
+     * Only registers sets that have resolved transitions.
+     * Thread-safe: synchronized to prevent lost updates from concurrent page loads.
      */
-    private fun loadSets(): List<EffectSet> {
-        cachedSets?.let { return it }
+    @Synchronized
+    fun registerRemote(effectSets: List<EffectSet>) {
+        val updated = remoteCache.toMutableMap()
+        effectSets
+            .filter { it.transitions.isNotEmpty() }
+            .forEach { updated[it.id] = it }
+        remoteCache = updated.toMap()
+    }
+
+    /**
+     * Load effect sets from local JSON file (offline fallback).
+     */
+    private fun loadLocalSets(): List<EffectSet> {
+        localCache?.let { return it }
 
         val ctx = context ?: throw IllegalStateException(
             "TransitionSetLibrary not initialized. Call init(context) first."
@@ -61,37 +80,50 @@ object TransitionSetLibrary {
                 )
             }.filter { it.transitions.isNotEmpty() && it.isActive }
 
-            cachedSets = sets
+            localCache = sets
             sets
         } catch (e: Exception) {
-            android.util.Log.e("TransitionSetLibrary", "Failed to load effect sets", e)
+            android.util.Log.e("TransitionSetLibrary", "Failed to load local effect sets", e)
             emptyList()
         }
     }
 
-    fun getAll(): List<EffectSet> = loadSets()
-
-    fun getById(id: String): EffectSet? = loadSets().find { it.id == id }
-
-    fun getDefault(): EffectSet = loadSets().firstOrNull()
-        ?: EffectSet(
-            id = "default",
-            name = "Default",
-            description = "Default transitions",
-            thumbnailUrl = "",
-            isPremium = false,
-            transitions = listOfNotNull(TransitionShaderLibrary.getDefault())
-        )
-
-    fun getFree(): List<EffectSet> = loadSets().filter { !it.isPremium }
-
-    fun getPremium(): List<EffectSet> = loadSets().filter { it.isPremium }
+    fun getAll(): List<EffectSet> {
+        // Merge: remote overrides local by ID
+        val local = loadLocalSets().associateBy { it.id }
+        return (local + remoteCache).values.toList()
+    }
 
     /**
-     * Clear cached sets (useful for development hot reload)
+     * Lookup by ID: remote first, then local fallback.
+     */
+    fun getById(id: String): EffectSet? =
+        remoteCache[id] ?: loadLocalSets().find { it.id == id }
+
+    fun getDefault(): EffectSet {
+        val remote = remoteCache.values.firstOrNull()
+        if (remote != null) return remote
+        return loadLocalSets().firstOrNull()
+            ?: EffectSet(
+                id = "default",
+                name = "Default",
+                description = "Default transitions",
+                thumbnailUrl = "",
+                isPremium = false,
+                transitions = listOfNotNull(TransitionShaderLibrary.getDefault())
+            )
+    }
+
+    fun getFree(): List<EffectSet> = getAll().filter { !it.isPremium }
+
+    fun getPremium(): List<EffectSet> = getAll().filter { it.isPremium }
+
+    /**
+     * Clear all caches (useful for development hot reload).
      */
     fun clearCache() {
-        cachedSets = null
+        localCache = null
+        remoteCache = emptyMap()
     }
 }
 

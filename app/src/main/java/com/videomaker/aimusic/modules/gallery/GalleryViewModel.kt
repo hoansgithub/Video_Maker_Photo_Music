@@ -77,8 +77,16 @@ class GalleryViewModel(
     private val application: Application,
     private val imageLoader: ImageLoader,
     private val templateRepository: TemplateRepository,
-    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
+    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
 ) : ViewModel() {
+
+    /** Called by HomeScreen when the Gallery tab settles into focus. */
+    fun onTabFocused() {
+        trendingPopupCoordinator.onTabFocused(
+            com.videomaker.aimusic.core.popup.TrendingPopupTab.GALLERY
+        )
+    }
 
     private val _uiState = MutableStateFlow<GalleryUiState>(GalleryUiState.Loading)
     val uiState: StateFlow<GalleryUiState> = _uiState.asStateFlow()

@@ -37,6 +37,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -60,7 +61,12 @@ import com.videomaker.aimusic.modules.home.components.ProjectsTabContent
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.songs.SongsScreen
 import com.videomaker.aimusic.modules.songs.SongsViewModel
+import com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
+import com.videomaker.aimusic.core.popup.TrendingPopupNavEvent
+import com.videomaker.aimusic.core.popup.TrendingPopupState
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import com.videomaker.aimusic.ui.components.PopupTrendingSong
+import com.videomaker.aimusic.ui.components.PopupTrendingTemplate
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.PrimaryDark
 import com.videomaker.aimusic.ui.theme.TextInactive
@@ -112,6 +118,9 @@ fun HomeScreen(
     val context = LocalContext.current
     val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
     val adsLoaderService = koinInject<AdsLoaderService>()
+    val trendingPopupCoordinator = koinInject<TrendingPopupCoordinator>()
+    val templatePopupState by trendingPopupCoordinator.templatePopup.collectAsStateWithLifecycle()
+    val songPopupState by trendingPopupCoordinator.songPopup.collectAsStateWithLifecycle()
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -192,7 +201,43 @@ fun HomeScreen(
                     hasSentInitialTabView = true
                 }
                 lastSettledPage = settledPage
+
+                when (settledPage) {
+                    0 -> galleryViewModel.onTabFocused()
+                    1 -> songsViewModel.onTabFocused()
+                    else -> Unit
+                }
             }
+    }
+
+    LaunchedEffect(Unit) {
+        trendingPopupCoordinator.navigationEvent.collect { event ->
+            when (event) {
+                is TrendingPopupNavEvent.OpenTemplatePreviewer -> {
+                    if (event.overrideSongId > 0L) {
+                        onNavigateToTemplatePreviewerWithSong(event.overrideSongId)
+                    } else {
+                        onNavigateToTemplateDetail(event.templateId, event.sourceLocation)
+                    }
+                }
+            }
+        }
+    }
+
+    (templatePopupState as? TrendingPopupState.Showing)?.let { showing ->
+        PopupTrendingTemplate(
+            item = showing.content,
+            onCTA = { trendingPopupCoordinator.onTemplatePopupCta(showing.content) },
+            onDismiss = { trendingPopupCoordinator.onTemplatePopupDismissed() }
+        )
+    }
+
+    (songPopupState as? TrendingPopupState.Showing)?.let { showing ->
+        PopupTrendingSong(
+            item = showing.content,
+            onCTA = { trendingPopupCoordinator.onSongPopupCta(showing.content) },
+            onDismiss = { trendingPopupCoordinator.onSongPopupDismissed() }
+        )
     }
 
     Column(
