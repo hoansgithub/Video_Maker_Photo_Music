@@ -159,7 +159,7 @@ fun PopupTrendingSong(
                 }
 
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(12.dp))
                 Text(
                     text = "Premium Song".uppercase(),
                     fontWeight = FontWeight.W500,

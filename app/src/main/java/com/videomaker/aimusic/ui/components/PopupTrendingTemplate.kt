@@ -116,7 +116,7 @@ fun PopupTrendingTemplate(
                 ) {
                     Box(
                         modifier = Modifier
-                            .padding(top = 18.dp, end = 26.dp)
+                            .padding(top = 18.dp, end = 32.dp)
                             .rotate(-10.8f)
                             .clip(RoundedCornerShape(18.35.dp))
                             .width(159.64.dp)

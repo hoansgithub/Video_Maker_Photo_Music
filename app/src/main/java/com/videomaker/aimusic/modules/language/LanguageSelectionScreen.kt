@@ -259,7 +259,7 @@ fun LanguageSelectionScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                     } else {
-                        Spacer(modifier = Modifier.height(70.dp))
+                        Spacer(modifier = Modifier.height(25.dp))
                     }
 
                     Text(
