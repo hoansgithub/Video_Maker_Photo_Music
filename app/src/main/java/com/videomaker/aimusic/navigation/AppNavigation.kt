@@ -127,7 +127,18 @@ fun AppNavigation(
     showWelcomeBack: Boolean = false
 ) {
     val activity = LocalContext.current as? Activity
-    val backStack = rememberNavBackStack(AppRoute.Home(initialTab = initialHomeTab.coerceIn(0, 2)))
+    // When Welcome Back must be shown on cold start, seed it on TOP of Home so HomeScreen
+    // doesn't compose first (which would prematurely trigger the Trending Popup via
+    // onTabFocused). After the user taps Continue, WelcomeBack pops and Home composes,
+    // at which point the popup is allowed to evaluate normally.
+    val backStack = if (showWelcomeBack) {
+        rememberNavBackStack(
+            AppRoute.Home(initialTab = initialHomeTab.coerceIn(0, 2)),
+            AppRoute.WelcomeBack
+        )
+    } else {
+        rememberNavBackStack(AppRoute.Home(initialTab = initialHomeTab.coerceIn(0, 2)))
+    }
 
     // Trending popup rendered at the navigation level so it survives navigation pushes
     // (e.g., shortcut deep-link pushes TemplateList; Dialog must persist across that switch).
@@ -159,12 +170,6 @@ fun AppNavigation(
                     }
                 }
             }
-        }
-    }
-
-    LaunchedEffect(showWelcomeBack) {
-        if (showWelcomeBack) {
-            backStack.add(AppRoute.WelcomeBack)
         }
     }
 
