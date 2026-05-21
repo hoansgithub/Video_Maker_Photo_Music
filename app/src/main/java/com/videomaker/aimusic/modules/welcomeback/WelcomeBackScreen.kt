@@ -8,19 +8,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -85,14 +79,9 @@ fun WelcomeBackScreen(
                 .align(Alignment.TopCenter)
         )
 
+        // Content column — ad is last item, naturally at screen bottom edge
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(
-                        WindowInsetsSides.Horizontal + WindowInsetsSides.Top
-                    )
-                )
+            modifier = Modifier.fillMaxSize()
         ) {
             // Flexible top space — pushes text toward the button
             Spacer(modifier = Modifier.weight(1f))
@@ -144,30 +133,28 @@ fun WelcomeBackScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Fixed bottom section: CTA + Native ad (pre-reserved height)
-            Column(
+            // CTA button
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+            ) {
+                WelcomeBackCtaButton(
+                    text = stringResource(R.string.welcome_back_continue),
+                    onClick = onContinue
+                )
+            }
+
+            // Ad at bottom edge — min 304dp so button stays fixed even if no ad loads
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .navigationBarsPadding()
+                    .heightIn(min = 150.dp)
             ) {
-                Box(modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)) {
-                    WelcomeBackCtaButton(
-                        text = stringResource(R.string.welcome_back_continue),
-                        onClick = onContinue
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 304.dp)
-                ) {
-                    NativeAdView(
-                        placement = AdPlacement.NATIVE_WELCOME_BACK,
-                        modifier = Modifier.fillMaxWidth(),
-                        isDebug = BuildConfig.DEBUG
-                    )
-                }
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_WELCOME_BACK,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
+                )
             }
         }
     }

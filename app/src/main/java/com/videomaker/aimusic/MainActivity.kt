@@ -140,7 +140,8 @@ class MainActivity : AppCompatActivity() {
 
             // Show Welcome Back screen on cold start if session >= 2 and no deep links are active
             val isNormalLaunch = intent.action == Intent.ACTION_MAIN || intent.action == null
-            if (isNormalLaunch && pendingDeepLink == null && !navigateToUninstall && preferencesManager.getAppSessionId() >= 2) {
+            val isFromOnboarding = intent.getBooleanExtra(EXTRA_FROM_ONBOARDING, false)
+            if (isNormalLaunch && !isFromOnboarding && pendingDeepLink == null && !navigateToUninstall && preferencesManager.getAppSessionId() >= 2) {
                 showWelcomeBack = true
             }
         } else {
@@ -387,6 +388,7 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MainActivity"
         const val ACTION_UNINSTALL_APP = "com.videomaker.aimusic.action.UNINSTALL_APP"
         const val EXTRA_INITIAL_TAB = "extra_initial_tab"
+        const val EXTRA_FROM_ONBOARDING = "extra_from_onboarding"
 
         // SavedInstanceState keys
         private const val KEY_STARTUP_TAB = "startup_tab"

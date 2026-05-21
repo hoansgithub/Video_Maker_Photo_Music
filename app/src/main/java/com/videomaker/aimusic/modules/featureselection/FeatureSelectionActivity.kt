@@ -247,6 +247,7 @@ class FeatureSelectionActivity : AppCompatActivity() {
     private fun navigateToMain(initialTab: Int) {
         val intent = Intent(this, MainActivity::class.java)
             .putExtra(MainActivity.EXTRA_INITIAL_TAB, initialTab)
+            .putExtra(MainActivity.EXTRA_FROM_ONBOARDING, true)
         startActivity(intent)
         finish()
     }
