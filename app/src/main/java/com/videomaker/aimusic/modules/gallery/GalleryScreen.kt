@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -97,6 +98,8 @@ import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
 import com.videomaker.aimusic.ui.theme.SearchFieldBorder
 import com.videomaker.aimusic.ui.theme.TextTertiary
+import com.videomaker.aimusic.ui.theme.TemplateBadgeBackground
+import com.videomaker.aimusic.ui.theme.White12
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -132,6 +135,8 @@ fun GalleryScreen(
     viewModel: GalleryViewModel,
     topBarHeight: Dp = 0.dp,
     isVisible: Boolean = true,
+    listState: LazyListState = rememberLazyListState(),
+    onUserInteraction: () -> Unit = {},
     onNavigateToSongDetail: (Long) -> Unit = {},
     onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTopSongs: () -> Unit = {},
@@ -229,6 +234,8 @@ fun GalleryScreen(
             is GalleryUiState.Loading -> GalleryLoadingContent(topBarHeight = topBarHeight)
             is GalleryUiState.Success -> GalleryContent(
                 topBarHeight = topBarHeight,
+                listState = listState,
+                onUserInteraction = onUserInteraction,
                 featuredTemplates = state.featuredTemplates,
                 vibeTags = state.vibeTags,
                 selectedVibeTagId = state.selectedVibeTagId,
@@ -238,6 +245,7 @@ fun GalleryScreen(
                 isVisible = isVisible,
                 onRefresh = viewModel::refresh,
                 onVibeTagSelected = { selectedTagId ->
+                    onUserInteraction()
                     val selectedTag = state.vibeTags.firstOrNull { it.id == selectedTagId }
                     Analytics.trackTemplateGenreClick(
                         genreId = selectedTagId ?: AnalyticsEvent.Value.ALL,
@@ -246,13 +254,23 @@ fun GalleryScreen(
                     )
                     viewModel.onVibeTagSelected(selectedTagId)
                 },
-                onTemplateClick = viewModel::onTemplateClick,
-                onSeeAllTemplates = viewModel::onSeeAllTemplatesClick,
+                onTemplateClick = { template, location ->
+                    onUserInteraction()
+                    viewModel.onTemplateClick(template, location)
+                },
+                onSeeAllTemplates = {
+                    onUserInteraction()
+                    viewModel.onSeeAllTemplatesClick()
+                },
                 onCreateClick = {
+                    onUserInteraction()
                     Analytics.trackCreationStart(AnalyticsEvent.Value.Location.GALLERY)
                     viewModel.onCreateClick()
                 },
-                onSearchClick = onNavigateToSearch,
+                onSearchClick = {
+                    onUserInteraction()
+                    onNavigateToSearch()
+                },
                 onLoadMore = viewModel::loadMore
             )
             is GalleryUiState.Error -> GalleryErrorContent(message = state.message)
@@ -321,6 +339,8 @@ private fun GalleryErrorContent(message: String) {
 @Composable
 private fun GalleryContent(
     topBarHeight: Dp = 0.dp,
+    listState: LazyListState,
+    onUserInteraction: () -> Unit,
     featuredTemplates: List<VideoTemplate>,
     vibeTags: List<VibeTag>,
     selectedVibeTagId: String?,
@@ -337,7 +357,6 @@ private fun GalleryContent(
     onLoadMore: () -> Unit = {}
 ) {
     val dimens = AppDimens.current
-    val listState = rememberLazyListState()
     var lastTrackedTemplateScroll by remember { mutableStateOf(false) }
 
     // ✅ FIX: Scroll-based pagination detection
@@ -470,32 +489,6 @@ private fun GalleryContent(
         }
         }
 
-        // Bottom gradient fade — dark to transparent, behind the button
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(120.dp)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            MaterialTheme.colorScheme.background
-                        )
-                    )
-                )
-        )
-
-        // Floating Create button — only shown once featured templates are loaded
-        if (featuredTemplates.isNotEmpty()) {
-            CreateNewVideoButton(
-                onClick = onCreateClick,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(bottom = dimens.spaceLg)
-            )
-        }
     }
 }
 
@@ -504,7 +497,7 @@ private fun GalleryContent(
 // ============================================
 
 @Composable
-private fun CreateNewVideoButton(
+fun CreateNewVideoButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -814,12 +807,12 @@ private fun FeaturedTemplateCard(
                         .align(Alignment.TopEnd)
                         .padding(dimens.spaceMd)
                         .background(
-                            color = Color.Black.copy(alpha = 0.6f),
+                            color = TemplateBadgeBackground,
                             shape = RoundedCornerShape(999.dp)
                         )
                         .border(
                             width = 1.dp,
-                            color = Color.White.copy(alpha = 0.12f),
+                            color = White12,
                             shape = RoundedCornerShape(999.dp)
                         )
                         .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -1070,6 +1063,8 @@ private fun GalleryContentPreview() {
             )
             GalleryContent(
                 topBarHeight = 56.dp,
+                listState = rememberLazyListState(),
+                onUserInteraction = {},
                 featuredTemplates = previewTemplates.take(5),
                 vibeTags = listOf(
                     VibeTag("birthday", "Birthday", "🎂"),

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -108,6 +109,8 @@ private const val STATION_AD_INSERTION_INDEX = 3
 fun SongsScreen(
     viewModel: SongsViewModel,
     topBarHeight: Dp = 0.dp,
+    listState: LazyListState = rememberLazyListState(),
+    onUserInteraction: () -> Unit = {},
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
     onNavigateToTemplatePreviewer: (songId: Long) -> Unit = {},
     onNavigateToSuggestedAll: () -> Unit = {},
@@ -164,12 +167,15 @@ fun SongsScreen(
 
             SongsContent(
                 topBarHeight = topBarHeight,
+                listState = listState,
+                onUserInteraction = onUserInteraction,
                 suggestedState = suggestedState,
                 rankingState = rankingState,
                 stationState = stationState,
                 genresState = genresState,
                 selectedGenre = selectedGenre,
                 onGenreSelected = { genreId ->
+                    onUserInteraction()
                     val genreName = when (val currentGenres = genresState) {
                         is SectionState.Success -> {
                             currentGenres.data.firstOrNull { it.id == genreId }?.displayName
@@ -187,12 +193,22 @@ fun SongsScreen(
                 isRefreshing = isRefreshing,
                 onRefresh = viewModel::refresh,
                 onSongClick = { song, location ->
+                    onUserInteraction()
                     selectedSongLocation = location
                     viewModel.onSongClick(song)
                 },
-                onSeeMoreSuggested = viewModel::onSeeMoreSuggestedClick,
-                onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
-                onSearchClick = onNavigateToSearch
+                onSeeMoreSuggested = {
+                    onUserInteraction()
+                    viewModel.onSeeMoreSuggestedClick()
+                },
+                onNavigateToWeeklyRankingList = {
+                    onUserInteraction()
+                    onNavigateToWeeklyRankingList()
+                },
+                onSearchClick = {
+                    onUserInteraction()
+                    onNavigateToSearch()
+                }
             )
         }
     }
@@ -217,6 +233,8 @@ fun SongsScreen(
 @Composable
 private fun SongsContent(
     topBarHeight: Dp = 0.dp,
+    listState: LazyListState,
+    onUserInteraction: () -> Unit,
     suggestedState: SectionState<List<MusicSong>>,
     rankingState: SectionState<List<MusicSong>>,
     stationState: SectionState<List<MusicSong>>,
@@ -231,7 +249,6 @@ private fun SongsContent(
     onSearchClick: () -> Unit
 ) {
     val dimens = AppDimens.current
-    val listState = rememberLazyListState()
     var lastTrackedLocation by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(listState) {
@@ -763,6 +780,8 @@ private fun SongsContentLoadedPreview() {
                 )
                 SongsContent(
                     topBarHeight = 56.dp,
+                    listState = rememberLazyListState(),
+                    onUserInteraction = {},
                     suggestedState = SectionState.Success(previewSongs),
                     rankingState = SectionState.Success(previewSongs.take(9)),
                     stationState = SectionState.Success(previewSongs),
@@ -795,6 +814,8 @@ private fun SongsContentLoadingPreview() {
                 )
                 SongsContent(
                     topBarHeight = 56.dp,
+                    listState = rememberLazyListState(),
+                    onUserInteraction = {},
                     suggestedState = SectionState.Loading,
                     rankingState = SectionState.Loading,
                     stationState = SectionState.Loading,
