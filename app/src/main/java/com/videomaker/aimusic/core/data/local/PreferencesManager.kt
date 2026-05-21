@@ -3,8 +3,12 @@ package com.videomaker.aimusic.core.data.local
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.videomaker.aimusic.core.popup.TrendingPopupDailySnapshot
+import com.videomaker.aimusic.core.popup.TrendingPopupTab
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -21,6 +25,27 @@ class PreferencesManager(context: Context) {
         Context.MODE_PRIVATE
     )
     private val stringSetLock = Any()
+    private val trendingPopupJson = Json { ignoreUnknownKeys = true }
+
+    private fun trendingPopupKey(tab: TrendingPopupTab): String = when (tab) {
+        TrendingPopupTab.GALLERY -> KEY_TRENDING_POPUP_TEMPLATE_SNAPSHOT
+        TrendingPopupTab.SONGS -> KEY_TRENDING_POPUP_SONG_SNAPSHOT
+    }
+
+    /**
+     * Read the per-tab trending-popup snapshot, or `null` if absent / unparseable.
+     * Callers should also treat an `epochDay != today` snapshot as empty (cap reset).
+     */
+    fun getTrendingPopupSnapshot(tab: TrendingPopupTab): TrendingPopupDailySnapshot? {
+        val raw = prefs.getString(trendingPopupKey(tab), null) ?: return null
+        return runCatching { trendingPopupJson.decodeFromString<TrendingPopupDailySnapshot>(raw) }
+            .getOrNull()
+    }
+
+    fun setTrendingPopupSnapshot(tab: TrendingPopupTab, snapshot: TrendingPopupDailySnapshot) {
+        val raw = trendingPopupJson.encodeToString(snapshot)
+        prefs.edit { putString(trendingPopupKey(tab), raw) }
+    }
 
     companion object {
         private const val PREFS_NAME = "video_maker_prefs"
@@ -50,6 +75,8 @@ class PreferencesManager(context: Context) {
         private const val KEY_VIRAL_TEMPLATE_SNAPSHOT_DATE = "viral_template_snapshot_date"
         private const val KEY_VIRAL_TEMPLATE_SNAPSHOT_ID = "viral_template_snapshot_id"
         private const val KEY_VIRAL_TEMPLATE_SNAPSHOT_USAGE = "viral_template_snapshot_usage"
+        private const val KEY_TRENDING_POPUP_TEMPLATE_SNAPSHOT = "trending_popup_template_snapshot"
+        private const val KEY_TRENDING_POPUP_SONG_SNAPSHOT = "trending_popup_song_snapshot"
         private const val KEY_APP_SESSION_ID = "notification_app_session_id"
         private const val KEY_APP_LAST_BACKGROUND_AT_MS = "notification_app_last_background_at_ms"
         private const val KEY_VIDEO_REMINDER_GENERATED_AT_PREFIX = "video_reminder_generated_at_"
@@ -70,6 +97,9 @@ class PreferencesManager(context: Context) {
         private const val KEY_ACTIVE_DRAFT_REMINDER_IDS = "active_draft_reminder_ids"
         private const val KEY_MEDIA_FULL_PERMISSION_REQUEST_COUNT = "media_full_permission_request_count"
         private const val KEY_MEDIA_FULL_PERMISSION_BLOCKED = "media_full_permission_blocked"
+        private const val KEY_PENDING_DEEP_LINK_ACTION = "pending_deep_link_action"
+        private const val KEY_PENDING_DEEP_LINK_TEMPLATE_ID = "pending_deep_link_template_id"
+        private const val KEY_PENDING_DEEP_LINK_SONG_ID = "pending_deep_link_song_id"
         private const val RECENT_SEARCHES_DELIMITER = "\u001F" // Unit Separator
         private const val GENRES_DELIMITER = ","
         private const val MAX_RECENT_SEARCHES = 3 // FIFO: First In First Out
@@ -636,6 +666,47 @@ class PreferencesManager(context: Context) {
             remove(KEY_MEDIA_FULL_PERMISSION_BLOCKED)
             remove(KEY_MEDIA_FULL_PERMISSION_REQUEST_COUNT)
         }
+    }
+
+    // ============================================
+    // Pending deep link (widget/shortcut before onboarding)
+    // ============================================
+
+    data class PendingDeepLink(
+        val action: String,
+        val templateId: String?,
+        val songId: Long?
+    )
+
+    /**
+     * Save a widget/shortcut deep link to be consumed after onboarding completes.
+     * Stores action + typed extras individually for correct serialization.
+     */
+    fun setPendingDeepLink(action: String?, templateId: String?, songId: Long?) {
+        prefs.edit {
+            if (action != null) putString(KEY_PENDING_DEEP_LINK_ACTION, action)
+            else remove(KEY_PENDING_DEEP_LINK_ACTION)
+            if (templateId != null) putString(KEY_PENDING_DEEP_LINK_TEMPLATE_ID, templateId)
+            else remove(KEY_PENDING_DEEP_LINK_TEMPLATE_ID)
+            if (songId != null && songId > 0L) putLong(KEY_PENDING_DEEP_LINK_SONG_ID, songId)
+            else remove(KEY_PENDING_DEEP_LINK_SONG_ID)
+        }
+    }
+
+    /**
+     * Atomically read and clear the pending deep link (action + all extras).
+     * Returns null if no pending deep link is stored.
+     */
+    fun consumePendingDeepLink(): PendingDeepLink? {
+        val action = prefs.getString(KEY_PENDING_DEEP_LINK_ACTION, null) ?: return null
+        val templateId = prefs.getString(KEY_PENDING_DEEP_LINK_TEMPLATE_ID, null)
+        val songId = prefs.getLong(KEY_PENDING_DEEP_LINK_SONG_ID, -1L).takeIf { it > 0L }
+        prefs.edit {
+            remove(KEY_PENDING_DEEP_LINK_ACTION)
+            remove(KEY_PENDING_DEEP_LINK_TEMPLATE_ID)
+            remove(KEY_PENDING_DEEP_LINK_SONG_ID)
+        }
+        return PendingDeepLink(action, templateId, songId)
     }
 
     /**

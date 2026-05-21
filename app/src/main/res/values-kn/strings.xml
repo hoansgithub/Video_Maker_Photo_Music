@@ -23,7 +23,7 @@
     <string name="onboarding_get_started">ಪ್ರಾರಂಭಿಸಿ</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">ಪ್ರತಿದಿನ ನವೀಕರಿಸಲಾದ ತಾಜಾ ಟೆಂಪ್ಲೇಟ್‌ಗಳೊಂದಿಗೆ ಮುಂಚೂಣಿಯಲ್ಲಿರಿ.</string>
-    <string name="onboarding_india_page3_title">ಪ್ರತಿದಿನ ಟ್ರೆಂಡಿಂಗ್ ಟೆಂಪ್ಲೇಟ್‌ಗಳನ್ನು ಹಿಡಿಯಿರಿ</string>
+    <string name="onboarding_india_page3_title">ಟ್ರೆಂಡಿಂಗ್ ಟೆಂಪ್ಲೇಟ್‌ಗಳನ್ನು ಹಿಡಿಯಿರಿ</string>
     <string name="onboarding_india_page3_subtitle">ಪ್ರತಿದಿನ ನವೀಕರಿಸಲಾದ ತಾಜಾ ಟೆಂಪ್ಲೇಟ್‌ಗಳೊಂದಿಗೆ ಮುಂಚೂಣಿಯಲ್ಲಿರಿ.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">ಕೆಲವೇ ಸೆಕೆಂಡ್‌ಗಳಲ್ಲಿ ಮ್ಯಾಜಿಕ್ ರಚಿಸಿ</string>
@@ -554,4 +554,15 @@
     <string name="notif_cta_continue_editing">ಸಂಪಾದನೆ ಮುಂದುವರಿಸಿ</string>
     <string name="notif_cta_view_template">ಟೆಂಪ್ಲೇಟ್ ನೋಡಿ</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">ಮತ್ತೆ ಸ್ವಾಗತ!</string>
+    <string name="welcome_back_subtitle">ಈ ವಾರದ ಹೊಸದೇನು ಇಲ್ಲಿದೆ:</string>
+    <string name="welcome_back_vibe_tags">• 8 ಹೊಸ ಹಾಡುಗಳು • 3 ಜನಪ್ರಿಯ ಟೆಂಪ್ಲೇಟ್‌ಗಳು 🚀</string>
+    <string name="welcome_back_continue">ಮುಂದುವರಿಸಿ</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">ತಪ್ಪಿಸಿಕೊಳ್ಳಬೇಡಿ</string>
+    <string name="popup_premium_song">ಪ್ರೀಮಿಯಂ ಹಾಡು</string>
+    <string name="popup_premium_template">ಪ್ರೀಮಿಯಂ ಟೆಂಪ್ಲೇಟ್</string>
+    <string name="popup_try_it_now">ಈಗ ಪ್ರಯತ್ನಿಸಿ</string>
 </resources>

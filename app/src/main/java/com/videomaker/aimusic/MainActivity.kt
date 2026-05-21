@@ -50,8 +50,9 @@ import com.videomaker.aimusic.navigation.AppNavigation
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.widget.appwidget.WidgetActions
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import com.videomaker.aimusic.core.data.local.PreferencesManager
+import kotlinx.coroutines.launch
 
 /**
  * MainActivity — Main app content host
@@ -81,6 +82,7 @@ class MainActivity : AppCompatActivity() {
     // Set to true when launched via the "Uninstall App" shortcut.
     private var navigateToUninstall: Boolean by mutableStateOf(false)
     private var startupInitialTab: Int by mutableIntStateOf(0)
+    private var showWelcomeBack: Boolean by mutableStateOf(false)
 
     // Track if we're ready to show UI (ads must be initialized first on cold start)
     private var isReadyToShowUI: Boolean by mutableStateOf(false)
@@ -91,11 +93,56 @@ class MainActivity : AppCompatActivity() {
 
         android.util.Log.d(TAG, "onCreate() called - savedInstanceState=${if (savedInstanceState == null) "null" else "exists"}, intent=$intent")
 
+        // CRITICAL: If onboarding not complete, redirect to RootViewActivity for full init flow.
+        // Widget/shortcut cold starts bypass RootViewActivity, skipping ad init, Remote Config,
+        // onboarding checks, and splash ad. Persist deep link in prefs so it survives the
+        // onboarding chain (Language → Onboarding → Genre → Feature → MainActivity).
+        val preferencesManager: PreferencesManager by inject()
+        if (!preferencesManager.isOnboardingComplete()) {
+            android.util.Log.w(TAG, "Onboarding not complete — redirecting to RootViewActivity (action=${intent.action})")
+            // Save widget/shortcut deep link to SharedPreferences (survives Activity chain)
+            if (intent.action != null && intent.action != Intent.ACTION_MAIN) {
+                val templateId = intent.getStringExtra(WidgetActions.EXTRA_TEMPLATE_ID)
+                val songId = intent.getLongExtra(WidgetActions.EXTRA_SONG_ID, -1L).takeIf { it > 0L }
+                preferencesManager.setPendingDeepLink(
+                    action = intent.action,
+                    templateId = templateId,
+                    songId = songId
+                )
+                android.util.Log.d(TAG, "Saved pending deep link: action=${intent.action}, templateId=$templateId, songId=$songId")
+            }
+            val rootIntent = Intent(this, RootViewActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            }
+            startActivity(rootIntent)
+            finish()
+            return
+        }
+
         notificationScheduler.scheduleDailyBootstrap()
 
         if (savedInstanceState == null) {
             startupInitialTab = intent.getIntExtra(EXTRA_INITIAL_TAB, 0).coerceIn(0, 2)
             handleEntryIntent(intent)
+
+            // Restore pending deep link saved before onboarding redirect
+            if (pendingDeepLink == null) {
+                val saved = preferencesManager.consumePendingDeepLink()
+                if (saved != null) {
+                    android.util.Log.d(TAG, "Restoring pending deep link: action=${saved.action}, templateId=${saved.templateId}, songId=${saved.songId}")
+                    val restoredIntent = Intent(saved.action).apply {
+                        saved.templateId?.let { putExtra(WidgetActions.EXTRA_TEMPLATE_ID, it) }
+                        saved.songId?.let { putExtra(WidgetActions.EXTRA_SONG_ID, it) }
+                    }
+                    handleEntryIntent(restoredIntent)
+                }
+            }
+
+            // Show Welcome Back screen on cold start if session >= 2 and no deep links are active
+            val isNormalLaunch = intent.action == Intent.ACTION_MAIN || intent.action == null
+            if (isNormalLaunch && pendingDeepLink == null && !navigateToUninstall && preferencesManager.getAppSessionId() >= 2) {
+                showWelcomeBack = true
+            }
         } else {
             // Restore state after process death
             startupInitialTab = savedInstanceState.getInt(KEY_STARTUP_TAB, 0)
@@ -150,7 +197,8 @@ class MainActivity : AppCompatActivity() {
                             pendingDeepLink = pendingDeepLink,
                             onDeepLinkConsumed = { pendingDeepLink = null },
                             navigateToUninstall = navigateToUninstall,
-                            onUninstallNavigationConsumed = { navigateToUninstall = false }
+                            onUninstallNavigationConsumed = { navigateToUninstall = false },
+                            showWelcomeBack = showWelcomeBack
                         )
                     }
                 }

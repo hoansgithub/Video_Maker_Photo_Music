@@ -12,6 +12,7 @@ import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.AspectRatio
 // DurationPlanner removed - beat-sync only mode
 import com.videomaker.aimusic.domain.model.EditorInitialData
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.VideoQuality
@@ -400,9 +401,9 @@ class EditorViewModel(
                     )
                 }
 
-                // Fetch song data (name + URL) to ensure consistency across app
+                // Fetch song data with retry (name + URL) to ensure consistency across app
                 val song = data.musicSongId?.let { songId ->
-                    songRepository.getSongById(songId).getOrNull()
+                    fetchSongWithRetry(songId)
                 }
 
                 // Load beat-sync data if music is selected
@@ -414,6 +415,14 @@ class EditorViewModel(
                 // Error dialog is already shown by loadBeatSyncWithRetry, user will be navigated back
                 if (data.musicSongId != null && beatSyncData == null) {
                     android.util.Log.e("EditorViewModel", "Beat-sync data required but failed to load - aborting initialization")
+                    return@launch
+                }
+
+                // CRITICAL: If music is selected but song data couldn't be fetched (deleted/network error),
+                // abort to avoid silent video (beat-sync works but no audio URL to play)
+                if (data.musicSongId != null && (song == null || song.mp3Url.isBlank())) {
+                    android.util.Log.e("EditorViewModel", "Song data required but unavailable after retries (songId=${data.musicSongId}, song=${song?.name}, mp3Url=${song?.mp3Url}) - aborting initialization")
+                    _showBeatSyncErrorDialog.value = true
                     return@launch
                 }
 
@@ -708,7 +717,7 @@ class EditorViewModel(
         // Fetch song data to get both name and URL
         viewModelScope.launch {
             try {
-                val song = songId?.let { songRepository.getSongById(it).getOrNull() }
+                val song = songId?.let { fetchSongWithRetry(it) }
 
                 // Load beat-sync data with retry if song is selected
                 val beatSyncData = songId?.let { loadBeatSyncWithRetry(it) }
@@ -716,6 +725,13 @@ class EditorViewModel(
                 // Beat-sync load failure already shows error dialog and returns null
                 if (beatSyncData == null && songId != null) {
                     // Error dialog already shown by loadBeatSyncWithRetry
+                    return@launch
+                }
+
+                // Song data unavailable (deleted/network error) - abort to avoid silent video
+                if (songId != null && (song == null || song.mp3Url.isBlank())) {
+                    android.util.Log.e("EditorViewModel", "Song data unavailable after retries (songId=$songId) - cannot update music")
+                    _showBeatSyncErrorDialog.value = true
                     return@launch
                 }
 
@@ -854,6 +870,38 @@ class EditorViewModel(
                 _showBeatSyncErrorDialog.value = true
             }
         }
+    }
+
+    /**
+     * Fetch song data with 3 retry attempts.
+     * Returns null if song doesn't exist or all retries fail.
+     */
+    private suspend fun fetchSongWithRetry(songId: Long): MusicSong? {
+        val maxRetries = 3
+        repeat(maxRetries) { attempt ->
+            try {
+                val result = songRepository.getSongById(songId)
+                if (result.isSuccess) {
+                    val song = result.getOrNull()
+                    android.util.Log.d("EditorViewModel", "Song fetched: id=${song?.id}, name=${song?.name}, hasUrl=${song?.mp3Url?.isNotBlank()}")
+                    return song
+                } else {
+                    android.util.Log.w("EditorViewModel", "Song fetch failed (attempt ${attempt + 1}/$maxRetries): ${result.exceptionOrNull()?.message}")
+                    if (attempt < maxRetries - 1) {
+                        delay(1000L * (attempt + 1))
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                android.util.Log.e("EditorViewModel", "Song fetch exception (attempt ${attempt + 1}/$maxRetries)", e)
+                if (attempt < maxRetries - 1) {
+                    delay(1000L * (attempt + 1))
+                }
+            }
+        }
+        android.util.Log.e("EditorViewModel", "Song fetch failed after $maxRetries attempts for songId=$songId")
+        return null
     }
 
     /**

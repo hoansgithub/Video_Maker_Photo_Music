@@ -49,6 +49,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.text.style.TextAlign
 import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import coil.compose.SubcomposeAsyncImage
@@ -62,6 +65,8 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
 import com.videomaker.aimusic.ui.theme.FoundationBlack
+import com.videomaker.aimusic.ui.theme.Neutral_N100
+import com.videomaker.aimusic.ui.theme.Neutral_N600
 import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -184,6 +189,8 @@ internal fun WelcomePage(
 @Composable
 internal fun WelcomePageDynamic(
     thumbnailUrl: String?,
+    nameSong: String?,
+    nameArtist: String?,
     videoUrl: String? = null,
     localFallbackResId: Int,
     title: String,
@@ -192,6 +199,7 @@ internal fun WelcomePageDynamic(
     onCta: () -> Unit,
     pageIndex: Int = 0
 ) {
+    var bottomSectionHeight by remember { mutableStateOf(0) }
     val adPlacement = when (pageIndex) {
         0 -> AdPlacement.NATIVE_ONBOARDING_PAGE1
         1 -> AdPlacement.NATIVE_ONBOARDING_PAGE2
@@ -337,13 +345,41 @@ internal fun WelcomePageDynamic(
                                 )
                             }
 
-                            Image(
-                                painter = painterResource(R.drawable.img_text_ob2),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .weight(1f),
-                                contentScale = ContentScale.FillWidth
-                            )
+                            if (nameSong.isNullOrBlank() && nameArtist.isNullOrBlank()) {
+                                Image(
+                                    painter = painterResource(R.drawable.img_text_ob2),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .weight(1f),
+                                    contentScale = ContentScale.FillWidth
+                                )
+                            } else {
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(vertical = 10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = nameSong.orEmpty(),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.W600,
+                                        color = Color.White,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = nameArtist.orEmpty(),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.W400,
+                                        color = Neutral_N600,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
                         }
 
                         Spacer(Modifier.padding(horizontal = 12.dp).fillMaxWidth().height(2.dp).background(Color(0xff373737)))
@@ -367,49 +403,31 @@ internal fun WelcomePageDynamic(
                 )
             }
         }
+        if (bottomSectionHeight == 0){
+            Spacer(Modifier.height(32.dp))
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
 
         // Title/Subtitle + CTA Button Row
-        Row(
+        Text(
+            text = title,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color.White,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.0f),
-                            Color.Black.copy(alpha = 0.5f),
-                            Color.Black.copy(alpha = 0.75f),
-                            Color.Black.copy(alpha = 1.0f)
-                        )
-                    )
-                )
-                .padding(horizontal = 24.dp)
-                .padding(top = 40.dp, bottom = 32.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = 16.dp)
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 32.dp, bottom = 16.dp),
+            contentAlignment = Alignment.BottomEnd
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 16.dp)
-            ) {
-                Text(
-                    text = title,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = subtitle,
-                    fontSize = 16.sp,
-                    color = Color.White.copy(alpha = 0.9f),
-                    lineHeight = 22.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
 
             OnboardingCtaButton(
                 text = ctaText,
@@ -419,9 +437,20 @@ internal fun WelcomePageDynamic(
             )
         }
 
+        if (bottomSectionHeight == 0){
+            Spacer(Modifier.weight(1f))
+        }
+
         // Native Ad at bottom
         if (adPlacement != null) {
-            Box(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { size ->
+                        bottomSectionHeight =
+                            size.height  // Measure actual height dynamically!
+                    }
+            ) {
                 NativeAdView(
                     placement = adPlacement,
                     modifier = Modifier.fillMaxWidth(),
@@ -447,6 +476,7 @@ internal fun DynamicCarousel(
     onCta: () -> Unit,
     pageIndex: Int = 0
 ) {
+    var bottomSectionHeight by remember { mutableStateOf(0) }
     val totalSlides = maxOf(1, thumbnailUrls.size + localFallbackResIds.size)
     val pagerState = rememberPagerState(pageCount = { totalSlides })
 
@@ -539,64 +569,54 @@ internal fun DynamicCarousel(
             }
         }
 
-        // Title/Subtitle + CTA overlay
+        if (bottomSectionHeight == 0){
+            Spacer(Modifier.height(32.dp))
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
+        // Title/Subtitle + CTA Button Row
+        Text(
+            text = title,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color.White,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.0f),
-                            Color.Black.copy(alpha = 0.5f),
-                            Color.Black.copy(alpha = 0.75f),
-                            Color.Black.copy(alpha = 1.0f)
-                        )
-                    )
-                )
-                .padding(horizontal = 24.dp)
-                .padding(top = 40.dp, bottom = 32.dp)
+                .padding(top = 32.dp, bottom = 16.dp),
+            contentAlignment = Alignment.BottomEnd
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 16.dp)
-                ) {
-                    Text(
-                        text = title,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color.White,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        text = subtitle,
-                        fontSize = 16.sp,
-                        color = Color.White.copy(alpha = 0.9f),
-                        lineHeight = 22.sp,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
 
-                OnboardingCtaButton(
-                    text = ctaText,
-                    onClick = onCta,
-                    color = Primary,
-                    icon = R.drawable.ic_right_arrow
-                )
-            }
+            OnboardingCtaButton(
+                text = ctaText,
+                onClick = onCta,
+                color = Primary,
+                icon = R.drawable.ic_right_arrow
+            )
+        }
+
+
+        if (bottomSectionHeight == 0){
+            Spacer(Modifier.weight(1f))
         }
 
         // Native Ad at bottom
         if (adPlacement != null) {
-            Box(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { size ->
+                        bottomSectionHeight =
+                            size.height  // Measure actual height dynamically!
+                    }
+            ) {
                 NativeAdView(
                     placement = adPlacement,
                     modifier = Modifier.fillMaxWidth(),
@@ -699,7 +719,7 @@ internal fun IndiaPage3Carousel(
                     ) {
                         Text(
                             text = title,
-                            fontSize = 28.sp,
+                            fontSize = 24.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White,
                             maxLines = 2,
@@ -708,10 +728,10 @@ internal fun IndiaPage3Carousel(
                         Spacer(Modifier.height(12.dp))
                         Text(
                             text = subtitle,
-                            fontSize = 16.sp,
+                            fontSize = 14.sp,
                             color = Color.White.copy(alpha = 0.9f),
                             lineHeight = 22.sp,
-                            maxLines = 2,
+                            maxLines = 4,
                             overflow = TextOverflow.Ellipsis
                         )
                     }

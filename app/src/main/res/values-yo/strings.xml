@@ -23,7 +23,7 @@
     <string name="onboarding_get_started">Bẹ̀rẹ̀</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Dúró níwájú pẹ̀lú àwọn àpẹẹrẹ tuntun tí a ń ṣe àgbéyẹwọ̀ lójoojúmọ́.</string>
-    <string name="onboarding_india_page3_title">Mu àwọn àpẹẹrẹ trending lójoojúmọ́</string>
+    <string name="onboarding_india_page3_title">Mu àwọn àpẹẹrẹ trending</string>
     <string name="onboarding_india_page3_subtitle">Dúró níwájú pẹ̀lú àwọn àpẹẹrẹ tuntun tí a ń ṣe àgbéyẹwọ̀ lójoojúmọ́.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Ṣẹ Ìyanu ní Ìṣẹ́jú Àáárọ̀</string>
@@ -554,4 +554,15 @@
     <string name="notif_cta_continue_editing">Tẹ̀síwájú Ṣíṣàtúnṣe</string>
     <string name="notif_cta_view_template">Wo Àpẹẹrẹ</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Kaabọ pada!</string>
+    <string name="welcome_back_subtitle">Eyi ni kini tuntun ni ọsẹ yii:</string>
+    <string name="welcome_back_vibe_tags">• Awọn orin tuntun 8 • Awọn awoṣe olokiki 3 🚀</string>
+    <string name="welcome_back_continue">Tẹsiwaju</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Má Jẹ́ Kó Kọjá</string>
+    <string name="popup_premium_song">Orin Premium</string>
+    <string name="popup_premium_template">Àpẹẹrẹ Premium</string>
+    <string name="popup_try_it_now">Gbiyanju rẹ̀ báyìí</string>
 </resources>

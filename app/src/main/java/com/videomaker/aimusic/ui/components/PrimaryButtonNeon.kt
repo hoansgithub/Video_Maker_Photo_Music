@@ -189,6 +189,119 @@ fun PrimaryButtonNeon(
         }
     }
 }
+@Composable
+fun CTAPrimaryButton(
+    text: String,
+    onClick: () -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val pillShape = RoundedCornerShape(40.dp)
+    val innerShape = RoundedCornerShape(32.dp)
+
+    // Glow pulse animation
+    val infiniteTransition = rememberInfiniteTransition(label = "glow")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glowAlpha"
+    )
+
+    // Press scale
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label = "scale"
+    )
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .scale(scale)
+            .shadowCustom(
+                color = Color(0xFFF8F8F8).copy(0.5f),
+                blurRadius = 8.dp,
+                borderRadius = 40.dp,
+            )
+    ) {
+        // ── Layer 1: Outer glow ─────────────────────────────
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .padding(4.dp)
+                .clip(pillShape)
+                .background(NeonLime.copy(alpha = glowAlpha))
+        )
+
+        // ── Layer 2: Main pill body ─────────────────────────
+        //   • Gradient fill (lime)
+        //   • border: 1.5px gradient @ 158.39deg
+        //   • box-shadow: 0 0 8px 0 #F8F8F840 inset
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clip(pillShape)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(NeonLimeLight, NeonLime, NeonLimeDark)
+                    )
+                )
+                .glassBorderWithInsetShadow(
+                    cornerRadius = 40f,
+                    borderWidth = 1.5f,
+                    insetBlurRadius = 8f
+                )
+        )
+
+        // ── Layer 3: Inner glassmorphism pill ───────────────
+        //   • backdrop-filter: blur(22dp)
+        //   • Same gradient border
+        //   • Subtle white overlay
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .padding(horizontal = 30.dp, vertical = 4.dp)
+        ) {
+            // Backdrop blur layer
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(innerShape)
+                    .blur(22.dp) // backdrop-filter: blur(~22dp)
+                    .background(Color.White.copy(alpha = 0.06f))
+            )
+
+
+        }
+
+        // ── Layer 4: Content ────────────────────────────────
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .clip(pillShape)
+                .clickableSingle(
+                    onClick = onClick
+                )
+                .padding(vertical = 12.dp, horizontal = 64.dp)
+        ) {
+            Text(
+                text = text,
+                style = TextStyle(
+                    color = Color.Black.copy(alpha = 0.85f),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = (-0.3).sp
+                )
+            )
+        }
+    }
+}
 
 // box-shadow: 0px 0px 8px 0px #F8F8F840 inset
 private val InsetShadowColor = Color(0x40F8F8F8)
@@ -324,5 +437,23 @@ private fun GlowingAddWidgetButtonPreview() {
             .padding(horizontal = 32.dp)
     ) {
         PrimaryButtonNeon(onClick = {}, text = "testttt")
+    }
+}
+@Preview(
+    showBackground = true,
+    backgroundColor = 0xFF0A0A0A,
+    widthDp = 360,
+    heightDp = 160
+)
+@Composable
+private fun CTAButtonPreview() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(DarkBg)
+            .padding(horizontal = 32.dp)
+    ) {
+        CTAPrimaryButton(onClick = {}, text = "Try it now")
     }
 }

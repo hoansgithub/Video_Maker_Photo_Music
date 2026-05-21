@@ -20,7 +20,7 @@
     <string name="onboarding_get_started">Empezar</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Mantente a la vanguardia con plantillas frescas y listas para usar que se actualizan todos los días.</string>
-    <string name="onboarding_india_page3_title">Atrapa las plantillas en tendencia diariamente</string>
+    <string name="onboarding_india_page3_title">Atrapa las plantillas en tendencia</string>
     <string name="onboarding_india_page3_subtitle">Mantente a la vanguardia con plantillas frescas y listas para usar que se actualizan todos los días.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Crea Magia en Segundos</string>
@@ -547,4 +547,15 @@
     <string name="notif_cta_continue_editing">Seguir editando</string>
     <string name="notif_cta_view_template">Ver plantilla</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">¡Bienvenido de nuevo!</string>
+    <string name="welcome_back_subtitle">Esto es lo nuevo de esta semana:</string>
+    <string name="welcome_back_vibe_tags">• 8 canciones nuevas • 3 plantillas populares 🚀</string>
+    <string name="welcome_back_continue">Continuar</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">¡No te lo pierdas!</string>
+    <string name="popup_premium_song">Canción Premium</string>
+    <string name="popup_premium_template">Plantilla Premium</string>
+    <string name="popup_try_it_now">Pruébalo ahora</string>
 </resources>

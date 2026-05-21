@@ -147,6 +147,45 @@ val dataModule = module {
     single { com.videomaker.aimusic.core.storage.UnlockedTemplatesManager(androidContext()) }
     single { com.videomaker.aimusic.core.storage.UnlockedSongsManager(androidContext()) }
 
+    // ============================================
+    // TRENDING POPUP
+    // ============================================
+    single<com.videomaker.aimusic.core.popup.PopupSnapshotStore> {
+        object : com.videomaker.aimusic.core.popup.PopupSnapshotStore {
+            private val prefs: PreferencesManager = get()
+            override fun get(tab: com.videomaker.aimusic.core.popup.TrendingPopupTab) =
+                prefs.getTrendingPopupSnapshot(tab)
+            override fun set(
+                tab: com.videomaker.aimusic.core.popup.TrendingPopupTab,
+                snapshot: com.videomaker.aimusic.core.popup.TrendingPopupDailySnapshot
+            ) = prefs.setTrendingPopupSnapshot(tab, snapshot)
+        }
+    }
+
+    single<com.videomaker.aimusic.core.popup.PopupConfigSource> {
+        val config = com.videomaker.aimusic.core.popup.TrendingPopupConfig(get())
+        object : com.videomaker.aimusic.core.popup.PopupConfigSource {
+            override fun read() = config.read()
+        }
+    }
+
+    single<com.videomaker.aimusic.core.popup.PopupClock> {
+        com.videomaker.aimusic.core.popup.SystemPopupClock()
+    }
+
+    single { com.videomaker.aimusic.core.popup.TrendingPopupGate() }
+
+    single {
+        com.videomaker.aimusic.core.popup.TrendingPopupCoordinator(
+            templateRepository = get(),
+            songRepository = get(),
+            snapshotStore = get(),
+            config = get(),
+            clock = get(),
+            gate = get()
+        )
+    }
+
     // Language config service (singleton - ConfigurableObject for Remote Config)
     // Centralized registration: Explicitly registered in VideoMakerApplication.kt
     // Uses RegionProvider for region detection (includes IP detection if enabled via region_detection_config)
@@ -604,14 +643,16 @@ class GalleryViewModelFactory(
     private val application: android.app.Application,
     private val imageLoader: coil.ImageLoader,
     private val templateRepository: TemplateRepository,
-    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
+    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
 ) {
     fun create(): GalleryViewModel {
         return GalleryViewModel(
             application = application,
             imageLoader = imageLoader,
             templateRepository = templateRepository,
-            adsLoaderService = adsLoaderService
+            adsLoaderService = adsLoaderService,
+            trendingPopupCoordinator = trendingPopupCoordinator
         )
     }
 }
@@ -626,7 +667,8 @@ class SongsViewModelFactory(
     private val getGenresUseCase: GetGenresUseCase,
     private val getSongsByGenreUseCase: GetSongsByGenreUseCase,
     private val clearSongCacheUseCase: ClearSongCacheUseCase,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
 ) {
     fun create(): SongsViewModel = SongsViewModel(
         getSuggestedSongsUseCase = getSuggestedSongsUseCase,
@@ -635,7 +677,8 @@ class SongsViewModelFactory(
         getGenresUseCase = getGenresUseCase,
         getSongsByGenreUseCase = getSongsByGenreUseCase,
         clearSongCacheUseCase = clearSongCacheUseCase,
-        songRepository = songRepository
+        songRepository = songRepository,
+        trendingPopupCoordinator = trendingPopupCoordinator
     )
 }
 
@@ -938,7 +981,8 @@ val presentationModule = module {
                 ?: error("applicationContext is not an Application instance"),
             imageLoader = get(),
             templateRepository = get(),
-            adsLoaderService = get()
+            adsLoaderService = get(),
+            trendingPopupCoordinator = get()
         )
     }
 
@@ -951,7 +995,8 @@ val presentationModule = module {
             getGenresUseCase = get(),
             getSongsByGenreUseCase = get(),
             clearSongCacheUseCase = get(),
-            songRepository = get()
+            songRepository = get(),
+            trendingPopupCoordinator = get()
         )
     }
 

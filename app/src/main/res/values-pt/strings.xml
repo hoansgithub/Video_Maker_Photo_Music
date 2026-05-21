@@ -20,7 +20,7 @@
     <string name="onboarding_get_started">Começar</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Mantenha-se à frente com modelos frescos e prontos para usar atualizados todos os dias.</string>
-    <string name="onboarding_india_page3_title">Acompanhe os modelos em tendências diariamente</string>
+    <string name="onboarding_india_page3_title">Acompanhe os modelos em tendências</string>
     <string name="onboarding_india_page3_subtitle">Mantenha-se à frente com modelos frescos e prontos para usar atualizados todos os dias.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Crie Magia em Segundos</string>
@@ -547,4 +547,15 @@
     <string name="notif_cta_continue_editing">Continuar Edição</string>
     <string name="notif_cta_view_template">Ver Modelo</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Bem-vindo de volta!</string>
+    <string name="welcome_back_subtitle">Aqui está o que há de novo esta semana:</string>
+    <string name="welcome_back_vibe_tags">• 8 novas músicas • 3 templates em alta 🚀</string>
+    <string name="welcome_back_continue">Continuar</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Não perca</string>
+    <string name="popup_premium_song">Música Premium</string>
+    <string name="popup_premium_template">Modelo Premium</string>
+    <string name="popup_try_it_now">Experimente agora</string>
 </resources>

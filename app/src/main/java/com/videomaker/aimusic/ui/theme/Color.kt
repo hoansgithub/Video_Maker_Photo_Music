@@ -61,6 +61,7 @@ val Neutral_N800 = Color(0xFF4D4D4D)
 val Neutral_N700 = Color(0xFF666666)
 val Neutral_N900 = Color(0xFF333333)
 val Neutral_N600 = Color(0xFF808080)
+val Neutral_N200 = Color(0xFFE6E6E6)
 val Neutral_N100 = Color(0xFF151515)
 val BackgroundDark = Color(0xFF09090B)      // Zinc-950 (Figma background)
 val BackgroundDarkElevated = Color(0xFF18181B) // Zinc-900 (elevated surface)
@@ -296,3 +297,11 @@ val TemplateBadgeBackground = Color(0xE5282828) // Use-count badge bg (#282828, 
 // MUSIC PLAYER
 // ============================================
 val PlayerCardBackground = Color(0xFF373737)    // Song info + seeker card background
+
+// ============================================
+// WELCOME BACK SCREEN
+// ============================================
+val WelcomeBackBackground = Color(0xFF121212)
+val WelcomeBackVibeBg = Color(0xFF17240B)
+val WelcomeBackVibeBorder = Color(0xFF384E1A)
+

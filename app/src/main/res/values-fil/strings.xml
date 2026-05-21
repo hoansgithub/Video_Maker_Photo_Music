@@ -20,7 +20,7 @@
     <string name="onboarding_get_started">Magsimula</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Maging hari nai-update na sari at handang gamitin na mga template na pangunguna sa uso.</string>
-    <string name="onboarding_india_page3_title">Makuha sa mga trending template araw-araw</string>
+    <string name="onboarding_india_page3_title">Makuha sa mga trending template</string>
     <string name="onboarding_india_page3_subtitle">Maging hari nai-update na sari at handang gamitin na mga template na pangunguna sa uso.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Gumawa ng Mahika sa Ilang Segundo</string>
@@ -547,4 +547,15 @@
     <string name="notif_cta_continue_editing">Ipagpatuloy ang Edit</string>
     <string name="notif_cta_view_template">Tingnan ang Template</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Maligayang pagbabalik!</string>
+    <string name="welcome_back_subtitle">Heto ang bago ngayong linggo:</string>
+    <string name="welcome_back_vibe_tags">• 8 bagong kanta • 3 sikat na template 🚀</string>
+    <string name="welcome_back_continue">Ipatuloy</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Huwag palampasin</string>
+    <string name="popup_premium_song">Premium na Kanta</string>
+    <string name="popup_premium_template">Premium na Template</string>
+    <string name="popup_try_it_now">Subukan ngayon</string>
 </resources>

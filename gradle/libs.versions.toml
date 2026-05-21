@@ -3,7 +3,7 @@
 # CORE VERSIONS
 # ============================================
 # Using 8.13.2 for Pangle SDK compatibility (AGP 9.0 has strict namespace validation)
-agp = "8.13.2"
+agp = "9.2.1"
 kotlin = "2.3.20"  # Upgraded to match ACCCoreAndroid
 ksp = "2.3.6"  # KSP2 for Kotlin 2.3.20
 
@@ -58,12 +58,12 @@ koin = "4.2.0"  # Matches ACCCoreAndroid
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.39"  # Latest: v0.0.39 release
+acccore = "0.0.42"  # Latest: v0.0.42 - fix(ads): remove hardcoded OnboardingActivity checks
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)
 # ============================================
-firebaseBom = "34.7.0"  # Matches ACCCoreAndroid
+firebaseBom = "34.12.0"  # Matches ACCCoreAndroid (fixes DataStore ANR)
 
 # ============================================
 # MONETIZATION (Optional)

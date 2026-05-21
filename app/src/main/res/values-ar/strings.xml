@@ -20,7 +20,7 @@
     <string name="onboarding_get_started">ابدأ الآن</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">ابقَ في صدارة المنافسة مع قوالب طازجة وجاهزة للاستخدام يتم تحديثها يوميًا.</string>
-    <string name="onboarding_india_page3_title">التقط القوالب الرائجة يوميًا</string>
+    <string name="onboarding_india_page3_title">التقط القوالب الرائجة</string>
     <string name="onboarding_india_page3_subtitle">ابقَ في صدارة المنافسة مع قوالب طازجة وجاهزة للاستخدام يتم تحديثها يوميًا.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">اصنع السحر في ثوانٍ</string>
@@ -547,4 +547,15 @@
     <string name="notif_cta_continue_editing">متابعة التعديل</string>
     <string name="notif_cta_view_template">عرض القالب</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">مرحبًا بعودتك!</string>
+    <string name="welcome_back_subtitle">إليك ما هو جديد هذا الأسبوع:</string>
+    <string name="welcome_back_vibe_tags">• 8 أغاني جديدة • 3 قوالب رائجة 🚀</string>
+    <string name="welcome_back_continue">متابعة</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">لا تفوّتها</string>
+    <string name="popup_premium_song">أغنية مميزة</string>
+    <string name="popup_premium_template">قالب مميز</string>
+    <string name="popup_try_it_now">جرّبه الآن</string>
 </resources>

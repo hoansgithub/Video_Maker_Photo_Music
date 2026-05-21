@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.ui.theme.Primary
 
 @Composable
@@ -74,7 +75,13 @@ fun GenreSelectionScreen(
                 GenreCard(
                     genre = genre,
                     isSelected = selectedGenre?.id == genre.id,
-                    onClick = { onGenreSelect(genre) }
+                    onClick = {
+                        Analytics.track(
+                            name = "music_genre_click",
+                            params = mapOf("genre" to genre.displayName)
+                        )
+                        onGenreSelect(genre)
+                    }
                 )
             }
 

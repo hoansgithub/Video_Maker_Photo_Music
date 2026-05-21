@@ -804,5 +804,203 @@
       "cube_3d"
     ],
     "isActive": true
+  },
+  {
+    "id": "glow_beat",
+    "name": "Glow Beat",
+    "description": "Future Bass, Melodic EDM, Trap, Pop EDM",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["dreamy","fade","dreamy","fade_color","blur","dreamy","fade","dreamy"],
+    "isActive": true
+  },
+  {
+    "id": "flash_flow",
+    "name": "Flash Flow",
+    "description": "Chill Trap, Ambient EDM, Downtempo, Chillwave",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["light_leak","fade","light_leak","blur","fade_color","light_leak","dreamy","light_leak"],
+    "isActive": true
+  },
+  {
+    "id": "fade_sync",
+    "name": "Fade Sync",
+    "description": "EDM, Dance Pop, Future Pop, Electronic",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["fade","fade_color","fade","dreamy","fade","blur","fade","dreamy"],
+    "isActive": true
+  },
+  {
+    "id": "blur_pulse",
+    "name": "Blur Pulse",
+    "description": "Phonk, Drift Phonk, Trap, Bass House",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["blur","dreamy","blur","fade","blur","fade_color","blur","dreamy"],
+    "isActive": true
+  },
+  {
+    "id": "neon_sync",
+    "name": "Neon Sync",
+    "description": "Hyperpop, Dance Pop, K-pop, Electropop",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["dreamy","light_leak","dreamy","fade","dreamy","fade_color","dreamy","blur"],
+    "isActive": true
+  },
+  {
+    "id": "flash_beat",
+    "name": "Flash Beat",
+    "description": "Progressive House, Festival EDM, Big Room, Electro House",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["light_leak","fade","fade_color","light_leak","dreamy","fade","light_leak","blur"],
+    "isActive": true
+  },
+  {
+    "id": "beat_pulse",
+    "name": "Beat Pulse",
+    "description": "Pop Remix, Slap House, EDM Remix, Electronic Pop",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["fade","dreamy","fade","blur","fade","dreamy","fade_color","fade"],
+    "isActive": true
+  },
+  {
+    "id": "dream_loop",
+    "name": "Dream Loop",
+    "description": "Dreamcore, Ambient Electronic, Synthwave, Chill Electronic",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["dreamy","dreamy","blur","dreamy","fade_color","dreamy","fade","dreamy"],
+    "isActive": true
+  },
+  {
+    "id": "sunset_flow",
+    "name": "Sunset Flow",
+    "description": "Tropical House, Chill Pop, Dance Pop, Deep House",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["fade_color","dreamy","fade_color","blur","fade_color","dreamy","fade","fade_color"],
+    "isActive": true
+  },
+  {
+    "id": "neon_pulse",
+    "name": "Neon Pulse",
+    "description": "Synthwave, Retrowave, Electronic, Night Drive",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["light_leak","blur","light_leak","fade","dreamy","light_leak","fade_color","light_leak"],
+    "isActive": true
+  },
+  {
+    "id": "birthday_glow",
+    "name": "Birthday Glow",
+    "description": "Birthday Pop, Acoustic Pop, Family Pop, Indie Pop",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["circle","fade","circle","dreamy","light_leak","circle","blur"],
+    "isActive": true
+  },
+  {
+    "id": "love_flow",
+    "name": "Love Flow",
+    "description": "Love Ballad, Romantic Pop, Piano Ballad, Acoustic",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["dreamy","fade_color","dreamy","blur","dreamy","light_leak","dreamy"],
+    "isActive": true
+  },
+  {
+    "id": "bestie_reel",
+    "name": "Bestie Reel",
+    "description": "Acoustic Pop, Indie Pop, Folk Pop, Travel Music",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["blur","fade","blur","dreamy","fade_color","blur","slide_left"],
+    "isActive": true
+  },
+  {
+    "id": "retro_tape",
+    "name": "Retro Tape",
+    "description": "Lo-fi, Retro Pop, Vintage Soul, Indie Acoustic",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["vhs","blur","vhs","fade","dreamy","vhs","fade_color"],
+    "isActive": true
+  },
+  {
+    "id": "minimal_flow",
+    "name": "Minimal Flow",
+    "description": "Lo-fi, Minimal Piano, Ambient, Chillout",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["fade","blur","fade","dreamy","fade","fade_color","fade"],
+    "isActive": true
+  },
+  {
+    "id": "wedding_flow",
+    "name": "Wedding Flow",
+    "description": "Wedding Piano, Classical Crossover, Romantic Instrumental",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["dreamy","light_leak","dreamy","fade","dreamy","blur","dreamy"],
+    "isActive": true
+  },
+  {
+    "id": "travel_flow",
+    "name": "Travel Flow",
+    "description": "Cinematic, Indie Folk, Adventure Pop, Chill Electronic",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["zoom_out","blur","zoom_out","fade","dreamy","zoom_out","fade_color"],
+    "isActive": true
+  },
+  {
+    "id": "vintage_reel",
+    "name": "Vintage Reel",
+    "description": "Retro Soul, Old School Pop, Lo-fi Hip Hop, Vintage Jazz",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["vhs","fade","vhs","blur","dreamy","vhs","light_leak"],
+    "isActive": true
+  },
+  {
+    "id": "memory_flow",
+    "name": "Memory Flow",
+    "description": "Cinematic Piano, Emotional Ambient, Neo Classical, Soundtrack",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["dreamy","blur","dreamy","fade","dreamy","fade_color","dreamy"],
+    "isActive": true
+  },
+  {
+    "id": "fade_beat",
+    "name": "Fade Beat",
+    "description": "EDM Remix, Future Bass, Trap Pop, Electropop",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["fade","fade_color","fade","dreamy","fade","blur","fade_color","fade"],
+    "isActive": true
+  },
+  {
+    "id": "beat_fade",
+    "name": "Beat Fade",
+    "description": "Dance EDM, Festival EDM, Electronic Pop, Bass Pop",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["fade","fade_color","fade","fade","dreamy","blur","fade","dreamy"],
+    "isActive": true
+  },
+  {
+    "id": "clean_flow",
+    "name": "Clean Flow",
+    "description": "Minimal Electronic, Chill EDM, Deep House, Pop Electronic",
+    "thumbnailUrl": "",
+    "isPremium": false,
+    "transitionIds": ["fade","blur","fade","fade_color","fade","dreamy","fade","blur"],
+    "isActive": true
   }
 ]

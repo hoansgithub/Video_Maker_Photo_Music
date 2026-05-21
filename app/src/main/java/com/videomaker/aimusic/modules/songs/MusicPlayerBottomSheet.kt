@@ -175,6 +175,9 @@ fun MusicPlayerBottomSheet(
     val isSongUnlocked by viewModel.isSongUnlocked.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
     val adsLoaderService = koinInject<AdsLoaderService>()
+    val trendingPopupCoordinator = koinInject<com.videomaker.aimusic.core.popup.TrendingPopupCoordinator>()
+    val isPopupShowing by trendingPopupCoordinator.isAnyPopupShowing.collectAsStateWithLifecycle()
+    var wasPlayingBeforePopup by remember { mutableStateOf(false) }
     var isPlaying  by remember { mutableStateOf(false) }
     var isPrepared by remember { mutableStateOf(false) }
     var currentMs  by remember { mutableIntStateOf(0) }
@@ -647,6 +650,28 @@ fun MusicPlayerBottomSheet(
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Pause when trending popup shows; auto-resume only when user dismisses it (X).
+    // On CTA, popupUserDismissEvent does NOT fire — music stays paused while
+    // user navigates to TemplatePreviewer.
+    LaunchedEffect(isPopupShowing) {
+        if (isPopupShowing) {
+            wasPlayingBeforePopup = player.isPlaying
+            if (player.isPlaying) {
+                player.pause()
+                isPlaying = false
+            }
+        }
+    }
+    LaunchedEffect(Unit) {
+        trendingPopupCoordinator.popupUserDismissEvent.collect {
+            if (wasPlayingBeforePopup) {
+                player.play()
+                isPlaying = true
+            }
+            wasPlayingBeforePopup = false
+        }
     }
 
     // Handle rewarded ad presentation

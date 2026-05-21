@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
@@ -133,7 +134,8 @@ fun OnboardingScreen(
 
     HorizontalPager(
         state = pagerState,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize(),
         beyondViewportPageCount = 1,
         userScrollEnabled = pagerState.currentPage != pagerState.pageCount - 1
     ) { page ->
@@ -166,10 +168,11 @@ fun OnboardingScreen(
                     DynamicCarousel(
                         thumbnailUrls = contentState.page3Thumbnails,
                         localFallbackResIds = contentState.page3LocalFallbacks,
-                        title = stringResource(R.string.onboarding_page3_title),
-                        subtitle = stringResource(R.string.onboarding_page3_subtitle),
+                        title = stringResource(R.string.onboarding_india_page3_title),
+                        subtitle = stringResource(R.string.onboarding_india_page3_subtitle),
                         ctaText = stringResource(R.string.onboarding_next),
                         onCta = {
+                            Analytics.track(name = "onboarding_3_next", params = emptyMap())
                             preloadFeatureSelectionIfNeeded(page, "tapped Continue")
                             showSwipeHint = false
                             if (isLastPage) {
@@ -201,7 +204,7 @@ fun OnboardingScreen(
                         R.string.onboarding_page2_title
                     }
                     val subtitleRes = if (pageData.pageIndex == 0) {
-                        R.string.onboarding_page1_subtitle
+                        R.string.onboarding_india_page1_subtitle
                     } else {
                         R.string.onboarding_page2_subtitle
                     }
@@ -233,12 +236,18 @@ fun OnboardingScreen(
                     ) {
                         WelcomePageDynamic(
                             thumbnailUrl = thumbnailUrl,
+                            nameSong = contentState.nameSong,
+                            nameArtist = contentState.nameArtist,
                             videoUrl = videoUrl,
                             localFallbackResId = localFallback,
                             title = stringResource(titleRes),
                             subtitle = stringResource(subtitleRes),
                             ctaText = stringResource(R.string.onboarding_next),
                             onCta = {
+                                Analytics.track(
+                                    name = "onboarding_${page + 1}_next",
+                                    params = emptyMap()
+                                )
                                 preloadFeatureSelectionIfNeeded(page, "tapped Continue")
                                 showSwipeHint = false
                                 if (isLastPage) {

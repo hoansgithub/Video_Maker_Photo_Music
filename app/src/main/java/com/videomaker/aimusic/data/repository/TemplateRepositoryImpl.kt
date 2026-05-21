@@ -305,7 +305,7 @@ private data class TemplateDto(
     @SerialName("use_count") val useCount: Long = 0,
     @SerialName("view_count") val viewCount: Long = 0,
     @SerialName("template_vibe_tags") val vibeTags: List<VibeTagRef> = emptyList(),
-    @SerialName("target_regions") val targetRegions: List<String> = emptyList()
+    @SerialName("target_regions") val targetRegions: List<String>? = null
 ) {
     fun toDomain(locale: String): VideoTemplate {
         // Determine if preview_path is a video (.mp4) or image

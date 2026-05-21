@@ -192,6 +192,12 @@ fun HomeScreen(
                     hasSentInitialTabView = true
                 }
                 lastSettledPage = settledPage
+
+                when (settledPage) {
+                    0 -> galleryViewModel.onTabFocused()
+                    1 -> songsViewModel.onTabFocused()
+                    else -> Unit
+                }
             }
     }
 

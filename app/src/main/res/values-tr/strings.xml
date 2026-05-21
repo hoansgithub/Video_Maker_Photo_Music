@@ -20,7 +20,7 @@
     <string name="onboarding_get_started">Başla</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Her gün güncellenen taze, kullanıma hazır şablonlarla bir adım önde olun.</string>
-    <string name="onboarding_india_page3_title">Günlük trend şablonları yakalayın</string>
+    <string name="onboarding_india_page3_title">Trend şablonları yakalayın</string>
     <string name="onboarding_india_page3_subtitle">Her gün güncellenen taze, kullanıma hazır şablonlarla bir adım önde olun.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Saniyeler İçinde Sihir Yarat</string>
@@ -547,4 +547,15 @@
     <string name="notif_cta_continue_editing">Düzenlemeye Devam Et</string>
     <string name="notif_cta_view_template">Şablonu Gör</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Tekrar hoş geldiniz!</string>
+    <string name="welcome_back_subtitle">Bu haftanın yenilikleri:</string>
+    <string name="welcome_back_vibe_tags">• 8 yeni şarkı • 3 popüler şablon 🚀</string>
+    <string name="welcome_back_continue">Devam Et</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Kaçırmayın</string>
+    <string name="popup_premium_song">Premium Şarkı</string>
+    <string name="popup_premium_template">Premium Şablon</string>
+    <string name="popup_try_it_now">Şimdi deneyin</string>
 </resources>

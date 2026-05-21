@@ -57,11 +57,11 @@ class AssetPickerPermissionStateUtilsTest {
     @Test
     fun `prune selected uris by available uri set on limited reload`() {
         val retained = retainSelectedUrisAfterReload(
-            selectedUris = setOf("a", "b", "c"),
+            selectedUris = listOf("a", "b", "c"),
             availableUris = setOf("a", "c")
         )
 
-        assertEquals(setOf("a", "c"), retained)
+        assertEquals(listOf("a", "c"), retained)
     }
 
     @Test

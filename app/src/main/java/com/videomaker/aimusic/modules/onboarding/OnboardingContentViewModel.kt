@@ -8,6 +8,7 @@ import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.constants.RemoteConfigKeys
 import com.videomaker.aimusic.core.data.local.RegionProvider
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import kotlinx.coroutines.Job
@@ -60,7 +61,9 @@ class OnboardingContentViewModel(
                     page1VideoUrl = page1Video,
                     page1ThumbnailUrl = page1Url,
                     page1LocalFallback = page1Local,
-                    page2ThumbnailUrl = page2Url,
+                    page2ThumbnailUrl = page2Url?.coverUrl,
+                    nameSong = page2Url?.name,
+                    nameArtist = page2Url?.artist,
                     page2LocalFallback = page2Local,
                     page3Thumbnails = page3Urls,
                     page3LocalFallbacks = page3Locals,
@@ -114,7 +117,7 @@ class OnboardingContentViewModel(
         return Triple(null, null, localFallback)
     }
 
-    private suspend fun resolvePage2Thumbnail(): Pair<String?, Int> {
+    private suspend fun resolvePage2Thumbnail(): Pair<MusicSong?, Int> {
         val localFallback = localPage2()
 
         // Try remote config song ID
@@ -128,7 +131,7 @@ class OnboardingContentViewModel(
         if (configSongId != null) {
             val song = songRepository.getSongById(configSongId.toLong()).getOrNull()
             if (song != null && song.coverUrl.isNotBlank()) {
-                return Pair(song.coverUrl, localFallback)
+                return Pair(song, localFallback)
             }
         }
 
@@ -138,7 +141,7 @@ class OnboardingContentViewModel(
             .firstOrNull { it.coverUrl.isNotBlank() }
 
         if (featured != null) {
-            return Pair(featured.coverUrl, localFallback)
+            return Pair(featured, localFallback)
         }
 
         return Pair(null, localFallback)

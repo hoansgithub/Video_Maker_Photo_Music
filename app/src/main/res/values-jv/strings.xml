@@ -23,7 +23,7 @@
     <string name="onboarding_get_started">Mulai</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Tetep ngarep karo template seger sing di-update saben dina.</string>
-    <string name="onboarding_india_page3_title">Tangkap template trending saben dina</string>
+    <string name="onboarding_india_page3_title">Tangkap template trending</string>
     <string name="onboarding_india_page3_subtitle">Tetep ngarep karo template seger sing di-update saben dina.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Gawe Keajaiban ing Sawetara Detik</string>
@@ -554,4 +554,15 @@
     <string name="notif_cta_continue_editing">Terus Nyunting</string>
     <string name="notif_cta_view_template">Deleng Template</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Sugeng rawuh bali!</string>
+    <string name="welcome_back_subtitle">Iki sing anyar minggu iki:</string>
+    <string name="welcome_back_vibe_tags">• 8 lagu anyar • 3 template populer 🚀</string>
+    <string name="welcome_back_continue">Terusake</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Aja Dilewati</string>
+    <string name="popup_premium_song">Lagu Premium</string>
+    <string name="popup_premium_template">Template Premium</string>
+    <string name="popup_try_it_now">Coba saiki</string>
 </resources>

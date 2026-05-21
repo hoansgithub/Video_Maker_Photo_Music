@@ -20,7 +20,7 @@
     <string name="onboarding_get_started">Bắt đầu</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Luôn dẫn đầu với các mẫu mới sẵn sàng sử dụng và cập nhật hàng ngày.</string>
-    <string name="onboarding_india_page3_title">Nhận mẫu xu hướng mỗi ngày</string>
+    <string name="onboarding_india_page3_title">Nhận mẫu xu hướng</string>
     <string name="onboarding_india_page3_subtitle">Luôn dẫn đầu với các mẫu mới sẵn sàng sử dụng và cập nhật hàng ngày.</string>
     <!-- Page 1 -->
     <string name="onboarding_page1_title">Tạo Điều Kỳ Diệu trong Vài Giây</string>
@@ -547,4 +547,15 @@
     <string name="notif_cta_continue_editing">Tiếp Tục Chỉnh Sửa</string>
     <string name="notif_cta_view_template">Xem Mẫu</string>
 
+    <!-- Welcome Back Screen -->
+    <string name="welcome_back_title">Chào mừng bạn trở lại!</string>
+    <string name="welcome_back_subtitle">Đây là những nội dung mới trong tuần này:</string>
+    <string name="welcome_back_vibe_tags">• 8 bài hát mới • 3 mẫu thịnh hành 🚀</string>
+    <string name="welcome_back_continue">Tiếp tục</string>
+
+    <!-- Popup Trending -->
+    <string name="popup_dont_miss_it">Đừng bỏ lỡ</string>
+    <string name="popup_premium_song">Bài hát Premium</string>
+    <string name="popup_premium_template">Mẫu Premium</string>
+    <string name="popup_try_it_now">Dùng thử ngay</string>
 </resources>
