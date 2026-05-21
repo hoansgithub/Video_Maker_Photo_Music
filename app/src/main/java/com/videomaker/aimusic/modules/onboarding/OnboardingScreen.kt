@@ -135,7 +135,6 @@ fun OnboardingScreen(
     HorizontalPager(
         state = pagerState,
         modifier = Modifier
-            .navigationBarsPadding()
             .fillMaxSize(),
         beyondViewportPageCount = 1,
         userScrollEnabled = pagerState.currentPage != pagerState.pageCount - 1
