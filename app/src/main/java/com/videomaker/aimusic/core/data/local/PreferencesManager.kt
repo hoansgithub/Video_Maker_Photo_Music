@@ -97,6 +97,9 @@ class PreferencesManager(context: Context) {
         private const val KEY_ACTIVE_DRAFT_REMINDER_IDS = "active_draft_reminder_ids"
         private const val KEY_MEDIA_FULL_PERMISSION_REQUEST_COUNT = "media_full_permission_request_count"
         private const val KEY_MEDIA_FULL_PERMISSION_BLOCKED = "media_full_permission_blocked"
+        private const val KEY_PENDING_DEEP_LINK_ACTION = "pending_deep_link_action"
+        private const val KEY_PENDING_DEEP_LINK_TEMPLATE_ID = "pending_deep_link_template_id"
+        private const val KEY_PENDING_DEEP_LINK_SONG_ID = "pending_deep_link_song_id"
         private const val RECENT_SEARCHES_DELIMITER = "\u001F" // Unit Separator
         private const val GENRES_DELIMITER = ","
         private const val MAX_RECENT_SEARCHES = 3 // FIFO: First In First Out
@@ -663,6 +666,47 @@ class PreferencesManager(context: Context) {
             remove(KEY_MEDIA_FULL_PERMISSION_BLOCKED)
             remove(KEY_MEDIA_FULL_PERMISSION_REQUEST_COUNT)
         }
+    }
+
+    // ============================================
+    // Pending deep link (widget/shortcut before onboarding)
+    // ============================================
+
+    data class PendingDeepLink(
+        val action: String,
+        val templateId: String?,
+        val songId: Long?
+    )
+
+    /**
+     * Save a widget/shortcut deep link to be consumed after onboarding completes.
+     * Stores action + typed extras individually for correct serialization.
+     */
+    fun setPendingDeepLink(action: String?, templateId: String?, songId: Long?) {
+        prefs.edit {
+            if (action != null) putString(KEY_PENDING_DEEP_LINK_ACTION, action)
+            else remove(KEY_PENDING_DEEP_LINK_ACTION)
+            if (templateId != null) putString(KEY_PENDING_DEEP_LINK_TEMPLATE_ID, templateId)
+            else remove(KEY_PENDING_DEEP_LINK_TEMPLATE_ID)
+            if (songId != null && songId > 0L) putLong(KEY_PENDING_DEEP_LINK_SONG_ID, songId)
+            else remove(KEY_PENDING_DEEP_LINK_SONG_ID)
+        }
+    }
+
+    /**
+     * Atomically read and clear the pending deep link (action + all extras).
+     * Returns null if no pending deep link is stored.
+     */
+    fun consumePendingDeepLink(): PendingDeepLink? {
+        val action = prefs.getString(KEY_PENDING_DEEP_LINK_ACTION, null) ?: return null
+        val templateId = prefs.getString(KEY_PENDING_DEEP_LINK_TEMPLATE_ID, null)
+        val songId = prefs.getLong(KEY_PENDING_DEEP_LINK_SONG_ID, -1L).takeIf { it > 0L }
+        prefs.edit {
+            remove(KEY_PENDING_DEEP_LINK_ACTION)
+            remove(KEY_PENDING_DEEP_LINK_TEMPLATE_ID)
+            remove(KEY_PENDING_DEEP_LINK_SONG_ID)
+        }
+        return PendingDeepLink(action, templateId, songId)
     }
 
     /**
