@@ -59,6 +59,7 @@ import com.videomaker.aimusic.ui.theme.TemplateBadgeBackground
 import com.videomaker.aimusic.ui.theme.White12
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.videomaker.aimusic.core.util.NumberFormatter
 
 @Composable
 fun TemplatePickScreen(
@@ -243,7 +244,7 @@ private fun TemplateItem(
                             modifier = Modifier.size(10.dp)
                         )
                         Text(
-                            text = formatUseCount(template.useCount),
+                            text = NumberFormatter.formatCount(template.useCount),
                             fontSize = 10.sp,
                             color = Gray200,
                             maxLines = 1
@@ -278,16 +279,4 @@ private fun TemplateItem(
 
 
     }
-}
-
-private fun formatUseCount(count: Long): String = when {
-    count >= 1_000_000 -> {
-        val v = count / 1_000_000.0
-        if (v % 1.0 == 0.0) "${v.toLong()}M" else "%.1fM".format(v)
-    }
-    count >= 1_000 -> {
-        val v = count / 1_000.0
-        if (v % 1.0 == 0.0) "${v.toLong()}K" else "%.1fK".format(v)
-    }
-    else -> count.toString()
 }

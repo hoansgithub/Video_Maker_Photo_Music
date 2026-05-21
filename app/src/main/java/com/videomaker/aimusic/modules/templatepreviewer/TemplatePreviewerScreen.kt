@@ -3,18 +3,20 @@ package com.videomaker.aimusic.modules.templatepreviewer
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
-    import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,14 +55,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.util.UnstableApi
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -76,48 +70,54 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import com.videomaker.aimusic.BuildConfig
-import com.videomaker.aimusic.core.ads.RewardedAdPresenter
-import com.videomaker.aimusic.R
-import kotlinx.coroutines.delay
-import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
-import com.videomaker.aimusic.core.analytics.Analytics
-import com.videomaker.aimusic.core.analytics.AnalyticsEvent
-import com.videomaker.aimusic.core.constants.AdPlacement
-import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
-import com.videomaker.aimusic.ui.components.AdBadge
-import com.videomaker.aimusic.ui.components.AdBadgeStyle
-import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
-import com.videomaker.aimusic.ui.components.NotificationPermissionPromoDialog
-import com.videomaker.aimusic.ui.components.NotificationPermissionSettingsGuideDialog
-import com.videomaker.aimusic.domain.model.AspectRatio
-import com.videomaker.aimusic.domain.model.MusicSong
-import com.videomaker.aimusic.media.audio.AudioPreviewCache
-import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
-import com.videomaker.aimusic.modules.templatepreviewer.components.UserSongBackgroundPlayer
-import org.koin.compose.koinInject
-import com.videomaker.aimusic.ui.components.PrimaryButton
-import com.videomaker.aimusic.ui.theme.Primary
-import com.videomaker.aimusic.ui.theme.SurfaceDark
-import com.videomaker.aimusic.ui.theme.SurfaceDarkVariant
-import com.videomaker.aimusic.ui.theme.White16
-import com.videomaker.aimusic.ui.theme.White40
 import coil.compose.SubcomposeAsyncImage
 import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Scale
+import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.ads.RewardedAdPresenter
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
+import com.videomaker.aimusic.core.util.NumberFormatter
+import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
+import com.videomaker.aimusic.modules.templatepreviewer.components.TemplateVideoPlayer
+import com.videomaker.aimusic.modules.templatepreviewer.components.UserSongBackgroundPlayer
+import com.videomaker.aimusic.ui.components.AdBadge
+import com.videomaker.aimusic.ui.components.AdBadgeStyle
+import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import com.videomaker.aimusic.ui.components.NotificationPermissionPromoDialog
+import com.videomaker.aimusic.ui.components.NotificationPermissionSettingsGuideDialog
+import com.videomaker.aimusic.ui.components.PrimaryButton
 import com.videomaker.aimusic.ui.theme.FoundationBlack
+import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.SurfaceDark
+import com.videomaker.aimusic.ui.theme.SurfaceDarkVariant
 import com.videomaker.aimusic.ui.theme.SurfaceLight
+import com.videomaker.aimusic.ui.theme.White16
+import com.videomaker.aimusic.ui.theme.White40
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import androidx.core.content.edit
-import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import org.koin.compose.koinInject
 
 // Virtual page count for infinite-scroll illusion.
 private const val VIRTUAL_PAGE_COUNT = 10_000
@@ -903,7 +903,7 @@ private fun TemplatePreviewerReadyContent(
                     }
 
                     Text(
-                        text = stringResource(R.string.template_add_to_favorites),
+                        text = NumberFormatter.formatCount(currentTemplate?.viewCount ?: 0L),
                         color = SurfaceLight,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 12.sp

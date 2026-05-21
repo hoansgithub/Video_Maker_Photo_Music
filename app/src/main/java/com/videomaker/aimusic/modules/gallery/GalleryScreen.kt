@@ -58,6 +58,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import com.videomaker.aimusic.core.util.NumberFormatter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -806,7 +807,7 @@ private fun FeaturedTemplateCard(
             if (template.useCount > 0) {
                 // ✅ FIX: Pre-calculate formatted use count once
                 val formattedCount = remember(template.useCount) {
-                    formatUseCount(template.useCount)
+                    NumberFormatter.formatCount(template.useCount)
                 }
 
                 Row(
@@ -856,21 +857,6 @@ private fun FeaturedTemplateCard(
             )
         }
     }
-}
-
-/**
- * Format use count for display (1000 -> 1K, 1500000 -> 1.5M)
- */
-private fun formatUseCount(count: Long): String = when {
-    count >= 1_000_000 -> {
-        val v = count / 1_000_000.0
-        if (v % 1.0 == 0.0) "${v.toLong()}M" else "%.1fM".format(v)
-    }
-    count >= 1_000 -> {
-        val v = count / 1_000.0
-        if (v % 1.0 == 0.0) "${v.toLong()}K" else "%.1fK".format(v)
-    }
-    else -> count.toString()
 }
 
 // ============================================
