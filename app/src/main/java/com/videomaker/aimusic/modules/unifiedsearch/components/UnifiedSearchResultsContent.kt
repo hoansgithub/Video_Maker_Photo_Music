@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.modules.unifiedsearch.MusicSectionState
@@ -204,7 +205,16 @@ fun UnifiedSearchResultsContent(
                                                     )
                                                     onTemplateClick(template.id)
                                                           },
-                                                modifier = Modifier.width(190.dp)
+                                                modifier = Modifier
+                                                    .width(190.dp)
+                                                    .onFirstVisible(key = template.id) {
+                                                        Analytics.trackTemplateImpression(
+                                                            templateId = template.id,
+                                                            templateName = template.name,
+                                                            location = AnalyticsEvent.Value.Location.SEARCH_RCM,
+                                                            screenSessionId = ""
+                                                        )
+                                                    }
                                             )
                                         }
                                     }
@@ -234,6 +244,14 @@ fun UnifiedSearchResultsContent(
                                                         location = AnalyticsEvent.Value.Location.SEARCH_RCM
                                                     )
                                                     onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RCM)
+                                                },
+                                                modifier = Modifier.onFirstVisible(key = song.id) {
+                                                    Analytics.trackSongImpression(
+                                                        songId = song.id.toString(),
+                                                        songName = song.name,
+                                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM,
+                                                        screenSessionId = ""
+                                                    )
                                                 }
                                             )
                                         }
@@ -357,6 +375,14 @@ fun UnifiedSearchResultsContent(
                                             location = AnalyticsEvent.Value.Location.SEARCH_RESULT
                                         )
                                         onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RESULT)
+                                    },
+                                    modifier = Modifier.onFirstVisible(key = song.id) {
+                                        Analytics.trackSongImpression(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.SEARCH_RESULT,
+                                            screenSessionId = ""
+                                        )
                                     }
                                 )
                             }
@@ -433,7 +459,8 @@ internal fun UnifiedSeeMore(
 internal fun UnifiedTemplateGrid(
     templates: List<VideoTemplate>,
     onTemplateClick: (template: VideoTemplate) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    impressionLocation: String = AnalyticsEvent.Value.Location.SEARCH_RESULT
 ) {
     val dimens = AppDimens.current
 
@@ -454,6 +481,14 @@ internal fun UnifiedTemplateGrid(
             template = template,
             onClick = {
                 onTemplateClick(template)
+            },
+            modifier = Modifier.onFirstVisible(key = template.id) {
+                Analytics.trackTemplateImpression(
+                    templateId = template.id,
+                    templateName = template.name,
+                    location = impressionLocation,
+                    screenSessionId = ""
+                )
             }
         )
     }

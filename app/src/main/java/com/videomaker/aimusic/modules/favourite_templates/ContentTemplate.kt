@@ -25,6 +25,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.Stable
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.constants.AdPlacement
 
 @Stable
@@ -94,6 +97,14 @@ fun ContentTemplate(
                             isPremium = item.template.isPremium,
                             isShowOption = true,
                             useCount = item.template.useCount,
+                            modifier = Modifier.onFirstVisible(key = item.template.id) {
+                                Analytics.trackTemplateImpression(
+                                    templateId = item.template.id,
+                                    templateName = item.template.name,
+                                    location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE,
+                                    screenSessionId = ""
+                                )
+                            },
                             onClickDelete = {
                                 onDeleteTemplateClick.invoke(item.template.id)
                             },

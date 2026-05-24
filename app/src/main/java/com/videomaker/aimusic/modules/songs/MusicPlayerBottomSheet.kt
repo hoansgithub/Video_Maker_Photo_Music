@@ -185,10 +185,8 @@ fun MusicPlayerBottomSheet(
     var isSeeking  by remember { mutableStateOf(false) }
     var seekValue  by remember { mutableFloatStateOf(0f) }
     var hasTrackedAutoPreview by remember(song.id) { mutableStateOf(false) }
-    var hasTrackedImpression by remember(song.id) { mutableStateOf(false) }
     var hasAppliedHookSeek by remember(song.id) { mutableStateOf(false) }
     var wasPlayingBeforeAd by remember(song.id) { mutableStateOf(false) }
-    val playerSessionId = remember(song.id) { Analytics.newScreenSessionId() }
 
     val context = LocalContext.current
     // Player is created once per sheet open and released on close.
@@ -243,15 +241,9 @@ fun MusicPlayerBottomSheet(
                             )
                             hasTrackedAutoPreview = true
                         }
-                        if (!hasTrackedImpression) {
-                            Analytics.trackSongImpression(
-                                songId = song.id.toString(),
-                                songName = song.name,
-                                location = location,
-                                screenSessionId = playerSessionId
-                            )
-                            hasTrackedImpression = true
-                        }
+                        // Note: song_impression with location=song_player should only fire
+                        // on next/back clicks per spec — NOT on 1st display. Bottom sheet
+                        // currently has no next/back controls, so no impression fires here.
                     }
                     Player.STATE_ENDED -> {
                         isPlaying = false

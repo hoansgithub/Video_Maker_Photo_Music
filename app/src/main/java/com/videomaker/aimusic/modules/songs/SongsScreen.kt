@@ -54,6 +54,7 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
@@ -417,6 +418,14 @@ private fun SuggestSongsList(
                                 location = AnalyticsEvent.Value.Location.SONG_FORYOU
                             )
                             onSongClick(song, AnalyticsEvent.Value.Location.SONG_FORYOU)
+                        },
+                        modifier = Modifier.onFirstVisible(key = song.id) {
+                            Analytics.trackSongImpression(
+                                songId = song.id.toString(),
+                                songName = song.name,
+                                location = AnalyticsEvent.Value.Location.SONG_FORYOU,
+                                screenSessionId = ""
+                            )
                         }
                     )
                 }
@@ -534,6 +543,14 @@ private fun WeeklyRankingPager(
                             location = AnalyticsEvent.Value.Location.SONG_RANKING
                         )
                         onSongClick(song, AnalyticsEvent.Value.Location.SONG_RANKING)
+                    },
+                    modifier = Modifier.onFirstVisible(key = song.id) {
+                        Analytics.trackSongImpression(
+                            songId = song.id.toString(),
+                            songName = song.name,
+                            location = AnalyticsEvent.Value.Location.SONG_RANKING,
+                            screenSessionId = ""
+                        )
                     }
                 )
             }
@@ -581,10 +598,19 @@ private fun StationSongsSection(
                             )
                             onSongClick(song, AnalyticsEvent.Value.Location.SONG_STATIONS)
                         },
-                        modifier = Modifier.padding(
-                            horizontal = dimens.spaceLg,
-                            vertical = dimens.spaceXs
-                        )
+                        modifier = Modifier
+                            .padding(
+                                horizontal = dimens.spaceLg,
+                                vertical = dimens.spaceXs
+                            )
+                            .onFirstVisible(key = song.id) {
+                                Analytics.trackSongImpression(
+                                    songId = song.id.toString(),
+                                    songName = song.name,
+                                    location = AnalyticsEvent.Value.Location.SONG_STATIONS,
+                                    screenSessionId = ""
+                                )
+                            }
                     )
                 }
             }

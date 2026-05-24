@@ -2243,6 +2243,10 @@ object Analytics {
     }
 
     private fun buildDefaultDedupeKey(eventName: String, params: Map<String, Any>): String {
+        // Dedupe scope: entire app process lifetime. Set is cleared only on process death.
+        // screenSessionId intentionally NOT in the key so re-entering a screen (which mints
+        // a fresh sessionId via remember{}) does not re-fire impressions for items the user
+        // already saw earlier in this session.
         val itemId =
             params[AnalyticsEvent.Param.TEMPLATE_ID]
                 ?: params[AnalyticsEvent.Param.SONG_ID]
@@ -2250,8 +2254,7 @@ object Analytics {
                 ?: params[AnalyticsEvent.Param.ID]
                 ?: "na"
         val location = params[AnalyticsEvent.Param.LOCATION] ?: "na"
-        val screenSessionId = params[AnalyticsEvent.Param.SCREEN_SESSION_ID] ?: "global"
-        return "$eventName|$itemId|$location|$screenSessionId"
+        return "$eventName|$itemId|$location"
     }
 
     private fun buildVideoParams(
