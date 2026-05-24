@@ -109,6 +109,7 @@ private const val STATION_AD_INSERTION_INDEX = 3
 fun SongsScreen(
     viewModel: SongsViewModel,
     topBarHeight: Dp = 0.dp,
+    isVisible: Boolean = true,
     listState: LazyListState = rememberLazyListState(),
     onUserInteraction: () -> Unit = {},
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
@@ -133,6 +134,14 @@ fun SongsScreen(
     // [Experiment] CTA "Try it" hides while the user scrolls the list to discover
     // other songs during preview; reappears on player interaction or new song select.
     var isCtaVisible by remember { mutableStateOf(true) }
+
+    // Close the open player when this tab is swiped away, so returning shows a fresh state.
+    LaunchedEffect(isVisible) {
+        if (!isVisible) {
+            isCtaVisible = true
+            viewModel.onDismissPlayer()
+        }
+    }
 
     // ✅ FIX: Refresh data when locale changes (genres will be localized in future)
     // Use rememberSaveable to persist previousLocale across Activity recreation

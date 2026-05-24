@@ -394,6 +394,7 @@ fun HomeScreen(
                             lastInteractionScrollPositionSongs = currentSongsScroll
                         },
                         topBarHeight = topBarHeight,
+                        isVisible = pagerState.settledPage == 1,
                         onNavigateToSearch = onNavigateToSongSearch,
                         onNavigateToSuggestedSongsList = onNavigateToSuggestedSongsList,
                         onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
@@ -404,6 +405,7 @@ fun HomeScreen(
                         viewModel = projectsViewModel,
                         highlightProjectId = highlightProjectId,
                         hintMode = projectHintMode,
+                        isVisible = pagerState.settledPage == 2,
                         onCreateClick = {
                             Analytics.trackCreationStart(AnalyticsEvent.Value.Location.LIBRARY)
                             onNavigateToTemplateDetail("", AnalyticsEvent.Value.Location.LIBRARY_RCM)
@@ -521,7 +523,7 @@ fun HomeScreen(
                                                 fontSize = 16.sp,
                                                 fontWeight = FontWeight.Bold
                                             )
-                                            
+
                                             // Circular white refresh button inside the pill
                                             Icon(
                                                 painter = painterResource(id = R.drawable.ic_refresh),
@@ -587,7 +589,7 @@ fun HomeScreen(
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold
                                     )
-                                    
+
                                     // Circular white refresh button inside the pill
                                     Icon(
                                         painter = painterResource(id = R.drawable.ic_refresh),
@@ -756,6 +758,7 @@ private fun SongsTabContent(
     listState: LazyListState,
     onUserInteraction: () -> Unit,
     topBarHeight: Dp = 0.dp,
+    isVisible: Boolean = true,
     onNavigateToSearch: () -> Unit = {},
     onNavigateToSuggestedSongsList: () -> Unit = {},
     onNavigateToWeeklyRankingList: () -> Unit = {},
@@ -765,6 +768,7 @@ private fun SongsTabContent(
     SongsScreen(
         viewModel = viewModel,
         topBarHeight = topBarHeight,
+        isVisible = isVisible,
         listState = listState,
         onUserInteraction = onUserInteraction,
         onNavigateToAssetPicker = onNavigateToAssetPicker,
@@ -884,7 +888,7 @@ private fun HomeScreenPreviewContent(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    
+
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxWidth()
@@ -1014,7 +1018,7 @@ private fun HomeScreenPreviewContent(
                                                 fontSize = 16.sp,
                                                 fontWeight = FontWeight.Bold
                                             )
-                                            
+
                                             // Circular white refresh button inside the pill
                                             Icon(
                                                 painter = painterResource(id = R.drawable.ic_refresh),
@@ -1072,7 +1076,7 @@ private fun HomeScreenPreviewContent(
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold
                                     )
-                                    
+
                                     // Circular white refresh button inside the pill
                                     Icon(
                                         painter = painterResource(id = R.drawable.ic_refresh),

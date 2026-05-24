@@ -113,7 +113,8 @@ fun ProjectsTabContent(
     onNavigateToTemplateSearch: () -> Unit = {},
     onNavigateToAllTemplates: () -> Unit = {},
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
-    topBarHeight: Dp = 0.dp
+    topBarHeight: Dp = 0.dp,
+    isVisible: Boolean = true
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val templateState by viewModel.templateState.collectAsStateWithLifecycle()
@@ -129,6 +130,14 @@ fun ProjectsTabContent(
     // preview; reappears on player interaction or new song select.
     var isCtaVisible by remember { mutableStateOf(true) }
     val scrollHideConnection = rememberHideOnScrollConnection { isCtaVisible = false }
+
+    // Close the open player when this tab is swiped away, so returning shows a fresh state.
+    LaunchedEffect(isVisible) {
+        if (!isVisible) {
+            isCtaVisible = true
+            viewModel.onDismissPlayer()
+        }
+    }
     val context = LocalContext.current
     val activity = context as? Activity
     val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
