@@ -235,6 +235,13 @@ object AnalyticsEvent {
     const val TRENDING_POPUP_CTA = "trending_popup_cta"
     const val TRENDING_POPUP_DISMISS = "trending_popup_dismiss"
 
+    const val REWARD_SONG_RENDER = "reward_song_render"
+    const val REWARD_SONG_CLICK = "reward_song_click"
+    const val REWARD_SONG_EXIT = "reward_song_exit"
+    const val REWARD_TEMPLATE_RENDER = "reward_template_render"
+    const val REWARD_TEMPLATE_CLICK = "reward_template_click"
+    const val REWARD_TEMPLATE_EXIT = "reward_template_exit"
+
     // ============================================
     // PARAMETER KEYS
     // ============================================

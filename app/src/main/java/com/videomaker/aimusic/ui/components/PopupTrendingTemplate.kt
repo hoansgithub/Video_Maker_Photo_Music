@@ -19,6 +19,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +40,8 @@ import androidx.compose.ui.window.DialogProperties
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
@@ -54,6 +57,15 @@ fun PopupTrendingTemplate(
     onCTA: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    LaunchedEffect(item.id) {
+        Analytics.track(
+            AnalyticsEvent.REWARD_TEMPLATE_RENDER,
+            mapOf(
+                AnalyticsEvent.Param.TEMPLATE_ID to item.id,
+                AnalyticsEvent.Param.TEMPLATE_NAME to item.name
+            )
+        )
+    }
     Dialog(
         onDismissRequest = {
         },
@@ -86,6 +98,13 @@ fun PopupTrendingTemplate(
                         modifier = Modifier
                             .size(44.dp)
                             .clickableSingle {
+                                Analytics.track(
+                                    AnalyticsEvent.REWARD_TEMPLATE_EXIT,
+                                    mapOf(
+                                        AnalyticsEvent.Param.TEMPLATE_ID to item.id,
+                                        AnalyticsEvent.Param.TEMPLATE_NAME to item.name
+                                    )
+                                )
                                 onDismiss.invoke()
                             }
                             .align(Alignment.TopEnd)
@@ -134,7 +153,16 @@ fun PopupTrendingTemplate(
                             useCount = 0,
                             viewCount = 0,
                             modifier = Modifier,
-                            onClick = { onCTA() }
+                            onClick = {
+                                Analytics.track(
+                                    AnalyticsEvent.REWARD_TEMPLATE_CLICK,
+                                    mapOf(
+                                        AnalyticsEvent.Param.TEMPLATE_ID to item.id,
+                                        AnalyticsEvent.Param.TEMPLATE_NAME to item.name
+                                    )
+                                )
+                                onCTA()
+                            }
                         )
                     }
 
@@ -180,6 +208,13 @@ fun PopupTrendingTemplate(
                 CTAPrimaryButton(
                     text = stringResource(R.string.popup_try_it_now)
                 ) {
+                    Analytics.track(
+                        AnalyticsEvent.REWARD_TEMPLATE_CLICK,
+                        mapOf(
+                            AnalyticsEvent.Param.TEMPLATE_ID to item.id,
+                            AnalyticsEvent.Param.TEMPLATE_NAME to item.name
+                        )
+                    )
                     onCTA.invoke()
                 }
             }
