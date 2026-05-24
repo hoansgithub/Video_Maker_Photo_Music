@@ -83,7 +83,7 @@ class AbandonedSelectPhotosWorker(
             } else {
                 "select_photos_exit_cold_15m"
             },
-            deepLinkDestination = "select_photos",
+            deepLinkDestination = "template_preview",
             copyVariant = "beat_hanging_v1",
             imageType = "template_key_art",
             sessionType = mode,
@@ -125,7 +125,7 @@ class AbandonedSelectPhotosWorker(
             } else {
                 "select_photos_exit_cold_15m"
             },
-            deepLinkDestination = "select_photos",
+            deepLinkDestination = "template_preview",
             copyVariant = "beat_hanging_v1",
             imageType = "template_key_art",
             shownAt = nowMs

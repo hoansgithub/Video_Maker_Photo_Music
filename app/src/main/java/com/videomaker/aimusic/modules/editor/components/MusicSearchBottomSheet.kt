@@ -72,6 +72,7 @@ import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.storage.UnlockedSongsManager
 import com.videomaker.aimusic.R
@@ -545,12 +546,6 @@ internal fun MusicSearchBottomSheet(
                                         songName = song.name,
                                         location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
                                     )
-                                    Analytics.trackSongImpression(
-                                        songId = song.id.toString(),
-                                        songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH,
-                                        screenSessionId = screenSessionId
-                                    )
                                     Analytics.trackSongPreview(
                                         songId = song.id.toString(),
                                         songName = song.name,
@@ -559,6 +554,14 @@ internal fun MusicSearchBottomSheet(
                                     focusManager.clearFocus()
                                     keyboardController?.hide()
                                     MusicPreviewManager.togglePreview(song.id)
+                                },
+                                modifier = Modifier.onFirstVisible(key = song.id) {
+                                    Analytics.trackSongImpression(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH,
+                                        screenSessionId = ""
+                                    )
                                 }
                             )
                         }
@@ -672,12 +675,6 @@ internal fun MusicSearchBottomSheet(
                                             songName = song.name,
                                             location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
                                         )
-                                        Analytics.trackSongImpression(
-                                            songId = song.id.toString(),
-                                            songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
-                                            screenSessionId = screenSessionId
-                                        )
                                         Analytics.trackSongPreview(
                                             songId = song.id.toString(),
                                             songName = song.name,
@@ -686,6 +683,14 @@ internal fun MusicSearchBottomSheet(
                                         focusManager.clearFocus()
                                         keyboardController?.hide()
                                         MusicPreviewManager.togglePreview(song.id)
+                                    },
+                                    modifier = Modifier.onFirstVisible(key = song.id) {
+                                        Analytics.trackSongImpression(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                            screenSessionId = ""
+                                        )
                                     }
                                 )
                             }
@@ -784,12 +789,6 @@ internal fun MusicSearchBottomSheet(
                                             songName = song.name,
                                             location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
                                         )
-                                        Analytics.trackSongImpression(
-                                            songId = song.id.toString(),
-                                            songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
-                                            screenSessionId = screenSessionId
-                                        )
                                         Analytics.trackSongPreview(
                                             songId = song.id.toString(),
                                             songName = song.name,
@@ -798,6 +797,14 @@ internal fun MusicSearchBottomSheet(
                                         focusManager.clearFocus()
                                         keyboardController?.hide()
                                         MusicPreviewManager.togglePreview(song.id)
+                                    },
+                                    modifier = Modifier.onFirstVisible(key = song.id) {
+                                        Analytics.trackSongImpression(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                            screenSessionId = ""
+                                        )
                                     }
                                 )
                             }

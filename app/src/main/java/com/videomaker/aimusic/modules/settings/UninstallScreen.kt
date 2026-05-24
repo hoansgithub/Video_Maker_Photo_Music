@@ -73,6 +73,7 @@ import coil.size.Size
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
@@ -301,6 +302,14 @@ fun UninstallScreen(
                                 modifier = Modifier
                                     .weight(1f)
                                     .aspectRatio(1f)
+                                    .onFirstVisible(key = template.id) {
+                                        Analytics.trackTemplateImpression(
+                                            templateId = template.id,
+                                            templateName = template.name,
+                                            location = AnalyticsEvent.Value.Location.UNINSTALL,
+                                            screenSessionId = ""
+                                        )
+                                    }
                             )
                         } else {
                             ShimmerPlaceholder(

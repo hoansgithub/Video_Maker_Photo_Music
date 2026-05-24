@@ -16,6 +16,9 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -81,6 +84,14 @@ fun ContentSong(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 22.dp)
+                            .onFirstVisible(key = item.song.id) {
+                                Analytics.trackSongImpression(
+                                    songId = item.song.id.toString(),
+                                    songName = item.song.name,
+                                    location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
+                                    screenSessionId = ""
+                                )
+                            }
                     )
                 }
                 is SongListItemType.AdItem -> {

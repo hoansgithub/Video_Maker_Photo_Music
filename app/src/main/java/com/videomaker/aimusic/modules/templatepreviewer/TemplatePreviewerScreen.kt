@@ -691,12 +691,17 @@ private fun TemplatePreviewerReadyContent(
                     templateName = template.name,
                     location = trackingLocation
                 )
-                Analytics.trackTemplateImpression(
-                    templateId = template.id,
-                    templateName = template.name,
-                    location = trackingLocation,
-                    screenSessionId = screenSessionId
-                )
+                // Impression on first entry is already fired by the source list
+                // (home_template / home_banner / search_result / etc.). Only fire
+                // here on subsequent swipes with location=preview_swipe.
+                if (!isFirstSettledEmission) {
+                    Analytics.trackTemplateImpression(
+                        templateId = template.id,
+                        templateName = template.name,
+                        location = AnalyticsEvent.Value.Location.PREVIEW_SWIPE,
+                        screenSessionId = ""
+                    )
+                }
                 isFirstSettledEmission = false
             }
     }

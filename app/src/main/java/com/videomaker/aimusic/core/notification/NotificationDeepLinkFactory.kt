@@ -58,7 +58,7 @@ object NotificationDeepLinkFactory {
     ): NotificationDeepLink {
         return NotificationDeepLink(
             action = ACTION_NOTIF_RESUME_TEMPLATE,
-            deepLinkDestination = "select_photos",
+            deepLinkDestination = "template_preview",
             songId = songId,
             templateId = templateId,
             draftId = draftId

@@ -167,7 +167,7 @@ class NotificationRenderer(
             setTextColor(R.id.tvBody, textColors.bodyColor)
             setTextViewText(R.id.tvCtaText, resolvedCtaText)
             setImageViewResource(R.id.ivCtaIcon, payload.ivCtaIcon)
-            setImageViewBitmap(R.id.ivHero, scaleBitmapToFit(heroBitmap, dp(384), dp(216)))
+            setImageViewBitmap(R.id.ivHero, scaleBitmapToFit(heroBitmap, dp(384), dp(160)))
             setOnClickPendingIntent(R.id.rootContainer, contentIntent)
             setOnClickPendingIntent(R.id.ivHero, contentIntent)
             setOnClickPendingIntent(R.id.btnCta, actionIntent)

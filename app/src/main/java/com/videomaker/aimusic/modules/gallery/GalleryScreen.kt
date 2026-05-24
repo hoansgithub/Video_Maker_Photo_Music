@@ -77,6 +77,7 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
@@ -618,10 +619,10 @@ private fun FeaturedTemplatesCarousel(
         }
     }
 
-    LaunchedEffect(pagerState, isVisible) {
+    LaunchedEffect(pagerState, isVisible, templates) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
-            .collect {
+            .collect { settledPage ->
                 if (!isVisible) {
                     hasPendingUserSwipe = false
                     return@collect
@@ -630,6 +631,18 @@ private fun FeaturedTemplatesCarousel(
                     Analytics.trackGallerySwipe(AnalyticsEvent.Value.Location.GALLERY_BANNER)
                     hasPendingUserSwipe = false
                 }
+                if (templates.isEmpty()) return@collect
+                val carouselSize = templates.size + 1
+                val itemIndex = settledPage.mod(carouselSize)
+                if (itemIndex == 1) return@collect // ad slot — skip
+                val templateIndex = if (itemIndex == 0) 0 else itemIndex - 1
+                val template = templates.getOrNull(templateIndex) ?: return@collect
+                Analytics.trackTemplateImpression(
+                    templateId = template.id,
+                    templateName = template.name,
+                    location = AnalyticsEvent.Value.Location.HOME_BANNER,
+                    screenSessionId = ""
+                )
             }
     }
 
@@ -974,7 +987,14 @@ private fun StaggeredTemplateGrid(
                     showHotTag = templateIndex < 10,  // Show HOT tag for top 10 templates
                     useCount = template.useCount,  // For backward compatibility
                     viewCount = template.viewCount,  // Display count shown to users
-                    modifier = Modifier,
+                    modifier = Modifier.onFirstVisible(key = template.id) {
+                        Analytics.trackTemplateImpression(
+                            templateId = template.id,
+                            templateName = template.name,
+                            location = AnalyticsEvent.Value.Location.HOME_TEMPLATE,
+                            screenSessionId = ""
+                        )
+                    },
                     onClick = {
                         Analytics.trackTemplateClick(
                             templateId = template.id,

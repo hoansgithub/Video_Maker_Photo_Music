@@ -303,15 +303,15 @@ fun AppNavigation(
             NotificationDeepLinkFactory.ACTION_NOTIF_RESUME_TEMPLATE -> {
                 val templateId = intent.getStringExtra(NotificationDeepLinkFactory.EXTRA_TEMPLATE_ID)
                 val songId = intent.getLongExtra(NotificationDeepLinkFactory.EXTRA_SONG_ID, -1L)
-                val draftId = intent.getStringExtra(NotificationDeepLinkFactory.EXTRA_DRAFT_ID)
                 backStack.apply {
                     clear()
                     add(AppRoute.Home())
                     add(
-                        AppRoute.AssetPicker(
-                            templateId = templateId,
+                        AppRoute.TemplatePreviewer(
+                            templateId = templateId.orEmpty(),
+                            imageUris = emptyList(),
                             overrideSongId = songId,
-                            resumeDraftId = draftId
+                            sourceLocation = AnalyticsEvent.Value.Location.HOME_TEMPLATE
                         )
                     )
                 }
