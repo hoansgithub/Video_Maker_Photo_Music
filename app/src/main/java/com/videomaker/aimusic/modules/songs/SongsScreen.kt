@@ -130,6 +130,9 @@ fun SongsScreen(
     var selectedSongLocation by rememberSaveable {
         mutableStateOf(AnalyticsEvent.Value.Location.SONG_PREVIEW)
     }
+    // [Experiment] CTA "Try it" hides while the user scrolls the list to discover
+    // other songs during preview; reappears on player interaction or new song select.
+    var isCtaVisible by remember { mutableStateOf(true) }
 
     // ✅ FIX: Refresh data when locale changes (genres will be localized in future)
     // Use rememberSaveable to persist previousLocale across Activity recreation
@@ -195,8 +198,10 @@ fun SongsScreen(
                 onSongClick = { song, location ->
                     onUserInteraction()
                     selectedSongLocation = location
+                    isCtaVisible = true  // new song selected → reveal CTA
                     viewModel.onSongClick(song)
                 },
+                onListUserScroll = { isCtaVisible = false },
                 onSeeMoreSuggested = {
                     onUserInteraction()
                     viewModel.onSeeMoreSuggestedClick()
@@ -210,18 +215,23 @@ fun SongsScreen(
                     onNavigateToSearch()
                 }
             )
-        }
-    }
 
-    // Music player bottom sheet — shown when a song is tapped
-    selectedSong?.let { song ->
-        MusicPlayerBottomSheet(
-            song = song,
-            cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-            location = selectedSongLocation,
-            onDismiss = viewModel::onDismissPlayer,
-            onUseToCreate = { viewModel.onUseToCreateVideo(song) }
-        )
+            // Music player bottom sheet — shown when a song is tapped
+            selectedSong?.let { song ->
+                MusicPlayerBottomSheet(
+                    song = song,
+                    cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+                    location = selectedSongLocation,
+                    isCtaVisible = isCtaVisible,
+                    onPlayerInteraction = { isCtaVisible = true },
+                    onDismiss = {
+                        isCtaVisible = true
+                        viewModel.onDismissPlayer()
+                    },
+                    onUseToCreate = { viewModel.onUseToCreateVideo(song) }
+                )
+            }
+        }
     }
 }
 
@@ -244,6 +254,7 @@ private fun SongsContent(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onSongClick: (MusicSong, String) -> Unit,
+    onListUserScroll: () -> Unit = {},
     onSeeMoreSuggested: () -> Unit,
     onNavigateToWeeklyRankingList: () -> Unit,
     onSearchClick: () -> Unit
@@ -255,6 +266,7 @@ private fun SongsContent(
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .drop(1)
             .collect { (firstVisibleIndex, _) ->
+                onListUserScroll()  // any list scroll hides the CTA during preview
                 val location = when {
                     firstVisibleIndex <= 2 -> AnalyticsEvent.Value.Location.SONG_FORYOU
                     firstVisibleIndex <= 4 -> AnalyticsEvent.Value.Location.SONG_RANKING
@@ -371,6 +383,10 @@ private fun SongsContent(
                     state = stationState,
                     onSongClick = onSongClick
                 )
+            }
+
+            item {
+                Spacer(Modifier.height(150.dp))
             }
         }
     }

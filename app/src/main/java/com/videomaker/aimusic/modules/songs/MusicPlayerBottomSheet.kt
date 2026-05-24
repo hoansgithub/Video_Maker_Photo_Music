@@ -1,10 +1,16 @@
 package com.videomaker.aimusic.modules.songs
 
+import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,12 +25,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Slideshow
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
@@ -57,6 +66,7 @@ import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -66,6 +76,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -99,6 +111,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -114,11 +127,11 @@ private fun ExoPlayer.releaseAsync() {
     val playerToRelease = this
     ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
         runCatching {
-            android.util.Log.d("MusicPlayerBottomSheet", "Releasing player on background thread...")
+            Log.d("MusicPlayerBottomSheet", "Releasing player on background thread...")
             playerToRelease.release()
-            android.util.Log.d("MusicPlayerBottomSheet", "Player released successfully")
+            Log.d("MusicPlayerBottomSheet", "Player released successfully")
         }.onFailure { e ->
-            android.util.Log.e("MusicPlayerBottomSheet", "Failed to release player", e)
+            Log.e("MusicPlayerBottomSheet", "Failed to release player", e)
         }
     }
 }
@@ -151,6 +164,8 @@ fun MusicPlayerBottomSheet(
     song: MusicSong,
     cacheDataSourceFactory: CacheDataSource.Factory,
     location: String = AnalyticsEvent.Value.Location.SONG_PREVIEW,
+    isCtaVisible: Boolean = true,
+    onPlayerInteraction: () -> Unit = {},
     onDismiss: () -> Unit,
     onUseToCreate: () -> Unit,
 ) {
@@ -175,7 +190,7 @@ fun MusicPlayerBottomSheet(
     val isSongUnlocked by viewModel.isSongUnlocked.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
     val adsLoaderService = koinInject<AdsLoaderService>()
-    val trendingPopupCoordinator = koinInject<com.videomaker.aimusic.core.popup.TrendingPopupCoordinator>()
+    val trendingPopupCoordinator = koinInject<TrendingPopupCoordinator>()
     val isPopupShowing by trendingPopupCoordinator.isAnyPopupShowing.collectAsStateWithLifecycle()
     var wasPlayingBeforePopup by remember { mutableStateOf(false) }
     var isPlaying  by remember { mutableStateOf(false) }
@@ -284,71 +299,45 @@ fun MusicPlayerBottomSheet(
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = Color.Transparent,  // Transparent sheet background
-        scrimColor = Black60,
-        dragHandle = {
-            Box(
-                modifier = Modifier
-                    .padding(vertical = 12.dp)
-                    .size(width = 36.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(Gray600)
-            )
-        },
-        modifier = Modifier.fillMaxHeight()  // Fullscreen sheet
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentAlignment = Alignment.BottomCenter
     ) {
-        // Box fills entire screen with dim background
-        Box(
+        // Player content at bottom with solid background and rounded top corners
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.3f))  // Dim transparent background
-        ) {
-            // Player content at bottom with solid background and rounded top corners
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
-                    .background(SurfaceDark)  // Solid background for player area
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 40.dp)
-            ) {
-            // ── Title row ─────────────────────────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.music_player_title),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary,
-                    modifier = Modifier.weight(1f)
+                .fillMaxWidth()
+                .shadow(
+                    elevation = 12.dp,
+                    shape = RoundedCornerShape(
+                        topStart = 20.dp,
+                        topEnd = 20.dp
+                    ),
+                    ambientColor = Color(0x29FFFFFF),
+                    spotColor = Color(0x29FFFFFF)
                 )
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.close),
-                        tint = TextPrimary
+                .clip(
+                    RoundedCornerShape(
+                        topStart = 20.dp,
+                        topEnd = 20.dp
                     )
+                )
+                .clickableSingle{
+                    onPlayerInteraction()
                 }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            // ── Song info + seeker card ────────────────────────
-            // ModalBottomSheet runs in its own window so shimmer needs its
-            // own ProvideShimmerEffect — no ancestor provides it here.
+                .background(SurfaceDark)
+        ) {
             ProvideShimmerEffect {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(
+                            topStart = 20.dp,
+                            topEnd = 20.dp
+                        ))
                         .background(PlayerCardBackground)
-                        .padding(12.dp)
+                        .padding(16.dp)
                 ) {
                     // Song info row
                     Row(
@@ -366,16 +355,26 @@ fun MusicPlayerBottomSheet(
 
                         Spacer(Modifier.width(12.dp))
 
+
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = song.name,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(Modifier.height(2.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth().height(18.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ){
+                                Text(
+                                    text = song.name,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false)
+                                )
+
+                                EqualizerBars(isPlaying = isPlaying)
+                            }
+                            Spacer(Modifier.height(6.dp))
                             Text(
                                 text = song.artist,
                                 fontSize = 13.sp,
@@ -384,10 +383,6 @@ fun MusicPlayerBottomSheet(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-
-                        Spacer(Modifier.width(12.dp))
-
-                        EqualizerBars(isPlaying = isPlaying)
 
                         Spacer(Modifier.width(12.dp))
 
@@ -400,6 +395,7 @@ fun MusicPlayerBottomSheet(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clickableSingle{
+                                    onPlayerInteraction()
                                     if (isLiked) {
                                         Analytics.trackSongUnfavorite(
                                             songId = song.id.toString(),
@@ -416,40 +412,40 @@ fun MusicPlayerBottomSheet(
                                     viewModel.toggleLike(song)
                                 }
                         )
-                    }
 
-                    Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.width(12.dp))
 
-                    // Seeker row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (!isPrepared) {
-                            // Loading state — shimmer placeholders
-                            ShimmerBox(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            ShimmerBox(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(4.dp)
-                                    .clip(RoundedCornerShape(2.dp))
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            ShimmerBox(
-                                modifier = Modifier
-                                    .width(36.dp)
-                                    .height(13.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                            )
-                        } else {
-                            // Play/pause button
-                            IconButton(
-                                onClick = {
+                        Spacer(Modifier
+                            .width(1.dp)
+                            .height(22.dp)
+                            .background(Color.White)
+                        )
+                        Spacer(Modifier.width(8.dp))
+
+                        Icon(
+                            imageVector = Icons.Default.SkipPrevious,
+                            contentDescription = null,
+                            tint = TextPrimary,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clickableSingle{
+                                    onPlayerInteraction()
+                                }
+                                .padding(3.dp)
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+                        // Play/pause button
+                        Icon(
+                            imageVector = if (isPlaying) Icons.Default.Pause
+                            else Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            tint = TextPrimary,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(White16, CircleShape)
+                                .clickableSingle{
+                                    onPlayerInteraction()
                                     when {
                                         player.isPlaying -> {
                                             player.pause()
@@ -478,144 +474,162 @@ fun MusicPlayerBottomSheet(
                                             )
                                         }
                                     }
-                                },
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .background(White16, CircleShape)
-                            ) {
-                                Icon(
-                                    imageVector = if (isPlaying) Icons.Default.Pause
-                                                  else Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    tint = TextPrimary,
-                                    modifier = Modifier.size(22.dp)
+                                }
+                                .padding(5.dp)
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+
+                        Icon(
+                            imageVector = Icons.Default.SkipNext,
+                            contentDescription = null,
+                            tint = TextPrimary,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clickableSingle{
+                                    onPlayerInteraction()
+                                }
+                                .padding(3.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // Seeker row
+                    if (!isPrepared) {
+                        ShimmerBox(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                        )
+                    } else {
+                        val progress = if (isSeeking) seekValue
+                        else currentMs.toFloat() / durationMs.toFloat()
+
+                        Slider(
+                            value = progress.coerceIn(0f, 1f),
+                            onValueChange = { v ->
+                                isSeeking = true
+                                seekValue = v
+                            },
+                            onValueChangeFinished = {
+                                onPlayerInteraction()
+                                runCatching {
+                                    player.seekTo((seekValue * durationMs).toLong())
+                                    currentMs = (seekValue * durationMs).toInt()
+                                }
+                                isSeeking = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = SliderDefaults.colors(
+                                thumbColor = TextPrimary,
+                                activeTrackColor = TextPrimary,
+                                inactiveTrackColor = Gray500,
+                                activeTickColor = Color.Transparent,
+                                inactiveTickColor = Color.Transparent
+                            ),
+                            thumb = {
+                                SliderDefaults.Thumb(
+                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                    thumbSize = androidx.compose.ui.unit.DpSize(18.dp, 18.dp),
+                                    colors = SliderDefaults.colors(thumbColor = TextPrimary)
+                                )
+                            },
+                            track = { sliderState ->
+                                SliderDefaults.Track(
+                                    sliderState = sliderState,
+                                    modifier = Modifier.height(4.dp),
+                                    colors = SliderDefaults.colors(
+                                        activeTrackColor = TextPrimary,
+                                        inactiveTrackColor = Gray500,
+                                        activeTickColor = Color.Transparent,
+                                        inactiveTickColor = Color.Transparent
+                                    ),
+                                    drawStopIndicator = null
                                 )
                             }
+                        )
 
-                            Spacer(Modifier.width(8.dp))
+//                            // Realtime countdown — remaining time, updates every 200ms
+//                            val remainingMs = if (isSeeking)
+//                                ((1f - seekValue) * durationMs).toLong().coerceAtLeast(0L)
+//                            else
+//                                (durationMs - currentMs).toLong().coerceAtLeast(0L)
+//                            Text(
+//                                text = formatDurationMmSs(remainingMs),
+//                                fontSize = 13.sp,
+//                                color = TextSecondary,
+//                                modifier = Modifier.width(36.dp)
+//                            )
+                    }
 
-                            val progress = if (isSeeking) seekValue
-                                           else currentMs.toFloat() / durationMs.toFloat()
 
-                            Slider(
-                                value = progress.coerceIn(0f, 1f),
-                                onValueChange = { v ->
-                                    isSeeking = true
-                                    seekValue = v
-                                },
-                                onValueChangeFinished = {
-                                    runCatching {
-                                        player.seekTo((seekValue * durationMs).toLong())
-                                        currentMs = (seekValue * durationMs).toInt()
-                                    }
-                                    isSeeking = false
-                                },
-                                modifier = Modifier.weight(1f),
-                                colors = SliderDefaults.colors(
-                                    thumbColor = TextPrimary,
-                                    activeTrackColor = TextPrimary,
-                                    inactiveTrackColor = Gray500,
-                                    activeTickColor = Color.Transparent,
-                                    inactiveTickColor = Color.Transparent
-                                ),
-                                thumb = {
-                                    SliderDefaults.Thumb(
-                                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                        thumbSize = androidx.compose.ui.unit.DpSize(18.dp, 18.dp),
-                                        colors = SliderDefaults.colors(thumbColor = TextPrimary)
+                    // ── CTA button ────────────────────────────────────
+                    // Hidden (shrink + fade) while user scrolls the songs list to
+                    // discover other tracks; revealed again on any player interaction.
+                    AnimatedVisibility(
+                        visible = isCtaVisible,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
+                    ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(50))
+                            .background(Primary)
+                            .clickableSingle(onClick = {
+                                Analytics.trackSongSelect(
+                                    songId = song.id.toString(),
+                                    songName = song.name,
+                                    location = location
+                                )
+                                Analytics.trackCreationStart(AnalyticsEvent.Value.Location.SONG)
+                                viewModel.onUseToCreateClick(onProceed = onUseToCreate)
+                            })
+                            .padding(14.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            if (!isSongUnlocked) {
+                                // Show ad badge instead of slideshow icon
+                                AdBadge(
+                                    style = AdBadgeStyle.Small(
+                                        textColor = Primary,
+                                        backgroundColor = TextOnPrimary
                                     )
-                                },
-                                track = { sliderState ->
-                                    SliderDefaults.Track(
-                                        sliderState = sliderState,
-                                        modifier = Modifier.height(4.dp),
-                                        colors = SliderDefaults.colors(
-                                            activeTrackColor = TextPrimary,
-                                            inactiveTrackColor = Gray500,
-                                            activeTickColor = Color.Transparent,
-                                            inactiveTickColor = Color.Transparent
-                                        ),
-                                        drawStopIndicator = null
-                                    )
-                                }
-                            )
-
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_lead_search),
+                                    contentDescription = null,
+                                    tint = TextOnPrimary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
                             Spacer(Modifier.width(8.dp))
-
-                            // Realtime countdown — remaining time, updates every 200ms
-                            val remainingMs = if (isSeeking)
-                                ((1f - seekValue) * durationMs).toLong().coerceAtLeast(0L)
-                            else
-                                (durationMs - currentMs).toLong().coerceAtLeast(0L)
                             Text(
-                                text = formatDurationMmSs(remainingMs),
-                                fontSize = 13.sp,
-                                color = TextSecondary,
-                                modifier = Modifier.width(36.dp)
+                                text = stringResource(
+                                    if (isSongUnlocked) R.string.music_player_try_it
+                                    else R.string.music_player_free_unlock
+                                ),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextOnPrimary
                             )
                         }
                     }
-                }
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            // ── CTA button ────────────────────────────────────
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(Primary)
-                    .clickableSingle(onClick = {
-                        Analytics.trackSongSelect(
-                            songId = song.id.toString(),
-                            songName = song.name,
-                            location = location
-                        )
-                        Analytics.trackCreationStart(AnalyticsEvent.Value.Location.SONG)
-                        viewModel.onUseToCreateClick(onProceed = onUseToCreate)
-                    })
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    if (!isSongUnlocked) {
-                        // Show ad badge instead of slideshow icon
-                        AdBadge(
-                            style = AdBadgeStyle.Small(
-                                textColor = Primary,
-                                backgroundColor = TextOnPrimary
-                            )
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Slideshow,
-                            contentDescription = null,
-                            tint = TextOnPrimary,
-                            modifier = Modifier.size(22.dp)
-                        )
                     }
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(
-                            if (isSongUnlocked) R.string.music_player_use_to_create
-                            else R.string.music_player_free_unlock
-                        ),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextOnPrimary
-                    )
                 }
             }
-            }  // End Column
-
             // Standard ad loading overlay - covers entire fullscreen sheet
             AdsLoadingOverlay()
-        }  // End Box
-    }  // End ModalBottomSheet
+        }  // End Column
+
+    }  // End Box
 
     // Pause/resume when Activity loses focus (AOA, interstitial ads)
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -678,7 +692,7 @@ fun MusicPlayerBottomSheet(
             if (player.isPlaying) {
                 player.pause()
                 isPlaying = false
-                android.util.Log.d("MusicPlayerBottomSheet", "Paused music for ad presentation")
+                Log.d("MusicPlayerBottomSheet", "Paused music for ad presentation")
             }
         },
         onAdClosed = {
@@ -735,7 +749,7 @@ private fun EqualizerBars(isPlaying: Boolean) {
             Box(
                 modifier = Modifier
                     .width(4.dp)
-                    .height(20.dp * fraction)
+                    .height(18.dp * fraction)
                     .clip(RoundedCornerShape(2.dp))
                     .background(Primary)
             )
