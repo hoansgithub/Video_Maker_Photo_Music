@@ -75,7 +75,7 @@ fun PopupTrendingSong(
                 .clickableSingle {
                 }
                 .fillMaxSize()
-                .background(Color(0xFF000000).copy(0.8f))
+                .background(Color(0xFF000000).copy(0.56f))
                 .padding(top = 81.dp),
             contentAlignment = Alignment.TopCenter
         ) {
