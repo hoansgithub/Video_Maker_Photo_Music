@@ -4,9 +4,6 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
-import com.videomaker.aimusic.media.audio.AudioPreviewCache
-import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
-import org.koin.compose.koinInject
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -85,13 +82,11 @@ fun WidgetScreen(
     onNavigateBack: () -> Unit,
     onNavigateToTemplatePreviewer: (templateId: String) -> Unit,
     onNavigateToSearch: () -> Unit,
-    onNavigateToTemplatePreviewerWithSong: (songId: Long) -> Unit,
+    onNavigateToSongPlayer: (songId: Long) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
-    val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
     val pinWidgetEvent by viewModel.pinWidgetEvent.collectAsStateWithLifecycle()
-    val audioPreviewCache: AudioPreviewCache = koinInject()
 
     val context = LocalContext.current
 
@@ -102,7 +97,7 @@ fun WidgetScreen(
                 is WidgetNavigationEvent.NavigateBack -> onNavigateBack()
                 is WidgetNavigationEvent.NavigateToTemplatePreviewer -> onNavigateToTemplatePreviewer(event.templateId)
                 is WidgetNavigationEvent.NavigateToSearch -> onNavigateToSearch()
-                is WidgetNavigationEvent.NavigateToTemplatePreviewerWithSong -> onNavigateToTemplatePreviewerWithSong(event.songId)
+                is WidgetNavigationEvent.NavigateToSongPlayer -> onNavigateToSongPlayer(event.songId)
             }
             viewModel.onNavigationHandled()
         }
@@ -114,16 +109,6 @@ fun WidgetScreen(
             requestPinWidget(context = context, widgetType = widgetType)
             viewModel.onPinWidgetHandled()
         }
-    }
-
-    // Music player bottom sheet — shown when a song card is tapped
-    selectedSong?.let { song ->
-        MusicPlayerBottomSheet(
-            song = song,
-            cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-            onDismiss = viewModel::onDismissPlayer,
-            onUseToCreate = { viewModel.onUseToCreateVideo(song) }
-        )
     }
 
     // Derive widget data from state
