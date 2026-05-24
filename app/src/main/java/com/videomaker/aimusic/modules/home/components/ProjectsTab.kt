@@ -57,6 +57,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -90,6 +91,7 @@ import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ProcessToast
 import com.videomaker.aimusic.ui.components.ProjectCard
 import com.videomaker.aimusic.ui.components.StaggeredGrid
+import com.videomaker.aimusic.ui.components.rememberHideOnScrollConnection
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Neutral_Black
 import com.videomaker.aimusic.ui.theme.Primary
@@ -123,6 +125,10 @@ fun ProjectsTabContent(
     val toastState by viewModel.toastState.collectAsStateWithLifecycle()
     val audioPreviewCache: AudioPreviewCache = koinInject()
     var showRemovedMessage by remember { mutableStateOf(false) }
+    // CTA "Try it" hides while the user scrolls the list to discover other songs during
+    // preview; reappears on player interaction or new song select.
+    var isCtaVisible by remember { mutableStateOf(true) }
+    val scrollHideConnection = rememberHideOnScrollConnection { isCtaVisible = false }
     val context = LocalContext.current
     val activity = context as? Activity
     val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
@@ -295,7 +301,10 @@ fun ProjectsTabContent(
         viewModel.onTabSelected(pagerState.settledPage)
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .nestedScroll(scrollHideConnection)
+    ) {
         // Background image — edge-to-edge, behind everything
         Image(
             painter = painterResource(id = R.drawable.bg_projects),
@@ -486,6 +495,7 @@ fun ProjectsTabContent(
                                             songName = song.name,
                                             location = AnalyticsEvent.Value.Location.SONG_FAVORITE
                                         )
+                                        isCtaVisible = true  // new song selected → reveal CTA
                                         viewModel.onSongClick(song)
                                     },
                                     onDeleteSongClick = {
@@ -514,8 +524,25 @@ fun ProjectsTabContent(
                                             songName = song.name,
                                             location = AnalyticsEvent.Value.Location.SONG_FAVORITE
                                         )
+                                        isCtaVisible = true  // new song selected → reveal CTA
                                         viewModel.onSongClick(song)
                                     }
+                                )
+                            }
+
+                            // Music player bottom sheet — shown when a song is tapped
+                            selectedSong?.let { song ->
+                                MusicPlayerBottomSheet(
+                                    song = song,
+                                    cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+                                    location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
+                                    isCtaVisible = isCtaVisible,
+                                    onPlayerInteraction = { isCtaVisible = true },
+                                    onDismiss = {
+                                        isCtaVisible = true
+                                        viewModel.onDismissPlayer()
+                                    },
+                                    onUseToCreate = { viewModel.onUseToCreateVideo(song) }
                                 )
                             }
                         }
@@ -584,17 +611,6 @@ fun ProjectsTabContent(
         onAdFailed = viewModel::onAdFailed,
         isInterstitial = true
     )
-
-    // Music player bottom sheet — shown when a song is tapped
-    selectedSong?.let { song ->
-        MusicPlayerBottomSheet(
-            song = song,
-            cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-            location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
-            onDismiss = viewModel::onDismissPlayer,
-            onUseToCreate = { viewModel.onUseToCreateVideo(song) }
-        )
-    }
 }
 
 @Composable

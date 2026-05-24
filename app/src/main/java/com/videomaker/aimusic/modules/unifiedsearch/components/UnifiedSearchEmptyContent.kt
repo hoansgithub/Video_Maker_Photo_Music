@@ -116,5 +116,9 @@ fun UnifiedSearchEmptyContent(
                 )
             }
         }
+
+        item {
+            Spacer(Modifier.height(150.dp))
+        }
     }
 }
