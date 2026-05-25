@@ -1,46 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
 Native Ad Layout: Small Clean
-- Compact horizontal layout (200dp height)
-- Media on left (55%), content on right (45%)
-- Clean CTA button styled with app theme
-- Dark background with ad badge disclosure
-- Use case: In-content placements (home feed, song list, project list)
+- ConstraintLayout with MediaView maintaining 1:1 aspect ratio
+- Compact horizontal layout (wrap_content height)
+- Non-clickbait CTA button (36dp, clean app-styled)
+- Light gray background for ad distinction
+- Use case: In-content placements (home screen, search results)
 -->
 <com.google.android.gms.ads.nativead.NativeAdView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="200dp"
-    android:background="@color/foundation_black">
+    android:layout_height="wrap_content"
+    android:background="#1E1E1E">
 
-    <!-- Horizontal layout: Media on left, Content on right -->
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal">
+        android:layout_height="wrap_content"
+        android:minHeight="200dp">
 
-        <!-- Media View with Ad Badge overlay (left side - 55% width) -->
-        <FrameLayout
+        <!-- Invisible Space to enforce container 390:200 ratio (original design) -->
+        <Space
+            android:id="@+id/ratio_enforcer"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="55">
+            android:layout_height="0dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintDimensionRatio="W,390:200" />
 
-            <com.google.android.gms.ads.nativead.MediaView
-                android:id="@+id/ad_media"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop" />
-        </FrameLayout>
+        <!-- Media View with 1:1 aspect ratio (left side) -->
+        <com.google.android.gms.ads.nativead.MediaView
+            android:id="@+id/ad_media"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:scaleType="centerCrop"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintWidth_percent="0.52" />
 
-        <!-- Content area (right side - 45% width) -->
+        <!-- Ad Badge overlay on MediaView -->
+        <TextView
+            android:id="@+id/ad_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ad"
+            android:textSize="9sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:background="@drawable/bg_ad_badge"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="2dp"
+            android:layout_margin="8dp"
+            app:layout_constraintTop_toTopOf="@id/ad_media"
+            app:layout_constraintEnd_toEndOf="@id/ad_media" />
+
+        <!-- Content area (right side) -->
         <LinearLayout
+            android:id="@+id/content_section"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="45"
+            android:layout_height="0dp"
             android:orientation="vertical"
-            android:background="@color/foundation_black_100"
+            android:background="#2A2A2A"
             android:padding="12dp"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/ad_media"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <!-- Row 1: Icon + Title -->
             <LinearLayout
@@ -55,8 +85,7 @@ Native Ad Layout: Small Clean
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:scaleType="fitCenter"
-                    android:layout_marginEnd="8dp"
-                    android:contentDescription="@string/ad_icon" />
+                    android:layout_marginEnd="8dp" />
 
                 <TextView
                     android:id="@+id/ad_headline"
@@ -64,7 +93,7 @@ Native Ad Layout: Small Clean
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textSize="13sp"
-                    android:textColor="@color/foundation_white"
+                    android:textColor="#E0E0E0"
                     android:textStyle="bold"
                     android:maxLines="2"
                     android:ellipsize="end" />
@@ -76,49 +105,27 @@ Native Ad Layout: Small Clean
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="11sp"
-                android:textColor="@color/foundation_white_60"
+                android:textColor="#999999"
                 android:maxLines="2"
                 android:ellipsize="end"
                 android:layout_marginStart="40dp"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Row 3: CTA Button -->
+            <!-- Row 3: CTA Button below description -->
             <TextView
                 android:id="@+id/ad_call_to_action"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
                 android:gravity="center"
                 android:textSize="13sp"
-                android:textColor="@color/foundation_black"
+                android:textColor="@color/black"
                 android:textStyle="bold"
                 android:background="@drawable/bg_cta_clean"
                 android:paddingHorizontal="16dp"
                 android:minWidth="72dp"
                 android:layout_marginStart="40dp" />
-
-            <!-- Optional: Advertiser name (hidden if not provided) -->
-            <TextView
-                android:id="@+id/ad_advertiser"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="9sp"
-                android:textColor="@color/foundation_white_40"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:visibility="gone" />
-
-            <!-- Optional: Store name (hidden if not provided) -->
-            <TextView
-                android:id="@+id/ad_store"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="9sp"
-                android:textColor="@color/foundation_white_40"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:visibility="gone" />
         </LinearLayout>
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- AdChoices overlay at top-right of entire ad -->
     <FrameLayout

@@ -251,6 +251,11 @@ dependencies {
     // implementation(libs.acccore.revenuecat)  // Uncomment when RevenueCat needed
 
     // ============================================
+    // CONSTRAINTLAYOUT (for native ad layouts)
+    // ============================================
+    implementation(libs.androidx.constraintlayout)
+
+    // ============================================
     // WIDGETS (Glance)
     // ============================================
     implementation(libs.glance.appwidget)

@@ -1,63 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
 Native Ad Layout: Big Bait Reversed
-- Large vertical layout (304dp height, 412x304 ratio)
-- Top: CTA button (56dp), Middle: Media, Bottom: Title box
-- CLICKBAIT CTA button with primary theme color
+- ConstraintLayout with MediaView maintaining 4:3 aspect ratio across all device widths
+- Top: CTA button, Middle: Media (4:3 dynamic), Bottom: Title box
+- CLICKBAIT CTA button with primary theme color (taller for better clickability)
 - Attention-grabbing design for maximum clicks
 - Use case: High-monetization placements with CTA first
 -->
 <com.google.android.gms.ads.nativead.NativeAdView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="304dp"
-    android:background="@color/foundation_black">
+    android:layout_height="wrap_content"
+    android:background="#1E1E1E">
 
-    <!-- Vertical layout: CTA at top, Media middle, Title bottom -->
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:minHeight="304dp">
 
-        <!-- BIG Full-width CTA Button at top (344x44 ratio, Clickbait style) -->
+        <!-- Invisible Space to enforce container 412:304 ratio (original design) -->
+        <Space
+            android:id="@+id/ratio_enforcer"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintDimensionRatio="W,412:304" />
+
+        <!-- Clickable full-width CTA Button at top (Clickbait style) -->
         <TextView
             android:id="@+id/ad_call_to_action"
-            android:layout_width="match_parent"
-            android:layout_height="44dp"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
             android:gravity="center"
             android:textSize="18sp"
-            android:textColor="@color/foundation_black"
+            android:textColor="@color/black"
             android:textStyle="bold"
             android:textAllCaps="true"
             android:background="@drawable/bg_cta_clean"
-            android:layout_marginHorizontal="8dp"
-            android:layout_marginVertical="12dp" />
+            android:layout_marginHorizontal="6dp"
+            android:layout_marginVertical="5dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Media View (middle) -->
+        <!-- Media View (4:3 aspect ratio maintained across all device widths) -->
         <com.google.android.gms.ads.nativead.MediaView
             android:id="@+id/ad_media"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:scaleType="centerCrop" />
+            android:scaleType="centerCrop"
+            app:layout_constraintTop_toBottomOf="@id/ad_call_to_action"
+            app:layout_constraintBottom_toTopOf="@id/title_section"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintDimensionRatio="W,4:3" />
 
-        <!-- Title box (icon + text) at bottom -->
+        <!-- Title box (icon + text) at bottom - minimal spacing -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:id="@+id/title_section"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:background="@color/foundation_black"
-            android:padding="12dp"
-            android:gravity="center_vertical">
+            android:background="#1E1E1E"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="6dp"
+            android:gravity="center_vertical"
+            app:layout_constraintTop_toBottomOf="@id/ad_media"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
 
             <!-- App Icon -->
             <ImageView
                 android:id="@+id/ad_icon"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:scaleType="fitCenter"
-                android:layout_marginEnd="12dp"
-                android:contentDescription="@string/ad_icon" />
+                android:layout_marginEnd="8dp" />
 
             <!-- Text container -->
             <LinearLayout
@@ -66,52 +89,50 @@ Native Ad Layout: Big Bait Reversed
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <!-- Headline -->
-                <TextView
-                    android:id="@+id/ad_headline"
+                <!-- Headline row with ad badge -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="14sp"
-                    android:textColor="@color/foundation_white"
-                    android:textStyle="bold"
-                    android:maxLines="1"
-                    android:ellipsize="end" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/ad_headline"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textSize="13sp"
+                        android:textColor="#E0E0E0"
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <TextView
+                        android:id="@+id/ad_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ad"
+                        android:textSize="9sp"
+                        android:textColor="#FFFFFF"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_ad_badge"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
 
                 <!-- Body text (1 line to prioritize CTA) -->
                 <TextView
                     android:id="@+id/ad_body"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:textColor="@color/foundation_white_60"
+                    android:textSize="11sp"
+                    android:textColor="#999999"
                     android:maxLines="1"
-                    android:ellipsize="end"
-                    android:layout_marginTop="2dp" />
-
-                <!-- Optional: Advertiser name (hidden if not provided) -->
-                <TextView
-                    android:id="@+id/ad_advertiser"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="9sp"
-                    android:textColor="@color/foundation_white_40"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:visibility="gone" />
-
-                <!-- Optional: Store name (hidden if not provided) -->
-                <TextView
-                    android:id="@+id/ad_store"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="9sp"
-                    android:textColor="@color/foundation_white_40"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:visibility="gone" />
+                    android:ellipsize="end" />
             </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- AdChoices overlay at top-right of entire ad -->
     <FrameLayout

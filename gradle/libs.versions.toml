@@ -58,7 +58,7 @@ koin = "4.2.0"  # Matches ACCCoreAndroid
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.42"  # Latest: v0.0.42 - fix(ads): remove hardcoded OnboardingActivity checks
+acccore = "0.0.44"
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)
@@ -74,6 +74,11 @@ revenuecat = "9.1.0"
 # WIDGETS (Glance)
 # ============================================
 glance = "1.1.1"
+
+# ============================================
+# CONSTRAINTLAYOUT (for native ad layouts)
+# ============================================
+constraintlayout = "2.2.0"
 
 # ============================================
 # UI UTILITIES
@@ -196,6 +201,11 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coil" }
 coil-video = { group = "io.coil-kt", name = "coil-video", version.ref = "coil" }
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
+
+# ============================================
+# CONSTRAINTLAYOUT
+# ============================================
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 
 # ============================================
 # WIDGETS (Glance)
