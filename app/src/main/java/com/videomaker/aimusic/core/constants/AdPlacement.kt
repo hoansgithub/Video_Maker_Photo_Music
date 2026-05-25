@@ -354,6 +354,38 @@ object AdPlacement {
     const val NATIVE_ONBOARDING_FEATURE_SELECTION_ALT = "ad_native_onboarding_feature_selection_alt"
 
     /**
+     * Feature survey screen native (primary "select" slot), shown after language.
+     * Pro_NA_high_select. Fades to reveal the alt slot when the user makes a selection.
+     * Ad unit: ca-app-pub-7121075950716954/5275683453
+     * Remote Config key: ad_native_onboarding_select
+     */
+    const val NATIVE_ONBOARDING_SELECT = "ad_native_onboarding_select"
+
+    /**
+     * Feature survey screen native (alt "select_alt" slot), revealed on selection.
+     * Pro_NA_all_select. Reloaded on each additional selection.
+     * Ad unit: ca-app-pub-7121075950716954/3802133920
+     * Remote Config key: ad_native_onboarding_select_alt
+     */
+    const val NATIVE_ONBOARDING_SELECT_ALT = "ad_native_onboarding_select_alt"
+
+    /**
+     * Platform survey screen native (primary "social" slot), shown after the feature screen.
+     * Pro_NA_high_social. Fades to reveal the alt slot when the user makes a selection.
+     * Ad unit: ca-app-pub-7121075950716954/4700282623
+     * Remote Config key: ad_native_onboarding_social
+     */
+    const val NATIVE_ONBOARDING_SOCIAL = "ad_native_onboarding_social"
+
+    /**
+     * Platform survey screen native (alt "social_alt" slot), revealed on selection.
+     * Pro_NA_all_social. Reloaded on each additional selection.
+     * Ad unit: ca-app-pub-7121075950716954/3387200953
+     * Remote Config key: ad_native_onboarding_social_alt
+     */
+    const val NATIVE_ONBOARDING_SOCIAL_ALT = "ad_native_onboarding_social_alt"
+
+    /**
      * Native ad shown at bottom of onboarding page 1.
      * Timing: Loaded when onboarding page 1 is displayed.
      * First welcome page of the onboarding flow.
@@ -898,6 +930,10 @@ object AdPlacement {
         NATIVE_ONBOARDING_SELECT_MUSIC,
         NATIVE_ONBOARDING_SELECT_TPT,
         NATIVE_ONBOARDING_PERSONALIZING,
+        NATIVE_ONBOARDING_SELECT,
+        NATIVE_ONBOARDING_SELECT_ALT,
+        NATIVE_ONBOARDING_SOCIAL,
+        NATIVE_ONBOARDING_SOCIAL_ALT,
         REWARD_INTER_DOWNLOAD_VIDEO,
         REWARD_REMOVE_WATERMARK,
         REWARD_UNLOCK_QUALITY,

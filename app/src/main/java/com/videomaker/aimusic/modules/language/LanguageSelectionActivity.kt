@@ -16,8 +16,12 @@ import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
+import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
 import com.videomaker.aimusic.modules.onboarding.OnboardingContentViewModel
+import com.videomaker.aimusic.modules.onboardingsurvey.OnboardingSurveyActivity
+import com.videomaker.aimusic.modules.onboardingsurvey.OnboardingSurveyGate
+import com.videomaker.aimusic.modules.onboardingsurvey.OnboardingSurveyStep
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
 /**
@@ -47,19 +51,32 @@ class LanguageSelectionActivity : AppCompatActivity() {
     private val applyLanguageUseCase: ApplyLanguageUseCase by inject()
     private val completeLanguageSelectionUseCase: CompleteLanguageSelectionUseCase by inject()
     private val onboardingContentViewModel: OnboardingContentViewModel by inject()
+    private val remoteConfig: RemoteConfig by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // 2-ahead preloading (high-completion early step)
-        // All onboarding page ads + fullscreen preloaded here at language selection
-        // OnboardingActivity also preloads PAGE3 + FULLSCREEN as a safety net (idempotent)
-        android.util.Log.d("LanguageSelection", "🔄 Preloading onboarding page ads (2-ahead)")
-        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
-        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
-        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE3)
-        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
+        // Preload the next screen's ads (1-step-ahead strategy). The next screen depends on
+        // which survey screens are enabled; fall back to the welcome pager ads when none are.
+        android.util.Log.d("LanguageSelection", "🔄 Preloading next-screen ads (1-step-ahead)")
+        when (OnboardingSurveyGate.enabledSteps(remoteConfig).firstOrNull()) {
+            OnboardingSurveyStep.FEATURE -> {
+                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SELECT)
+                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SELECT_ALT)
+            }
+            OnboardingSurveyStep.PLATFORM -> {
+                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SOCIAL)
+                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SOCIAL_ALT)
+            }
+            null -> {
+                // No survey screens → welcome pager (OnboardingActivity) is next.
+                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
+                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
+                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE3)
+                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
+            }
+        }
 
         // Pre-fetch onboarding thumbnails (data ready when OnboardingActivity opens)
         onboardingContentViewModel.preloadContent()
@@ -98,7 +115,14 @@ class LanguageSelectionActivity : AppCompatActivity() {
      * After language selection, launch OnboardingActivity.
      */
     private fun navigateToOnboarding() {
-        startActivity(Intent(this, OnboardingActivity::class.java))
+        // Route through the survey screens when at least one is enabled; otherwise go straight
+        // to the welcome pager (avoids launching an Activity that would immediately finish).
+        val target = if (OnboardingSurveyGate.isAnyEnabled(remoteConfig)) {
+            OnboardingSurveyActivity::class.java
+        } else {
+            OnboardingActivity::class.java
+        }
+        startActivity(Intent(this, target))
         applyDefaultTransition()
         finish()
     }

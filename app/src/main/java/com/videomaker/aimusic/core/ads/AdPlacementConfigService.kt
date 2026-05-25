@@ -397,6 +397,42 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Feature survey screen natives (shown after language). Primary fades to reveal alt on selection.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_SELECT,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/5275683453"   // Pro_NA_high_select
+            ),
+            enabled = true
+        )
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_SELECT_ALT,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/3802133920"   // Pro_NA_all_select
+            ),
+            enabled = true
+        )
+
+        // Platform survey screen natives (shown after the feature screen).
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_SOCIAL,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4700282623"   // Pro_NA_high_social
+            ),
+            enabled = true
+        )
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_SOCIAL_ALT,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/3387200953"   // Pro_NA_all_social
+            ),
+            enabled = true
+        )
+
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_SELECT_MUSIC,
             layoutName = "native_big_bait_reversed",
