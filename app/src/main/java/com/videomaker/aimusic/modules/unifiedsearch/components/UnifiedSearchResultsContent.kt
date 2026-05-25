@@ -3,7 +3,6 @@ package com.videomaker.aimusic.modules.unifiedsearch.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,16 +29,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
-import coil.compose.SubcomposeAsyncImage
-import coil.compose.SubcomposeAsyncImageContent
-import coil.request.CachePolicy
-import coil.request.ImageRequest
-import coil.size.Precision
-import coil.size.Size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
@@ -47,26 +36,34 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import co.alcheclub.lib.acccore.ads.compose.NativeAdView
-import com.videomaker.aimusic.BuildConfig
-import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
+import coil.request.CachePolicy
+import coil.request.ImageRequest
+import coil.size.Precision
+import coil.size.Size
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.util.NumberFormatter
 import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
-import com.videomaker.aimusic.modules.unifiedsearch.MusicSectionState
-import com.videomaker.aimusic.modules.unifiedsearch.TemplateSectionState
 import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchUiState
 import com.videomaker.aimusic.navigation.SearchSection
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
@@ -653,7 +650,7 @@ private fun ScaledTemplateCard(
                             modifier = Modifier.size((10 * scaleFactor).dp)
                         )
                         Text(
-                            text = formatUseCount(template.useCount),
+                            text = NumberFormatter.formatCount(template.useCount),
                             fontSize = (10 * scaleFactor).sp,
                             color = Gray200,
                             maxLines = 1
@@ -678,18 +675,6 @@ private fun parseAspectRatio(aspectRatio: String): Float {
     } catch (_: Exception) {
         9f / 16f
     }
-}
-
-private fun formatUseCount(count: Long): String = when {
-    count >= 1_000_000 -> {
-        val v = count / 1_000_000.0
-        if (v % 1.0 == 0.0) "${v.toLong()}M" else "%.1fM".format(v)
-    }
-    count >= 1_000 -> {
-        val v = count / 1_000.0
-        if (v % 1.0 == 0.0) "${v.toLong()}K" else "%.1fK".format(v)
-    }
-    else -> count.toString()
 }
 
 /**
