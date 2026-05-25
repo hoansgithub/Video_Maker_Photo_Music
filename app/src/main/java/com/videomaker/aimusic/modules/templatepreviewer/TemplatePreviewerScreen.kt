@@ -8,10 +8,12 @@ import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
-    import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,6 +38,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -457,7 +469,8 @@ fun TemplatePreviewerScreen(
                     onSwipeTemplate = { hasSwipedTemplate = true },
                     eventLocation = eventLocation,
                     onNavigateBack = viewModel::onNavigateBack,
-                    onFirstVideoReady = { firstVideoReady = true }
+                    onFirstVideoReady = { firstVideoReady = true },
+                    onRefresh = viewModel::refresh
                 )
 
                 // Show loading overlay on top until ad display completes
@@ -641,8 +654,16 @@ private fun TemplatePreviewerReadyContent(
     onSwipeTemplate: () -> Unit = {},
     eventLocation: String = AnalyticsEvent.Value.Location.PREVIEW_SWIPE,
     onNavigateBack: () -> Unit,
-    onFirstVideoReady: () -> Unit
+    onFirstVideoReady: () -> Unit,
+    onRefresh: () -> Unit = {}
 ) {
+    var showRefreshTooltip by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(800)
+        showRefreshTooltip = true
+        delay(6000)
+        showRefreshTooltip = false
+    }
     val templates = state.templates
     val screenSessionId = remember { Analytics.newScreenSessionId() }
     val pagerState = rememberPagerState(
@@ -807,14 +828,14 @@ private fun TemplatePreviewerReadyContent(
                 .align(Alignment.BottomCenter)
         )
 
-        // Top bar — back button (left) + template name (right)
+        // Top bar — back button (left) + template name (center) + refresh button (right)
         val currentTemplateName = templates.getOrNull(pagerState.settledPage % templates.size)?.name
         Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(start = 8.dp, end = 16.dp, top = 8.dp),
+                .padding(start = 8.dp, end = 8.dp, top = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
@@ -829,17 +850,118 @@ private fun TemplatePreviewerReadyContent(
                     tint = Color.White
                 )
             }
-            if (currentTemplateName != null) {
-                Text(
-                    text = currentTemplateName,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.End,
-                    modifier = Modifier.weight(1f)
+            
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (currentTemplateName != null) {
+                    Text(
+                        text = currentTemplateName,
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            IconButton(
+                onClick = {
+                    onRefresh()
+                    showRefreshTooltip = false
+                },
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(color = Color.Black.copy(alpha = 0.4f), shape = CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Refresh",
+                    tint = Color.White
                 )
+            }
+        }
+
+        // Custom Tooltip Popup pointing directly UP to the Refresh Icon
+        androidx.compose.animation.AnimatedVisibility(
+            visible = showRefreshTooltip,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding()
+                .padding(top = 64.dp, end = 8.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier.width(280.dp)
+            ) {
+                // Triangle pointing UP
+                Box(
+                    modifier = Modifier
+                        .padding(end = 16.dp)
+                        .size(width = 16.dp, height = 8.dp)
+                        .drawBehind {
+                            val path = Path().apply {
+                                moveTo(size.width / 2f, 0f)
+                                lineTo(size.width, size.height)
+                                lineTo(0f, size.height)
+                                close()
+                            }
+                            drawPath(path, color = Color(0xFF1E1E1E))
+                        }
+                )
+                // Main popup container
+                Box(
+                    modifier = Modifier
+                        .background(color = Color(0xFF1E1E1E), shape = RoundedCornerShape(12.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "✨",
+                            fontSize = 14.sp
+                        )
+                        val annotatedText = buildAnnotatedString {
+                            append("We've just updated a lot of new content for you! ")
+                            pushStringAnnotation(tag = "refresh", annotation = "refresh")
+                            withStyle(
+                                style = SpanStyle(
+                                    color = Primary,
+                                    fontWeight = FontWeight.Bold,
+                                    textDecoration = TextDecoration.Underline
+                                )
+                            ) {
+                                append("Refresh now")
+                            }
+                            pop()
+                            append(" to check it out.")
+                        }
+                        ClickableText(
+                            text = annotatedText,
+                            style = TextStyle(
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                lineHeight = 18.sp
+                            ),
+                            onClick = { offset ->
+                                annotatedText.getStringAnnotations(tag = "refresh", start = offset, end = offset)
+                                    .firstOrNull()?.let {
+                                        onRefresh()
+                                        showRefreshTooltip = false
+                                    }
+                            }
+                        )
+                    }
+                }
             }
         }
 

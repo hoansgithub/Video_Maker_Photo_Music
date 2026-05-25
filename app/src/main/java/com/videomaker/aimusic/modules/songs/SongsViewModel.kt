@@ -126,6 +126,13 @@ class SongsViewModel(
         }
     }
 
+    fun shuffle() {
+        val station = (_stationState.value as? SectionState.Success)?.data
+        if (station != null) {
+            _stationState.value = SectionState.Success(station.shuffled())
+        }
+    }
+
     /** Called when user taps a genre chip. null = "All" (no filter). */
     fun onGenreSelected(genre: String?) {
         if (_selectedGenre.value == genre) return

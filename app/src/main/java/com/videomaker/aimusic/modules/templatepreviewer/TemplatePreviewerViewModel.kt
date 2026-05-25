@@ -202,6 +202,14 @@ class TemplatePreviewerViewModel(
     // PUBLIC METHODS
     // ============================================
 
+    fun refresh() {
+        loadInitialTemplates()
+        val currentSongId = overrideSongId.value
+        if (currentSongId >= 0L) {
+            loadUserSong(currentSongId)
+        }
+    }
+
     fun onPageChanged(virtualIndex: Int) {
         val state = _uiState.value as? TemplatePreviewerUiState.Ready ?: return
         if (state.templates.isEmpty()) return
