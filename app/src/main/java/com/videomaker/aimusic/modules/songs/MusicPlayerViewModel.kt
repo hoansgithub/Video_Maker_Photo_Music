@@ -130,6 +130,7 @@ class MusicPlayerViewModel(
         val prev = history.removeLastOrNull() ?: return
         _canGoPrev.value = history.isNotEmpty()
         _currentSong.value = prev
+        Analytics.trackSongBack(songId = prev.id.toString())
         Analytics.trackSongImpression(
             songId = prev.id.toString(),
             songName = prev.name,
@@ -150,6 +151,7 @@ class MusicPlayerViewModel(
     private fun switchTo(next: MusicSong) {
         _currentSong.value = next
         sessionManager.markImpressed(next.id)
+        Analytics.trackSongNext(songId = next.id.toString())
         Analytics.trackSongImpression(
             songId = next.id.toString(),
             songName = next.name,

@@ -445,13 +445,13 @@ fun MusicPlayerBottomSheet(
                                         Analytics.trackSongUnfavorite(
                                             songId = currentSong.id.toString(),
                                             songName = currentSong.name,
-                                            location = categoryLocation
+                                            location = AnalyticsEvent.Value.Location.SONG_PLAYER
                                         )
                                     } else {
                                         Analytics.trackSongFavorite(
                                             songId = currentSong.id.toString(),
                                             songName = currentSong.name,
-                                            location = categoryLocation
+                                            location = AnalyticsEvent.Value.Location.SONG_PLAYER
                                         )
                                     }
                                     viewModel.toggleLike(currentSong)

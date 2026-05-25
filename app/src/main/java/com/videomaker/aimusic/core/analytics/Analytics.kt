@@ -435,6 +435,24 @@ object Analytics {
         )
     }
 
+    fun trackSongNext(songId: String) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.SONG_NEXT,
+            params = mapOf(AnalyticsEvent.Param.SONG_ID to songId),
+            requiredParams = setOf(AnalyticsEvent.Param.SONG_ID),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackSongBack(songId: String) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.SONG_BACK,
+            params = mapOf(AnalyticsEvent.Param.SONG_ID to songId),
+            requiredParams = setOf(AnalyticsEvent.Param.SONG_ID),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackSongPlay(songId: String, songName: String, location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_PLAY,
