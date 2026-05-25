@@ -77,9 +77,7 @@ import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.AspectRatio
-import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.Project
-import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.favourite_songs.ContentSong
 import com.videomaker.aimusic.modules.favourite_songs.LikeSongEmpty
 import com.videomaker.aimusic.modules.favourite_templates.ContentTemplate
@@ -87,7 +85,6 @@ import com.videomaker.aimusic.modules.favourite_templates.LikeTemplateEmpty
 import com.videomaker.aimusic.modules.projects.ProjectsNavigationEvent
 import com.videomaker.aimusic.modules.projects.ProjectsUiState
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
-import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ProcessToast
 import com.videomaker.aimusic.ui.components.ProjectCard
@@ -115,7 +112,8 @@ fun ProjectsTabContent(
     onNavigateToAllTemplates: () -> Unit = {},
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
     topBarHeight: Dp = 0.dp,
-    isVisible: Boolean = true
+    isVisible: Boolean = true,
+    onListScroll: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val templateState by viewModel.templateState.collectAsStateWithLifecycle()
@@ -123,20 +121,14 @@ fun ProjectsTabContent(
     val songState by viewModel.songState.collectAsStateWithLifecycle()
     val songStateLocal by viewModel.songStateLocal.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
-    val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
-    var selectedSongPlaylist by remember { mutableStateOf<List<MusicSong>>(emptyList()) }
     val toastState by viewModel.toastState.collectAsStateWithLifecycle()
-    val audioPreviewCache: AudioPreviewCache = koinInject()
     var showRemovedMessage by remember { mutableStateOf(false) }
-    // CTA "Try it" hides while the user scrolls the list to discover other songs during
-    // preview; reappears on player interaction or new song select.
-    var isCtaVisible by remember { mutableStateOf(true) }
-    val scrollHideConnection = rememberHideOnScrollConnection { isCtaVisible = false }
+    val scrollHideConnection = rememberHideOnScrollConnection { onListScroll() }
 
     // Close the open player when this tab is swiped away, so returning shows a fresh state.
+    // The player overlay itself lives in HomeScreen so it can render full-screen above the bottom ad.
     LaunchedEffect(isVisible) {
         if (!isVisible) {
-            isCtaVisible = true
             viewModel.onDismissPlayer()
         }
     }
@@ -506,9 +498,7 @@ fun ProjectsTabContent(
                                             songName = song.name,
                                             location = AnalyticsEvent.Value.Location.SONG_FAVORITE
                                         )
-                                        isCtaVisible = true  // new song selected → reveal CTA
-                                        selectedSongPlaylist = songStateLocal
-                                        viewModel.onSongClick(song)
+                                        viewModel.onSongClick(song, songStateLocal)
                                     },
                                     onDeleteSongClick = {
                                         Analytics.trackSongOption(
@@ -536,28 +526,8 @@ fun ProjectsTabContent(
                                             songName = song.name,
                                             location = AnalyticsEvent.Value.Location.SONG_FAVORITE
                                         )
-                                        isCtaVisible = true  // new song selected → reveal CTA
-                                        selectedSongPlaylist = emptyList()
                                         viewModel.onSongClick(song)
                                     }
-                                )
-                            }
-
-                            // Music player bottom sheet — shown when a song is tapped
-                            selectedSong?.let { song ->
-                                MusicPlayerBottomSheet(
-                                    song = song,
-                                    playlist = selectedSongPlaylist,
-                                    categoryLocation = AnalyticsEvent.Value.Location.SONG_FAVORITE,
-                                    genreId = null,
-                                    cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-                                    isCtaVisible = isCtaVisible,
-                                    onPlayerInteraction = { isCtaVisible = true },
-                                    onDismiss = {
-                                        isCtaVisible = true
-                                        viewModel.onDismissPlayer()
-                                    },
-                                    onUseToCreate = { viewModel.onUseToCreateVideo(song) }
                                 )
                             }
                         }

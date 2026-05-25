@@ -69,16 +69,20 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.gallery.GalleryScreen
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
 import com.videomaker.aimusic.modules.gallery.GalleryUiState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.modules.home.components.ProjectsTabContent
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
+import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.modules.songs.SongsScreen
 import com.videomaker.aimusic.modules.songs.SongsViewModel
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
@@ -119,6 +123,7 @@ object HomeFabStateManager {
  * @param onCreateClick Callback when Create action is triggered
  * @param onProjectClick Callback when a project is clicked
  */
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun HomeScreen(
     galleryViewModel: GalleryViewModel,
@@ -356,71 +361,91 @@ fun HomeScreen(
             }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .windowInsetsPadding(WindowInsets.navigationBars)
-    ) {
-        // Main content area with tabs
-        Box(
+    // Player overlay state lifted here so MusicPlayerBottomSheet can render full-screen
+    // above both the bottom NativeAdView and the tab content.
+    val audioPreviewCache: AudioPreviewCache = koinInject()
+    val songsSelectedSong by songsViewModel.selectedSong.collectAsStateWithLifecycle()
+    val projectsSelectedSong by projectsViewModel.selectedSong.collectAsStateWithLifecycle()
+    // [Experiment] CTA "Try it" hides while the user scrolls the list to discover other songs
+    // during preview; reappears on player interaction or new song select.
+    var isSongsCtaVisible by remember { mutableStateOf(true) }
+    var isProjectsCtaVisible by remember { mutableStateOf(true) }
+    // New song selected → reveal CTA again. Keyed by song id so re-selecting same song is a no-op.
+    LaunchedEffect(songsSelectedSong?.id) {
+        if (songsSelectedSong != null) isSongsCtaVisible = true
+    }
+    LaunchedEffect(projectsSelectedSong?.id) {
+        if (projectsSelectedSong != null) isProjectsCtaVisible = true
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface)
+                .windowInsetsPadding(WindowInsets.navigationBars)
         ) {
-            // Pager Content — full-bleed so each page can draw its own background
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize()
-            ) { page ->
-                when (page) {
-                    0 -> GalleryTabContent(
-                        viewModel = galleryViewModel,
-                        isVisible = pagerState.settledPage == 0,
-                        listState = galleryListState,
-                        onUserInteraction = {
-                            lastInteractionScrollPositionGallery = currentGalleryScroll
-                        },
-                        onCreateClick = onCreateClick,
-                        onNavigateToSearch = onNavigateToSearch,
-                        onNavigateToTemplateDetail = onNavigateToTemplateDetail,
-                        onNavigateToAllTemplates = onNavigateToAllTemplates,
-                        topBarHeight = topBarHeight
-                    )
-                    1 -> SongsTabContent(
-                        viewModel = songsViewModel,
-                        listState = songsListState,
-                        onUserInteraction = {
-                            lastInteractionScrollPositionSongs = currentSongsScroll
-                        },
-                        topBarHeight = topBarHeight,
-                        isVisible = pagerState.settledPage == 1,
-                        onNavigateToSearch = onNavigateToSongSearch,
-                        onNavigateToSuggestedSongsList = onNavigateToSuggestedSongsList,
-                        onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
-                        onNavigateToAssetPicker = onNavigateToAssetPicker,
-                        onNavigateToTemplatePreviewerWithSong = onNavigateToTemplatePreviewerWithSong
-                    )
-                    2 -> ProjectsTabContent(
-                        viewModel = projectsViewModel,
-                        highlightProjectId = highlightProjectId,
-                        hintMode = projectHintMode,
-                        isVisible = pagerState.settledPage == 2,
-                        onCreateClick = {
-                            Analytics.trackCreationStart(AnalyticsEvent.Value.Location.LIBRARY)
-                            onNavigateToTemplateDetail("", AnalyticsEvent.Value.Location.LIBRARY_RCM)
-                        }, // Open template previewer with first template + analytics
-                        onProjectClick = onProjectClick,
-                        onNavigateToTemplateDetail = onNavigateToTemplateDetail,
-                        onNavigateToSongSearch = onNavigateToSongSearch,
-                        onNavigateToAllSongs = onNavigateToAllSongs,
-                        onNavigateToTemplateSearch = onNavigateToSearch,
-                        onNavigateToAllTemplates = { onNavigateToAllTemplates(null) },
-                        onNavigateToAssetPicker = onNavigateToAssetPicker,
-                        topBarHeight = topBarHeight
-                    )
+            // Main content area with tabs
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                // Pager Content — full-bleed so each page can draw its own background
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
+                    when (page) {
+                        0 -> GalleryTabContent(
+                            viewModel = galleryViewModel,
+                            isVisible = pagerState.settledPage == 0,
+                            listState = galleryListState,
+                            onUserInteraction = {
+                                lastInteractionScrollPositionGallery = currentGalleryScroll
+                            },
+                            onCreateClick = onCreateClick,
+                            onNavigateToSearch = onNavigateToSearch,
+                            onNavigateToTemplateDetail = onNavigateToTemplateDetail,
+                            onNavigateToAllTemplates = onNavigateToAllTemplates,
+                            topBarHeight = topBarHeight
+                        )
+                        1 -> SongsTabContent(
+                            viewModel = songsViewModel,
+                            listState = songsListState,
+                            onUserInteraction = {
+                                lastInteractionScrollPositionSongs = currentSongsScroll
+                            },
+                            topBarHeight = topBarHeight,
+                            isVisible = pagerState.settledPage == 1,
+                            onNavigateToSearch = onNavigateToSongSearch,
+                            onNavigateToSuggestedSongsList = onNavigateToSuggestedSongsList,
+                            onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
+                            onNavigateToAssetPicker = onNavigateToAssetPicker,
+                            onNavigateToTemplatePreviewerWithSong = onNavigateToTemplatePreviewerWithSong,
+                            onListScroll = { isSongsCtaVisible = false }
+                        )
+                        2 -> ProjectsTabContent(
+                            viewModel = projectsViewModel,
+                            highlightProjectId = highlightProjectId,
+                            hintMode = projectHintMode,
+                            isVisible = pagerState.settledPage == 2,
+                            onCreateClick = {
+                                Analytics.trackCreationStart(AnalyticsEvent.Value.Location.LIBRARY)
+                                onNavigateToTemplateDetail("", AnalyticsEvent.Value.Location.LIBRARY_RCM)
+                            }, // Open template previewer with first template + analytics
+                            onProjectClick = onProjectClick,
+                            onNavigateToTemplateDetail = onNavigateToTemplateDetail,
+                            onNavigateToSongSearch = onNavigateToSongSearch,
+                            onNavigateToAllSongs = onNavigateToAllSongs,
+                            onNavigateToTemplateSearch = onNavigateToSearch,
+                            onNavigateToAllTemplates = { onNavigateToAllTemplates(null) },
+                            onNavigateToAssetPicker = onNavigateToAssetPicker,
+                            topBarHeight = topBarHeight,
+                            onListScroll = { isProjectsCtaVisible = false }
+                        )
+                    }
                 }
-            }
 
             // Top Bar with Tabs and Settings — on top, respecting system bars
             // onGloballyPositioned BEFORE windowInsetsPadding to measure full height including status bar
@@ -605,16 +630,57 @@ fun HomeScreen(
             }
         }
 
-        // Native ad below tab content (at bottom of screen)
-        // Fixed height prevents measurement issues after multiple navigations
-        // Replaced standard banner with native ad as requested
-        NativeAdView(
-            placement = AdPlacement.NATIVE_HOME_BANNER,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            isDebug = BuildConfig.DEBUG
-        )
+            // Native ad below tab content (at bottom of screen)
+            // Fixed height prevents measurement issues after multiple navigations
+            // Replaced standard banner with native ad as requested
+            NativeAdView(
+                placement = AdPlacement.NATIVE_HOME_BANNER,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                isDebug = BuildConfig.DEBUG
+            )
+        }
+
+        // Music player bottom sheets — rendered at HomeScreen level so they cover the
+        // full screen (including the bottom NativeAdView), not just the tab content area.
+        songsSelectedSong?.let { song ->
+            val selectedPlaylist by songsViewModel.selectedPlaylist.collectAsStateWithLifecycle()
+            val selectedCategoryLocation by songsViewModel.selectedCategoryLocation.collectAsStateWithLifecycle()
+            val selectedGenreId by songsViewModel.selectedGenreId.collectAsStateWithLifecycle()
+            MusicPlayerBottomSheet(
+                song = song,
+                playlist = selectedPlaylist,
+                categoryLocation = selectedCategoryLocation,
+                genreId = selectedGenreId,
+                cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+                isCtaVisible = isSongsCtaVisible,
+                onPlayerInteraction = { isSongsCtaVisible = true },
+                onDismiss = {
+                    isSongsCtaVisible = true
+                    songsViewModel.onDismissPlayer()
+                },
+                onUseToCreate = { songsViewModel.onUseToCreateVideo(song) }
+            )
+        }
+
+        projectsSelectedSong?.let { song ->
+            val selectedPlaylist by projectsViewModel.selectedPlaylist.collectAsStateWithLifecycle()
+            MusicPlayerBottomSheet(
+                song = song,
+                playlist = selectedPlaylist,
+                categoryLocation = AnalyticsEvent.Value.Location.SONG_FAVORITE,
+                genreId = null,
+                cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
+                isCtaVisible = isProjectsCtaVisible,
+                onPlayerInteraction = { isProjectsCtaVisible = true },
+                onDismiss = {
+                    isProjectsCtaVisible = true
+                    projectsViewModel.onDismissPlayer()
+                },
+                onUseToCreate = { projectsViewModel.onUseToCreateVideo(song) }
+            )
+        }
     }
 }
 
@@ -763,7 +829,8 @@ private fun SongsTabContent(
     onNavigateToSuggestedSongsList: () -> Unit = {},
     onNavigateToWeeklyRankingList: () -> Unit = {},
     onNavigateToAssetPicker: (Long) -> Unit = {},
-    onNavigateToTemplatePreviewerWithSong: (Long) -> Unit = {}
+    onNavigateToTemplatePreviewerWithSong: (Long) -> Unit = {},
+    onListScroll: () -> Unit = {}
 ) {
     SongsScreen(
         viewModel = viewModel,
@@ -775,7 +842,8 @@ private fun SongsTabContent(
         onNavigateToTemplatePreviewer = onNavigateToTemplatePreviewerWithSong,
         onNavigateToSuggestedAll = onNavigateToSuggestedSongsList,
         onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
-        onNavigateToSearch = onNavigateToSearch
+        onNavigateToSearch = onNavigateToSearch,
+        onListScroll = onListScroll
     )
 }
 

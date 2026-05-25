@@ -61,7 +61,6 @@ import com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
-import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.RankingSongCard
@@ -118,7 +117,8 @@ fun SongsScreen(
     onNavigateToTemplatePreviewer: (songId: Long) -> Unit = {},
     onNavigateToSuggestedAll: () -> Unit = {},
     onNavigateToWeeklyRankingList: () -> Unit = {},
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    onListScroll: () -> Unit = {}
 ) {
 
     val suggestedState by viewModel.suggestedState.collectAsStateWithLifecycle()
@@ -128,19 +128,11 @@ fun SongsScreen(
     val selectedGenre by viewModel.selectedGenre.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
-    val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
-    val audioPreviewCache: AudioPreviewCache = koinInject()
-    var selectedSongLocation by rememberSaveable {
-        mutableStateOf(AnalyticsEvent.Value.Location.SONG_PREVIEW)
-    }
-    // [Experiment] CTA "Try it" hides while the user scrolls the list to discover
-    // other songs during preview; reappears on player interaction or new song select.
-    var isCtaVisible by remember { mutableStateOf(true) }
 
     // Close the open player when this tab is swiped away, so returning shows a fresh state.
+    // The player overlay itself lives in HomeScreen so it can render full-screen above the bottom ad.
     LaunchedEffect(isVisible) {
         if (!isVisible) {
-            isCtaVisible = true
             viewModel.onDismissPlayer()
         }
     }
@@ -208,11 +200,9 @@ fun SongsScreen(
                 onRefresh = viewModel::refresh,
                 onSongClick = { song, playlist, location, genreId ->
                     onUserInteraction()
-                    selectedSongLocation = location
-                    isCtaVisible = true  // new song selected → reveal CTA
                     viewModel.onSongClick(song, playlist, location, genreId)
                 },
-                onListUserScroll = { isCtaVisible = false },
+                onListUserScroll = onListScroll,
                 onSeeMoreSuggested = {
                     onUserInteraction()
                     viewModel.onSeeMoreSuggestedClick()
@@ -226,26 +216,6 @@ fun SongsScreen(
                     onNavigateToSearch()
                 }
             )
-
-            // Music player bottom sheet — shown when a song is tapped
-            val selectedPlaylist by viewModel.selectedPlaylist.collectAsStateWithLifecycle()
-            val selectedGenreId by viewModel.selectedGenreId.collectAsStateWithLifecycle()
-            selectedSong?.let { song ->
-                MusicPlayerBottomSheet(
-                    song = song,
-                    playlist = selectedPlaylist,
-                    categoryLocation = selectedSongLocation,
-                    genreId = selectedGenreId,
-                    cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-                    isCtaVisible = isCtaVisible,
-                    onPlayerInteraction = { isCtaVisible = true },
-                    onDismiss = {
-                        isCtaVisible = true
-                        viewModel.onDismissPlayer()
-                    },
-                    onUseToCreate = { viewModel.onUseToCreateVideo(song) }
-                )
-            }
         }
     }
 }
