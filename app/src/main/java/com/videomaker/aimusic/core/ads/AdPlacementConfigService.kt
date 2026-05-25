@@ -66,8 +66,6 @@ class AdPlacementConfigService(
         private const val KEY_QUALITY_1080P_AD_TYPE = "ad_quality_1080p_type"
         private const val DEFAULT_QUALITY_AD_TYPE = "rewarded"
 
-        private const val KEY_DOWNLOAD_AD_TYPE = "ad_download_ad_type"
-        private const val DEFAULT_DOWNLOAD_AD_TYPE = "rewarded"
     }
 
     /**
@@ -86,8 +84,6 @@ class AdPlacementConfigService(
 
     private var quality720pAdType: String = DEFAULT_QUALITY_AD_TYPE
     private var quality1080pAdType: String = DEFAULT_QUALITY_AD_TYPE
-    private var downloadAdType: String = DEFAULT_DOWNLOAD_AD_TYPE
-
     init {
         try {
             registerAllPlacements()
@@ -698,21 +694,7 @@ class AdPlacementConfigService(
         // REWARDED ADS
         // ============================================
 
-        // Rewarded ad for video download (standard rewarded format)
-        // Used when Remote Config ad_download_ad_type = "rewarded"
-        // Waterfall: Primary unit → Secondary unit
-        registerPlacementWithMultipleUnits(
-            placementId = AdPlacement.REWARD_DOWNLOAD_VIDEO_1,
-            type = "reward",
-            adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/5841454382",  // Primary
-                "ca-app-pub-7121075950716954/7948742970"   // Secondary
-            ),
-            enabled = true
-        )
-
         // Rewarded interstitial for video download (shown when user clicks download button)
-        // Used when Remote Config ad_download_ad_type = "rewardedInterstitial" (default)
         // Waterfall: Primary unit → Secondary unit
         registerPlacementWithMultipleUnits(
             placementId = AdPlacement.REWARD_INTER_DOWNLOAD_VIDEO,
@@ -950,8 +932,6 @@ class AdPlacementConfigService(
         quality1080pAdType = config.getString(KEY_QUALITY_1080P_AD_TYPE, DEFAULT_QUALITY_AD_TYPE)
         Log.d(TAG, "📊 Quality ad types — 720p: $quality720pAdType, 1080p: $quality1080pAdType")
 
-        downloadAdType = config.getString(KEY_DOWNLOAD_AD_TYPE, DEFAULT_DOWNLOAD_AD_TYPE)
-        Log.d(TAG, "📊 Download ad type: $downloadAdType")
     }
 
     /**
@@ -987,10 +967,4 @@ class AdPlacementConfigService(
         }
     }
 
-    /**
-     * Returns the ad type for download: "rewardedInterstitial" or "rewarded".
-     * Controlled by Remote Config key `ad_download_ad_type`.
-     * Default: "rewardedInterstitial" (current behavior).
-     */
-    fun getDownloadAdType(): String = downloadAdType
 }

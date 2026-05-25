@@ -562,8 +562,7 @@ class ExportViewModelFactory(
     private val adsLoaderService: AdsLoaderService,
     private val notificationScheduler: NotificationScheduler,
     private val preferencesManager: PreferencesManager,
-    private val conversionTracker: NotificationConversionTracker,
-    private val adPlacementConfigService: com.videomaker.aimusic.core.ads.AdPlacementConfigService
+    private val conversionTracker: NotificationConversionTracker
 ) {
     fun create(projectId: String, quality: com.videomaker.aimusic.domain.model.VideoQuality = com.videomaker.aimusic.domain.model.VideoQuality.DEFAULT): ExportViewModel {
         return ExportViewModel(
@@ -577,8 +576,7 @@ class ExportViewModelFactory(
             adsLoaderService = adsLoaderService,
             notificationScheduler = notificationScheduler,
             preferencesManager = preferencesManager,
-            conversionTracker = conversionTracker,
-            adPlacementConfigService = adPlacementConfigService
+            conversionTracker = conversionTracker
         )
     }
 }
@@ -599,8 +597,7 @@ class ProjectsViewModelFactory(
     private val adsLoaderService: AdsLoaderService,
     private val notificationScheduler: NotificationScheduler,
     private val preferencesManager: PreferencesManager,
-    private val conversionTracker: NotificationConversionTracker,
-    private val adPlacementConfigService: com.videomaker.aimusic.core.ads.AdPlacementConfigService
+    private val conversionTracker: NotificationConversionTracker
 ) {
     fun create(): ProjectsViewModel {
         return ProjectsViewModel(
@@ -616,8 +613,7 @@ class ProjectsViewModelFactory(
             adsLoaderService = adsLoaderService,
             notificationScheduler = notificationScheduler,
             preferencesManager = preferencesManager,
-            conversionTracker = conversionTracker,
-            adPlacementConfigService = adPlacementConfigService
+            conversionTracker = conversionTracker
         )
     }
 }
@@ -946,8 +942,7 @@ val presentationModule = module {
             adsLoaderService = get(),
             notificationScheduler = get(),
             preferencesManager = get(),
-            conversionTracker = get(),
-            adPlacementConfigService = get()
+            conversionTracker = get()
         )
     }
 
@@ -966,8 +961,7 @@ val presentationModule = module {
             adsLoaderService = get(),
             notificationScheduler = get(),
             preferencesManager = get(),
-            conversionTracker = get(),
-            adPlacementConfigService = get()
+            conversionTracker = get()
         )
     }
 

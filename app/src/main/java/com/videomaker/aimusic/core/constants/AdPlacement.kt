@@ -525,8 +525,8 @@ object AdPlacement {
      * - Blends with project cards in staggered grid
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/6293185105
-     * - Secondary: ca-app-pub-7121075950716954/6536223106
+     * - Primary: ca-app-pub-7121075950716954/4667301062
+     * - Secondary: ca-app-pub-7121075950716954/6996887879
      *
      * Remote Config key: ad_native_projects_grid
      */
@@ -683,26 +683,6 @@ object AdPlacement {
      * Remote Config key: ad_native_onboarding_personalizing
      */
     const val NATIVE_ONBOARDING_PERSONALIZING = "ad_native_onboarding_personalizing"
-
-    /**
-     * Rewarded ad shown when user wants to download video to gallery.
-     * Timing: User clicks download button → dialog appears → user watches ad → download proceeds.
-     * User MUST watch the full ad to earn the reward (download permission).
-     *
-     * Flow:
-     * 1. User clicks download button (ad icon instead of download icon)
-     * 2. Dialog shows: "Watch an ad to download your video?"
-     * 3. User taps "Watch Ad" → Ad loads and plays
-     * 4. User watches full ad → onUserEarnedReward callback
-     * 5. Download proceeds automatically
-     *
-     * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/5841454382
-     * - Secondary: ca-app-pub-7121075950716954/7948742970
-     *
-     * Remote Config key: ad_reward_download_video
-     */
-    const val REWARD_DOWNLOAD_VIDEO_1 = "ad_reward_download_video"
 
     /**
      * Rewarded ad shown when user wants to download video to gallery.
@@ -903,7 +883,6 @@ object AdPlacement {
         NATIVE_ONBOARDING_SELECT_MUSIC,
         NATIVE_ONBOARDING_SELECT_TPT,
         NATIVE_ONBOARDING_PERSONALIZING,
-        REWARD_DOWNLOAD_VIDEO_1,
         REWARD_INTER_DOWNLOAD_VIDEO,
         REWARD_REMOVE_WATERMARK,
         REWARD_UNLOCK_QUALITY,

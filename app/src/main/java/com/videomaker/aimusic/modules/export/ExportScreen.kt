@@ -577,16 +577,15 @@ fun ExportScreen(
         }
 
         // Handle download ad presentation using reusable presenter
-        // Placement and format driven by Remote Config `ad_download_ad_type`
         RewardedAdPresenter(
             shouldPresent = shouldPresentDownloadAd,
-            placement = viewModel.downloadAdPlacement,
+            placement = AdPlacement.REWARD_INTER_DOWNLOAD_VIDEO,
             adsLoaderService = adsLoaderService,
             onRewardEarned = viewModel::onDownloadRewardEarned,
             onAdFailed = viewModel::onDownloadAdFailed,
             onAdShown = { pauseSuccessPreviewForAd = true },
             onAdClosed = { pauseSuccessPreviewForAd = false },
-            isInterstitial = viewModel.isDownloadAdInterstitial
+            isInterstitial = true
         )
 
         // Handle watermark ad presentation using reusable presenter

@@ -40,7 +40,7 @@
   </entry>
   <entry>
     <key>ad_interstitial_open_app</key>
-    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/4748771125","enabled":true},{"id":"ca-app-pub-7121075950716954/8323870852","enabled":true}],"extras":{"retry_max":6}}</value>
+    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/4748771125","enabled":true},{"id":"ca-app-pub-7121075950716954/2676684702","enabled":true}],"extras":{"retry_max":6}}</value>
   </entry>
   <entry>
     <key>ad_interstitial_editor_back</key>
@@ -179,10 +179,6 @@
     <value>{"enabled":true,"type":"rewarded","units":[{"id":"ca-app-pub-7121075950716954/2285352752","enabled":true},{"id":"ca-app-pub-7121075950716954/3079559673","enabled":true}]}</value>
   </entry>
   <entry>
-    <key>ad_reward_download_video</key>
-    <value>{"enabled":true,"type":"rewarded","units":[{"id":"ca-app-pub-7121075950716954/5841454382","enabled":true},{"id":"ca-app-pub-7121075950716954/7948742970","enabled":true}]}</value>
-  </entry>
-  <entry>
     <key>ad_reward_inter_download_video</key>
     <value>{"enabled":true,"type":"rewardedInterstitial","units":[{"id":"ca-app-pub-7121075950716954/4370724539","enabled":true},{"id":"ca-app-pub-7121075950716954/6805316184","enabled":true}]}</value>
   </entry>
@@ -217,12 +213,6 @@
   <entry>
     <key>ad_appopen_foreground</key>
     <value>{"enabled":true,"type":"appOpen","units":[{"id":"ca-app-pub-7121075950716954/6000852048","enabled":true},{"id":"ca-app-pub-7121075950716954/9757555227","enabled":true}]}</value>
-  </entry>
-
-  <!-- Ad Download Type Config -->
-  <entry>
-    <key>ad_download_ad_type</key>
-    <value>rewarded</value>
   </entry>
 
   <!-- Ad Quality Config -->
