@@ -73,6 +73,7 @@ fun WeeklyRankingListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
+    var selectedSongPlaylist by remember { mutableStateOf<List<MusicSong>>(emptyList()) }
     val audioPreviewCache: AudioPreviewCache = koinInject()
     // CTA "Try it" hides while the user scrolls the list to discover other songs during
     // preview; reappears on player interaction or new song select.
@@ -118,6 +119,7 @@ fun WeeklyRankingListScreen(
                     pageState = state.pageState,
                     onSongClick = {
                         isCtaVisible = true  // new song selected → reveal CTA
+                        selectedSongPlaylist = state.pageState.songs
                         viewModel.onSongClick(it)
                     },
                     onLoadMore = { viewModel.loadMore() },
@@ -140,8 +142,10 @@ fun WeeklyRankingListScreen(
     selectedSong?.let { song ->
         MusicPlayerBottomSheet(
             song = song,
+            playlist = selectedSongPlaylist,
+            categoryLocation = AnalyticsEvent.Value.Location.SONG_RANKING,
+            genreId = null,
             cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-            location = AnalyticsEvent.Value.Location.SONG_RANKING,
             isCtaVisible = isCtaVisible,
             onPlayerInteraction = { isCtaVisible = true },
             onDismiss = {

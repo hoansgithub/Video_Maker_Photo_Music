@@ -77,6 +77,7 @@ import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.favourite_songs.ContentSong
@@ -123,6 +124,7 @@ fun ProjectsTabContent(
     val songStateLocal by viewModel.songStateLocal.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
+    var selectedSongPlaylist by remember { mutableStateOf<List<MusicSong>>(emptyList()) }
     val toastState by viewModel.toastState.collectAsStateWithLifecycle()
     val audioPreviewCache: AudioPreviewCache = koinInject()
     var showRemovedMessage by remember { mutableStateOf(false) }
@@ -505,6 +507,7 @@ fun ProjectsTabContent(
                                             location = AnalyticsEvent.Value.Location.SONG_FAVORITE
                                         )
                                         isCtaVisible = true  // new song selected → reveal CTA
+                                        selectedSongPlaylist = songStateLocal
                                         viewModel.onSongClick(song)
                                     },
                                     onDeleteSongClick = {
@@ -534,6 +537,7 @@ fun ProjectsTabContent(
                                             location = AnalyticsEvent.Value.Location.SONG_FAVORITE
                                         )
                                         isCtaVisible = true  // new song selected → reveal CTA
+                                        selectedSongPlaylist = emptyList()
                                         viewModel.onSongClick(song)
                                     }
                                 )
@@ -543,8 +547,10 @@ fun ProjectsTabContent(
                             selectedSong?.let { song ->
                                 MusicPlayerBottomSheet(
                                     song = song,
+                                    playlist = selectedSongPlaylist,
+                                    categoryLocation = AnalyticsEvent.Value.Location.SONG_FAVORITE,
+                                    genreId = null,
                                     cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-                                    location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
                                     isCtaVisible = isCtaVisible,
                                     onPlayerInteraction = { isCtaVisible = true },
                                     onDismiss = {

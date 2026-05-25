@@ -95,6 +95,19 @@ class SongsViewModel(
     private val _selectedSong = MutableStateFlow<MusicSong?>(null)
     val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
 
+    // Playlist + category + genre passed to MusicPlayerBottomSheet so it can navigate
+    // next/prev within the source context (e.g., the Suggested list, the Pop station, ...).
+    private val _selectedPlaylist = MutableStateFlow<List<MusicSong>>(emptyList())
+    val selectedPlaylist: StateFlow<List<MusicSong>> = _selectedPlaylist.asStateFlow()
+
+    private val _selectedCategoryLocation = MutableStateFlow(
+        com.videomaker.aimusic.core.analytics.AnalyticsEvent.Value.Location.SONG_PREVIEW
+    )
+    val selectedCategoryLocation: StateFlow<String> = _selectedCategoryLocation.asStateFlow()
+
+    private val _selectedGenreId = MutableStateFlow<String?>(null)
+    val selectedGenreId: StateFlow<String?> = _selectedGenreId.asStateFlow()
+
     init {
         loadAll()
     }
@@ -175,8 +188,20 @@ class SongsViewModel(
             .onFailure { _genresState.value = SectionState.Success(emptyList()) }
     }
 
-    /** Opens the music player bottom sheet for the given song. */
-    fun onSongClick(song: MusicSong) {
+    /**
+     * Opens the music player bottom sheet for the given song.
+     * Captures the source [playlist] + [categoryLocation] + [genreId] so the player
+     * can navigate next/prev within that context.
+     */
+    fun onSongClick(
+        song: MusicSong,
+        playlist: List<MusicSong>,
+        categoryLocation: String,
+        genreId: String? = null
+    ) {
+        _selectedPlaylist.value = playlist
+        _selectedCategoryLocation.value = categoryLocation
+        _selectedGenreId.value = genreId
         _selectedSong.value = song
     }
 
@@ -185,7 +210,13 @@ class SongsViewModel(
         if (songId == -1L) return
         viewModelScope.launch(Dispatchers.IO) {
             songRepository.getSongById(songId)
-                .onSuccess { _selectedSong.value = it }
+                .onSuccess {
+                    _selectedPlaylist.value = emptyList()
+                    _selectedCategoryLocation.value =
+                        com.videomaker.aimusic.core.analytics.AnalyticsEvent.Value.Location.SONG_PREVIEW
+                    _selectedGenreId.value = null
+                    _selectedSong.value = it
+                }
         }
     }
 

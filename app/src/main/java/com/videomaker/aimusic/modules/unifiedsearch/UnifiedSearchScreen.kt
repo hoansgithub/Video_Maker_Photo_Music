@@ -40,6 +40,7 @@ import androidx.media3.common.util.UnstableApi
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.modules.unifiedsearch.components.UnifiedSearchEmptyContent
 import com.videomaker.aimusic.modules.unifiedsearch.components.UnifiedSearchIdleContent
@@ -72,6 +73,7 @@ fun UnifiedSearchScreen(
     val hasMoreSuggestedSongs by viewModel.hasMoreSuggestedSongs.collectAsStateWithLifecycle()
     val isLoadingMoreSuggestedSongs by viewModel.isLoadingMoreSuggestedSongs.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
+    var selectedSongPlaylist by remember { mutableStateOf<List<MusicSong>>(emptyList()) }
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
     val audioPreviewCache: AudioPreviewCache = koinInject()
@@ -188,6 +190,7 @@ fun UnifiedSearchScreen(
                 onSongClick = { song, location ->
                     keyboardController?.hide()
                     selectedSongLocation = location
+                    selectedSongPlaylist = suggestedSongs
                     isCtaVisible = true  // new song selected → reveal CTA
                     viewModel.onSongClick(song)
                 },
@@ -215,6 +218,7 @@ fun UnifiedSearchScreen(
                 onSongClick = { song, location ->
                     keyboardController?.hide()
                     selectedSongLocation = location
+                    selectedSongPlaylist = state.music.songs
                     isCtaVisible = true  // new song selected → reveal CTA
                     viewModel.onSongClick(song)
                 },
@@ -240,8 +244,10 @@ fun UnifiedSearchScreen(
     selectedSong?.let { song ->
         MusicPlayerBottomSheet(
             song = song,
+            playlist = selectedSongPlaylist,
+            categoryLocation = selectedSongLocation,
+            genreId = null,
             cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-            location = selectedSongLocation,
             isCtaVisible = isCtaVisible,
             onPlayerInteraction = { isCtaVisible = true },
             onDismiss = {

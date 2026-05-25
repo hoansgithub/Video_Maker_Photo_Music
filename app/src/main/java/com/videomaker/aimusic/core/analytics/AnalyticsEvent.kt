@@ -364,6 +364,7 @@ object AnalyticsEvent {
             const val SONG_STATIONS = "song_stations"
 
             const val SONG_PREVIEW = "song_preview"
+            const val SONG_PLAYER = "song_player"
             const val TEMPLATE_PREVIEW = "template_preview"
             const val VIDEO_PREVIEW = "video_preview"
 

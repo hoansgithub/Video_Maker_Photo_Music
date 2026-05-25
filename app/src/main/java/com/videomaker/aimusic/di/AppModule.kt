@@ -146,6 +146,7 @@ val dataModule = module {
     single { com.videomaker.aimusic.core.storage.UnlockedEffectSetsManager(androidContext()) }
     single { com.videomaker.aimusic.core.storage.UnlockedTemplatesManager(androidContext()) }
     single { com.videomaker.aimusic.core.storage.UnlockedSongsManager(androidContext()) }
+    single { com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager() }
 
     // ============================================
     // TRENDING POPUP
@@ -784,17 +785,28 @@ class MusicPlayerViewModelFactory(
     private val likedSongRepository: LikedSongRepository,
     private val unlockedSongsManager: com.videomaker.aimusic.core.storage.UnlockedSongsManager,
     private val adsLoaderService: AdsLoaderService,
-    private val songRepository: com.videomaker.aimusic.domain.repository.SongRepository
+    private val songRepository: com.videomaker.aimusic.domain.repository.SongRepository,
+    private val sessionManager: com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
 ) {
-    fun create(songId: Long, song: com.videomaker.aimusic.domain.model.MusicSong): MusicPlayerViewModel = MusicPlayerViewModel(
+    fun create(
+        songId: Long,
+        song: com.videomaker.aimusic.domain.model.MusicSong,
+        playlist: List<com.videomaker.aimusic.domain.model.MusicSong>,
+        categoryLocation: String,
+        genreId: String?
+    ): MusicPlayerViewModel = MusicPlayerViewModel(
         songId = songId,
         song = song,
+        initialPlaylist = playlist,
+        categoryLocation = categoryLocation,
+        initialGenreId = genreId,
         likeSongUseCase = likeSongUseCase,
         unlikeSongUseCase = unlikeSongUseCase,
         likedSongRepository = likedSongRepository,
         unlockedSongsManager = unlockedSongsManager,
         adsLoaderService = adsLoaderService,
-        songRepository = songRepository
+        songRepository = songRepository,
+        sessionManager = sessionManager
     )
 }
 
@@ -1086,7 +1098,8 @@ val presentationModule = module {
             likedSongRepository = get(),
             unlockedSongsManager = get(),
             adsLoaderService = get(),
-            songRepository = get()
+            songRepository = get(),
+            sessionManager = get()
         )
     }
 }

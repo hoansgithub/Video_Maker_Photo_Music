@@ -21,6 +21,9 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.analytics.onFirstVisible
+import com.videomaker.aimusic.core.analytics.trackSongImpressionAndMark
+import com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -41,6 +44,7 @@ fun ContentSong(
     onDeleteSongClick: (MusicSong) -> Unit,
 ) {
     val dimens = AppDimens.current
+    val sessionManager: MusicPlaybackSessionManager = koinInject()
 
     val listItems = remember(songs) {
         buildList {
@@ -87,11 +91,10 @@ fun ContentSong(
                             .fillMaxWidth()
                             .padding(horizontal = 22.dp)
                             .onFirstVisible(key = item.song.id) {
-                                Analytics.trackSongImpression(
+                                sessionManager.trackSongImpressionAndMark(
                                     songId = item.song.id.toString(),
                                     songName = item.song.name,
-                                    location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
-                                    screenSessionId = ""
+                                    location = AnalyticsEvent.Value.Location.SONG_FAVORITE
                                 )
                             }
                     )

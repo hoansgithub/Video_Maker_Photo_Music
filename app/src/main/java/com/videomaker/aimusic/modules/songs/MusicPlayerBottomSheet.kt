@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,8 +70,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -163,8 +166,10 @@ internal fun resolveMusicPlayerHookStartPositionMs(
 @Composable
 fun MusicPlayerBottomSheet(
     song: MusicSong,
+    playlist: List<MusicSong>,
+    categoryLocation: String,
+    genreId: String? = null,
     cacheDataSourceFactory: CacheDataSource.Factory,
-    location: String = AnalyticsEvent.Value.Location.SONG_PREVIEW,
     isCtaVisible: Boolean = true,
     onPlayerInteraction: () -> Unit = {},
     onDismiss: () -> Unit,
@@ -175,7 +180,13 @@ fun MusicPlayerBottomSheet(
         key = "player_${song.id}",
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val viewModel = playerFactory.create(song.id, song)
+                val viewModel = playerFactory.create(
+                    songId = song.id,
+                    song = song,
+                    playlist = playlist,
+                    categoryLocation = categoryLocation,
+                    genreId = genreId
+                )
                 if (modelClass.isAssignableFrom(viewModel::class.java)) {
                     @Suppress("UNCHECKED_CAST")
                     return viewModel as T
@@ -190,6 +201,8 @@ fun MusicPlayerBottomSheet(
     val isLiked by viewModel.isLiked.collectAsStateWithLifecycle()
     val isSongUnlocked by viewModel.isSongUnlocked.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
+    val currentSong by viewModel.currentSong.collectAsStateWithLifecycle()
+    val canGoPrev by viewModel.canGoPrev.collectAsStateWithLifecycle()
     val adsLoaderService = koinInject<AdsLoaderService>()
     val trendingPopupCoordinator = koinInject<TrendingPopupCoordinator>()
     val isPopupShowing by trendingPopupCoordinator.isAnyPopupShowing.collectAsStateWithLifecycle()
@@ -200,9 +213,11 @@ fun MusicPlayerBottomSheet(
     var durationMs by remember { mutableIntStateOf((song.durationMs ?: 0).coerceAtLeast(1)) }
     var isSeeking  by remember { mutableStateOf(false) }
     var seekValue  by remember { mutableFloatStateOf(0f) }
-    var hasTrackedAutoPreview by remember(song.id) { mutableStateOf(false) }
-    var hasAppliedHookSeek by remember(song.id) { mutableStateOf(false) }
-    var wasPlayingBeforeAd by remember(song.id) { mutableStateOf(false) }
+    var hasTrackedAutoPreview by remember { mutableStateOf(false) }
+    var hasAppliedHookSeek by remember { mutableStateOf(false) }
+    var wasPlayingBeforeAd by remember { mutableStateOf(false) }
+    val swipeThresholdPx = with(LocalDensity.current) { 80.dp.toPx() }
+    var swipeAccumulated by remember { mutableFloatStateOf(0f) }
 
     val context = LocalContext.current
     // Player is created once per sheet open and released on close.
@@ -227,18 +242,21 @@ fun MusicPlayerBottomSheet(
     }
 
     // ── ExoPlayer lifecycle ────────────────────────────────────────────────
-    DisposableEffect(song.id) {
+    // Listener attached once for the player's lifetime; reads from `currentSong`
+    // (captured by closure — recomposes on song change). Media swapping happens
+    // in the LaunchedEffect(currentSong) below.
+    DisposableEffect(Unit) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 when (state) {
                     Player.STATE_READY -> {
-                        val resolvedDurationMs = player.duration.takeIf { it > 0L } ?: song.durationMs?.toLong()
+                        val resolvedDurationMs = player.duration.takeIf { it > 0L } ?: currentSong.durationMs?.toLong()
                         durationMs = resolvedDurationMs?.coerceAtLeast(1L)?.toInt() ?: 1
                         if (shouldApplyMusicPlayerHookSeek(state, hasAppliedHookSeek)) {
                             val hookStartPositionMs = resolveMusicPlayerHookStartPositionMs(
-                                hookStartTimeMs = song.hookStartTimeMs,
+                                hookStartTimeMs = currentSong.hookStartTimeMs,
                                 playerDurationMs = resolvedDurationMs,
-                                songDurationMs = song.durationMs
+                                songDurationMs = currentSong.durationMs
                             )
                             if (hookStartPositionMs > 0L) {
                                 player.seekTo(hookStartPositionMs)
@@ -251,15 +269,12 @@ fun MusicPlayerBottomSheet(
                         isPrepared = true
                         if (!hasTrackedAutoPreview) {
                             Analytics.trackSongPreview(
-                                songId = song.id.toString(),
-                                songName = song.name,
-                                location = location
+                                songId = currentSong.id.toString(),
+                                songName = currentSong.name,
+                                location = categoryLocation
                             )
                             hasTrackedAutoPreview = true
                         }
-                        // Note: song_impression with location=song_player should only fire
-                        // on next/back clicks per spec — NOT on 1st display. Bottom sheet
-                        // currently has no next/back controls, so no impression fires here.
                     }
                     Player.STATE_ENDED -> {
                         isPlaying = false
@@ -272,19 +287,27 @@ fun MusicPlayerBottomSheet(
                 isPlaying = playing
             }
         }
-
-        val url = song.mp3Url.ifEmpty { song.previewUrl }
-        if (url.isNotEmpty()) {
-            player.addListener(listener)
-            runCatching {
-                player.setMediaItem(MediaItem.fromUri(url))
-                player.prepare()
-            }
-        }
+        player.addListener(listener)
         onDispose {
             player.removeListener(listener)
             player.stop()  // ✅ Stop immediately (synchronous)
             player.releaseAsync()  // ✅ Release async to avoid ANR
+        }
+    }
+
+    // Swap media when next/prev/swipe changes `currentSong`. Reset per-song state so
+    // STATE_READY listener treats the swap like a fresh load (hook seek + analytics).
+    LaunchedEffect(currentSong) {
+        val url = currentSong.mp3Url.ifEmpty { currentSong.previewUrl }
+        if (url.isNotEmpty()) {
+            hasAppliedHookSeek = false
+            hasTrackedAutoPreview = false
+            currentMs = 0
+            durationMs = (currentSong.durationMs ?: 0).coerceAtLeast(1)
+            runCatching {
+                player.setMediaItem(MediaItem.fromUri(url))
+                player.prepare()
+            }
         }
     }
 
@@ -328,6 +351,27 @@ fun MusicPlayerBottomSheet(
                     onPlayerInteraction()
                 }
                 .background(SurfaceDark)
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            when {
+                                swipeAccumulated < -swipeThresholdPx -> {
+                                    onPlayerInteraction()
+                                    viewModel.onNext()
+                                }
+                                swipeAccumulated > swipeThresholdPx -> {
+                                    onPlayerInteraction()
+                                    if (canGoPrev) viewModel.onPrev()
+                                }
+                            }
+                            swipeAccumulated = 0f
+                        },
+                        onDragCancel = { swipeAccumulated = 0f },
+                        onHorizontalDrag = { _, dragAmount ->
+                            swipeAccumulated += dragAmount
+                        }
+                    )
+                }
         ) {
             ProvideShimmerEffect {
                 Column(
@@ -346,8 +390,8 @@ fun MusicPlayerBottomSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         AppAsyncImage(
-                            imageUrl = song.coverUrl,
-                            contentDescription = song.name,
+                            imageUrl = currentSong.coverUrl,
+                            contentDescription = currentSong.name,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(48.dp)
@@ -364,7 +408,7 @@ fun MusicPlayerBottomSheet(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ){
                                 Text(
-                                    text = song.name,
+                                    text = currentSong.name,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = TextPrimary,
@@ -377,7 +421,7 @@ fun MusicPlayerBottomSheet(
                             }
                             Spacer(Modifier.height(6.dp))
                             Text(
-                                text = song.artist,
+                                text = currentSong.artist,
                                 fontSize = 13.sp,
                                 color = TextSecondary,
                                 maxLines = 1,
@@ -399,18 +443,18 @@ fun MusicPlayerBottomSheet(
                                     onPlayerInteraction()
                                     if (isLiked) {
                                         Analytics.trackSongUnfavorite(
-                                            songId = song.id.toString(),
-                                            songName = song.name,
-                                            location = location
+                                            songId = currentSong.id.toString(),
+                                            songName = currentSong.name,
+                                            location = categoryLocation
                                         )
                                     } else {
                                         Analytics.trackSongFavorite(
-                                            songId = song.id.toString(),
-                                            songName = song.name,
-                                            location = location
+                                            songId = currentSong.id.toString(),
+                                            songName = currentSong.name,
+                                            location = categoryLocation
                                         )
                                     }
-                                    viewModel.toggleLike(song)
+                                    viewModel.toggleLike(currentSong)
                                 }
                         )
 
@@ -426,11 +470,12 @@ fun MusicPlayerBottomSheet(
                         Icon(
                             imageVector = Icons.Default.SkipPrevious,
                             contentDescription = null,
-                            tint = TextPrimary,
+                            tint = if (canGoPrev) TextPrimary else TextSecondary,
                             modifier = Modifier
                                 .size(32.dp)
-                                .clickableSingle{
+                                .clickableSingle(enabled = canGoPrev) {
                                     onPlayerInteraction()
+                                    viewModel.onPrev()
                                 }
                                 .padding(3.dp)
                         )
@@ -451,9 +496,9 @@ fun MusicPlayerBottomSheet(
                                         player.isPlaying -> {
                                             player.pause()
                                             Analytics.trackSongPause(
-                                                songId = song.id.toString(),
-                                                songName = song.name,
-                                                location = location
+                                                songId = currentSong.id.toString(),
+                                                songName = currentSong.name,
+                                                location = categoryLocation
                                             )
                                         }
                                         player.playbackState == Player.STATE_ENDED -> {
@@ -461,17 +506,17 @@ fun MusicPlayerBottomSheet(
                                             currentMs = 0
                                             player.play()
                                             Analytics.trackSongPlay(
-                                                songId = song.id.toString(),
-                                                songName = song.name,
-                                                location = location
+                                                songId = currentSong.id.toString(),
+                                                songName = currentSong.name,
+                                                location = categoryLocation
                                             )
                                         }
                                         else -> {
                                             player.play()
                                             Analytics.trackSongPlay(
-                                                songId = song.id.toString(),
-                                                songName = song.name,
-                                                location = location
+                                                songId = currentSong.id.toString(),
+                                                songName = currentSong.name,
+                                                location = categoryLocation
                                             )
                                         }
                                     }
@@ -489,6 +534,7 @@ fun MusicPlayerBottomSheet(
                                 .size(32.dp)
                                 .clickableSingle{
                                     onPlayerInteraction()
+                                    viewModel.onNext()
                                 }
                                 .padding(3.dp)
                         )
@@ -582,9 +628,9 @@ fun MusicPlayerBottomSheet(
                             .background(Primary)
                             .clickableSingle(onClick = {
                                 Analytics.trackSongSelect(
-                                    songId = song.id.toString(),
-                                    songName = song.name,
-                                    location = location
+                                    songId = currentSong.id.toString(),
+                                    songName = currentSong.name,
+                                    location = categoryLocation
                                 )
                                 Analytics.trackCreationStart(AnalyticsEvent.Value.Location.SONG)
                                 viewModel.onUseToCreateClick(onProceed = onUseToCreate)

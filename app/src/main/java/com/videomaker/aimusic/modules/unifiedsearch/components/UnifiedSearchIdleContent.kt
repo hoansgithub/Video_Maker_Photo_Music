@@ -32,6 +32,9 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.analytics.onFirstVisible
+import com.videomaker.aimusic.core.analytics.trackSongImpressionAndMark
+import com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
@@ -68,6 +71,7 @@ fun UnifiedSearchIdleContent(
     onSeeMoreSongs: () -> Unit
 ) {
     val dimens = AppDimens.current
+    val sessionManager: MusicPlaybackSessionManager = koinInject()
 
     LazyColumn(
         modifier = Modifier
@@ -254,11 +258,10 @@ fun UnifiedSearchIdleContent(
                                     onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RCM)
                                 },
                                 modifier = Modifier.onFirstVisible(key = song.id) {
-                                    Analytics.trackSongImpression(
+                                    sessionManager.trackSongImpressionAndMark(
                                         songId = song.id.toString(),
                                         songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM,
-                                        screenSessionId = ""
+                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
                                     )
                                 }
                             )
