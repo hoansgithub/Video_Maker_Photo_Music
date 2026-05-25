@@ -31,8 +31,8 @@ object AdPlacement {
      * Shown once per app session (splash screen only appears once).
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/4247360286
-     * - Secondary: ca-app-pub-7121075950716954/6785534926
+     * - Primary: ca-app-pub-7121075950716954/9920077454
+     * - Secondary: ca-app-pub-7121075950716954/1830520200
      *
      * Remote Config key: ad_interstitial_splash
      */
@@ -44,8 +44,8 @@ object AdPlacement {
      * Uses separate ad unit to allow independent eCPM tracking and frequency capping.
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/3800316265 (Inter_high_splash_reopen)
-     * - Secondary: ca-app-pub-7121075950716954/2822365800 (Inter_all_splash_reopen)
+     * - Primary: ca-app-pub-7121075950716954/4748771125 (Inter_high_splash_reopen)
+     * - Secondary: ca-app-pub-7121075950716954/2676684702 (Inter_all_splash_reopen)
      *
      * Remote Config key: ad_interstitial_open_app
      */
@@ -57,8 +57,8 @@ object AdPlacement {
      * If ad not loaded yet, back navigation proceeds normally (non-blocking).
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/2213834713
-     * - Secondary: ca-app-pub-7121075950716954/6699874633
+     * - Primary: ca-app-pub-7121075950716954/4441122705
+     * - Secondary: ca-app-pub-7121075950716954/7545420894
      *
      * Remote Config key: ad_interstitial_template_previewer_back
      */
@@ -75,8 +75,8 @@ object AdPlacement {
      * - Timer resets after ad shown
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/1693027679
-     * - Secondary: ca-app-pub-7121075950716954/3084106753
+     * - Primary: ca-app-pub-7121075950716954/8224075141
+     * - Secondary: ca-app-pub-7121075950716954/3051639510
      *
      * Remote Config key: ad_interstitial_template_previewer_scroll
      */
@@ -88,8 +88,8 @@ object AdPlacement {
      * If ad not loaded yet, back navigation proceeds normally (non-blocking).
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/9607266009
-     * - Secondary: ca-app-pub-7121075950716954/5668020998
+     * - Primary: ca-app-pub-7121075950716954/9739651039
+     * - Secondary: ca-app-pub-7121075950716954/8170207041
      *
      * Remote Config key: ad_interstitial_editor_back
      */
@@ -101,8 +101,8 @@ object AdPlacement {
      * Frequency controlled by ad_interstitial_interval_seconds Remote Config.
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/4929654393
-     * - Secondary: ca-app-pub-7121075950716954/7761718368
+     * - Primary: ca-app-pub-7121075950716954/8538250004
+     * - Secondary: ca-app-pub-7121075950716954/8361778735
      *
      * Remote Config key: ad_interstitial_template_grid_tap
      */
@@ -114,8 +114,8 @@ object AdPlacement {
      * If ad not loaded yet, navigation proceeds normally (non-blocking).
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/3630901660
-     * - Secondary: ca-app-pub-7121075950716954/4477079477
+     * - Primary: ca-app-pub-7121075950716954/9761424655
+     * - Secondary: ca-app-pub-7121075950716954/7135261314
      *
      * Remote Config key: ad_interstitial_library_project_tap
      */
@@ -127,8 +127,8 @@ object AdPlacement {
      * If ad not loaded yet, navigation proceeds normally (non-blocking).
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/3608744575
-     * - Secondary: ca-app-pub-7121075950716954/2161948881
+     * - Primary: ca-app-pub-7121075950716954/1879065208
+     * - Secondary: ca-app-pub-7121075950716954/6956966219
      *
      * Remote Config key: ad_interstitial_uninstall_template_tap
      */
@@ -140,8 +140,8 @@ object AdPlacement {
      * If ad not loaded yet, navigation proceeds normally (non-blocking).
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/9709181357
-     * - Secondary: ca-app-pub-7121075950716954/8587671370
+     * - Primary: ca-app-pub-7121075950716954/5408312336
+     * - Secondary: ca-app-pub-7121075950716954/5188820489
      *
      * Remote Config key: ad_interstitial_export_result_exit
      */
@@ -153,8 +153,8 @@ object AdPlacement {
      * If ad not loaded yet, navigation proceeds normally (non-blocking).
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/6949256261
-     * - Secondary: ca-app-pub-7121075950716954/1583783907
+     * - Primary: ca-app-pub-7121075950716954/2782148994
+     * - Secondary: ca-app-pub-7121075950716954/7537679430
      *
      * Remote Config key: ad_interstitial_asset_picker_exit
      */
@@ -173,8 +173,8 @@ object AdPlacement {
      * - Skipped when another fullscreen ad is showing
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/3672286423
-     * - Secondary: ca-app-pub-7121075950716954/7364624003
+     * - Primary: ca-app-pub-7121075950716954/4550155106
+     * - Secondary: ca-app-pub-7121075950716954/7178364047
      *
      * Remote Config key: ad_appopen_aoa
      */
@@ -193,8 +193,8 @@ object AdPlacement {
      * - Skipped when another fullscreen ad is showing
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/4327019161
-     * - Secondary: ca-app-pub-7121075950716954/5945281221
+     * - Primary: ca-app-pub-7121075950716954/6000852048
+     * - Secondary: ca-app-pub-7121075950716954/9757555227
      *
      * Remote Config key: ad_appopen_foreground
      */
@@ -212,7 +212,7 @@ object AdPlacement {
      * - Lifecycle-aware cleanup
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/1313786204
+     * - Primary: ca-app-pub-7121075950716954/6103658351
      *
      * Remote Config key: ad_banner_home
      */
@@ -229,7 +229,7 @@ object AdPlacement {
      * - Same configuration as home banner
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/1313786204
+     * - Primary: ca-app-pub-7121075950716954/6103658351
      *
      * Remote Config key: ad_banner_template_previewer
      */
@@ -245,7 +245,7 @@ object AdPlacement {
      * - Lifecycle-aware cleanup
      *
      * Ad units (priority order):
-     * - Primary: TBD (temporary: ca-app-pub-7121075950716954/1313786204)
+     * - Primary: TBD (temporary: ca-app-pub-7121075950716954/6103658351)
      *
      * Remote Config key: ad_banner_asset_picker
      */
@@ -262,7 +262,7 @@ object AdPlacement {
      * - Lifecycle-aware cleanup
      *
      * Ad units (priority order):
-     * - Primary: TBD (temporary: ca-app-pub-7121075950716954/1313786204)
+     * - Primary: TBD (temporary: ca-app-pub-7121075950716954/6103658351)
      *
      * Remote Config key: ad_banner_editor
      */
@@ -279,7 +279,7 @@ object AdPlacement {
      * - Lifecycle-aware cleanup
      *
      * Ad units (priority order):
-     * - Primary: TBD (temporary: ca-app-pub-7121075950716954/1313786204)
+     * - Primary: TBD (temporary: ca-app-pub-7121075950716954/6103658351)
      *
      * Remote Config key: ad_banner_export
      */
@@ -295,8 +295,8 @@ object AdPlacement {
      * - Attention-grabbing design for maximum engagement
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/4622910597
-     * - Secondary: ca-app-pub-7121075950716954/5002184541
+     * - Primary: ca-app-pub-7121075950716954/3045501749
+     * - Secondary: ca-app-pub-7121075950716954/5041109698
      *
      * Remote Config key: ad_native_onboarding_language
      */
@@ -312,8 +312,8 @@ object AdPlacement {
      * - Different ad units for A/B testing
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/7245204502
-     * - Secondary: ca-app-pub-7121075950716954/9871367841
+     * - Primary: ca-app-pub-7121075950716954/6080295985
+     * - Secondary: ca-app-pub-7121075950716954/8931032052
      *
      * Remote Config key: ad_native_onboarding_language_alt
      */
@@ -329,8 +329,8 @@ object AdPlacement {
      * - Attention-grabbing design for maximum engagement
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/9315495347
-     * - Secondary: ca-app-pub-7121075950716954/1976061375
+     * - Primary: ca-app-pub-7121075950716954/3797747576
+     * - Secondary: ca-app-pub-7121075950716954/9064413900
      *
      * Remote Config key: ad_native_onboarding_feature_selection
      */
@@ -346,8 +346,8 @@ object AdPlacement {
      * - Different ad units for A/B testing
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/1801306131
-     * - Secondary: ca-app-pub-7121075950716954/8645411507
+     * - Primary: ca-app-pub-7121075950716954/3059380976
+     * - Secondary: ca-app-pub-7121075950716954/5685544316
      *
      * Remote Config key: ad_native_onboarding_feature_selection_alt
      */
@@ -363,8 +363,8 @@ object AdPlacement {
      * - Attention-grabbing design for maximum engagement
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/8425919653
-     * - Secondary: ca-app-pub-7121075950716954/8562155601
+     * - Primary: ca-app-pub-7121075950716954/1923991765
+     * - Secondary: ca-app-pub-7121075950716954/1559057460
      *
      * Remote Config key: ad_native_onboarding_page1
      */
@@ -380,8 +380,8 @@ object AdPlacement {
      * - Attention-grabbing design for maximum engagement
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/2815004904
-     * - Secondary: ca-app-pub-7121075950716954/3373262316
+     * - Primary: ca-app-pub-7121075950716954/6984746755
+     * - Secondary: ca-app-pub-7121075950716954/9610910095
      *
      * Remote Config key: ad_native_onboarding_page2
      */
@@ -397,8 +397,8 @@ object AdPlacement {
      * - Attention-grabbing design for maximum engagement
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/3417640133
-     * - Secondary: ca-app-pub-7121075950716954/6506837908
+     * - Primary: ca-app-pub-7121075950716954/5340492594
+     * - Secondary: ca-app-pub-7121075950716954/6891275199
      *
      * Remote Config key: ad_native_onboarding_page3
      */
@@ -432,8 +432,8 @@ object AdPlacement {
      * Layout: native_big_bait (large vertical layout)
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/7249073934
-     * - Secondary: ca-app-pub-7121075950716954/5724093483
+     * - Primary: ca-app-pub-7121075950716954/8980354700
+     * - Secondary: ca-app-pub-7121075950716954/1293436372
      *
      * Remote Config key: ad_native_onboarding_fullscreen
      * Remote Config extras:
@@ -454,8 +454,8 @@ object AdPlacement {
      * Layout: Uses custom native ad layout (full width in-feed)
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/6109352277
-     * - Secondary: ca-app-pub-7121075950716954/1665574760
+     * - Primary: ca-app-pub-7121075950716954/7251804638
+     * - Secondary: ca-app-pub-7121075950716954/1185923881
      *
      * Remote Config key: ad_native_search_infeed
      */
@@ -471,8 +471,8 @@ object AdPlacement {
      * - Attention-grabbing design for maximum engagement
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/5203464719
-     * - Secondary: ca-app-pub-7121075950716954/1283896429
+     * - Primary: ca-app-pub-7121075950716954/7123126368
+     * - Secondary: ca-app-pub-7121075950716954/7176617161
      *
      * Remote Config key: ad_native_uninstall_bottom
      */
@@ -488,8 +488,8 @@ object AdPlacement {
      * - Attention-grabbing design for maximum engagement
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/7829628054
-     * - Secondary: ca-app-pub-7121075950716954/6101613417
+     * - Primary: ca-app-pub-7121075950716954/5938722965
+     * - Secondary: ca-app-pub-7121075950716954/1171584233
      *
      * Remote Config key: ad_native_widget_bottom
      */
@@ -506,8 +506,8 @@ object AdPlacement {
      * - Shown with "Building Your Feed" loading indicator
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/8424019843
-     * - Secondary: ca-app-pub-7121075950716954/1431594877
+     * - Primary: ca-app-pub-7121075950716954/2672745463
+     * - Secondary: ca-app-pub-7121075950716954/5298908808
      *
      * Remote Config key: ad_native_template_previewer_loading
      */
@@ -564,8 +564,8 @@ object AdPlacement {
      * - Blends with template cards in staggered grid
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/8919348440
-     * - Secondary: ca-app-pub-7121075950716954/2545511783
+     * - Primary: ca-app-pub-7121075950716954/1251475281
+     * - Secondary: ca-app-pub-7121075950716954/7733500455
      *
      * Remote Config key: ad_native_gallery_grid
      */
@@ -576,8 +576,8 @@ object AdPlacement {
      * Displayed at the 2nd position.
      *
      * Ad units:
-     * - Primary: ca-app-pub-7121075950716954/6084726491
-     * - Secondary: ca-app-pub-7121075950716954/3468887588
+     * - Primary: ca-app-pub-7121075950716954/1840370904
+     * - Secondary: ca-app-pub-7121075950716954/5831815710
      * 
      * Remote Config key: ad_native_gallery_hot_tpt
      */
@@ -596,8 +596,8 @@ object AdPlacement {
      * - Blends with song list items
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/2788549787
-     * - Secondary: ca-app-pub-7121075950716954/1667039805
+     * - Primary: ca-app-pub-7121075950716954/2115862172
+     * - Secondary: ca-app-pub-7121075950716954/3794255449
      *
      * Remote Config key: ad_native_songs_station
      */
@@ -613,8 +613,8 @@ object AdPlacement {
      * - Shown with "Generating" text and progress indicator above
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/4484774830
-     * - Secondary: ca-app-pub-7121075950716954/7797838469
+     * - Primary: ca-app-pub-7121075950716954/9046582121
+     * - Secondary: ca-app-pub-7121075950716954/1359663791
      *
      * Remote Config key: ad_native_export_generating
      */
@@ -625,8 +625,8 @@ object AdPlacement {
      * Timing: Loaded when the select ratio bottom sheet is displayed.
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/6466097345
-     * - Secondary: ca-app-pub-7121075950716954/8422087554
+     * - Primary: ca-app-pub-7121075950716954/7313933710
+     * - Secondary: ca-app-pub-7121075950716954/3818832831
      *
      * Remote Config key: ad_native_template_ratio_sheet
      */
@@ -697,8 +697,8 @@ object AdPlacement {
      * 5. Download proceeds automatically
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/4051154821
-     * - Secondary: ca-app-pub-7121075950716954/6681333380
+     * - Primary: ca-app-pub-7121075950716954/5841454382
+     * - Secondary: ca-app-pub-7121075950716954/7948742970
      *
      * Remote Config key: ad_reward_download_video
      */
@@ -737,8 +737,8 @@ object AdPlacement {
      * 5. Watermark removed for current session
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/6485746472
-     * - Secondary: ca-app-pub-7121075950716954/8206497619
+     * - Primary: ca-app-pub-7121075950716954/1902209378
+     * - Secondary: ca-app-pub-7121075950716954/5322579631
      *
      * Remote Config key: ad_reward_remove_watermark
      */
@@ -765,8 +765,8 @@ object AdPlacement {
      * - User must watch ad again each time they edit a project
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/9080595582
-     * - Secondary: ca-app-pub-7121075950716954/2706758926
+     * - Primary: ca-app-pub-7121075950716954/6550003612
+     * - Secondary: ca-app-pub-7121075950716954/6827232991
      *
      * Remote Config key: ad_reward_unlock_quality
      */
@@ -787,8 +787,8 @@ object AdPlacement {
      * 7. Unlock persists across app restarts
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/1281667047
-     * - Secondary: ca-app-pub-7121075950716954/4323092928
+     * - Primary: ca-app-pub-7121075950716954/2285352752
+     * - Secondary: ca-app-pub-7121075950716954/3079559673
      *
      * Remote Config key: ad_reward_unlock_effect_set
      */
@@ -848,8 +848,8 @@ object AdPlacement {
      * Unlock happens when user CLOSES the ad (action callback), not on show.
      *
      * Placeholder unit IDs (replace via Firebase Remote Config after AdMob assigns):
-     * - Primary: ca-app-pub-7121075950716954/6949256261 (borrowed from ASSET_PICKER_EXIT)
-     * - Secondary: ca-app-pub-7121075950716954/1583783907
+     * - Primary: ca-app-pub-7121075950716954/2782148994 (borrowed from ASSET_PICKER_EXIT)
+     * - Secondary: ca-app-pub-7121075950716954/7537679430
      *
      * Remote Config key: ad_interstitial_unlock_quality
      */

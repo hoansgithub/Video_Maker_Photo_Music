@@ -124,8 +124,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.APP_OPEN_AOA,
             type = "appOpen",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/3672286423",  // Primary
-                "ca-app-pub-7121075950716954/7364624003"   // Secondary
+                "ca-app-pub-7121075950716954/4550155106",  // Primary
+                "ca-app-pub-7121075950716954/7178364047"   // Secondary
             ),
             enabled = true
         )
@@ -138,8 +138,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.APP_OPEN_FOREGROUND,
             type = "appOpen",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/4327019161",  // Primary
-                "ca-app-pub-7121075950716954/5945281221"   // Secondary
+                "ca-app-pub-7121075950716954/6000852048",  // Primary
+                "ca-app-pub-7121075950716954/9757555227"   // Secondary
             ),
             enabled = true
         )
@@ -154,8 +154,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.INTERSTITIAL_SPLASH,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/4247360286",  // Primary
-                "ca-app-pub-7121075950716954/6785534926"   // Secondary
+                "ca-app-pub-7121075950716954/9920077454",  // Primary
+                "ca-app-pub-7121075950716954/1830520200"   // Secondary
             ),
             enabled = true
         )
@@ -166,8 +166,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.INTERSTITIAL_OPEN_APP,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/3800316265",  // Inter_high_splash_reopen (Primary)
-                "ca-app-pub-7121075950716954/2822365800"   // Inter_all_splash_reopen (Secondary)
+                "ca-app-pub-7121075950716954/4748771125",  // Inter_high_splash_reopen (Primary)
+                "ca-app-pub-7121075950716954/2676684702"   // Inter_all_splash_reopen (Secondary)
             ),
             enabled = true
         )
@@ -179,8 +179,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/2213834713",  // Primary
-                "ca-app-pub-7121075950716954/6699874633"   // Secondary
+                "ca-app-pub-7121075950716954/4441122705",  // Primary
+                "ca-app-pub-7121075950716954/7545420894"   // Secondary
             ),
             enabled = true
         )
@@ -192,8 +192,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1693027679",  // Primary
-                "ca-app-pub-7121075950716954/3084106753"   // Secondary
+                "ca-app-pub-7121075950716954/8224075141",  // Primary
+                "ca-app-pub-7121075950716954/3051639510"   // Secondary
             ),
             enabled = true
         )
@@ -205,8 +205,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.INTERSTITIAL_EDITOR_BACK,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/9607266009",  // Primary
-                "ca-app-pub-7121075950716954/5668020998"   // Secondary
+                "ca-app-pub-7121075950716954/9739651039",  // Primary
+                "ca-app-pub-7121075950716954/8170207041"   // Secondary
             ),
             enabled = true
         )
@@ -218,8 +218,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/4929654393",  // Primary
-                "ca-app-pub-7121075950716954/7761718368"   // Secondary
+                "ca-app-pub-7121075950716954/8538250004",  // Primary
+                "ca-app-pub-7121075950716954/8361778735"   // Secondary
             ),
             enabled = true
         )
@@ -231,8 +231,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/3630901660",  // Primary
-                "ca-app-pub-7121075950716954/4477079477"   // Secondary
+                "ca-app-pub-7121075950716954/9761424655",  // Primary
+                "ca-app-pub-7121075950716954/7135261314"   // Secondary
             ),
             enabled = true
         )
@@ -244,8 +244,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.INTERSTITIAL_UNINSTALL_TEMPLATE_TAP,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/3608744575",  // Primary
-                "ca-app-pub-7121075950716954/2161948881"   // Secondary
+                "ca-app-pub-7121075950716954/1879065208",  // Primary
+                "ca-app-pub-7121075950716954/6956966219"   // Secondary
             ),
             enabled = true
         )
@@ -257,8 +257,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.INTERSTITIAL_EXPORT_RESULT_EXIT,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/9709181357",  // Primary
-                "ca-app-pub-7121075950716954/8587671370"   // Secondary
+                "ca-app-pub-7121075950716954/5408312336",  // Primary
+                "ca-app-pub-7121075950716954/5188820489"   // Secondary
             ),
             enabled = true
         )
@@ -270,8 +270,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.INTERSTITIAL_ASSET_PICKER_EXIT,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/6949256261",  // Primary
-                "ca-app-pub-7121075950716954/1583783907"   // Secondary
+                "ca-app-pub-7121075950716954/2782148994",  // Primary
+                "ca-app-pub-7121075950716954/7537679430"   // Secondary
             ),
             enabled = true
         )
@@ -287,7 +287,7 @@ class AdPlacementConfigService(
             placementId = AdPlacement.BANNER_HOME,
             type = "banner",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1313786204"  // Primary
+                "ca-app-pub-7121075950716954/6103658351"  // Primary
             ),
             enabled = true
         )
@@ -299,7 +299,7 @@ class AdPlacementConfigService(
             placementId = AdPlacement.BANNER_TEMPLATE_PREVIEWER,
             type = "banner",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1313786204"  // Primary (same as home)
+                "ca-app-pub-7121075950716954/6103658351"  // Primary (same as home)
             ),
             enabled = true
         )
@@ -310,7 +310,7 @@ class AdPlacementConfigService(
             placementId = AdPlacement.BANNER_ASSET_PICKER,
             type = "banner",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1313786204"  // Temporary (same as home)
+                "ca-app-pub-7121075950716954/6103658351"  // Temporary (same as home)
             ),
             enabled = true
         )
@@ -321,7 +321,7 @@ class AdPlacementConfigService(
             placementId = AdPlacement.BANNER_EDITOR,
             type = "banner",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1313786204"  // Temporary (same as home)
+                "ca-app-pub-7121075950716954/6103658351"  // Temporary (same as home)
             ),
             enabled = true
         )
@@ -332,7 +332,7 @@ class AdPlacementConfigService(
             placementId = AdPlacement.BANNER_EXPORT,
             type = "banner",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1313786204"  // Temporary (same as home)
+                "ca-app-pub-7121075950716954/6103658351"  // Temporary (same as home)
             ),
             enabled = true
         )
@@ -349,8 +349,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
             layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/4622910597",  // Primary
-                "ca-app-pub-7121075950716954/5002184541"   // Secondary
+                "ca-app-pub-7121075950716954/3045501749",  // Primary
+                "ca-app-pub-7121075950716954/5041109698"   // Secondary
             ),
             enabled = true
         )
@@ -363,8 +363,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
             layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/7245204502",  // Primary
-                "ca-app-pub-7121075950716954/9871367841"   // Secondary
+                "ca-app-pub-7121075950716954/6080295985",  // Primary
+                "ca-app-pub-7121075950716954/8931032052"   // Secondary
             ),
             enabled = true
         )
@@ -377,8 +377,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION,
             layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/9315495347",  // Primary
-                "ca-app-pub-7121075950716954/1976061375"   // Secondary
+                "ca-app-pub-7121075950716954/3797747576",  // Primary
+                "ca-app-pub-7121075950716954/9064413900"   // Secondary
             ),
             enabled = true
         )
@@ -391,8 +391,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
             layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1801306131",  // Primary
-                "ca-app-pub-7121075950716954/8645411507"   // Secondary
+                "ca-app-pub-7121075950716954/3059380976",  // Primary
+                "ca-app-pub-7121075950716954/5685544316"   // Secondary
             ),
             enabled = true
         )
@@ -435,8 +435,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_ONBOARDING_PAGE1,
             layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/8425919653",  // Primary
-                "ca-app-pub-7121075950716954/8562155601"   // Secondary
+                "ca-app-pub-7121075950716954/1923991765",  // Primary
+                "ca-app-pub-7121075950716954/1559057460"   // Secondary
             ),
             enabled = true
         )
@@ -449,8 +449,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_ONBOARDING_PAGE2,
             layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/2815004904",  // Primary
-                "ca-app-pub-7121075950716954/3373262316"   // Secondary
+                "ca-app-pub-7121075950716954/6984746755",  // Primary
+                "ca-app-pub-7121075950716954/9610910095"   // Secondary
             ),
             enabled = true
         )
@@ -463,8 +463,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_ONBOARDING_PAGE3,
             layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/3417640133",  // Primary
-                "ca-app-pub-7121075950716954/6506837908"   // Secondary
+                "ca-app-pub-7121075950716954/5340492594",  // Primary
+                "ca-app-pub-7121075950716954/6891275199"   // Secondary
             ),
             enabled = true
         )
@@ -478,8 +478,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_ONBOARDING_FULLSCREEN,
             layoutName = "native_full_screen_bait",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/7249073934",  // Primary
-                "ca-app-pub-7121075950716954/5724093483"   // Secondary
+                "ca-app-pub-7121075950716954/8980354700",  // Primary
+                "ca-app-pub-7121075950716954/1293436372"   // Secondary
             ),
             enabled = true
         )
@@ -492,8 +492,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_SEARCH_INFEED,
             layoutName = "native_small_row",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/6109352277",  // Primary
-                "ca-app-pub-7121075950716954/1665574760"   // Secondary
+                "ca-app-pub-7121075950716954/7251804638",  // Primary
+                "ca-app-pub-7121075950716954/1185923881"   // Secondary
             ),
             enabled = true
         )
@@ -506,8 +506,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_UNINSTALL_BOTTOM,
             layoutName = "native_big_bait",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/5203464719",  // Primary
-                "ca-app-pub-7121075950716954/1283896429"   // Secondary
+                "ca-app-pub-7121075950716954/7123126368",  // Primary
+                "ca-app-pub-7121075950716954/7176617161"   // Secondary
             ),
             enabled = true
         )
@@ -520,8 +520,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_WIDGET_BOTTOM,
             layoutName = "native_big_bait",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/7829628054",  // Primary
-                "ca-app-pub-7121075950716954/6101613417"   // Secondary
+                "ca-app-pub-7121075950716954/5938722965",  // Primary
+                "ca-app-pub-7121075950716954/1171584233"   // Secondary
             ),
             enabled = true
         )
@@ -549,8 +549,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING,
             layoutName = "native_big_bait",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/8424019843",  // Primary
-                "ca-app-pub-7121075950716954/1431594877"   // Secondary
+                "ca-app-pub-7121075950716954/2672745463",  // Primary
+                "ca-app-pub-7121075950716954/5298908808"   // Secondary
             ),
             enabled = true
         )
@@ -563,8 +563,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_TEMPLATE_RATIO_SHEET,
             layoutName = "native_small_bait",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/6466097345",  // Primary
-                "ca-app-pub-7121075950716954/8422087554"   // Secondary
+                "ca-app-pub-7121075950716954/7313933710",  // Primary
+                "ca-app-pub-7121075950716954/3818832831"   // Secondary
             ),
             enabled = true
         )
@@ -594,8 +594,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_GALLERY_GRID,
             layoutName = "native_project_card",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/8919348440",  // Primary
-                "ca-app-pub-7121075950716954/2545511783"   // Secondary
+                "ca-app-pub-7121075950716954/1251475281",  // Primary
+                "ca-app-pub-7121075950716954/7733500455"   // Secondary
             ),
             enabled = true
         )
@@ -607,8 +607,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_GALLERY_HOT_TPT,
             layoutName = "native_small_clean",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/6084726491",  // Primary
-                "ca-app-pub-7121075950716954/3468887588"   // Secondary
+                "ca-app-pub-7121075950716954/1840370904",  // Primary
+                "ca-app-pub-7121075950716954/5831815710"   // Secondary
             ),
             enabled = true
         )
@@ -623,8 +623,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_SONGS_STATION,
             layoutName = "native_small_row",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/2788549787",  // Primary
-                "ca-app-pub-7121075950716954/1667039805"   // Secondary
+                "ca-app-pub-7121075950716954/2115862172",  // Primary
+                "ca-app-pub-7121075950716954/3794255449"   // Secondary
             ),
             enabled = true
         )
@@ -639,8 +639,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_POPUP_TRENDING_TEMPLATE,
             layoutName = "native_small_row",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/8457835867",  // Primary (NA_high_lib)
-                "ca-app-pub-7121075950716954/8266264176"   // Secondary (NA_all_lib)
+                "ca-app-pub-7121075950716954/1192669490",  // Primary (NA_high_lib)
+                "ca-app-pub-7121075950716954/7566506155"   // Secondary (NA_all_lib)
             ),
             enabled = true
         )
@@ -655,8 +655,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_POPUP_TRENDING_SONG,
             layoutName = "native_small_row",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/8457835867",  // NA_high_select_music
-                "ca-app-pub-7121075950716954/8266264176"   // NA_all_select_music
+                "ca-app-pub-7121075950716954/1192669490",  // NA_high_select_music
+                "ca-app-pub-7121075950716954/7566506155"   // NA_all_select_music
             ),
             enabled = true
         )
@@ -669,8 +669,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_HOME_BANNER,
             layoutName = "native_small_row",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/8457835867",  // Primary (NA_high_lib)
-                "ca-app-pub-7121075950716954/8266264176"   // Secondary (NA_all_lib)
+                "ca-app-pub-7121075950716954/1192669490",  // Primary (NA_high_lib)
+                "ca-app-pub-7121075950716954/7566506155"   // Secondary (NA_all_lib)
             ),
             enabled = true
         )
@@ -684,8 +684,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_EXPORT_GENERATING,
             layoutName = "native_big_bait",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/4484774830",  // Primary
-                "ca-app-pub-7121075950716954/7797838469"   // Secondary
+                "ca-app-pub-7121075950716954/9046582121",  // Primary
+                "ca-app-pub-7121075950716954/1359663791"   // Secondary
             ),
             enabled = true
         )
@@ -720,8 +720,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.REWARD_REMOVE_WATERMARK,
             type = "reward",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/6485746472",  // Primary
-                "ca-app-pub-7121075950716954/8206497619"   // Secondary
+                "ca-app-pub-7121075950716954/1902209378",  // Primary
+                "ca-app-pub-7121075950716954/5322579631"   // Secondary
             ),
             enabled = true
         )
@@ -733,8 +733,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.REWARD_UNLOCK_QUALITY,
             type = "reward",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/9080595582",  // Primary
-                "ca-app-pub-7121075950716954/2706758926"   // Secondary
+                "ca-app-pub-7121075950716954/6550003612",  // Primary
+                "ca-app-pub-7121075950716954/6827232991"   // Secondary
             ),
             enabled = true
         )
@@ -746,8 +746,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.REWARD_UNLOCK_EFFECT_SET,
             type = "reward",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1281667047",  // Primary
-                "ca-app-pub-7121075950716954/4323092928"   // Secondary
+                "ca-app-pub-7121075950716954/2285352752",  // Primary
+                "ca-app-pub-7121075950716954/3079559673"   // Secondary
             ),
             enabled = true
         )
@@ -759,8 +759,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.REWARD_UNLOCK_TEMPLATE,
             type = "reward",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1281667047",  // Primary (shared with effect set)
-                "ca-app-pub-7121075950716954/4323092928"   // Secondary (shared with effect set)
+                "ca-app-pub-7121075950716954/2285352752",  // Primary (shared with effect set)
+                "ca-app-pub-7121075950716954/3079559673"   // Secondary (shared with effect set)
             ),
             enabled = true
         )
@@ -770,8 +770,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.REWARD_UNLOCK_SONG,
             type = "reward",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1281667047",  // Primary (same as template/effect)
-                "ca-app-pub-7121075950716954/4323092928"   // Secondary
+                "ca-app-pub-7121075950716954/2285352752",  // Primary (same as template/effect)
+                "ca-app-pub-7121075950716954/3079559673"   // Secondary
             ),
             enabled = true
         )
@@ -786,8 +786,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.INTERSTITIAL_UNLOCK_QUALITY,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/6949256261",  // Placeholder (borrowed from ASSET_PICKER_EXIT)
-                "ca-app-pub-7121075950716954/1583783907"   // Placeholder Secondary
+                "ca-app-pub-7121075950716954/2782148994",  // Placeholder (borrowed from ASSET_PICKER_EXIT)
+                "ca-app-pub-7121075950716954/7537679430"   // Placeholder Secondary
             ),
             enabled = true
         )
