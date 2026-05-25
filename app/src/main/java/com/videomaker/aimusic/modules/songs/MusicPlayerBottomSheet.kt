@@ -37,7 +37,9 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Slideshow
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.ui.components.AdBadge
@@ -72,6 +74,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -175,6 +178,7 @@ fun MusicPlayerBottomSheet(
     onDismiss: () -> Unit,
     onUseToCreate: () -> Unit,
 ) {
+    var bottomSectionHeight by remember { mutableStateOf(0) }
     val playerFactory = koinInject<MusicPlayerViewModelFactory>()
     val viewModel: MusicPlayerViewModel = viewModel(
         key = "player_${song.id}",
@@ -675,7 +679,25 @@ fun MusicPlayerBottomSheet(
             // Standard ad loading overlay - covers entire fullscreen sheet
             AdsLoadingOverlay()
 
-            Spacer(Modifier.navigationBarsPadding())
+            if (bottomSectionHeight == 0) {
+                Spacer(Modifier.navigationBarsPadding())
+            }
+
+            // ── Native ad (small row banner) ──────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { size ->
+                        bottomSectionHeight =
+                            size.height  // Measure actual height dynamically!
+                    }
+            ) {
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_MUSIC_PLAYER,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG
+                )
+            }
         }  // End Column
 
     }  // End Box
