@@ -5,6 +5,7 @@ import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.data.local.PreferencesManager
@@ -99,7 +100,8 @@ class ProjectsViewModel(
     private val adsLoaderService: AdsLoaderService,
     private val notificationScheduler: NotificationScheduler,
     private val preferencesManager: PreferencesManager,
-    private val conversionTracker: NotificationConversionTracker
+    private val conversionTracker: NotificationConversionTracker,
+    private val adPlacementConfigService: AdPlacementConfigService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProjectsUiState>(ProjectsUiState.Loading)
@@ -128,6 +130,17 @@ class ProjectsViewModel(
 
     // Expose rewarded ad state
     val shouldPresentAd: StateFlow<Boolean> = rewardedAdController.shouldPresentAd
+
+    /** Active placement for download ad, driven by Remote Config `ad_download_ad_type`. */
+    val downloadAdPlacement: String
+        get() = if (adPlacementConfigService.getDownloadAdType() == "rewarded")
+            AdPlacement.REWARD_DOWNLOAD_VIDEO_1
+        else
+            AdPlacement.REWARD_INTER_DOWNLOAD_VIDEO
+
+    /** Whether the active download ad placement is rewardedInterstitial. */
+    val isDownloadAdInterstitial: Boolean
+        get() = adPlacementConfigService.getDownloadAdType() != "rewarded"
 
     // Pending download project (stored for callback after ad)
     private val _pendingDownloadProject = MutableStateFlow<Project?>(null)
@@ -305,7 +318,7 @@ class ProjectsViewModel(
         // Store pending project
         _pendingDownloadProject.value = project
 
-        // Request ad via controller
+        // Request ad via controller (placement resolved dynamically by Remote Config)
         rewardedAdController.requestAd(
             onReward = {
                 // Download after ad is watched
@@ -322,7 +335,7 @@ class ProjectsViewModel(
                 _pendingDownloadProject.value = null
                 downloadContext = null
             },
-            checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_INTER_DOWNLOAD_VIDEO) }
+            checkEnabled = { adsLoaderService.canLoadAd(downloadAdPlacement) }
         )
     }
 

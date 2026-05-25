@@ -300,8 +300,10 @@ fun AssetPickerScreen(
                             activity = activity,
                             placement = AdPlacement.INTERSTITIAL_ASSET_PICKER_EXIT,
                             action = {
-                                // Ad closed - navigate
+                                // Ad closed OR failed to show - always navigate as fallback
+                                // (idempotent if onShown already navigated)
                                 android.util.Log.d("AssetPickerScreen", "✅ Exit ad closed - navigating")
+                                onNavigateBack()
                             },
                             onShown = {
                                 // Navigate immediately when ad shows (parallel)

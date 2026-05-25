@@ -576,13 +576,14 @@ fun ProjectsTabContent(
     }
 
     // Handle rewarded ad presentation using reusable presenter
+    // Placement and format driven by Remote Config `ad_download_ad_type`
     RewardedAdPresenter(
         shouldPresent = shouldPresentAd,
-        placement = AdPlacement.REWARD_INTER_DOWNLOAD_VIDEO,
+        placement = viewModel.downloadAdPlacement,
         adsLoaderService = koinInject(),
         onRewardEarned = viewModel::onRewardEarned,
         onAdFailed = viewModel::onAdFailed,
-        isInterstitial = true
+        isInterstitial = viewModel.isDownloadAdInterstitial
     )
 
     // Music player bottom sheet — shown when a song is tapped

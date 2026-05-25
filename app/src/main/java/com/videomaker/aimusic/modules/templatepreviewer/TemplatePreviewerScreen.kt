@@ -212,11 +212,11 @@ fun TemplatePreviewerScreen(
                             activity = activity,
                             placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
                             action = {
-                                // Ad closed - navigate back. We left the screen on onShown,
-                                // so isAdShowing reset is mostly defensive (this composable is
-                                // being disposed anyway).
+                                // Ad closed OR failed to show - always navigate as fallback
+                                // (idempotent if onShown already navigated)
                                 isAdShowing = false
                                 android.util.Log.d("TemplatePreviewerScreen", "✅ Back ad closed - navigating")
+                                onNavigateBack()
                             },
                             onShown = {
                                 // Mute players while ad is on screen, then navigate.

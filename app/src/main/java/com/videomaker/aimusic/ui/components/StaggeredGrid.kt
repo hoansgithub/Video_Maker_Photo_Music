@@ -72,7 +72,16 @@ fun StaggeredGrid(
 
         layout(constraints.maxWidth, totalHeight.coerceAtLeast(0)) {
             placeables.forEach { (placeable, x, y) ->
-                placeable.placeRelative(x, y)
+                // Guard against detached LayoutNode during placement.
+                // Known Compose issue: Android View interop children (e.g. NativeAdView)
+                // can become detached when their external Activity closes and the draw
+                // cycle runs before Compose reconciles the tree.
+                try {
+                    placeable.placeRelative(x, y)
+                } catch (_: IllegalStateException) {
+                    // LayoutNode detached from owner — skip this frame;
+                    // Compose will reconcile on the next layout pass.
+                }
             }
         }
     }
@@ -150,7 +159,11 @@ fun <T> StaggeredGrid(
 
         layout(constraints.maxWidth, totalHeight.coerceAtLeast(0)) {
             placeables.forEach { (placeable, x, y) ->
-                placeable.placeRelative(x, y)
+                try {
+                    placeable.placeRelative(x, y)
+                } catch (_: IllegalStateException) {
+                    // LayoutNode detached from owner — skip this frame
+                }
             }
         }
     }

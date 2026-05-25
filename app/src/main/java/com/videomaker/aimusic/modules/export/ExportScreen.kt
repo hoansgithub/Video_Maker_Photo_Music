@@ -407,8 +407,10 @@ fun ExportScreen(
                             activity = activity,
                             placement = AdPlacement.INTERSTITIAL_EXPORT_RESULT_EXIT,
                             action = {
-                                // Ad closed - navigate
+                                // Ad closed OR failed to show - always navigate as fallback
+                                // (idempotent if onShown already navigated)
                                 android.util.Log.d("ExportScreen", "✅ Exit ad closed - navigating")
+                                onNavigateToHomeMyVideos()
                             },
                             onShown = {
                                 // Navigate immediately when ad shows (parallel)
@@ -575,15 +577,16 @@ fun ExportScreen(
         }
 
         // Handle download ad presentation using reusable presenter
+        // Placement and format driven by Remote Config `ad_download_ad_type`
         RewardedAdPresenter(
             shouldPresent = shouldPresentDownloadAd,
-            placement = AdPlacement.REWARD_INTER_DOWNLOAD_VIDEO,
+            placement = viewModel.downloadAdPlacement,
             adsLoaderService = adsLoaderService,
             onRewardEarned = viewModel::onDownloadRewardEarned,
             onAdFailed = viewModel::onDownloadAdFailed,
             onAdShown = { pauseSuccessPreviewForAd = true },
             onAdClosed = { pauseSuccessPreviewForAd = false },
-            isInterstitial = true
+            isInterstitial = viewModel.isDownloadAdInterstitial
         )
 
         // Handle watermark ad presentation using reusable presenter

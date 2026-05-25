@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.analytics.Analytics
@@ -150,7 +151,8 @@ class ExportViewModel(
     private val adsLoaderService: AdsLoaderService,
     private val notificationScheduler: NotificationScheduler,
     private val preferencesManager: PreferencesManager,
-    private val conversionTracker: NotificationConversionTracker
+    private val conversionTracker: NotificationConversionTracker,
+    private val adPlacementConfigService: AdPlacementConfigService
 ) : ViewModel() {
 
     // ============================================
@@ -188,6 +190,17 @@ class ExportViewModel(
 
     // Expose download ad state
     val shouldPresentDownloadAd: StateFlow<Boolean> = downloadAdController.shouldPresentAd
+
+    /** Active placement for download ad, driven by Remote Config `ad_download_ad_type`. */
+    val downloadAdPlacement: String
+        get() = if (adPlacementConfigService.getDownloadAdType() == "rewarded")
+            AdPlacement.REWARD_DOWNLOAD_VIDEO_1
+        else
+            AdPlacement.REWARD_INTER_DOWNLOAD_VIDEO
+
+    /** Whether the active download ad placement is rewardedInterstitial. */
+    val isDownloadAdInterstitial: Boolean
+        get() = adPlacementConfigService.getDownloadAdType() != "rewarded"
 
     // Pending download request - stored when user initiates download
     private var pendingDownloadRequest: (() -> Unit)? = null
@@ -700,7 +713,7 @@ class ExportViewModel(
             )
         }
 
-        // Request ad via controller
+        // Request ad via controller (placement resolved dynamically by Remote Config)
         downloadAdController.requestAd(
             onReward = {
                 // Download after ad is watched
@@ -713,7 +726,7 @@ class ExportViewModel(
                 pendingDownloadRequest?.invoke()
                 pendingDownloadRequest = null
             },
-            checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_INTER_DOWNLOAD_VIDEO) }
+            checkEnabled = { adsLoaderService.canLoadAd(downloadAdPlacement) }
         )
     }
 
