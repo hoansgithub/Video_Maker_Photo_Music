@@ -299,6 +299,7 @@ fun ProjectsTabContent(
                 to = libraryTabByIndex(currentPage)
             )
             lastSettledPage = currentPage
+            viewModel.onDismissPlayer()
         }
         lazyListState.animateScrollToItem(pagerState.settledPage)
         viewModel.onTabSelected(pagerState.settledPage)
@@ -493,6 +494,7 @@ fun ProjectsTabContent(
                                 ContentSong(
                                     songs = songStateLocal,
                                     onSongClick = { song ->
+                                        viewModel.onDismissPlayer()
                                         Analytics.trackSongClick(
                                             songId = song.id.toString(),
                                             songName = song.name,

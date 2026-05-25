@@ -281,10 +281,12 @@ class ProjectsViewModel(
     }
 
     fun onSongSearch() {
+        onDismissPlayer()
         _navigationEvent.value = ProjectsNavigationEvent.NavigateToSongSearch
     }
 
     fun onSeeAllSongs() {
+        onDismissPlayer()
         _navigationEvent.value = ProjectsNavigationEvent.NavigateToAllSongs
     }
 

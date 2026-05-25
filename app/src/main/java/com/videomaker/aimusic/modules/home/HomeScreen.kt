@@ -340,6 +340,7 @@ fun HomeScreen(
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { settledPage ->
+                songsViewModel.onDismissPlayer()
                 val currentTab = tabNameByIndex(settledPage)
                 Analytics.trackTabView(currentTab)
 
@@ -418,11 +419,24 @@ fun HomeScreen(
                             },
                             topBarHeight = topBarHeight,
                             isVisible = pagerState.settledPage == 1,
-                            onNavigateToSearch = onNavigateToSongSearch,
-                            onNavigateToSuggestedSongsList = onNavigateToSuggestedSongsList,
-                            onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
-                            onNavigateToAssetPicker = onNavigateToAssetPicker,
-                            onNavigateToTemplatePreviewerWithSong = onNavigateToTemplatePreviewerWithSong,
+                            onNavigateToSearch = {
+                                songsViewModel.onDismissPlayer()
+                                onNavigateToSongSearch.invoke()
+                            },
+                            onNavigateToSuggestedSongsList = {
+                                songsViewModel.onDismissPlayer()
+                                onNavigateToSuggestedSongsList.invoke()
+                                                             },
+                            onNavigateToWeeklyRankingList = {
+                                songsViewModel.onDismissPlayer()
+                                onNavigateToWeeklyRankingList.invoke()
+                                                            },
+                            onNavigateToAssetPicker = {
+                                songsViewModel.onDismissPlayer()
+                                onNavigateToAssetPicker.invoke(it) },
+                            onNavigateToTemplatePreviewerWithSong = {
+                                songsViewModel.onDismissPlayer()
+                                onNavigateToTemplatePreviewerWithSong.invoke(it) },
                             onListScroll = { isSongsCtaVisible = false }
                         )
                         2 -> ProjectsTabContent(
@@ -525,12 +539,21 @@ fun HomeScreen(
                                             .fillMaxWidth()
                                             .padding(end = 12.dp)
                                             .height(52.dp)
-                                            .background(color = NewIdeasBackground, shape = RoundedCornerShape(26.dp))
-                                            .border(width = 1.5.dp, color = Primary, shape = RoundedCornerShape(26.dp))
+                                            .background(
+                                                color = NewIdeasBackground,
+                                                shape = RoundedCornerShape(26.dp)
+                                            )
+                                            .border(
+                                                width = 1.5.dp,
+                                                color = Primary,
+                                                shape = RoundedCornerShape(26.dp)
+                                            )
                                             .clickable {
                                                 isNewIdeasClickedGallery = true
                                                 coroutineScope.launch {
-                                                    galleryListState.animateScrollToItem(galleryTemplatesHeaderIndex)
+                                                    galleryListState.animateScrollToItem(
+                                                        galleryTemplatesHeaderIndex
+                                                    )
                                                 }
                                                 galleryViewModel.shuffle()
                                             }
@@ -591,8 +614,15 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .fillMaxWidth(0.7f)
                                     .height(52.dp)
-                                    .background(color = NewIdeasBackground, shape = RoundedCornerShape(26.dp))
-                                    .border(width = 1.5.dp, color = Primary, shape = RoundedCornerShape(26.dp))
+                                    .background(
+                                        color = NewIdeasBackground,
+                                        shape = RoundedCornerShape(26.dp)
+                                    )
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = Primary,
+                                        shape = RoundedCornerShape(26.dp)
+                                    )
                                     .clickable {
                                         isNewIdeasClickedSongs = true
                                         coroutineScope.launch {
@@ -966,8 +996,15 @@ private fun HomeScreenPreviewContent(
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(180.dp)
-                                    .background(PreviewCardBackground, shape = RoundedCornerShape(12.dp))
-                                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+                                    .background(
+                                        PreviewCardBackground,
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                    .border(
+                                        1.dp,
+                                        Color.White.copy(alpha = 0.1f),
+                                        RoundedCornerShape(12.dp)
+                                    ),
                                 contentAlignment = Alignment.BottomStart
                             ) {
                                 Box(
@@ -975,7 +1012,10 @@ private fun HomeScreenPreviewContent(
                                         .fillMaxSize()
                                         .background(
                                             brush = Brush.verticalGradient(
-                                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
+                                                colors = listOf(
+                                                    Color.Transparent,
+                                                    Color.Black.copy(alpha = 0.7f)
+                                                )
                                             )
                                         )
                                 )
@@ -1007,7 +1047,10 @@ private fun HomeScreenPreviewContent(
                             Box(
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .background(PreviewButtonBackground, shape = RoundedCornerShape(8.dp)),
+                                    .background(
+                                        PreviewButtonBackground,
+                                        shape = RoundedCornerShape(8.dp)
+                                    ),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -1069,8 +1112,15 @@ private fun HomeScreenPreviewContent(
                                             .fillMaxWidth()
                                             .padding(end = 12.dp)
                                             .height(52.dp)
-                                            .background(color = NewIdeasBackground, shape = RoundedCornerShape(26.dp))
-                                            .border(width = 1.5.dp, color = Primary, shape = RoundedCornerShape(26.dp))
+                                            .background(
+                                                color = NewIdeasBackground,
+                                                shape = RoundedCornerShape(26.dp)
+                                            )
+                                            .border(
+                                                width = 1.5.dp,
+                                                color = Primary,
+                                                shape = RoundedCornerShape(26.dp)
+                                            )
                                             .clickable { }
                                     ) {
                                         Row(
@@ -1127,8 +1177,15 @@ private fun HomeScreenPreviewContent(
                                 modifier = Modifier
                                     .fillMaxWidth(0.7f)
                                     .height(52.dp)
-                                    .background(color = NewIdeasBackground, shape = RoundedCornerShape(26.dp))
-                                    .border(width = 1.5.dp, color = Primary, shape = RoundedCornerShape(26.dp))
+                                    .background(
+                                        color = NewIdeasBackground,
+                                        shape = RoundedCornerShape(26.dp)
+                                    )
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = Primary,
+                                        shape = RoundedCornerShape(26.dp)
+                                    )
                                     .clickable { }
                             ) {
                                 Row(
