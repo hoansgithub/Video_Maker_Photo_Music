@@ -63,11 +63,9 @@ class LanguageSelectionActivity : AppCompatActivity() {
         when (OnboardingSurveyGate.enabledSteps(remoteConfig).firstOrNull()) {
             OnboardingSurveyStep.FEATURE -> {
                 VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SELECT)
-                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SELECT_ALT)
             }
             OnboardingSurveyStep.PLATFORM -> {
                 VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SOCIAL)
-                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SOCIAL_ALT)
             }
             null -> {
                 // No survey screens → welcome pager (OnboardingActivity) is next.

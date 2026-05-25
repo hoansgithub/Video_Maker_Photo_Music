@@ -15,8 +15,7 @@ class OnboardingSurveyStepConfigTest {
             ),
             FEATURE_CONFIG.items.map { it.id }
         )
-        assertEquals(AdPlacement.NATIVE_ONBOARDING_SELECT, FEATURE_CONFIG.primaryPlacement)
-        assertEquals(AdPlacement.NATIVE_ONBOARDING_SELECT_ALT, FEATURE_CONFIG.altPlacement)
+        assertEquals(AdPlacement.NATIVE_ONBOARDING_SELECT, FEATURE_CONFIG.placement)
     }
 
     @Test
@@ -28,8 +27,7 @@ class OnboardingSurveyStepConfigTest {
             ),
             PLATFORM_CONFIG.items.map { it.id }
         )
-        assertEquals(AdPlacement.NATIVE_ONBOARDING_SOCIAL, PLATFORM_CONFIG.primaryPlacement)
-        assertEquals(AdPlacement.NATIVE_ONBOARDING_SOCIAL_ALT, PLATFORM_CONFIG.altPlacement)
+        assertEquals(AdPlacement.NATIVE_ONBOARDING_SOCIAL, PLATFORM_CONFIG.placement)
     }
 
     @Test

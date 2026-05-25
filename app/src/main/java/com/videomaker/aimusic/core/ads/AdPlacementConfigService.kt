@@ -397,37 +397,23 @@ class AdPlacementConfigService(
             enabled = true
         )
 
-        // Feature survey screen natives (shown after language). Primary fades to reveal alt on selection.
+        // Feature survey screen native (shown after language). Single placement, waterfall.
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_SELECT,
             layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/5275683453"   // Pro_NA_high_select
-            ),
-            enabled = true
-        )
-        registerNativePlacement(
-            placementId = AdPlacement.NATIVE_ONBOARDING_SELECT_ALT,
-            layoutName = "native_big_bait_reversed",
-            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/5275683453",  // Pro_NA_high_select
                 "ca-app-pub-7121075950716954/3802133920"   // Pro_NA_all_select
             ),
             enabled = true
         )
 
-        // Platform survey screen natives (shown after the feature screen).
+        // Platform survey screen native (shown after the feature screen). Single placement, waterfall.
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_SOCIAL,
             layoutName = "native_big_bait_reversed",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/4700282623"   // Pro_NA_high_social
-            ),
-            enabled = true
-        )
-        registerNativePlacement(
-            placementId = AdPlacement.NATIVE_ONBOARDING_SOCIAL_ALT,
-            layoutName = "native_big_bait_reversed",
-            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4700282623",  // Pro_NA_high_social
                 "ca-app-pub-7121075950716954/3387200953"   // Pro_NA_all_social
             ),
             enabled = true
