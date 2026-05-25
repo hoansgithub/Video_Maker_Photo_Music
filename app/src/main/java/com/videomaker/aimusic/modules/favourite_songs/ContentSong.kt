@@ -2,10 +2,12 @@ package com.videomaker.aimusic.modules.favourite_songs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -19,6 +21,9 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.analytics.onFirstVisible
+import com.videomaker.aimusic.core.analytics.trackSongImpressionAndMark
+import com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -39,6 +44,7 @@ fun ContentSong(
     onDeleteSongClick: (MusicSong) -> Unit,
 ) {
     val dimens = AppDimens.current
+    val sessionManager: MusicPlaybackSessionManager = koinInject()
 
     val listItems = remember(songs) {
         buildList {
@@ -85,11 +91,10 @@ fun ContentSong(
                             .fillMaxWidth()
                             .padding(horizontal = 22.dp)
                             .onFirstVisible(key = item.song.id) {
-                                Analytics.trackSongImpression(
+                                sessionManager.trackSongImpressionAndMark(
                                     songId = item.song.id.toString(),
                                     songName = item.song.name,
-                                    location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
-                                    screenSessionId = ""
+                                    location = AnalyticsEvent.Value.Location.SONG_FAVORITE
                                 )
                             }
                     )
@@ -104,6 +109,10 @@ fun ContentSong(
                     )
                 }
             }
+        }
+
+        item {
+            Spacer(Modifier.height(150.dp))
         }
     }
 }

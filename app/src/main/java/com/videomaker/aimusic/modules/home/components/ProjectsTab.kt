@@ -57,6 +57,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -77,7 +78,6 @@ import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Project
-import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.favourite_songs.ContentSong
 import com.videomaker.aimusic.modules.favourite_songs.LikeSongEmpty
 import com.videomaker.aimusic.modules.favourite_templates.ContentTemplate
@@ -85,11 +85,11 @@ import com.videomaker.aimusic.modules.favourite_templates.LikeTemplateEmpty
 import com.videomaker.aimusic.modules.projects.ProjectsNavigationEvent
 import com.videomaker.aimusic.modules.projects.ProjectsUiState
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
-import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ProcessToast
 import com.videomaker.aimusic.ui.components.ProjectCard
 import com.videomaker.aimusic.ui.components.StaggeredGrid
+import com.videomaker.aimusic.ui.components.rememberHideOnScrollConnection
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Neutral_Black
 import com.videomaker.aimusic.ui.theme.Primary
@@ -111,7 +111,9 @@ fun ProjectsTabContent(
     onNavigateToTemplateSearch: () -> Unit = {},
     onNavigateToAllTemplates: () -> Unit = {},
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
-    topBarHeight: Dp = 0.dp
+    topBarHeight: Dp = 0.dp,
+    isVisible: Boolean = true,
+    onListScroll: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val templateState by viewModel.templateState.collectAsStateWithLifecycle()
@@ -119,10 +121,17 @@ fun ProjectsTabContent(
     val songState by viewModel.songState.collectAsStateWithLifecycle()
     val songStateLocal by viewModel.songStateLocal.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
-    val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
     val toastState by viewModel.toastState.collectAsStateWithLifecycle()
-    val audioPreviewCache: AudioPreviewCache = koinInject()
     var showRemovedMessage by remember { mutableStateOf(false) }
+    val scrollHideConnection = rememberHideOnScrollConnection { onListScroll() }
+
+    // Close the open player when this tab is swiped away, so returning shows a fresh state.
+    // The player overlay itself lives in HomeScreen so it can render full-screen above the bottom ad.
+    LaunchedEffect(isVisible) {
+        if (!isVisible) {
+            viewModel.onDismissPlayer()
+        }
+    }
     val context = LocalContext.current
     val activity = context as? Activity
     val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
@@ -290,12 +299,16 @@ fun ProjectsTabContent(
                 to = libraryTabByIndex(currentPage)
             )
             lastSettledPage = currentPage
+            viewModel.onDismissPlayer()
         }
         lazyListState.animateScrollToItem(pagerState.settledPage)
         viewModel.onTabSelected(pagerState.settledPage)
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .nestedScroll(scrollHideConnection)
+    ) {
         // Background image — edge-to-edge, behind everything
         Image(
             painter = painterResource(id = R.drawable.bg_projects),
@@ -481,12 +494,13 @@ fun ProjectsTabContent(
                                 ContentSong(
                                     songs = songStateLocal,
                                     onSongClick = { song ->
+                                        viewModel.onDismissPlayer()
                                         Analytics.trackSongClick(
                                             songId = song.id.toString(),
                                             songName = song.name,
                                             location = AnalyticsEvent.Value.Location.SONG_FAVORITE
                                         )
-                                        viewModel.onSongClick(song)
+                                        viewModel.onSongClick(song, songStateLocal)
                                     },
                                     onDeleteSongClick = {
                                         Analytics.trackSongOption(
@@ -584,17 +598,6 @@ fun ProjectsTabContent(
         onAdFailed = viewModel::onAdFailed,
         isInterstitial = true
     )
-
-    // Music player bottom sheet — shown when a song is tapped
-    selectedSong?.let { song ->
-        MusicPlayerBottomSheet(
-            song = song,
-            cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-            location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
-            onDismiss = viewModel::onDismissPlayer,
-            onUseToCreate = { viewModel.onUseToCreateVideo(song) }
-        )
-    }
 }
 
 @Composable

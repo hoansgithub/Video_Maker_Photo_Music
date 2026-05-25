@@ -435,6 +435,24 @@ object Analytics {
         )
     }
 
+    fun trackSongNext(songId: String) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.SONG_NEXT,
+            params = mapOf(AnalyticsEvent.Param.SONG_ID to songId),
+            requiredParams = setOf(AnalyticsEvent.Param.SONG_ID),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackSongBack(songId: String) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.SONG_BACK,
+            params = mapOf(AnalyticsEvent.Param.SONG_ID to songId),
+            requiredParams = setOf(AnalyticsEvent.Param.SONG_ID),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackSongPlay(songId: String, songName: String, location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_PLAY,
@@ -2304,3 +2322,25 @@ object Analytics {
         }
     }
 }
+
+/**
+ * Wrapper around [Analytics.trackSongImpression] that also marks the song in
+ * [com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager]. Use this
+ * instead of calling `Analytics.trackSongImpression` directly so the session
+ * impressed-set stays in sync with analytics events.
+ */
+fun com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager.trackSongImpressionAndMark(
+    songId: String,
+    songName: String,
+    location: String,
+    screenSessionId: String = ""
+) {
+    Analytics.trackSongImpression(
+        songId = songId,
+        songName = songName,
+        location = location,
+        screenSessionId = screenSessionId
+    )
+    songId.toLongOrNull()?.let { markImpressed(it) }
+}
+

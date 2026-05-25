@@ -4,8 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,10 +30,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,6 +49,7 @@ import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.ui.components.SongListItem
+import com.videomaker.aimusic.ui.components.rememberHideOnScrollConnection
 import com.videomaker.aimusic.ui.theme.AppDimens
 
 /**
@@ -67,7 +73,12 @@ fun WeeklyRankingListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
+    var selectedSongPlaylist by remember { mutableStateOf<List<MusicSong>>(emptyList()) }
     val audioPreviewCache: AudioPreviewCache = koinInject()
+    // CTA "Try it" hides while the user scrolls the list to discover other songs during
+    // preview; reappears on player interaction or new song select.
+    var isCtaVisible by remember { mutableStateOf(true) }
+    val scrollHideConnection = rememberHideOnScrollConnection { isCtaVisible = false }
 
     // Handle navigation events
     LaunchedEffect(navigationEvent) {
@@ -106,10 +117,16 @@ fun WeeklyRankingListScreen(
             is WeeklyRankingListUiState.Success -> {
                 WeeklyRankingListContent(
                     pageState = state.pageState,
-                    onSongClick = { viewModel.onSongClick(it) },
+                    onSongClick = {
+                        isCtaVisible = true  // new song selected → reveal CTA
+                        selectedSongPlaylist = state.pageState.songs
+                        viewModel.onSongClick(it)
+                    },
                     onLoadMore = { viewModel.loadMore() },
                     onRefresh = { viewModel.refresh() },
-                    modifier = Modifier.padding(paddingValues)
+                    modifier = Modifier
+                        .padding(paddingValues)
+                        .nestedScroll(scrollHideConnection)
                 )
             }
             is WeeklyRankingListUiState.Error -> {
@@ -125,9 +142,16 @@ fun WeeklyRankingListScreen(
     selectedSong?.let { song ->
         MusicPlayerBottomSheet(
             song = song,
+            playlist = selectedSongPlaylist,
+            categoryLocation = AnalyticsEvent.Value.Location.SONG_RANKING,
+            genreId = null,
             cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-            location = AnalyticsEvent.Value.Location.SONG_RANKING,
-            onDismiss = viewModel::onDismissPlayer,
+            isCtaVisible = isCtaVisible,
+            onPlayerInteraction = { isCtaVisible = true },
+            onDismiss = {
+                isCtaVisible = true
+                viewModel.onDismissPlayer()
+            },
             onUseToCreate = { viewModel.onUseToCreateVideo(song) }
         )
     }
@@ -254,6 +278,10 @@ private fun WeeklyRankingListContent(
                                 CircularProgressIndicator(modifier = Modifier.size(32.dp))
                             }
                         }
+                    }
+
+                    item {
+                        Spacer(Modifier.height(150.dp))
                     }
                 }
             }

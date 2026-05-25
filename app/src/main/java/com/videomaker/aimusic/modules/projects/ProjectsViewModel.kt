@@ -117,6 +117,9 @@ class ProjectsViewModel(
     private val _selectedSong = MutableStateFlow<MusicSong?>(null)
     val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
 
+    private val _selectedPlaylist = MutableStateFlow<List<MusicSong>>(emptyList())
+    val selectedPlaylist: StateFlow<List<MusicSong>> = _selectedPlaylist.asStateFlow()
+
     private val _toastState = MutableStateFlow<ProcessToastState?>(null)
     val toastState: StateFlow<ProcessToastState?> = _toastState.asStateFlow()
 
@@ -263,7 +266,8 @@ class ProjectsViewModel(
         }
     }
 
-    fun onSongClick(song: MusicSong) {
+    fun onSongClick(song: MusicSong, playlist: List<MusicSong> = emptyList()) {
+        _selectedPlaylist.value = playlist
         _selectedSong.value = song
     }
 
@@ -277,10 +281,12 @@ class ProjectsViewModel(
     }
 
     fun onSongSearch() {
+        onDismissPlayer()
         _navigationEvent.value = ProjectsNavigationEvent.NavigateToSongSearch
     }
 
     fun onSeeAllSongs() {
+        onDismissPlayer()
         _navigationEvent.value = ProjectsNavigationEvent.NavigateToAllSongs
     }
 

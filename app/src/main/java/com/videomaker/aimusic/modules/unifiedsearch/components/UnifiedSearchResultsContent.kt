@@ -62,6 +62,9 @@ import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.util.NumberFormatter
 import com.videomaker.aimusic.core.analytics.onFirstVisible
+import com.videomaker.aimusic.core.analytics.trackSongImpressionAndMark
+import com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchUiState
@@ -97,6 +100,7 @@ fun UnifiedSearchResultsContent(
 ) {
     val dimens = AppDimens.current
     val listState = rememberLazyListState()
+    val sessionManager: MusicPlaybackSessionManager = koinInject()
 
     LaunchedEffect(Unit) {
         snapshotFlow { listState.isScrollInProgress }
@@ -243,11 +247,10 @@ fun UnifiedSearchResultsContent(
                                                     onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RCM)
                                                 },
                                                 modifier = Modifier.onFirstVisible(key = song.id) {
-                                                    Analytics.trackSongImpression(
+                                                    sessionManager.trackSongImpressionAndMark(
                                                         songId = song.id.toString(),
                                                         songName = song.name,
-                                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM,
-                                                        screenSessionId = ""
+                                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
                                                     )
                                                 }
                                             )
@@ -374,11 +377,10 @@ fun UnifiedSearchResultsContent(
                                         onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RESULT)
                                     },
                                     modifier = Modifier.onFirstVisible(key = song.id) {
-                                        Analytics.trackSongImpression(
+                                        sessionManager.trackSongImpressionAndMark(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.SEARCH_RESULT,
-                                            screenSessionId = ""
+                                            location = AnalyticsEvent.Value.Location.SEARCH_RESULT
                                         )
                                     }
                                 )
@@ -388,6 +390,10 @@ fun UnifiedSearchResultsContent(
                     }
                 }
             }
+        }
+
+        item {
+            Spacer(Modifier.height(150.dp))
         }
     }
 }

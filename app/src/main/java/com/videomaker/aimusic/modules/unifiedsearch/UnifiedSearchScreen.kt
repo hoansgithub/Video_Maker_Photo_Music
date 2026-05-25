@@ -23,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.core.constants.AdPlacement
 import androidx.compose.ui.graphics.Color
@@ -39,6 +40,7 @@ import androidx.media3.common.util.UnstableApi
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.modules.unifiedsearch.components.UnifiedSearchEmptyContent
 import com.videomaker.aimusic.modules.unifiedsearch.components.UnifiedSearchIdleContent
@@ -46,6 +48,7 @@ import com.videomaker.aimusic.modules.unifiedsearch.components.UnifiedSearchLoad
 import com.videomaker.aimusic.modules.unifiedsearch.components.UnifiedSearchResultsContent
 import com.videomaker.aimusic.modules.unifiedsearch.components.UnifiedSearchTopBar
 import com.videomaker.aimusic.modules.unifiedsearch.components.UnifiedSearchTypingOverlay
+import com.videomaker.aimusic.ui.components.rememberHideOnScrollConnection
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import org.koin.compose.koinInject
 
@@ -70,6 +73,7 @@ fun UnifiedSearchScreen(
     val hasMoreSuggestedSongs by viewModel.hasMoreSuggestedSongs.collectAsStateWithLifecycle()
     val isLoadingMoreSuggestedSongs by viewModel.isLoadingMoreSuggestedSongs.collectAsStateWithLifecycle()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
+    var selectedSongPlaylist by remember { mutableStateOf<List<MusicSong>>(emptyList()) }
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
     val audioPreviewCache: AudioPreviewCache = koinInject()
@@ -77,6 +81,10 @@ fun UnifiedSearchScreen(
     var selectedSongLocation by rememberSaveable {
         mutableStateOf(AnalyticsEvent.Value.Location.SEARCH_RCM)
     }
+    // CTA "Try it" hides while the user scrolls the list to discover other songs during
+    // preview; reappears on player interaction or new song select.
+    var isCtaVisible by remember { mutableStateOf(true) }
+    val scrollHideConnection = rememberHideOnScrollConnection { isCtaVisible = false }
 
     // ✅ FIX: Refresh data when locale changes (genres, vibe tags, templates, songs)
     // Use rememberSaveable to persist previousLocale across Activity recreation
@@ -158,6 +166,7 @@ fun UnifiedSearchScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
             .imePadding()
+            .nestedScroll(scrollHideConnection)
     ) {
         when (val state = uiState) {
             is UnifiedSearchUiState.Idle -> UnifiedSearchIdleContent(
@@ -181,6 +190,8 @@ fun UnifiedSearchScreen(
                 onSongClick = { song, location ->
                     keyboardController?.hide()
                     selectedSongLocation = location
+                    selectedSongPlaylist = suggestedSongs
+                    isCtaVisible = true  // new song selected → reveal CTA
                     viewModel.onSongClick(song)
                 },
                 onSeeMoreSongs = viewModel::onSeeMoreSuggestedSongsClick
@@ -207,6 +218,8 @@ fun UnifiedSearchScreen(
                 onSongClick = { song, location ->
                     keyboardController?.hide()
                     selectedSongLocation = location
+                    selectedSongPlaylist = state.music.songs
+                    isCtaVisible = true  // new song selected → reveal CTA
                     viewModel.onSongClick(song)
                 },
                 onExplore = viewModel::onExplore,
@@ -231,9 +244,16 @@ fun UnifiedSearchScreen(
     selectedSong?.let { song ->
         MusicPlayerBottomSheet(
             song = song,
+            playlist = selectedSongPlaylist,
+            categoryLocation = selectedSongLocation,
+            genreId = null,
             cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-            location = selectedSongLocation,
-            onDismiss = viewModel::onDismissPlayer,
+            isCtaVisible = isCtaVisible,
+            onPlayerInteraction = { isCtaVisible = true },
+            onDismiss = {
+                isCtaVisible = true
+                viewModel.onDismissPlayer()
+            },
             onUseToCreate = viewModel::onUseToCreateVideo
         )
     }

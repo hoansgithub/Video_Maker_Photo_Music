@@ -52,6 +52,8 @@ object AnalyticsEvent {
     const val SONG_CLICK = "song_click"
     const val SONG_PLAY = "song_play"
     const val SONG_PAUSE = "song_pause"
+    const val SONG_NEXT = "song_next"
+    const val SONG_BACK = "song_back"
     const val SONG_PREVIEW = "song_preview"
     const val SONG_FAVORITE = "song_favorite"
     const val SONG_UNFAVORITE = "song_unfavorite"
@@ -364,6 +366,7 @@ object AnalyticsEvent {
             const val SONG_STATIONS = "song_stations"
 
             const val SONG_PREVIEW = "song_preview"
+            const val SONG_PLAYER = "song_player"
             const val TEMPLATE_PREVIEW = "template_preview"
             const val VIDEO_PREVIEW = "video_preview"
 

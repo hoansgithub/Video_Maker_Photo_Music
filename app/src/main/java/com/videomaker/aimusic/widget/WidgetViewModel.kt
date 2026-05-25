@@ -37,7 +37,8 @@ sealed class WidgetNavigationEvent {
     data object NavigateBack : WidgetNavigationEvent()
     data class NavigateToTemplatePreviewer(val templateId: String) : WidgetNavigationEvent()
     data object NavigateToSearch : WidgetNavigationEvent()
-    data class NavigateToTemplatePreviewerWithSong(val songId: Long) : WidgetNavigationEvent()
+    // Opens the song in the Songs tab (HomeScreen) and auto-plays it there.
+    data class NavigateToSongPlayer(val songId: Long) : WidgetNavigationEvent()
 }
 
 // ============================================
@@ -54,10 +55,6 @@ class WidgetViewModel(
 
     private val _navigationEvent = MutableStateFlow<WidgetNavigationEvent?>(null)
     val navigationEvent: StateFlow<WidgetNavigationEvent?> = _navigationEvent.asStateFlow()
-
-    // Currently selected song — drives MusicPlayerBottomSheet visibility
-    private val _selectedSong = MutableStateFlow<MusicSong?>(null)
-    val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
 
     // Pin widget event - StateFlow for one-time event (requires Context in composable)
     private val _pinWidgetEvent = MutableStateFlow<WidgetType?>(null)
@@ -115,20 +112,9 @@ class WidgetViewModel(
         _navigationEvent.value = WidgetNavigationEvent.NavigateToSearch
     }
 
-    // Opens MusicPlayerBottomSheet for the tapped song
+    // Opens the song in the Songs tab and auto-plays it there
     fun onSongPlayClick(song: MusicSong) {
-        _selectedSong.value = song
-    }
-
-    // Dismisses MusicPlayerBottomSheet
-    fun onDismissPlayer() {
-        _selectedSong.value = null
-    }
-
-    // Called from MusicPlayerBottomSheet "Use to Create" — navigates to TemplatePreviewer
-    fun onUseToCreateVideo(song: MusicSong) {
-        _selectedSong.value = null
-        _navigationEvent.value = WidgetNavigationEvent.NavigateToTemplatePreviewerWithSong(song.id)
+        _navigationEvent.value = WidgetNavigationEvent.NavigateToSongPlayer(song.id)
     }
 
     fun onNavigateBack() {
