@@ -104,9 +104,14 @@ fun OnboardingScreen(
         if (!hasPreloadedFeatureSelection) {
             val isNearEnd = triggeredFromPage >= pageList.size - 2
             if (isNearEnd) {
-                android.util.Log.d("OnboardingScreen", "User $action from page $triggeredFromPage/${pageList.lastIndex}, preloading Feature Selection ads")
+                android.util.Log.d("OnboardingScreen", "User $action from page $triggeredFromPage/${pageList.lastIndex}, preloading Feature Selection ads (primary immediate, ALT delayed 1s)")
+                // Primary: immediate
                 VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION)
-                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT)
+                // ALT: delayed 1s (A/B variant, lower priority)
+                VideoMakerApplication.preloadNativeAdDelayed(
+                    placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
+                    delayMs = 1000L
+                )
                 hasPreloadedFeatureSelection = true
             }
         }

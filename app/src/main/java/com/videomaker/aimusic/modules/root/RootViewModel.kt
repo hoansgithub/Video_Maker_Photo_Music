@@ -284,15 +284,15 @@ class RootViewModel(
                         // Launch native ads with delay (Application scope, survives navigation)
                         if (!this@RootViewModel.onboardingComplete) {
                             // Onboarding not complete → Preload Language Selection ads (Step 0)
-                            // Using Application scope with 1.5s delay to prioritize splash ad
-                            android.util.Log.d("RootViewModel", "🔄 Launching native ads in background (Application scope, 1.5s delay)")
-                            com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdDelayed(
-                                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
-                                delayMs = 1500L
+                            // Primary: immediate (prioritize bandwidth for the ad users see first)
+                            // ALT: delayed 1s (A/B variant, lower priority)
+                            android.util.Log.d("RootViewModel", "🔄 Preloading LANGUAGE ad immediately, LANGUAGE_ALT delayed 1s")
+                            com.videomaker.aimusic.VideoMakerApplication.preloadNativeAd(
+                                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE
                             )
                             com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdDelayed(
                                 placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
-                                delayMs = 1500L
+                                delayMs = 1000L
                             )
                         } else {
                             // Onboarding complete → Go to Home (no native ads needed)

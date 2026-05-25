@@ -52,12 +52,14 @@ class LanguageSelectionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Preload onboarding page ads (1-step-ahead strategy)
-        // PAGE1 and PAGE2 are preloaded here at language selection
-        // PAGE3 will be preloaded in OnboardingActivity
-        android.util.Log.d("LanguageSelection", "🔄 Preloading onboarding page ads (1-step-ahead)")
+        // 2-ahead preloading (high-completion early step)
+        // All onboarding page ads + fullscreen preloaded here at language selection
+        // OnboardingActivity also preloads PAGE3 + FULLSCREEN as a safety net (idempotent)
+        android.util.Log.d("LanguageSelection", "🔄 Preloading onboarding page ads (2-ahead)")
         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
+        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE3)
+        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
 
         // Pre-fetch onboarding thumbnails (data ready when OnboardingActivity opens)
         onboardingContentViewModel.preloadContent()
