@@ -664,9 +664,7 @@ class GalleryViewModelFactory(
 class SongsViewModelFactory(
     private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
     private val getWeeklyRankingSongsUseCase: GetWeeklyRankingSongsUseCase,
-    private val getStationSongsUseCase: GetStationSongsUseCase,
     private val getGenresUseCase: GetGenresUseCase,
-    private val getSongsByGenreUseCase: GetSongsByGenreUseCase,
     private val clearSongCacheUseCase: ClearSongCacheUseCase,
     private val songRepository: SongRepository,
     private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
@@ -674,9 +672,7 @@ class SongsViewModelFactory(
     fun create(): SongsViewModel = SongsViewModel(
         getSuggestedSongsUseCase = getSuggestedSongsUseCase,
         getWeeklyRankingSongsUseCase = getWeeklyRankingSongsUseCase,
-        getStationSongsUseCase = getStationSongsUseCase,
         getGenresUseCase = getGenresUseCase,
-        getSongsByGenreUseCase = getSongsByGenreUseCase,
         clearSongCacheUseCase = clearSongCacheUseCase,
         songRepository = songRepository,
         trendingPopupCoordinator = trendingPopupCoordinator
@@ -1003,9 +999,7 @@ val presentationModule = module {
         SongsViewModelFactory(
             getSuggestedSongsUseCase = get(),
             getWeeklyRankingSongsUseCase = get(),
-            getStationSongsUseCase = get(),
             getGenresUseCase = get(),
-            getSongsByGenreUseCase = get(),
             clearSongCacheUseCase = get(),
             songRepository = get(),
             trendingPopupCoordinator = get()

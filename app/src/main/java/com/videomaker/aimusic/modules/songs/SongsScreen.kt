@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -25,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Radio
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -124,6 +127,7 @@ fun SongsScreen(
     val suggestedState by viewModel.suggestedState.collectAsStateWithLifecycle()
     val rankingState by viewModel.rankingState.collectAsStateWithLifecycle()
     val stationState by viewModel.stationState.collectAsStateWithLifecycle()
+    val stationLoadingMore by viewModel.stationLoadingMore.collectAsStateWithLifecycle()
     val genresState by viewModel.genresState.collectAsStateWithLifecycle()
     val selectedGenre by viewModel.selectedGenre.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -178,6 +182,8 @@ fun SongsScreen(
                 suggestedState = suggestedState,
                 rankingState = rankingState,
                 stationState = stationState,
+                stationLoadingMore = stationLoadingMore,
+                onLoadMoreStations = viewModel::loadMoreStations,
                 genresState = genresState,
                 selectedGenre = selectedGenre,
                 onGenreSelected = { genreId ->
@@ -233,6 +239,8 @@ private fun SongsContent(
     suggestedState: SectionState<List<MusicSong>>,
     rankingState: SectionState<List<MusicSong>>,
     stationState: SectionState<List<MusicSong>>,
+    stationLoadingMore: Boolean = false,
+    onLoadMoreStations: () -> Unit = {},
     genresState: SectionState<List<SongGenre>>,
     selectedGenre: String?,
     onGenreSelected: (String?) -> Unit,
@@ -363,12 +371,84 @@ private fun SongsContent(
                 )
             }
 
-            item(key = "station_songs", contentType = "station_songs") {
-                StationSongsSection(
-                    state = stationState,
-                    selectedGenre = selectedGenre,
-                    onSongClick = onSongClick
-                )
+            when (stationState) {
+                is SectionState.Loading -> {
+                    item(key = "station_loading", contentType = "station_loading") {
+                        StationLoadingPlaceholder()
+                    }
+                }
+                is SectionState.Success -> {
+                    val songs = (stationState as SectionState.Success<List<MusicSong>>).data
+                    items(
+                        items = songs,
+                        key = { song -> "station_${song.id}" },
+                        contentType = { "station_song" }
+                    ) { song ->
+                        val dimens = AppDimens.current
+                        val sessionManager: MusicPlaybackSessionManager = koinInject()
+                        StationSongItem(
+                            song = song,
+                            onSongClick = {
+                                Analytics.trackSongClick(
+                                    songId = song.id.toString(),
+                                    songName = song.name,
+                                    location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                                )
+                                onSongClick(song, songs, AnalyticsEvent.Value.Location.SONG_STATIONS, selectedGenre)
+                            },
+                            modifier = Modifier
+                                .padding(
+                                    horizontal = dimens.spaceLg,
+                                    vertical = dimens.spaceXs
+                                )
+                                .onFirstVisible(key = song.id) {
+                                    sessionManager.trackSongImpressionAndMark(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                                    )
+                                }
+                        )
+                    }
+                    // Pagination trigger: load more when last item is visible
+                    if (songs.isNotEmpty()) {
+                        item(key = "station_load_more", contentType = "station_load_more") {
+                            LaunchedEffect(songs.size, selectedGenre) { onLoadMoreStations() }
+                            if (stationLoadingMore) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = AppDimens.current.spaceMd),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                is SectionState.Error -> {
+                    item(key = "station_error", contentType = "station_error") {
+                        val dimens = AppDimens.current
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = dimens.spaceLg)
+                                .height(60.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.error_load_failed),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
             }
 
             item {
@@ -582,6 +662,21 @@ private fun WeeklyRankingPager(
 // ============================================
 
 private const val STATION_PLACEHOLDER_COUNT = 5
+
+@Composable
+private fun StationLoadingPlaceholder(modifier: Modifier = Modifier) {
+    val dimens = AppDimens.current
+    Column(modifier = modifier) {
+        repeat(STATION_PLACEHOLDER_COUNT) {
+            StationSongItemPlaceholder(
+                modifier = Modifier.padding(
+                    horizontal = dimens.spaceLg,
+                    vertical = dimens.spaceXs
+                )
+            )
+        }
+    }
+}
 
 @Composable
 private fun StationSongsSection(

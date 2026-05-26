@@ -8,11 +8,10 @@ import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.usecase.ClearSongCacheUseCase
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
-import com.videomaker.aimusic.domain.usecase.GetSongsByGenreUseCase
-import com.videomaker.aimusic.domain.usecase.GetStationSongsUseCase
 import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.GetWeeklyRankingSongsUseCase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,9 +48,7 @@ sealed class SongsNavigationEvent {
 class SongsViewModel(
     private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
     private val getWeeklyRankingSongsUseCase: GetWeeklyRankingSongsUseCase,
-    private val getStationSongsUseCase: GetStationSongsUseCase,
     private val getGenresUseCase: GetGenresUseCase,
-    private val getSongsByGenreUseCase: GetSongsByGenreUseCase,
     private val clearSongCacheUseCase: ClearSongCacheUseCase,
     private val songRepository: SongRepository,
     private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
@@ -84,6 +81,13 @@ class SongsViewModel(
     // Currently active genre filter (null = show all / unfiltered)
     private val _selectedGenre = MutableStateFlow<String?>(null)
     val selectedGenre: StateFlow<String?> = _selectedGenre.asStateFlow()
+
+    // Station pagination
+    private var stationOffset = 0
+    private var stationHasMore = true
+    private var stationJob: Job? = null
+    private val _stationLoadingMore = MutableStateFlow(false)
+    val stationLoadingMore: StateFlow<Boolean> = _stationLoadingMore.asStateFlow()
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
@@ -150,7 +154,20 @@ class SongsViewModel(
     fun onGenreSelected(genre: String?) {
         if (_selectedGenre.value == genre) return
         _selectedGenre.value = genre
-        viewModelScope.launch(Dispatchers.IO) { loadStations() }
+        // Cancel in-flight station load to prevent stale offset corruption
+        stationJob?.cancel()
+        stationJob = viewModelScope.launch(Dispatchers.IO) { loadStations() }
+    }
+
+    /** Called by UI when user scrolls near the end of the station list. */
+    fun loadMoreStations() {
+        // Atomic check-and-set prevents duplicate requests on fast scroll
+        if (!_stationLoadingMore.compareAndSet(false, true)) return
+        if (!stationHasMore) {
+            _stationLoadingMore.value = false
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO) { loadMoreStationsInternal() }
     }
 
     private suspend fun loadSuggested() {
@@ -169,15 +186,38 @@ class SongsViewModel(
 
     private suspend fun loadStations() {
         _stationState.value = SectionState.Loading
-        val genre = _selectedGenre.value
-        val result = if (genre == null) {
-            getStationSongsUseCase(limit = 10)
-        } else {
-            getSongsByGenreUseCase(genre, limit = 20)
-        }
-        result
-            .onSuccess { _stationState.value = SectionState.Success(it) }
+        stationOffset = 0
+        stationHasMore = true
+        val genres = stationGenresList()
+        songRepository.getSuggestedSongs(preferredGenres = genres, offset = 0, limit = STATION_PAGE_SIZE)
+            .onSuccess { songs ->
+                stationOffset = songs.size
+                stationHasMore = songs.size >= STATION_PAGE_SIZE && stationOffset < STATION_MAX_ITEMS
+                _stationState.value = SectionState.Success(songs)
+            }
             .onFailure { _stationState.value = SectionState.Error(it.message ?: "Failed to load") }
+    }
+
+    private suspend fun loadMoreStationsInternal() {
+        try {
+            val genres = stationGenresList()
+            songRepository.getSuggestedSongs(preferredGenres = genres, offset = stationOffset, limit = STATION_PAGE_SIZE)
+                .onSuccess { newSongs ->
+                    stationOffset += newSongs.size
+                    stationHasMore = newSongs.size >= STATION_PAGE_SIZE && stationOffset < STATION_MAX_ITEMS
+                    val current = (_stationState.value as? SectionState.Success)?.data.orEmpty()
+                    val existingIds = current.map { it.id }.toSet()
+                    val unique = newSongs.filterNot { it.id in existingIds }
+                    _stationState.value = SectionState.Success(current + unique)
+                }
+        } finally {
+            _stationLoadingMore.value = false
+        }
+    }
+
+    private fun stationGenresList(): List<String> {
+        val genre = _selectedGenre.value
+        return if (genre != null) listOf(genre) else emptyList()
     }
 
     private suspend fun loadGenres() {
@@ -237,5 +277,10 @@ class SongsViewModel(
 
     fun onNavigationHandled() {
         _navigationEvent.value = null
+    }
+
+    companion object {
+        private const val STATION_PAGE_SIZE = 15
+        private const val STATION_MAX_ITEMS = 100
     }
 }
