@@ -410,10 +410,10 @@ private fun SongsContent(
                                 }
                         )
                     }
-                    // Pagination trigger: load more when last item is composed
+                    // Pagination trigger: load more when last item is visible
                     if (songs.isNotEmpty()) {
-                        item(key = "station_load_more_${songs.size}", contentType = "station_load_more") {
-                            LaunchedEffect(songs.size) { onLoadMoreStations() }
+                        item(key = "station_load_more", contentType = "station_load_more") {
+                            LaunchedEffect(songs.size, selectedGenre) { onLoadMoreStations() }
                             if (stationLoadingMore) {
                                 Box(
                                     modifier = Modifier

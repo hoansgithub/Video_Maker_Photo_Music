@@ -11,6 +11,7 @@ import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
 import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.GetWeeklyRankingSongsUseCase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -84,7 +85,7 @@ class SongsViewModel(
     // Station pagination
     private var stationOffset = 0
     private var stationHasMore = true
-    private var isLoadingMoreStations = false
+    private var stationJob: Job? = null
     private val _stationLoadingMore = MutableStateFlow(false)
     val stationLoadingMore: StateFlow<Boolean> = _stationLoadingMore.asStateFlow()
 
@@ -153,13 +154,19 @@ class SongsViewModel(
     fun onGenreSelected(genre: String?) {
         if (_selectedGenre.value == genre) return
         _selectedGenre.value = genre
-        // Reset pagination on genre change
-        viewModelScope.launch(Dispatchers.IO) { loadStations() }
+        // Cancel in-flight station load to prevent stale offset corruption
+        stationJob?.cancel()
+        stationJob = viewModelScope.launch(Dispatchers.IO) { loadStations() }
     }
 
     /** Called by UI when user scrolls near the end of the station list. */
     fun loadMoreStations() {
-        if (isLoadingMoreStations || !stationHasMore) return
+        // Atomic check-and-set prevents duplicate requests on fast scroll
+        if (!_stationLoadingMore.compareAndSet(false, true)) return
+        if (!stationHasMore) {
+            _stationLoadingMore.value = false
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) { loadMoreStationsInternal() }
     }
 
@@ -192,8 +199,6 @@ class SongsViewModel(
     }
 
     private suspend fun loadMoreStationsInternal() {
-        isLoadingMoreStations = true
-        _stationLoadingMore.value = true
         try {
             val genres = stationGenresList()
             songRepository.getSuggestedSongs(preferredGenres = genres, offset = stationOffset, limit = STATION_PAGE_SIZE)
@@ -206,7 +211,6 @@ class SongsViewModel(
                     _stationState.value = SectionState.Success(current + unique)
                 }
         } finally {
-            isLoadingMoreStations = false
             _stationLoadingMore.value = false
         }
     }
