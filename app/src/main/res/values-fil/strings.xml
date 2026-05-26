@@ -19,6 +19,29 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Susunod</string>
     <string name="onboarding_get_started">Magsimula</string>
+
+    <!-- Onboarding survey: feature screen -->
+    <string name="survey_feature_title">Anong feature ang gusto mo?</string>
+    <string name="survey_feature_subtitle">Pumili ng isa o higit pa para i-customize ang iyong mga rekomendasyon.</string>
+    <string name="survey_feature_ai_dance">AI Dance Video</string>
+    <string name="survey_feature_music_video">Music Video Templates</string>
+    <string name="survey_feature_ai_hair">AI Hair Swap</string>
+    <string name="survey_feature_lyric">Lyric Videos</string>
+    <string name="survey_feature_ai_avatar">AI Avatar</string>
+    <string name="survey_feature_beat_sync">Beat Sync Effect</string>
+    <string name="survey_feature_explore_later">Tuklasin ko mamaya</string>
+
+    <!-- Onboarding survey: platform screen -->
+    <string name="survey_platform_title">Para sa anong platform\nka gumagawa?</string>
+    <string name="survey_platform_subtitle">Magrerekomenda kami ng format at template\nna optimized para sa iyong mga platform.</string>
+    <string name="survey_platform_whatsapp">WhatsApp</string>
+    <string name="survey_platform_instagram">Instagram</string>
+    <string name="survey_platform_tiktok">Tiktok</string>
+    <string name="survey_platform_facebook">Facebook</string>
+    <string name="survey_platform_youtube">Youtube Short</string>
+    <string name="survey_platform_snapchat">Snapchat</string>
+    <string name="survey_platform_personally">Pansarili lang</string>
+
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Maging hari nai-update na sari at handang gamitin na mga template na pangunguna sa uso.</string>
     <string name="onboarding_india_page3_title">Makuha sa mga trending template</string>
@@ -279,6 +302,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Music Player</string>
     <string name="music_player_use_to_create">Gamitin para Gumawa ng Video</string>
+    <string name="music_player_try_it">Subukan</string>
     <string name="music_player_free_unlock">Libreng I-unlock</string>
     <string name="picker_exit_confirm_title">Lumabas sa pagpili ng larawan?</string>
     <string name="picker_exit_confirm_message">May napili ka nang mga larawan. Kapag lumabas ka ngayon, mawawala ang mga napiling larawan.</string>

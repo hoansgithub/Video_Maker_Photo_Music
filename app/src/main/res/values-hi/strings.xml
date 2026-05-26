@@ -19,6 +19,29 @@
     <!-- Onboarding -->
     <string name="onboarding_next">अगला</string>
     <string name="onboarding_get_started">शुरू करें</string>
+
+    <!-- Onboarding survey: feature screen -->
+    <string name="survey_feature_title">आप कौन-सी सुविधाएँ पसंद करते हैं?</string>
+    <string name="survey_feature_subtitle">अपनी सिफारिशें कस्टमाइज़ करने के लिए एक या अधिक चुनें।</string>
+    <string name="survey_feature_ai_dance">AI डांस वीडियो</string>
+    <string name="survey_feature_music_video">म्यूज़िक वीडियो टेम्पलेट</string>
+    <string name="survey_feature_ai_hair">AI हेयर स्वैप</string>
+    <string name="survey_feature_lyric">लिरिक वीडियो</string>
+    <string name="survey_feature_ai_avatar">AI अवतार</string>
+    <string name="survey_feature_beat_sync">बीट सिंक इफ़ेक्ट</string>
+    <string name="survey_feature_explore_later">मैं बाद में देखूँगा</string>
+
+    <!-- Onboarding survey: platform screen -->
+    <string name="survey_platform_title">आप किस प्लेटफ़ॉर्म के लिए\nबना रहे हैं?</string>
+    <string name="survey_platform_subtitle">हम आपके प्लेटफ़ॉर्म के लिए अनुकूलित\nफ़ॉर्मेट और टेम्पलेट सुझाएंगे।</string>
+    <string name="survey_platform_whatsapp">WhatsApp</string>
+    <string name="survey_platform_instagram">Instagram</string>
+    <string name="survey_platform_tiktok">Tiktok</string>
+    <string name="survey_platform_facebook">Facebook</string>
+    <string name="survey_platform_youtube">Youtube Short</string>
+    <string name="survey_platform_snapchat">Snapchat</string>
+    <string name="survey_platform_personally">मैं इसे निजी रखता हूँ</string>
+
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">हर दिन अपडेट किए जाने वाले ताज़ा, उपयोग के लिए तैयार टेम्पलेट्स के साथ आगे बने रहें।</string>
     <string name="onboarding_india_page3_title">ट्रेंडिंग टेम्पलेट्स पकड़ें</string>
@@ -281,6 +304,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">संगीत प्लेयर</string>
     <string name="music_player_use_to_create">वीडियो बनाने के लिए उपयोग करें</string>
+    <string name="music_player_try_it">आज़माएं</string>
     <string name="music_player_free_unlock">फ्री अनलॉक</string>
     <string name="picker_exit_confirm_title">छवि चयन से बाहर निकलें?</string>
     <string name="picker_exit_confirm_message">आपने तस्वीरें चुनी हैं। अभी बाहर निकलने पर चुनी हुई तस्वीरें हटा दी जाएंगी।</string>

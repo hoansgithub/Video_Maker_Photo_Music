@@ -19,6 +19,29 @@
     <!-- Onboarding -->
     <string name="onboarding_next">İleri</string>
     <string name="onboarding_get_started">Başla</string>
+
+    <!-- Onboarding survey: feature screen -->
+    <string name="survey_feature_title">Hangi özellikleri tercih edersin?</string>
+    <string name="survey_feature_subtitle">Önerilerini özelleştirmek için bir veya daha fazlasını seç.</string>
+    <string name="survey_feature_ai_dance">AI Dans Videosu</string>
+    <string name="survey_feature_music_video">Müzik Video Şablonları</string>
+    <string name="survey_feature_ai_hair">AI Saç Değişimi</string>
+    <string name="survey_feature_lyric">Sözlü Videolar</string>
+    <string name="survey_feature_ai_avatar">AI Avatar</string>
+    <string name="survey_feature_beat_sync">Ritim Senkron Efekti</string>
+    <string name="survey_feature_explore_later">Sonra keşfedeceğim</string>
+
+    <!-- Onboarding survey: platform screen -->
+    <string name="survey_platform_title">Hangi platform için\noluşturuyorsun?</string>
+    <string name="survey_platform_subtitle">Platformların için optimize edilmiş\nformat ve şablonlar önereceğiz.</string>
+    <string name="survey_platform_whatsapp">WhatsApp</string>
+    <string name="survey_platform_instagram">Instagram</string>
+    <string name="survey_platform_tiktok">Tiktok</string>
+    <string name="survey_platform_facebook">Facebook</string>
+    <string name="survey_platform_youtube">Youtube Short</string>
+    <string name="survey_platform_snapchat">Snapchat</string>
+    <string name="survey_platform_personally">Kendime saklıyorum</string>
+
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Her gün güncellenen taze, kullanıma hazır şablonlarla bir adım önde olun.</string>
     <string name="onboarding_india_page3_title">Trend şablonları yakalayın</string>
@@ -279,6 +302,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Müzik Çalar</string>
     <string name="music_player_use_to_create">Video Oluşturmak İçin Kullan</string>
+    <string name="music_player_try_it">Dene</string>
     <string name="music_player_free_unlock">Ücretsiz Kilidi Aç</string>
     <string name="picker_exit_confirm_title">Görsel seçiminden çıkılsın mı?</string>
     <string name="picker_exit_confirm_message">Görseller seçtiniz. Şimdi çıkarsanız seçili görseller silinecek.</string>

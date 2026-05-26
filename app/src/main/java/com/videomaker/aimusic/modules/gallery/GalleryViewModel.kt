@@ -12,14 +12,15 @@ import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.TemplateRepository
+import com.videomaker.aimusic.media.library.BundledContentLibrary
 import com.videomaker.aimusic.media.library.MusicSongLibrary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.random.Random
 
 // ============================================
@@ -135,33 +136,79 @@ class GalleryViewModel(
                 val topSongs = MusicSongLibrary.getTop(12).mapIndexed { index, song ->
                     song.toTopSong(ranking = index + 1, likes = Random.nextInt(10000, 150000))
                 }
-                val (vibeTags, templates, featuredTemplates) = coroutineScope {
-                    val vibeTagsDeferred = async { templateRepository.getVibeTags().getOrElse { emptyList() } }
-                    val templatesDeferred = async { templateRepository.getTemplates(limit = PAGE_SIZE, offset = 0).getOrElse { emptyList() } }
-                    val featuredDeferred = async { templateRepository.getFeaturedTemplates(limit = 6).getOrElse { emptyList() } }
-                    Triple(vibeTagsDeferred.await(), templatesDeferred.await(), featuredDeferred.await())
+
+                // Async children of this launch; they outlive the withTimeoutOrNull below.
+                val vibeTagsDeferred = async { templateRepository.getVibeTags().getOrElse { emptyList() } }
+                val templatesDeferred = async { templateRepository.getTemplates(limit = PAGE_SIZE, offset = 0).getOrElse { emptyList() } }
+                val featuredDeferred = async { templateRepository.getFeaturedTemplates(limit = 6).getOrElse { emptyList() } }
+
+                // Geo-aware path: wait up to 5s for the main grid. If it returns in time,
+                // assemble fully with the other two; otherwise fall back to bundled then swap.
+                val templatesInitial =
+                    withTimeoutOrNull(GEO_TIMEOUT_MS) { templatesDeferred.await() }
+
+                if (templatesInitial != null && templatesInitial.isNotEmpty()) {
+                    val vibeTags = vibeTagsDeferred.await()
+                    val featuredTemplates = featuredDeferred.await()
+                    _uiState.value = buildGallerySuccess(
+                        trendingSongs = trendingSongs,
+                        topSongs = topSongs,
+                        vibeTags = vibeTags,
+                        templates = templatesInitial,
+                        featuredTemplates = featuredTemplates
+                    )
+                    preloadCarouselImages(trendingSongs)
+                    return@launch
                 }
 
-                _uiState.value = GalleryUiState.Success(
+                // Timeout / empty — show bundled defaults immediately…
+                _uiState.value = buildGallerySuccess(
                     trendingSongs = trendingSongs,
                     topSongs = topSongs,
-                    vibeTags = vibeTags,
-                    selectedVibeTagId = null,
-                    templateListState = TemplateListState.Success(
-                        templates = templates,
-                        hasMore = templates.size >= PAGE_SIZE && templates.size < MAX_ITEMS
-                    ),
-                    featuredTemplates = featuredTemplates
+                    vibeTags = emptyList(),
+                    templates = BundledContentLibrary.getDefaultTemplates(),
+                    featuredTemplates = emptyList()
                 )
-
-                // Only preload carousel images (visible on screen)
-                // Don't preload featured thumbnails - let Coil load them as they become visible
                 preloadCarouselImages(trendingSongs)
+
+                // …then keep waiting for the real responses and swap in.
+                val realTemplates = templatesDeferred.await()
+                val realVibeTags = vibeTagsDeferred.await()
+                val realFeatured = featuredDeferred.await()
+                if (realTemplates.isNotEmpty()) {
+                    val current = _uiState.value as? GalleryUiState.Success ?: return@launch
+                    _uiState.value = current.copy(
+                        vibeTags = realVibeTags,
+                        templateListState = TemplateListState.Success(
+                            templates = realTemplates,
+                            hasMore = realTemplates.size >= PAGE_SIZE && realTemplates.size < MAX_ITEMS
+                        ),
+                        featuredTemplates = realFeatured
+                    )
+                }
             } catch (e: Exception) {
                 _uiState.value = GalleryUiState.Error(e.message ?: "Failed to load gallery data")
             }
         }
     }
+
+    private fun buildGallerySuccess(
+        trendingSongs: List<TrendingSong>,
+        topSongs: List<TopSong>,
+        vibeTags: List<VibeTag>,
+        templates: List<VideoTemplate>,
+        featuredTemplates: List<VideoTemplate>
+    ) = GalleryUiState.Success(
+        trendingSongs = trendingSongs,
+        topSongs = topSongs,
+        vibeTags = vibeTags,
+        selectedVibeTagId = null,
+        templateListState = TemplateListState.Success(
+            templates = templates,
+            hasMore = templates.size >= PAGE_SIZE && templates.size < MAX_ITEMS
+        ),
+        featuredTemplates = featuredTemplates
+    )
 
     fun onVibeTagSelected(tagId: String?) {
         val current = _uiState.value as? GalleryUiState.Success ?: return
@@ -335,5 +382,10 @@ class GalleryViewModel(
 
     fun onNavigationHandled() {
         _navigationEvent.value = null
+    }
+
+    private companion object {
+        /** Max time we wait for region-aware templates before showing bundled GL defaults. */
+        const val GEO_TIMEOUT_MS = 5_000L
     }
 }

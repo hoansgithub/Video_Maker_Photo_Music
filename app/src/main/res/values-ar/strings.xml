@@ -19,6 +19,29 @@
     <!-- Onboarding -->
     <string name="onboarding_next">التالي</string>
     <string name="onboarding_get_started">ابدأ الآن</string>
+
+    <!-- Onboarding survey: feature screen -->
+    <string name="survey_feature_title">ما الميزات التي تفضلها؟</string>
+    <string name="survey_feature_subtitle">اختر واحدة أو أكثر لتخصيص توصياتك.</string>
+    <string name="survey_feature_ai_dance">فيديو رقص بالذكاء الاصطناعي</string>
+    <string name="survey_feature_music_video">قوالب فيديوهات موسيقية</string>
+    <string name="survey_feature_ai_hair">تبديل الشعر بالذكاء الاصطناعي</string>
+    <string name="survey_feature_lyric">فيديوهات كلمات الأغاني</string>
+    <string name="survey_feature_ai_avatar">أفاتار بالذكاء الاصطناعي</string>
+    <string name="survey_feature_beat_sync">تأثير متزامن مع الإيقاع</string>
+    <string name="survey_feature_explore_later">سأستكشف لاحقًا</string>
+
+    <!-- Onboarding survey: platform screen -->
+    <string name="survey_platform_title">ما المنصة التي\nتنشئ لها؟</string>
+    <string name="survey_platform_subtitle">سنوصي بتنسيقات وقوالب\nمحسّنة لمنصاتك.</string>
+    <string name="survey_platform_whatsapp">WhatsApp</string>
+    <string name="survey_platform_instagram">Instagram</string>
+    <string name="survey_platform_tiktok">Tiktok</string>
+    <string name="survey_platform_facebook">Facebook</string>
+    <string name="survey_platform_youtube">Youtube Short</string>
+    <string name="survey_platform_snapchat">Snapchat</string>
+    <string name="survey_platform_personally">أحتفظ به لنفسي</string>
+
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">ابقَ في صدارة المنافسة مع قوالب طازجة وجاهزة للاستخدام يتم تحديثها يوميًا.</string>
     <string name="onboarding_india_page3_title">التقط القوالب الرائجة</string>
@@ -279,6 +302,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">مشغل الموسيقى</string>
     <string name="music_player_use_to_create">استخدام لإنشاء فيديو</string>
+    <string name="music_player_try_it">جربه</string>
     <string name="music_player_free_unlock">فتح مجاني</string>
     <string name="picker_exit_confirm_title">الخروج من اختيار الصور؟</string>
     <string name="picker_exit_confirm_message">لقد اخترت صورًا. إذا خرجت الآن، سيتم تجاهل الصور التي اخترتها.</string>
