@@ -127,8 +127,8 @@ class ApiCacheManager(context: Context) {
         private const val SONGS_CACHE_SCHEMA_VERSION = 2
 
         // ── Song cache keys ──────────────────────────────────────────────────
-        /** Dynamic key per locale — genre names will use label_i18n in future */
-        fun keySongsGenres(locale: String): String = "songs_genres_v${SONGS_CACHE_SCHEMA_VERSION}_${locale}"
+        /** Dynamic key per locale + region — sorted by regional popularity */
+        fun keySongsGenres(locale: String, region: String = ""): String = "songs_genres_v${SONGS_CACHE_SCHEMA_VERSION}_${region}_${locale}"
         const val KEY_SONGS_SUGGESTED      = "songs_suggested"
         fun keySongsWeeklyRanking(region: String): String = "songs_weekly_ranking_v${SONGS_CACHE_SCHEMA_VERSION}_${region}"
 

@@ -41,6 +41,7 @@ class SongRepositoryImpl(
         private const val FN_SEARCH_SONGS = "search_songs"
         private const val FN_SONGS_SORTED = "get_songs_sorted"
         private const val FN_SONGS_BY_GENRES_SORTED = "get_songs_by_genres_sorted"
+        private const val FN_GENRES_BY_POPULARITY = "get_genres_by_popularity"
         private const val ERROR_LOAD_FAILED = "Failed to load songs"
         private const val ERROR_NOT_FOUND = "Song not found"
         private const val MEMORY_SONG_CACHE_LIMIT = 500
@@ -175,21 +176,19 @@ class SongRepositoryImpl(
      * will be localized and cache key already includes locale for future compatibility.
      */
     override suspend fun getGenres(): Result<List<SongGenre>> = withContext(Dispatchers.IO) {
+        val region = regionProvider.getRegionCode()
         val locale = languageManager.getSelectedLanguage()
-        val cacheKey = ApiCacheManager.keySongsGenres(locale)
+        val cacheKey = ApiCacheManager.keySongsGenres(locale, region)
         apiCacheManager.get<List<SongGenre>>(cacheKey)
             ?.let { return@withContext Result.success(it) }
 
         try {
-            val genres = supabaseClient.from(TABLE_GENRES)
-                .select(Columns.raw("id, display_name, label_i18n")) {
-                    filter {
-                        eq("type", "genre")
-                        eq("is_active", true)
-                    }
-                    order("sort_order", Order.ASCENDING)
-                    limit(100)  // ✅ FIX: Prevent fetching billions of genres
-                }
+            // Sorted by region priority: genres with songs in user's region first,
+            // then remaining genres by static sort_order. No filtering — all genres shown.
+            val genres = supabaseClient.postgrest
+                .rpc(FN_GENRES_BY_POPULARITY, buildJsonObject {
+                    put("p_region", region)
+                })
                 .decodeList<GenreDto>()
                 .map {
                     val localizedName = I18nHelper.getLocalizedValue(
@@ -274,7 +273,9 @@ class SongRepositoryImpl(
         @SerialName("sort_order")
         val sortOrder: Int = 0,
         @SerialName("is_active")
-        val isActive: Boolean = true
+        val isActive: Boolean = true,
+        @SerialName("total_usage_count")
+        val totalUsageCount: Long = 0
     )
 
     /**
