@@ -43,8 +43,7 @@ import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.ui.components.ContentTag
-import com.videomaker.aimusic.ui.components.ContentTags
+import com.videomaker.aimusic.core.util.NumberFormatter
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.Black60
 import com.videomaker.aimusic.ui.theme.GoldAccent
@@ -256,7 +255,7 @@ fun TemplateCard(
                         modifier = Modifier.size(10.dp)
                     )
                     Text(
-                        text = formatViewCount(viewCount),
+                        text = NumberFormatter.formatCount(viewCount),
                         fontSize = 10.sp,
                         color = Gray200,
                         maxLines = 1
@@ -317,16 +316,4 @@ fun TemplateMore(
             )
         }
     }
-}
-
-private fun formatViewCount(count: Long): String = when {
-    count >= 1_000_000 -> {
-        val v = count / 1_000_000.0
-        if (v % 1.0 == 0.0) "${v.toLong()}M" else "%.1fM".format(v)
-    }
-    count >= 1_000 -> {
-        val v = count / 1_000.0
-        if (v % 1.0 == 0.0) "${v.toLong()}K" else "%.1fK".format(v)
-    }
-    else -> count.toString()
 }

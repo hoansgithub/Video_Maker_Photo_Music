@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -58,6 +59,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import com.videomaker.aimusic.core.util.NumberFormatter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -77,6 +79,7 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
@@ -96,6 +99,8 @@ import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
 import com.videomaker.aimusic.ui.theme.SearchFieldBorder
 import com.videomaker.aimusic.ui.theme.TextTertiary
+import com.videomaker.aimusic.ui.theme.TemplateBadgeBackground
+import com.videomaker.aimusic.ui.theme.White12
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -131,6 +136,8 @@ fun GalleryScreen(
     viewModel: GalleryViewModel,
     topBarHeight: Dp = 0.dp,
     isVisible: Boolean = true,
+    listState: LazyListState = rememberLazyListState(),
+    onUserInteraction: () -> Unit = {},
     onNavigateToSongDetail: (Long) -> Unit = {},
     onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTopSongs: () -> Unit = {},
@@ -228,6 +235,8 @@ fun GalleryScreen(
             is GalleryUiState.Loading -> GalleryLoadingContent(topBarHeight = topBarHeight)
             is GalleryUiState.Success -> GalleryContent(
                 topBarHeight = topBarHeight,
+                listState = listState,
+                onUserInteraction = onUserInteraction,
                 featuredTemplates = state.featuredTemplates,
                 vibeTags = state.vibeTags,
                 selectedVibeTagId = state.selectedVibeTagId,
@@ -237,6 +246,7 @@ fun GalleryScreen(
                 isVisible = isVisible,
                 onRefresh = viewModel::refresh,
                 onVibeTagSelected = { selectedTagId ->
+                    onUserInteraction()
                     val selectedTag = state.vibeTags.firstOrNull { it.id == selectedTagId }
                     Analytics.trackTemplateGenreClick(
                         genreId = selectedTagId ?: AnalyticsEvent.Value.ALL,
@@ -245,13 +255,23 @@ fun GalleryScreen(
                     )
                     viewModel.onVibeTagSelected(selectedTagId)
                 },
-                onTemplateClick = viewModel::onTemplateClick,
-                onSeeAllTemplates = viewModel::onSeeAllTemplatesClick,
+                onTemplateClick = { template, location ->
+                    onUserInteraction()
+                    viewModel.onTemplateClick(template, location)
+                },
+                onSeeAllTemplates = {
+                    onUserInteraction()
+                    viewModel.onSeeAllTemplatesClick()
+                },
                 onCreateClick = {
+                    onUserInteraction()
                     Analytics.trackCreationStart(AnalyticsEvent.Value.Location.GALLERY)
                     viewModel.onCreateClick()
                 },
-                onSearchClick = onNavigateToSearch,
+                onSearchClick = {
+                    onUserInteraction()
+                    onNavigateToSearch()
+                },
                 onLoadMore = viewModel::loadMore
             )
             is GalleryUiState.Error -> GalleryErrorContent(message = state.message)
@@ -320,6 +340,8 @@ private fun GalleryErrorContent(message: String) {
 @Composable
 private fun GalleryContent(
     topBarHeight: Dp = 0.dp,
+    listState: LazyListState,
+    onUserInteraction: () -> Unit,
     featuredTemplates: List<VideoTemplate>,
     vibeTags: List<VibeTag>,
     selectedVibeTagId: String?,
@@ -336,7 +358,6 @@ private fun GalleryContent(
     onLoadMore: () -> Unit = {}
 ) {
     val dimens = AppDimens.current
-    val listState = rememberLazyListState()
     var lastTrackedTemplateScroll by remember { mutableStateOf(false) }
 
     // ✅ FIX: Scroll-based pagination detection
@@ -469,32 +490,6 @@ private fun GalleryContent(
         }
         }
 
-        // Bottom gradient fade — dark to transparent, behind the button
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(120.dp)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            MaterialTheme.colorScheme.background
-                        )
-                    )
-                )
-        )
-
-        // Floating Create button — only shown once featured templates are loaded
-        if (featuredTemplates.isNotEmpty()) {
-            CreateNewVideoButton(
-                onClick = onCreateClick,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(bottom = dimens.spaceLg)
-            )
-        }
     }
 }
 
@@ -503,7 +498,7 @@ private fun GalleryContent(
 // ============================================
 
 @Composable
-private fun CreateNewVideoButton(
+fun CreateNewVideoButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -618,10 +613,10 @@ private fun FeaturedTemplatesCarousel(
         }
     }
 
-    LaunchedEffect(pagerState, isVisible) {
+    LaunchedEffect(pagerState, isVisible, templates) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
-            .collect {
+            .collect { settledPage ->
                 if (!isVisible) {
                     hasPendingUserSwipe = false
                     return@collect
@@ -630,6 +625,18 @@ private fun FeaturedTemplatesCarousel(
                     Analytics.trackGallerySwipe(AnalyticsEvent.Value.Location.GALLERY_BANNER)
                     hasPendingUserSwipe = false
                 }
+                if (templates.isEmpty()) return@collect
+                val carouselSize = templates.size + 1
+                val itemIndex = settledPage.mod(carouselSize)
+                if (itemIndex == 1) return@collect // ad slot — skip
+                val templateIndex = if (itemIndex == 0) 0 else itemIndex - 1
+                val template = templates.getOrNull(templateIndex) ?: return@collect
+                Analytics.trackTemplateImpression(
+                    templateId = template.id,
+                    templateName = template.name,
+                    location = AnalyticsEvent.Value.Location.HOME_BANNER,
+                    screenSessionId = ""
+                )
             }
     }
 
@@ -793,7 +800,7 @@ private fun FeaturedTemplateCard(
             if (template.useCount > 0) {
                 // ✅ FIX: Pre-calculate formatted use count once
                 val formattedCount = remember(template.useCount) {
-                    formatUseCount(template.useCount)
+                    NumberFormatter.formatCount(template.useCount)
                 }
 
                 Row(
@@ -801,12 +808,12 @@ private fun FeaturedTemplateCard(
                         .align(Alignment.TopEnd)
                         .padding(dimens.spaceMd)
                         .background(
-                            color = Color.Black.copy(alpha = 0.6f),
+                            color = TemplateBadgeBackground,
                             shape = RoundedCornerShape(999.dp)
                         )
                         .border(
                             width = 1.dp,
-                            color = Color.White.copy(alpha = 0.12f),
+                            color = White12,
                             shape = RoundedCornerShape(999.dp)
                         )
                         .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -843,21 +850,6 @@ private fun FeaturedTemplateCard(
             )
         }
     }
-}
-
-/**
- * Format use count for display (1000 -> 1K, 1500000 -> 1.5M)
- */
-private fun formatUseCount(count: Long): String = when {
-    count >= 1_000_000 -> {
-        val v = count / 1_000_000.0
-        if (v % 1.0 == 0.0) "${v.toLong()}M" else "%.1fM".format(v)
-    }
-    count >= 1_000 -> {
-        val v = count / 1_000.0
-        if (v % 1.0 == 0.0) "${v.toLong()}K" else "%.1fK".format(v)
-    }
-    else -> count.toString()
 }
 
 // ============================================
@@ -974,7 +966,14 @@ private fun StaggeredTemplateGrid(
                     showHotTag = templateIndex < 10,  // Show HOT tag for top 10 templates
                     useCount = template.useCount,  // For backward compatibility
                     viewCount = template.viewCount,  // Display count shown to users
-                    modifier = Modifier,
+                    modifier = Modifier.onFirstVisible(key = template.id) {
+                        Analytics.trackTemplateImpression(
+                            templateId = template.id,
+                            templateName = template.name,
+                            location = AnalyticsEvent.Value.Location.HOME_TEMPLATE,
+                            screenSessionId = ""
+                        )
+                    },
                     onClick = {
                         Analytics.trackTemplateClick(
                             templateId = template.id,
@@ -1050,6 +1049,8 @@ private fun GalleryContentPreview() {
             )
             GalleryContent(
                 topBarHeight = 56.dp,
+                listState = rememberLazyListState(),
+                onUserInteraction = {},
                 featuredTemplates = previewTemplates.take(5),
                 vibeTags = listOf(
                     VibeTag("birthday", "Birthday", "🎂"),

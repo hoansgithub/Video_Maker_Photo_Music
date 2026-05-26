@@ -123,6 +123,10 @@ fun UnifiedSearchLoadingContent(
                     )
                 }
             }
+
+            item {
+                Spacer(Modifier.height(150.dp))
+            }
         }
     }
 }

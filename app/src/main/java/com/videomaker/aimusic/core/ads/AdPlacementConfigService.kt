@@ -661,6 +661,20 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Music player bottom sheet native ad (shown above CTA button in player sheet)
+        // Small horizontal banner-style placement that blends with player controls
+        // Layout: native_small_row (horizontal row matching banner dimensions)
+        // Waterfall: Primary unit -> Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_MUSIC_PLAYER,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1938387916",  // Pro_NA_high_music_player
+                "ca-app-pub-7121075950716954/8994750854"   // Pro_NA_all_music_player
+            ),
+            enabled = true
+        )
+
         // Home Banner Native Ad (replaces standard banner)
         // Shown at the bottom of the Home screen, shared across tabs
         // Layout: native_small_row (horizontal row) to fit the banner dimensions

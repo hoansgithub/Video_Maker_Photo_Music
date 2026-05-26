@@ -4,17 +4,27 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.RewardedAdController
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
 import com.videomaker.aimusic.core.storage.UnlockedSongsManager
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.repository.LikedSongRepository
+import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.usecase.LikeSongUseCase
 import com.videomaker.aimusic.domain.usecase.UnlikeSongUseCase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.random.Random
 
 // ============================================
 // VIEW MODEL
@@ -23,13 +33,26 @@ import kotlinx.coroutines.launch
 class MusicPlayerViewModel(
     private val songId: Long,
     private val song: MusicSong,
+    private val initialPlaylist: List<MusicSong>,
+    private val categoryLocation: String,
+    private val initialGenreId: String?,
     private val likeSongUseCase: LikeSongUseCase,
     private val unlikeSongUseCase: UnlikeSongUseCase,
     likedSongRepository: LikedSongRepository,
     private val unlockedSongsManager: UnlockedSongsManager,
     private val adsLoaderService: AdsLoaderService,
-    private val songRepository: com.videomaker.aimusic.domain.repository.SongRepository
+    private val songRepository: SongRepository,
+    private val sessionManager: MusicPlaybackSessionManager
 ) : ViewModel() {
+
+    private companion object {
+        const val MAX_HISTORY = 50
+        const val MAX_QUEUE = 200
+        const val MAX_GENRE_FETCH_RETRIES = 3
+        const val NEW_GENRE_FETCH_LIMIT = 20
+    }
+
+    // ── Existing state (unchanged behavior) ─────────────────────────
 
     val isLiked: StateFlow<Boolean> = likedSongRepository
         .observeIsLiked(songId)
@@ -58,6 +81,134 @@ class MusicPlayerViewModel(
     // Callback for after song is used to create
     private var onSongUnlockedCallback: (() -> Unit)? = null
 
+    // ── Playback queue + history ────────────────────────────────────
+
+    private val _currentSong = MutableStateFlow(song)
+    val currentSong: StateFlow<MusicSong> = _currentSong.asStateFlow()
+
+    private val _canGoPrev = MutableStateFlow(false)
+    val canGoPrev: StateFlow<Boolean> = _canGoPrev.asStateFlow()
+
+    private val history: ArrayDeque<MusicSong> = ArrayDeque()
+    private var queue: List<MusicSong> = initialPlaylist.toList()
+    private var pivotJob: Job? = null
+
+    // ── Navigation API ──────────────────────────────────────────────
+
+    /**
+     * Advance to the next song. Algorithm:
+     *  1. First unimpressed song in [queue] (excluding current).
+     *  2. Else pivot: fetch songs from a random unused genre, retry up to 3 times.
+     *  3. Else loop replay: reset usedGenres, pick from [initialPlaylist].
+     *
+     * Concurrent calls during an active genre fetch are coalesced via [pivotJob].
+     */
+    fun onNext() {
+        val current = _currentSong.value
+        val impressed = sessionManager.impressedSongIds.value
+
+        val queueCandidate = findNextUnimpressedSong(queue, current.id, impressed)
+        if (queueCandidate != null) {
+            pushHistory(current)
+            switchTo(queueCandidate)
+            return
+        }
+
+        if (pivotJob?.isActive == true) return
+        pivotJob = viewModelScope.launch(Dispatchers.IO) {
+            val pivoted = fetchAndPivotToNewGenre(retriesLeft = MAX_GENRE_FETCH_RETRIES)
+            if (!pivoted) {
+                loopFromInitialPlaylist(current)
+            }
+        }
+    }
+
+    /**
+     * Step back to the previously-played song. No-op when history is empty.
+     */
+    fun onPrev() {
+        val prev = history.removeLastOrNull() ?: return
+        _canGoPrev.value = history.isNotEmpty()
+        _currentSong.value = prev
+        Analytics.trackSongBack(songId = prev.id.toString())
+        Analytics.trackSongImpression(
+            songId = prev.id.toString(),
+            songName = prev.name,
+            location = AnalyticsEvent.Value.Location.SONG_PLAYER,
+            screenSessionId = ""
+        )
+        sessionManager.markImpressed(prev.id)
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────
+
+    private fun pushHistory(songToPush: MusicSong) {
+        history.addLast(songToPush)
+        while (history.size > MAX_HISTORY) history.removeFirst()
+        _canGoPrev.value = true
+    }
+
+    private fun switchTo(next: MusicSong) {
+        _currentSong.value = next
+        sessionManager.markImpressed(next.id)
+        Analytics.trackSongNext(songId = next.id.toString())
+        Analytics.trackSongImpression(
+            songId = next.id.toString(),
+            songName = next.name,
+            location = AnalyticsEvent.Value.Location.SONG_PLAYER,
+            screenSessionId = ""
+        )
+    }
+
+    /**
+     * Fetch songs from a random unused genre, append to queue, switch to first unimpressed.
+     * Returns true on success, false when no genre yields a switchable song after
+     * [retriesLeft] attempts. Runs on Dispatchers.IO; mutates StateFlow on Main.
+     */
+    private suspend fun fetchAndPivotToNewGenre(retriesLeft: Int): Boolean {
+        if (retriesLeft <= 0) return false
+        val allGenres = songRepository.getGenres().getOrNull() ?: return false
+        val pick = pickRandomAvailableGenre(
+            allGenres = allGenres,
+            usedGenres = sessionManager.usedGenreIds.value,
+            initialGenre = initialGenreId,
+            random = Random.Default
+        ) ?: return false
+
+        val fetched = songRepository.getSongsByGenre(pick.id, NEW_GENRE_FETCH_LIMIT)
+            .getOrNull().orEmpty()
+        sessionManager.markGenreUsed(pick.id)
+        if (fetched.isEmpty()) {
+            return fetchAndPivotToNewGenre(retriesLeft - 1)
+        }
+        queue = appendCapped(queue, fetched, MAX_QUEUE)
+        val current = _currentSong.value
+        val impressed = sessionManager.impressedSongIds.value
+        val target = fetched.firstOrNull { it.id != current.id && it.id !in impressed }
+            ?: return fetchAndPivotToNewGenre(retriesLeft - 1)
+
+        withContext(Dispatchers.Main) {
+            pushHistory(current)
+            switchTo(target)
+        }
+        return true
+    }
+
+    /**
+     * All genres exhausted — reset usedGenres and replay from initial playlist.
+     * Intentionally allows repeating already-heard songs (spec behavior).
+     */
+    private suspend fun loopFromInitialPlaylist(current: MusicSong) {
+        sessionManager.resetUsedGenres()
+        val replay = pickReplaySong(initialPlaylist, current.id) ?: return
+        withContext(Dispatchers.Main) {
+            pushHistory(current)
+            switchTo(replay)
+        }
+    }
+
+    // ── Existing API (unchanged) ────────────────────────────────────
+
     fun toggleLike(song: MusicSong) {
         viewModelScope.launch {
             if (isLiked.value) {
@@ -69,13 +220,11 @@ class MusicPlayerViewModel(
     }
 
     fun onUseToCreateClick(onProceed: () -> Unit) {
-        // Increment usage_count for analytics/ranking
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             songRepository.incrementUseCount(song.id)
         }
 
         if (song.isPremium && !unlockedSongsManager.isUnlocked(song.id)) {
-            // Song is locked - request ad
             onSongUnlockedCallback = onProceed
             rewardedAdController.requestAd(
                 onReward = {
@@ -86,7 +235,6 @@ class MusicPlayerViewModel(
                     }
                 },
                 onSkip = {
-                    // Ad disabled - unlock for free
                     viewModelScope.launch {
                         unlockedSongsManager.unlockSong(song.id)
                         onSongUnlockedCallback?.invoke()
@@ -96,7 +244,6 @@ class MusicPlayerViewModel(
                 checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_SONG) }
             )
         } else {
-            // Song is unlocked or free - proceed
             onProceed()
         }
     }

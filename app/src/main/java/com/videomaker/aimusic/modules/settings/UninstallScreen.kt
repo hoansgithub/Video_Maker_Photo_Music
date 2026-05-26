@@ -73,11 +73,10 @@ import coil.size.Size
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
-import com.videomaker.aimusic.media.audio.AudioPreviewCache
-import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
@@ -91,7 +90,6 @@ import com.videomaker.aimusic.ui.theme.Primary_N500
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.utils.innerShadowCustom
-import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,13 +99,11 @@ fun UninstallScreen(
     onNavigateToTemplatePreviewer: (templateId: String) -> Unit,
     onNavigateToTemplates: () -> Unit,
     onNavigateToAllSongs: () -> Unit,
-    onNavigateToTemplatePreviewerWithSong: (songId: Long) -> Unit,
+    onNavigateToSongPlayer: (songId: Long) -> Unit,
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
-    val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
-    val audioPreviewCache: AudioPreviewCache = koinInject()
     val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
 
     LaunchedEffect(Unit) {
@@ -164,22 +160,12 @@ fun UninstallScreen(
                     onNavigateToAllSongs()
                     viewModel.onNavigationHandled()
                 }
-                is UninstallNavigationEvent.NavigateToTemplatePreviewerWithSong -> {
-                    onNavigateToTemplatePreviewerWithSong(event.songId)
+                is UninstallNavigationEvent.NavigateToSongPlayer -> {
+                    onNavigateToSongPlayer(event.songId)
                     viewModel.onNavigationHandled()
                 }
             }
         }
-    }
-
-    selectedSong?.let { song ->
-        MusicPlayerBottomSheet(
-            song = song,
-            cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-            location = AnalyticsEvent.Value.Location.UNINSTALL,
-            onDismiss = viewModel::onDismissPlayer,
-            onUseToCreate = { viewModel.onUseToCreateVideo(song) }
-        )
     }
 
     val uninstallData = when (val state = uiState) {
@@ -301,6 +287,14 @@ fun UninstallScreen(
                                 modifier = Modifier
                                     .weight(1f)
                                     .aspectRatio(1f)
+                                    .onFirstVisible(key = template.id) {
+                                        Analytics.trackTemplateImpression(
+                                            templateId = template.id,
+                                            templateName = template.name,
+                                            location = AnalyticsEvent.Value.Location.UNINSTALL,
+                                            screenSessionId = ""
+                                        )
+                                    }
                             )
                         } else {
                             ShimmerPlaceholder(

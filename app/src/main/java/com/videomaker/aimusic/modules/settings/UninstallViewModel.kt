@@ -45,7 +45,8 @@ sealed class UninstallNavigationEvent {
     data class NavigateToTemplatePreviewer(val templateId: String, val shouldShowAd: Boolean) : UninstallNavigationEvent()
     data object NavigateToTemplates : UninstallNavigationEvent()
     data object NavigateToAllSongs : UninstallNavigationEvent()
-    data class NavigateToTemplatePreviewerWithSong(val songId: Long) : UninstallNavigationEvent()
+    // Opens the song in the Songs tab (HomeScreen) and auto-plays it there.
+    data class NavigateToSongPlayer(val songId: Long) : UninstallNavigationEvent()
 }
 
 // ============================================
@@ -62,9 +63,6 @@ class UninstallViewModel(
 
     private val _navigationEvent = MutableStateFlow<UninstallNavigationEvent?>(null)
     val navigationEvent: StateFlow<UninstallNavigationEvent?> = _navigationEvent.asStateFlow()
-
-    private val _selectedSong = MutableStateFlow<MusicSong?>(null)
-    val selectedSong: StateFlow<MusicSong?> = _selectedSong.asStateFlow()
 
     // Fallback API data shown when the liked lists are empty
     private val _fallbackTemplates = MutableStateFlow<List<VideoTemplate>>(emptyList())
@@ -143,16 +141,7 @@ class UninstallViewModel(
             songName = song.name,
             location = AnalyticsEvent.Value.Location.UNINSTALL
         )
-        _selectedSong.value = song
-    }
-
-    fun onDismissPlayer() {
-        _selectedSong.value = null
-    }
-
-    fun onUseToCreateVideo(song: MusicSong) {
-        _selectedSong.value = null
-        _navigationEvent.value = UninstallNavigationEvent.NavigateToTemplatePreviewerWithSong(song.id)
+        _navigationEvent.value = UninstallNavigationEvent.NavigateToSongPlayer(song.id)
     }
 
     fun onSeeMoreSongsClick() {

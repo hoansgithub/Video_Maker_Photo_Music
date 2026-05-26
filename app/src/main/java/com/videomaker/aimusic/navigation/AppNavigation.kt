@@ -303,15 +303,15 @@ fun AppNavigation(
             NotificationDeepLinkFactory.ACTION_NOTIF_RESUME_TEMPLATE -> {
                 val templateId = intent.getStringExtra(NotificationDeepLinkFactory.EXTRA_TEMPLATE_ID)
                 val songId = intent.getLongExtra(NotificationDeepLinkFactory.EXTRA_SONG_ID, -1L)
-                val draftId = intent.getStringExtra(NotificationDeepLinkFactory.EXTRA_DRAFT_ID)
                 backStack.apply {
                     clear()
                     add(AppRoute.Home())
                     add(
-                        AppRoute.AssetPicker(
-                            templateId = templateId,
+                        AppRoute.TemplatePreviewer(
+                            templateId = templateId.orEmpty(),
+                            imageUris = emptyList(),
                             overrideSongId = songId,
-                            resumeDraftId = draftId
+                            sourceLocation = AnalyticsEvent.Value.Location.HOME_TEMPLATE
                         )
                     )
                 }
@@ -710,13 +710,13 @@ fun AppNavigation(
                     },
                     onNavigateToTemplates = { backStack.add(AppRoute.TemplateList()) },
                     onNavigateToAllSongs = { backStack.add(AppRoute.SuggestedSongsList) },
-                    onNavigateToTemplatePreviewerWithSong = { songId ->
-                        backStack.add(AppRoute.TemplatePreviewer(
-                            templateId = "",
-                            imageUris = emptyList(),
-                            overrideSongId = songId,
-                            sourceLocation = AnalyticsEvent.Value.Location.UNINSTALL
-                        ))
+                    onNavigateToSongPlayer = { songId ->
+                        // Open the Songs tab and auto-play the tapped song (same pattern as
+                        // widget/notification song deep-links).
+                        backStack.apply {
+                            clear()
+                            add(AppRoute.Home(initialTab = 1, initialSongId = songId))
+                        }
                     }
                 )
             }
@@ -760,12 +760,13 @@ fun AppNavigation(
                         ))
                     },
                     onNavigateToSearch = { backStack.add(AppRoute.UnifiedSearch(SearchSection.TEMPLATES)) },
-                    onNavigateToTemplatePreviewerWithSong = { songId ->
-                        backStack.add(AppRoute.TemplatePreviewer(
-                            templateId = "",
-                            imageUris = emptyList(),
-                            overrideSongId = songId
-                        ))
+                    onNavigateToSongPlayer = { songId ->
+                        // Open the Songs tab and auto-play the tapped song (same pattern as
+                        // widget/notification song deep-links).
+                        backStack.apply {
+                            clear()
+                            add(AppRoute.Home(initialTab = 1, initialSongId = songId))
+                        }
                     }
                 )
             }

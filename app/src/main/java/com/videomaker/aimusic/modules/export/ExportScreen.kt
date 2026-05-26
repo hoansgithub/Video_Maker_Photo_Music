@@ -19,6 +19,7 @@ import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
 import kotlinx.coroutines.delay
@@ -1580,6 +1581,14 @@ private fun FeaturedTemplatesGrid(
                             aspectRatio = parseAspectRatio(template.aspectRatio),
                             isPremium = template.isPremium,
                             useCount = template.useCount,
+                            modifier = Modifier.onFirstVisible(key = template.id) {
+                                Analytics.trackTemplateImpression(
+                                    templateId = template.id,
+                                    templateName = template.name,
+                                    location = AnalyticsEvent.Value.Location.RESULT_RCM,
+                                    screenSessionId = ""
+                                )
+                            },
                             onClick = { onTemplateClick(template) }
                         )
                     }

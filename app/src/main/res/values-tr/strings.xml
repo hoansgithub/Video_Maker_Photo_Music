@@ -7,6 +7,7 @@
     <string name="ad_loading">Reklam yükleniyor…</string>
 
     <!-- Language Selection -->
+    <string name="language_system_default">Sistem varsayılanı</string>
     <string name="language_select_title">Dilleri Seçin</string>
     <string name="language_select_subtitle">Lütfen bir görüntüleme dili seçin.</string>
     <string name="language_continue">Devam Et</string>
@@ -549,7 +550,7 @@
 
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">Tekrar hoş geldiniz!</string>
-    <string name="welcome_back_subtitle">Bu haftanın yenilikleri:</string>
+    <string name="welcome_back_subtitle">Bugünün yenilikleri:</string>
     <string name="welcome_back_vibe_tags">• 8 yeni şarkı • 3 popüler şablon 🚀</string>
     <string name="welcome_back_continue">Devam Et</string>
 

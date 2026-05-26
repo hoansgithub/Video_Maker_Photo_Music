@@ -435,6 +435,24 @@ object Analytics {
         )
     }
 
+    fun trackSongNext(songId: String) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.SONG_NEXT,
+            params = mapOf(AnalyticsEvent.Param.SONG_ID to songId),
+            requiredParams = setOf(AnalyticsEvent.Param.SONG_ID),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackSongBack(songId: String) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.SONG_BACK,
+            params = mapOf(AnalyticsEvent.Param.SONG_ID to songId),
+            requiredParams = setOf(AnalyticsEvent.Param.SONG_ID),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackSongPlay(songId: String, songName: String, location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_PLAY,
@@ -2243,6 +2261,10 @@ object Analytics {
     }
 
     private fun buildDefaultDedupeKey(eventName: String, params: Map<String, Any>): String {
+        // Dedupe scope: entire app process lifetime. Set is cleared only on process death.
+        // screenSessionId intentionally NOT in the key so re-entering a screen (which mints
+        // a fresh sessionId via remember{}) does not re-fire impressions for items the user
+        // already saw earlier in this session.
         val itemId =
             params[AnalyticsEvent.Param.TEMPLATE_ID]
                 ?: params[AnalyticsEvent.Param.SONG_ID]
@@ -2250,8 +2272,7 @@ object Analytics {
                 ?: params[AnalyticsEvent.Param.ID]
                 ?: "na"
         val location = params[AnalyticsEvent.Param.LOCATION] ?: "na"
-        val screenSessionId = params[AnalyticsEvent.Param.SCREEN_SESSION_ID] ?: "global"
-        return "$eventName|$itemId|$location|$screenSessionId"
+        return "$eventName|$itemId|$location"
     }
 
     private fun buildVideoParams(
@@ -2301,3 +2322,25 @@ object Analytics {
         }
     }
 }
+
+/**
+ * Wrapper around [Analytics.trackSongImpression] that also marks the song in
+ * [com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager]. Use this
+ * instead of calling `Analytics.trackSongImpression` directly so the session
+ * impressed-set stays in sync with analytics events.
+ */
+fun com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager.trackSongImpressionAndMark(
+    songId: String,
+    songName: String,
+    location: String,
+    screenSessionId: String = ""
+) {
+    Analytics.trackSongImpression(
+        songId = songId,
+        songName = songName,
+        location = location,
+        screenSessionId = screenSessionId
+    )
+    songId.toLongOrNull()?.let { markImpressed(it) }
+}
+

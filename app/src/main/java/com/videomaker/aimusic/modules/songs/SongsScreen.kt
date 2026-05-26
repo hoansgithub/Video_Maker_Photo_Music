@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -54,10 +55,12 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
+import com.videomaker.aimusic.core.analytics.trackSongImpressionAndMark
+import com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
-import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.RankingSongCard
@@ -107,11 +110,15 @@ private const val STATION_AD_INSERTION_INDEX = 3
 fun SongsScreen(
     viewModel: SongsViewModel,
     topBarHeight: Dp = 0.dp,
+    isVisible: Boolean = true,
+    listState: LazyListState = rememberLazyListState(),
+    onUserInteraction: () -> Unit = {},
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
     onNavigateToTemplatePreviewer: (songId: Long) -> Unit = {},
     onNavigateToSuggestedAll: () -> Unit = {},
     onNavigateToWeeklyRankingList: () -> Unit = {},
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    onListScroll: () -> Unit = {}
 ) {
 
     val suggestedState by viewModel.suggestedState.collectAsStateWithLifecycle()
@@ -121,10 +128,13 @@ fun SongsScreen(
     val selectedGenre by viewModel.selectedGenre.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
-    val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
-    val audioPreviewCache: AudioPreviewCache = koinInject()
-    var selectedSongLocation by rememberSaveable {
-        mutableStateOf(AnalyticsEvent.Value.Location.SONG_PREVIEW)
+
+    // Close the open player when this tab is swiped away, so returning shows a fresh state.
+    // The player overlay itself lives in HomeScreen so it can render full-screen above the bottom ad.
+    LaunchedEffect(isVisible) {
+        if (!isVisible) {
+            viewModel.onDismissPlayer()
+        }
     }
 
     // ✅ FIX: Refresh data when locale changes (genres will be localized in future)
@@ -163,12 +173,15 @@ fun SongsScreen(
 
             SongsContent(
                 topBarHeight = topBarHeight,
+                listState = listState,
+                onUserInteraction = onUserInteraction,
                 suggestedState = suggestedState,
                 rankingState = rankingState,
                 stationState = stationState,
                 genresState = genresState,
                 selectedGenre = selectedGenre,
                 onGenreSelected = { genreId ->
+                    onUserInteraction()
                     val genreName = when (val currentGenres = genresState) {
                         is SectionState.Success -> {
                             currentGenres.data.firstOrNull { it.id == genreId }?.displayName
@@ -185,26 +198,25 @@ fun SongsScreen(
                 },
                 isRefreshing = isRefreshing,
                 onRefresh = viewModel::refresh,
-                onSongClick = { song, location ->
-                    selectedSongLocation = location
-                    viewModel.onSongClick(song)
+                onSongClick = { song, playlist, location, genreId ->
+                    onUserInteraction()
+                    viewModel.onSongClick(song, playlist, location, genreId)
                 },
-                onSeeMoreSuggested = viewModel::onSeeMoreSuggestedClick,
-                onNavigateToWeeklyRankingList = onNavigateToWeeklyRankingList,
-                onSearchClick = onNavigateToSearch
+                onListUserScroll = onListScroll,
+                onSeeMoreSuggested = {
+                    onUserInteraction()
+                    viewModel.onSeeMoreSuggestedClick()
+                },
+                onNavigateToWeeklyRankingList = {
+                    onUserInteraction()
+                    onNavigateToWeeklyRankingList()
+                },
+                onSearchClick = {
+                    onUserInteraction()
+                    onNavigateToSearch()
+                }
             )
         }
-    }
-
-    // Music player bottom sheet — shown when a song is tapped
-    selectedSong?.let { song ->
-        MusicPlayerBottomSheet(
-            song = song,
-            cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-            location = selectedSongLocation,
-            onDismiss = viewModel::onDismissPlayer,
-            onUseToCreate = { viewModel.onUseToCreateVideo(song) }
-        )
     }
 }
 
@@ -216,6 +228,8 @@ fun SongsScreen(
 @Composable
 private fun SongsContent(
     topBarHeight: Dp = 0.dp,
+    listState: LazyListState,
+    onUserInteraction: () -> Unit,
     suggestedState: SectionState<List<MusicSong>>,
     rankingState: SectionState<List<MusicSong>>,
     stationState: SectionState<List<MusicSong>>,
@@ -224,19 +238,20 @@ private fun SongsContent(
     onGenreSelected: (String?) -> Unit,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
-    onSongClick: (MusicSong, String) -> Unit,
+    onSongClick: (song: MusicSong, playlist: List<MusicSong>, location: String, genreId: String?) -> Unit,
+    onListUserScroll: () -> Unit = {},
     onSeeMoreSuggested: () -> Unit,
     onNavigateToWeeklyRankingList: () -> Unit,
     onSearchClick: () -> Unit
 ) {
     val dimens = AppDimens.current
-    val listState = rememberLazyListState()
     var lastTrackedLocation by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .drop(1)
             .collect { (firstVisibleIndex, _) ->
+                onListUserScroll()  // any list scroll hides the CTA during preview
                 val location = when {
                     firstVisibleIndex <= 2 -> AnalyticsEvent.Value.Location.SONG_FORYOU
                     firstVisibleIndex <= 4 -> AnalyticsEvent.Value.Location.SONG_RANKING
@@ -351,8 +366,13 @@ private fun SongsContent(
             item(key = "station_songs", contentType = "station_songs") {
                 StationSongsSection(
                     state = stationState,
+                    selectedGenre = selectedGenre,
                     onSongClick = onSongClick
                 )
+            }
+
+            item {
+                Spacer(Modifier.height(150.dp))
             }
         }
     }
@@ -373,12 +393,13 @@ private const val SUGGEST_PLACEHOLDER_COUNT = 5
 @Composable
 private fun SuggestSongsList(
     state: SectionState<List<MusicSong>>,
-    onSongClick: (MusicSong, String) -> Unit,
+    onSongClick: (song: MusicSong, playlist: List<MusicSong>, location: String, genreId: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
     val horizontalScrollState = rememberScrollState()
     var hasTrackedSwipe by remember { mutableStateOf(false) }
+    val sessionManager: MusicPlaybackSessionManager = koinInject()
 
     LaunchedEffect(horizontalScrollState) {
         snapshotFlow { horizontalScrollState.value }
@@ -416,7 +437,14 @@ private fun SuggestSongsList(
                                 songName = song.name,
                                 location = AnalyticsEvent.Value.Location.SONG_FORYOU
                             )
-                            onSongClick(song, AnalyticsEvent.Value.Location.SONG_FORYOU)
+                            onSongClick(song, state.data, AnalyticsEvent.Value.Location.SONG_FORYOU, null)
+                        },
+                        modifier = Modifier.onFirstVisible(key = song.id) {
+                            sessionManager.trackSongImpressionAndMark(
+                                songId = song.id.toString(),
+                                songName = song.name,
+                                location = AnalyticsEvent.Value.Location.SONG_FORYOU
+                            )
                         }
                     )
                 }
@@ -451,7 +479,7 @@ private const val RANKING_PLACEHOLDER_COUNT = 3
 @Composable
 private fun WeeklyRankingSection(
     state: SectionState<List<MusicSong>>,
-    onSongClick: (MusicSong, String) -> Unit,
+    onSongClick: (song: MusicSong, playlist: List<MusicSong>, location: String, genreId: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
@@ -497,12 +525,13 @@ private fun WeeklyRankingSection(
 @Composable
 private fun WeeklyRankingPager(
     songs: List<MusicSong>,
-    onSongClick: (MusicSong, String) -> Unit,
+    onSongClick: (song: MusicSong, playlist: List<MusicSong>, location: String, genreId: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
     val pages = remember(songs) { songs.take(9).chunked(3) }
     val pagerState = rememberPagerState(pageCount = { pages.size })
+    val sessionManager: MusicPlaybackSessionManager = koinInject()
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
@@ -533,7 +562,14 @@ private fun WeeklyRankingPager(
                             songName = song.name,
                             location = AnalyticsEvent.Value.Location.SONG_RANKING
                         )
-                        onSongClick(song, AnalyticsEvent.Value.Location.SONG_RANKING)
+                        onSongClick(song, songs, AnalyticsEvent.Value.Location.SONG_RANKING, null)
+                    },
+                    modifier = Modifier.onFirstVisible(key = song.id) {
+                        sessionManager.trackSongImpressionAndMark(
+                            songId = song.id.toString(),
+                            songName = song.name,
+                            location = AnalyticsEvent.Value.Location.SONG_RANKING
+                        )
                     }
                 )
             }
@@ -550,10 +586,12 @@ private const val STATION_PLACEHOLDER_COUNT = 5
 @Composable
 private fun StationSongsSection(
     state: SectionState<List<MusicSong>>,
-    onSongClick: (MusicSong, String) -> Unit,
+    selectedGenre: String?,
+    onSongClick: (song: MusicSong, playlist: List<MusicSong>, location: String, genreId: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
+    val sessionManager: MusicPlaybackSessionManager = koinInject()
 
     when (state) {
         is SectionState.Loading -> {
@@ -579,12 +617,20 @@ private fun StationSongsSection(
                                 songName = song.name,
                                 location = AnalyticsEvent.Value.Location.SONG_STATIONS
                             )
-                            onSongClick(song, AnalyticsEvent.Value.Location.SONG_STATIONS)
+                            onSongClick(song, state.data, AnalyticsEvent.Value.Location.SONG_STATIONS, selectedGenre)
                         },
-                        modifier = Modifier.padding(
-                            horizontal = dimens.spaceLg,
-                            vertical = dimens.spaceXs
-                        )
+                        modifier = Modifier
+                            .padding(
+                                horizontal = dimens.spaceLg,
+                                vertical = dimens.spaceXs
+                            )
+                            .onFirstVisible(key = song.id) {
+                                sessionManager.trackSongImpressionAndMark(
+                                    songId = song.id.toString(),
+                                    songName = song.name,
+                                    location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                                )
+                            }
                     )
                 }
             }
@@ -737,6 +783,8 @@ private fun SongsContentLoadedPreview() {
                 )
                 SongsContent(
                     topBarHeight = 56.dp,
+                    listState = rememberLazyListState(),
+                    onUserInteraction = {},
                     suggestedState = SectionState.Success(previewSongs),
                     rankingState = SectionState.Success(previewSongs.take(9)),
                     stationState = SectionState.Success(previewSongs),
@@ -745,7 +793,7 @@ private fun SongsContentLoadedPreview() {
                     onGenreSelected = {},
                     isRefreshing = false,
                     onRefresh = {},
-                    onSongClick = { _, _ -> },
+                    onSongClick = { _, _, _, _ -> },
                     onSeeMoreSuggested = {},
                     onNavigateToWeeklyRankingList = {},
                     onSearchClick = {}
@@ -769,6 +817,8 @@ private fun SongsContentLoadingPreview() {
                 )
                 SongsContent(
                     topBarHeight = 56.dp,
+                    listState = rememberLazyListState(),
+                    onUserInteraction = {},
                     suggestedState = SectionState.Loading,
                     rankingState = SectionState.Loading,
                     stationState = SectionState.Loading,
@@ -777,7 +827,7 @@ private fun SongsContentLoadingPreview() {
                     onGenreSelected = {},
                     isRefreshing = false,
                     onRefresh = {},
-                    onSongClick = { _, _ -> },
+                    onSongClick = { _, _, _, _ -> },
                     onSeeMoreSuggested = {},
                     onNavigateToWeeklyRankingList = {},
                     onSearchClick = {}
@@ -812,7 +862,7 @@ private fun RankingPagerPage1Preview() {
         Surface(color = MaterialTheme.colorScheme.background) {
             WeeklyRankingSection(
                 state = SectionState.Success(previewSongs.take(9)),
-                onSongClick = { _, _ -> }
+                onSongClick = { _, _, _, _ -> }
             )
         }
     }
@@ -826,7 +876,7 @@ private fun RankingPagerLoadingPreview() {
             Surface(color = MaterialTheme.colorScheme.background) {
                 WeeklyRankingSection(
                     state = SectionState.Loading,
-                    onSongClick = { _, _ -> }
+                    onSongClick = { _, _, _, _ -> }
                 )
             }
         }

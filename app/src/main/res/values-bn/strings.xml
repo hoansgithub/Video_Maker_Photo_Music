@@ -10,6 +10,7 @@
     <string name="ad_loading">বিজ্ঞাপন লোড হচ্ছে…</string>
 
     <!-- Language Selection -->
+    <string name="language_system_default">সিস্টেম ডিফল্ট</string>
     <string name="language_select_title">ভাষা বেছে নিন</string>
     <string name="language_select_subtitle">একটি প্রদর্শন ভাষা নির্বাচন করুন।</string>
     <string name="language_continue">চালিয়ে যান</string>
@@ -556,7 +557,7 @@
 
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">আবার স্বাগত জানাই!</string>
-    <string name="welcome_back_subtitle">এই সপ্তাহে নতুন কী আছে দেখুন:</string>
+    <string name="welcome_back_subtitle">আজকের নতুন কী আছে দেখুন:</string>
     <string name="welcome_back_vibe_tags">• ৮টি নতুন গান • ৩টি জনপ্রিয় টেমপ্লেট 🚀</string>
     <string name="welcome_back_continue">চালিয়ে যান</string>
 

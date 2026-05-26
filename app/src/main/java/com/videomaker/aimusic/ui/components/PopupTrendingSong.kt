@@ -18,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +39,8 @@ import androidx.compose.ui.window.DialogProperties
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
@@ -53,6 +56,15 @@ fun PopupTrendingSong(
     onCTA: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    LaunchedEffect(item.id) {
+        Analytics.track(
+            AnalyticsEvent.REWARD_SONG_RENDER,
+            mapOf(
+                AnalyticsEvent.Param.SONG_ID to item.id.toString(),
+                AnalyticsEvent.Param.SONG_NAME to item.name
+            )
+        )
+    }
     Dialog(
         onDismissRequest = {
         },
@@ -63,7 +75,7 @@ fun PopupTrendingSong(
                 .clickableSingle {
                 }
                 .fillMaxSize()
-                .background(Color(0xFF000000).copy(0.8f))
+                .background(Color(0xFF000000).copy(0.56f))
                 .padding(top = 81.dp),
             contentAlignment = Alignment.TopCenter
         ) {
@@ -85,6 +97,13 @@ fun PopupTrendingSong(
                         modifier = Modifier
                             .size(44.dp)
                             .clickableSingle {
+                                Analytics.track(
+                                    AnalyticsEvent.REWARD_SONG_EXIT,
+                                    mapOf(
+                                        AnalyticsEvent.Param.SONG_ID to item.id.toString(),
+                                        AnalyticsEvent.Param.SONG_NAME to item.name
+                                    )
+                                )
                                 onDismiss.invoke()
                             }
                             .align(Alignment.TopEnd)
@@ -205,6 +224,13 @@ fun PopupTrendingSong(
                 CTAPrimaryButton(
                     text = stringResource(R.string.popup_try_it_now)
                 ) {
+                    Analytics.track(
+                        AnalyticsEvent.REWARD_SONG_CLICK,
+                        mapOf(
+                            AnalyticsEvent.Param.SONG_ID to item.id.toString(),
+                            AnalyticsEvent.Param.SONG_NAME to item.name
+                        )
+                    )
                     onCTA()
                 }
             }

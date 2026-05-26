@@ -305,3 +305,10 @@ val WelcomeBackBackground = Color(0xFF121212)
 val WelcomeBackVibeBg = Color(0xFF17240B)
 val WelcomeBackVibeBorder = Color(0xFF384E1A)
 
+// ============================================
+// HOME FLOATING BUTTON & PREVIEWS
+// ============================================
+val NewIdeasBackground = Color(0xFF1E1E1E)
+val PreviewCardBackground = Color(0xFF242424)
+val PreviewButtonBackground = Color(0xFF2A2A2A)
+

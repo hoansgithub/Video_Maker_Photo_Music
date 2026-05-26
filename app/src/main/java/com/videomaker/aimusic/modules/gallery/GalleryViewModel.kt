@@ -117,6 +117,17 @@ class GalleryViewModel(
         }
     }
 
+    fun shuffle() {
+        val current = _uiState.value as? GalleryUiState.Success ?: return
+        val listState = current.templateListState as? TemplateListState.Success ?: return
+        
+        val shuffledTemplates = listState.templates.shuffled()
+        
+        _uiState.value = current.copy(
+            templateListState = listState.copy(templates = shuffledTemplates)
+        )
+    }
+
     private fun loadGalleryData() {
         viewModelScope.launch {
             try {

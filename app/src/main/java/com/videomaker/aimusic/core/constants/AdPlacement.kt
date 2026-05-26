@@ -649,6 +649,20 @@ object AdPlacement {
     const val NATIVE_POPUP_TRENDING_SONG = "ad_native_popup_trending_song"
 
     /**
+     * Native ad shown inside the music player bottom sheet (above the CTA button).
+     * Small horizontal banner-style placement that blends with the player controls.
+     *
+     * Layout: native_small_row (horizontal row matching banner dimensions)
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1938387916  (Pro_NA_high_music_player)
+     * - Secondary: ca-app-pub-7121075950716954/8994750854  (Pro_NA_all_music_player)
+     *
+     * Remote Config key: ad_native_music_player
+     */
+    const val NATIVE_MUSIC_PLAYER = "ad_native_music_player"
+
+    /**
      * Native ad shown at bottom of onboarding genre selection screen.
      * NA_high_select_music (primary) → NA_all_select_music (secondary waterfall).
      *
@@ -879,6 +893,7 @@ object AdPlacement {
         NATIVE_TEMPLATE_RATIO_SHEET,
         NATIVE_POPUP_TRENDING_TEMPLATE,
         NATIVE_POPUP_TRENDING_SONG,
+        NATIVE_MUSIC_PLAYER,
         NATIVE_EXPORT_GENERATING,
         NATIVE_ONBOARDING_SELECT_MUSIC,
         NATIVE_ONBOARDING_SELECT_TPT,

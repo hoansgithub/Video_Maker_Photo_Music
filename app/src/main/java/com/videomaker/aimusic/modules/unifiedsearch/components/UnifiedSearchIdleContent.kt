@@ -31,6 +31,10 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
+import com.videomaker.aimusic.core.analytics.trackSongImpressionAndMark
+import com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
+import org.koin.compose.koinInject
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
@@ -67,6 +71,7 @@ fun UnifiedSearchIdleContent(
     onSeeMoreSongs: () -> Unit
 ) {
     val dimens = AppDimens.current
+    val sessionManager: MusicPlaybackSessionManager = koinInject()
 
     LazyColumn(
         modifier = Modifier
@@ -185,7 +190,8 @@ fun UnifiedSearchIdleContent(
                                     )
                                     onTemplateClick.invoke(template.id)
                                 },
-                                modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                                modifier = Modifier.padding(horizontal = dimens.spaceLg),
+                                impressionLocation = AnalyticsEvent.Value.Location.SEARCH_RCM
                             )
                             Spacer(modifier = Modifier.height(dimens.spaceXl))
                         }
@@ -250,6 +256,13 @@ fun UnifiedSearchIdleContent(
                                         location = AnalyticsEvent.Value.Location.SEARCH_RCM
                                     )
                                     onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RCM)
+                                },
+                                modifier = Modifier.onFirstVisible(key = song.id) {
+                                    sessionManager.trackSongImpressionAndMark(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                    )
                                 }
                             )
                         }
@@ -265,6 +278,10 @@ fun UnifiedSearchIdleContent(
                     }
                 }
             }
+        }
+
+        item {
+            Spacer(Modifier.height(150.dp))
         }
     }
 }
