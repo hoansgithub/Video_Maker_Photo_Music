@@ -22,6 +22,29 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Na gaba</string>
     <string name="onboarding_get_started">Fara</string>
+
+    <!-- Onboarding survey: feature screen -->
+    <string name="survey_feature_title">Wadanne fasaloli kuke so?</string>
+    <string name="survey_feature_subtitle">Zaɓi ɗaya ko fiye don keɓance shawarwarin ku.</string>
+    <string name="survey_feature_ai_dance">Bidiyon Rawa na AI</string>
+    <string name="survey_feature_music_video">Samfuran Bidiyon Kiɗa</string>
+    <string name="survey_feature_ai_hair">Sauya Gashi na AI</string>
+    <string name="survey_feature_lyric">Bidiyon Waka</string>
+    <string name="survey_feature_ai_avatar">Avatar na AI</string>
+    <string name="survey_feature_beat_sync">Tasirin Daidaita Bugu</string>
+    <string name="survey_feature_explore_later">Zan bincika daga baya</string>
+
+    <!-- Onboarding survey: platform screen -->
+    <string name="survey_platform_title">Wace dandali kuke\nyi don?</string>
+    <string name="survey_platform_subtitle">Za mu ba da shawarar tsari da samfuran\nda aka inganta don dandalin ku.</string>
+    <string name="survey_platform_whatsapp">WhatsApp</string>
+    <string name="survey_platform_instagram">Instagram</string>
+    <string name="survey_platform_tiktok">Tiktok</string>
+    <string name="survey_platform_facebook">Facebook</string>
+    <string name="survey_platform_youtube">Youtube Short</string>
+    <string name="survey_platform_snapchat">Snapchat</string>
+    <string name="survey_platform_personally">Ina ajiye shi kaina</string>
+
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Kasance a gaban kowane kamya da sababbin templates masu sabuntawa kullum.</string>
     <string name="onboarding_india_page3_title">Kama templates masu trending</string>
@@ -288,6 +311,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Mai Kunna Kiɗa</string>
     <string name="music_player_use_to_create">Yi amfani don Ƙirƙiri Bidiyo</string>
+    <string name="music_player_try_it">Gwada</string>
     <string name="music_player_free_unlock">Buɗe Kyauta</string>
 
     <!-- Music Picker -->

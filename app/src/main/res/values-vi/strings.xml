@@ -19,6 +19,28 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Tiếp theo</string>
     <string name="onboarding_get_started">Bắt đầu</string>
+
+    <!-- Onboarding survey: feature screen -->
+    <string name="survey_feature_title">Bạn thích tính năng nào?</string>
+    <string name="survey_feature_subtitle">Chọn một hoặc nhiều để tùy chỉnh đề xuất của bạn.</string>
+    <string name="survey_feature_ai_dance">Video Nhảy AI</string>
+    <string name="survey_feature_music_video">Mẫu Video Âm Nhạc</string>
+    <string name="survey_feature_ai_hair">Đổi Tóc AI</string>
+    <string name="survey_feature_lyric">Video Lời Bài Hát</string>
+    <string name="survey_feature_ai_avatar">Avatar AI</string>
+    <string name="survey_feature_beat_sync">Hiệu Ứng Theo Nhịp</string>
+    <string name="survey_feature_explore_later">Để khám phá sau</string>
+
+    <!-- Onboarding survey: platform screen -->
+    <string name="survey_platform_title">Bạn tạo nội dung\ncho nền tảng nào?</string>
+    <string name="survey_platform_subtitle">Chúng tôi sẽ đề xuất định dạng và mẫu\nphù hợp với nền tảng của bạn.</string>
+    <string name="survey_platform_whatsapp">WhatsApp</string>
+    <string name="survey_platform_instagram">Instagram</string>
+    <string name="survey_platform_tiktok">Tiktok</string>
+    <string name="survey_platform_facebook">Facebook</string>
+    <string name="survey_platform_youtube">Youtube Short</string>
+    <string name="survey_platform_snapchat">Snapchat</string>
+    <string name="survey_platform_personally">Tôi giữ riêng tư</string>
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Luôn dẫn đầu với các mẫu mới sẵn sàng sử dụng và cập nhật hàng ngày.</string>
     <string name="onboarding_india_page3_title">Nhận mẫu xu hướng</string>
@@ -279,6 +301,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Trình Phát Nhạc</string>
     <string name="music_player_use_to_create">Dùng để Tạo Video</string>
+    <string name="music_player_try_it">Dùng thử</string>
     <string name="music_player_free_unlock">Mở Khóa Miễn Phí</string>
     <string name="picker_exit_confirm_title">Thoát khỏi chọn hình ảnh?</string>
     <string name="picker_exit_confirm_message">Bạn đã chọn hình ảnh. Nếu thoát bây giờ, các hình ảnh đã chọn sẽ bị hủy.</string>

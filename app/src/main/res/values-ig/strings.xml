@@ -23,6 +23,29 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Ọzọ</string>
     <string name="onboarding_get_started">Bido</string>
+
+    <!-- Onboarding survey: feature screen -->
+    <string name="survey_feature_title">Kedu atụmatụ ị na-ahọrọ?</string>
+    <string name="survey_feature_subtitle">Họrọ otu ma ọ bụ karịa iji hazie ndụmọdụ gị.</string>
+    <string name="survey_feature_ai_dance">Vidiyo Ịgba Egwu AI</string>
+    <string name="survey_feature_music_video">Ụdị Vidiyo Egwu</string>
+    <string name="survey_feature_ai_hair">Ịgbanwe Ntutu Isi AI</string>
+    <string name="survey_feature_lyric">Vidiyo Okwu Egwu</string>
+    <string name="survey_feature_ai_avatar">Avatar AI</string>
+    <string name="survey_feature_beat_sync">Mmetụta Mmekorita Beat</string>
+    <string name="survey_feature_explore_later">M ga-enyocha emechaa</string>
+
+    <!-- Onboarding survey: platform screen -->
+    <string name="survey_platform_title">Maka ikpo okwu ole\nị na-emepụta?</string>
+    <string name="survey_platform_subtitle">Anyị ga-akwado ụdị na ụdị\nakwadoro maka ikpo okwu gị.</string>
+    <string name="survey_platform_whatsapp">WhatsApp</string>
+    <string name="survey_platform_instagram">Instagram</string>
+    <string name="survey_platform_tiktok">Tiktok</string>
+    <string name="survey_platform_facebook">Facebook</string>
+    <string name="survey_platform_youtube">Youtube Short</string>
+    <string name="survey_platform_snapchat">Snapchat</string>
+    <string name="survey_platform_personally">M debere ya nzuzo</string>
+
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Gaa n\'ihu nke ụkpụrụ ọhụrụ a na-emegharị kwa ụbọchị, a na-emegharị kwa ụbọchị kwa ụbọchị.</string>
     <string name="onboarding_india_page3_title">Jidee ụkpụrụ na-ewu ewu</string>
@@ -289,6 +312,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Onye Egwu</string>
     <string name="music_player_use_to_create">Jiri Mepụta Video</string>
+    <string name="music_player_try_it">Nwaa ya</string>
     <string name="music_player_free_unlock">Mepee N\'efu</string>
 
     <!-- Music Picker -->

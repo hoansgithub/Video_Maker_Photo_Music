@@ -22,6 +22,29 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Tókàn</string>
     <string name="onboarding_get_started">Bẹ̀rẹ̀</string>
+
+    <!-- Onboarding survey: feature screen -->
+    <string name="survey_feature_title">Àwọn ẹya wo ni o fẹ́?</string>
+    <string name="survey_feature_subtitle">Yan ọkan tàbí jù bẹ́ẹ̀ lọ láti ṣe àkànṣe àwọn ìṣedéédé rẹ.</string>
+    <string name="survey_feature_ai_dance">Fídíò Ijó AI</string>
+    <string name="survey_feature_music_video">Àwọn Àwòṣe Fídíò Orin</string>
+    <string name="survey_feature_ai_hair">Ìyípadà Irun AI</string>
+    <string name="survey_feature_lyric">Àwọn Fídíò Ọ̀rọ̀ Orin</string>
+    <string name="survey_feature_ai_avatar">Avatar AI</string>
+    <string name="survey_feature_beat_sync">Ipa Mímúṣiṣẹ́pọ̀</string>
+    <string name="survey_feature_explore_later">Máa ṣàwárí nígbà mìíràn</string>
+
+    <!-- Onboarding survey: platform screen -->
+    <string name="survey_platform_title">Fún pẹpẹ wo ni o\nń ṣẹda fún?</string>
+    <string name="survey_platform_subtitle">A ó ṣe ìṣedéédé àwọn ọ̀nà àti àwọn àwòṣe\ntí a ṣe ní pàtàkì fún pẹpẹ rẹ.</string>
+    <string name="survey_platform_whatsapp">WhatsApp</string>
+    <string name="survey_platform_instagram">Instagram</string>
+    <string name="survey_platform_tiktok">Tiktok</string>
+    <string name="survey_platform_facebook">Facebook</string>
+    <string name="survey_platform_youtube">Youtube Short</string>
+    <string name="survey_platform_snapchat">Snapchat</string>
+    <string name="survey_platform_personally">Mo ń pa á mọ́</string>
+
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Dúró níwájú pẹ̀lú àwọn àpẹẹrẹ tuntun tí a ń ṣe àgbéyẹwọ̀ lójoojúmọ́.</string>
     <string name="onboarding_india_page3_title">Mu àwọn àpẹẹrẹ trending</string>
@@ -288,6 +311,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Olùṣe Orin</string>
     <string name="music_player_use_to_create">Lò Láti Ṣẹ Fídíò</string>
+    <string name="music_player_try_it">Gbìyànjú</string>
     <string name="music_player_free_unlock">Ṣí Ọfẹ</string>
 
     <!-- Music Picker -->
