@@ -3,8 +3,6 @@ package com.videomaker.aimusic.modules.language
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOutCubic
-import androidx.compose.animation.core.EaseInCubic
-import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -12,7 +10,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -42,6 +40,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -53,50 +52,46 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.foundation.layout.offset
-import androidx.compose.ui.draw.paint
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.math.roundToInt
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.SupportedLanguage
-import com.videomaker.aimusic.core.data.local.getAllLanguages
 import com.videomaker.aimusic.core.language.LanguageConfigService
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
-import org.koin.compose.koinInject
-import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.ui.theme.Black12
 import com.videomaker.aimusic.ui.theme.Black20
 import com.videomaker.aimusic.ui.theme.Gray700
 import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.ui.theme.White20
 import com.videomaker.aimusic.ui.theme.White40
-import co.alcheclub.lib.acccore.ads.compose.NativeAdView
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import com.videomaker.aimusic.BuildConfig
-import com.videomaker.aimusic.core.constants.AdPlacement
-import com.videomaker.aimusic.modules.featureselection.EVENT_GENRE_SHOW
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
+import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * LanguageSelectionScreen - Language picker for onboarding and settings.
@@ -112,16 +107,34 @@ fun LanguageSelectionScreen(
     onContinue: () -> Unit,
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {},
-    languageConfigService: LanguageConfigService = koinInject()
+    languageConfigService: LanguageConfigService = koinInject(),
+    languageManager: LanguageManager = koinInject()
 ) {
     LaunchedEffect(Unit) {
         Analytics.track(name = "language_show")
     }
     val density = LocalDensity.current
-    var selectedLanguage by remember { mutableStateOf<String?>(null) }
+    var selectedLanguage by remember {
+        mutableStateOf(
+            if (languageManager.isLanguageSelectionComplete()) {
+                languageManager.getSelectedLanguagePreference()
+            } else {
+                null
+            }
+        )
+    }
 
-    // Get sorted languages (country-based priority)
-    val languages = remember { languageConfigService.getSortedLanguages() }
+    val systemDefaultLanguage = SupportedLanguage(
+        code = LanguageManager.LANGUAGE_SYSTEM,
+        displayName = stringResource(R.string.language_system_default),
+        flag = "",
+        iconRes = R.drawable.ic_system_default
+    )
+
+    // Get sorted languages (country-based priority) and prepend System Default option
+    val languages = remember(systemDefaultLanguage) {
+        listOf(systemDefaultLanguage) + languageConfigService.getSortedLanguages()
+    }
 
     // Track bottom section height dynamically (button + ad)
     var bottomSectionHeight by remember { mutableStateOf(0) }
@@ -140,6 +153,55 @@ fun LanguageSelectionScreen(
     var showCursor by remember { mutableStateOf(false) }
     val languageCardOffsets = remember { mutableStateMapOf<String, Offset>() }
     var ctaButtonOffset by remember { mutableStateOf(Offset.Zero) }
+
+    val scrollState = rememberScrollState()
+
+    // 5-second inactivity auto-select "system" default
+    LaunchedEffect(interactionKey, selectedLanguage, scrollState.isScrollInProgress) {
+        if (selectedLanguage == null && !scrollState.isScrollInProgress) {
+            delay(5_000.milliseconds)
+            selectedLanguage = LanguageManager.LANGUAGE_SYSTEM
+            onLanguageSelected(LanguageManager.LANGUAGE_SYSTEM)
+            Analytics.track(
+                name = "language_select",
+                params = mapOf(
+                    "language" to LanguageManager.LANGUAGE_SYSTEM,
+                    "trigger" to "idle_auto_select"
+                )
+            )
+        }
+    }
+
+    // Auto-select "system" default when returning to the screen (e.g. after ad click)
+    var hasBeenPaused by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    hasBeenPaused = true
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    if (hasBeenPaused && selectedLanguage == null) {
+                        selectedLanguage = LanguageManager.LANGUAGE_SYSTEM
+                        onLanguageSelected(LanguageManager.LANGUAGE_SYSTEM)
+                        Analytics.track(
+                            name = "language_select",
+                            params = mapOf(
+                                "language" to LanguageManager.LANGUAGE_SYSTEM,
+                                "trigger" to "ad_return_auto_select"
+                            )
+                        )
+                    }
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     // Sequential delays ensuring EACH ad gets at least 0.5 second of display time
     // Timer starts on FIRST selection and does NOT reset on subsequent selections
@@ -209,7 +271,7 @@ fun LanguageSelectionScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                         .padding(horizontal = 24.dp)
                         .padding(
                             top = 16.dp,
@@ -426,11 +488,23 @@ private fun LanguageCard(
             .clickableSingle(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 18.dp)
     ) {
-        Text(
-            text = language.flag,
-            fontSize = 20.sp,
-            modifier = Modifier.padding(end = 14.dp)
-        )
+        if (language.iconRes != null) {
+            Icon(
+                painter = painterResource(language.iconRes),
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier
+                    .size(26.dp)
+                    .padding(end = 2.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+        } else {
+            Text(
+                text = language.flag,
+                fontSize = 20.sp,
+                modifier = Modifier.padding(end = 14.dp)
+            )
+        }
 
         Text(
             text = language.displayName,

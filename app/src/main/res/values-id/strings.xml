@@ -7,6 +7,7 @@
     <string name="ad_loading">Memuat iklan…</string>
 
     <!-- Language Selection -->
+    <string name="language_system_default">Default sistem</string>
     <string name="language_select_title">Pilih Bahasa</string>
     <string name="language_select_subtitle">Silakan pilih bahasa tampilan.</string>
     <string name="language_continue">Lanjutkan</string>
@@ -549,7 +550,7 @@
 
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">Selamat datang kembali!</string>
-    <string name="welcome_back_subtitle">Ini yang baru minggu ini:</string>
+    <string name="welcome_back_subtitle">Ini yang baru hari ini:</string>
     <string name="welcome_back_vibe_tags">• 8 lagu baru • 3 template populer 🚀</string>
     <string name="welcome_back_continue">Lanjutkan</string>
 

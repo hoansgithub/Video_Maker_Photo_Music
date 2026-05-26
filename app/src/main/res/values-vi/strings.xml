@@ -7,6 +7,7 @@
     <string name="ad_loading">Đang tải quảng cáo…</string>
 
     <!-- Language Selection -->
+    <string name="language_system_default">Mặc định hệ thống</string>
     <string name="language_select_title">Chọn Ngôn ngữ</string>
     <string name="language_select_subtitle">Vui lòng chọn ngôn ngữ hiển thị.</string>
     <string name="language_continue">Tiếp tục</string>
@@ -549,7 +550,7 @@
 
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">Chào mừng bạn trở lại!</string>
-    <string name="welcome_back_subtitle">Đây là những nội dung mới trong tuần này:</string>
+    <string name="welcome_back_subtitle">Đây là những nội dung mới hôm nay:</string>
     <string name="welcome_back_vibe_tags">• 8 bài hát mới • 3 mẫu thịnh hành 🚀</string>
     <string name="welcome_back_continue">Tiếp tục</string>
 

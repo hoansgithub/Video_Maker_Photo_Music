@@ -7,6 +7,7 @@
     <string name="ad_loading">Carregando anúncio…</string>
 
     <!-- Language Selection -->
+    <string name="language_system_default">Padrão do sistema</string>
     <string name="language_select_title">Escolher idiomas</string>
     <string name="language_select_subtitle">Selecione um idioma de exibição.</string>
     <string name="language_continue">Continuar</string>
@@ -549,7 +550,7 @@
 
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">Bem-vindo de volta!</string>
-    <string name="welcome_back_subtitle">Aqui está o que há de novo esta semana:</string>
+    <string name="welcome_back_subtitle">Aqui está o que há de novo hoje:</string>
     <string name="welcome_back_vibe_tags">• 8 novas músicas • 3 templates em alta 🚀</string>
     <string name="welcome_back_continue">Continuar</string>
 

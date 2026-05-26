@@ -10,6 +10,7 @@
     <string name="ad_loading">Ana lodi talla…</string>
 
     <!-- Language Selection -->
+    <string name="language_system_default">Tsarin asali</string>
     <string name="language_select_title">Zaɓi Harshe</string>
     <string name="language_select_subtitle">Da fatan za a zaɓi harshen nunawa.</string>
     <string name="language_continue">Ci gaba</string>
@@ -556,7 +557,7 @@
 
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">Barka da dawowa!</string>
-    <string name="welcome_back_subtitle">Ga abin da ke sabo a wannan makon:</string>
+    <string name="welcome_back_subtitle">Ga abin da ke sabo a yau:</string>
     <string name="welcome_back_vibe_tags">• Sabbin wakoki 8 • Shahararrun samfura 3 🚀</string>
     <string name="welcome_back_continue">Ci gaba</string>
 

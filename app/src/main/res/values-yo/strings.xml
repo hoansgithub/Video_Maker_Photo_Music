@@ -10,6 +10,7 @@
     <string name="ad_loading">Ń gba ìpolówó ẹrọ jẹ…</string>
 
     <!-- Language Selection -->
+    <string name="language_system_default">Àiyípèsè ètò</string>
     <string name="language_select_title">Yan Èdè</string>
     <string name="language_select_subtitle">Jọwọ yan èdè ìfihàn kan.</string>
     <string name="language_continue">Tẹ̀síwájú</string>
@@ -556,7 +557,7 @@
 
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">Kaabọ pada!</string>
-    <string name="welcome_back_subtitle">Eyi ni kini tuntun ni ọsẹ yii:</string>
+    <string name="welcome_back_subtitle">Eyi ni kini tuntun loni:</string>
     <string name="welcome_back_vibe_tags">• Awọn orin tuntun 8 • Awọn awoṣe olokiki 3 🚀</string>
     <string name="welcome_back_continue">Tẹsiwaju</string>
 

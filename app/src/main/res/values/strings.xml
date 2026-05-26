@@ -10,6 +10,7 @@
     <string name="ad_loading">Loading ad…</string>
 
     <!-- Language Selection -->
+    <string name="language_system_default">System default</string>
     <string name="language_select_title">Choose Languages</string>
     <string name="language_select_subtitle">Please select a display language.</string>
     <string name="language_continue">Continue</string>
@@ -565,7 +566,7 @@
 
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">Welcome back!</string>
-    <string name="welcome_back_subtitle">Here\'s what new this week:</string>
+    <string name="welcome_back_subtitle">Here\'s what\'s new today:</string>
     <string name="welcome_back_vibe_tags">• 8 new songs • 3 hot templates 🚀</string>
     <string name="welcome_back_continue">Continue</string>
 
