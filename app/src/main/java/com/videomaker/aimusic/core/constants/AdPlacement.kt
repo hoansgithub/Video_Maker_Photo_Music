@@ -354,6 +354,22 @@ object AdPlacement {
     const val NATIVE_ONBOARDING_FEATURE_SELECTION_ALT = "ad_native_onboarding_feature_selection_alt"
 
     /**
+     * Feature survey screen native (shown after language). Single placement with a waterfall:
+     * Pro_NA_high_select (primary) → Pro_NA_all_select (secondary). Reloaded on each selection tap.
+     * Ad units: ca-app-pub-7121075950716954/5275683453 → ca-app-pub-7121075950716954/3802133920
+     * Remote Config key: ad_native_onboarding_select
+     */
+    const val NATIVE_ONBOARDING_SELECT = "ad_native_onboarding_select"
+
+    /**
+     * Platform survey screen native (shown after the feature screen). Single placement waterfall:
+     * Pro_NA_high_social (primary) → Pro_NA_all_social (secondary). Reloaded on each selection tap.
+     * Ad units: ca-app-pub-7121075950716954/4700282623 → ca-app-pub-7121075950716954/3387200953
+     * Remote Config key: ad_native_onboarding_social
+     */
+    const val NATIVE_ONBOARDING_SOCIAL = "ad_native_onboarding_social"
+
+    /**
      * Native ad shown at bottom of onboarding page 1.
      * Timing: Loaded when onboarding page 1 is displayed.
      * First welcome page of the onboarding flow.
@@ -898,6 +914,8 @@ object AdPlacement {
         NATIVE_ONBOARDING_SELECT_MUSIC,
         NATIVE_ONBOARDING_SELECT_TPT,
         NATIVE_ONBOARDING_PERSONALIZING,
+        NATIVE_ONBOARDING_SELECT,
+        NATIVE_ONBOARDING_SOCIAL,
         REWARD_INTER_DOWNLOAD_VIDEO,
         REWARD_REMOVE_WATERMARK,
         REWARD_UNLOCK_QUALITY,

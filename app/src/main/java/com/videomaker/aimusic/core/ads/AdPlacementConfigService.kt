@@ -397,6 +397,28 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Feature survey screen native (shown after language). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_SELECT,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/5275683453",  // Pro_NA_high_select
+                "ca-app-pub-7121075950716954/3802133920"   // Pro_NA_all_select
+            ),
+            enabled = true
+        )
+
+        // Platform survey screen native (shown after the feature screen). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_SOCIAL,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4700282623",  // Pro_NA_high_social
+                "ca-app-pub-7121075950716954/3387200953"   // Pro_NA_all_social
+            ),
+            enabled = true
+        )
+
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_SELECT_MUSIC,
             layoutName = "native_big_bait_reversed",
