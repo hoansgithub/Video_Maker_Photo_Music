@@ -22,6 +22,29 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Selajengipun</string>
     <string name="onboarding_get_started">Mulai</string>
+
+    <!-- Onboarding survey: feature screen -->
+    <string name="survey_feature_title">Fitur apa sing sampeyan senengi?</string>
+    <string name="survey_feature_subtitle">Pilih siji utawa luwih kanggo nyetel rekomendasi sampeyan.</string>
+    <string name="survey_feature_ai_dance">Video Tari AI</string>
+    <string name="survey_feature_music_video">Templat Video Musik</string>
+    <string name="survey_feature_ai_hair">Ngganti Rambut AI</string>
+    <string name="survey_feature_lyric">Video Lirik</string>
+    <string name="survey_feature_ai_avatar">Avatar AI</string>
+    <string name="survey_feature_beat_sync">Efek Selaras Beat</string>
+    <string name="survey_feature_explore_later">Aku njelajah mengko</string>
+
+    <!-- Onboarding survey: platform screen -->
+    <string name="survey_platform_title">Kanggo platform apa\nsampeyan nggawe?</string>
+    <string name="survey_platform_subtitle">Kita bakal nyaranake format lan templat\nsing dioptimalake kanggo platform sampeyan.</string>
+    <string name="survey_platform_whatsapp">WhatsApp</string>
+    <string name="survey_platform_instagram">Instagram</string>
+    <string name="survey_platform_tiktok">Tiktok</string>
+    <string name="survey_platform_facebook">Facebook</string>
+    <string name="survey_platform_youtube">Youtube Short</string>
+    <string name="survey_platform_snapchat">Snapchat</string>
+    <string name="survey_platform_personally">Tak simpen dhewe</string>
+
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Tetep ngarep karo template seger sing di-update saben dina.</string>
     <string name="onboarding_india_page3_title">Tangkap template trending</string>
@@ -288,6 +311,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Pemutar Musik</string>
     <string name="music_player_use_to_create">Gunakake kanggo Gawe Video</string>
+    <string name="music_player_try_it">Coba</string>
     <string name="music_player_free_unlock">Mbukak Gratis</string>
 
     <!-- Music Picker -->

@@ -636,6 +636,9 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
         // Initialize VideoTemplateLibrary to load templates from assets
         VideoTemplateLibrary.init(this)
+
+        // Initialize BundledContentLibrary (timeout fallback for slow networks)
+        com.videomaker.aimusic.media.library.BundledContentLibrary.init(this)
     }
 
     private fun configureNotifications() {

@@ -19,6 +19,29 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Berikutnya</string>
     <string name="onboarding_get_started">Mulai</string>
+
+    <!-- Onboarding survey: feature screen -->
+    <string name="survey_feature_title">Fitur apa yang kamu sukai?</string>
+    <string name="survey_feature_subtitle">Pilih satu atau lebih untuk menyesuaikan rekomendasimu.</string>
+    <string name="survey_feature_ai_dance">Video Tari AI</string>
+    <string name="survey_feature_music_video">Templat Video Musik</string>
+    <string name="survey_feature_ai_hair">Tukar Rambut AI</string>
+    <string name="survey_feature_lyric">Video Lirik</string>
+    <string name="survey_feature_ai_avatar">Avatar AI</string>
+    <string name="survey_feature_beat_sync">Efek Selaras Beat</string>
+    <string name="survey_feature_explore_later">Saya akan jelajahi nanti</string>
+
+    <!-- Onboarding survey: platform screen -->
+    <string name="survey_platform_title">Untuk platform apa\nkamu membuat?</string>
+    <string name="survey_platform_subtitle">Kami akan merekomendasikan format dan templat\nyang dioptimalkan untuk platformmu.</string>
+    <string name="survey_platform_whatsapp">WhatsApp</string>
+    <string name="survey_platform_instagram">Instagram</string>
+    <string name="survey_platform_tiktok">Tiktok</string>
+    <string name="survey_platform_facebook">Facebook</string>
+    <string name="survey_platform_youtube">Youtube Short</string>
+    <string name="survey_platform_snapchat">Snapchat</string>
+    <string name="survey_platform_personally">Saya simpan untuk pribadi</string>
+
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Tetaplah terdepan dengan template segar yang siap digunakan dan diperbarui setiap hari.</string>
     <string name="onboarding_india_page3_title">Dapatkan template trending</string>
@@ -279,6 +302,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Pemutar Musik</string>
     <string name="music_player_use_to_create">Gunakan untuk Buat Video</string>
+    <string name="music_player_try_it">Coba</string>
     <string name="music_player_free_unlock">Buka Gratis</string>
     <string name="picker_exit_confirm_title">Keluar dari pemilihan gambar?</string>
     <string name="picker_exit_confirm_message">Anda telah memilih gambar. Jika keluar sekarang, gambar yang dipilih akan dibuang.</string>

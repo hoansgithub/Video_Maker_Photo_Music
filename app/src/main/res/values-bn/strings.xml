@@ -22,6 +22,29 @@
     <!-- Onboarding -->
     <string name="onboarding_next">পরবর্তী</string>
     <string name="onboarding_get_started">শুরু করুন</string>
+
+    <!-- Onboarding survey: feature screen -->
+    <string name="survey_feature_title">আপনি কোন ফিচারগুলো পছন্দ করেন?</string>
+    <string name="survey_feature_subtitle">আপনার সুপারিশ কাস্টমাইজ করতে এক বা একাধিক বেছে নিন।</string>
+    <string name="survey_feature_ai_dance">AI ডান্স ভিডিও</string>
+    <string name="survey_feature_music_video">মিউজিক ভিডিও টেমপ্লেট</string>
+    <string name="survey_feature_ai_hair">AI হেয়ার সোয়াপ</string>
+    <string name="survey_feature_lyric">লিরিক ভিডিও</string>
+    <string name="survey_feature_ai_avatar">AI অবতার</string>
+    <string name="survey_feature_beat_sync">বিট সিঙ্ক ইফেক্ট</string>
+    <string name="survey_feature_explore_later">পরে দেখব</string>
+
+    <!-- Onboarding survey: platform screen -->
+    <string name="survey_platform_title">আপনি কোন প্ল্যাটফর্মের জন্য\nতৈরি করছেন?</string>
+    <string name="survey_platform_subtitle">আমরা আপনার প্ল্যাটফর্মের জন্য\nউপযোগী ফরম্যাট ও টেমপ্লেট সুপারিশ করব।</string>
+    <string name="survey_platform_whatsapp">WhatsApp</string>
+    <string name="survey_platform_instagram">Instagram</string>
+    <string name="survey_platform_tiktok">Tiktok</string>
+    <string name="survey_platform_facebook">Facebook</string>
+    <string name="survey_platform_youtube">Youtube Short</string>
+    <string name="survey_platform_snapchat">Snapchat</string>
+    <string name="survey_platform_personally">আমি ব্যক্তিগতভাবে রাখি</string>
+
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">প্রতিদিন আপডেট হওয় তাজা, ব্যবহারের জন্য প্রস্তুত টেমপ্লেট দিয়ে এগিয়ে থাকুন।</string>
     <string name="onboarding_india_page3_title">ট্রেন্ডিং টেমপ্লেট ধরুন</string>
@@ -288,6 +311,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">মিউজিক প্লেয়ার</string>
     <string name="music_player_use_to_create">ভিডিও তৈরিতে ব্যবহার করুন</string>
+    <string name="music_player_try_it">চেষ্টা করুন</string>
     <string name="music_player_free_unlock">ফ্রি আনলক</string>
 
     <!-- Music Picker -->

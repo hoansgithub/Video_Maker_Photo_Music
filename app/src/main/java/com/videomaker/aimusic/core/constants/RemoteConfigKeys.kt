@@ -116,6 +116,13 @@ object RemoteConfigKeys {
     const val ONBOARDING_TEMPLATE_PICK_ENABLED = "onboarding_template_pick_enabled"
 
     // ============================================
+    // ONBOARDING SURVEY SCREENS (after language) — AB test on/off per screen
+    // ============================================
+
+    const val ONBOARDING_FEATURE_SELECTION_ENABLED = "onboarding_feature_selection_enabled"
+    const val ONBOARDING_PLATFORM_SELECTION_ENABLED = "onboarding_platform_selection_enabled"
+
+    // ============================================
     // TRENDING POPUP
     // ============================================
 

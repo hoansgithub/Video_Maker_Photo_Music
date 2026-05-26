@@ -22,6 +22,29 @@
     <!-- Onboarding -->
     <string name="onboarding_next">Weiter</string>
     <string name="onboarding_get_started">Loslegen</string>
+
+    <!-- Onboarding survey: feature screen -->
+    <string name="survey_feature_title">Welche Funktionen bevorzugst du?</string>
+    <string name="survey_feature_subtitle">Wähle eine oder mehrere, um deine Empfehlungen anzupassen.</string>
+    <string name="survey_feature_ai_dance">KI-Tanzvideo</string>
+    <string name="survey_feature_music_video">Musikvideo-Vorlagen</string>
+    <string name="survey_feature_ai_hair">KI-Haarwechsel</string>
+    <string name="survey_feature_lyric">Lyric-Videos</string>
+    <string name="survey_feature_ai_avatar">KI-Avatar</string>
+    <string name="survey_feature_beat_sync">Beat-Sync-Effekt</string>
+    <string name="survey_feature_explore_later">Ich schaue später</string>
+
+    <!-- Onboarding survey: platform screen -->
+    <string name="survey_platform_title">Für welche Plattform\nerstellst du?</string>
+    <string name="survey_platform_subtitle">Wir empfehlen Formate und Vorlagen,\ndie für deine Plattformen optimiert sind.</string>
+    <string name="survey_platform_whatsapp">WhatsApp</string>
+    <string name="survey_platform_instagram">Instagram</string>
+    <string name="survey_platform_tiktok">Tiktok</string>
+    <string name="survey_platform_facebook">Facebook</string>
+    <string name="survey_platform_youtube">Youtube Short</string>
+    <string name="survey_platform_snapchat">Snapchat</string>
+    <string name="survey_platform_personally">Ich behalte es privat</string>
+
     <!-- India-specific onboarding -->
     <string name="onboarding_india_page1_subtitle">Bleib mit frischen, einsatzbereiten Vorlagen, die täglich aktualisiert werden, einen Schritt voraus.</string>
     <string name="onboarding_india_page3_title">Trendige Vorlagen entdecken</string>
@@ -288,6 +311,7 @@
     <!-- Music Player Bottom Sheet -->
     <string name="music_player_title">Musik-Player</string>
     <string name="music_player_use_to_create">Zur Videoerstellung verwenden</string>
+    <string name="music_player_try_it">Ausprobieren</string>
     <string name="music_player_free_unlock">Kostenlos freischalten</string>
 
     <!-- Music Picker -->

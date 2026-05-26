@@ -17,6 +17,16 @@
     <value>5</value>
   </entry>
 
+  <!-- Onboarding Survey Screens (after language) - AB test on/off per screen -->
+  <entry>
+    <key>onboarding_feature_selection_enabled</key>
+    <value>true</value>
+  </entry>
+  <entry>
+    <key>onboarding_platform_selection_enabled</key>
+    <value>true</value>
+  </entry>
+
   <!-- Notification Config -->
   <entry>
     <key>notification_schedule_config</key>
@@ -95,6 +105,14 @@
   <entry>
     <key>ad_native_onboarding_feature_selection_alt</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/3059380976","enabled":true},{"id":"ca-app-pub-7121075950716954/5685544316","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_onboarding_select</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/5275683453","enabled":true},{"id":"ca-app-pub-7121075950716954/3802133920","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_onboarding_social</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/4700282623","enabled":true},{"id":"ca-app-pub-7121075950716954/3387200953","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
     <key>ad_native_onboarding_page1</key>

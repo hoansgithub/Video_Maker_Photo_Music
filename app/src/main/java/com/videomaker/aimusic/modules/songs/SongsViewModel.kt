@@ -10,13 +10,16 @@ import com.videomaker.aimusic.domain.usecase.ClearSongCacheUseCase
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
 import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.GetWeeklyRankingSongsUseCase
+import com.videomaker.aimusic.media.library.BundledContentLibrary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 // ============================================
 // SECTION STATE — per-section loading indicator
@@ -118,9 +121,9 @@ class SongsViewModel(
 
     // Each section loads independently — UI shows shimmer per section
     private fun loadAll() {
-        viewModelScope.launch(Dispatchers.IO) { loadSuggested() }
-        viewModelScope.launch(Dispatchers.IO) { loadRanking() }
-        viewModelScope.launch(Dispatchers.IO) { loadStations() }
+        loadSuggested()
+        loadRanking()
+        loadStations()
         viewModelScope.launch(Dispatchers.IO) { loadGenres() }
     }
 
@@ -132,11 +135,11 @@ class SongsViewModel(
             try {
                 clearSongCacheUseCase()  // wipe disk cache before re-fetching
                 coroutineScope {
-                    launch(Dispatchers.IO) { loadSuggested() }
-                    launch(Dispatchers.IO) { loadRanking() }
-                    launch(Dispatchers.IO) { loadStations() }
                     launch(Dispatchers.IO) { loadGenres() }
                 }
+                loadSuggested()
+                loadRanking()
+                loadStations()
             } finally {
                 _isRefreshing.value = false
             }
@@ -156,7 +159,7 @@ class SongsViewModel(
         _selectedGenre.value = genre
         // Cancel in-flight station load to prevent stale offset corruption
         stationJob?.cancel()
-        stationJob = viewModelScope.launch(Dispatchers.IO) { loadStations() }
+        stationJob = viewModelScope.launch(Dispatchers.IO) { loadStationsInternal() }
     }
 
     /** Called by UI when user scrolls near the end of the station list. */
@@ -170,21 +173,24 @@ class SongsViewModel(
         viewModelScope.launch(Dispatchers.IO) { loadMoreStationsInternal() }
     }
 
-    private suspend fun loadSuggested() {
-        _suggestedState.value = SectionState.Loading
-        getSuggestedSongsUseCase(limit = 10)
-            .onSuccess { _suggestedState.value = SectionState.Success(it) }
-            .onFailure { _suggestedState.value = SectionState.Error(it.message ?: "Failed to load") }
+    private fun loadSuggested() {
+        loadSectionWithGeoFallback(_suggestedState) {
+            getSuggestedSongsUseCase(limit = 10)
+        }
     }
 
-    private suspend fun loadRanking() {
-        _rankingState.value = SectionState.Loading
-        getWeeklyRankingSongsUseCase(limit = 9)
-            .onSuccess { _rankingState.value = SectionState.Success(it) }
-            .onFailure { _rankingState.value = SectionState.Error(it.message ?: "Failed to load") }
+    private fun loadRanking() {
+        loadSectionWithGeoFallback(_rankingState) {
+            getWeeklyRankingSongsUseCase(limit = 9)
+        }
     }
 
-    private suspend fun loadStations() {
+    private fun loadStations() {
+        stationJob?.cancel()
+        stationJob = viewModelScope.launch(Dispatchers.IO) { loadStationsInternal() }
+    }
+
+    private suspend fun loadStationsInternal() {
         _stationState.value = SectionState.Loading
         stationOffset = 0
         stationHasMore = true
@@ -193,9 +199,9 @@ class SongsViewModel(
             .onSuccess { songs ->
                 stationOffset = songs.size
                 stationHasMore = songs.size >= STATION_PAGE_SIZE && stationOffset < STATION_MAX_ITEMS
-                _stationState.value = SectionState.Success(songs)
+                _stationState.value = SectionState.Success(songs.ifEmpty { defaultSongs() })
             }
-            .onFailure { _stationState.value = SectionState.Error(it.message ?: "Failed to load") }
+            .onFailure { _stationState.value = SectionState.Success(defaultSongs()) }
     }
 
     private suspend fun loadMoreStationsInternal() {
@@ -219,6 +225,43 @@ class SongsViewModel(
         val genre = _selectedGenre.value
         return if (genre != null) listOf(genre) else emptyList()
     }
+
+    /**
+     * Geo timeout fallback:
+     * 1. Kick off the real (region-aware) request.
+     * 2. Wait up to [GEO_TIMEOUT_MS]. If it returns in time, render it directly.
+     * 3. On timeout, render the bundled GL defaults so the section never appears empty,
+     *    keep awaiting the real result, then swap in once it arrives.
+     */
+    private fun loadSectionWithGeoFallback(
+        state: MutableStateFlow<SectionState<List<MusicSong>>>,
+        load: suspend () -> Result<List<MusicSong>>
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            state.value = SectionState.Loading
+            val deferred = async { load() }
+            val initial = withTimeoutOrNull(GEO_TIMEOUT_MS) { deferred.await() }
+
+            if (initial != null) {
+                initial
+                    .onSuccess {
+                        state.value = SectionState.Success(it.ifEmpty { defaultSongs() })
+                    }
+                    .onFailure {
+                        state.value = SectionState.Success(defaultSongs())
+                    }
+                return@launch
+            }
+
+            // Timeout — show bundled defaults now, keep awaiting the real result.
+            state.value = SectionState.Success(defaultSongs())
+            deferred.await().onSuccess { real ->
+                if (real.isNotEmpty()) state.value = SectionState.Success(real)
+            }
+        }
+    }
+
+    private fun defaultSongs(): List<MusicSong> = BundledContentLibrary.getDefaultSongs()
 
     private suspend fun loadGenres() {
         _genresState.value = SectionState.Loading
@@ -279,8 +322,10 @@ class SongsViewModel(
         _navigationEvent.value = null
     }
 
-    companion object {
-        private const val STATION_PAGE_SIZE = 15
-        private const val STATION_MAX_ITEMS = 100
+    private companion object {
+        const val STATION_PAGE_SIZE = 15
+        const val STATION_MAX_ITEMS = 100
+        /** Max time we wait for region-aware content before showing bundled GL defaults. */
+        const val GEO_TIMEOUT_MS = 5_000L
     }
 }

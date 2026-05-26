@@ -885,6 +885,13 @@ val presentationModule = module {
         )
     }
 
+    // Onboarding Survey (feature + platform) ViewModel
+    viewModel {
+        com.videomaker.aimusic.modules.onboardingsurvey.OnboardingSurveyViewModel(
+            remoteConfig = get()
+        )
+    }
+
     // Song Search ViewModel
     viewModel {
         SongSearchViewModel(
