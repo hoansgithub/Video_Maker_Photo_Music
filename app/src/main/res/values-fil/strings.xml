@@ -7,6 +7,7 @@
     <string name="ad_loading">Nilo-load ang ad…</string>
 
     <!-- Language Selection -->
+    <string name="language_system_default">Default ng system</string>
     <string name="language_select_title">Pumili ng mga Wika</string>
     <string name="language_select_subtitle">Pakipili ang wikang ipapakita.</string>
     <string name="language_continue">Magpatuloy</string>
@@ -549,7 +550,7 @@
 
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">Maligayang pagbabalik!</string>
-    <string name="welcome_back_subtitle">Heto ang bago ngayong linggo:</string>
+    <string name="welcome_back_subtitle">Heto ang bago ngayon:</string>
     <string name="welcome_back_vibe_tags">• 8 bagong kanta • 3 sikat na template 🚀</string>
     <string name="welcome_back_continue">Ipatuloy</string>
 

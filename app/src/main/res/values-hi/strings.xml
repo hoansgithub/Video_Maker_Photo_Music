@@ -7,6 +7,7 @@
     <string name="ad_loading">विज्ञापन लोड हो रहा है…</string>
 
     <!-- Language Selection -->
+    <string name="language_system_default">सिस्टम डिफ़ॉल्ट</string>
     <string name="language_select_title">भाषाएँ चुनें</string>
     <string name="language_select_subtitle">कृपया प्रदर्शन भाषा चुनें।</string>
     <string name="language_continue">जारी रखें</string>
@@ -551,7 +552,7 @@
 
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">आपका स्वागत है!</string>
-    <string name="welcome_back_subtitle">इस सप्ताह नया क्या है:</string>
+    <string name="welcome_back_subtitle">आज नया क्या है:</string>
     <string name="welcome_back_vibe_tags">• 8 नए गाने • 3 लोकप्रिय टेम्पलेट 🚀</string>
     <string name="welcome_back_continue">जारी रखें</string>
 

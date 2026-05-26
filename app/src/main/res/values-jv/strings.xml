@@ -10,6 +10,7 @@
     <string name="ad_loading">Ngunggah iklan…</string>
 
     <!-- Language Selection -->
+    <string name="language_system_default">Default sistem</string>
     <string name="language_select_title">Pilih Basa</string>
     <string name="language_select_subtitle">Pilih basa tampilan.</string>
     <string name="language_continue">Lanjutake</string>
@@ -556,7 +557,7 @@
 
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">Sugeng rawuh bali!</string>
-    <string name="welcome_back_subtitle">Iki sing anyar minggu iki:</string>
+    <string name="welcome_back_subtitle">Iki sing anyar dina iki:</string>
     <string name="welcome_back_vibe_tags">• 8 lagu anyar • 3 template populer 🚀</string>
     <string name="welcome_back_continue">Terusake</string>
 

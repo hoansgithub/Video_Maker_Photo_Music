@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
+import androidx.core.os.ConfigurationCompat
 import androidx.core.os.LocaleListCompat
 
 /**
@@ -47,6 +48,7 @@ class LanguageManager(private val context: Context) {
         private const val KEY_GENRE_SELECTION_PENDING = "genre_selection_pending"
 
         // Supported language codes
+        const val LANGUAGE_SYSTEM = "system"
         const val LANGUAGE_ENGLISH = "en"
         const val LANGUAGE_PORTUGUESE = "pt"
         const val LANGUAGE_SPANISH = "es"
@@ -66,6 +68,7 @@ class LanguageManager(private val context: Context) {
         const val LANGUAGE_IGBO = "ig"
 
         val SUPPORTED_LANGUAGES = listOf(
+            LANGUAGE_SYSTEM,
             LANGUAGE_ENGLISH,
             LANGUAGE_PORTUGUESE,
             LANGUAGE_SPANISH,
@@ -103,6 +106,14 @@ class LanguageManager(private val context: Context) {
     }
 
     /**
+     * Get the raw saved language preference (e.g. "system", "en", "vi").
+     * Does not resolve "system" or system locales.
+     */
+    fun getSelectedLanguagePreference(): String {
+        return prefs.getString(KEY_SELECTED_LANGUAGE, LANGUAGE_SYSTEM) ?: LANGUAGE_SYSTEM
+    }
+
+    /**
      * Get the currently selected language code.
      * Prefers AppCompat's stored locale (single source of truth with autoStoreLocales=true),
      * falls back to SharedPreferences for first-run scenarios.
@@ -113,11 +124,36 @@ class LanguageManager(private val context: Context) {
             val localeTag = appLocales[0]?.toLanguageTag() ?: LANGUAGE_ENGLISH
             // Normalize locale tag (e.g. "en-US" → "en", "fil" → "fil")
             val languageCode = localeTag.split("-", "_").firstOrNull() ?: LANGUAGE_ENGLISH
-            if (languageCode in SUPPORTED_LANGUAGES) {
+            if (languageCode in SUPPORTED_LANGUAGES && languageCode != LANGUAGE_SYSTEM) {
                 return languageCode
             }
         }
-        return prefs.getString(KEY_SELECTED_LANGUAGE, LANGUAGE_ENGLISH) ?: LANGUAGE_ENGLISH
+        val saved = prefs.getString(KEY_SELECTED_LANGUAGE, LANGUAGE_SYSTEM) ?: LANGUAGE_SYSTEM
+        if (saved == LANGUAGE_SYSTEM) {
+            return getDeviceLanguage()
+        }
+        return saved
+    }
+
+    /**
+     * Get device's current system language, normalized and checked against supported languages.
+     */
+    fun getDeviceLanguage(): String {
+        val config = context.resources.configuration
+        val locale = ConfigurationCompat.getLocales(config).get(0)
+        val rawCode = locale?.language ?: LANGUAGE_ENGLISH
+        val deviceCode = when (rawCode) {
+            "tl" -> "fil"
+            "in" -> "id"
+            else -> rawCode
+        }
+        // Check if device language is in our supported list (excluding "system" itself)
+        val cleanSupportedList = SUPPORTED_LANGUAGES.filter { it != LANGUAGE_SYSTEM }
+        return if (deviceCode in cleanSupportedList) {
+            deviceCode
+        } else {
+            LANGUAGE_ENGLISH
+        }
     }
 
     /**
@@ -136,8 +172,12 @@ class LanguageManager(private val context: Context) {
      * Call this right before navigating away so the next Activity starts with the new locale.
      */
     fun applyLanguage() {
-        val savedLanguage = prefs.getString(KEY_SELECTED_LANGUAGE, LANGUAGE_ENGLISH) ?: LANGUAGE_ENGLISH
-        val localeList = LocaleListCompat.forLanguageTags(savedLanguage)
+        val savedLanguage = prefs.getString(KEY_SELECTED_LANGUAGE, LANGUAGE_SYSTEM) ?: LANGUAGE_SYSTEM
+        val localeList = if (savedLanguage == LANGUAGE_SYSTEM) {
+            LocaleListCompat.getEmptyLocaleList()
+        } else {
+            LocaleListCompat.forLanguageTags(savedLanguage)
+        }
         AppCompatDelegate.setApplicationLocales(localeList)
     }
 
@@ -172,7 +212,8 @@ data class SupportedLanguage(
     val code: String,
     val displayName: String,
     val flag: String,
-    val isRtl: Boolean = false
+    val isRtl: Boolean = false,
+    val iconRes: Int? = null
 )
 
 /**

@@ -11,6 +11,7 @@
     <string name="ad_loading">Na-ebugharị mgbasa ozi…</string>
 
     <!-- Language Selection -->
+    <string name="language_system_default">Nhọrọ sistemụ</string>
     <string name="language_select_title">Họrọ Asụsụ</string>
     <string name="language_select_subtitle">Biko họrọ asụsụ nke ngosipụta.</string>
     <string name="language_continue">Gaa n\'ihu</string>
@@ -557,7 +558,7 @@
 
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">Nnọọ ọzọ!</string>
-    <string name="welcome_back_subtitle">Ihe ọhụrụ n\'izu a:</string>
+    <string name="welcome_back_subtitle">Ihe ọhụrụ taa:</string>
     <string name="welcome_back_vibe_tags">• Egwu ọhụrụ 8 • 3 template a ma ama 🚀</string>
     <string name="welcome_back_continue">Gaa n\'ihu</string>
 
