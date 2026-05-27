@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
-import coil.compose.SubcomposeAsyncImageContent
 import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -163,14 +162,12 @@ fun TemplateCard(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
                     loading = {
-                        // Show shimmer while loading
                         ShimmerPlaceholder(
                             modifier = Modifier.fillMaxSize(),
                             cornerRadius = 0.dp
                         )
                     },
-                    error = { errorState ->
-                        // Show friendly placeholder on error (auto-retrying up to 3 times)
+                    error = {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -184,10 +181,6 @@ fun TemplateCard(
                                 tint = Gray600
                             )
                         }
-                    },
-                    success = {
-                        // Show the loaded image
-                        SubcomposeAsyncImageContent()
                     }
                 )
             } else {
@@ -261,6 +254,7 @@ fun TemplateCard(
 
             // View count badge — bottom-end (shows viewCount, not useCount)
             if (viewCount > 0) {
+                val formattedViewCount = remember(viewCount) { NumberFormatter.formatCount(viewCount) }
                 Row(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -278,7 +272,7 @@ fun TemplateCard(
                         modifier = Modifier.size(10.dp)
                     )
                     Text(
-                        text = NumberFormatter.formatCount(viewCount),
+                        text = formattedViewCount,
                         fontSize = 10.sp,
                         color = Gray200,
                         maxLines = 1

@@ -190,7 +190,7 @@ class GalleryViewModel(
 
                 // Async children of this launch; they outlive the withTimeoutOrNull below.
                 val vibeTagsDeferred = async { templateRepository.getVibeTags().getOrElse { emptyList() } }
-                val templatesDeferred = async { templateRepository.getTemplates(limit = MAX_ITEMS, offset = 0).getOrElse { emptyList() } }
+                val templatesDeferred = async { templateRepository.getTemplates(limit = PAGE_SIZE, offset = 0).getOrElse { emptyList() } }
                 val featuredDeferred = async { templateRepository.getFeaturedTemplates(limit = 6).getOrElse { emptyList() } }
 
                 // Geo-aware path: wait up to 5s for the main grid. If it returns in time,
@@ -209,6 +209,8 @@ class GalleryViewModel(
                         featuredTemplates = featuredTemplates
                     )
                     preloadCarouselImages(trendingSongs)
+                    preloadFeaturedThumbnails(featuredTemplates)
+                    preloadGridThumbnails(templatesInitial)
                     return@launch
                 }
 
@@ -233,10 +235,12 @@ class GalleryViewModel(
                         vibeTags = realVibeTags,
                         templateListState = TemplateListState.Success(
                             templates = reordered,
-                            hasMore = realTemplates.size >= MAX_ITEMS && realTemplates.size < MAX_ITEMS
+                            hasMore = realTemplates.size >= PAGE_SIZE
                         ),
                         featuredTemplates = realFeatured
                     )
+                    preloadFeaturedThumbnails(realFeatured)
+                    preloadGridThumbnails(reordered)
                 }
             } catch (e: Exception) {
                 _uiState.value = GalleryUiState.Error(e.message ?: "Failed to load gallery data")
@@ -257,7 +261,7 @@ class GalleryViewModel(
         selectedVibeTagId = null,
         templateListState = TemplateListState.Success(
             templates = reorderBySeenStatus(templates),
-            hasMore = templates.size >= MAX_ITEMS && templates.size < MAX_ITEMS
+            hasMore = templates.size >= PAGE_SIZE
         ),
         featuredTemplates = featuredTemplates
     )
@@ -285,7 +289,7 @@ class GalleryViewModel(
             _uiState.value = updated.copy(
                 templateListState = TemplateListState.Success(
                     templates = reordered,
-                    hasMore = templates.size >= MAX_ITEMS && templates.size < MAX_ITEMS
+                    hasMore = templates.size >= PAGE_SIZE
                 )
             )
         }
@@ -361,6 +365,24 @@ class GalleryViewModel(
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .memoryCacheKey("featured_${template.id}")
                     .diskCacheKey("featured_${template.id}")
+                    .build()
+                imageLoader.enqueue(request)
+            }
+        }
+    }
+
+    private fun preloadGridThumbnails(templates: List<VideoTemplate>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            // Preload first ~6 visible templates (2 columns × ~3 visible rows)
+            templates.take(6).forEach { template ->
+                if (template.thumbnailPath.isEmpty()) return@forEach
+                val request = ImageRequest.Builder(application)
+                    .data(template.thumbnailPath)
+                    .size(Size(200, 350))
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .memoryCacheKey("grid_${template.thumbnailPath}_anim")
+                    .diskCacheKey("grid_${template.thumbnailPath}")
                     .build()
                 imageLoader.enqueue(request)
             }
