@@ -470,7 +470,7 @@ fun TemplatePreviewerScreen(
                     eventLocation = eventLocation,
                     onNavigateBack = viewModel::onNavigateBack,
                     onFirstVideoReady = { firstVideoReady = true },
-                    onRefresh = viewModel::refresh
+                    onRefresh = { excludeIds -> viewModel.refresh(excludeIds) }
                 )
 
                 // Show loading overlay on top until ad display completes
@@ -655,14 +655,21 @@ private fun TemplatePreviewerReadyContent(
     eventLocation: String = AnalyticsEvent.Value.Location.PREVIEW_SWIPE,
     onNavigateBack: () -> Unit,
     onFirstVideoReady: () -> Unit,
-    onRefresh: () -> Unit = {}
+    onRefresh: (excludeIds: Set<String>) -> Unit = {}
 ) {
+    // Track viewed template IDs for refresh exclusion logic
+    var viewedTemplateIds by remember { mutableStateOf(setOf<String>()) }
+    val showRefreshIcon = viewedTemplateIds.size >= 5
+
     var showRefreshTooltip by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        delay(800)
-        showRefreshTooltip = true
-        delay(6000)
-        showRefreshTooltip = false
+    // Show tooltip only after the refresh icon becomes visible
+    LaunchedEffect(showRefreshIcon) {
+        if (showRefreshIcon) {
+            delay(800)
+            showRefreshTooltip = true
+            delay(6000)
+            showRefreshTooltip = false
+        }
     }
     val templates = state.templates
     val screenSessionId = remember { Analytics.newScreenSessionId() }
@@ -689,10 +696,23 @@ private fun TemplatePreviewerReadyContent(
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .drop(1)
-            .collect {
+            .collect { settledPage ->
+                // Track viewed template IDs for refresh exclusion
+                val template = templates.getOrNull(settledPage % templates.size)
+                if (template != null) {
+                    viewedTemplateIds = viewedTemplateIds + template.id
+                }
                 onSwipeTemplate()
-                onPageChanged(it)
+                onPageChanged(settledPage)
             }
+    }
+
+    // Track initial template as viewed
+    LaunchedEffect(Unit) {
+        val initialTemplate = templates.getOrNull(pagerState.settledPage % templates.size)
+        if (initialTemplate != null) {
+            viewedTemplateIds = viewedTemplateIds + initialTemplate.id
+        }
     }
 
     LaunchedEffect(pagerState, templates, screenSessionId) {
@@ -870,26 +890,38 @@ private fun TemplatePreviewerReadyContent(
                 }
             }
 
-            IconButton(
-                onClick = {
-                    onRefresh()
-                    showRefreshTooltip = false
-                },
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(color = Color.Black.copy(alpha = 0.4f), shape = CircleShape)
+            // Only show refresh icon after viewing 5+ templates
+            AnimatedVisibility(
+                visible = showRefreshIcon,
+                enter = fadeIn(),
+                exit = fadeOut()
             ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Refresh",
-                    tint = Color.White
-                )
+                IconButton(
+                    onClick = {
+                        onRefresh(viewedTemplateIds)
+                        showRefreshTooltip = false
+                    },
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(color = Color.Black.copy(alpha = 0.4f), shape = CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Refresh",
+                        tint = Color.White
+                    )
+                }
+            }
+
+            // Invisible spacer to keep the back button / title centered when refresh icon is hidden
+            if (!showRefreshIcon) {
+                Spacer(modifier = Modifier.size(48.dp))
             }
         }
 
         // Custom Tooltip Popup pointing directly UP to the Refresh Icon
-        androidx.compose.animation.AnimatedVisibility(
-            visible = showRefreshTooltip,
+        AnimatedVisibility(
+            visible = showRefreshTooltip && showRefreshIcon,
             enter = fadeIn() + expandVertically(),
             exit = fadeOut() + shrinkVertically(),
             modifier = Modifier
@@ -955,7 +987,7 @@ private fun TemplatePreviewerReadyContent(
                             onClick = { offset ->
                                 annotatedText.getStringAnnotations(tag = "refresh", start = offset, end = offset)
                                     .firstOrNull()?.let {
-                                        onRefresh()
+                                        onRefresh(viewedTemplateIds)
                                         showRefreshTooltip = false
                                     }
                             }

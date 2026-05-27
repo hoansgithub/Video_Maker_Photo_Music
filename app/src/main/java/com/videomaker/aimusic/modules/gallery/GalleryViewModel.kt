@@ -12,6 +12,7 @@ import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.TemplateRepository
+import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.media.library.BundledContentLibrary
 import com.videomaker.aimusic.media.library.MusicSongLibrary
 import kotlinx.coroutines.Dispatchers
@@ -79,7 +80,8 @@ class GalleryViewModel(
     private val imageLoader: ImageLoader,
     private val templateRepository: TemplateRepository,
     private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
-    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
+    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
     /** Called by HomeScreen when the Gallery tab settles into focus. */
@@ -119,14 +121,63 @@ class GalleryViewModel(
     }
 
     fun shuffle() {
-        val current = _uiState.value as? GalleryUiState.Success ?: return
-        val listState = current.templateListState as? TemplateListState.Success ?: return
-        
-        val shuffledTemplates = listState.templates.shuffled()
-        
+        android.util.Log.d("GalleryViewModel", "shuffle() triggered")
+        val current = _uiState.value as? GalleryUiState.Success ?: run {
+            android.util.Log.e("GalleryViewModel", "shuffle failed: uiState is not Success")
+            return
+        }
+        val listState = current.templateListState as? TemplateListState.Success ?: run {
+            android.util.Log.e("GalleryViewModel", "shuffle failed: templateListState is not Success")
+            return
+        }
+
+        // 1) Mark the currently visible templates as "seen" (so they won't be prioritized anymore)
+        val visibleIds = listState.templates.take(PAGE_SIZE).map { it.id }.toSet()
+        android.util.Log.d("GalleryViewModel", "shuffle: marking as seen ids=$visibleIds")
+        preferencesManager.addSeenTemplateIds(visibleIds)
+
+        // 2) Show loading state on the template grid
         _uiState.value = current.copy(
-            templateListState = listState.copy(templates = shuffledTemplates)
+            templateListState = TemplateListState.Loading
         )
+
+        // 3) Fetch a fresh batch from repository, then partition by seen status (new first)
+        viewModelScope.launch {
+            try {
+                val result = if (current.selectedVibeTagId == null) {
+                    templateRepository.getTemplates(limit = MAX_ITEMS, offset = 0)
+                } else {
+                    templateRepository.getTemplatesByVibeTag(
+                        tag = current.selectedVibeTagId,
+                        limit = MAX_ITEMS,
+                        offset = 0
+                    )
+                }
+
+                val allTemplates = result.getOrElse { emptyList() }
+                android.util.Log.d("GalleryViewModel", "shuffle: fetched allTemplates size=${allTemplates.size}")
+                val reordered = reorderBySeenStatus(allTemplates)
+
+                val updated = _uiState.value as? GalleryUiState.Success ?: run {
+                    android.util.Log.e("GalleryViewModel", "shuffle: updated state is not Success after fetch")
+                    return@launch
+                }
+                _uiState.value = updated.copy(
+                    templateListState = TemplateListState.Success(
+                        templates = reordered,
+                        hasMore = allTemplates.size >= MAX_ITEMS
+                    )
+                )
+                android.util.Log.d("GalleryViewModel", "shuffle: success, set templateListState to Success with templates size=${reordered.size}")
+            } catch (e: Exception) {
+                android.util.Log.e("GalleryViewModel", "shuffle failed with exception", e)
+                // Restore success state on error
+                val restored = _uiState.value as? GalleryUiState.Success ?: return@launch
+                _uiState.value = restored.copy(
+                    templateListState = listState
+                )
+            }
+        }
     }
 
     private fun loadGalleryData() {
@@ -139,7 +190,7 @@ class GalleryViewModel(
 
                 // Async children of this launch; they outlive the withTimeoutOrNull below.
                 val vibeTagsDeferred = async { templateRepository.getVibeTags().getOrElse { emptyList() } }
-                val templatesDeferred = async { templateRepository.getTemplates(limit = PAGE_SIZE, offset = 0).getOrElse { emptyList() } }
+                val templatesDeferred = async { templateRepository.getTemplates(limit = MAX_ITEMS, offset = 0).getOrElse { emptyList() } }
                 val featuredDeferred = async { templateRepository.getFeaturedTemplates(limit = 6).getOrElse { emptyList() } }
 
                 // Geo-aware path: wait up to 5s for the main grid. If it returns in time,
@@ -177,11 +228,12 @@ class GalleryViewModel(
                 val realFeatured = featuredDeferred.await()
                 if (realTemplates.isNotEmpty()) {
                     val current = _uiState.value as? GalleryUiState.Success ?: return@launch
+                    val reordered = reorderBySeenStatus(realTemplates)
                     _uiState.value = current.copy(
                         vibeTags = realVibeTags,
                         templateListState = TemplateListState.Success(
-                            templates = realTemplates,
-                            hasMore = realTemplates.size >= PAGE_SIZE && realTemplates.size < MAX_ITEMS
+                            templates = reordered,
+                            hasMore = realTemplates.size >= MAX_ITEMS && realTemplates.size < MAX_ITEMS
                         ),
                         featuredTemplates = realFeatured
                     )
@@ -204,8 +256,8 @@ class GalleryViewModel(
         vibeTags = vibeTags,
         selectedVibeTagId = null,
         templateListState = TemplateListState.Success(
-            templates = templates,
-            hasMore = templates.size >= PAGE_SIZE && templates.size < MAX_ITEMS
+            templates = reorderBySeenStatus(templates),
+            hasMore = templates.size >= MAX_ITEMS && templates.size < MAX_ITEMS
         ),
         featuredTemplates = featuredTemplates
     )
@@ -222,16 +274,18 @@ class GalleryViewModel(
 
         viewModelScope.launch {
             val result = if (tagId == null) {
-                templateRepository.getTemplates(limit = PAGE_SIZE, offset = 0)
+                templateRepository.getTemplates(limit = MAX_ITEMS, offset = 0)
             } else {
-                templateRepository.getTemplatesByVibeTag(tag = tagId, limit = PAGE_SIZE, offset = 0)
+                templateRepository.getTemplatesByVibeTag(tag = tagId, limit = MAX_ITEMS, offset = 0)
             }
             val templates = result.getOrElse { emptyList() }
             val updated = _uiState.value as? GalleryUiState.Success ?: return@launch
+            if (updated.selectedVibeTagId != tagId) return@launch
+            val reordered = reorderBySeenStatus(templates)
             _uiState.value = updated.copy(
                 templateListState = TemplateListState.Success(
-                    templates = templates,
-                    hasMore = templates.size >= PAGE_SIZE && templates.size < MAX_ITEMS
+                    templates = reordered,
+                    hasMore = templates.size >= MAX_ITEMS && templates.size < MAX_ITEMS
                 )
             )
         }
@@ -322,6 +376,9 @@ class GalleryViewModel(
     }
 
     fun onTemplateClick(template: VideoTemplate, sourceLocation: String) {
+        // Mark clicked template as seen
+        preferencesManager.addSeenTemplateIds(setOf(template.id))
+
         // Check if template grid tap ad is ready (non-blocking, with frequency cap)
         val isAdReady = adsLoaderService.isInterstitialReady(com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_TEMPLATE_GRID_TAP)
 
@@ -382,6 +439,18 @@ class GalleryViewModel(
 
     fun onNavigationHandled() {
         _navigationEvent.value = null
+    }
+
+    private fun reorderBySeenStatus(templates: List<VideoTemplate>): List<VideoTemplate> {
+        val seenIds = preferencesManager.getSeenTemplateIds()
+        val (seen, unseen) = templates.partition { it.id in seenIds }
+        android.util.Log.d("GalleryViewModel", "reorderBySeenStatus: templates size=${templates.size}, seen size=${seen.size}, unseen size=${unseen.size}")
+        return if (unseen.isEmpty() && templates.isNotEmpty()) {
+            android.util.Log.d("GalleryViewModel", "reorderBySeenStatus: all templates have been seen! Shuffling all templates to keep feed fresh.")
+            templates.shuffled()
+        } else {
+            unseen + seen.shuffled()
+        }
     }
 
     private companion object {
