@@ -665,33 +665,27 @@ class AdPlacementConfigService(
         )
 
         // Trending template popup native ad (bottom of "Don't miss it" popup, Gallery tab)
-        // TEMP units borrowed from NATIVE_ONBOARDING_SELECT_TPT: onboarding-only,
-        // never loads concurrently with Gallery browsing → avoids ad-unit contention.
-        // TODO: replace with dedicated AdMob native units.
-        // Layout: native_big_bait (matches remote_config_defaults.xml)
+        // Layout: native_small_row
         // Waterfall: Primary unit -> Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_POPUP_TRENDING_TEMPLATE,
             layoutName = "native_small_row",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1192669490",  // Primary (NA_high_lib)
-                "ca-app-pub-7121075950716954/7566506155"   // Secondary (NA_all_lib)
+                "ca-app-pub-7121075950716954/7380310494",  // Primary
+                "ca-app-pub-7121075950716954/5252536687"   // Secondary
             ),
             enabled = true
         )
 
         // Trending song popup native ad (bottom of "Don't miss it" popup, Songs tab)
-        // TEMP units borrowed from NATIVE_ONBOARDING_SELECT_MUSIC: onboarding-only,
-        // never loads concurrently with Songs browsing → avoids ad-unit contention.
-        // TODO: replace with dedicated AdMob native units.
-        // Layout: native_big_bait (matches remote_config_defaults.xml)
+        // Layout: native_small_row
         // Waterfall: Primary unit -> Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_POPUP_TRENDING_SONG,
             layoutName = "native_small_row",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1192669490",  // NA_high_select_music
-                "ca-app-pub-7121075950716954/7566506155"   // NA_all_select_music
+                "ca-app-pub-7121075950716954/1938387916",  // Primary
+                "ca-app-pub-7121075950716954/8994750854"   // Secondary
             ),
             enabled = true
         )
@@ -704,8 +698,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.NATIVE_MUSIC_PLAYER,
             layoutName = "native_small_row",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1938387916",  // Pro_NA_high_music_player
-                "ca-app-pub-7121075950716954/8994750854"   // Pro_NA_all_music_player
+                "ca-app-pub-7121075950716954/4156165171",  // Primary
+                "ca-app-pub-7121075950716954/9216920167"   // Secondary
             ),
             enabled = true
         )
@@ -834,8 +828,8 @@ class AdPlacementConfigService(
             placementId = AdPlacement.INTERSTITIAL_UNLOCK_QUALITY,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/2782148994",  // Placeholder (borrowed from ASSET_PICKER_EXIT)
-                "ca-app-pub-7121075950716954/7537679430"   // Placeholder Secondary
+                "ca-app-pub-7121075950716954/3669507647",  // Primary
+                "ca-app-pub-7121075950716954/3529906841"   // Secondary
             ),
             enabled = true
         )

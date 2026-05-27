@@ -90,7 +90,7 @@
   </entry>
   <entry>
     <key>ad_interstitial_unlock_quality</key>
-    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/2782148994","enabled":true},{"id":"ca-app-pub-7121075950716954/7537679430","enabled":true}],"extras":{"retry_max":6}}</value>
+    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/3669507647","enabled":true},{"id":"ca-app-pub-7121075950716954/3529906841","enabled":true}],"extras":{"retry_max":6}}</value>
   </entry>
 
   <!-- Ad Placements - Native -->
@@ -137,6 +137,10 @@
   <entry>
     <key>ad_native_home_banner</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1192669490","enabled":true},{"id":"ca-app-pub-7121075950716954/7566506155","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_music_player</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/4156165171","enabled":true},{"id":"ca-app-pub-7121075950716954/9216920167","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
     <key>ad_native_gallery_grid</key>
@@ -271,10 +275,10 @@
        TODO: replace with dedicated AdMob native units. -->
   <entry>
     <key>ad_native_popup_trending_template</key>
-    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1192669490","enabled":true},{"id":"ca-app-pub-7121075950716954/7566506155","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/7380310494","enabled":true},{"id":"ca-app-pub-7121075950716954/5252536687","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
     <key>ad_native_popup_trending_song</key>
-    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1192669490","enabled":true},{"id":"ca-app-pub-7121075950716954/7566506155","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1938387916","enabled":true},{"id":"ca-app-pub-7121075950716954/8994750854","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
 </defaults>
