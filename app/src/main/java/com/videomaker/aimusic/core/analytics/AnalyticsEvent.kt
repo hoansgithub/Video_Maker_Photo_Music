@@ -14,6 +14,13 @@ object AnalyticsEvent {
     const val APP_INIT_TIME = "app_init_time"
 
     // ============================================
+    // LANGUAGE SELECTION
+    // ============================================
+    const val LANGUAGE_SHOW = "language_show"
+    const val LANGUAGE_SELECT = "language_select"
+    const val LANGUAGE_NEXT = "language_next"
+
+    // ============================================
     // 2. HOME / TAB
     // ============================================
     const val TAB_VIEW = "tab_view"
@@ -328,6 +335,8 @@ object AnalyticsEvent {
         const val CONVERSION_ACTION = "conversion_action"
         const val CONVERSION_TIME_MINUTES = "conversion_time_minutes"
         const val CTA = "cta"
+        const val LANGUAGE = "language"
+        const val TRIGGER = "trigger"
     }
 
     // ============================================
@@ -442,16 +451,10 @@ object AnalyticsEvent {
             const val UNLOCK_QUALITY_CLICK = "done_edit_click"
             const val EDITOR_SONG_CONFIRM = "editor_song_confirm"
         }
-    }
 
-    // ============================================
-    // SCREEN NAMES
-    // ============================================
-    object Screen {
-        const val ROOT = "root"
-        const val LANGUAGE_SELECTION = "language_selection"
-        const val ONBOARDING = "onboarding"
-        const val FEATURE_SELECTION = "feature_selection"
-        const val HOME = "home"
+        object Trigger {
+            const val IDLE_AUTO_SELECT = "idle_auto_select"
+            const val AD_RETURN_AUTO_SELECT = "ad_return_auto_select"
+        }
     }
 }
