@@ -386,7 +386,13 @@ fun AppNavigation(
                     initialTab = route.initialTab,
                     highlightProjectId = route.highlightProjectId,
                     projectHintMode = route.hintMode,
-                    onCreateClick = { backStack.add(AppRoute.AssetPicker()) },
+                    onCreateClick = {
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "",
+                            imageUris = emptyList(),
+                            sourceLocation = AnalyticsEvent.Value.Location.GALLERY
+                        ))
+                    },
                     onSettingsClick = { location ->
                         backStack.add(AppRoute.Settings(settingLocation = location))
                     },

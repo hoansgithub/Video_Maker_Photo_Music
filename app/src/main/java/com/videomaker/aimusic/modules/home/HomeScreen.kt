@@ -332,6 +332,7 @@ fun HomeScreen(
             .distinctUntilChanged()
             .collect { settledPage ->
                 songsViewModel.onDismissPlayer()
+                projectsViewModel.onDismissPlayer()
                 val currentTab = tabNameByIndex(settledPage)
                 Analytics.trackTabView(currentTab)
 
