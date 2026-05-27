@@ -150,7 +150,7 @@ object AdPlacement {
     /**
      * Interstitial ad shown when user exits the export result screen.
      * Timing: Preloaded when export completes, shown on back/exit if ready.
-     * If ad not loaded yet, navigation proceeds normally (non-blocking).
+     * If ad not loaded yet, navigation procee ds normally (non-blocking).
      *
      * Ad units (priority order):
      * - Primary: ca-app-pub-7121075950716954/5408312336
