@@ -83,6 +83,19 @@ object AdPlacement {
     const val INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL = "ad_interstitial_template_previewer_scroll"
 
     /**
+     * Interstitial ad shown when user taps "Use this template" in template previewer.
+     * Timing: Preloaded at screen launch, shown on "Use this template" tap if ready.
+     * If ad not loaded yet, navigation proceeds normally (non-blocking).
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/2307503671
+     * - Secondary: ca-app-pub-7121075950716954/4561068862
+     *
+     * Remote Config key: ad_interstitial_template_previewer_use
+     */
+    const val INTERSTITIAL_TEMPLATE_PREVIEWER_USE = "ad_interstitial_template_previewer_use"
+
+    /**
      * Interstitial ad shown when user presses back or swipes to exit editor screen.
      * Timing: Preloaded at screen launch, shown on back button press/swipe if ready.
      * If ad not loaded yet, back navigation proceeds normally (non-blocking).
@@ -137,7 +150,7 @@ object AdPlacement {
     /**
      * Interstitial ad shown when user exits the export result screen.
      * Timing: Preloaded when export completes, shown on back/exit if ready.
-     * If ad not loaded yet, navigation proceeds normally (non-blocking).
+     * If ad not loaded yet, navigation procee ds normally (non-blocking).
      *
      * Ad units (priority order):
      * - Primary: ca-app-pub-7121075950716954/5408312336
@@ -650,7 +663,10 @@ object AdPlacement {
 
     /**
      * Native ad shown at the bottom of the trending template popup (Gallery tab).
-     * Fallback default: ad units of NATIVE_TEMPLATE_PREVIEWER_LOADING.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/7380310494
+     * - Secondary: ca-app-pub-7121075950716954/5252536687
      *
      * Remote Config key: ad_native_popup_trending_template
      */
@@ -658,7 +674,10 @@ object AdPlacement {
 
     /**
      * Native ad shown at the bottom of the trending song popup (Songs tab).
-     * Fallback default: ad units of NATIVE_SONGS_STATION.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1938387916
+     * - Secondary: ca-app-pub-7121075950716954/8994750854
      *
      * Remote Config key: ad_native_popup_trending_song
      */
@@ -671,8 +690,8 @@ object AdPlacement {
      * Layout: native_small_row (horizontal row matching banner dimensions)
      *
      * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/1938387916  (Pro_NA_high_music_player)
-     * - Secondary: ca-app-pub-7121075950716954/8994750854  (Pro_NA_all_music_player)
+     * - Primary: ca-app-pub-7121075950716954/4156165171
+     * - Secondary: ca-app-pub-7121075950716954/9216920167
      *
      * Remote Config key: ad_native_music_player
      */
@@ -857,9 +876,9 @@ object AdPlacement {
      * and Remote Config routes to interstitial instead of rewarded.
      * Unlock happens when user CLOSES the ad (action callback), not on show.
      *
-     * Placeholder unit IDs (replace via Firebase Remote Config after AdMob assigns):
-     * - Primary: ca-app-pub-7121075950716954/2782148994 (borrowed from ASSET_PICKER_EXIT)
-     * - Secondary: ca-app-pub-7121075950716954/7537679430
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/3669507647
+     * - Secondary: ca-app-pub-7121075950716954/3529906841
      *
      * Remote Config key: ad_interstitial_unlock_quality
      */
@@ -876,6 +895,7 @@ object AdPlacement {
         INTERSTITIAL_OPEN_APP,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
         INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
+        INTERSTITIAL_TEMPLATE_PREVIEWER_USE,
         INTERSTITIAL_EDITOR_BACK,
         INTERSTITIAL_TEMPLATE_GRID_TAP,
         INTERSTITIAL_LIBRARY_PROJECT_TAP,

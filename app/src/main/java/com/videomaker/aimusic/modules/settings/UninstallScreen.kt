@@ -102,12 +102,35 @@ fun UninstallScreen(
     onNavigateToSongPlayer: (songId: Long) -> Unit,
 ) {
     val context = LocalContext.current
+    val activity = context as? android.app.Activity
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val adsLoaderService = org.koin.compose.koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
 
     LaunchedEffect(Unit) {
         Analytics.trackUninstallView()
+    }
+
+    // Show interstitial ad before an action, or run action immediately if not ready
+    val showAdThenAct: (() -> Unit) -> Unit = remember(activity, adsLoaderService) {
+        { action ->
+            val isAdReady = adsLoaderService.isInterstitialReady(
+                com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_UNINSTALL_TEMPLATE_TAP
+            )
+            if (isAdReady && activity != null) {
+                com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.showInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    activity = activity,
+                    placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_UNINSTALL_TEMPLATE_TAP,
+                    action = { action() },
+                    onShown = { /* ad visible — wait for close */ },
+                    bypassFrequencyCap = true,
+                    showLoadingOverlay = false
+                )
+            } else {
+                action()
+            }
+        }
     }
 
     // Preload uninstall template tap ad when screen launches
@@ -196,7 +219,7 @@ fun UninstallScreen(
                 navigationIcon = {
                     IconButton(onClick = {
                         Analytics.trackUninstallCtaClick(type = "dont_uninstall")
-                        onNavigateBack()
+                        showAdThenAct { onNavigateBack() }
                     }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -380,25 +403,27 @@ fun UninstallScreen(
                 modifier = Modifier
                     .clickableSingle{
                         Analytics.trackUninstallCtaClick(type = "uninstall")
-                        val packageUri = Uri.parse("package:${context.packageName}")
+                        showAdThenAct {
+                            val packageUri = Uri.parse("package:${context.packageName}")
 
-                        val uninstallIntent = Intent(Intent.ACTION_DELETE).apply {
-                            data = packageUri
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-
-                        try {
-                            if (uninstallIntent.resolveActivity(context.packageManager) != null) {
-                                context.startActivity(uninstallIntent)
-                            } else {
-                                val settingsIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                    data = packageUri
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                }
-                                context.startActivity(settingsIntent)
+                            val uninstallIntent = Intent(Intent.ACTION_DELETE).apply {
+                                data = packageUri
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+
+                            try {
+                                if (uninstallIntent.resolveActivity(context.packageManager) != null) {
+                                    context.startActivity(uninstallIntent)
+                                } else {
+                                    val settingsIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                        data = packageUri
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    context.startActivity(settingsIntent)
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         }
                     }
                     .padding(12.dp)
@@ -409,7 +434,7 @@ fun UninstallScreen(
             Button(
                 onClick = {
                     Analytics.trackUninstallCtaClick(type = "dont_uninstall")
-                    onNavigateBack()
+                    showAdThenAct { onNavigateBack() }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),

@@ -206,6 +206,24 @@ fun TemplatePreviewerScreen(
         viewModel.onNavigateBack()
     }
 
+    // Preload "use template" interstitial ad on view appear
+    // Non-blocking: if ad not ready when user taps, navigation proceeds immediately
+    LaunchedEffect(Unit) {
+        android.util.Log.d("TemplatePreviewerScreen", "🎬 Preloading use-template ad...")
+        runCatching {
+            InterstitialAdHelperExt.preloadInterstitial(
+                adsLoaderService = adsLoaderService,
+                placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_USE,
+                loadTimeoutMillis = null,
+                showLoadingOverlay = false
+            )
+        }.onSuccess { success ->
+            android.util.Log.d("TemplatePreviewerScreen", if (success) "✅ Use-template ad preload SUCCESS" else "⚠️ Use-template ad preload FAILED")
+        }.onFailure { e ->
+            android.util.Log.e("TemplatePreviewerScreen", "❌ Use-template ad preload exception: ${e.message}", e)
+        }
+    }
+
     // Handle navigation events - Channel pattern (Google official) - one-time delivery, no replay
     LaunchedEffect(Unit) {
         viewModel.navigationEvent.collect { event ->
@@ -276,6 +294,28 @@ fun TemplatePreviewerScreen(
                         )
                     } else {
                         android.util.Log.w("TemplatePreviewerScreen", "⚠️ No activity - cannot show scroll ad")
+                    }
+                }
+
+                is TemplatePreviewerNavigationEvent.RequestUseTemplateWithAd -> {
+                    if (event.shouldShowAd && activity != null) {
+                        InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_USE,
+                            action = {
+                                isAdShowing = false
+                                onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
+                            },
+                            onShown = {
+                                isAdShowing = true
+                                onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
+                            },
+                            bypassFrequencyCap = true,
+                            showLoadingOverlay = false
+                        )
+                    } else {
+                        onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
                     }
                 }
 
