@@ -177,7 +177,10 @@ fun OnboardingScreen(
                         subtitle = stringResource(R.string.onboarding_india_page3_subtitle),
                         ctaText = stringResource(R.string.onboarding_next),
                         onCta = {
-                            Analytics.track(name = "onboarding_3_next", params = emptyMap())
+                            Analytics.track(
+                                name = "onboarding_${pageData.pageIndex + 1}_next",
+                                params = emptyMap()
+                            )
                             preloadFeatureSelectionIfNeeded(page, "tapped Continue")
                             showSwipeHint = false
                             if (isLastPage) {
@@ -250,7 +253,7 @@ fun OnboardingScreen(
                             ctaText = stringResource(R.string.onboarding_next),
                             onCta = {
                                 Analytics.track(
-                                    name = "onboarding_${page + 1}_next",
+                                    name = "onboarding_${pageData.pageIndex + 1}_next",
                                     params = emptyMap()
                                 )
                                 preloadFeatureSelectionIfNeeded(page, "tapped Continue")
