@@ -103,6 +103,8 @@ class PreferencesManager(context: Context) {
         private const val RECENT_SEARCHES_DELIMITER = "\u001F" // Unit Separator
         private const val GENRES_DELIMITER = ","
         private const val MAX_RECENT_SEARCHES = 3 // FIFO: First In First Out
+        private const val KEY_SEEN_TEMPLATE_IDS = "seen_template_ids"
+        private const val MAX_SEEN_TEMPLATE_IDS = 200
     }
 
     /** Music genre preferences selected during onboarding. Empty = no preference set. */
@@ -780,5 +782,33 @@ class PreferencesManager(context: Context) {
 
     private fun todayLocalDateString(): String {
         return LocalDate.now(ZoneId.systemDefault()).toString()
+    }
+
+    fun getSeenTemplateIds(): Set<String> {
+        synchronized(stringSetLock) {
+            return prefs.getStringSet(KEY_SEEN_TEMPLATE_IDS, emptySet()) ?: emptySet()
+        }
+    }
+
+    fun addSeenTemplateIds(ids: Collection<String>) {
+        if (ids.isEmpty()) return
+        mutateStringSet(KEY_SEEN_TEMPLATE_IDS) { current ->
+            // Add new IDs (they become most recent)
+            current.addAll(ids)
+            // Cap at MAX_SEEN_TEMPLATE_IDS using a simple retention policy if it exceeds limit
+            if (current.size > MAX_SEEN_TEMPLATE_IDS) {
+                val kept = current.toList().takeLast(MAX_SEEN_TEMPLATE_IDS).toSet()
+                current.clear()
+                current.addAll(kept)
+            }
+        }
+    }
+
+    fun clearSeenTemplateIds() {
+        synchronized(stringSetLock) {
+            prefs.edit(commit = true) {
+                remove(KEY_SEEN_TEMPLATE_IDS)
+            }
+        }
     }
 }

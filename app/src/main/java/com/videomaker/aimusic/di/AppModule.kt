@@ -1,19 +1,48 @@
 package com.videomaker.aimusic.di
 
+// Note: Language use cases are still registered for LanguageSelectionActivity (ACCDI.get)
+// import com.videomaker.aimusic.modules.musicpicker.MusicPickerViewModel
+// TODO: Uncomment after fixing ACCCore-Ads API
+// import co.alcheclub.lib.acccore.ads.AdPlacementRegistrar
+// import co.alcheclub.lib.acccore.ads.helpers.InterstitialAdHelper
+// import co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator
+// import com.videomaker.aimusic.core.ads.AdInitializer
+// import com.videomaker.aimusic.core.ads.AdPlacementConfigService
+// import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import android.content.Context
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.SimpleCache
 import androidx.work.WorkManager
-import org.koin.core.module.Module
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.module.dsl.viewModel
-import org.koin.dsl.module
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
+import com.videomaker.aimusic.core.cache.VideoCacheManager
 import com.videomaker.aimusic.core.data.local.ApiCacheManager
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.data.local.RegionProvider
+import com.videomaker.aimusic.core.device.DeviceInfoProvider
+import com.videomaker.aimusic.core.notification.AppSessionTracker
+import com.videomaker.aimusic.core.notification.NotificationCapPolicy
+import com.videomaker.aimusic.core.notification.NotificationChannels
+import com.videomaker.aimusic.core.notification.NotificationConversionTracker
+import com.videomaker.aimusic.core.notification.NotificationReminderStore
+import com.videomaker.aimusic.core.notification.NotificationRenderer
+import com.videomaker.aimusic.core.notification.NotificationRescheduleController
+import com.videomaker.aimusic.core.notification.NotificationScheduleConfigService
+import com.videomaker.aimusic.core.notification.NotificationScheduleReconciler
+import com.videomaker.aimusic.core.notification.NotificationScheduler
+import com.videomaker.aimusic.core.notification.PreferencesReminderStore
+import com.videomaker.aimusic.core.notification.SchedulerRescheduleController
+import com.videomaker.aimusic.core.permission.MediaPermissionCoordinator
+import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
+import com.videomaker.aimusic.core.rating.RatingTriggerManager
 import com.videomaker.aimusic.data.local.database.ProjectDatabase
 import com.videomaker.aimusic.data.remote.SupabaseClientProvider
 import com.videomaker.aimusic.data.repository.BeatSyncRepositoryImpl
 import com.videomaker.aimusic.data.repository.EffectSetRepositoryImpl
 import com.videomaker.aimusic.data.repository.ExportRepositoryImpl
+import com.videomaker.aimusic.data.repository.FeedbackRepositoryImpl
 import com.videomaker.aimusic.data.repository.LikedSongRepositoryImpl
 import com.videomaker.aimusic.data.repository.LikedTemplateRepositoryImpl
 import com.videomaker.aimusic.data.repository.ProjectRepositoryImpl
@@ -22,6 +51,7 @@ import com.videomaker.aimusic.data.repository.TemplateRepositoryImpl
 import com.videomaker.aimusic.domain.repository.BeatSyncRepository
 import com.videomaker.aimusic.domain.repository.EffectSetRepository
 import com.videomaker.aimusic.domain.repository.ExportRepository
+import com.videomaker.aimusic.domain.repository.FeedbackRepository
 import com.videomaker.aimusic.domain.repository.LikedSongRepository
 import com.videomaker.aimusic.domain.repository.LikedTemplateRepository
 import com.videomaker.aimusic.domain.repository.ProjectRepository
@@ -29,91 +59,57 @@ import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.ClearSongCacheUseCase
+import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
+import com.videomaker.aimusic.domain.usecase.DeleteProjectUseCase
+import com.videomaker.aimusic.domain.usecase.GetAllProjectsUseCase
 import com.videomaker.aimusic.domain.usecase.GetEffectSetsPagedUseCase
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
+import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.GetSongsByGenreUseCase
 import com.videomaker.aimusic.domain.usecase.GetStationSongsUseCase
 import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.GetWeeklyRankingSongsUseCase
-import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
-import com.videomaker.aimusic.domain.usecase.DeleteProjectUseCase
-import com.videomaker.aimusic.domain.usecase.GetAllProjectsUseCase
-import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.LikeSongUseCase
 import com.videomaker.aimusic.domain.usecase.LikeTemplateUseCase
 import com.videomaker.aimusic.domain.usecase.ObserveLikedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.ObserveLikedTemplatesUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
-import com.videomaker.aimusic.domain.usecase.SearchSongsUseCase
 import com.videomaker.aimusic.domain.usecase.SearchSongsPagedUseCase
-import com.videomaker.aimusic.domain.usecase.SearchTemplatesUseCase
+import com.videomaker.aimusic.domain.usecase.SearchSongsUseCase
 import com.videomaker.aimusic.domain.usecase.SearchTemplatesPagedUseCase
+import com.videomaker.aimusic.domain.usecase.SearchTemplatesUseCase
+import com.videomaker.aimusic.domain.usecase.SubmitFeedbackUseCase
 import com.videomaker.aimusic.domain.usecase.UnlikeSongUseCase
 import com.videomaker.aimusic.domain.usecase.UnlikeTemplateUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
+import com.videomaker.aimusic.media.audio.AudioPreviewCache
+import com.videomaker.aimusic.media.composition.CompositionFactory
+import com.videomaker.aimusic.modules.editor.EditorViewModel
+import com.videomaker.aimusic.modules.export.ExportViewModel
+import com.videomaker.aimusic.modules.gallery.GalleryViewModel
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CheckLanguageSelectedUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.GetSelectedLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
-// Note: Language use cases are still registered for LanguageSelectionActivity (ACCDI.get)
-import com.videomaker.aimusic.media.audio.AudioPreviewCache
-import com.videomaker.aimusic.media.composition.CompositionFactory
-import com.videomaker.aimusic.core.cache.VideoCacheManager
-import androidx.media3.datasource.cache.SimpleCache
-import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.datasource.DefaultHttpDataSource
-import com.videomaker.aimusic.modules.editor.EditorViewModel
-import com.videomaker.aimusic.modules.export.ExportViewModel
-import com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepository
-import com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepositoryImpl
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
-import android.content.Context
-import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import co.alcheclub.lib.acccore.ads.loader.PlacementConfigService
-import co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator
-import com.videomaker.aimusic.modules.gallery.GalleryViewModel
-// import com.videomaker.aimusic.modules.musicpicker.MusicPickerViewModel
-import com.videomaker.aimusic.modules.songs.MusicPlayerViewModel
-import com.videomaker.aimusic.modules.songs.SongsViewModel
+import com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepository
+import com.videomaker.aimusic.modules.onboarding.repository.OnboardingRepositoryImpl
 import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.root.RootViewModel
+import com.videomaker.aimusic.modules.settings.UninstallViewModel
+import com.videomaker.aimusic.modules.songs.MusicPlayerViewModel
+import com.videomaker.aimusic.modules.songs.SongsViewModel
 import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerViewModel
-import com.videomaker.aimusic.core.device.DeviceInfoProvider
-import com.videomaker.aimusic.core.permission.MediaPermissionCoordinator
-import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
-import com.videomaker.aimusic.core.notification.NotificationCapPolicy
-import com.videomaker.aimusic.core.notification.NotificationChannels
-import com.videomaker.aimusic.core.notification.NotificationConversionTracker
-import com.videomaker.aimusic.core.notification.NotificationReminderStore
-import com.videomaker.aimusic.core.notification.NotificationRescheduleController
-import com.videomaker.aimusic.core.notification.NotificationRenderer
-import com.videomaker.aimusic.core.notification.NotificationScheduleConfigService
-import com.videomaker.aimusic.core.notification.NotificationScheduleReconciler
-import com.videomaker.aimusic.core.notification.NotificationScheduler
-import com.videomaker.aimusic.core.notification.PreferencesReminderStore
-import com.videomaker.aimusic.core.notification.SchedulerRescheduleController
-import com.videomaker.aimusic.core.notification.AppSessionTracker
-import com.videomaker.aimusic.core.rating.RatingTriggerManager
-import com.videomaker.aimusic.data.repository.FeedbackRepositoryImpl
-import com.videomaker.aimusic.domain.repository.FeedbackRepository
-import com.videomaker.aimusic.domain.usecase.SubmitFeedbackUseCase
-import com.videomaker.aimusic.modules.settings.UninstallViewModel
 import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchViewModelFactory
 import com.videomaker.aimusic.widget.WidgetViewModel
 import org.koin.android.ext.koin.androidApplication
-// TODO: Uncomment after fixing ACCCore-Ads API
-// import co.alcheclub.lib.acccore.ads.AdPlacementRegistrar
-// import co.alcheclub.lib.acccore.ads.helpers.InterstitialAdHelper
-// import co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator
-// import com.videomaker.aimusic.core.ads.AdInitializer
-// import com.videomaker.aimusic.core.ads.AdPlacementConfigService
-// import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
-import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.module
 import java.time.ZonedDateTime
 
 /**
@@ -645,7 +641,8 @@ class GalleryViewModelFactory(
     private val imageLoader: coil.ImageLoader,
     private val templateRepository: TemplateRepository,
     private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
-    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
+    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator,
+    private val preferencesManager: PreferencesManager
 ) {
     fun create(): GalleryViewModel {
         return GalleryViewModel(
@@ -653,7 +650,8 @@ class GalleryViewModelFactory(
             imageLoader = imageLoader,
             templateRepository = templateRepository,
             adsLoaderService = adsLoaderService,
-            trendingPopupCoordinator = trendingPopupCoordinator
+            trendingPopupCoordinator = trendingPopupCoordinator,
+            preferencesManager = preferencesManager
         )
     }
 }
@@ -997,7 +995,8 @@ val presentationModule = module {
             imageLoader = get(),
             templateRepository = get(),
             adsLoaderService = get(),
-            trendingPopupCoordinator = get()
+            trendingPopupCoordinator = get(),
+            preferencesManager = get()
         )
     }
 

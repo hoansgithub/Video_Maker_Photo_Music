@@ -157,10 +157,10 @@ fun LanguageSelectionScreen(
 
     val scrollState = rememberScrollState()
 
-    // 5-second inactivity auto-select "system" default
+    // 7-second inactivity auto-select "system" default
     LaunchedEffect(interactionKey, selectedLanguage, scrollState.isScrollInProgress) {
         if (selectedLanguage == null && !scrollState.isScrollInProgress) {
-            delay(5_000.milliseconds)
+            delay(7_000.milliseconds)
             selectedLanguage = LanguageManager.LANGUAGE_SYSTEM
             onLanguageSelected(LanguageManager.LANGUAGE_SYSTEM)
             Analytics.track(
