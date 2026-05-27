@@ -198,6 +198,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Template previewer "Use this template" interstitial
+        // Preloaded at screen launch, shown on "Use this template" tap if ready
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_USE,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2307503671",  // Primary
+                "ca-app-pub-7121075950716954/4561068862"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Editor back button interstitial (shown when exiting editor screen)
         // Preloaded on screen entry, non-blocking if not ready
         // Waterfall: Primary unit → Secondary unit

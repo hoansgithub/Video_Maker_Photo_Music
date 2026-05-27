@@ -80,6 +80,17 @@ sealed class TemplatePreviewerNavigationEvent {
         val overrideSongId: Long,
         val aspectRatio: AspectRatio
     ) : TemplatePreviewerNavigationEvent()
+
+    /**
+     * Request "use template" navigation with optional interstitial ad.
+     * Non-blocking: if ad not ready, navigates immediately.
+     */
+    data class RequestUseTemplateWithAd(
+        val shouldShowAd: Boolean,
+        val template: VideoTemplate,
+        val overrideSongId: Long,
+        val aspectRatio: AspectRatio
+    ) : TemplatePreviewerNavigationEvent()
 }
 
 // ============================================
@@ -237,11 +248,16 @@ class TemplatePreviewerViewModel(
             templateRepository.incrementUseCount(template.id)
         }
 
-        // Navigate to AssetPicker - user needs to select images
+        // Check if "use template" interstitial is ready (non-blocking)
+        val isAdReady = adsLoaderService.isInterstitialReady(
+            AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_USE
+        )
+        val currentOverrideSongId = overrideSongId.value
+
         viewModelScope.launch {
-            val currentOverrideSongId = overrideSongId.value  // Get current value from StateFlow
             _navigationEvent.send(
-                TemplatePreviewerNavigationEvent.NavigateToAssetPicker(
+                TemplatePreviewerNavigationEvent.RequestUseTemplateWithAd(
+                    shouldShowAd = isAdReady,
                     template = template,
                     overrideSongId = currentOverrideSongId,
                     aspectRatio = aspectRatio

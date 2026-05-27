@@ -83,6 +83,19 @@ object AdPlacement {
     const val INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL = "ad_interstitial_template_previewer_scroll"
 
     /**
+     * Interstitial ad shown when user taps "Use this template" in template previewer.
+     * Timing: Preloaded at screen launch, shown on "Use this template" tap if ready.
+     * If ad not loaded yet, navigation proceeds normally (non-blocking).
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/2307503671
+     * - Secondary: ca-app-pub-7121075950716954/4561068862
+     *
+     * Remote Config key: ad_interstitial_template_previewer_use
+     */
+    const val INTERSTITIAL_TEMPLATE_PREVIEWER_USE = "ad_interstitial_template_previewer_use"
+
+    /**
      * Interstitial ad shown when user presses back or swipes to exit editor screen.
      * Timing: Preloaded at screen launch, shown on back button press/swipe if ready.
      * If ad not loaded yet, back navigation proceeds normally (non-blocking).
@@ -876,6 +889,7 @@ object AdPlacement {
         INTERSTITIAL_OPEN_APP,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
         INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
+        INTERSTITIAL_TEMPLATE_PREVIEWER_USE,
         INTERSTITIAL_EDITOR_BACK,
         INTERSTITIAL_TEMPLATE_GRID_TAP,
         INTERSTITIAL_LIBRARY_PROJECT_TAP,

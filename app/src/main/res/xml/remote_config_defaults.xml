@@ -69,6 +69,10 @@
     <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/4441122705","enabled":true},{"id":"ca-app-pub-7121075950716954/7545420894","enabled":true}],"extras":{"retry_max":6}}</value>
   </entry>
   <entry>
+    <key>ad_interstitial_template_previewer_use</key>
+    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/2307503671","enabled":true},{"id":"ca-app-pub-7121075950716954/4561068862","enabled":true}],"extras":{"retry_max":6}}</value>
+  </entry>
+  <entry>
     <key>ad_interstitial_template_grid_tap</key>
     <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/8538250004","enabled":true},{"id":"ca-app-pub-7121075950716954/8361778735","enabled":true}],"extras":{"retry_max":6}}</value>
   </entry>
