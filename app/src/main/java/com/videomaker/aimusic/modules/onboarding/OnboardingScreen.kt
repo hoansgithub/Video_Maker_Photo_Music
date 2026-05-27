@@ -84,11 +84,14 @@ fun OnboardingScreen(
             .distinctUntilChanged()
             .collect { page ->
                 if (page > 0) showSwipeHint = false
-                val onboardingStep = page + 1
-                Analytics.track(
-                    name = "onboarding_$onboardingStep",
-                    params = mapOf("onboarding_screen" to "ob$onboardingStep")
-                )
+                val pageData = pageList[page]
+                if (pageData is OnboardingPage.Welcome) {
+                    val onboardingStep = pageData.pageIndex + 1
+                    Analytics.track(
+                        name = "onboarding_$onboardingStep",
+                        params = mapOf("onboarding_screen" to "ob$onboardingStep")
+                    )
+                }
             }
     }
 
