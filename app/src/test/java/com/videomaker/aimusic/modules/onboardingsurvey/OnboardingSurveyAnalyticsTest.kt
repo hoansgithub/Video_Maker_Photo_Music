@@ -6,22 +6,39 @@ import org.junit.Test
 class OnboardingSurveyAnalyticsTest {
 
     @Test
-    fun `joinSelection comma-joins in iteration order`() {
+    fun `expandSelection produces indexed params in iteration order`() {
         assertEquals(
-            "ai_dance_video,music_video_templates,ai_avatar",
-            OnboardingSurveyAnalytics.joinSelection(
-                listOf("ai_dance_video", "music_video_templates", "ai_avatar")
-            )
+            mapOf(
+                "feature1" to "ai_dance_video",
+                "feature2" to "music_video_templates",
+                "feature3" to "ai_avatar",
+            ),
+            OnboardingSurveyAnalytics.expandSelection(
+                OnboardingSurveyAnalytics.PARAM_FEATURE,
+                listOf("ai_dance_video", "music_video_templates", "ai_avatar"),
+            ),
         )
     }
 
     @Test
-    fun `joinSelection of single id has no comma`() {
-        assertEquals("whatsapp", OnboardingSurveyAnalytics.joinSelection(listOf("whatsapp")))
+    fun `expandSelection of single id produces single indexed param`() {
+        assertEquals(
+            mapOf("platform1" to "whatsapp"),
+            OnboardingSurveyAnalytics.expandSelection(
+                OnboardingSurveyAnalytics.PARAM_PLATFORM,
+                listOf("whatsapp"),
+            ),
+        )
     }
 
     @Test
-    fun `joinSelection of empty is empty string`() {
-        assertEquals("", OnboardingSurveyAnalytics.joinSelection(emptyList()))
+    fun `expandSelection of empty is empty map`() {
+        assertEquals(
+            emptyMap<String, String>(),
+            OnboardingSurveyAnalytics.expandSelection(
+                OnboardingSurveyAnalytics.PARAM_FEATURE,
+                emptyList(),
+            ),
+        )
     }
 }

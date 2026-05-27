@@ -183,10 +183,10 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                             onClick = {
                                 Analytics.track(
                                     name = config.eventNext,
-                                    params = mapOf(
-                                        config.paramKey to OnboardingSurveyAnalytics.joinSelection(selectedIds),
-                                        config.countKey to selectedIds.size.toString(),
-                                    ),
+                                    params = buildMap {
+                                        putAll(OnboardingSurveyAnalytics.expandSelection(config.paramKey, selectedIds))
+                                        put(config.countKey, selectedIds.size.toString())
+                                    },
                                 )
                                 viewModel.onNext()
                             },
