@@ -76,6 +76,7 @@ import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.data.local.LanguageManager
 import com.videomaker.aimusic.core.data.local.SupportedLanguage
@@ -111,7 +112,7 @@ fun LanguageSelectionScreen(
     languageManager: LanguageManager = koinInject()
 ) {
     LaunchedEffect(Unit) {
-        Analytics.track(name = "language_show")
+        Analytics.track(name = AnalyticsEvent.LANGUAGE_SHOW)
     }
     val density = LocalDensity.current
     var selectedLanguage by remember {
@@ -163,10 +164,10 @@ fun LanguageSelectionScreen(
             selectedLanguage = LanguageManager.LANGUAGE_SYSTEM
             onLanguageSelected(LanguageManager.LANGUAGE_SYSTEM)
             Analytics.track(
-                name = "language_select",
+                name = AnalyticsEvent.LANGUAGE_SELECT,
                 params = mapOf(
-                    "language" to LanguageManager.LANGUAGE_SYSTEM,
-                    "trigger" to "idle_auto_select"
+                    AnalyticsEvent.Param.LANGUAGE to LanguageManager.LANGUAGE_SYSTEM,
+                    AnalyticsEvent.Param.TRIGGER to AnalyticsEvent.Value.Trigger.IDLE_AUTO_SELECT
                 )
             )
         }
@@ -186,10 +187,10 @@ fun LanguageSelectionScreen(
                         selectedLanguage = LanguageManager.LANGUAGE_SYSTEM
                         onLanguageSelected(LanguageManager.LANGUAGE_SYSTEM)
                         Analytics.track(
-                            name = "language_select",
+                            name = AnalyticsEvent.LANGUAGE_SELECT,
                             params = mapOf(
-                                "language" to LanguageManager.LANGUAGE_SYSTEM,
-                                "trigger" to "ad_return_auto_select"
+                                AnalyticsEvent.Param.LANGUAGE to LanguageManager.LANGUAGE_SYSTEM,
+                                AnalyticsEvent.Param.TRIGGER to AnalyticsEvent.Value.Trigger.AD_RETURN_AUTO_SELECT
                             )
                         )
                     }
@@ -307,9 +308,9 @@ fun LanguageSelectionScreen(
                                         onContinue.invoke()
                                         selectedLanguage?.let {
                                             Analytics.track(
-                                                name = "language_next",
+                                                name = AnalyticsEvent.LANGUAGE_NEXT,
                                                 params = mapOf(
-                                                    "language" to it
+                                                    AnalyticsEvent.Param.LANGUAGE to it
                                                 )
                                             )
                                         }
@@ -360,9 +361,9 @@ fun LanguageSelectionScreen(
                                     selectedLanguage = language.code
                                     onLanguageSelected(language.code)
                                     Analytics.track(
-                                        name = "language_select",
+                                        name = AnalyticsEvent.LANGUAGE_SELECT,
                                         params = mapOf(
-                                            "language" to language.code
+                                            AnalyticsEvent.Param.LANGUAGE to language.code
                                         )
                                     )
                                 }
@@ -407,9 +408,9 @@ fun LanguageSelectionScreen(
                                     onContinue.invoke()
                                     selectedLanguage?.let {
                                         Analytics.track(
-                                            name = "language_next",
+                                            name = AnalyticsEvent.LANGUAGE_NEXT,
                                             params = mapOf(
-                                                "language" to it
+                                                AnalyticsEvent.Param.LANGUAGE to it
                                             )
                                         )
                                     }
