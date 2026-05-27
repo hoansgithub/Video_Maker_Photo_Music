@@ -227,55 +227,48 @@ fun HomeScreen(
     var lastInteractionScrollPositionGallery by rememberSaveable { mutableIntStateOf(0) }
     var lastInteractionScrollPositionSongs by rememberSaveable { mutableIntStateOf(0) }
 
-    var accumulatedGalleryScroll by rememberSaveable { mutableIntStateOf(0) }
-    var accumulatedSongsScroll by rememberSaveable { mutableIntStateOf(0) }
+    val currentGalleryScroll by remember(galleryTemplatesHeaderIndex) {
+        derivedStateOf {
+            val targetIndex = galleryTemplatesHeaderIndex + 1
+            val visibleItems = galleryListState.layoutInfo.visibleItemsInfo
+            if (visibleItems.isEmpty()) return@derivedStateOf 0
 
-    LaunchedEffect(galleryListState) {
-        var prevIndex = galleryListState.firstVisibleItemIndex
-        var prevOffset = galleryListState.firstVisibleItemScrollOffset
-        snapshotFlow { galleryListState.firstVisibleItemIndex to galleryListState.firstVisibleItemScrollOffset }
-            .collect { (index, offset) ->
-                val visibleItems = galleryListState.layoutInfo.visibleItemsInfo
-                if (visibleItems.isNotEmpty()) {
-                    val delta = if (index == prevIndex) {
-                        offset - prevOffset
-                    } else {
-                        val avgSize = visibleItems.map { it.size }.average().toInt()
-                        (index - prevIndex) * avgSize + (offset - prevOffset)
-                    }
-                    accumulatedGalleryScroll = (accumulatedGalleryScroll + delta).coerceAtLeast(0)
+            val targetVisibleItem = visibleItems.firstOrNull { it.index == targetIndex }
+            if (targetVisibleItem != null) {
+                (-targetVisibleItem.offset).coerceAtLeast(0)
+            } else {
+                val firstVisible = visibleItems.first()
+                if (firstVisible.index > targetIndex) {
+                    val avgSize = visibleItems.map { it.size }.average().toInt()
+                    val estimatedPassed = (firstVisible.index - targetIndex) * avgSize
+                    (estimatedPassed - firstVisible.offset).coerceAtLeast(0)
+                } else {
+                    0
                 }
-                prevIndex = index
-                prevOffset = offset
             }
-    }
-
-    LaunchedEffect(songsListState) {
-        var prevIndex = songsListState.firstVisibleItemIndex
-        var prevOffset = songsListState.firstVisibleItemScrollOffset
-        snapshotFlow { songsListState.firstVisibleItemIndex to songsListState.firstVisibleItemScrollOffset }
-            .collect { (index, offset) ->
-                val visibleItems = songsListState.layoutInfo.visibleItemsInfo
-                if (visibleItems.isNotEmpty()) {
-                    val delta = if (index == prevIndex) {
-                        offset - prevOffset
-                    } else {
-                        val avgSize = visibleItems.map { it.size }.average().toInt()
-                        (index - prevIndex) * avgSize + (offset - prevOffset)
-                    }
-                    accumulatedSongsScroll = (accumulatedSongsScroll + delta).coerceAtLeast(0)
-                }
-                prevIndex = index
-                prevOffset = offset
-            }
-    }
-
-    val currentGalleryScroll by remember {
-        derivedStateOf { accumulatedGalleryScroll }
+        }
     }
 
     val currentSongsScroll by remember {
-        derivedStateOf { accumulatedSongsScroll }
+        derivedStateOf {
+            val targetIndex = 8
+            val visibleItems = songsListState.layoutInfo.visibleItemsInfo
+            if (visibleItems.isEmpty()) return@derivedStateOf 0
+
+            val targetVisibleItem = visibleItems.firstOrNull { it.index == targetIndex }
+            if (targetVisibleItem != null) {
+                (-targetVisibleItem.offset).coerceAtLeast(0)
+            } else {
+                val firstVisible = visibleItems.first()
+                if (firstVisible.index > targetIndex) {
+                    val avgSize = visibleItems.map { it.size }.average().toInt()
+                    val estimatedPassed = (firstVisible.index - targetIndex) * avgSize
+                    (estimatedPassed - firstVisible.offset).coerceAtLeast(0)
+                } else {
+                    0
+                }
+            }
+        }
     }
 
     val galleryHeight = remember {
@@ -313,15 +306,13 @@ fun HomeScreen(
     LaunchedEffect(galleryListState.firstVisibleItemIndex, galleryListState.firstVisibleItemScrollOffset) {
         if (galleryListState.firstVisibleItemIndex <= galleryTemplatesHeaderIndex) {
             isNewIdeasClickedGallery = false
-            accumulatedGalleryScroll = 0
             lastInteractionScrollPositionGallery = 0
         }
     }
 
     LaunchedEffect(songsListState.firstVisibleItemIndex, songsListState.firstVisibleItemScrollOffset) {
-        if (songsListState.firstVisibleItemIndex <= 6) {
+        if (songsListState.firstVisibleItemIndex <= 7) {
             isNewIdeasClickedSongs = false
-            accumulatedSongsScroll = 0
             lastInteractionScrollPositionSongs = 0
         }
     }

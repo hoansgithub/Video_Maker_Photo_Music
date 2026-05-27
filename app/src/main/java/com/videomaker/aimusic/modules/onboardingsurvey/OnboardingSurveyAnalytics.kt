@@ -16,6 +16,10 @@ object OnboardingSurveyAnalytics {
     const val PARAM_PLATFORM = "platform"
     const val PARAM_PLATFORM_COUNT = "platform_count"
 
-    /** Comma-joins selected ids for the *_next event value (mirrors genre_next). */
-    fun joinSelection(ids: Collection<String>): String = ids.joinToString(",")
+    /**
+     * Expands selected ids into indexed params: `${paramKey}1` → id1, `${paramKey}2` → id2, …
+     * Iteration order is preserved; index starts at 1.
+     */
+    fun expandSelection(paramKey: String, ids: Collection<String>): Map<String, String> =
+        ids.withIndex().associate { (i, id) -> "$paramKey${i + 1}" to id }
 }

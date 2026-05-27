@@ -213,11 +213,49 @@ class TemplatePreviewerViewModel(
     // PUBLIC METHODS
     // ============================================
 
-    fun refresh() {
-        loadInitialTemplates()
-        val currentSongId = overrideSongId.value
-        if (currentSongId >= 0L) {
-            loadUserSong(currentSongId)
+    fun refresh(excludeIds: Set<String> = emptySet()) {
+        viewModelScope.launch {
+            _uiState.value = TemplatePreviewerUiState.Loading
+            currentOffset = 0
+            hasMorePages = true
+
+            templateRepository.getTemplates(limit = PAGE_SIZE, offset = 0)
+                .onSuccess { templates ->
+                    currentOffset = templates.size
+                    hasMorePages = templates.size >= PAGE_SIZE
+
+                    if (excludeIds.isNotEmpty()) {
+                        // Filter out already-viewed templates
+                        val freshTemplates = templates.filterNot { it.id in excludeIds }
+                        if (freshTemplates.isNotEmpty()) {
+                            _uiState.value = TemplatePreviewerUiState.Ready(
+                                templates = freshTemplates,
+                                initialPage = 0
+                            )
+                        } else {
+                            // All templates in first page were already viewed — show full list anyway
+                            _uiState.value = TemplatePreviewerUiState.Ready(
+                                templates = templates,
+                                initialPage = 0
+                            )
+                        }
+                    } else {
+                        _uiState.value = TemplatePreviewerUiState.Ready(
+                            templates = templates,
+                            initialPage = 0
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.value = TemplatePreviewerUiState.Error(
+                        error.message ?: "Failed to load templates"
+                    )
+                }
+
+            val currentSongId = overrideSongId.value
+            if (currentSongId >= 0L) {
+                loadUserSong(currentSongId)
+            }
         }
     }
 

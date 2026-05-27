@@ -433,7 +433,7 @@ fun MusicPlayerBottomSheet(
                             )
                         }
 
-                        Spacer(Modifier.width(12.dp))
+                        /*Spacer(Modifier.width(12.dp))
 
                         Icon(
                             painter = painterResource(
@@ -468,7 +468,7 @@ fun MusicPlayerBottomSheet(
                             .width(1.dp)
                             .height(22.dp)
                             .background(Color.White)
-                        )
+                        )*/
                         Spacer(Modifier.width(8.dp))
 
                         Icon(
