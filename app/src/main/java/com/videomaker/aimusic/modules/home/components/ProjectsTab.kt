@@ -869,7 +869,7 @@ private fun ProjectsStaggeredGrid(
     val infoSectionHeightDp = 40f
     val adAspectRatio = 9f / 16f  // Ad media uses 9:16 portrait
 
-    val aspectRatios = remember(gridItems.size, gridItems.firstOrNull()) {
+    val aspectRatios = remember(gridItems) {
         gridItems.map { item ->
             calculateAspectRatio(item, infoSectionHeightDp, adAspectRatio)
         }

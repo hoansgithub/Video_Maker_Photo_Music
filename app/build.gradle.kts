@@ -38,7 +38,7 @@ android {
         applicationId = "com.videomaker.aimusic"
         minSdk = 28
         targetSdk = 36
-        versionCode = 35
+        versionCode = 36
         versionName = "1.0.6.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

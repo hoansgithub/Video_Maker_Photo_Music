@@ -930,8 +930,8 @@ private fun StaggeredTemplateGrid(
         }
     }
 
-    // ✅ OPTIMIZED: Pre-calculate aspect ratios once when grid items change
-    val aspectRatios = remember(gridItems.size, gridItems.firstOrNull()) {
+    // Pre-calculate aspect ratios once when grid items change
+    val aspectRatios = remember(gridItems) {
         gridItems.map { item ->
             when (item) {
                 is GalleryGridItem.TemplateItem -> parseAspectRatio(item.template.aspectRatio)

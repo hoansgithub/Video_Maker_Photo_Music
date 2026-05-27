@@ -239,7 +239,7 @@ fun HomeScreen(
             } else {
                 val firstVisible = visibleItems.first()
                 if (firstVisible.index > targetIndex) {
-                    val avgSize = visibleItems.map { it.size }.average().toInt()
+                    val avgSize = visibleItems.sumOf { it.size } / visibleItems.size
                     val estimatedPassed = (firstVisible.index - targetIndex) * avgSize
                     (estimatedPassed - firstVisible.offset).coerceAtLeast(0)
                 } else {
@@ -261,7 +261,7 @@ fun HomeScreen(
             } else {
                 val firstVisible = visibleItems.first()
                 if (firstVisible.index > targetIndex) {
-                    val avgSize = visibleItems.map { it.size }.average().toInt()
+                    val avgSize = visibleItems.sumOf { it.size } / visibleItems.size
                     val estimatedPassed = (firstVisible.index - targetIndex) * avgSize
                     (estimatedPassed - firstVisible.offset).coerceAtLeast(0)
                 } else {
@@ -387,7 +387,8 @@ fun HomeScreen(
                 // Pager Content — full-bleed so each page can draw its own background
                 HorizontalPager(
                     state = pagerState,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    beyondViewportPageCount = 2  // Keep all 3 tabs composed to avoid reloading on tab switch
                 ) { page ->
                     when (page) {
                         0 -> GalleryTabContent(
