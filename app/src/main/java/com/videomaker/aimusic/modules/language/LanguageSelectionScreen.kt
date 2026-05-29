@@ -89,7 +89,9 @@ import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.ui.theme.White20
 import com.videomaker.aimusic.ui.theme.White40
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
@@ -132,9 +134,16 @@ fun LanguageSelectionScreen(
         iconRes = R.drawable.ic_system_default
     )
 
-    // Get sorted languages (country-based priority) and prepend System Default option
-    val languages = remember(systemDefaultLanguage) {
-        listOf(systemDefaultLanguage) + languageConfigService.getSortedLanguages()
+    // Immediate: sorted by SIM/system region (never blocks)
+    var languages by remember {
+        mutableStateOf(listOf(systemDefaultLanguage) + languageConfigService.getSortedLanguagesImmediate())
+    }
+    // Update with IP-aware region when detection completes (may refine order for VPN users)
+    LaunchedEffect(Unit) {
+        val sorted = withContext(Dispatchers.IO) {
+            languageConfigService.getSortedLanguages()
+        }
+        languages = listOf(systemDefaultLanguage) + sorted
     }
 
     // Track bottom section height dynamically (button + ad)

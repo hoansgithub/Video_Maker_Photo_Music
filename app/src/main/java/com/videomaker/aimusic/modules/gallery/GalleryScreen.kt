@@ -931,7 +931,10 @@ private fun StaggeredTemplateGrid(
     }
 
     // Pre-calculate aspect ratios once when grid items change
-    val aspectRatios = remember(gridItems) {
+    // Use stable keys (size + first element) to avoid excess layout invalidation
+    // that races with SubcomposeAsyncImage state transitions causing
+    // "LayoutNode should be attached to an owner" crash
+    val aspectRatios = remember(gridItems.size, gridItems.firstOrNull()) {
         gridItems.map { item ->
             when (item) {
                 is GalleryGridItem.TemplateItem -> parseAspectRatio(item.template.aspectRatio)

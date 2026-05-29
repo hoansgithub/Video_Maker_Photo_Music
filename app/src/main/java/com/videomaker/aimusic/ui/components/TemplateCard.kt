@@ -36,7 +36,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.SubcomposeAsyncImage
+import androidx.compose.foundation.Image
+import coil.compose.AsyncImagePainter
+import coil.compose.rememberAsyncImagePainter
 import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -154,20 +156,23 @@ fun TemplateCard(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
 
-            // Thumbnail with loading/error states
+            // Thumbnail — uses Image + rememberAsyncImagePainter instead of
+            // SubcomposeAsyncImage to avoid SubcomposeLayout node replacement
+            // race that causes "LayoutNode should be attached to an owner" crash.
             if (thumbnailPath.isNotEmpty()) {
-                SubcomposeAsyncImage(
-                    model = imageRequest,
-                    contentDescription = name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                    loading = {
+                val painter = rememberAsyncImagePainter(model = imageRequest)
+                val painterState = painter.state
+
+                // Shimmer / error behind the image
+                when (painterState) {
+                    is AsyncImagePainter.State.Loading,
+                    is AsyncImagePainter.State.Empty -> {
                         ShimmerPlaceholder(
                             modifier = Modifier.fillMaxSize(),
                             cornerRadius = 0.dp
                         )
-                    },
-                    error = {
+                    }
+                    is AsyncImagePainter.State.Error -> {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -182,6 +187,14 @@ fun TemplateCard(
                             )
                         }
                     }
+                    is AsyncImagePainter.State.Success -> { /* image renders below */ }
+                }
+
+                Image(
+                    painter = painter,
+                    contentDescription = name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
             } else {
                 ShimmerPlaceholder(

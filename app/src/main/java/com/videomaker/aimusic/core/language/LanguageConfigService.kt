@@ -80,50 +80,46 @@ class LanguageConfigService(
      *
      * @return Sorted list with device language first, then region priorities, rest after
      */
+    /**
+     * Sort languages using full region detection (may block for IP detection).
+     * Call from a background thread / IO dispatcher.
+     */
     fun getSortedLanguages(): List<SupportedLanguage> {
-        // Use remote languages if available, otherwise fallback to hardcoded
+        return sortByRegion(regionProvider.getRegionCode().uppercase())
+    }
+
+    /**
+     * Sort languages using system region only (SIM/locale). Never blocks.
+     * Safe to call during composition or from the main thread.
+     */
+    fun getSortedLanguagesImmediate(): List<SupportedLanguage> {
+        return sortByRegion(regionProvider.getRegionCodeImmediate().uppercase())
+    }
+
+    private fun sortByRegion(region: String): List<SupportedLanguage> {
         val availableLanguages = if (remoteLanguages.isNotEmpty()) {
             remoteLanguages.values.toList()
         } else {
             LanguageManager.getAllLanguages()
         }
 
-        // Get device language (ALWAYS FIRST)
         val deviceLanguage = getDeviceLanguage()
-        android.util.Log.d(TAG, "📱 Device language for sorting: $deviceLanguage")
-
-        // Check if device language is in available languages
         val deviceLanguageAvailable = deviceLanguage?.let { lang ->
             availableLanguages.any { it.code == lang }
         } ?: false
-        android.util.Log.d(TAG, "🔍 Device language available in list: $deviceLanguageAvailable")
-        android.util.Log.d(TAG, "📚 Available language codes: ${availableLanguages.map { it.code }}")
-
-        // Get region from RegionProvider (includes IP detection if enabled)
-        val region = regionProvider.getRegionCode().uppercase()
-        android.util.Log.d(TAG, "🌍 Detected region from RegionProvider: $region")
 
         val regionPriorities = getLanguagePriorityForCountry(region)
-        android.util.Log.d(TAG, "🎯 Region priorities: $regionPriorities")
 
-        // Combine: device language ALWAYS first (if available), then region priorities (excluding device language to avoid duplicates)
         val priorityCodes = listOfNotNull(deviceLanguage?.takeIf { deviceLanguageAvailable }) +
                            regionPriorities.filter { it != deviceLanguage }
 
-        android.util.Log.d(TAG, "🔢 Final priority codes: $priorityCodes")
-
-        // Prioritized languages (maintain priority order)
         val prioritized = priorityCodes.mapNotNull { code ->
             availableLanguages.find { it.code == code }
         }
 
-        // Rest of languages (not in priority list)
         val rest = availableLanguages.filter { it.code !in priorityCodes }
 
-        val result = prioritized + rest
-        android.util.Log.d(TAG, "📋 Sorted languages: ${result.map { it.code }}")
-
-        return result
+        return prioritized + rest
     }
 
     /**

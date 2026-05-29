@@ -842,7 +842,7 @@ private fun TemplatePreviewerReadyContent(
             state = pagerState,
             beyondViewportPageCount = 2,  // Preload 2 pages ahead/behind for smoother scrolling
             modifier = Modifier.fillMaxSize(),
-            key = { pageIndex -> templates[pageIndex % templates.size].id }
+            key = { pageIndex -> pageIndex }
         ) { pageIndex ->
             // Videos now have built-in music, so always animate immediately when page is current
             val isCurrentPage = pageIndex == pagerState.settledPage

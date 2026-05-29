@@ -58,6 +58,27 @@ class RegionProvider(
      * SYSTEM DETECTION MODE (default):
      * Uses fast system-based detection (SIM/Network/Locale).
      */
+    /**
+     * Returns region immediately using cache/persisted/system detection.
+     * Never blocks — skips IP detection wait. Also kicks off IP detection
+     * in background so a subsequent [getRegionCode] call may return the IP result.
+     */
+    fun getRegionCodeImmediate(): String {
+        cached?.let { return it }
+        ipRegionCached?.let { cached = it; return it }
+
+        // Kick off IP detection if enabled but don't wait
+        val shouldUseIp = regionDetectionConfig?.useIpGeolocation == true
+        if (shouldUseIp && !ipDetectionStarted) {
+            ipDetectionStarted = true
+            val timeout = regionDetectionConfig?.ipTimeoutMs ?: 15_000
+            startIPDetectionInBackground(timeout)
+        }
+
+        val persisted = preferencesManager.getUserRegion()?.takeIf { it.isNotBlank() }
+        return persisted ?: detectRegionFromSystem()
+    }
+
     fun getRegionCode(): String {
         cached?.let { return it }
 

@@ -370,15 +370,17 @@ private fun Modifier.glassBorderWithInsetShadow(
     // 2) Inset box-shadow: 0 0 8px 0 #F8F8F840 inset
     // Approximate by drawing a stroked rect inset by half the blur
     val insetAmount = blurPx * 0.5f
-    inset(insetAmount) {
-        drawRoundRect(
-            color = InsetShadowColor,
-            cornerRadius = CornerRadius(
-                cornerPx - insetAmount,
-                cornerPx - insetAmount
-            ),
-            style = Stroke(width = blurPx)
-        )
+    if (size.width > insetAmount * 2 && size.height > insetAmount * 2) {
+        inset(insetAmount) {
+            drawRoundRect(
+                color = InsetShadowColor,
+                cornerRadius = CornerRadius(
+                    (cornerPx - insetAmount).coerceAtLeast(0f),
+                    (cornerPx - insetAmount).coerceAtLeast(0f)
+                ),
+                style = Stroke(width = blurPx)
+            )
+        }
     }
 }
 
