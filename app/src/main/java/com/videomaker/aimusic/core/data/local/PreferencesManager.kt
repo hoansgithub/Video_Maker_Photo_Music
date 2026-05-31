@@ -60,6 +60,12 @@ class PreferencesManager(context: Context) {
         private const val KEY_RATING_VIDEO_CREATE_COUNT = "rating_video_create_count"
         private const val KEY_RATING_SHOWN_COUNT = "rating_shown_count"
         private const val KEY_RATING_COMPLETED = "rating_completed"
+        private const val KEY_RATING_SWIPE_TEMPLATE_COUNT = "rating_swipe_template_count"
+        private const val KEY_RATING_NEXT_SONG_COUNT = "rating_next_song_count"
+        private const val KEY_RATING_HAS_TRIGGERED_ON_SELECT = "rating_has_triggered_on_select"
+        private const val KEY_RATING_LAST_TRIGGERED_HOME_SESSION_ID = "rating_last_triggered_home_session_id"
+        private const val KEY_RATING_DAILY_SHOWN_EPOCH_DAY = "rating_daily_shown_epoch_day"
+        private const val KEY_RATING_DAILY_SHOWN_COUNT = "rating_daily_shown_count"
         private const val KEY_NOTIFICATION_PERMISSION_REQUEST_COUNT = "notification_permission_request_count"
         private const val KEY_NOTIFICATION_PERMISSION_BLOCKED = "notification_permission_blocked"
         private const val KEY_NOTIFICATION_DAILY_SHOWN_EPOCH_DAY = "notification_daily_shown_epoch_day"
@@ -237,6 +243,40 @@ class PreferencesManager(context: Context) {
     var ratingCompleted: Boolean
         get() = prefs.getBoolean(KEY_RATING_COMPLETED, false)
         set(value) = prefs.edit { putBoolean(KEY_RATING_COMPLETED, value) }
+
+    var ratingSwipeTemplateCount: Int
+        get() = prefs.getInt(KEY_RATING_SWIPE_TEMPLATE_COUNT, 0)
+        set(value) = prefs.edit { putInt(KEY_RATING_SWIPE_TEMPLATE_COUNT, value) }
+
+    var ratingNextSongCount: Int
+        get() = prefs.getInt(KEY_RATING_NEXT_SONG_COUNT, 0)
+        set(value) = prefs.edit { putInt(KEY_RATING_NEXT_SONG_COUNT, value) }
+
+    var ratingHasTriggeredOnSelect: Boolean
+        get() = prefs.getBoolean(KEY_RATING_HAS_TRIGGERED_ON_SELECT, false)
+        set(value) = prefs.edit { putBoolean(KEY_RATING_HAS_TRIGGERED_ON_SELECT, value) }
+
+    var ratingLastTriggeredHomeSessionId: Long
+        get() = prefs.getLong(KEY_RATING_LAST_TRIGGERED_HOME_SESSION_ID, 0L)
+        set(value) = prefs.edit { putLong(KEY_RATING_LAST_TRIGGERED_HOME_SESSION_ID, value) }
+
+    fun getRatingDailyShownCount(nowMs: Long = System.currentTimeMillis()): Int {
+        val today = epochDay(nowMs)
+        val storedDay = prefs.getLong(KEY_RATING_DAILY_SHOWN_EPOCH_DAY, Long.MIN_VALUE)
+        if (storedDay != today) return 0
+        return prefs.getInt(KEY_RATING_DAILY_SHOWN_COUNT, 0)
+    }
+
+    fun incrementRatingDailyShownCount(nowMs: Long = System.currentTimeMillis()): Int {
+        val today = epochDay(nowMs)
+        val currentCount = getRatingDailyShownCount(nowMs)
+        val nextCount = currentCount + 1
+        prefs.edit {
+            putLong(KEY_RATING_DAILY_SHOWN_EPOCH_DAY, today)
+            putInt(KEY_RATING_DAILY_SHOWN_COUNT, nextCount)
+        }
+        return nextCount
+    }
 
     // ============================================
     // Notification permission preferences

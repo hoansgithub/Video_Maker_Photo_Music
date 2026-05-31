@@ -16,6 +16,12 @@ object Analytics {
 
     private const val DEFAULT_DEFER_TTL_MS = 10_000L
 
+    private fun getRatingTriggerManager(): com.videomaker.aimusic.core.rating.RatingTriggerManager? {
+        return runCatching {
+            org.koin.core.context.GlobalContext.get().get<com.videomaker.aimusic.core.rating.RatingTriggerManager>()
+        }.getOrNull()
+    }
+
     enum class TrackingPolicy {
         NORMAL,
         IMPRESSION,
@@ -402,6 +408,7 @@ object Analytics {
     }
 
     fun trackTemplateSelect(templateId: String, templateName: String, location: String) {
+        getRatingTriggerManager()?.onTemplateSelected()
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_SELECT,
             params = mapOf(
@@ -539,6 +546,7 @@ object Analytics {
     }
 
     fun trackSongSelect(songId: String, songName: String, location: String) {
+        getRatingTriggerManager()?.onSongSelected()
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_SELECT,
             params = mapOf(
@@ -1193,6 +1201,7 @@ object Analytics {
     }
 
     fun trackEditorSongSelect(videoId: String, songId: String, songName: String) {
+        getRatingTriggerManager()?.onSongSelected()
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_SELECT,
             params = mapOf(

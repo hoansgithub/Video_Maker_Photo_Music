@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.rate
 
+import android.view.ViewTreeObserver
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -30,12 +30,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,14 +44,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.BackgroundDark
@@ -64,16 +69,8 @@ import com.videomaker.aimusic.ui.theme.Neutral_N900
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextPrimaryDark
+import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.delay
-import kotlin.comparisons.then
-import android.view.ViewTreeObserver
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 
 @Composable
 fun RatingSatisfactionPopup(
@@ -641,4 +638,39 @@ fun rememberImeState(): State<Boolean> {
         }
     }
     return imeState
+}
+
+@Preview
+@Composable
+private fun RatingSatisfactionPopupPreview() {
+    VideoMakerTheme {
+        RatingSatisfactionPopup(
+            onNotReally = {},
+            onGood = {},
+            onDismiss = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun RatingStarsPopupPreview() {
+    VideoMakerTheme {
+        RatingStarsPopup(
+            onLowRating = {},
+            onHighRating = {},
+            onDismiss = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun RatingFeedbackPopupPreview() {
+    VideoMakerTheme {
+        RatingFeedbackPopup(
+            onSubmit = {},
+            onDismiss = {}
+        )
+    }
 }

@@ -149,4 +149,19 @@ object RemoteConfigKeys {
      */
     const val TRENDING_POPUP_DAILY_CAP = "trending_popup_daily_cap"
 
+    // ============================================
+    // RATING POPUP
+    // ============================================
+
+    /**
+     * Threshold for template swipes/song nexts to trigger rating popup.
+     * Default: 5.
+     */
+    const val RATING_POPUP_TRIGGER_COUNT = "rating_popup_trigger_count"
+
+    /**
+     * Maximum number of times the rating popup can be shown per local day.
+     * Default: 3.
+     */
+    const val RATING_POPUP_DAILY_CAP = "rating_popup_daily_cap"
 }

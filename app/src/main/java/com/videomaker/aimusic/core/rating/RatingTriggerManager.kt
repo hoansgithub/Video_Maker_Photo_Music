@@ -2,18 +2,25 @@ package com.videomaker.aimusic.core.rating
 
 import android.util.Log
 import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.RemoteConfigKeys
 import com.videomaker.aimusic.core.data.local.PreferencesManager
+import com.videomaker.aimusic.domain.usecase.SubmitFeedbackUseCase
+import com.videomaker.aimusic.modules.rate.RatingStep
+import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 
 /**
  * Pure function for testing trigger conditions in isolation.
- *
- * @param videoCreateCount total successful exports so far (after increment)
- * @param shownCount how many times the popup has been shown
- * @param completed true if user has fully engaged (submitted feedback or rated 4-5 stars)
- * @param firstShow show popup after this many videos created
- * @param cap maximum number of times to re-show
  */
 fun shouldShowRating(
     videoCreateCount: Int,
@@ -30,20 +37,11 @@ fun shouldShowRating(
 
 /**
  * Manages the rating popup trigger logic.
- *
- * Trigger conditions:
- * - User has NOT completed the rating flow (submitted feedback or rated 4-5 stars)
- * - Total successful video exports >= FIRST_SHOW (default 1)
- * - Popup has been shown < CAP times (default 3)
- *
- * Usage:
- * - Call onVideoCreated() when ExportUiState.Success is reached
- * - Collect showRatingPopup Flow to react to trigger
- * - Call onRatingShown() when Satisfaction popup appears
- * - Call onRatingCompleted() when user submits feedback or rates 4-5 stars
  */
 class RatingTriggerManager(
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val remoteConfig: RemoteConfig,
+    private val submitFeedbackUseCase: SubmitFeedbackUseCase
 ) {
     companion object {
         private const val TAG = "RatingTriggerManager"
@@ -51,44 +49,200 @@ class RatingTriggerManager(
         const val CAP = 3
     }
 
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    private val _ratingStep = MutableStateFlow(RatingStep.None)
+    val ratingStep: StateFlow<RatingStep> = _ratingStep.asStateFlow()
+
     private val _showRatingPopup = Channel<Unit>(Channel.BUFFERED)
     val showRatingPopup = _showRatingPopup.receiveAsFlow()
 
+    private val _launchPlayStoreEvent = Channel<Unit>(Channel.BUFFERED)
+    val launchPlayStoreEvent = _launchPlayStoreEvent.receiveAsFlow()
+
+    private var satisfactionResponse = ""
+    private var lastStarRating = 0
+
+    private fun triggerRatingPopupIfEligible(location: String) {
+        if (preferencesManager.ratingCompleted) {
+            if (BuildConfig.DEBUG) Log.d(TAG, "Rating already completed, skipping trigger.")
+            return
+        }
+
+        val dailyCap = remoteConfig.getLong(RemoteConfigKeys.RATING_POPUP_DAILY_CAP, 3L)
+        val dailyShownCount = preferencesManager.getRatingDailyShownCount()
+        if (dailyShownCount >= dailyCap) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Cannot trigger rating popup: dailyShownCount ($dailyShownCount) >= dailyCap ($dailyCap)")
+            }
+            return
+        }
+
+        // If eligible, show it!
+        preferencesManager.incrementRatingDailyShownCount()
+        preferencesManager.ratingShownCount++
+
+        Analytics.trackRateView(
+            logicRender = "system",
+            location = location
+        )
+
+        _ratingStep.value = RatingStep.Satisfaction
+        _showRatingPopup.trySend(Unit)
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Rating popup triggered successfully. Step set to Satisfaction. Location: $location")
+        }
+    }
+
     /**
      * Call when a video export completes successfully (ExportProgress.Success).
-     * Emits to showRatingPopup if all trigger conditions are met.
      */
     fun onVideoCreated() {
         preferencesManager.ratingVideoCreateCount++
-
-        val videoCount = preferencesManager.ratingVideoCreateCount
-        val shownCount = preferencesManager.ratingShownCount
-        val completed = preferencesManager.ratingCompleted
-
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "onVideoCreated: count=$videoCount, shown=$shownCount, completed=$completed")
+            Log.d(TAG, "onVideoCreated: count=${preferencesManager.ratingVideoCreateCount}")
         }
+        triggerRatingPopupIfEligible(location = AnalyticsEvent.Value.Location.RESULT)
+    }
 
-        if (shouldShowRating(videoCount, shownCount, completed, FIRST_SHOW, CAP)) {
-            if (BuildConfig.DEBUG) Log.d(TAG, "✅ Rating conditions met — triggering popup")
-            _showRatingPopup.trySend(Unit)
-        } else {
-            if (BuildConfig.DEBUG) Log.d(TAG, "❌ Rating conditions not met")
+    /**
+     * Call when template is selected.
+     */
+    fun onTemplateSelected() {
+        if (BuildConfig.DEBUG) Log.d(TAG, "onTemplateSelected")
+        if (!preferencesManager.ratingHasTriggeredOnSelect) {
+            preferencesManager.ratingHasTriggeredOnSelect = true
+            triggerRatingPopupIfEligible(location = "template_select")
         }
+    }
+
+    /**
+     * Call when song is selected.
+     */
+    fun onSongSelected() {
+        if (BuildConfig.DEBUG) Log.d(TAG, "onSongSelected")
+        if (!preferencesManager.ratingHasTriggeredOnSelect) {
+            preferencesManager.ratingHasTriggeredOnSelect = true
+            triggerRatingPopupIfEligible(location = "song_select")
+        }
+    }
+
+    /**
+     * Call when template is swiped.
+     */
+    fun onTemplateSwiped() {
+        preferencesManager.ratingSwipeTemplateCount++
+        val threshold = remoteConfig.getLong(RemoteConfigKeys.RATING_POPUP_TRIGGER_COUNT, 5L)
+        val targetCount = (threshold - 1).coerceAtLeast(1)
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "onTemplateSwiped: count=${preferencesManager.ratingSwipeTemplateCount}, targetCount=$targetCount, threshold=$threshold")
+        }
+        if (preferencesManager.ratingSwipeTemplateCount >= targetCount) {
+            preferencesManager.ratingSwipeTemplateCount = 0
+            triggerRatingPopupIfEligible(location = "swipe_template")
+        }
+    }
+
+    /**
+     * Call when song is skipped/nexted.
+     */
+    fun onSongNexted() {
+        preferencesManager.ratingNextSongCount++
+        val threshold = remoteConfig.getLong(RemoteConfigKeys.RATING_POPUP_TRIGGER_COUNT, 5L)
+        val targetCount = (threshold - 1).coerceAtLeast(1)
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "onSongNexted: count=${preferencesManager.ratingNextSongCount}, targetCount=$targetCount, threshold=$threshold")
+        }
+        if (preferencesManager.ratingNextSongCount >= targetCount) {
+            preferencesManager.ratingNextSongCount = 0
+            triggerRatingPopupIfEligible(location = "next_song")
+        }
+    }
+
+    /**
+     * Call when user focuses the home screen.
+     */
+    fun onHomeScreenFocused() {
+        val sessionId = preferencesManager.getAppSessionId()
+        val lastTriggeredSessionId = preferencesManager.ratingLastTriggeredHomeSessionId
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "onHomeScreenFocused: sessionId=$sessionId, lastTriggeredSessionId=$lastTriggeredSessionId")
+        }
+        if (sessionId >= 2 && lastTriggeredSessionId != sessionId) {
+            preferencesManager.ratingLastTriggeredHomeSessionId = sessionId
+            triggerRatingPopupIfEligible(location = "home")
+        }
+    }
+
+    fun onNotReally() {
+        satisfactionResponse = "not_really"
+        Analytics.trackRateClick(option = AnalyticsEvent.Value.Option.BAD)
+        _ratingStep.value = RatingStep.None
+    }
+
+    fun onGood() {
+        satisfactionResponse = "good"
+        Analytics.trackRateClick(option = AnalyticsEvent.Value.Option.GOOD)
+        _ratingStep.value = RatingStep.Stars
+    }
+
+    fun onLowRating(stars: Int) {
+        lastStarRating = stars
+        Analytics.trackRateStar(stars, option = AnalyticsEvent.Value.Option.BAD)
+        Analytics.trackRateRateUsButtonClick(option = AnalyticsEvent.Value.Option.GOOD)
+        Analytics.trackRateFlowContinue(option = AnalyticsEvent.Value.Option.BAD, star = stars)
+        Analytics.trackRateReason(option = AnalyticsEvent.Value.Option.BAD, star = stars)
+        _ratingStep.value = RatingStep.Feedback
+    }
+
+    fun onHighRating(stars: Int) {
+        lastStarRating = stars
+        Analytics.trackRateStar(stars, option = AnalyticsEvent.Value.Option.GOOD)
+        Analytics.trackRateRateUsButtonClick(option = AnalyticsEvent.Value.Option.GOOD)
+        Analytics.trackRateFlowContinue(option = AnalyticsEvent.Value.Option.GOOD, star = stars)
+        Analytics.trackRateDone(option = AnalyticsEvent.Value.Option.GOOD, star = stars)
+        _ratingStep.value = RatingStep.None
+        onRatingCompleted()
+        _launchPlayStoreEvent.trySend(Unit)
+    }
+
+    fun onFeedbackSubmit(feedback: String) {
+        val star = if (lastStarRating > 0) lastStarRating else 0
+        Analytics.trackReasonClick(des = feedback, option = AnalyticsEvent.Value.Option.BAD)
+        Analytics.trackRateSubmit(
+            des = feedback,
+            option = AnalyticsEvent.Value.Option.BAD,
+            star = star
+        )
+        if (star > 0) {
+            Analytics.trackRateDone(option = AnalyticsEvent.Value.Option.BAD, star = star)
+        }
+        _ratingStep.value = RatingStep.None
+        onRatingCompleted()
+        scope.launch(Dispatchers.IO) {
+            runCatching {
+                submitFeedbackUseCase(
+                    feedbackText = feedback,
+                    satisfactionResponse = satisfactionResponse,
+                    starRating = if (lastStarRating > 0) lastStarRating else null
+                )
+            }
+        }
+    }
+
+    fun onRatingDismiss() {
+        _ratingStep.value = RatingStep.None
     }
 
     /**
      * Call when the Satisfaction popup first appears.
-     * Increments the shown count to track re-show cap.
      */
     fun onRatingShown() {
-        preferencesManager.ratingShownCount++
-        if (BuildConfig.DEBUG) Log.d(TAG, "onRatingShown: shownCount=${preferencesManager.ratingShownCount}")
+        // Handled directly inside triggerRatingPopupIfEligible to be consistent
     }
 
     /**
      * Call when user submits feedback or rates 4-5 stars.
-     * Marks the rating as permanently completed — popup never shows again.
      */
     fun onRatingCompleted() {
         preferencesManager.ratingCompleted = true

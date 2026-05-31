@@ -170,6 +170,7 @@ fun TemplatePreviewerScreen(
     val activity = context as? Activity
     val adsLoaderService = koinInject<AdsLoaderService>()
     val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
+    val ratingTriggerManager = koinInject<com.videomaker.aimusic.core.rating.RatingTriggerManager>()
     var showNotificationPromoDialog by remember { mutableStateOf(false) }
     var showNotificationSettingsGuideDialog by remember { mutableStateOf(false) }
     var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
@@ -506,7 +507,10 @@ fun TemplatePreviewerScreen(
                     onUseThisTemplate = viewModel::onUseThisTemplate,
                     onRatioSelected = viewModel::onRatioSelected,
                     onLikeTemplate = viewModel::onLikeTemplate,
-                    onSwipeTemplate = { hasSwipedTemplate = true },
+                    onSwipeTemplate = {
+                        hasSwipedTemplate = true
+                        ratingTriggerManager.onTemplateSwiped()
+                    },
                     eventLocation = eventLocation,
                     onNavigateBack = viewModel::onNavigateBack,
                     onFirstVideoReady = { firstVideoReady = true },

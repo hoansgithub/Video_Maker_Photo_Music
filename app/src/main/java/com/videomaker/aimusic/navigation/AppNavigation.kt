@@ -4,7 +4,10 @@ package com.videomaker.aimusic.navigation
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -25,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -38,8 +42,6 @@ import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
 import com.videomaker.aimusic.core.popup.TrendingPopupNavEvent
 import com.videomaker.aimusic.core.popup.TrendingPopupState
-import com.videomaker.aimusic.ui.components.PopupTrendingSong
-import com.videomaker.aimusic.ui.components.PopupTrendingTemplate
 import com.videomaker.aimusic.di.AssetPickerViewModelFactory
 import com.videomaker.aimusic.di.EditorViewModelFactory
 import com.videomaker.aimusic.di.ExportViewModelFactory
@@ -64,6 +66,10 @@ import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePrefer
 import com.videomaker.aimusic.modules.picker.AssetPickerScreen
 import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
+import com.videomaker.aimusic.modules.rate.RatingFeedbackPopup
+import com.videomaker.aimusic.modules.rate.RatingSatisfactionPopup
+import com.videomaker.aimusic.modules.rate.RatingStarsPopup
+import com.videomaker.aimusic.modules.rate.RatingStep
 import com.videomaker.aimusic.modules.settings.NotificationTestScreen
 import com.videomaker.aimusic.modules.settings.SettingsScreen
 import com.videomaker.aimusic.modules.settings.UninstallScreen
@@ -77,6 +83,8 @@ import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchScreen
 import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchViewModel
 import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchViewModelFactory
 import com.videomaker.aimusic.modules.welcomeback.WelcomeBackScreen
+import com.videomaker.aimusic.ui.components.PopupTrendingSong
+import com.videomaker.aimusic.ui.components.PopupTrendingTemplate
 import com.videomaker.aimusic.widget.WidgetScreen
 import com.videomaker.aimusic.widget.WidgetViewModel
 import com.videomaker.aimusic.widget.appwidget.WidgetActions
@@ -145,6 +153,30 @@ fun AppNavigation(
     val trendingPopupCoordinator = koinInject<TrendingPopupCoordinator>()
     val templatePopupState by trendingPopupCoordinator.templatePopup.collectAsStateWithLifecycle()
     val songPopupState by trendingPopupCoordinator.songPopup.collectAsStateWithLifecycle()
+
+    val ratingTriggerManager = koinInject<com.videomaker.aimusic.core.rating.RatingTriggerManager>()
+    val ratingStep by ratingTriggerManager.ratingStep.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        ratingTriggerManager.launchPlayStoreEvent.collect {
+            val packageName = context.packageName
+            val marketIntent = Intent(Intent.ACTION_VIEW, "market://details?id=$packageName".toUri())
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            try {
+                context.startActivity(marketIntent)
+            } catch (e: Exception) {
+                runCatching {
+                    context.startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            "https://play.google.com/store/apps/details?id=$packageName".toUri()
+                        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         trendingPopupCoordinator.navigationEvent.collect { event ->
@@ -801,6 +833,31 @@ fun AppNavigation(
             onCTA = { trendingPopupCoordinator.onSongPopupCta(showing.content) },
             onDismiss = { trendingPopupCoordinator.onSongPopupDismissed() }
         )
+    }
+
+    // Global rating popup overlay
+    AnimatedContent(
+        targetState = ratingStep,
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        label = "rating_popup_transition"
+    ) { step ->
+        when (step) {
+            RatingStep.Satisfaction -> RatingSatisfactionPopup(
+                onNotReally = ratingTriggerManager::onNotReally,
+                onGood = ratingTriggerManager::onGood,
+                onDismiss = ratingTriggerManager::onRatingDismiss
+            )
+            RatingStep.Stars -> RatingStarsPopup(
+                onLowRating = ratingTriggerManager::onLowRating,
+                onHighRating = ratingTriggerManager::onHighRating,
+                onDismiss = ratingTriggerManager::onRatingDismiss
+            )
+            RatingStep.Feedback -> RatingFeedbackPopup(
+                onSubmit = ratingTriggerManager::onFeedbackSubmit,
+                onDismiss = ratingTriggerManager::onRatingDismiss
+            )
+            RatingStep.None -> { /* No popup shown */ }
+        }
     }
 }
 
