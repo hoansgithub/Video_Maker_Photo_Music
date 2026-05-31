@@ -11,21 +11,20 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.data.local.PreferencesManager
-import com.videomaker.aimusic.domain.model.AspectRatio
-import com.videomaker.aimusic.domain.model.Project
-import com.videomaker.aimusic.domain.model.VideoQuality
-import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.core.notification.NotificationConversionTracker
 import com.videomaker.aimusic.core.notification.NotificationScheduler
 import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.core.rating.RatingTriggerManager
+import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.Project
+import com.videomaker.aimusic.domain.model.VideoQuality
+import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.ExportProgress
 import com.videomaker.aimusic.domain.repository.ExportRepository
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.SubmitFeedbackUseCase
 import com.videomaker.aimusic.media.export.MediaStoreHelper
-import com.videomaker.aimusic.modules.rate.RatingStep
 import com.videomaker.aimusic.ui.components.ProcessToastState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -206,21 +205,6 @@ class ExportViewModel(
     val shouldPresentWatermarkAd: StateFlow<Boolean> = watermarkAdController.shouldPresentAd
 
     // ============================================
-    // RATING STATE
-    // ============================================
-
-    private val _ratingStep = MutableStateFlow(RatingStep.None)
-    val ratingStep: StateFlow<RatingStep> = _ratingStep.asStateFlow()
-
-    // Private tracking for feedback submission
-    private var satisfactionResponse: String? = null
-    private var lastStarRating: Int = 0
-
-    // Play Store launch event — one-time action requiring Activity context in composable
-    private val _launchPlayStoreEvent = Channel<Unit>(Channel.BUFFERED)
-    val launchPlayStoreEvent = _launchPlayStoreEvent.receiveAsFlow()
-
-    // ============================================
     // NAVIGATION EVENTS (StateFlow-based - Google recommended)
     // ============================================
     // Using Channel for one-time events (Google pattern) - prevents replay on config change
@@ -256,7 +240,6 @@ class ExportViewModel(
         loadProjectData()
         startExport()
         loadFeaturedTemplates()
-        observeRatingTrigger()
         observeSuccessForAdPreload()
     }
 
@@ -399,76 +382,6 @@ class ExportViewModel(
     }
 
     // ============================================
-    // RATING ACTIONS
-    // ============================================
-
-    /** User tapped "Not Really" on Satisfaction popup — dismiss without further action */
-    fun onNotReally() {
-        satisfactionResponse = "not_really"
-        Analytics.trackRateClick(option = AnalyticsEvent.Value.Option.BAD)
-        _ratingStep.value = RatingStep.None
-    }
-
-    /** User tapped "Good" on Satisfaction popup — proceed to star rating */
-    fun onGood() {
-        satisfactionResponse = "good"
-        Analytics.trackRateClick(option = AnalyticsEvent.Value.Option.GOOD)
-        _ratingStep.value = RatingStep.Stars
-    }
-
-    /** User tapped "Rate Us" with 1-3 stars — proceed to feedback popup */
-    fun onLowRating(stars: Int) {
-        lastStarRating = stars
-        Analytics.trackRateStar(stars, option = AnalyticsEvent.Value.Option.BAD)
-        Analytics.trackRateRateUsButtonClick(option = AnalyticsEvent.Value.Option.GOOD)
-        Analytics.trackRateFlowContinue(option = AnalyticsEvent.Value.Option.BAD, star = stars)
-        Analytics.trackRateReason(option = AnalyticsEvent.Value.Option.BAD, star = stars)
-        _ratingStep.value = RatingStep.Feedback
-    }
-
-    /** User tapped "Rate Us" with 4-5 stars — open Play Store, mark completed */
-    fun onHighRating(stars: Int) {
-        lastStarRating = stars
-        Analytics.trackRateStar(stars, option = AnalyticsEvent.Value.Option.GOOD)
-        Analytics.trackRateRateUsButtonClick(option = AnalyticsEvent.Value.Option.GOOD)
-        Analytics.trackRateFlowContinue(option = AnalyticsEvent.Value.Option.GOOD, star = stars)
-        Analytics.trackRateDone(option = AnalyticsEvent.Value.Option.GOOD, star = stars)
-        _ratingStep.value = RatingStep.None
-        ratingTriggerManager.onRatingCompleted()
-        viewModelScope.launch {
-            _launchPlayStoreEvent.send(Unit)
-        }
-    }
-
-    /** User submitted feedback text — send to Supabase, mark completed */
-    fun onFeedbackSubmit(feedback: String) {
-        val star = if (lastStarRating > 0) lastStarRating else 0
-        Analytics.trackReasonClick(des = feedback, option = AnalyticsEvent.Value.Option.BAD)
-        Analytics.trackRateSubmit(
-            des = feedback,
-            option = AnalyticsEvent.Value.Option.BAD,
-            star = star
-        )
-        if (star > 0) {
-            Analytics.trackRateDone(option = AnalyticsEvent.Value.Option.BAD, star = star)
-        }
-        _ratingStep.value = RatingStep.None
-        ratingTriggerManager.onRatingCompleted()
-        viewModelScope.launch(Dispatchers.Default) {
-            submitFeedbackUseCase(
-                feedbackText = feedback,
-                satisfactionResponse = satisfactionResponse,
-                starRating = if (lastStarRating > 0) lastStarRating else null
-            )
-        }
-    }
-
-    /** User dismissed any popup via X button */
-    fun onRatingDismiss() {
-        _ratingStep.value = RatingStep.None
-    }
-
-    // ============================================
     // USER ACTIONS
     // ============================================
 
@@ -548,21 +461,6 @@ class ExportViewModel(
      */
     fun onSaveToastDismissed() {
         _saveToastState.value = null
-    }
-
-    private fun observeRatingTrigger() {
-        viewModelScope.launch {
-            ratingTriggerManager.showRatingPopup.collect {
-                if (_ratingStep.value == RatingStep.None) {
-                    Analytics.trackRateView(
-                        logicRender = "system",
-                        location = AnalyticsEvent.Value.Location.RESULT
-                    )
-                    _ratingStep.value = RatingStep.Satisfaction
-                    ratingTriggerManager.onRatingShown()
-                }
-            }
-        }
     }
 
     /**

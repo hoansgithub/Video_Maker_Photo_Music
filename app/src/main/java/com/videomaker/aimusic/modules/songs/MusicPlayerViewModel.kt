@@ -8,6 +8,7 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
+import com.videomaker.aimusic.core.rating.RatingTriggerManager
 import com.videomaker.aimusic.core.storage.UnlockedSongsManager
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.repository.LikedSongRepository
@@ -42,7 +43,8 @@ class MusicPlayerViewModel(
     private val unlockedSongsManager: UnlockedSongsManager,
     private val adsLoaderService: AdsLoaderService,
     private val songRepository: SongRepository,
-    private val sessionManager: MusicPlaybackSessionManager
+    private val sessionManager: MusicPlaybackSessionManager,
+    private val ratingTriggerManager: RatingTriggerManager
 ) : ViewModel() {
 
     private companion object {
@@ -152,6 +154,7 @@ class MusicPlayerViewModel(
         _currentSong.value = next
         sessionManager.markImpressed(next.id)
         Analytics.trackSongNext(songId = next.id.toString())
+        ratingTriggerManager.onSongNexted()
         Analytics.trackSongImpression(
             songId = next.id.toString(),
             songName = next.name,

@@ -258,7 +258,7 @@ val dataModule = module {
     single { DeviceInfoProvider(androidContext()) }
 
     // Rating trigger
-    single { RatingTriggerManager(get()) }
+    single { RatingTriggerManager(get(), get(), get()) }
     single { MediaPermissionCoordinator(get()) }
     single { NotificationPermissionCoordinator(get()) }
 
@@ -779,8 +779,9 @@ class MusicPlayerViewModelFactory(
     private val likedSongRepository: LikedSongRepository,
     private val unlockedSongsManager: com.videomaker.aimusic.core.storage.UnlockedSongsManager,
     private val adsLoaderService: AdsLoaderService,
-    private val songRepository: com.videomaker.aimusic.domain.repository.SongRepository,
-    private val sessionManager: com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
+    private val songRepository: SongRepository,
+    private val sessionManager: com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager,
+    private val ratingTriggerManager: RatingTriggerManager
 ) {
     fun create(
         songId: Long,
@@ -800,7 +801,8 @@ class MusicPlayerViewModelFactory(
         unlockedSongsManager = unlockedSongsManager,
         adsLoaderService = adsLoaderService,
         songRepository = songRepository,
-        sessionManager = sessionManager
+        sessionManager = sessionManager,
+        ratingTriggerManager = ratingTriggerManager
     )
 }
 
@@ -1099,7 +1101,8 @@ val presentationModule = module {
             unlockedSongsManager = get(),
             adsLoaderService = get(),
             songRepository = get(),
-            sessionManager = get()
+            sessionManager = get(),
+            ratingTriggerManager = get()
         )
     }
 }

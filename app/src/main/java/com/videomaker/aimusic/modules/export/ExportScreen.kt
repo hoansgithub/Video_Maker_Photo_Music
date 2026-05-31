@@ -2,7 +2,6 @@ package com.videomaker.aimusic.modules.export
 
 import android.Manifest
 import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -10,30 +9,10 @@ import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import co.alcheclub.lib.acccore.ads.compose.NativeAdView
-import co.alcheclub.lib.acccore.ads.compose.BannerAdView
-import androidx.compose.foundation.layout.navigationBarsPadding
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
-import com.videomaker.aimusic.core.ads.RewardedAdPresenter
-import com.videomaker.aimusic.BuildConfig
-import com.videomaker.aimusic.core.analytics.Analytics
-import com.videomaker.aimusic.core.analytics.AnalyticsEvent
-import com.videomaker.aimusic.core.analytics.onFirstVisible
-import com.videomaker.aimusic.core.constants.AdPlacement
-import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
-import kotlinx.coroutines.delay
-import org.koin.compose.koinInject
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -45,15 +24,17 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
@@ -70,9 +51,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,14 +60,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -96,23 +76,34 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import coil.compose.AsyncImage
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.ads.RewardedAdPresenter
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
+import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.domain.model.VideoTemplate
-import com.videomaker.aimusic.modules.rate.RatingFeedbackPopup
-import com.videomaker.aimusic.modules.rate.RatingSatisfactionPopup
-import com.videomaker.aimusic.modules.rate.RatingStarsPopup
-import com.videomaker.aimusic.modules.rate.RatingStep.*
 import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
 import com.videomaker.aimusic.ui.components.NotificationPermissionPromoDialog
 import com.videomaker.aimusic.ui.components.NotificationPermissionSettingsGuideDialog
@@ -126,11 +117,11 @@ import com.videomaker.aimusic.ui.theme.Neutral_N800
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
-import java.io.File
-import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
+import java.io.File
 
 // ============================================
 // HELPER - Release player async to avoid ANR
@@ -198,7 +189,7 @@ fun ExportScreen(
     val currentQuality by viewModel.currentQuality.collectAsStateWithLifecycle()
     val featuredTemplatesState by viewModel.featuredTemplatesState.collectAsStateWithLifecycle()
     val saveToastState by viewModel.saveToastState.collectAsStateWithLifecycle()
-    val ratingStep by viewModel.ratingStep.collectAsStateWithLifecycle()
+
     val shouldPresentDownloadAd by viewModel.shouldPresentDownloadAd.collectAsStateWithLifecycle()
     val showWatermark by viewModel.showWatermark.collectAsStateWithLifecycle()
     val shouldPresentWatermarkAd by viewModel.shouldPresentWatermarkAd.collectAsStateWithLifecycle()
@@ -440,26 +431,6 @@ fun ExportScreen(
         }
     }
 
-    // Launch Play Store for high-star rating — one-time event requiring Activity context
-    LaunchedEffect(Unit) {
-        viewModel.launchPlayStoreEvent.collect {
-            val packageName = context.packageName
-            val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            try {
-                context.startActivity(marketIntent)
-            } catch (e: ActivityNotFoundException) {
-                // Fallback: open Play Store in browser if Play Store app not installed
-                context.startActivity(
-                    Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse("https://play.google.com/store/apps/details?id=$packageName")
-                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                )
-            }
-        }
-    }
-
     // Block back navigation during processing - no cancel option
     BackHandler(enabled = uiState is ExportUiState.Processing || uiState is ExportUiState.Preparing) {
         // Do nothing - prevent back navigation during export
@@ -549,31 +520,6 @@ fun ExportScreen(
                 CancelledContent(
                     onBackClick = viewModel::navigateBack
                 )
-            }
-        }
-
-        // Rating popup overlay — renders on top of export content
-        AnimatedContent(
-            targetState = ratingStep,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
-            label = "rating_popup_transition"
-        ) { step ->
-            when (step) {
-                Satisfaction -> RatingSatisfactionPopup(
-                    onNotReally = viewModel::onNotReally,
-                    onGood = viewModel::onGood,
-                    onDismiss = viewModel::onRatingDismiss
-                )
-                Stars -> RatingStarsPopup(
-                    onLowRating = viewModel::onLowRating,
-                    onHighRating = viewModel::onHighRating,
-                    onDismiss = viewModel::onRatingDismiss
-                )
-                Feedback -> RatingFeedbackPopup(
-                    onSubmit = viewModel::onFeedbackSubmit,
-                    onDismiss = viewModel::onRatingDismiss
-                )
-                None -> { /* No popup shown */ }
             }
         }
 
