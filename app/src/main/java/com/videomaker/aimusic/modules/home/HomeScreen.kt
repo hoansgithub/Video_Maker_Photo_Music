@@ -123,9 +123,6 @@ import org.koin.compose.koinInject
 /** Two scroll sessions ending within this window count as a single swipe (dedupes split flings). */
 private const val GESTURE_COOLDOWN_MS = 250L
 
-/** A single scroll past this many items also triggers the collapse (a long fling, not 3 swipes). */
-private const val DEEP_SCROLL_ITEM_COUNT = 28
-
 /** Stable no-op progress provider for tabs without a collapsing create pill (e.g. Songs). */
 private val ZeroProgress: () -> Float = { 0f }
 
@@ -251,6 +248,10 @@ fun HomeScreen(
     // "See What's New" reveals. Scrolling back near the top resets the count → both fold back.
     var galleryGestureCount by remember { mutableIntStateOf(0) }
     var songsGestureCount by remember { mutableIntStateOf(0) }
+    // Scroll magnitude at which the last swipe was counted — counting net distance since this
+    // (not per-session) makes a split fling count as one swipe. Reset with the count at top.
+    var galleryLastCountedMag by remember { mutableIntStateOf(0) }
+    var songsLastCountedMag by remember { mutableIntStateOf(0) }
 
     val galleryScrollMagnitude = remember(galleryTemplatesHeaderIndex) {
         derivedStateOf {
@@ -310,22 +311,22 @@ fun HomeScreen(
         }
     }
 
-    // Count a downward swipe each time a scroll session ends having moved past a small
-    // threshold (ignores tiny flicks). A fling can split into two sessions when content
-    // loading briefly pauses it, so a short cooldown merges those into one swipe.
+    // Count a downward swipe at each scroll-session end, but measured as NET distance scrolled
+    // since the previous counted swipe (≥ ~35% of the viewport — a real swipe, not a flick).
+    // Because it's cumulative, a fling that splits into two sessions only adds one count (the
+    // small second half doesn't clear the threshold), and a single long fling is always just
+    // one count — so it genuinely takes 3 separate swipes, never 2.
     LaunchedEffect(galleryListState) {
-        var startMag = 0
         var lastCountAt = 0L
         snapshotFlow { galleryListState.isScrollInProgress }
             .collect { scrolling ->
-                if (scrolling) {
-                    startMag = galleryScrollMagnitude.value
-                } else {
-                    val threshold = (galleryHeight.value * 0.12f).toInt().coerceAtLeast(120)
+                if (!scrolling) {
+                    val threshold = (galleryHeight.value * 0.35f).toInt().coerceAtLeast(300)
                     val now = System.currentTimeMillis()
-                    if (galleryScrollMagnitude.value - startMag >= threshold &&
-                        now - lastCountAt >= GESTURE_COOLDOWN_MS) {
+                    val mag = galleryScrollMagnitude.value
+                    if (mag - galleryLastCountedMag >= threshold && now - lastCountAt >= GESTURE_COOLDOWN_MS) {
                         galleryGestureCount++
+                        galleryLastCountedMag = mag
                         lastCountAt = now
                     }
                 }
@@ -333,38 +334,31 @@ fun HomeScreen(
     }
 
     LaunchedEffect(songsListState) {
-        var startMag = 0
         var lastCountAt = 0L
         snapshotFlow { songsListState.isScrollInProgress }
             .collect { scrolling ->
-                if (scrolling) {
-                    startMag = songsScrollMagnitude.value
-                } else {
-                    val threshold = (songsHeight.value * 0.12f).toInt().coerceAtLeast(120)
+                if (!scrolling) {
+                    val threshold = (songsHeight.value * 0.35f).toInt().coerceAtLeast(300)
                     val now = System.currentTimeMillis()
-                    if (songsScrollMagnitude.value - startMag >= threshold &&
-                        now - lastCountAt >= GESTURE_COOLDOWN_MS) {
+                    val mag = songsScrollMagnitude.value
+                    if (mag - songsLastCountedMag >= threshold && now - lastCountAt >= GESTURE_COOLDOWN_MS) {
                         songsGestureCount++
+                        songsLastCountedMag = mag
                         lastCountAt = now
                     }
                 }
             }
     }
 
-    // Index-based latch/reset (snapshotFlow fires only when the item index changes — far
-    // lighter than keying a LaunchedEffect on the per-frame scroll offset):
-    //  - near the top → reset (latched collapse cleared),
-    //  - scrolled past DEEP_SCROLL_ITEM_COUNT in one go → latch collapsed (so a single long
-    //    fling triggers the animation without needing 3 separate swipes).
-    // Fold-back fires as soon as you scroll near the top (during the scroll, not deferred):
-    // the per-card per-frame work was removed from the gallery cells, so the main thread is
-    // free enough for the draw-phase CTA2→CTA1 animation to run smoothly mid-scroll.
+    // Reset the sequence (fold back) once the list returns near the top. No deep-scroll
+    // shortcut: CTA only appears after the user has genuinely completed 3 downward swipes,
+    // never from a single long fling. snapshotFlow on the item index keeps this cheap.
     LaunchedEffect(galleryListState) {
         snapshotFlow { galleryListState.firstVisibleItemIndex }
             .collect { index ->
-                when {
-                    index <= galleryTemplatesHeaderIndex -> galleryGestureCount = 0
-                    index > DEEP_SCROLL_ITEM_COUNT && galleryGestureCount < 3 -> galleryGestureCount = 3
+                if (index <= galleryTemplatesHeaderIndex) {
+                    galleryGestureCount = 0
+                    galleryLastCountedMag = 0
                 }
             }
     }
@@ -372,14 +366,14 @@ fun HomeScreen(
     LaunchedEffect(songsListState) {
         snapshotFlow { songsListState.firstVisibleItemIndex }
             .collect { index ->
-                when {
-                    index <= 7 -> songsGestureCount = 0
-                    index > DEEP_SCROLL_ITEM_COUNT && songsGestureCount < 3 -> songsGestureCount = 3
+                if (index <= 7) {
+                    songsGestureCount = 0
+                    songsLastCountedMag = 0
                 }
             }
     }
 
-    // After the 3rd swipe (or a long fling) the create pill collapses; reset fold-back at top.
+    // After the 3rd completed downward swipe the create pill collapses; reset fold-back at top.
     val galleryCollapsed by remember {
         derivedStateOf { galleryGestureCount >= 3 }
     }

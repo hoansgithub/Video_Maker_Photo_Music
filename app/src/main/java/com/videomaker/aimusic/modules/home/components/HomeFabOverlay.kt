@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.home.components
 
+import android.graphics.BlurMaskFilter
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -36,6 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -45,10 +48,16 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.toRect
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
@@ -255,7 +264,13 @@ private fun SeeWhatsNewPill(
         modifier = modifier
             .height(52.dp)
             .background(color = NewIdeasBackground, shape = PillShape)
-            .border(width = 1.5.dp, color = Primary, shape = PillShape)
+            .border(width = 1.dp, color = Primary.copy(0.7f), shape = PillShape)
+            .innerShadow(
+                shape = PillShape,
+                color = Color(0x3DFFFFFF),
+                blur = 12.dp,
+                offsetY = (-3).dp
+            )
             .clickableSingle(onClick = onClick)
             .padding(start = 24.dp, end = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -265,7 +280,7 @@ private fun SeeWhatsNewPill(
             text = "See What's New",
             color = Color.White,
             fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.W400,
             maxLines = 1,
             softWrap = false
         )
@@ -275,5 +290,35 @@ private fun SeeWhatsNewPill(
             tint = Primary,
             modifier = Modifier.size(24.dp)
         )
+    }
+}
+
+fun Modifier.innerShadow(
+    shape: Shape,
+    color: Color,
+    blur: Dp,
+    offsetX: Dp = 0.dp,
+    offsetY: Dp = 0.dp,
+) = this.drawWithContent {
+    drawContent()
+
+    drawIntoCanvas { canvas ->
+        val paint = Paint().apply {
+            this.color = color
+        }
+
+        val frameworkPaint = paint.asFrameworkPaint().apply {
+            maskFilter =
+                BlurMaskFilter(blur.toPx(), BlurMaskFilter.Blur.NORMAL)
+        }
+
+        canvas.saveLayer(size.toRect(), paint)
+
+        canvas.drawOutline(
+            outline = shape.createOutline(size, layoutDirection, this),
+            paint = paint
+        )
+
+        canvas.restore()
     }
 }
