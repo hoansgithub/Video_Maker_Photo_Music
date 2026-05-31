@@ -53,6 +53,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.ui.res.painterResource
+import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.components.PrimaryButton
+import com.videomaker.aimusic.modules.home.components.HomeFabOverlay
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -103,9 +117,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
-object HomeFabStateManager {
-    var hasCompletedFirstAccess = false
-}
+/** Two scroll sessions ending within this window count as a single swipe (dedupes split flings). */
+private const val GESTURE_COOLDOWN_MS = 250L
 
 /**
  * HomeScreen - Main screen with tabbed navigation
@@ -224,12 +237,12 @@ fun HomeScreen(
         if (featuredTemplates.isNotEmpty()) 4 else 2
     }
 
-    var hasCompletedFirstAccess by rememberSaveable { mutableStateOf(HomeFabStateManager.hasCompletedFirstAccess) }
+    // Swipe-gesture counters drive the bottom FAB state machine per tab.
+    // swipe #2 → collapse the create pill into the (+); swipe #3 → reveal "See What's New".
+    var galleryGestureCount by remember { mutableIntStateOf(0) }
+    var songsGestureCount by remember { mutableIntStateOf(0) }
 
-    var lastInteractionScrollPositionGallery by rememberSaveable { mutableIntStateOf(0) }
-    var lastInteractionScrollPositionSongs by rememberSaveable { mutableIntStateOf(0) }
-
-    val currentGalleryScroll by remember(galleryTemplatesHeaderIndex) {
+    val galleryScrollMagnitude = remember(galleryTemplatesHeaderIndex) {
         derivedStateOf {
             val targetIndex = galleryTemplatesHeaderIndex + 1
             val visibleItems = galleryListState.layoutInfo.visibleItemsInfo
@@ -251,7 +264,7 @@ fun HomeScreen(
         }
     }
 
-    val currentSongsScroll by remember {
+    val songsScrollMagnitude = remember {
         derivedStateOf {
             val targetIndex = 8
             val visibleItems = songsListState.layoutInfo.visibleItemsInfo
@@ -287,43 +300,72 @@ fun HomeScreen(
         }
     }
 
-    // Collapse FAB on scroll down
-    LaunchedEffect(currentGalleryScroll) {
-        if (currentGalleryScroll > 0 && !hasCompletedFirstAccess) {
-            hasCompletedFirstAccess = true
-            HomeFabStateManager.hasCompletedFirstAccess = true
-        }
+    // Count a downward swipe each time a scroll session ends having moved past a small
+    // threshold (ignores tiny flicks). A fling can split into two sessions when content
+    // loading briefly pauses it, so a short cooldown merges those into one swipe.
+    LaunchedEffect(galleryListState) {
+        var startMag = 0
+        var lastCountAt = 0L
+        snapshotFlow { galleryListState.isScrollInProgress }
+            .collect { scrolling ->
+                if (scrolling) {
+                    startMag = galleryScrollMagnitude.value
+                } else {
+                    val threshold = (galleryHeight.value * 0.12f).toInt().coerceAtLeast(120)
+                    val now = System.currentTimeMillis()
+                    if (galleryScrollMagnitude.value - startMag >= threshold &&
+                        now - lastCountAt >= GESTURE_COOLDOWN_MS) {
+                        galleryGestureCount++
+                        lastCountAt = now
+                    }
+                }
+            }
     }
 
-    LaunchedEffect(currentSongsScroll) {
-        if (currentSongsScroll > 0 && !hasCompletedFirstAccess) {
-            hasCompletedFirstAccess = true
-            HomeFabStateManager.hasCompletedFirstAccess = true
-        }
+    LaunchedEffect(songsListState) {
+        var startMag = 0
+        var lastCountAt = 0L
+        snapshotFlow { songsListState.isScrollInProgress }
+            .collect { scrolling ->
+                if (scrolling) {
+                    startMag = songsScrollMagnitude.value
+                } else {
+                    val threshold = (songsHeight.value * 0.12f).toInt().coerceAtLeast(120)
+                    val now = System.currentTimeMillis()
+                    if (songsScrollMagnitude.value - startMag >= threshold &&
+                        now - lastCountAt >= GESTURE_COOLDOWN_MS) {
+                        songsGestureCount++
+                        lastCountAt = now
+                    }
+                }
+            }
     }
 
-    var isNewIdeasClickedGallery by rememberSaveable { mutableStateOf(false) }
-    var isNewIdeasClickedSongs by rememberSaveable { mutableStateOf(false) }
-
+    // Returning to the top resets the sequence: the create pill re-expands and the
+    // "See What's New" pill retracts gradually, both folding back together.
     LaunchedEffect(galleryListState.firstVisibleItemIndex, galleryListState.firstVisibleItemScrollOffset) {
         if (galleryListState.firstVisibleItemIndex <= galleryTemplatesHeaderIndex) {
-            isNewIdeasClickedGallery = false
-            lastInteractionScrollPositionGallery = 0
+            galleryGestureCount = 0
         }
     }
 
     LaunchedEffect(songsListState.firstVisibleItemIndex, songsListState.firstVisibleItemScrollOffset) {
         if (songsListState.firstVisibleItemIndex <= 7) {
-            isNewIdeasClickedSongs = false
-            lastInteractionScrollPositionSongs = 0
+            songsGestureCount = 0
         }
+    }
+
+    // After the 3rd completed swipe the create pill collapses into the (+) and
+    // "See What's New" appears. Both reset (fold back) when scrolling to the top.
+    val galleryCollapsed by remember {
+        derivedStateOf { galleryGestureCount >= 3 }
     }
 
     val isNewIdeasVisible by remember {
         derivedStateOf {
             when (pagerState.currentPage) {
-                0 -> !isNewIdeasClickedGallery && currentGalleryScroll > 0 && (currentGalleryScroll - lastInteractionScrollPositionGallery >= 3 * galleryHeight.value)
-                1 -> !isNewIdeasClickedSongs && currentSongsScroll > 0 && (currentSongsScroll - lastInteractionScrollPositionSongs >= 3 * songsHeight.value)
+                0 -> galleryGestureCount >= 3
+                1 -> songsGestureCount >= 3
                 else -> false
             }
         }
@@ -397,9 +439,7 @@ fun HomeScreen(
                             viewModel = galleryViewModel,
                             isVisible = pagerState.settledPage == 0,
                             listState = galleryListState,
-                            onUserInteraction = {
-                                lastInteractionScrollPositionGallery = currentGalleryScroll
-                            },
+                            onUserInteraction = {},
                             onCreateClick = onCreateClick,
                             onNavigateToSearch = onNavigateToSearch,
                             onNavigateToTemplateDetail = onNavigateToTemplateDetail,
@@ -409,9 +449,7 @@ fun HomeScreen(
                         1 -> SongsTabContent(
                             viewModel = songsViewModel,
                             listState = songsListState,
-                            onUserInteraction = {
-                                lastInteractionScrollPositionSongs = currentSongsScroll
-                            },
+                            onUserInteraction = {},
                             topBarHeight = topBarHeight,
                             isVisible = pagerState.settledPage == 1,
                             onNavigateToSearch = {
@@ -493,165 +531,29 @@ fun HomeScreen(
 
             // Unified FAB Overlay for Gallery and Song tabs
             if (pagerState.currentPage == 0 || pagerState.currentPage == 1) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    if (pagerState.currentPage == 0) {
-                        // Gallery Tab: S1 pill, S2 collapsed FAB, S3 FAB + New Ideas pill
-                        if (!hasCompletedFirstAccess) {
-                            // S1: Centered bottom expanded pill
-                            CreateNewVideoButton(
-                                onClick = {
-                                    hasCompletedFirstAccess = true
-                                    HomeFabStateManager.hasCompletedFirstAccess = true
-                                    onCreateClick()
-                                },
-                                modifier = Modifier.align(Alignment.BottomCenter)
-                            )
-                        } else {
-                            // S2 & S3: Right edge icon only (+) FAB + "New Ideas ✨" pill
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .align(Alignment.BottomEnd),
-                                horizontalArrangement = Arrangement.End,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                AnimatedVisibility(
-                                    visible = isNewIdeasVisible,
-                                    enter = fadeIn() + expandHorizontally(),
-                                    exit = fadeOut() + shrinkHorizontally(),
-                                    modifier = Modifier.then(
-                                        if (isNewIdeasVisible) Modifier.weight(1f) else Modifier
-                                    )
-                                ) {
-                                    // Custom "New Ideas ✨" pill button matching the mockup UI
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(end = 12.dp)
-                                            .height(52.dp)
-                                            .background(
-                                                color = NewIdeasBackground,
-                                                shape = RoundedCornerShape(26.dp)
-                                            )
-                                            .border(
-                                                width = 1.5.dp,
-                                                color = Primary,
-                                                shape = RoundedCornerShape(26.dp)
-                                            )
-                                            .clickable {
-                                                isNewIdeasClickedGallery = true
-                                                coroutineScope.launch {
-                                                    galleryListState.animateScrollToItem(
-                                                        galleryTemplatesHeaderIndex
-                                                    )
-                                                }
-                                                galleryViewModel.shuffle()
-                                            }
-                                    ) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .padding(start = 20.dp, end = 6.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text(
-                                                text = "New Ideas✨",
-                                                color = Color.White,
-                                                fontSize = 16.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-
-                                            // Circular white refresh button inside the pill
-                                            Icon(
-                                                painter = painterResource(id = R.drawable.ic_refresh),
-                                                contentDescription = "Refresh",
-                                                tint = Color.Unspecified,
-                                                modifier = Modifier.size(38.dp)
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // Circular (+) FAB
-                                androidx.compose.material3.FloatingActionButton(
-                                    onClick = {
-                                        onCreateClick()
-                                    },
-                                    shape = CircleShape,
-                                    containerColor = Primary,
-                                    contentColor = Color.Black,
-                                    modifier = Modifier.size(52.dp)
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_circle_plus),
-                                        contentDescription = "Create",
-                                        tint = Color.Unspecified,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
+                val isGalleryTab = pagerState.currentPage == 0
+                HomeFabOverlay(
+                    isGalleryTab = isGalleryTab,
+                    collapsed = isGalleryTab && galleryCollapsed,
+                    refreshVisible = isNewIdeasVisible,
+                    onCreateClick = onCreateClick,
+                    onRefreshClick = {
+                        // Scroll smoothly to the top first, then shuffle. Reaching the top
+                        // resets the swipe count, so "See What's New" retracts gradually in
+                        // sync with the create pill re-expanding (instead of vanishing early).
+                        if (isGalleryTab) {
+                            coroutineScope.launch {
+                                galleryListState.animateScrollToItem(0)
+                                galleryViewModel.shuffle()
                             }
-                        }
-                    } else {
-                        // Songs Tab: Only show "New Ideas ✨" pill button when visible, aligned to bottom center. No add/FAB button at all.
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = isNewIdeasVisible,
-                            enter = fadeIn() + expandHorizontally(),
-                            exit = fadeOut() + shrinkHorizontally(),
-                            modifier = Modifier.align(Alignment.BottomCenter)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(0.7f)
-                                    .height(52.dp)
-                                    .background(
-                                        color = NewIdeasBackground,
-                                        shape = RoundedCornerShape(26.dp)
-                                    )
-                                    .border(
-                                        width = 1.5.dp,
-                                        color = Primary,
-                                        shape = RoundedCornerShape(26.dp)
-                                    )
-                                    .clickable {
-                                        isNewIdeasClickedSongs = true
-                                        coroutineScope.launch {
-                                            songsListState.animateScrollToItem(6)
-                                        }
-                                        songsViewModel.shuffle()
-                                    }
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(start = 20.dp, end = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = "New Ideas✨",
-                                        color = Color.White,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-
-                                    // Circular white refresh button inside the pill
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_refresh),
-                                        contentDescription = "Refresh",
-                                        tint = Color.Unspecified,
-                                        modifier = Modifier.size(38.dp)
-                                    )
-                                }
+                        } else {
+                            coroutineScope.launch {
+                                songsListState.animateScrollToItem(0)
+                                songsViewModel.shuffle()
                             }
                         }
                     }
-                }
+                )
             }
         }
 
@@ -881,7 +783,7 @@ private fun SongsTabContent(
 private fun HomeScreenFirstAccessPreview() {
     VideoMakerTheme {
         HomeScreenPreviewContent(
-            hasCompletedFirstAccess = false,
+            collapsed = false,
             isNewIdeasVisible = false,
             currentPage = 0
         )
@@ -893,7 +795,7 @@ private fun HomeScreenFirstAccessPreview() {
 private fun HomeScreenCollapsedFabPreview() {
     VideoMakerTheme {
         HomeScreenPreviewContent(
-            hasCompletedFirstAccess = true,
+            collapsed = true,
             isNewIdeasVisible = false,
             currentPage = 0
         )
@@ -905,7 +807,7 @@ private fun HomeScreenCollapsedFabPreview() {
 private fun HomeScreenNewIdeasExpandedPreview() {
     VideoMakerTheme {
         HomeScreenPreviewContent(
-            hasCompletedFirstAccess = true,
+            collapsed = true,
             isNewIdeasVisible = true,
             currentPage = 0
         )
@@ -917,7 +819,7 @@ private fun HomeScreenNewIdeasExpandedPreview() {
 private fun HomeScreenSongTabNewIdeasPreview() {
     VideoMakerTheme {
         HomeScreenPreviewContent(
-            hasCompletedFirstAccess = true,
+            collapsed = true,
             isNewIdeasVisible = true,
             currentPage = 1
         )
@@ -929,7 +831,7 @@ private fun HomeScreenSongTabNewIdeasPreview() {
  */
 @Composable
 private fun HomeScreenPreviewContent(
-    hasCompletedFirstAccess: Boolean = false,
+    collapsed: Boolean = false,
     isNewIdeasVisible: Boolean = false,
     currentPage: Int = 0
 ) {
@@ -1069,146 +971,16 @@ private fun HomeScreenPreviewContent(
                 }
             }
 
-            // Unified FAB Overlay - copied exactly from real implementation to ensure visual fidelity
+            // Unified FAB Overlay — shared with the real screen for visual fidelity
             if (pagerState.currentPage == 0 || pagerState.currentPage == 1) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    if (pagerState.currentPage == 0) {
-                        if (!hasCompletedFirstAccess) {
-                            // S1: Centered bottom expanded pill
-                            CreateNewVideoButton(
-                                onClick = {},
-                                modifier = Modifier.align(Alignment.BottomCenter)
-                            )
-                        } else {
-                            // S2 & S3: Right edge icon only (+) FAB + "New Ideas ✨" pill
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .align(Alignment.BottomEnd),
-                                horizontalArrangement = Arrangement.End,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                AnimatedVisibility(
-                                    visible = isNewIdeasVisible,
-                                    enter = fadeIn() + expandHorizontally(),
-                                    exit = fadeOut() + shrinkHorizontally(),
-                                    modifier = Modifier.then(
-                                        if (isNewIdeasVisible) Modifier.weight(1f) else Modifier
-                                    )
-                                ) {
-                                    // Custom "New Ideas ✨" pill button matching the mockup UI
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(end = 12.dp)
-                                            .height(52.dp)
-                                            .background(
-                                                color = NewIdeasBackground,
-                                                shape = RoundedCornerShape(26.dp)
-                                            )
-                                            .border(
-                                                width = 1.5.dp,
-                                                color = Primary,
-                                                shape = RoundedCornerShape(26.dp)
-                                            )
-                                            .clickable { }
-                                    ) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .padding(start = 20.dp, end = 6.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text(
-                                                text = "New Ideas✨",
-                                                color = Color.White,
-                                                fontSize = 16.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-
-                                            // Circular white refresh button inside the pill
-                                            Icon(
-                                                painter = painterResource(id = R.drawable.ic_refresh),
-                                                contentDescription = "Refresh",
-                                                tint = Color.Unspecified,
-                                                modifier = Modifier.size(38.dp)
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // Circular (+) FAB
-                                androidx.compose.material3.FloatingActionButton(
-                                    onClick = {},
-                                    shape = CircleShape,
-                                    containerColor = Primary,
-                                    contentColor = Color.Black,
-                                    modifier = Modifier.size(52.dp)
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_circle_plus),
-                                        contentDescription = "Create",
-                                        tint = Color.Unspecified,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        // Songs Tab: Only show "New Ideas ✨" pill button when visible, aligned to bottom center. No FAB.
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = isNewIdeasVisible,
-                            enter = fadeIn() + expandHorizontally(),
-                            exit = fadeOut() + shrinkHorizontally(),
-                            modifier = Modifier.align(Alignment.BottomCenter)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(0.7f)
-                                    .height(52.dp)
-                                    .background(
-                                        color = NewIdeasBackground,
-                                        shape = RoundedCornerShape(26.dp)
-                                    )
-                                    .border(
-                                        width = 1.5.dp,
-                                        color = Primary,
-                                        shape = RoundedCornerShape(26.dp)
-                                    )
-                                    .clickable { }
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(start = 20.dp, end = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = "New Ideas✨",
-                                        color = Color.White,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-
-                                    // Circular white refresh button inside the pill
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_refresh),
-                                        contentDescription = "Refresh",
-                                        tint = Color.Unspecified,
-                                        modifier = Modifier.size(38.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                val isGalleryTab = pagerState.currentPage == 0
+                HomeFabOverlay(
+                    isGalleryTab = isGalleryTab,
+                    collapsed = isGalleryTab && collapsed,
+                    refreshVisible = isNewIdeasVisible,
+                    onCreateClick = {},
+                    onRefreshClick = {}
+                )
             }
         }
     }
