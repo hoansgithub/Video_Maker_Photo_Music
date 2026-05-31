@@ -100,6 +100,9 @@ import org.koin.compose.koinInject
 /** Two scroll sessions ending within this window count as a single swipe (dedupes split flings). */
 private const val GESTURE_COOLDOWN_MS = 250L
 
+/** On refresh, jump instantly to this item if further down, then smooth-animate the rest to top. */
+private const val NEAR_TOP_JUMP_INDEX = 8
+
 /** Stable no-op progress provider for tabs without a collapsing create pill (e.g. Songs). */
 private val ZeroProgress: () -> Float = { 0f }
 
@@ -254,7 +257,10 @@ fun HomeScreen(
 
     val songsScrollMagnitude = remember {
         derivedStateOf {
-            val targetIndex = 8
+            // Track scroll from near the very top so the FIRST swipe already counts. (Was 8 —
+            // the tall songs header spans ~8 items, so the first swipe through it produced
+            // magnitude 0 and didn't count, which is why it took 4 swipes instead of 3.)
+            val targetIndex = 1
             val visibleItems = songsListState.layoutInfo.visibleItemsInfo
             if (visibleItems.isEmpty()) return@derivedStateOf 0
 
@@ -565,16 +571,32 @@ fun HomeScreen(
                     refreshVisible = isNewIdeasVisible,
                     onCreateClick = onCreateClick,
                     onRefreshClick = {
-                        // Scroll smoothly to the top first, then shuffle. Reaching the top
-                        // resets the swipe count, so "See What's New" retracts gradually in
-                        // sync with the create pill re-expanding (instead of vanishing early).
+                        // Jump instantly to near the top, THEN smooth-animate the last short
+                        // stretch. animateScrollToItem over a long distance composes/draws every
+                        // item it passes (the whole tall grid / many song rows) → that's the
+                        // stutter. The instant jump skips that; you still see a smooth pull-up for
+                        // the final part. Shuffle after, at the top.
                         if (isGalleryTab) {
                             coroutineScope.launch {
+                                val gridIndex = galleryTemplatesHeaderIndex + 1
+                                if (galleryListState.firstVisibleItemIndex >= gridIndex) {
+                                    // Jump to just INSIDE the grid (offset kept above the
+                                    // re-expand ramp so the CTA stays collapsed and doesn't snap),
+                                    // then animate the short rest — the scroll-linked fold-back
+                                    // still plays over the last stretch.
+                                    galleryListState.scrollToItem(
+                                        gridIndex,
+                                        (galleryHeight.value * 0.4f).toInt()
+                                    )
+                                }
                                 galleryListState.animateScrollToItem(0)
                                 galleryViewModel.shuffle()
                             }
                         } else {
                             coroutineScope.launch {
+                                if (songsListState.firstVisibleItemIndex > NEAR_TOP_JUMP_INDEX) {
+                                    songsListState.scrollToItem(NEAR_TOP_JUMP_INDEX)
+                                }
                                 songsListState.animateScrollToItem(0)
                                 songsViewModel.shuffle()
                             }
