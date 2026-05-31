@@ -1,7 +1,6 @@
 package com.videomaker.aimusic.core.analytics
 
 import co.alcheclub.lib.acccore.analytics.AnalyticsCoordinator
-import java.util.LinkedHashSet
 import java.util.UUID
 
 /**
@@ -61,6 +60,12 @@ object Analytics {
         AnalyticsEvent.SONG_SHARE,
         AnalyticsEvent.SONG_SELECT
     )
+
+    @Volatile
+    private var isFirstSongRefreshInSession = true
+
+    @Volatile
+    private var isFirstTemplateRefreshInSession = true
 
     /**
      * Sanitize a string for analytics parameters.
@@ -2169,6 +2174,83 @@ object Analytics {
                 AnalyticsEvent.Param.ITEM_TYPE,
                 AnalyticsEvent.Param.CONVERSION_ACTION
             ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackIdeaSongImpression() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.IDEA_SONG_IMPRESSION,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackIdeaTemplateImpression() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.IDEA_TEMPLATE_IMPRESSION,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackIdeaSongClick() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.IDEA_SONG_CLICK,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackIdeaTemplateClick() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.IDEA_TEMPLATE_CLICK,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackRefreshStartSong() {
+        val logicVal = if (isFirstSongRefreshInSession) {
+            isFirstSongRefreshInSession = false
+            "retention"
+        } else {
+            "same_session"
+        }
+
+        trackWithPolicy(
+            eventName = AnalyticsEvent.REFRESH_START_SONG,
+            params = mapOf(AnalyticsEvent.Param.LOGIC to logicVal),
+            requiredParams = setOf(AnalyticsEvent.Param.LOGIC),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackRefreshStartTemplate() {
+        val logicVal = if (isFirstTemplateRefreshInSession) {
+            isFirstTemplateRefreshInSession = false
+            "retention"
+        } else {
+            "same_session"
+        }
+
+        trackWithPolicy(
+            eventName = AnalyticsEvent.REFRESH_START_TEMPLATE,
+            params = mapOf(AnalyticsEvent.Param.LOGIC to logicVal),
+            requiredParams = setOf(AnalyticsEvent.Param.LOGIC),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackRefreshIconClick(flow: String) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.REFRESH_ICON_CLICK,
+            params = mapOf(AnalyticsEvent.Param.FLOW to flow),
+            requiredParams = setOf(AnalyticsEvent.Param.FLOW),
             policy = TrackingPolicy.NORMAL
         )
     }

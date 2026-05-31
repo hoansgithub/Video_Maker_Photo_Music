@@ -26,6 +26,14 @@ object AnalyticsEvent {
     const val TAB_VIEW = "tab_view"
     const val TAB_SWITCH = "tab_switch"
 
+    const val IDEA_SONG_IMPRESSION = "idea_song_impression"
+    const val IDEA_TEMPLATE_IMPRESSION = "idea_template_impression"
+    const val IDEA_SONG_CLICK = "idea_song_click"
+    const val IDEA_TEMPLATE_CLICK = "idea_template_click"
+    const val REFRESH_START_SONG = "refresh_start_song"
+    const val REFRESH_START_TEMPLATE = "refresh_start_template"
+    const val REFRESH_ICON_CLICK = "refresh_icon_click"
+
     // ============================================
     // 3. GALLERY SCREEN
     // ============================================
@@ -258,6 +266,8 @@ object AnalyticsEvent {
         const val VALUE = "value"
         const val TYPE = "type"
         const val SOURCE = "source"
+        const val LOGIC = "logic"
+        const val FLOW = "flow"
 
         const val TAB_NAME = "tab_name"
         const val FROM = "from"
