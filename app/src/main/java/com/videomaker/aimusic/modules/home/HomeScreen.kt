@@ -57,6 +57,9 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.expandHorizontally
@@ -119,6 +122,12 @@ import org.koin.compose.koinInject
 
 /** Two scroll sessions ending within this window count as a single swipe (dedupes split flings). */
 private const val GESTURE_COOLDOWN_MS = 250L
+
+/** A single scroll past this many items also triggers the collapse (a long fling, not 3 swipes). */
+private const val DEEP_SCROLL_ITEM_COUNT = 28
+
+/** Stable no-op progress provider for tabs without a collapsing create pill (e.g. Songs). */
+private val ZeroProgress: () -> Float = { 0f }
 
 /**
  * HomeScreen - Main screen with tabbed navigation
@@ -238,7 +247,8 @@ fun HomeScreen(
     }
 
     // Swipe-gesture counters drive the bottom FAB state machine per tab.
-    // swipe #2 → collapse the create pill into the (+); swipe #3 → reveal "See What's New".
+    // On the 3rd counted downward swipe: the create pill collapses into the (+) AND
+    // "See What's New" reveals. Scrolling back near the top resets the count → both fold back.
     var galleryGestureCount by remember { mutableIntStateOf(0) }
     var songsGestureCount by remember { mutableIntStateOf(0) }
 
@@ -341,24 +351,70 @@ fun HomeScreen(
             }
     }
 
-    // Returning to the top resets the sequence: the create pill re-expands and the
-    // "See What's New" pill retracts gradually, both folding back together.
-    LaunchedEffect(galleryListState.firstVisibleItemIndex, galleryListState.firstVisibleItemScrollOffset) {
-        if (galleryListState.firstVisibleItemIndex <= galleryTemplatesHeaderIndex) {
-            galleryGestureCount = 0
-        }
+    // Index-based latch/reset (snapshotFlow fires only when the item index changes — far
+    // lighter than keying a LaunchedEffect on the per-frame scroll offset):
+    //  - near the top → reset (latched collapse cleared),
+    //  - scrolled past DEEP_SCROLL_ITEM_COUNT in one go → latch collapsed (so a single long
+    //    fling triggers the animation without needing 3 separate swipes).
+    // Fold-back fires as soon as you scroll near the top (during the scroll, not deferred):
+    // the per-card per-frame work was removed from the gallery cells, so the main thread is
+    // free enough for the draw-phase CTA2→CTA1 animation to run smoothly mid-scroll.
+    LaunchedEffect(galleryListState) {
+        snapshotFlow { galleryListState.firstVisibleItemIndex }
+            .collect { index ->
+                when {
+                    index <= galleryTemplatesHeaderIndex -> galleryGestureCount = 0
+                    index > DEEP_SCROLL_ITEM_COUNT && galleryGestureCount < 3 -> galleryGestureCount = 3
+                }
+            }
     }
 
-    LaunchedEffect(songsListState.firstVisibleItemIndex, songsListState.firstVisibleItemScrollOffset) {
-        if (songsListState.firstVisibleItemIndex <= 7) {
-            songsGestureCount = 0
-        }
+    LaunchedEffect(songsListState) {
+        snapshotFlow { songsListState.firstVisibleItemIndex }
+            .collect { index ->
+                when {
+                    index <= 7 -> songsGestureCount = 0
+                    index > DEEP_SCROLL_ITEM_COUNT && songsGestureCount < 3 -> songsGestureCount = 3
+                }
+            }
     }
 
-    // After the 3rd completed swipe the create pill collapses into the (+) and
-    // "See What's New" appears. Both reset (fold back) when scrolling to the top.
+    // After the 3rd swipe (or a long fling) the create pill collapses; reset fold-back at top.
     val galleryCollapsed by remember {
         derivedStateOf { galleryGestureCount >= 3 }
+    }
+
+    // Collapse progress (0 = expanded pill, 1 = collapsed into the +).
+    //  - Collapsing is TIME-animated (a clean morph fired by the swipe trigger).
+    //  - Re-expanding is SCROLL-LINKED: as you scroll up into the last ~0.3 viewport before the
+    //    top, progress follows the scroll position directly (no separate time clock), so the
+    //    fold-back STARTS during the scroll-up and tracks it smoothly to completion at the top.
+    // (firstVisibleItemIndex can't drive this — the whole grid is one LazyColumn item — but the
+    // grid item's scroll offset, captured by galleryScrollMagnitude, can.)
+    val galleryExpandFraction = remember(galleryTemplatesHeaderIndex) {
+        derivedStateOf {
+            val ramp = (galleryHeight.value * 0.3f).coerceAtLeast(1f)
+            (galleryScrollMagnitude.value / ramp).coerceIn(0f, 1f)
+        }
+    }
+    val galleryCollapse = remember { Animatable(0f) }
+    val galleryCollapseProgressProvider = remember { { galleryCollapse.value } }
+
+    LaunchedEffect(galleryCollapsed) {
+        galleryCollapse.animateTo(
+            targetValue = if (galleryCollapsed) 1f else 0f,
+            animationSpec = tween(520, easing = FastOutSlowInEasing)
+        )
+    }
+    LaunchedEffect(galleryListState) {
+        snapshotFlow { galleryExpandFraction.value }
+            .collect { fraction ->
+                // Only drive progress DOWN to follow an upward scroll; the collapse animation
+                // owns the upward direction (and frac == 1 while deep, so it never caps it).
+                if (galleryCollapsed && fraction < galleryCollapse.value) {
+                    galleryCollapse.snapTo(fraction)
+                }
+            }
     }
 
     val isNewIdeasVisible by remember {
@@ -534,7 +590,7 @@ fun HomeScreen(
                 val isGalleryTab = pagerState.currentPage == 0
                 HomeFabOverlay(
                     isGalleryTab = isGalleryTab,
-                    collapsed = isGalleryTab && galleryCollapsed,
+                    collapseProgress = if (isGalleryTab) galleryCollapseProgressProvider else ZeroProgress,
                     refreshVisible = isNewIdeasVisible,
                     onCreateClick = onCreateClick,
                     onRefreshClick = {
@@ -976,7 +1032,7 @@ private fun HomeScreenPreviewContent(
                 val isGalleryTab = pagerState.currentPage == 0
                 HomeFabOverlay(
                     isGalleryTab = isGalleryTab,
-                    collapsed = isGalleryTab && collapsed,
+                    collapseProgress = { if (isGalleryTab && collapsed) 1f else 0f },
                     refreshVisible = isNewIdeasVisible,
                     onCreateClick = {},
                     onRefreshClick = {}

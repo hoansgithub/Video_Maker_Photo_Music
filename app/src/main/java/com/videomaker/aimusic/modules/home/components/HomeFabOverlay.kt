@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -12,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -36,30 +36,35 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.lerp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.NewIdeasBackground
 import com.videomaker.aimusic.ui.theme.Primary
 
-private const val ANIM_MS = 700           // full "Create New Video" collapse / expand
-private const val SW_DELAY_MS = 260        // "See What's New" waits while the pill collapses past its start point
-private const val SW_MS = ANIM_MS - SW_DELAY_MS // then slides in, finishing together with the pill
+private const val ANIM_MS = 700           // Songs "See What's New" reveal duration
 private const val FAB_SIZE = 52
 private const val FAB_GAP = 12
+private const val SW_START = 0.4f          // CTA2 begins REVEALING (clip) once progress passes this
+// CTA2 is added/removed from composition only at this near-zero progress (i.e. at the
+// extremes, when the list is settled) — NOT at SW_START. Toggling composition mid-animation
+// caused a one-frame recompose+relayout stutter ("giật 1 cái") right in the middle.
+private const val SW_MOUNT = 0.02f
 private val PillShape = RoundedCornerShape(26.dp) // half of 52dp → a perfect circle at 52dp wide
 
 // Songs: no create pill to coordinate with, so a simple centered reveal.
@@ -73,18 +78,19 @@ private val SongsRefreshExit: ExitTransition =
 /**
  * Bottom floating-action overlay shared by the Gallery and Songs tabs.
  *
- * Gallery: a single morphing element — the centered, content-width "Create New Video" pill
- * shrinks its width down to a 52dp circle while gliding into the bottom-right corner, so it
- * literally becomes the (+) float button (no crossfade, no scale distortion → smooth like the
- * full-width version). "See What's New" stays still, then (after a delay) slides in beside the
- * (+) in parallel. Opening (scrolling to the top) plays the reverse.
+ * Gallery: everything is driven by a single [collapseProgress] (0 = expanded pill,
+ * 1 = collapsed into the (+)) owned by the caller — time-animated when collapsing, but
+ * scroll-linked when re-expanding (so scrolling up just follows the finger, no separate
+ * animation clock to stutter against the fling). The create pill morphs its width into the
+ * (+); "See What's New" clip-wipes in once progress passes [SW_START] (a stagger), and wipes
+ * back out as progress falls — both in lockstep with the same value.
  *
- * Songs tab has no create button — only the centered "See What's New" pill.
+ * Songs tab has no create button — only the centered "See What's New" pill ([refreshVisible]).
  */
 @Composable
 fun HomeFabOverlay(
     isGalleryTab: Boolean,
-    collapsed: Boolean,
+    collapseProgress: () -> Float,
     refreshVisible: Boolean,
     onCreateClick: () -> Unit,
     onRefreshClick: () -> Unit,
@@ -99,42 +105,30 @@ fun HomeFabOverlay(
         if (isGalleryTab) {
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                 val fullWidthPx = with(LocalDensity.current) { maxWidth.toPx() }
-                val collapse = animateFloatAsState(
-                    targetValue = if (collapsed) 1f else 0f,
-                    animationSpec = tween(ANIM_MS, easing = FastOutSlowInEasing),
-                    label = "collapse"
-                )
 
                 CreateMorphButton(
-                    collapsed = collapsed,
-                    progress = { collapse.value },
+                    progress = collapseProgress,
                     fullWidthPx = fullWidthPx,
                     onClick = onCreateClick,
                     modifier = Modifier.align(Alignment.BottomEnd)
                 )
 
-                // "See What's New" — revealed in place by a clip wipe: show sweeps start→end
-                // (left→right), hide retracts end→start (right→left). Delayed so it waits while
-                // the create pill collapses past its start point.
-                val swReveal = animateFloatAsState(
-                    targetValue = if (refreshVisible) 1f else 0f,
-                    animationSpec = tween(
-                        SW_MS,
-                        delayMillis = if (refreshVisible) SW_DELAY_MS else 0,
-                        easing = FastOutSlowInEasing
-                    ),
-                    label = "swReveal"
-                )
-                val swActive by remember { derivedStateOf { swReveal.value > 0.001f } }
-                if (swActive) {
+                // "See What's New" — clip wipe driven by the SAME progress (staggered after the
+                // pill): reveals start→end as progress rises past SW_START, wipes end→start as it
+                // falls. Reading progress in draw only → no recomposition during the animation.
+                val swVisible by remember(collapseProgress) {
+                    derivedStateOf { collapseProgress() > SW_MOUNT }
+                }
+                if (swVisible) {
                     SeeWhatsNewPill(
                         onClick = onRefreshClick,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(end = (FAB_SIZE + FAB_GAP).dp)
                             .drawWithContent {
-                                val revealWidth = (size.width * swReveal.value).coerceIn(0f, size.width)
-                                clipRect(right = revealWidth) { this@drawWithContent.drawContent() }
+                                val reveal = ((collapseProgress() - SW_START) / (1f - SW_START))
+                                    .coerceIn(0f, 1f)
+                                clipRect(right = size.width * reveal) { this@drawWithContent.drawContent() }
                             }
                     )
                 }
@@ -163,7 +157,6 @@ fun HomeFabOverlay(
  */
 @Composable
 private fun CreateMorphButton(
-    collapsed: Boolean,
     progress: () -> Float,
     fullWidthPx: Float,
     onClick: () -> Unit,
@@ -171,27 +164,49 @@ private fun CreateMorphButton(
 ) {
     var contentWidthPx by remember { mutableIntStateOf(0) }
     val measured = contentWidthPx > 0
-    val contentWidthDp = with(LocalDensity.current) { contentWidthPx.toDp() }
-
-    // Width is derived from the collapse progress (NOT a self-animating state), so on first
-    // entry / tab switch (progress == 0) it simply appears at full width with no animation;
-    // it only animates while the user actually collapses it by scrolling.
-    val width = lerp(contentWidthDp, FAB_SIZE.dp, progress())
+    val density = LocalDensity.current
+    val fabPx = with(density) { FAB_SIZE.dp.toPx() }
+    val contentWidthDp = with(density) { contentWidthPx.toDp() }
 
     Box(
         modifier = modifier
-            // Wrap content until measured; then animate the real width (anchored to the right).
-            .then(if (measured) Modifier.width(width) else Modifier)
+            // Width is FIXED (set once after measuring). The morph runs entirely in the DRAW
+            // phase (drawWithContent + graphicsLayer reading progress), so the animation only
+            // invalidates drawing — never layout or recomposition — and stays smooth even while
+            // the LazyColumn is busy composing items during a scroll.
+            .then(if (measured) Modifier.width(contentWidthDp) else Modifier)
             .height(FAB_SIZE.dp)
             .graphicsLayer {
-                // Expanded → shifted left to sit centered; collapsed → 0 (right corner).
-                val centerOffset = -((fullWidthPx - contentWidthPx) / 2f)
-                translationX = centerOffset * (1f - progress())
+                // Centered while expanded, slides into the right corner as it collapses.
+                translationX = -((fullWidthPx - contentWidthPx) / 2f) * (1f - progress())
             }
-            .shadow(elevation = 10.dp, shape = PillShape, spotColor = Primary)
-            .clip(PillShape)
-            .background(Primary)
-            .clickableSingle(onClick = onClick)
+            .drawWithContent {
+                val w = lerp(size.width, fabPx, progress())
+                val left = size.width - w
+                val radius = CornerRadius(size.height / 2f)
+                drawRoundRect(
+                    color = Color.Black.copy(alpha = 0.18f),
+                    topLeft = Offset(left, 4.dp.toPx()),
+                    size = Size(w, size.height),
+                    cornerRadius = radius
+                )
+                drawRoundRect(
+                    color = Primary,
+                    topLeft = Offset(left, 0f),
+                    size = Size(w, size.height),
+                    cornerRadius = radius
+                )
+                // Clip the icon + label to the shrinking background.
+                clipRect(left = left, right = size.width) { this@drawWithContent.drawContent() }
+            }
+            .pointerInput(Unit) {
+                // Only the visible (drawn) part is tappable — avoids a phantom hit target over
+                // the transparent area once collapsed.
+                detectTapGestures { offset ->
+                    val w = lerp(size.width.toFloat(), fabPx, progress())
+                    if (offset.x >= size.width - w) onClick()
+                }
+            }
     ) {
         Row(
             modifier = Modifier
@@ -206,7 +221,10 @@ private fun CreateMorphButton(
                 painter = painterResource(id = R.drawable.ic_circle_plus),
                 contentDescription = "Create",
                 tint = Color.Unspecified,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier
+                    .size(24.dp)
+                    // Glides the + to the circle's centre as the pill collapses.
+                    .graphicsLayer { translationX = (contentWidthPx - fabPx) * progress() }
             )
             Text(
                 text = stringResource(R.string.gallery_create_new_video),
@@ -215,9 +233,9 @@ private fun CreateMorphButton(
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 softWrap = false,
-                // Fades out over the first ~60% so it's gone before the pill is a circle.
+                // Fades out over the first ~40% so it's gone before the clip reaches it.
                 modifier = Modifier.graphicsLayer {
-                    alpha = (1f - progress() / 0.6f).coerceIn(0f, 1f)
+                    alpha = (1f - progress() / 0.4f).coerceIn(0f, 1f)
                 }
             )
         }

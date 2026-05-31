@@ -39,14 +39,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
-import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalView
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.util.NumberFormatter
 import com.videomaker.aimusic.ui.theme.AppDimens
@@ -92,35 +88,26 @@ fun TemplateCard(
     val dimens = AppDimens.current
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val view = LocalView.current
 
     var expanded by remember { mutableStateOf(false) }
-
-    // Visibility detection: animate WebP only when on screen, static first frame when off screen.
-    // This saves CPU (no frame decoding) and memory (single bitmap vs animation frames).
-    var isOnScreen by remember { mutableStateOf(true) }
 
     // Simple retry mechanism (3 attempts max) - keyed to thumbnailPath for lazy list safety
     var retryCount by remember(thumbnailPath) { mutableIntStateOf(0) }
     var retryTrigger by remember(thumbnailPath) { mutableIntStateOf(0) }
 
-    val imageRequest = remember(thumbnailPath, retryTrigger, isOnScreen) {
+    // Stable request (no per-frame on-screen check): one cache key, so scrolling never
+    // rebuilds/reloads the image, and there's no per-card onGloballyPositioned cost per frame.
+    val imageRequest = remember(thumbnailPath, retryTrigger) {
         ImageRequest.Builder(context)
             .data(thumbnailPath)
             .size(Size(200, 350))  // Reduced from 400x700 to 200x350 (4x less data!)
             .precision(Precision.INEXACT)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .diskCachePolicy(CachePolicy.ENABLED)
-            .memoryCacheKey("grid_${thumbnailPath}_${if (isOnScreen) "anim" else "static"}")
+            .memoryCacheKey("grid_$thumbnailPath")
             .diskCacheKey("grid_$thumbnailPath")
             .crossfade(true)  // Smooth fade-in animation
             .crossfade(200)  // 200ms crossfade duration
-            .apply {
-                if (!isOnScreen) {
-                    // Static first frame only — bypasses animated WebP decoder
-                    decoderFactory(BitmapFactoryDecoder.Factory())
-                }
-            }
             .listener(
                 onError = { request, result ->
                     android.util.Log.e("TemplateCard", "Failed to load thumbnail (attempt ${retryCount + 1}/3): ${thumbnailPath}, error: ${result.throwable.message}")
@@ -144,12 +131,7 @@ fun TemplateCard(
     Card(
         onClick = onClick,
         modifier = modifier
-            .aspectRatio(aspectRatio.coerceIn(0.3f, 3f))
-            .onGloballyPositioned { coordinates ->
-                val bounds = coordinates.boundsInWindow()
-                val screenHeight = view.height.toFloat()
-                isOnScreen = bounds.bottom > 0f && bounds.top < screenHeight
-            },
+            .aspectRatio(aspectRatio.coerceIn(0.3f, 3f)),
         shape = RoundedCornerShape(dimens.radiusLg),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
