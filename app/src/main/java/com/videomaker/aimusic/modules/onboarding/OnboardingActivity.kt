@@ -46,10 +46,14 @@ class OnboardingActivity : AppCompatActivity() {
     private val remoteConfig: RemoteConfig by inject()
     private val onboardingViewModel: OnboardingViewModel by viewModel()
     private val onboardingContentViewModel: OnboardingContentViewModel by inject()
+    private val onboardingMusicPlayer: com.videomaker.aimusic.core.playback.OnboardingMusicPlayer by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Idempotent safety net in case the flow is entered here directly.
+        onboardingMusicPlayer.start()
 
         // Safety net: PAGE3 + FULLSCREEN also preloaded in LanguageSelectionActivity (2-ahead).
         // This ensures ads are loaded even if user skips language selection or deep-links.

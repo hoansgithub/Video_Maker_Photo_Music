@@ -143,6 +143,12 @@ val dataModule = module {
     single { com.videomaker.aimusic.core.storage.UnlockedTemplatesManager(androidContext()) }
     single { com.videomaker.aimusic.core.storage.UnlockedSongsManager(androidContext()) }
     single { com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager() }
+    single {
+        com.videomaker.aimusic.core.playback.OnboardingMusicPlayer(
+            context = androidContext(),
+            songRepository = get()
+        ).also { it.observeProcessLifecycle() }
+    }
 
     // ============================================
     // TRENDING POPUP

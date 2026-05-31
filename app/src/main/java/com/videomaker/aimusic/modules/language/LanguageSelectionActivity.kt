@@ -52,10 +52,14 @@ class LanguageSelectionActivity : AppCompatActivity() {
     private val completeLanguageSelectionUseCase: CompleteLanguageSelectionUseCase by inject()
     private val onboardingContentViewModel: OnboardingContentViewModel by inject()
     private val remoteConfig: RemoteConfig by inject()
+    private val onboardingMusicPlayer: com.videomaker.aimusic.core.playback.OnboardingMusicPlayer by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Onboarding entry point: start the looping geo top-1 background song.
+        onboardingMusicPlayer.start()
 
         // Preload the next screen's ads (1-step-ahead strategy). The next screen depends on
         // which survey screens are enabled; fall back to the welcome pager ads when none are.
