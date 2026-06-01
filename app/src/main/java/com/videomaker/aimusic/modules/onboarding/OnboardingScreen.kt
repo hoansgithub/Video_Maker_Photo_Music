@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -63,6 +64,14 @@ fun OnboardingScreen(
 
     val pageList = remember(adsLoaderService) {
         buildOnboardingPageList(adsLoaderService)
+    }
+
+    // Optimize: preload the onboarding interstitial the moment this screen opens, so it's
+    // ready by the time the user swipes to the (later) interstitial ad page and shows instantly.
+    LaunchedEffect(Unit) {
+        if (pageList.any { it is OnboardingPage.InterstitialAd }) {
+            VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING)
+        }
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -120,11 +129,16 @@ fun OnboardingScreen(
         }
     }
 
+    // Track the page the user was on right before the current one, to detect swipe
+    // direction (used by the interstitial ad page: close → go back if arrived backwards).
+    var lastPageBeforeCurrent by remember { mutableIntStateOf(pagerState.currentPage) }
+
     LaunchedEffect(pagerState) {
         var previousPage = pagerState.currentPage
         snapshotFlow { pagerState.currentPage }.collect { currentPage ->
             if (previousPage != currentPage && previousPage >= 0) {
                 preloadFeatureSelectionIfNeeded(previousPage, "swiped")
+                lastPageBeforeCurrent = previousPage
             }
             previousPage = currentPage
         }
@@ -162,6 +176,32 @@ fun OnboardingScreen(
                                 pagerState.animateScrollToPage(page + 1)
                             } else {
                                 onComplete()
+                            }
+                        }
+                    }
+                )
+            }
+
+            is OnboardingPage.InterstitialAd -> {
+                com.videomaker.aimusic.modules.onboarding.pages.OnboardingInterstitialAdStep(
+                    isCurrentPage = page == pagerState.currentPage,
+                    onClose = {
+                        showSwipeHint = false
+                        // If the user arrived here by swiping BACK, continue backwards
+                        // after closing the ad; otherwise advance forward as usual.
+                        val arrivedBySwipingBack = lastPageBeforeCurrent > page
+                        coroutineScope.launch {
+                            if (arrivedBySwipingBack) {
+                                if (page > 0) {
+                                    pagerState.animateScrollToPage(page - 1)
+                                }
+                            } else {
+                                preloadFeatureSelectionIfNeeded(page, "closed interstitial")
+                                if (page < pageList.lastIndex) {
+                                    pagerState.animateScrollToPage(page + 1)
+                                } else {
+                                    onComplete()
+                                }
                             }
                         }
                     }
@@ -307,6 +347,7 @@ fun OnboardingScreen(
 sealed class OnboardingPage {
     data class Welcome(val step: StepOnboard, val pageIndex: Int) : OnboardingPage()
     data object FullscreenAd : OnboardingPage()
+    data object InterstitialAd : OnboardingPage()
 }
 
 data class StepOnboard(val pageIndex: Int)
@@ -330,11 +371,19 @@ private fun buildOnboardingPageList(
     }
     val injectPosition = injectAfter.coerceIn(1, 3)
 
+    // Independent onboarding interstitial: injected as its own page only when enabled
+    // on Firebase. Native fullscreen ad is left untouched (always injected as before).
+    val interstitialEnabled =
+        adsLoaderService.getPlacementConfig(AdPlacement.INTERSTITIAL_ONBOARDING)?.enabled == true
+
     val pages = mutableListOf<OnboardingPage>()
     repeat(3) { index ->
         pages.add(OnboardingPage.Welcome(StepOnboard(index), index))
         if (index + 1 == injectPosition) {
             pages.add(OnboardingPage.FullscreenAd)
+            if (interstitialEnabled) {
+                pages.add(OnboardingPage.InterstitialAd)
+            }
         }
     }
     return pages

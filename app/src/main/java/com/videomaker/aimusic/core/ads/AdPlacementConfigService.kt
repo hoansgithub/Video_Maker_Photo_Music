@@ -224,6 +224,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Onboarding fullscreen-image interstitial (independent of NATIVE_ONBOARDING_FULLSCREEN)
+        // Default DISABLED — enable via Firebase to show it as its own onboarding page
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_ONBOARDING,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7891516199",  // Primary (Pro_inter img_high_OB)
+                "ca-app-pub-7121075950716954/6578434529"   // Secondary (Pro_inter img_all_OB)
+            ),
+            enabled = true
+        )
+
         // Editor "after prepare" fullscreen-image interstitial
         // Preloaded while the editor is preparing; shown 1s after the editor appears
         // Waterfall: Primary unit → Secondary unit

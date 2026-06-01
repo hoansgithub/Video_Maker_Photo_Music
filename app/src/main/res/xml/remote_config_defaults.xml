@@ -61,6 +61,10 @@
     <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/6955884647","enabled":true},{"id":"ca-app-pub-7121075950716954/3004197192","enabled":true}],"extras":{"retry_max":6}}</value>
   </entry>
   <entry>
+    <key>ad_interstitial_onboarding</key>
+    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/7891516199","enabled":true},{"id":"ca-app-pub-7121075950716954/6578434529","enabled":true}],"extras":{"retry_max":6}}</value>
+  </entry>
+  <entry>
     <key>ad_interstitial_export_result_exit</key>
     <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/5408312336","enabled":true},{"id":"ca-app-pub-7121075950716954/5188820489","enabled":true}],"extras":{"retry_max":6}}</value>
   </entry>

@@ -52,6 +52,22 @@ object AdPlacement {
     const val INTERSTITIAL_OPEN_APP = "ad_interstitial_open_app"
 
     /**
+     * Fullscreen-image interstitial shown at the onboarding ad step
+     * (same position as NATIVE_ONBOARDING_FULLSCREEN, but an independent placement).
+     *
+     * Independent of the native fullscreen ad: each is toggled separately via Firebase.
+     * Default disabled — enable on Firebase to show it (and typically disable the native).
+     * Shown as its own onboarding page, injected only when this placement is enabled.
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_inter img_high_OB): ca-app-pub-7121075950716954/7891516199
+     * - Secondary (Pro_inter img_all_OB): ca-app-pub-7121075950716954/6578434529
+     *
+     * Remote Config key: ad_interstitial_onboarding
+     */
+    const val INTERSTITIAL_ONBOARDING = "ad_interstitial_onboarding"
+
+    /**
      * Interstitial ad shown when user presses back from template previewer.
      * Timing: Preloaded at screen launch, shown on back button press if ready.
      * If ad not loaded yet, back navigation proceeds normally (non-blocking).
@@ -954,6 +970,7 @@ object AdPlacement {
         INTERSTITIAL_TEMPLATE_PREVIEWER_USE,
         INTERSTITIAL_EDITOR_BACK,
         INTERSTITIAL_EDITOR_AFTER_PREPARE,
+        INTERSTITIAL_ONBOARDING,
         INTERSTITIAL_TEMPLATE_GRID_TAP,
         INTERSTITIAL_LIBRARY_PROJECT_TAP,
         INTERSTITIAL_UNINSTALL_TEMPLATE_TAP,
