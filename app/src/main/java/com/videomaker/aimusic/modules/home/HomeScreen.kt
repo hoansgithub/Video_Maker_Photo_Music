@@ -404,6 +404,15 @@ fun HomeScreen(
         }
     }
 
+    LaunchedEffect(isNewIdeasVisible, pagerState.currentPage) {
+        if (isNewIdeasVisible) {
+            when (pagerState.currentPage) {
+                0 -> Analytics.trackIdeaTemplateImpression()
+                1 -> Analytics.trackIdeaSongImpression()
+            }
+        }
+    }
+
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
@@ -424,8 +433,14 @@ fun HomeScreen(
                 lastSettledPage = settledPage
 
                 when (settledPage) {
-                    0 -> galleryViewModel.onTabFocused()
-                    1 -> songsViewModel.onTabFocused()
+                    0 -> {
+                        galleryViewModel.onTabFocused()
+                        Analytics.trackRefreshStartTemplate()
+                    }
+                    1 -> {
+                        songsViewModel.onTabFocused()
+                        Analytics.trackRefreshStartSong()
+                    }
                     else -> Unit
                 }
             }
@@ -577,6 +592,7 @@ fun HomeScreen(
                         // stutter. The instant jump skips that; you still see a smooth pull-up for
                         // the final part. Shuffle after, at the top.
                         if (isGalleryTab) {
+                            Analytics.trackIdeaTemplateClick()
                             coroutineScope.launch {
                                 val gridIndex = galleryTemplatesHeaderIndex + 1
                                 if (galleryListState.firstVisibleItemIndex >= gridIndex) {
@@ -593,6 +609,7 @@ fun HomeScreen(
                                 galleryViewModel.shuffle()
                             }
                         } else {
+                            Analytics.trackIdeaSongClick()
                             coroutineScope.launch {
                                 if (songsListState.firstVisibleItemIndex > NEAR_TOP_JUMP_INDEX) {
                                     songsListState.scrollToItem(NEAR_TOP_JUMP_INDEX)

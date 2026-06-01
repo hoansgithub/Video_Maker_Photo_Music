@@ -942,6 +942,7 @@ private fun TemplatePreviewerReadyContent(
             ) {
                 IconButton(
                     onClick = {
+                        Analytics.trackRefreshIconClick(flow = "template")
                         onRefresh(viewedTemplateIds)
                         showRefreshTooltip = false
                     },
@@ -1031,6 +1032,7 @@ private fun TemplatePreviewerReadyContent(
                             onClick = { offset ->
                                 annotatedText.getStringAnnotations(tag = "refresh", start = offset, end = offset)
                                     .firstOrNull()?.let {
+                                        Analytics.trackRefreshIconClick(flow = "template")
                                         onRefresh(viewedTemplateIds)
                                         showRefreshTooltip = false
                                     }
