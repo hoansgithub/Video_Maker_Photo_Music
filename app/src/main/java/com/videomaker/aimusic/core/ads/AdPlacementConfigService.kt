@@ -761,6 +761,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Export result native ad (Success screen, above "Try Another Templates")
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_EXPORT_RESULT,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6973716424",  // Primary (Pro_NA_high_result)
+                "ca-app-pub-7121075950716954/8652109693"   // Secondary (Pro_NA_all_result)
+            ),
+            enabled = true
+        )
+
         // ============================================
         // REWARDED ADS
         // ============================================

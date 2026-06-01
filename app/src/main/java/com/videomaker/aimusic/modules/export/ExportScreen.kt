@@ -1268,6 +1268,17 @@ private fun SuccessContent(
                 )
             }
 
+            // Native ad above the "Try Another Templates" section
+            Spacer(modifier = Modifier.height(24.dp))
+
+            NativeAdView(
+                placement = AdPlacement.NATIVE_EXPORT_RESULT,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp),
+                isDebug = BuildConfig.DEBUG
+            )
+
             // Try Another Templates section
             Spacer(modifier = Modifier.height(32.dp))
 

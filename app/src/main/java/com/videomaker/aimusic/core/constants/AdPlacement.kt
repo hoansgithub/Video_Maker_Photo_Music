@@ -681,6 +681,18 @@ object AdPlacement {
     const val NATIVE_EXPORT_PREPARING = "ad_native_export_preparing"
 
     /**
+     * Native ad shown on the export Result (Success) screen,
+     * placed right above the "Try Another Templates" section.
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_NA_high_result): ca-app-pub-7121075950716954/6973716424
+     * - Secondary (Pro_NA_all_result): ca-app-pub-7121075950716954/8652109693
+     *
+     * Remote Config key: ad_native_export_result
+     */
+    const val NATIVE_EXPORT_RESULT = "ad_native_export_result"
+
+    /**
      * Native ad shown in template ratio selection bottom sheet.
      * Timing: Loaded when the select ratio bottom sheet is displayed.
      *
@@ -964,6 +976,7 @@ object AdPlacement {
         NATIVE_MUSIC_PLAYER,
         NATIVE_EXPORT_GENERATING,
         NATIVE_EXPORT_PREPARING,
+        NATIVE_EXPORT_RESULT,
         NATIVE_ONBOARDING_SELECT_MUSIC,
         NATIVE_ONBOARDING_SELECT_TPT,
         NATIVE_ONBOARDING_PERSONALIZING,
