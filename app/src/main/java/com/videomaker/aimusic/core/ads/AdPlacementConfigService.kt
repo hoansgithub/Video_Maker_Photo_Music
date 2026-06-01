@@ -748,6 +748,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Export preparing native "banner" ad (replaces bottom banner on Preparing screen)
+        // Rendered banner-size via native_small_row (compact horizontal row)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_EXPORT_PREPARING,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1709251222",  // Primary (Pro_NA_high_Bottom BN)
+                "ca-app-pub-7121075950716954/3435442033"   // Secondary (Pro_NA_all_Bottom BN)
+            ),
+            enabled = true
+        )
+
         // ============================================
         // REWARDED ADS
         // ============================================

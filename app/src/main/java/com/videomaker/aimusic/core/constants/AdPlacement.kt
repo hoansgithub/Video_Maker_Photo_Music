@@ -668,6 +668,19 @@ object AdPlacement {
     const val NATIVE_EXPORT_GENERATING = "ad_native_export_generating"
 
     /**
+     * Native "banner" ad shown at the bottom of the export Preparing screen.
+     * Replaces the bottom banner (BANNER_EXPORT) only while state is Preparing.
+     * Rendered banner-size via the native_small_row layout.
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_NA_high_Bottom BN): ca-app-pub-7121075950716954/1709251222
+     * - Secondary (Pro_NA_all_Bottom BN): ca-app-pub-7121075950716954/3435442033
+     *
+     * Remote Config key: ad_native_export_preparing
+     */
+    const val NATIVE_EXPORT_PREPARING = "ad_native_export_preparing"
+
+    /**
      * Native ad shown in template ratio selection bottom sheet.
      * Timing: Loaded when the select ratio bottom sheet is displayed.
      *
@@ -950,6 +963,7 @@ object AdPlacement {
         NATIVE_POPUP_TRENDING_SONG,
         NATIVE_MUSIC_PLAYER,
         NATIVE_EXPORT_GENERATING,
+        NATIVE_EXPORT_PREPARING,
         NATIVE_ONBOARDING_SELECT_MUSIC,
         NATIVE_ONBOARDING_SELECT_TPT,
         NATIVE_ONBOARDING_PERSONALIZING,
