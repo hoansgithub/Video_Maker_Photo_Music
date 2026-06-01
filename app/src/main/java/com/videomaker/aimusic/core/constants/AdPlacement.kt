@@ -52,6 +52,22 @@ object AdPlacement {
     const val INTERSTITIAL_OPEN_APP = "ad_interstitial_open_app"
 
     /**
+     * Fullscreen-image interstitial shown at the onboarding ad step
+     * (same position as NATIVE_ONBOARDING_FULLSCREEN, but an independent placement).
+     *
+     * Independent of the native fullscreen ad: each is toggled separately via Firebase.
+     * Default disabled — enable on Firebase to show it (and typically disable the native).
+     * Shown as its own onboarding page, injected only when this placement is enabled.
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_inter img_high_OB): ca-app-pub-7121075950716954/7891516199
+     * - Secondary (Pro_inter img_all_OB): ca-app-pub-7121075950716954/6578434529
+     *
+     * Remote Config key: ad_interstitial_onboarding
+     */
+    const val INTERSTITIAL_ONBOARDING = "ad_interstitial_onboarding"
+
+    /**
      * Interstitial ad shown when user presses back from template previewer.
      * Timing: Preloaded at screen launch, shown on back button press if ready.
      * If ad not loaded yet, back navigation proceeds normally (non-blocking).
@@ -107,6 +123,19 @@ object AdPlacement {
      * Remote Config key: ad_interstitial_editor_back
      */
     const val INTERSTITIAL_EDITOR_BACK = "ad_interstitial_editor_back"
+
+    /**
+     * Fullscreen-image interstitial shown right after the editor finishes preparing.
+     * Timing: preloaded while the editor "preparing" (Loading) screen is showing;
+     * the editor (Success) is displayed for 1s, then this interstitial is shown.
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_inter img_high_after prepare): ca-app-pub-7121075950716954/6955884647
+     * - Secondary (Pro_inter img_all_after prepare): ca-app-pub-7121075950716954/3004197192
+     *
+     * Remote Config key: ad_interstitial_editor_after_prepare
+     */
+    const val INTERSTITIAL_EDITOR_AFTER_PREPARE = "ad_interstitial_editor_after_prepare"
 
     /**
      * Interstitial ad shown when user taps a template in gallery/home grid.
@@ -472,6 +501,24 @@ object AdPlacement {
     const val NATIVE_ONBOARDING_FULLSCREEN = "ad_native_onboarding_fullscreen"
 
     /**
+     * Fullscreen native ad shown right after a rewarded ad (post-reward "bait").
+     *
+     * Preloaded the moment ANY rewarded ad is shown, then displayed immediately
+     * as a fullscreen overlay while the reward ad may still be on screen.
+     * Suppressed if the rewarded ad closes before this native ad finishes loading.
+     * Centralized via RewardedAdPresenter, so every rewarded placement triggers it.
+     *
+     * Layout: native_full_screen_bait (fullscreen with prominent CTA button)
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_NAFS_high_after RW): ca-app-pub-7121075950716954/5630360530
+     * - Secondary (Pro_NAFS_all_after RW): ca-app-pub-7121075950716954/4143842872
+     *
+     * Remote Config key: ad_native_post_reward
+     */
+    const val NATIVE_POST_REWARD = "ad_native_post_reward"
+
+    /**
      * Native ad shown in search screens (in-feed at top).
      * Displayed as first item in search results list.
      * Shown on all search states: idle, loading, results, empty.
@@ -648,6 +695,31 @@ object AdPlacement {
      * Remote Config key: ad_native_export_generating
      */
     const val NATIVE_EXPORT_GENERATING = "ad_native_export_generating"
+
+    /**
+     * Native "banner" ad shown at the bottom of the export Preparing screen.
+     * Replaces the bottom banner (BANNER_EXPORT) only while state is Preparing.
+     * Rendered banner-size via the native_small_row layout.
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_NA_high_Bottom BN): ca-app-pub-7121075950716954/1709251222
+     * - Secondary (Pro_NA_all_Bottom BN): ca-app-pub-7121075950716954/3435442033
+     *
+     * Remote Config key: ad_native_export_preparing
+     */
+    const val NATIVE_EXPORT_PREPARING = "ad_native_export_preparing"
+
+    /**
+     * Native ad shown on the export Result (Success) screen,
+     * placed right above the "Try Another Templates" section.
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_NA_high_result): ca-app-pub-7121075950716954/6973716424
+     * - Secondary (Pro_NA_all_result): ca-app-pub-7121075950716954/8652109693
+     *
+     * Remote Config key: ad_native_export_result
+     */
+    const val NATIVE_EXPORT_RESULT = "ad_native_export_result"
 
     /**
      * Native ad shown in template ratio selection bottom sheet.
@@ -897,6 +969,8 @@ object AdPlacement {
         INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
         INTERSTITIAL_TEMPLATE_PREVIEWER_USE,
         INTERSTITIAL_EDITOR_BACK,
+        INTERSTITIAL_EDITOR_AFTER_PREPARE,
+        INTERSTITIAL_ONBOARDING,
         INTERSTITIAL_TEMPLATE_GRID_TAP,
         INTERSTITIAL_LIBRARY_PROJECT_TAP,
         INTERSTITIAL_UNINSTALL_TEMPLATE_TAP,
@@ -915,6 +989,7 @@ object AdPlacement {
         NATIVE_ONBOARDING_PAGE2,
         NATIVE_ONBOARDING_PAGE3,
         NATIVE_ONBOARDING_FULLSCREEN,
+        NATIVE_POST_REWARD,
         NATIVE_ONBOARDING_FEATURE_SELECTION,
         NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
         NATIVE_SEARCH_INFEED,
@@ -931,6 +1006,8 @@ object AdPlacement {
         NATIVE_POPUP_TRENDING_SONG,
         NATIVE_MUSIC_PLAYER,
         NATIVE_EXPORT_GENERATING,
+        NATIVE_EXPORT_PREPARING,
+        NATIVE_EXPORT_RESULT,
         NATIVE_ONBOARDING_SELECT_MUSIC,
         NATIVE_ONBOARDING_SELECT_TPT,
         NATIVE_ONBOARDING_PERSONALIZING,

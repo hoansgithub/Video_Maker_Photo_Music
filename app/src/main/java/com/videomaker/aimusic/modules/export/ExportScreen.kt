@@ -88,7 +88,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import coil.compose.AsyncImage
@@ -600,12 +599,12 @@ fun ExportScreen(
             )
         }
     }
-    BannerAdView(
-        placement = AdPlacement.BANNER_EXPORT,
+    // Bottom ad: native "banner" (replaces BANNER_EXPORT) on all export states
+    NativeAdView(
+        placement = AdPlacement.NATIVE_EXPORT_PREPARING,
         modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .height(50.dp)
+            .fillMaxWidth(),
+        isDebug = BuildConfig.DEBUG
     )
 }
 }
@@ -1268,6 +1267,17 @@ private fun SuccessContent(
                     modifier = Modifier.padding(horizontal = 32.dp)
                 )
             }
+
+            // Native ad above the "Try Another Templates" section
+            Spacer(modifier = Modifier.height(24.dp))
+
+            NativeAdView(
+                placement = AdPlacement.NATIVE_EXPORT_RESULT,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp),
+                isDebug = BuildConfig.DEBUG
+            )
 
             // Try Another Templates section
             Spacer(modifier = Modifier.height(32.dp))

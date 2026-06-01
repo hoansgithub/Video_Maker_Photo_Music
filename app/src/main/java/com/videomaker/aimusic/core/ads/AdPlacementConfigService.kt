@@ -224,6 +224,32 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Onboarding fullscreen-image interstitial (independent of NATIVE_ONBOARDING_FULLSCREEN)
+        // Default DISABLED — enable via Firebase to show it as its own onboarding page
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_ONBOARDING,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7891516199",  // Primary (Pro_inter img_high_OB)
+                "ca-app-pub-7121075950716954/6578434529"   // Secondary (Pro_inter img_all_OB)
+            ),
+            enabled = true
+        )
+
+        // Editor "after prepare" fullscreen-image interstitial
+        // Preloaded while the editor is preparing; shown 1s after the editor appears
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_EDITOR_AFTER_PREPARE,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6955884647",  // Primary (Pro_inter img_high_after prepare)
+                "ca-app-pub-7121075950716954/3004197192"   // Secondary (Pro_inter img_all_after prepare)
+            ),
+            enabled = true
+        )
+
         // Template grid tap interstitial (shown when tapping template in gallery/home)
         // Frequency controlled by ad_interstitial_interval_seconds
         // Waterfall: Primary unit → Secondary unit
@@ -519,6 +545,21 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Post-reward fullscreen native ad ("bait" shown right after a rewarded ad)
+        // Preloaded when ANY rewarded ad is shown, displayed immediately while the
+        // reward ad may still be on screen. Centralized via RewardedAdPresenter.
+        // Layout: native_full_screen_bait (fullscreen with prominent CTA button)
+        // Waterfall: Primary (high) → Secondary (all)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_POST_REWARD,
+            layoutName = "native_full_screen_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/5630360530",  // Primary (Pro_NAFS_high_after RW)
+                "ca-app-pub-7121075950716954/4143842872"   // Secondary (Pro_NAFS_all_after RW)
+            ),
+            enabled = true
+        )
+
         // Search in-feed native ad (template search + song search)
         // Displayed at top of search results on all search states
         // Layout: native_small_row (horizontal row matching search list items)
@@ -729,6 +770,32 @@ class AdPlacementConfigService(
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/9046582121",  // Primary
                 "ca-app-pub-7121075950716954/1359663791"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Export preparing native "banner" ad (replaces bottom banner on Preparing screen)
+        // Rendered banner-size via native_small_row (compact horizontal row)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_EXPORT_PREPARING,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1709251222",  // Primary (Pro_NA_high_Bottom BN)
+                "ca-app-pub-7121075950716954/3435442033"   // Secondary (Pro_NA_all_Bottom BN)
+            ),
+            enabled = true
+        )
+
+        // Export result native ad (Success screen, above "Try Another Templates")
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_EXPORT_RESULT,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6973716424",  // Primary (Pro_NA_high_result)
+                "ca-app-pub-7121075950716954/8652109693"   // Secondary (Pro_NA_all_result)
             ),
             enabled = true
         )

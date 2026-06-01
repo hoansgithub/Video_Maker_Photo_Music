@@ -79,7 +79,8 @@ import androidx.lifecycle.ProcessLifecycleOwner
 class VideoMakerApplication : Application(), ImageLoaderFactory {
 
     // Application-scoped coroutine scope for long-running operations
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    // Made public for DI access (used by PostRewardNativeAdManager singleton)
+    val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     // ✅ Guard to ensure shader preloading happens only once (not on every foreground)
     private val shaderPreloadedOnce = AtomicBoolean(false)
@@ -147,6 +148,37 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                     android.util.Log.w("VideoMakerApp", "⚠️ Failed to preload native ad: $placement - ${e.message}")
                 } catch (e: Exception) {
                     android.util.Log.e("VideoMakerApp", "⚠️ Unexpected error preloading native ad: $placement", e)
+                }
+            }
+        }
+
+        /**
+         * Preload an interstitial ad in the application scope (background, no overlay).
+         * Used so onboarding interstitials are ready when the ad step is reached.
+         *
+         * @param placement Placement ID to preload
+         */
+        fun preloadInterstitial(placement: String) {
+            // CRITICAL: AdMob interstitial load MUST run on the MAIN thread (same as the
+            // splash interstitial in RootViewModel, which wraps it in Dispatchers.Main).
+            // Running it on Dispatchers.IO (like native preload) makes the load silently
+            // fail / never become ready — the cause of "loads forever, never shows".
+            appScope?.launch(Dispatchers.Main) {
+                try {
+                    val adsLoaderService = org.koin.core.context.GlobalContext.get()
+                        .get<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
+                    val success = com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                        adsLoaderService = adsLoaderService,
+                        placement = placement,
+                        loadTimeoutMillis = 30_000L,
+                        showLoadingOverlay = false
+                    )
+                    android.util.Log.d(
+                        "VideoMakerApp",
+                        "${if (success) "✅" else "⚠️"} Interstitial preload ($placement): success=$success"
+                    )
+                } catch (e: Exception) {
+                    android.util.Log.e("VideoMakerApp", "⚠️ Failed to preload interstitial: $placement", e)
                 }
             }
         }
