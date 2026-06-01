@@ -38,6 +38,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.language.LanguageSelectionActivity
@@ -97,6 +98,15 @@ class RootViewActivity : AppCompatActivity() {
         // 3. Initialize app (UMP consent, ads, remote config, status checks)
         // CRITICAL: Pass Activity for UMP consent form
         rootViewModel.initializeApp(this)
+
+        // Silently preload + buffer the onboarding background song as early as possible (at splash).
+        // ExoPlayer keeps buffering through the post-splash interstitial ad, so the song can play
+        // instantly when the Language screen appears. Only for first-time users heading into onboarding.
+        val preferencesManager: com.videomaker.aimusic.core.data.local.PreferencesManager by inject()
+        val onboardingMusicPlayer: com.videomaker.aimusic.core.playback.OnboardingMusicPlayer by inject()
+        if (!preferencesManager.isOnboardingComplete()) {
+            onboardingMusicPlayer.preload()
+        }
 
         setContent {
             val isLoading by rootViewModel.isLoading.collectAsStateWithLifecycle()

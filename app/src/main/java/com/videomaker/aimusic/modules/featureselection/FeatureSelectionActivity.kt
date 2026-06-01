@@ -53,11 +53,15 @@ class FeatureSelectionActivity : AppCompatActivity() {
 
     private val preferencesManager: PreferencesManager by inject()
     private val onboardingViewModel: OnboardingViewModel by viewModel()
+    private val onboardingMusicPlayer: com.videomaker.aimusic.core.playback.OnboardingMusicPlayer by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         Analytics.track(name = EVENT_GENRE_SHOW)
+
+        // Idempotent safety net — keep the onboarding song looping on this last step.
+        onboardingMusicPlayer.start()
 
         setContent {
             val density = LocalDensity.current

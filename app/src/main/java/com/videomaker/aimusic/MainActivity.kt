@@ -91,6 +91,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Reached Home: stop and release the onboarding background song (terminal).
+        val onboardingMusicPlayer: com.videomaker.aimusic.core.playback.OnboardingMusicPlayer by inject()
+        onboardingMusicPlayer.stop()
+
         android.util.Log.d(TAG, "onCreate() called - savedInstanceState=${if (savedInstanceState == null) "null" else "exists"}, intent=$intent")
 
         // CRITICAL: If onboarding not complete, redirect to RootViewActivity for full init flow.

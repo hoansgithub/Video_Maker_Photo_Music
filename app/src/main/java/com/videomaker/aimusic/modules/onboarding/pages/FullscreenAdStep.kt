@@ -63,8 +63,16 @@ private const val AD_LOADING_TIMEOUT_SECONDS = 30  // Max wait time for ad to lo
 fun FullscreenAdStep(
     isCurrentPage: Boolean,
     onClose: () -> Unit,
-    adsLoaderService: AdsLoaderService = koinInject()
+    adsLoaderService: AdsLoaderService = koinInject(),
+    onboardingMusicPlayer: com.videomaker.aimusic.core.playback.OnboardingMusicPlayer = koinInject()
 ) {
+    // Pause the onboarding background song only while this fullscreen step is the visible page.
+    // Keyed on isCurrentPage because the pager pre-composes adjacent pages (beyondViewportPageCount).
+    androidx.compose.runtime.DisposableEffect(isCurrentPage) {
+        if (isCurrentPage) onboardingMusicPlayer.pauseForAd()
+        onDispose { onboardingMusicPlayer.resumeAfterAd() }
+    }
+
     // Detect if ad is from Meta Audience Network
     val adNetworkInfo = remember {
         adsLoaderService.getNativeAdNetworkInfo(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
