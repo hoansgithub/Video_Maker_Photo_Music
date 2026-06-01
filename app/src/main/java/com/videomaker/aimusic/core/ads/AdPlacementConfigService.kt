@@ -519,6 +519,21 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Post-reward fullscreen native ad ("bait" shown right after a rewarded ad)
+        // Preloaded when ANY rewarded ad is shown, displayed immediately while the
+        // reward ad may still be on screen. Centralized via RewardedAdPresenter.
+        // Layout: native_full_screen_bait (fullscreen with prominent CTA button)
+        // Waterfall: Primary (high) → Secondary (all)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_POST_REWARD,
+            layoutName = "native_full_screen_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/5630360530",  // Primary (Pro_NAFS_high_after RW)
+                "ca-app-pub-7121075950716954/4143842872"   // Secondary (Pro_NAFS_all_after RW)
+            ),
+            enabled = true
+        )
+
         // Search in-feed native ad (template search + song search)
         // Displayed at top of search results on all search states
         // Layout: native_small_row (horizontal row matching search list items)

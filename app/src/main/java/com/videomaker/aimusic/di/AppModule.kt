@@ -364,6 +364,16 @@ val adsModule = module {
         }
     }
 
+    // Post-Reward Native Ad Manager (global singleton for all rewarded ad locations)
+    // Shows fullscreen native ad immediately when loaded (while reward potentially still on screen)
+    // Uses VideoMakerApplication.applicationScope - app-level lifecycle
+    single {
+        com.videomaker.aimusic.core.ads.PostRewardNativeAdManager(
+            adsLoaderService = get(),
+            coroutineScope = (androidContext().applicationContext as com.videomaker.aimusic.VideoMakerApplication).applicationScope
+        )
+    }
+
     // Ad Initializer (singleton - validates ad system initialization)
     single {
         com.videomaker.aimusic.core.ads.AdInitializer(

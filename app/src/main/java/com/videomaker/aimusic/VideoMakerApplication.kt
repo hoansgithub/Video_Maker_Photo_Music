@@ -79,7 +79,8 @@ import androidx.lifecycle.ProcessLifecycleOwner
 class VideoMakerApplication : Application(), ImageLoaderFactory {
 
     // Application-scoped coroutine scope for long-running operations
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    // Made public for DI access (used by PostRewardNativeAdManager singleton)
+    val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     // ✅ Guard to ensure shader preloading happens only once (not on every foreground)
     private val shaderPreloadedOnce = AtomicBoolean(false)

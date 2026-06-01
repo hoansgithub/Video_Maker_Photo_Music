@@ -472,6 +472,24 @@ object AdPlacement {
     const val NATIVE_ONBOARDING_FULLSCREEN = "ad_native_onboarding_fullscreen"
 
     /**
+     * Fullscreen native ad shown right after a rewarded ad (post-reward "bait").
+     *
+     * Preloaded the moment ANY rewarded ad is shown, then displayed immediately
+     * as a fullscreen overlay while the reward ad may still be on screen.
+     * Suppressed if the rewarded ad closes before this native ad finishes loading.
+     * Centralized via RewardedAdPresenter, so every rewarded placement triggers it.
+     *
+     * Layout: native_full_screen_bait (fullscreen with prominent CTA button)
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_NAFS_high_after RW): ca-app-pub-7121075950716954/5630360530
+     * - Secondary (Pro_NAFS_all_after RW): ca-app-pub-7121075950716954/4143842872
+     *
+     * Remote Config key: ad_native_post_reward
+     */
+    const val NATIVE_POST_REWARD = "ad_native_post_reward"
+
+    /**
      * Native ad shown in search screens (in-feed at top).
      * Displayed as first item in search results list.
      * Shown on all search states: idle, loading, results, empty.
@@ -915,6 +933,7 @@ object AdPlacement {
         NATIVE_ONBOARDING_PAGE2,
         NATIVE_ONBOARDING_PAGE3,
         NATIVE_ONBOARDING_FULLSCREEN,
+        NATIVE_POST_REWARD,
         NATIVE_ONBOARDING_FEATURE_SELECTION,
         NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
         NATIVE_SEARCH_INFEED,
