@@ -361,6 +361,7 @@ private fun buildOnboardingPageList(
     adsLoaderService: AdsLoaderService
 ): List<OnboardingPage> {
     val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
+    val fullscreenEnabled = config?.enabled == true
     val injectAfterValue = config?.extras?.get("inject_after")
     val injectAfter = when {
         injectAfterValue == null -> 2
@@ -371,8 +372,8 @@ private fun buildOnboardingPageList(
     }
     val injectPosition = injectAfter.coerceIn(1, 3)
 
-    // Independent onboarding interstitial: injected as its own page only when enabled
-    // on Firebase. Native fullscreen ad is left untouched (always injected as before).
+    // Both onboarding ad pages are injected as their own page ONLY when their placement
+    // is enabled on Firebase (ad_native_onboarding_fullscreen / interstitial_onboarding).
     val interstitialEnabled =
         adsLoaderService.getPlacementConfig(AdPlacement.INTERSTITIAL_ONBOARDING)?.enabled == true
 
@@ -380,7 +381,9 @@ private fun buildOnboardingPageList(
     repeat(3) { index ->
         pages.add(OnboardingPage.Welcome(StepOnboard(index), index))
         if (index + 1 == injectPosition) {
-            pages.add(OnboardingPage.FullscreenAd)
+            if (fullscreenEnabled) {
+                pages.add(OnboardingPage.FullscreenAd)
+            }
             if (interstitialEnabled) {
                 pages.add(OnboardingPage.InterstitialAd)
             }

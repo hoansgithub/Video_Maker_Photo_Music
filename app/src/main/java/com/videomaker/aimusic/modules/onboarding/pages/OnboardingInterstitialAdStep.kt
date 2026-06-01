@@ -20,7 +20,6 @@ import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.ui.theme.SurfaceDark
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -30,13 +29,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 // Injected as its own onboarding page only when INTERSTITIAL_ONBOARDING is enabled.
 //
 // Shows the (preloaded) fullscreen-image interstitial each time the page becomes
-// current, then advances the pager once the ad closes/fails. Re-arms when the page
-// is left, so swiping back shows the ad again (a fresh one is preloaded after each
-// show, since interstitials are single-use). Never gets stuck on the spinner.
+// current, then advances the pager via the ad's action callback (called when the ad
+// closes OR fails to show). Re-arms when the page is left, so swiping back shows the
+// ad again (a fresh one is preloaded after each show, since interstitials are
+// single-use).
 // ============================================
 
 private const val AD_LOADING_TIMEOUT_MS = 6_000L  // Max wait if ad not ready
-private const val FALLBACK_BUFFER_MS = 1_500L     // Extra buffer after timeout
 
 @Composable
 fun OnboardingInterstitialAdStep(
@@ -82,10 +81,34 @@ fun OnboardingInterstitialAdStep(
             if (advanced.compareAndSet(false, true)) onClose()
         }
 
-        val ready = runCatching {
+        // Wait for the preloaded ad to become ready before showing. On a cold-start
+        // first visit the ad is usually still loading; showing immediately would make
+        // the helper fail-fast and skip straight to the next page. Poll up to the
+        // timeout so a real ad gets a chance to appear.
+        fun isReady() = runCatching {
             adsLoaderService.isInterstitialReady(AdPlacement.INTERSTITIAL_ONBOARDING)
         }.getOrDefault(false)
-        android.util.Log.d("OnboardingInterAd", "Page current - interstitial ready=$ready, showing...")
+
+        val deadline = System.currentTimeMillis() + AD_LOADING_TIMEOUT_MS
+        while (!isReady() && System.currentTimeMillis() < deadline && isCurrentPage) {
+            delay(200)
+        }
+
+        // User swiped away while we were waiting - re-arm and let the next visit retry.
+        if (!isCurrentPage) {
+            presentedThisVisit = false
+            return@LaunchedEffect
+        }
+
+        val ready = isReady()
+        android.util.Log.d("OnboardingInterAd", "Page current - interstitial ready=$ready")
+
+        if (!ready) {
+            // Ad failed to load within the timeout: advance instead of blocking forever.
+            android.util.Log.w("OnboardingInterAd", "Ad not ready within timeout - advancing")
+            advanceOnce()
+            return@LaunchedEffect
+        }
 
         InterstitialAdHelperExt.showInterstitial(
             adsLoaderService = adsLoaderService,
@@ -101,16 +124,5 @@ fun OnboardingInterstitialAdStep(
             loadTimeoutMillis = AD_LOADING_TIMEOUT_MS,
             showLoadingOverlay = false           // we render our own neutral background
         )
-
-        // WORKAROUND for ACCCore bug: InterstitialAdHelper does NOT call the action
-        // callback on load timeout (see RootViewModel splash handling). Without this the
-        // page would spin forever. Force-advance if action wasn't called in time.
-        launch {
-            delay(AD_LOADING_TIMEOUT_MS + FALLBACK_BUFFER_MS)
-            if (!advanced.get()) {
-                android.util.Log.w("OnboardingInterAd", "Ad callback not called within timeout - advancing")
-                advanceOnce()
-            }
-        }
     }
 }
