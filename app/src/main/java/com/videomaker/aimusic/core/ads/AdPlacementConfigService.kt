@@ -224,6 +224,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Editor "after prepare" fullscreen-image interstitial
+        // Preloaded while the editor is preparing; shown 1s after the editor appears
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_EDITOR_AFTER_PREPARE,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6955884647",  // Primary (Pro_inter img_high_after prepare)
+                "ca-app-pub-7121075950716954/3004197192"   // Secondary (Pro_inter img_all_after prepare)
+            ),
+            enabled = true
+        )
+
         // Template grid tap interstitial (shown when tapping template in gallery/home)
         // Frequency controlled by ad_interstitial_interval_seconds
         // Waterfall: Primary unit → Secondary unit

@@ -202,6 +202,22 @@ class EditorViewModel(
                 android.util.Log.e("EditorViewModel", "❌ Back button ad preload exception: ${e.message}", e)
             }
         }
+
+        // Preload "after prepare" interstitial (shown 1s after editor finishes preparing)
+        // Loads in background while the preparing screen is visible; non-blocking.
+        viewModelScope.launch {
+            android.util.Log.d("EditorViewModel", "🎬 Preloading after-prepare interstitial...")
+            runCatching {
+                com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                    adsLoaderService = adsLoaderService,
+                    placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_EDITOR_AFTER_PREPARE,
+                    loadTimeoutMillis = null,  // No timeout - load as long as needed
+                    showLoadingOverlay = false  // Background preload, no overlay
+                )
+            }.onFailure { e ->
+                android.util.Log.e("EditorViewModel", "❌ After-prepare ad preload exception: ${e.message}", e)
+            }
+        }
     }
 
     /**

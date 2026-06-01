@@ -57,6 +57,10 @@
     <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/9739651039","enabled":true},{"id":"ca-app-pub-7121075950716954/8170207041","enabled":true}],"extras":{"retry_max":6}}</value>
   </entry>
   <entry>
+    <key>ad_interstitial_editor_after_prepare</key>
+    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/6955884647","enabled":true},{"id":"ca-app-pub-7121075950716954/3004197192","enabled":true}],"extras":{"retry_max":6}}</value>
+  </entry>
+  <entry>
     <key>ad_interstitial_export_result_exit</key>
     <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/5408312336","enabled":true},{"id":"ca-app-pub-7121075950716954/5188820489","enabled":true}],"extras":{"retry_max":6}}</value>
   </entry>

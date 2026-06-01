@@ -109,6 +109,19 @@ object AdPlacement {
     const val INTERSTITIAL_EDITOR_BACK = "ad_interstitial_editor_back"
 
     /**
+     * Fullscreen-image interstitial shown right after the editor finishes preparing.
+     * Timing: preloaded while the editor "preparing" (Loading) screen is showing;
+     * the editor (Success) is displayed for 1s, then this interstitial is shown.
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_inter img_high_after prepare): ca-app-pub-7121075950716954/6955884647
+     * - Secondary (Pro_inter img_all_after prepare): ca-app-pub-7121075950716954/3004197192
+     *
+     * Remote Config key: ad_interstitial_editor_after_prepare
+     */
+    const val INTERSTITIAL_EDITOR_AFTER_PREPARE = "ad_interstitial_editor_after_prepare"
+
+    /**
      * Interstitial ad shown when user taps a template in gallery/home grid.
      * Timing: Shown when tapping template to open previewer.
      * Frequency controlled by ad_interstitial_interval_seconds Remote Config.
@@ -940,6 +953,7 @@ object AdPlacement {
         INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
         INTERSTITIAL_TEMPLATE_PREVIEWER_USE,
         INTERSTITIAL_EDITOR_BACK,
+        INTERSTITIAL_EDITOR_AFTER_PREPARE,
         INTERSTITIAL_TEMPLATE_GRID_TAP,
         INTERSTITIAL_LIBRARY_PROJECT_TAP,
         INTERSTITIAL_UNINSTALL_TEMPLATE_TAP,
