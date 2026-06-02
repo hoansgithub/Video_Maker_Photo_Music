@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Slideshow
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import co.alcheclub.lib.acccore.ads.mediation.AdLoadResult
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -57,6 +58,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -121,6 +123,28 @@ import androidx.lifecycle.lifecycleScope
 import com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+// ============================================
+// HELPER - Music player ad refresh throttle
+// ============================================
+
+/** Tracks last force-reload timestamp per placement to enforce 5s throttle */
+private object MusicPlayerAdRefresh {
+    @Volatile
+    var lastRefreshMs = 0L
+    private const val THROTTLE_MS = 5_000L
+
+    /** Returns true if enough time has passed since last refresh (and updates timestamp). */
+    @Synchronized
+    fun shouldRefresh(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastRefreshMs >= THROTTLE_MS) {
+            lastRefreshMs = now
+            return true
+        }
+        return false
+    }
+}
 
 // ============================================
 // HELPER - Release player async to avoid ANR
@@ -684,6 +708,35 @@ fun MusicPlayerBottomSheet(
             }
 
             // ── Native ad (small row banner) ──────────────────
+            // Force-reload a fresh ad on every song change (5s throttle).
+            // Loads new ad in background — only swaps when load succeeds.
+            // Old ad stays visible until then. Skips initial song (sheet open).
+            var adRefreshKey by remember { mutableIntStateOf(0) }
+            var isFirstSong by remember { mutableStateOf(true) }
+            LaunchedEffect(currentSong) {
+                if (isFirstSong) {
+                    isFirstSong = false
+                    return@LaunchedEffect
+                }
+                if (MusicPlayerAdRefresh.shouldRefresh()) {
+                    try {
+                        val result = adsLoaderService.loadNative(
+                            placement = AdPlacement.NATIVE_MUSIC_PLAYER,
+                            forceReload = true
+                        )
+                        when (result) {
+                            is AdLoadResult.Success,
+                            is AdLoadResult.AlreadyLoading -> adRefreshKey++
+                            else -> {} // Keep old ad on failure
+                        }
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Log.w("MusicPlayerBottomSheet", "Ad refresh failed, keeping old ad", e)
+                    }
+                }
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -692,11 +745,13 @@ fun MusicPlayerBottomSheet(
                             size.height  // Measure actual height dynamically!
                     }
             ) {
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_MUSIC_PLAYER,
-                    modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG
-                )
+                key(adRefreshKey) {
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_MUSIC_PLAYER,
+                        modifier = Modifier.fillMaxWidth(),
+                        isDebug = BuildConfig.DEBUG
+                    )
+                }
             }
         }  // End Column
 
