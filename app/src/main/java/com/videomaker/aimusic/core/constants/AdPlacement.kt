@@ -868,6 +868,24 @@ object AdPlacement {
     const val REWARD_UNLOCK_SONG = "ad_reward_unlock_song"
 
     // ============================================
+    // INTERSTITIAL — MUSIC PLAYER "TRY IT"
+    // ============================================
+
+    /**
+     * Interstitial ad shown when user taps "Try it" in music player for a free/unlocked song.
+     * Timing: Preloaded when music player opens, shown on "Try it" tap if ready.
+     * If ad not loaded yet, navigation proceeds normally (non-blocking).
+     * Premium/locked songs show rewarded ad (REWARD_UNLOCK_SONG) instead.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/7530599719
+     * - Secondary: ca-app-pub-7121075950716954/4904436375
+     *
+     * Remote Config key: ad_interstitial_music_player_try
+     */
+    const val INTERSTITIAL_MUSIC_PLAYER_TRY = "ad_interstitial_music_player_try"
+
+    // ============================================
     // INTERSTITIAL — QUALITY UNLOCK
     // ============================================
 
@@ -941,6 +959,7 @@ object AdPlacement {
         REWARD_UNLOCK_QUALITY,
         REWARD_UNLOCK_EFFECT_SET,
         REWARD_UNLOCK_TEMPLATE,
-        REWARD_UNLOCK_SONG
+        REWARD_UNLOCK_SONG,
+        INTERSTITIAL_MUSIC_PLAYER_TRY
     )
 }

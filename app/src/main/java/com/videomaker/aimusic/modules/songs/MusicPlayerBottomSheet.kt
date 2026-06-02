@@ -41,6 +41,7 @@ import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import co.alcheclub.lib.acccore.ads.mediation.AdLoadResult
 import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.ui.components.AdBadge
@@ -248,6 +249,8 @@ fun MusicPlayerBottomSheet(
     var swipeAccumulated by remember { mutableFloatStateOf(0f) }
 
     val context = LocalContext.current
+    val activity = context as? android.app.Activity
+
     // Player is created once per sheet open and released on close.
     // CacheDataSource.Factory routes playback through the 50 MB disk cache
     // so the same mp3 URL is only downloaded once across sessions.
@@ -661,7 +664,24 @@ fun MusicPlayerBottomSheet(
                                     location = categoryLocation
                                 )
                                 Analytics.trackCreationStart(AnalyticsEvent.Value.Location.SONG)
-                                viewModel.onUseToCreateClick(onProceed = onUseToCreate)
+                                viewModel.onUseToCreateClick(
+                                    onProceed = onUseToCreate,
+                                    onProceedWithAd = {
+                                        if (activity != null) {
+                                            InterstitialAdHelperExt.showInterstitial(
+                                                adsLoaderService = adsLoaderService,
+                                                activity = activity,
+                                                placement = AdPlacement.INTERSTITIAL_MUSIC_PLAYER_TRY,
+                                                action = { onUseToCreate() },
+                                                bypassFrequencyCap = true,
+                                                loadTimeoutMillis = 10_000L,
+                                                showLoadingOverlay = true
+                                            )
+                                        } else {
+                                            onUseToCreate()
+                                        }
+                                    }
+                                )
                             })
                             .padding(14.dp)
                     ) {
@@ -700,9 +720,6 @@ fun MusicPlayerBottomSheet(
                     }
                 }
             }
-            // Standard ad loading overlay - covers entire fullscreen sheet
-            AdsLoadingOverlay()
-
             if (bottomSectionHeight == 0) {
                 Spacer(Modifier.navigationBarsPadding())
             }
@@ -754,6 +771,9 @@ fun MusicPlayerBottomSheet(
                 }
             }
         }  // End Column
+
+        // Loading overlay — rendered on top of the sheet inside the fullscreen Box
+        AdsLoadingOverlay()
 
     }  // End Box
 

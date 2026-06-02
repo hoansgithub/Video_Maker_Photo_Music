@@ -834,6 +834,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Music player "Try it" interstitial (shown for free/unlocked songs)
+        // Preloaded when music player opens, non-blocking if not ready
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_MUSIC_PLAYER_TRY,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7530599719",  // Primary
+                "ca-app-pub-7121075950716954/4904436375"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }
