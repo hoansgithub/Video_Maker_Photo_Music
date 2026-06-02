@@ -48,9 +48,17 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
+import com.videomaker.aimusic.ui.components.DEFAULT_INFEED_INTERVAL
+import com.videomaker.aimusic.ui.components.SongFeedItem
 import com.videomaker.aimusic.ui.components.SongListItem
+import com.videomaker.aimusic.ui.components.buildSongFeedWithAds
 import com.videomaker.aimusic.ui.components.rememberHideOnScrollConnection
+import com.videomaker.aimusic.ui.components.songFeedItemKey
 import com.videomaker.aimusic.ui.theme.AppDimens
 
 /**
@@ -201,6 +209,15 @@ private fun SongsListContent(
     val listState = rememberLazyListState()
     val pullRefreshState = rememberPullToRefreshState()
 
+    // Read infeed ad interval from placement config
+    val adsLoaderService: AdsLoaderService = koinInject()
+    val infeedInterval = remember {
+        adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_SUGGESTED_INFEED)
+            ?.extras?.get("infeed_interval")
+            ?.toString()?.toIntOrNull()
+            ?: DEFAULT_INFEED_INTERVAL
+    }
+
     // Detect scroll near bottom (6 items threshold)
     val shouldLoadMore by remember(listState, pageState.hasMore, pageState.isLoadingMore) {
         derivedStateOf {
@@ -213,6 +230,11 @@ private fun SongsListContent(
 
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) onLoadMore()
+    }
+
+    // Build feed items at composable scope to avoid recomputing inside LazyListScope
+    val feedItems = remember(pageState.songs, infeedInterval) {
+        buildSongFeedWithAds(pageState.songs, infeedInterval)
     }
 
     PullToRefreshBox(
@@ -255,16 +277,33 @@ private fun SongsListContent(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(
-                        items = pageState.songs,
-                        key = { it.id },
-                        contentType = { "song" }
-                    ) { song ->
-                        SongListItem(
-                            name = song.name,
-                            artist = song.artist,
-                            coverUrl = song.coverUrl,
-                            onSongClick = { onSongClick(song) }
-                        )
+                        items = feedItems,
+                        key = { item -> songFeedItemKey(item, "suggested_") },
+                        contentType = { item ->
+                            when (item) {
+                                is SongFeedItem.Song -> "song"
+                                is SongFeedItem.Ad -> "ad"
+                            }
+                        }
+                    ) { item ->
+                        when (item) {
+                            is SongFeedItem.Song -> {
+                                val song = item.song
+                                SongListItem(
+                                    name = song.name,
+                                    artist = song.artist,
+                                    coverUrl = song.coverUrl,
+                                    onSongClick = { onSongClick(song) }
+                                )
+                            }
+                            is SongFeedItem.Ad -> {
+                                NativeAdView(
+                                    placement = AdPlacement.NATIVE_SUGGESTED_INFEED,
+                                    autoLoad = true,
+                                    isDebug = BuildConfig.DEBUG
+                                )
+                            }
+                        }
                     }
 
                     // Loading more indicator

@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -43,7 +44,12 @@ import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.navigation.SearchSection
 import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.ui.components.DEFAULT_INFEED_INTERVAL
+import com.videomaker.aimusic.ui.components.SongFeedItem
 import com.videomaker.aimusic.ui.components.SongListItem
+import com.videomaker.aimusic.ui.components.buildSongFeedWithAds
+import com.videomaker.aimusic.ui.components.songFeedItemKey
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.theme.TextTertiary
@@ -72,6 +78,18 @@ fun UnifiedSearchIdleContent(
 ) {
     val dimens = AppDimens.current
     val sessionManager: MusicPlaybackSessionManager = koinInject()
+    val adsLoaderService: AdsLoaderService = koinInject()
+    val searchInfeedInterval = remember {
+        adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_SEARCH_MUSIC_INFEED)
+            ?.extras?.get("infeed_interval")
+            ?.toString()?.toIntOrNull()
+            ?: DEFAULT_INFEED_INTERVAL
+    }
+
+    // Build feed items at composable scope (not inside LazyListScope) to avoid recomputing on every recomposition
+    val idleFeedItems = remember(suggestedSongs, searchInfeedInterval) {
+        buildSongFeedWithAds(suggestedSongs, searchInfeedInterval)
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -244,27 +262,48 @@ fun UnifiedSearchIdleContent(
                         item(key = "suggested_header") {
                             UnifiedSectionHeader(text = stringResource(R.string.search_music_suggestion))
                         }
-                        items(suggestedSongs, key = { "suggested_${it.id}" }) { song ->
-                            SongListItem(
-                                name = song.name,
-                                artist = song.artist,
-                                coverUrl = song.coverUrl,
-                                onSongClick = {
-                                    Analytics.trackSongClick(
-                                        songId = song.id.toString(),
-                                        songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
-                                    )
-                                    onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RCM)
-                                },
-                                modifier = Modifier.onFirstVisible(key = song.id) {
-                                    sessionManager.trackSongImpressionAndMark(
-                                        songId = song.id.toString(),
-                                        songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                        items(
+                            items = idleFeedItems,
+                            key = { item -> songFeedItemKey(item, "idle_") },
+                            contentType = { item ->
+                                when (item) {
+                                    is SongFeedItem.Song -> "song"
+                                    is SongFeedItem.Ad -> "ad"
+                                }
+                            }
+                        ) { item ->
+                            when (item) {
+                                is SongFeedItem.Song -> {
+                                    val song = item.song
+                                    SongListItem(
+                                        name = song.name,
+                                        artist = song.artist,
+                                        coverUrl = song.coverUrl,
+                                        onSongClick = {
+                                            Analytics.trackSongClick(
+                                                songId = song.id.toString(),
+                                                songName = song.name,
+                                                location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                            )
+                                            onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RCM)
+                                        },
+                                        modifier = Modifier.onFirstVisible(key = song.id) {
+                                            sessionManager.trackSongImpressionAndMark(
+                                                songId = song.id.toString(),
+                                                songName = song.name,
+                                                location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                            )
+                                        }
                                     )
                                 }
-                            )
+                                is SongFeedItem.Ad -> {
+                                    NativeAdView(
+                                        placement = AdPlacement.NATIVE_SEARCH_MUSIC_INFEED,
+                                        autoLoad = true,
+                                        isDebug = BuildConfig.DEBUG
+                                    )
+                                }
+                            }
                         }
 
                         item(key = "suggested_see_more") {

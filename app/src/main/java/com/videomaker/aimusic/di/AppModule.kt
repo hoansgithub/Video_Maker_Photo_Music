@@ -739,11 +739,13 @@ class TemplateListViewModelFactory(
  * Factory wrapper for SuggestedSongsListViewModel.
  */
 class SuggestedSongsListViewModelFactory(
-    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase
+    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(): com.videomaker.aimusic.modules.suggestedsongs.SuggestedSongsListViewModel {
         return com.videomaker.aimusic.modules.suggestedsongs.SuggestedSongsListViewModel(
-            getSuggestedSongsUseCase = getSuggestedSongsUseCase
+            getSuggestedSongsUseCase = getSuggestedSongsUseCase,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -752,11 +754,13 @@ class SuggestedSongsListViewModelFactory(
  * Factory wrapper for WeeklyRankingListViewModel.
  */
 class WeeklyRankingListViewModelFactory(
-    private val getWeeklyRankingSongsUseCase: GetWeeklyRankingSongsUseCase
+    private val getWeeklyRankingSongsUseCase: GetWeeklyRankingSongsUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(): com.videomaker.aimusic.modules.weeklyranking.WeeklyRankingListViewModel {
         return com.videomaker.aimusic.modules.weeklyranking.WeeklyRankingListViewModel(
-            getWeeklyRankingSongsUseCase = getWeeklyRankingSongsUseCase
+            getWeeklyRankingSongsUseCase = getWeeklyRankingSongsUseCase,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -1062,14 +1066,16 @@ val presentationModule = module {
     // Suggested Songs List ViewModel factory (singleton - stateless factory)
     single {
         SuggestedSongsListViewModelFactory(
-            getSuggestedSongsUseCase = get()
+            getSuggestedSongsUseCase = get(),
+            adsLoaderService = get()
         )
     }
 
     // Weekly Ranking List ViewModel factory (singleton - stateless factory)
     single {
         WeeklyRankingListViewModelFactory(
-            getWeeklyRankingSongsUseCase = get()
+            getWeeklyRankingSongsUseCase = get(),
+            adsLoaderService = get()
         )
     }
 

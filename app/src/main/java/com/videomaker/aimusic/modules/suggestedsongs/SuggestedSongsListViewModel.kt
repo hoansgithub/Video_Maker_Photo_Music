@@ -2,8 +2,11 @@ package com.videomaker.aimusic.modules.suggestedsongs
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,7 +49,8 @@ sealed class SuggestedSongsNavigationEvent {
 // ============================================
 
 class SuggestedSongsListViewModel(
-    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase
+    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) : ViewModel() {
 
     companion object {
@@ -68,6 +72,9 @@ class SuggestedSongsListViewModel(
 
     init {
         loadFirstPage()
+        viewModelScope.launch(Dispatchers.IO) {
+            adsLoaderService.loadNative(AdPlacement.NATIVE_SUGGESTED_INFEED)
+        }
     }
 
     private fun loadFirstPage() {

@@ -649,6 +649,42 @@ object AdPlacement {
     const val NATIVE_STATION_INFEED = "ad_native_station_infeed"
 
     /**
+     * Native ad inserted every Xth position in the weekly ranking full list.
+     * Same config structure as NATIVE_STATION_INFEED.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6943442204
+     * - Secondary: ca-app-pub-7121075950716954/5456924546
+     *
+     * Remote Config key: ad_native_ranking_infeed
+     */
+    const val NATIVE_RANKING_INFEED = "ad_native_ranking_infeed"
+
+    /**
+     * Native ad inserted every Xth position in the suggested songs full list.
+     * Same config structure as NATIVE_STATION_INFEED.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6943442204
+     * - Secondary: ca-app-pub-7121075950716954/5456924546
+     *
+     * Remote Config key: ad_native_suggested_infeed
+     */
+    const val NATIVE_SUGGESTED_INFEED = "ad_native_suggested_infeed"
+
+    /**
+     * Native ad inserted every Xth position in search music results.
+     * Same config structure as NATIVE_STATION_INFEED.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6943442204
+     * - Secondary: ca-app-pub-7121075950716954/5456924546
+     *
+     * Remote Config key: ad_native_search_music_infeed
+     */
+    const val NATIVE_SEARCH_MUSIC_INFEED = "ad_native_search_music_infeed"
+
+    /**
      * Native ad shown during export video generating state.
      * Timing: Displayed at bottom of "Generating" overlay while video is being exported.
      * Waits 10 seconds for ad to load, then displays for 2 more seconds if loaded.
@@ -978,6 +1014,9 @@ object AdPlacement {
         NATIVE_GALLERY_HOT_TPT,
         NATIVE_SONGS_STATION,
         NATIVE_STATION_INFEED,
+        NATIVE_RANKING_INFEED,
+        NATIVE_SUGGESTED_INFEED,
+        NATIVE_SEARCH_MUSIC_INFEED,
         NATIVE_TEMPLATE_PREVIEWER_LOADING,
         NATIVE_TEMPLATE_RATIO_SHEET,
         NATIVE_POPUP_TRENDING_TEMPLATE,

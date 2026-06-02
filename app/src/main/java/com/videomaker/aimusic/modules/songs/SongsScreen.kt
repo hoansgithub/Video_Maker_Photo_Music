@@ -72,7 +72,11 @@ import com.videomaker.aimusic.ui.components.RankingSongCardPlaceholder
 import com.videomaker.aimusic.ui.components.SectionHeader
 import com.videomaker.aimusic.ui.components.ShimmerBox
 import com.videomaker.aimusic.ui.components.SongListItem
+import com.videomaker.aimusic.ui.components.SongFeedItem
 import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
+import com.videomaker.aimusic.ui.components.buildSongFeedWithAds
+import com.videomaker.aimusic.ui.components.DEFAULT_INFEED_INTERVAL
+import com.videomaker.aimusic.ui.components.songFeedItemKey
 import com.videomaker.aimusic.ui.components.SongsSearchField
 import com.videomaker.aimusic.ui.components.SuggestSongCard
 import com.videomaker.aimusic.ui.components.SuggestSongCardPlaceholder
@@ -84,54 +88,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import org.koin.compose.koinInject
 
-// ============================================
-// STATION GRID ITEM (Song + Ad)
-// ============================================
-
-@Immutable
-private sealed class StationGridItem {
-    data class SongItem(val song: MusicSong) : StationGridItem()
-    data class AdItem(val index: Int) : StationGridItem()
-}
-
-/**
- * Stable key function for station grid items
- */
-private fun stationItemKey(item: StationGridItem): String = when (item) {
-    is StationGridItem.SongItem -> "song_${item.song.id}"
-    is StationGridItem.AdItem -> "ad_native_station_${item.index}"
-}
-
-/** Default interval for in-feed ads if config unavailable */
-private const val DEFAULT_INFEED_INTERVAL = 10
-
-/**
- * Build station items list with native ads inserted at every [interval] songs.
- * If total songs < interval but >= 1, one ad is placed after the last song.
- */
-private fun buildStationItemsWithAds(
-    songs: List<MusicSong>,
-    interval: Int
-): List<StationGridItem> {
-    if (songs.isEmpty() || interval <= 0) return songs.map { StationGridItem.SongItem(it) }
-
-    val result = mutableListOf<StationGridItem>()
-    var adIndex = 0
-
-    for (i in songs.indices) {
-        result.add(StationGridItem.SongItem(songs[i]))
-        if ((i + 1) % interval == 0) {
-            result.add(StationGridItem.AdItem(adIndex++))
-        }
-    }
-
-    // If fewer songs than interval but at least 1, show ad after last song
-    if (songs.size in 1 until interval) {
-        result.add(StationGridItem.AdItem(adIndex))
-    }
-
-    return result
-}
+// Uses shared SongFeedItem + buildSongFeedWithAds from ui.components.SongFeedItem
 
 // ============================================
 // SONGS SCREEN
@@ -309,6 +266,14 @@ private fun SongsContent(
             }
     }
 
+    // Build feed items at composable scope to avoid recomputing inside LazyListScope
+    val stationFeedItems = remember(stationState, infeedInterval) {
+        when (stationState) {
+            is SectionState.Success -> buildSongFeedWithAds(stationState.data, infeedInterval)
+            else -> emptyList()
+        }
+    }
+
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = onRefresh,
@@ -416,19 +381,18 @@ private fun SongsContent(
                 }
                 is SectionState.Success -> {
                     val songs = stationState.data
-                    val stationItems = buildStationItemsWithAds(songs, infeedInterval)
                     items(
-                        items = stationItems,
-                        key = { item -> stationItemKey(item) },
+                        items = stationFeedItems,
+                        key = { item -> songFeedItemKey(item, "station_") },
                         contentType = { item ->
                             when (item) {
-                                is StationGridItem.SongItem -> "station_song"
-                                is StationGridItem.AdItem -> "station_ad"
+                                is SongFeedItem.Song -> "station_song"
+                                is SongFeedItem.Ad -> "station_ad"
                             }
                         }
                     ) { item ->
                         when (item) {
-                            is StationGridItem.SongItem -> {
+                            is SongFeedItem.Song -> {
                                 val song = item.song
                                 val dimens = AppDimens.current
                                 val sessionManager: MusicPlaybackSessionManager = koinInject()
@@ -456,7 +420,7 @@ private fun SongsContent(
                                         }
                                 )
                             }
-                            is StationGridItem.AdItem -> {
+                            is SongFeedItem.Ad -> {
                                 val dimens = AppDimens.current
                                 Box(
                                     modifier = Modifier

@@ -3,8 +3,10 @@ package com.videomaker.aimusic.modules.unifiedsearch
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
@@ -171,6 +173,10 @@ class UnifiedSearchViewModel(
         Analytics.trackSearchOpen(searchOpenLocation())
         viewModelScope.launch {
             _recentSearches.value = preferencesManager.getRecentSearches()
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            adsLoaderService.loadNative(AdPlacement.NATIVE_SEARCH_MUSIC_INFEED)
         }
 
         viewModelScope.launch(Dispatchers.IO) {

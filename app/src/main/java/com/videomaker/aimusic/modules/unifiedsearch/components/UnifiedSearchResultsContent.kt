@@ -71,7 +71,12 @@ import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchUiState
 import com.videomaker.aimusic.navigation.SearchSection
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.ui.components.DEFAULT_INFEED_INTERVAL
+import com.videomaker.aimusic.ui.components.SongFeedItem
 import com.videomaker.aimusic.ui.components.SongListItem
+import com.videomaker.aimusic.ui.components.buildSongFeedWithAds
+import com.videomaker.aimusic.ui.components.songFeedItemKey
 import com.videomaker.aimusic.ui.components.StaggeredGrid
 import com.videomaker.aimusic.ui.components.SuggestSongCard
 import com.videomaker.aimusic.ui.components.TemplateCard
@@ -101,6 +106,18 @@ fun UnifiedSearchResultsContent(
     val dimens = AppDimens.current
     val listState = rememberLazyListState()
     val sessionManager: MusicPlaybackSessionManager = koinInject()
+    val adsLoaderService: AdsLoaderService = koinInject()
+    val searchInfeedInterval = remember {
+        adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_SEARCH_MUSIC_INFEED)
+            ?.extras?.get("infeed_interval")
+            ?.toString()?.toIntOrNull()
+            ?: DEFAULT_INFEED_INTERVAL
+    }
+
+    // Build feed items at composable scope to avoid recomputing inside LazyListScope
+    val musicFeedItems = remember(state.music.songs, searchInfeedInterval) {
+        buildSongFeedWithAds(state.music.songs, searchInfeedInterval)
+    }
 
     LaunchedEffect(Unit) {
         snapshotFlow { listState.isScrollInProgress }
@@ -361,29 +378,47 @@ fun UnifiedSearchResultsContent(
                             }
 
                             items(
-                                items = state.music.songs,
-                                key = { "song_${it.id}" }
-                            ) { song ->
-                                SongListItem(
-                                    name = song.name,
-                                    artist = song.artist,
-                                    coverUrl = song.coverUrl,
-                                    onSongClick = {
-                                        Analytics.trackSongClick(
-                                            songId = song.id.toString(),
-                                            songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.SEARCH_RESULT
-                                        )
-                                        onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RESULT)
-                                    },
-                                    modifier = Modifier.onFirstVisible(key = song.id) {
-                                        sessionManager.trackSongImpressionAndMark(
-                                            songId = song.id.toString(),
-                                            songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.SEARCH_RESULT
+                                items = musicFeedItems,
+                                key = { item -> songFeedItemKey(item, "search_") },
+                                contentType = { item ->
+                                    when (item) {
+                                        is SongFeedItem.Song -> "song"
+                                        is SongFeedItem.Ad -> "ad"
+                                    }
+                                }
+                            ) { item ->
+                                when (item) {
+                                    is SongFeedItem.Song -> {
+                                        val song = item.song
+                                        SongListItem(
+                                            name = song.name,
+                                            artist = song.artist,
+                                            coverUrl = song.coverUrl,
+                                            onSongClick = {
+                                                Analytics.trackSongClick(
+                                                    songId = song.id.toString(),
+                                                    songName = song.name,
+                                                    location = AnalyticsEvent.Value.Location.SEARCH_RESULT
+                                                )
+                                                onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RESULT)
+                                            },
+                                            modifier = Modifier.onFirstVisible(key = song.id) {
+                                                sessionManager.trackSongImpressionAndMark(
+                                                    songId = song.id.toString(),
+                                                    songName = song.name,
+                                                    location = AnalyticsEvent.Value.Location.SEARCH_RESULT
+                                                )
+                                            }
                                         )
                                     }
-                                )
+                                    is SongFeedItem.Ad -> {
+                                        NativeAdView(
+                                            placement = AdPlacement.NATIVE_SEARCH_MUSIC_INFEED,
+                                            autoLoad = true,
+                                            isDebug = BuildConfig.DEBUG
+                                        )
+                                    }
+                                }
                             }
                         }
                         // If music empty and templates have results → hide music completely
