@@ -25,6 +25,7 @@ import co.alcheclub.lib.acccore.di.koin.getAllSingletons
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.TimeoutCancellationException
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.ImageDecoderDecoder
@@ -147,6 +148,30 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                     android.util.Log.w("VideoMakerApp", "⚠️ Failed to preload native ad: $placement - ${e.message}")
                 } catch (e: Exception) {
                     android.util.Log.e("VideoMakerApp", "⚠️ Unexpected error preloading native ad: $placement", e)
+                }
+            }
+        }
+
+        /**
+         * Preload interstitial ad (non-suspend, fire-and-forget)
+         * Launches coroutine in application scope for background loading
+         *
+         * @param placement Placement ID to preload
+         */
+        fun preloadInterstitialAd(placement: String) {
+            appScope?.launch(Dispatchers.Main) {
+                try {
+                    val adsLoaderService = org.koin.core.context.GlobalContext.get()
+                        .get<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
+                    InterstitialAdHelperExt.preloadInterstitial(
+                        adsLoaderService = adsLoaderService,
+                        placement = placement,
+                        loadTimeoutMillis = null,
+                        showLoadingOverlay = false
+                    )
+                    android.util.Log.d("VideoMakerApp", "✅ Interstitial ad preloaded: $placement")
+                } catch (e: Exception) {
+                    android.util.Log.w("VideoMakerApp", "⚠️ Failed to preload interstitial ad: $placement - ${e.message}")
                 }
             }
         }

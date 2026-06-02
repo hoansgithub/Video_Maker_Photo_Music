@@ -924,6 +924,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Onboarding "Get started" interstitial
+        // Preloaded on screen init, non-blocking if not ready
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9773619674",  // Primary
+                "ca-app-pub-7121075950716954/2667109676"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }

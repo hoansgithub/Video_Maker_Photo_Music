@@ -955,6 +955,18 @@ object AdPlacement {
      */
     const val INTERSTITIAL_PICKER_DONE = "ad_interstitial_picker_done"
 
+    /**
+     * Interstitial ad shown when user completes onboarding ("Get started" / last page CTA).
+     * Preloaded on onboarding screen init. Non-blocking: if ad not ready, proceed immediately.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/9773619674
+     * - Secondary: ca-app-pub-7121075950716954/2667109676
+     *
+     * Remote Config key: ad_interstitial_onboarding_complete
+     */
+    const val INTERSTITIAL_ONBOARDING_COMPLETE = "ad_interstitial_onboarding_complete"
+
     // ============================================
     // INTERSTITIAL — QUALITY UNLOCK
     // ============================================
@@ -1035,6 +1047,7 @@ object AdPlacement {
         REWARD_UNLOCK_TEMPLATE,
         REWARD_UNLOCK_SONG,
         INTERSTITIAL_MUSIC_PLAYER_TRY,
-        INTERSTITIAL_PICKER_DONE
+        INTERSTITIAL_PICKER_DONE,
+        INTERSTITIAL_ONBOARDING_COMPLETE
     )
 }
