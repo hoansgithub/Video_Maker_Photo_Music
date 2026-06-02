@@ -53,6 +53,7 @@ import com.videomaker.aimusic.ui.components.songFeedItemKey
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.theme.TextTertiary
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
 @Composable
 fun UnifiedSearchIdleContent(
@@ -76,6 +77,7 @@ fun UnifiedSearchIdleContent(
     onSeeMoreTemplates: () -> Unit,
     onSeeMoreSongs: () -> Unit
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val dimens = AppDimens.current
     val sessionManager: MusicPlaybackSessionManager = koinInject()
     val adsLoaderService: AdsLoaderService = koinInject()
@@ -108,7 +110,8 @@ fun UnifiedSearchIdleContent(
                 NativeAdView(
                     placement = AdPlacement.NATIVE_SEARCH_INFEED,
                     modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             }
         }
@@ -300,7 +303,8 @@ fun UnifiedSearchIdleContent(
                                     NativeAdView(
                                         placement = AdPlacement.NATIVE_SEARCH_MUSIC_INFEED,
                                         autoLoad = true,
-                                        isDebug = BuildConfig.DEBUG
+                                        isDebug = BuildConfig.DEBUG,
+                                        onAdClicked = { adClickDetector.onAdClick(it) }
                                     )
                                 }
                             }

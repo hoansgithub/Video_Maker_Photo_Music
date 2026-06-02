@@ -29,6 +29,8 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import org.koin.compose.koinInject
 
 @Stable
 private sealed class TemplateGridItem {
@@ -42,6 +44,7 @@ fun ContentTemplate(
     onTemplateClick: (String) -> Unit,
     onDeleteTemplateClick: (String) -> Unit,
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val dimens = AppDimens.current
 
     LazyColumn(
@@ -120,7 +123,8 @@ fun ContentTemplate(
                             NativeAdView(
                                 placement = AdPlacement.NATIVE_LIBRARY_CREATED_VIDEO,
                                 modifier = Modifier.fillMaxSize(),
-                                isDebug = BuildConfig.DEBUG
+                                isDebug = BuildConfig.DEBUG,
+                                onAdClicked = { adClickDetector.onAdClick(it) }
                             )
                         }
                     }

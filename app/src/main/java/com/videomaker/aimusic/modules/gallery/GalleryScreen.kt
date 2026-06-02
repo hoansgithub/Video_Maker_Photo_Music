@@ -105,6 +105,8 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import org.koin.compose.koinInject
 
 // ============================================
 // GALLERY GRID ITEM (Template + Ad)
@@ -615,6 +617,7 @@ private fun FeaturedTemplatesCarousel(
     autoSlideIntervalMs: Long = 4000L,
     modifier: Modifier = Modifier
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val infinitePageCount = Int.MAX_VALUE
     val initialPage = infinitePageCount / 2
 
@@ -696,7 +699,8 @@ private fun FeaturedTemplatesCarousel(
                         NativeAdView(
                             placement = AdPlacement.NATIVE_GALLERY_HOT_TPT,
                             autoLoad = true,
-                            isDebug = BuildConfig.DEBUG
+                            isDebug = BuildConfig.DEBUG,
+                            onAdClicked = { adClickDetector.onAdClick(it) }
                         )
                     }
                 } else {
@@ -937,6 +941,7 @@ private fun StaggeredTemplateGrid(
     modifier: Modifier = Modifier,
     columns: Int = 2
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     if (templates.isEmpty()) return
 
     // ✅ FIX: Build grid items list (templates + ad)
@@ -1023,7 +1028,8 @@ private fun StaggeredTemplateGrid(
                 NativeAdView(
                     placement = AdPlacement.NATIVE_GALLERY_GRID,
                     modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             }
         }

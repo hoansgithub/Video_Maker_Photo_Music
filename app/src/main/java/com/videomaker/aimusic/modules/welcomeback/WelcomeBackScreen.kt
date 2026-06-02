@@ -43,11 +43,14 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.ui.theme.WelcomeBackBackground
 import com.videomaker.aimusic.ui.theme.WelcomeBackVibeBg
 import com.videomaker.aimusic.ui.theme.WelcomeBackVibeBorder
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import org.koin.compose.koinInject
 
 @Composable
 fun WelcomeBackScreen(
     onContinue: () -> Unit
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -153,7 +156,8 @@ fun WelcomeBackScreen(
                 NativeAdView(
                     placement = AdPlacement.NATIVE_WELCOME_BACK,
                     modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             }
         }

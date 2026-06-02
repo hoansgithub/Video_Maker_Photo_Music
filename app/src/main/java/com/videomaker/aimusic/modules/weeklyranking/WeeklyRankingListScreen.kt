@@ -59,6 +59,7 @@ import com.videomaker.aimusic.ui.components.buildSongFeedWithAds
 import com.videomaker.aimusic.ui.components.rememberHideOnScrollConnection
 import com.videomaker.aimusic.ui.components.songFeedItemKey
 import com.videomaker.aimusic.ui.theme.AppDimens
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
 /**
  * Weekly Ranking List Screen - Paginated ranking browsing
@@ -204,6 +205,7 @@ private fun WeeklyRankingListContent(
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val dimens = AppDimens.current
     val listState = rememberLazyListState()
     val pullRefreshState = rememberPullToRefreshState()
@@ -299,7 +301,8 @@ private fun WeeklyRankingListContent(
                                 NativeAdView(
                                     placement = AdPlacement.NATIVE_RANKING_INFEED,
                                     autoLoad = true,
-                                    isDebug = BuildConfig.DEBUG
+                                    isDebug = BuildConfig.DEBUG,
+                                    onAdClicked = { adClickDetector.onAdClick(it) }
                                 )
                             }
                         }

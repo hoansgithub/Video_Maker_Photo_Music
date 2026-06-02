@@ -102,6 +102,10 @@ import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.SnackbarHostState
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 
 /**
  * EditorScreen - Main video editor screen
@@ -127,6 +131,8 @@ fun EditorScreen(
     onNavigateToExport: (String, com.videomaker.aimusic.domain.model.VideoQuality) -> Unit,
     onNavigateToAddAssets: (String, List<String>) -> Unit
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val shouldPresentQualityAd by viewModel.shouldPresentQualityAd.collectAsStateWithLifecycle()
     val qualityAdError by viewModel.qualityAdError.collectAsStateWithLifecycle()
@@ -863,12 +869,25 @@ fun EditorScreen(
 
         }
 
-        BannerAdView(
-            placement = AdPlacement.BANNER_EDITOR,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-        )
+        // Remote Config toggle: native ad (default) or standard banner
+        if (adPlacementConfigService.bannerUseNative) {
+            NativeAdView(
+                placement = AdPlacement.NATIVE_EDITOR_BANNER,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                isDebug = BuildConfig.DEBUG,
+                onAdClicked = { adClickDetector.onAdClick(it) }
+            )
+        } else {
+            BannerAdView(
+                placement = AdPlacement.BANNER_EDITOR,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                onAdClicked = { adClickDetector.onAdClick(it) }
+            )
+        }
     }
 }
 

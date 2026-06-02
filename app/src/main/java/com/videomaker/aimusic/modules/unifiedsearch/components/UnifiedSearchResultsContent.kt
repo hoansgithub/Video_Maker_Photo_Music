@@ -91,6 +91,7 @@ import com.videomaker.aimusic.ui.theme.TextOnPrimary
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.White12
 import kotlinx.coroutines.flow.distinctUntilChanged
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
 @Composable
 fun UnifiedSearchResultsContent(
@@ -103,6 +104,7 @@ fun UnifiedSearchResultsContent(
     onScrollStarted: () -> Unit,
     onRelatedSearchClick: (String) -> Unit
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val dimens = AppDimens.current
     val listState = rememberLazyListState()
     val sessionManager: MusicPlaybackSessionManager = koinInject()
@@ -151,7 +153,8 @@ fun UnifiedSearchResultsContent(
                 NativeAdView(
                     placement = AdPlacement.NATIVE_SEARCH_INFEED,
                     modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             }
         }
@@ -415,7 +418,8 @@ fun UnifiedSearchResultsContent(
                                         NativeAdView(
                                             placement = AdPlacement.NATIVE_SEARCH_MUSIC_INFEED,
                                             autoLoad = true,
-                                            isDebug = BuildConfig.DEBUG
+                                            isDebug = BuildConfig.DEBUG,
+                                            onAdClicked = { adClickDetector.onAdClick(it) }
                                         )
                                     }
                                 }

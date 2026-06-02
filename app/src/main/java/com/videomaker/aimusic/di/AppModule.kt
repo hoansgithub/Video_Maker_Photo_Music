@@ -379,6 +379,19 @@ val adsModule = module {
         )
     }
 
+    // Ad Click Context Tracker (singleton - tracks ad click background state)
+    single { com.videomaker.aimusic.core.ads.AdClickContextTracker() }
+
+    // Ad Click Detector (singleton - handles ad click detection + preloads post-click AOA)
+    single {
+        com.videomaker.aimusic.core.ads.AdClickDetector(
+            application = androidContext() as android.app.Application,
+            adClickContextTracker = get(),
+            adsLoaderService = get(),
+            applicationScope = (androidContext().applicationContext as com.videomaker.aimusic.VideoMakerApplication).applicationScope
+        )
+    }
+
     // Ad Initializer (singleton - validates ad system initialization)
     single {
         com.videomaker.aimusic.core.ads.AdInitializer(

@@ -121,6 +121,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import java.io.File
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
 // ============================================
 // HELPER - Release player async to avoid ANR
@@ -182,6 +183,7 @@ fun ExportScreen(
     onNavigateToHomeMyVideos: () -> Unit,
     onNavigateToTemplateDetail: (String) -> Unit
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val thumbnailUri by viewModel.thumbnailUri.collectAsStateWithLifecycle()
     val aspectRatio by viewModel.aspectRatio.collectAsStateWithLifecycle()
@@ -604,7 +606,8 @@ fun ExportScreen(
         placement = AdPlacement.NATIVE_EXPORT_PREPARING,
         modifier = Modifier
             .fillMaxWidth(),
-        isDebug = BuildConfig.DEBUG
+        isDebug = BuildConfig.DEBUG,
+        onAdClicked = { adClickDetector.onAdClick(it) }
     )
 }
 }
@@ -636,6 +639,7 @@ private fun ProcessingContent(
     thumbnailUri: Uri? = null,
     aspectRatio: AspectRatio = AspectRatio.RATIO_9_16
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     // Rotating tips - cycle through 10 messages every 4 seconds
     val tipMessages = listOf(
         stringResource(R.string.export_tip_1),
@@ -826,7 +830,8 @@ private fun ProcessingContent(
             NativeAdView(
                 placement = AdPlacement.NATIVE_EXPORT_GENERATING,
                 modifier = Modifier.fillMaxWidth(),
-                isDebug = BuildConfig.DEBUG
+                isDebug = BuildConfig.DEBUG,
+                onAdClicked = { adClickDetector.onAdClick(it) }
             )
         }
     }
@@ -853,6 +858,7 @@ private fun SuccessContent(
     onTemplateClick: (String) -> Unit = {},
     onSaveToastDismissed: () -> Unit = {}
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val isPreview = LocalInspectionMode.current
@@ -1276,7 +1282,8 @@ private fun SuccessContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 32.dp),
-                isDebug = BuildConfig.DEBUG
+                isDebug = BuildConfig.DEBUG,
+                onAdClicked = { adClickDetector.onAdClick(it) }
             )
 
             // Try Another Templates section

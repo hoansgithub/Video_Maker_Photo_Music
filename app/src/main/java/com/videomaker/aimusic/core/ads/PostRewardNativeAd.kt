@@ -18,6 +18,7 @@ import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.constants.AdPlacement
+import org.koin.compose.koinInject
 
 /**
  * Fullscreen native ad shown when ready while the rewarded ad is potentially still on screen.
@@ -32,6 +33,7 @@ import com.videomaker.aimusic.core.constants.AdPlacement
 fun PostRewardNativeAd(
     onClose: () -> Unit
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -41,7 +43,8 @@ fun PostRewardNativeAd(
         NativeAdView(
             placement = AdPlacement.NATIVE_POST_REWARD,
             modifier = Modifier.fillMaxSize(),
-            isDebug = BuildConfig.DEBUG
+            isDebug = BuildConfig.DEBUG,
+            onAdClicked = { adClickDetector.onAdClick(it) }
         )
 
         // Close button (top-right corner, shown immediately)

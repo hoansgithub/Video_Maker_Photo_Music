@@ -484,6 +484,42 @@ object AdPlacement {
     const val NATIVE_HOME_BANNER = "ad_native_home_banner"
 
     /**
+     * Template previewer bottom banner native ad.
+     * Replaces standard banner when ad_banner_use_native is true.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1709251222
+     * - Secondary: ca-app-pub-7121075950716954/3435442033
+     *
+     * Remote Config key: ad_native_template_previewer_banner
+     */
+    const val NATIVE_TEMPLATE_PREVIEWER_BANNER = "ad_native_template_previewer_banner"
+
+    /**
+     * Editor bottom banner native ad.
+     * Replaces standard banner when ad_banner_use_native is true.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1709251222
+     * - Secondary: ca-app-pub-7121075950716954/3435442033
+     *
+     * Remote Config key: ad_native_editor_banner
+     */
+    const val NATIVE_EDITOR_BANNER = "ad_native_editor_banner"
+
+    /**
+     * Asset picker bottom banner native ad.
+     * Replaces standard banner when ad_banner_use_native is true.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1709251222
+     * - Secondary: ca-app-pub-7121075950716954/3435442033
+     *
+     * Remote Config key: ad_native_asset_picker_banner
+     */
+    const val NATIVE_ASSET_PICKER_BANNER = "ad_native_asset_picker_banner"
+
+    /**
      * Fullscreen native ad shown between onboarding pages.
      * Displayed as a full-screen overlay with close button.
      * Injected after page 1, 2, or 3 (configurable).
@@ -1052,6 +1088,25 @@ object AdPlacement {
     const val INTERSTITIAL_NOTIFICATION_OPEN = "ad_interstitial_notification_open"
 
     // ============================================
+    // APP OPEN — POST AD CLICK
+    // ============================================
+
+    /**
+     * App Open Ad shown when user returns after clicking a banner/native ad.
+     * Uses dedicated ad units to allow independent monetization tuning
+     * for post-click returns vs normal app opens.
+     *
+     * Disabled by default — enable via Firebase Remote Config to monetize post-click returns.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/2469844727
+     * - Secondary: ca-app-pub-7121075950716954/8843681380
+     *
+     * Remote Config key: ad_appopen_aoa_after_click
+     */
+    const val APP_OPEN_AFTER_AD_CLICK = "ad_appopen_aoa_after_click"
+
+    // ============================================
     // INTERSTITIAL — QUALITY UNLOCK
     // ============================================
 
@@ -1075,6 +1130,7 @@ object AdPlacement {
     val ALL_PLACEMENTS = listOf(
         APP_OPEN_AOA,
         APP_OPEN_FOREGROUND,
+        APP_OPEN_AFTER_AD_CLICK,
         INTERSTITIAL_SPLASH,
         INTERSTITIAL_OPEN_APP,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
@@ -1109,6 +1165,9 @@ object AdPlacement {
         NATIVE_WIDGET_BOTTOM,
         NATIVE_LIBRARY_CREATED_VIDEO,
         NATIVE_HOME_BANNER,
+        NATIVE_TEMPLATE_PREVIEWER_BANNER,
+        NATIVE_EDITOR_BANNER,
+        NATIVE_ASSET_PICKER_BANNER,
         NATIVE_GALLERY_GRID,
         NATIVE_GALLERY_HOT_TPT,
         NATIVE_SONGS_STATION,

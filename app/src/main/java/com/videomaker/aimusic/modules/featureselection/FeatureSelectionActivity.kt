@@ -50,6 +50,8 @@ import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import kotlinx.coroutines.launch
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import org.koin.compose.koinInject
 
 class FeatureSelectionActivity : AppCompatActivity() {
 
@@ -67,6 +69,7 @@ class FeatureSelectionActivity : AppCompatActivity() {
         onboardingMusicPlayer.start()
 
         setContent {
+            val adClickDetector: AdClickDetector = koinInject()
             val density = LocalDensity.current
             var isSaving by remember { mutableStateOf(false) }
 
@@ -243,7 +246,8 @@ class FeatureSelectionActivity : AppCompatActivity() {
                         NativeAdView(
                             placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
                             modifier = Modifier.fillMaxWidth(),
-                            isDebug = BuildConfig.DEBUG
+                            isDebug = BuildConfig.DEBUG,
+                            onAdClicked = { adClickDetector.onAdClick(it) }
                         )
 
                         // PRIMARY ad - top layer, fades out when user selects
@@ -251,7 +255,8 @@ class FeatureSelectionActivity : AppCompatActivity() {
                             placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION,
                             modifier = Modifier
                                 .fillMaxWidth(),
-                            isDebug = BuildConfig.DEBUG
+                            isDebug = BuildConfig.DEBUG,
+                            onAdClicked = { adClickDetector.onAdClick(it) }
                         )
                     }
                 }

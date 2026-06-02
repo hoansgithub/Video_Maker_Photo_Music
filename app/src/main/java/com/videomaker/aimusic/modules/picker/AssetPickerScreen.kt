@@ -11,6 +11,8 @@ import androidx.core.content.FileProvider
 import java.io.File
 import androidx.activity.compose.BackHandler
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -118,6 +120,7 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextPrimaryDark
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
 /**
  * Thumbnail size in pixels for image grid
@@ -182,6 +185,8 @@ fun AssetPickerScreen(
     onAssetsAdded: () -> Unit = {},
     onNavigateToTemplatePreviewer: (templateId: String, imageUris: List<String>, overrideSongId: Long) -> Unit = { _, _, _ -> }
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -602,12 +607,25 @@ fun AssetPickerScreen(
                 onCameraClick = onCameraClick
             )
         }
-        BannerAdView(
-            placement = AdPlacement.BANNER_ASSET_PICKER,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-        )
+        // Remote Config toggle: native ad (default) or standard banner
+        if (adPlacementConfigService.bannerUseNative) {
+            NativeAdView(
+                placement = AdPlacement.NATIVE_ASSET_PICKER_BANNER,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                isDebug = com.videomaker.aimusic.BuildConfig.DEBUG,
+                onAdClicked = { adClickDetector.onAdClick(it) }
+            )
+        } else {
+            BannerAdView(
+                placement = AdPlacement.BANNER_ASSET_PICKER,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                onAdClicked = { adClickDetector.onAdClick(it) }
+            )
+        }
     }
 
     if (showExitConfirmDialog) {

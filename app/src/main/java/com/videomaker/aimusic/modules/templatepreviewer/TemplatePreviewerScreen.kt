@@ -130,6 +130,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import org.koin.compose.koinInject
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 
 // Virtual page count for infinite-scroll illusion.
 private const val VIRTUAL_PAGE_COUNT = 10_000
@@ -152,6 +154,8 @@ fun TemplatePreviewerScreen(
     onNavigateToAssetPicker: (template: com.videomaker.aimusic.domain.model.VideoTemplate, overrideSongId: Long, aspectRatio: AspectRatio) -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val likedTemplateIds by viewModel.likedTemplateIds.collectAsStateWithLifecycle()
     val unlockedTemplateIds by viewModel.unlockedTemplateIds.collectAsStateWithLifecycle()
@@ -533,7 +537,8 @@ fun TemplatePreviewerScreen(
                         NativeAdView(
                             placement = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING,
                             modifier = Modifier.fillMaxWidth(),
-                            isDebug = BuildConfig.DEBUG
+                            isDebug = BuildConfig.DEBUG,
+                            onAdClicked = { adClickDetector.onAdClick(it) }
                         )
                     }
                 }
@@ -637,6 +642,7 @@ fun TemplatePreviewerScreen(
  */
 @Composable
 private fun LoadingStateWithAd() {
+    val adClickDetector: AdClickDetector = koinInject()
     val context = LocalContext.current
 
     Box(
@@ -671,7 +677,8 @@ private fun LoadingStateWithAd() {
             NativeAdView(
                 placement = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING,
                 modifier = Modifier.fillMaxWidth(),
-                isDebug = BuildConfig.DEBUG
+                isDebug = BuildConfig.DEBUG,
+                onAdClicked = { adClickDetector.onAdClick(it) }
             )
         }
     }
@@ -701,6 +708,8 @@ private fun TemplatePreviewerReadyContent(
     onFirstVideoReady: () -> Unit,
     onRefresh: (excludeIds: Set<String>) -> Unit = {}
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     // Track viewed template IDs for refresh exclusion logic
     var viewedTemplateIds by remember { mutableStateOf(setOf<String>()) }
     val showRefreshIcon = viewedTemplateIds.size >= 5
@@ -1153,15 +1162,30 @@ private fun TemplatePreviewerReadyContent(
             )
         }
 
-        // Banner ad - positioned at bottom, above safe area (like HomeScreen)
-        BannerAdView(
-            placement = AdPlacement.BANNER_TEMPLATE_PREVIEWER,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .navigationBarsPadding()  // Respect safe area
-                .height(50.dp)
-        )
+        // Ad at bottom, above safe area (like HomeScreen)
+        // Remote Config toggle: native ad (default) or standard banner
+        if (adPlacementConfigService.bannerUseNative) {
+            NativeAdView(
+                placement = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_BANNER,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .height(50.dp),
+                isDebug = BuildConfig.DEBUG,
+                onAdClicked = { adClickDetector.onAdClick(it) }
+            )
+        } else {
+            BannerAdView(
+                placement = AdPlacement.BANNER_TEMPLATE_PREVIEWER,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .height(50.dp),
+                onAdClicked = { adClickDetector.onAdClick(it) }
+            )
+        }
 
         AnimatedVisibility(
             visible = showSwipeHint,
@@ -1296,6 +1320,7 @@ private fun SelectRatioBottomSheet(
     onDismiss: () -> Unit,
     onConfirm: (AspectRatio) -> Unit
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     var selected by remember { mutableStateOf(defaultRatio) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -1370,7 +1395,8 @@ private fun SelectRatioBottomSheet(
             NativeAdView(
                 placement = AdPlacement.NATIVE_TEMPLATE_RATIO_SHEET,
                 modifier = Modifier.fillMaxWidth(),
-                isDebug = BuildConfig.DEBUG
+                isDebug = BuildConfig.DEBUG,
+                onAdClicked = { adClickDetector.onAdClick(it) }
             )
         }
     }

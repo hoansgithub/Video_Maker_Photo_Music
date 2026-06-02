@@ -167,6 +167,18 @@
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1192669490","enabled":true},{"id":"ca-app-pub-7121075950716954/7566506155","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
+    <key>ad_native_template_previewer_banner</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1709251222","enabled":true},{"id":"ca-app-pub-7121075950716954/3435442033","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_editor_banner</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1709251222","enabled":true},{"id":"ca-app-pub-7121075950716954/3435442033","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_asset_picker_banner</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1709251222","enabled":true},{"id":"ca-app-pub-7121075950716954/3435442033","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
     <key>ad_native_music_player</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/4156165171","enabled":true},{"id":"ca-app-pub-7121075950716954/9216920167","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
@@ -261,6 +273,12 @@
     <value>{"enabled":true,"type":"rewardedInterstitial","units":[{"id":"ca-app-pub-7121075950716954/4370724539","enabled":true},{"id":"ca-app-pub-7121075950716954/6805316184","enabled":true}]}</value>
   </entry>
 
+  <!-- Banner → Native toggle (true = replace all banners with native ads) -->
+  <entry>
+    <key>ad_banner_use_native</key>
+    <value>true</value>
+  </entry>
+
   <!-- Ad Placements - Banner -->
   <entry>
     <key>ad_banner_home</key>
@@ -291,6 +309,10 @@
   <entry>
     <key>ad_appopen_foreground</key>
     <value>{"enabled":true,"type":"appOpen","units":[{"id":"ca-app-pub-7121075950716954/6000852048","enabled":true},{"id":"ca-app-pub-7121075950716954/9757555227","enabled":true}]}</value>
+  </entry>
+  <entry>
+    <key>ad_appopen_aoa_after_click</key>
+    <value>{"enabled":false,"type":"appOpen","units":[{"id":"ca-app-pub-7121075950716954/2469844727","enabled":true},{"id":"ca-app-pub-7121075950716954/8843681380","enabled":true}]}</value>
   </entry>
 
   <!-- Ad Quality Config -->

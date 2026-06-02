@@ -87,6 +87,7 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import org.koin.compose.koinInject
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
 // Uses shared SongFeedItem + buildSongFeedWithAds from ui.components.SongFeedItem
 
@@ -238,6 +239,7 @@ private fun SongsContent(
     onNavigateToWeeklyRankingList: () -> Unit,
     onSearchClick: () -> Unit
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val dimens = AppDimens.current
     var lastTrackedLocation by remember { mutableStateOf<String?>(null) }
 
@@ -348,7 +350,8 @@ private fun SongsContent(
                     NativeAdView(
                         placement = AdPlacement.NATIVE_SONGS_STATION,
                         autoLoad = true,
-                        isDebug = BuildConfig.DEBUG
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
                     )
                 }
                 Spacer(modifier = Modifier.height(dimens.spaceMd))
@@ -432,7 +435,8 @@ private fun SongsContent(
                                     NativeAdView(
                                         placement = AdPlacement.NATIVE_STATION_INFEED,
                                         autoLoad = true,
-                                        isDebug = BuildConfig.DEBUG
+                                        isDebug = BuildConfig.DEBUG,
+                                        onAdClicked = { adClickDetector.onAdClick(it) }
                                     )
                                 }
                             }

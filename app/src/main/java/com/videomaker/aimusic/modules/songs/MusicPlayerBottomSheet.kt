@@ -124,6 +124,7 @@ import androidx.lifecycle.lifecycleScope
 import com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
 // ============================================
 // HELPER - Music player ad refresh throttle
@@ -203,6 +204,7 @@ fun MusicPlayerBottomSheet(
     onDismiss: () -> Unit,
     onUseToCreate: () -> Unit,
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     var bottomSectionHeight by remember { mutableStateOf(0) }
     val playerFactory = koinInject<MusicPlayerViewModelFactory>()
     val viewModel: MusicPlayerViewModel = viewModel(
@@ -766,7 +768,8 @@ fun MusicPlayerBottomSheet(
                     NativeAdView(
                         placement = AdPlacement.NATIVE_MUSIC_PLAYER,
                         modifier = Modifier.fillMaxWidth(),
-                        isDebug = BuildConfig.DEBUG
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
                     )
                 }
             }

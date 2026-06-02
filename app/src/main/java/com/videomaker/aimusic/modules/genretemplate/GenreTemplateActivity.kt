@@ -40,6 +40,8 @@ import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import org.koin.compose.koinInject
 
 class GenreTemplateActivity : AppCompatActivity() {
 
@@ -51,6 +53,7 @@ class GenreTemplateActivity : AppCompatActivity() {
         Analytics.track(name = "music_genre_render")
 
         setContent {
+            val adClickDetector: AdClickDetector = koinInject()
             var isSaving by remember { mutableStateOf(false) }
             var bottomSectionHeight by remember { mutableStateOf(0) }
             val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
@@ -199,7 +202,8 @@ class GenreTemplateActivity : AppCompatActivity() {
                                 NativeAdView(
                                     placement = adPlacement,
                                     modifier = Modifier.fillMaxWidth(),
-                                    isDebug = BuildConfig.DEBUG
+                                    isDebug = BuildConfig.DEBUG,
+                                    onAdClicked = { adClickDetector.onAdClick(it) }
                                 )
                             }
                         }

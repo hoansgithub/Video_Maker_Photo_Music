@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
@@ -96,6 +97,8 @@ import com.videomaker.aimusic.ui.theme.WelcomeBackBackground
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 
 /** Two scroll sessions ending within this window count as a single swipe (dedupes split flings). */
 private const val GESTURE_COOLDOWN_MS = 250L
@@ -141,6 +144,8 @@ fun HomeScreen(
     onNavigateToAllSongs: () -> Unit = {},
     onNavigateToTemplatePreviewerWithSong: (songId: Long) -> Unit = {}
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     val context = LocalContext.current
     val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
     val adsLoaderService = koinInject<AdsLoaderService>()
@@ -630,16 +635,26 @@ fun HomeScreen(
             }
         }
 
-            // Native ad below tab content (at bottom of screen)
-            // Fixed height prevents measurement issues after multiple navigations
-            // Replaced standard banner with native ad as requested
-            NativeAdView(
-                placement = AdPlacement.NATIVE_HOME_BANNER,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                isDebug = BuildConfig.DEBUG
-            )
+            // Ad below tab content (at bottom of screen)
+            // Remote Config toggle: native ad (default) or standard banner
+            if (adPlacementConfigService.bannerUseNative) {
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_HOME_BANNER,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
+                )
+            } else {
+                BannerAdView(
+                    placement = AdPlacement.BANNER_HOME,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    onAdClicked = { adClickDetector.onAdClick(it) }
+                )
+            }
         }
 
         // Music player bottom sheets — rendered at HomeScreen level so they cover the
