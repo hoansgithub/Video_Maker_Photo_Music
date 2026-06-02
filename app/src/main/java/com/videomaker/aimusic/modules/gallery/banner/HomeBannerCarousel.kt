@@ -167,12 +167,17 @@ fun HomeBannerCarousel(
                     if (template == null) {
                         BannerShimmer()
                     } else {
+                        // While a local placeholder is shown, ignore clicks — the underlying
+                        // template is a stand-in until the real remote item resolves.
                         BannerTemplateStyle(
                             template = template,
                             style = banner.style,
                             isCurrentPage = isCurrentPage,
                             shouldLoadImage = isNearCurrentPage,
-                            onClick = { onTemplateBannerClick(template, banner.position) }
+                            placeholderImageUrl = banner.placeholderImageUrl,
+                            onClick = {
+                                if (!banner.isPlaceholder) onTemplateBannerClick(template, banner.position)
+                            }
                         )
                     }
                 }
@@ -182,12 +187,17 @@ fun HomeBannerCarousel(
                     if (song == null) {
                         BannerShimmer()
                     } else {
+                        // While a local placeholder is shown, ignore click / inline play — the
+                        // underlying song is a stand-in until the real remote item resolves.
                         BannerSongStyle(
                             song = song,
                             style = banner.style,
-                            isPlaying = activeSongId == song.id,
-                            onPlay = { player.toggle(song) },
-                            onClick = { onSongBannerClick(song.id, banner.position) }
+                            isPlaying = !banner.isPlaceholder && activeSongId == song.id,
+                            placeholderImageUrl = banner.placeholderImageUrl,
+                            onPlay = { if (!banner.isPlaceholder) player.toggle(song) },
+                            onClick = {
+                                if (!banner.isPlaceholder) onSongBannerClick(song.id, banner.position)
+                            }
                         )
                     }
                 }

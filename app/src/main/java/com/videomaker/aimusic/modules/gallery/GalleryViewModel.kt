@@ -509,14 +509,58 @@ class GalleryViewModel(
                 return@launch
             }
 
-            // 1) Shimmer placeholders so the new carousel shows immediately (no legacy flash).
+            // 1) Local placeholders so the new carousel shows real-looking content immediately
+            //    (no legacy flash / blank shimmer). Each banner borrows a random, non-duplicate
+            //    item from the bundled "GL default" content (3 templates / 5 songs shipped offline
+            //    with file:///android_asset thumbnails); the configured name/style is kept and only
+            //    the underlying template/song image is the local stand-in. These are replaced by
+            //    the resolved remote content in step 4 once each id finishes loading.
+            // Assign each banner a random, non-duplicate local stand-in from the bundled content,
+            // keyed by banner index so the SAME local image is used both as the placeholder banner
+            // (this step) and as the offline image shown beneath the resolved remote banner (step 4),
+            // so a slow / no network connection always has a local image to fall back to.
+            val bundledTemplates = BundledContentLibrary.getDefaultTemplates()
+                .filter { it.thumbnailPath.isNotEmpty() }.shuffled()
+            val bundledSongs = BundledContentLibrary.getDefaultSongs()
+                .filter { it.coverUrl.isNotEmpty() }.shuffled()
+            var templateCursor = 0
+            var songCursor = 0
+            val localTemplateStandins = arrayOfNulls<VideoTemplate>(items.size)
+            val localSongStandins = arrayOfNulls<MusicSong>(items.size)
+            items.forEachIndexed { index, item ->
+                when (item) {
+                    is HomeBannerConfigItem.Template ->
+                        // Wrap around so EVERY banner always has a local stand-in image (unique while
+                        // the pool lasts, then reused). A banner must never be left without a local
+                        // image to show while the remote thumbnail is loading or has errored.
+                        if (bundledTemplates.isNotEmpty())
+                            localTemplateStandins[index] = bundledTemplates[templateCursor++ % bundledTemplates.size]
+                    is HomeBannerConfigItem.Song ->
+                        if (bundledSongs.isNotEmpty())
+                            localSongStandins[index] = bundledSongs[songCursor++ % bundledSongs.size]
+                }
+            }
+
             patchHomeBanners(
                 items.mapIndexed { index, item ->
                     when (item) {
                         is HomeBannerConfigItem.Template ->
-                            HomeBannerUi.TemplateBanner(index, BannerTemplate(item.name, item.id, item.style), null)
+                            HomeBannerUi.TemplateBanner(
+                                position = index,
+                                style = BannerTemplate(item.name, item.id, item.style),
+                                template = localTemplateStandins[index],
+                                isPlaceholder = true,
+                                placeholderImageUrl = localTemplateStandins[index]?.thumbnailPath,
+                                placeholderVideoUrl = localTemplateStandins[index]?.videoUrl,
+                            )
                         is HomeBannerConfigItem.Song ->
-                            HomeBannerUi.SongBanner(index, BannerSong(item.name, item.id, item.style), null)
+                            HomeBannerUi.SongBanner(
+                                position = index,
+                                style = BannerSong(item.name, item.id, item.style),
+                                song = localSongStandins[index],
+                                isPlaceholder = true,
+                                placeholderImageUrl = localSongStandins[index]?.coverUrl,
+                            )
                     }
                 }
             )
@@ -555,7 +599,11 @@ class GalleryViewModel(
                             }
                             templateFallbacks?.removeFirstWhere { it.id !in usedTemplateIds }
                                 ?.also { usedTemplateIds += it.id }
-                        } ?: return@mapIndexedNotNull null
+                        }
+                        // Last resort (weak / no network): the bundled offline stand-in so the
+                        // banner is never dropped.
+                            ?: localTemplateStandins.getOrNull(index)
+                            ?: return@mapIndexedNotNull null
                         HomeBannerUi.TemplateBanner(
                             position = index,
                             style = BannerTemplate(
@@ -563,7 +611,9 @@ class GalleryViewModel(
                                 id = template.id,
                                 style = item.style
                             ),
-                            template = template
+                            template = template,
+                            placeholderImageUrl = localTemplateStandins.getOrNull(index)?.thumbnailPath,
+                            placeholderVideoUrl = localTemplateStandins.getOrNull(index)?.videoUrl
                         )
                     }
                     is HomeBannerConfigItem.Song -> {
@@ -574,7 +624,11 @@ class GalleryViewModel(
                             }
                             songFallbacks?.removeFirstWhere { it.id !in usedSongIds }
                                 ?.also { usedSongIds += it.id }
-                        } ?: return@mapIndexedNotNull null
+                        }
+                        // Last resort (weak / no network): the bundled offline stand-in so the
+                        // banner is never dropped (songRepository has no offline fallback).
+                            ?: localSongStandins.getOrNull(index)
+                            ?: return@mapIndexedNotNull null
                         HomeBannerUi.SongBanner(
                             position = index,
                             style = BannerSong(
@@ -582,7 +636,8 @@ class GalleryViewModel(
                                 id = song.id,
                                 style = item.style
                             ),
-                            song = song
+                            song = song,
+                            placeholderImageUrl = localSongStandins.getOrNull(index)?.coverUrl
                         )
                     }
                 }

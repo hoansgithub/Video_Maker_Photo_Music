@@ -31,7 +31,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -52,10 +53,11 @@ fun BannerTemplateStyle(
     isCurrentPage: Boolean,
     shouldLoadImage: Boolean,
     onClick: () -> Unit,
+    placeholderImageUrl: String? = null,
 ) {
     val context = LocalContext.current
 
-    // ✅ Only create image request if within visible range
+    // ✅ Only create the remote image request if within visible range
     val imageRequest = if (shouldLoadImage) {
         remember(template.id, isCurrentPage) {
             ImageRequest.Builder(context)
@@ -88,13 +90,36 @@ fun BannerTemplateStyle(
             .border(2.dp, Color.White.copy(0.12f), RoundedCornerShape(16.dp))
             .clickableSingle { onClick.invoke() }
     ) {
-        // ✅ Only show image if request exists (within visible range)
         if (imageRequest != null) {
-            AsyncImage(
+            // Server thumbnail shown on success (as before). While it is loading or on error,
+            // fall back to the local bundled thumbnail loaded via Coil — same as a template card,
+            // so it animates on its own when the local asset is an animated WebP.
+            SubcomposeAsyncImage(
                 model = imageRequest,
                 contentDescription = template.name,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                loading = {
+                    if (!placeholderImageUrl.isNullOrEmpty()) {
+                        SubcomposeAsyncImage(
+                            model = placeholderImageUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                },
+                error = {
+                    if (!placeholderImageUrl.isNullOrEmpty()) {
+                        SubcomposeAsyncImage(
+                            model = placeholderImageUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                },
+                success = { SubcomposeAsyncImageContent() }
             )
 
             Image(
@@ -105,7 +130,7 @@ fun BannerTemplateStyle(
                     .fillMaxSize()
             )
         } else {
-            // Show placeholder for pages far from current
+            // Pages far from current — lightweight shimmer.
             ShimmerPlaceholder(
                 modifier = Modifier.fillMaxSize(),
                 cornerRadius = 0.dp

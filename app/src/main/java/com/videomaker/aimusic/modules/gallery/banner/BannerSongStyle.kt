@@ -59,6 +59,7 @@ fun BannerSongStyle(
     song: MusicSong,
     style: BannerSong,
     isPlaying: Boolean,
+    placeholderImageUrl: String? = null,
     onPlay: () -> Unit,
     onClick: () -> Unit,
 ) {
@@ -90,6 +91,7 @@ fun BannerSongStyle(
                     imageUrl = song.coverUrl,
                     contentDescription = song.name,
                     contentScale = ContentScale.Crop,
+                    placeholderUrl = placeholderImageUrl,
                     modifier = Modifier
                         .size(125.dp)
                         .background(PlaceholderBackground)
@@ -115,6 +117,7 @@ fun BannerSongStyle(
                             imageUrl = song.coverUrl,
                             contentDescription = song.name,
                             contentScale = ContentScale.Crop,
+                            placeholderUrl = placeholderImageUrl,
                             modifier = Modifier.fillMaxSize()
                         )
 
@@ -152,6 +155,7 @@ fun BannerSongStyle(
                     imageUrl = song.coverUrl,
                     contentDescription = song.name,
                     contentScale = ContentScale.Crop,
+                    placeholderUrl = placeholderImageUrl,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(PlaceholderBackground)
