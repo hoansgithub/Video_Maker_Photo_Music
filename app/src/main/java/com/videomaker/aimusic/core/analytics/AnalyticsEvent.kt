@@ -26,6 +26,12 @@ object AnalyticsEvent {
     const val TAB_VIEW = "tab_view"
     const val TAB_SWITCH = "tab_switch"
 
+    // Tab render: system displays a tab. Must fire BEFORE any rewarded popup
+    // event on that tab, same timing as TAB_VIEW.
+    const val TAB_GALLERY_RENDER = "tab_gallery_render"
+    const val TAB_SONG_RENDER = "tab_song_render"
+    const val TAB_LIBRARY_RENDER = "tab_library_render"
+
     const val IDEA_SONG_IMPRESSION = "idea_song_impression"
     const val IDEA_TEMPLATE_IMPRESSION = "idea_template_impression"
     const val IDEA_SONG_CLICK = "idea_song_click"

@@ -173,6 +173,26 @@ object Analytics {
         )
     }
 
+    /**
+     * Tab render: system displays the given tab. Must fire BEFORE any rewarded
+     * popup event on that tab, with the same timing as [trackTabView].
+     * No-op for unknown tab names.
+     */
+    fun trackTabRender(tabName: String) {
+        val eventName = when (tabName) {
+            AnalyticsEvent.Value.TabName.GALLERY -> AnalyticsEvent.TAB_GALLERY_RENDER
+            AnalyticsEvent.Value.TabName.SONG -> AnalyticsEvent.TAB_SONG_RENDER
+            AnalyticsEvent.Value.TabName.LIBRARY -> AnalyticsEvent.TAB_LIBRARY_RENDER
+            else -> return
+        }
+        trackWithPolicy(
+            eventName = eventName,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackTabSwitch(from: String, to: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.TAB_SWITCH,

@@ -420,6 +420,8 @@ fun HomeScreen(
                 songsViewModel.onDismissPlayer()
                 projectsViewModel.onDismissPlayer()
                 val currentTab = tabNameByIndex(settledPage)
+                // Tab render must precede any rewarded popup on this tab, same timing as tab_view.
+                Analytics.trackTabRender(currentTab)
                 Analytics.trackTabView(currentTab)
 
                 if (hasSentInitialTabView && lastSettledPage != settledPage) {
