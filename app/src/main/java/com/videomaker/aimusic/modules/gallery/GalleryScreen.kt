@@ -139,6 +139,7 @@ fun GalleryScreen(
     listState: LazyListState = rememberLazyListState(),
     onUserInteraction: () -> Unit = {},
     onNavigateToSongDetail: (Long) -> Unit = {},
+    onNavigateToSongPreview: (Long) -> Unit = {},
     onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTopSongs: () -> Unit = {},
     onNavigateToAllTemplates: (String?) -> Unit = {},
@@ -214,6 +215,10 @@ fun GalleryScreen(
                     onNavigateToCreate()
                     viewModel.onNavigationHandled()
                 }
+                is GalleryNavigationEvent.NavigateToSongPreview -> {
+                    onNavigateToSongPreview(event.songId)
+                    viewModel.onNavigationHandled()
+                }
                 is GalleryNavigationEvent.NavigateToTemplateDetail -> {
                     // Handled by HandleTemplateNavigation above
                 }
@@ -238,6 +243,7 @@ fun GalleryScreen(
                 listState = listState,
                 onUserInteraction = onUserInteraction,
                 featuredTemplates = state.featuredTemplates,
+                homeBanners = state.homeBanners,
                 vibeTags = state.vibeTags,
                 selectedVibeTagId = state.selectedVibeTagId,
                 templateListState = state.templateListState,
@@ -245,6 +251,14 @@ fun GalleryScreen(
                 isRefreshing = isRefreshing,
                 isVisible = isVisible,
                 onRefresh = viewModel::refresh,
+                onTemplateBannerClick = { template, position ->
+                    onUserInteraction()
+                    viewModel.onTemplateBannerClick(template, position)
+                },
+                onSongBannerClick = { songId, position ->
+                    onUserInteraction()
+                    viewModel.onSongBannerClick(songId, position)
+                },
                 onVibeTagSelected = { selectedTagId ->
                     onUserInteraction()
                     val selectedTag = state.vibeTags.firstOrNull { it.id == selectedTagId }
@@ -343,6 +357,7 @@ private fun GalleryContent(
     listState: LazyListState,
     onUserInteraction: () -> Unit,
     featuredTemplates: List<VideoTemplate>,
+    homeBanners: List<com.videomaker.aimusic.modules.gallery.banner.HomeBannerUi>,
     vibeTags: List<VibeTag>,
     selectedVibeTagId: String?,
     templateListState: TemplateListState,
@@ -350,6 +365,8 @@ private fun GalleryContent(
     isRefreshing: Boolean,
     isVisible: Boolean,
     onRefresh: () -> Unit,
+    onTemplateBannerClick: (VideoTemplate, Int) -> Unit,
+    onSongBannerClick: (Long, Int) -> Unit,
     onVibeTagSelected: (String?) -> Unit,
     onTemplateClick: (VideoTemplate, String) -> Unit,
     onSeeAllTemplates: () -> Unit,
@@ -416,8 +433,22 @@ private fun GalleryContent(
                 )
             }
 
-            // Section 2: Featured Templates Carousel
-            if (featuredTemplates.isNotEmpty()) {
+            // Section 2: Home banner carousel.
+            // Prefer the remote-config banner list; fall back to the legacy featured carousel.
+            if (homeBanners.isNotEmpty()) {
+                item(key = "spacer0", contentType = "spacer") {
+                    Spacer(modifier = Modifier.height(dimens.spaceMd))
+                }
+
+                item(key = "home_banners", contentType = "home_banners") {
+                    com.videomaker.aimusic.modules.gallery.banner.HomeBannerCarousel(
+                        banners = homeBanners,
+                        isVisible = isVisible,
+                        onTemplateBannerClick = onTemplateBannerClick,
+                        onSongBannerClick = onSongBannerClick
+                    )
+                }
+            } else if (featuredTemplates.isNotEmpty()) {
                 item(key = "spacer0", contentType = "spacer") {
                     Spacer(modifier = Modifier.height(dimens.spaceMd))
                 }
@@ -1055,6 +1086,7 @@ private fun GalleryContentPreview() {
                 listState = rememberLazyListState(),
                 onUserInteraction = {},
                 featuredTemplates = previewTemplates.take(5),
+                homeBanners = emptyList(),
                 vibeTags = listOf(
                     VibeTag("birthday", "Birthday", "🎂"),
                     VibeTag("travel", "Travel", "✈️"),
@@ -1066,6 +1098,8 @@ private fun GalleryContentPreview() {
                 isRefreshing = false,
                 isVisible = true,
                 onRefresh = {},
+                onTemplateBannerClick = { _, _ -> },
+                onSongBannerClick = { _, _ -> },
                 onVibeTagSelected = {},
                 onTemplateClick = { _, _ -> },
                 onSeeAllTemplates = {},
