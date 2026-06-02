@@ -326,11 +326,22 @@ fun AssetPickerScreen(
                 is AssetPickerNavigationEvent.NavigateToEditorWithData -> onNavigateToEditorWithData(event.initialData)
                 is AssetPickerNavigationEvent.AssetsAdded -> onAssetsAdded()
                 is AssetPickerNavigationEvent.SelectionConfirmed -> {
-                    // Store selection in cache and navigate back
-                    android.util.Log.d("AssetPickerScreen", "📦 Storing ${event.selectedUris.size} URIs in cache: ${event.selectedUris.joinToString()}")
+                    // Store selection in cache
                     AssetSelectionCache.setSelection(event.selectedUris)
-                    android.util.Log.d("AssetPickerScreen", "🔙 Navigating back to EditorScreen")
-                    onNavigateBack()
+
+                    // Show interstitial if preloaded (non-blocking), then navigate back
+                    if (event.shouldShowAd && activity != null) {
+                        InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = AdPlacement.INTERSTITIAL_PICKER_DONE,
+                            action = { onNavigateBack() },
+                            bypassFrequencyCap = true,
+                            showLoadingOverlay = false
+                        )
+                    } else {
+                        onNavigateBack()
+                    }
                 }
                 is AssetPickerNavigationEvent.NavigateToTemplatePreviewer ->
                     onNavigateToTemplatePreviewer(event.templateId, event.imageUris, event.overrideSongId)

@@ -886,6 +886,24 @@ object AdPlacement {
     const val INTERSTITIAL_MUSIC_PLAYER_TRY = "ad_interstitial_music_player_try"
 
     // ============================================
+    // INTERSTITIAL — PHOTO PICKER DONE (EDIT MODE)
+    // ============================================
+
+    /**
+     * Interstitial ad shown when user taps "Done" in photo picker while in edit mode.
+     * Timing: Loaded on tap with loading overlay, 10s timeout.
+     * If ad fails to load, navigation proceeds normally (non-blocking).
+     * Only shown in edit mode (replacing images from editor), not create/template modes.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1254485881
+     * - Secondary: ca-app-pub-7121075950716954/9965191360
+     *
+     * Remote Config key: ad_interstitial_picker_done
+     */
+    const val INTERSTITIAL_PICKER_DONE = "ad_interstitial_picker_done"
+
+    // ============================================
     // INTERSTITIAL — QUALITY UNLOCK
     // ============================================
 
@@ -960,6 +978,7 @@ object AdPlacement {
         REWARD_UNLOCK_EFFECT_SET,
         REWARD_UNLOCK_TEMPLATE,
         REWARD_UNLOCK_SONG,
-        INTERSTITIAL_MUSIC_PLAYER_TRY
+        INTERSTITIAL_MUSIC_PLAYER_TRY,
+        INTERSTITIAL_PICKER_DONE
     )
 }

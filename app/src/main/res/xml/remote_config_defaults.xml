@@ -96,6 +96,10 @@
     <key>ad_interstitial_music_player_try</key>
     <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/7530599719","enabled":true},{"id":"ca-app-pub-7121075950716954/4904436375","enabled":true}],"extras":{"retry_max":6}}</value>
   </entry>
+  <entry>
+    <key>ad_interstitial_picker_done</key>
+    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/1254485881","enabled":true},{"id":"ca-app-pub-7121075950716954/9965191360","enabled":true}],"extras":{"retry_max":6}}</value>
+  </entry>
 
   <!-- Ad Placements - Native -->
   <entry>

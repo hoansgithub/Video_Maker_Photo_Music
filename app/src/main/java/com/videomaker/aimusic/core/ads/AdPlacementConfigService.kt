@@ -847,6 +847,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Photo picker "Done" interstitial (edit mode only)
+        // Loaded on tap with overlay, non-blocking if failed
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_PICKER_DONE,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1254485881",  // Primary
+                "ca-app-pub-7121075950716954/9965191360"   // Secondary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }
