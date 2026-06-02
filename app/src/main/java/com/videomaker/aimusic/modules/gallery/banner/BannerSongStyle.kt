@@ -48,6 +48,7 @@ import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.Neutral_N100
 import com.videomaker.aimusic.ui.theme.Neutral_N500
+import com.videomaker.aimusic.ui.theme.PlaceholderBackground
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
@@ -57,6 +58,7 @@ import com.videomaker.aimusic.ui.theme.White16
 fun BannerSongStyle(
     song: MusicSong,
     style: BannerSong,
+    isPlaying: Boolean,
     onPlay: () -> Unit,
     onClick: () -> Unit,
 ) {
@@ -66,6 +68,7 @@ fun BannerSongStyle(
             .fillMaxWidth()
             .aspectRatio(388 / 200f)
             .border(2.dp, Color.White.copy(0.12f), RoundedCornerShape(16.dp))
+            .clickableSingle { onClick.invoke() }
     ) {
         if (style.style == 1) {
             Image(
@@ -89,6 +92,7 @@ fun BannerSongStyle(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(125.dp)
+                        .background(PlaceholderBackground)
                         .clip(RoundedCornerShape(8.dp))
                 )
                 Box{
@@ -138,7 +142,7 @@ fun BannerSongStyle(
 
             Box(
                 modifier = Modifier
-                    .padding(top = 4.dp, end = 57.dp)
+                    .padding(top = 2.dp, end = 45.dp)
                     .size(149.67.dp)
                     .clip(CircleShape)
                     .align(Alignment.TopEnd),
@@ -148,6 +152,9 @@ fun BannerSongStyle(
                     imageUrl = song.coverUrl,
                     contentDescription = song.name,
                     contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(PlaceholderBackground)
                 )
                 Spacer(Modifier.clip(CircleShape).size(10.dp).background(Color.Black))
             }
@@ -192,15 +199,15 @@ fun BannerSongStyle(
             }
 
             Icon(
-                imageVector = if (true) Icons.Default.Pause
+                imageVector = if (isPlaying) Icons.Default.Pause
                 else Icons.Default.PlayArrow,
                 contentDescription = null,
                 tint = Color(0xFFF6F6F6),
                 modifier = Modifier
                     .size(26.dp)
                     .background(Color.Black.copy(0.4f), CircleShape)
-                    .clickableSingle{
-
+                    .clickableSingle {
+                        onPlay.invoke()
                     }
                     .padding(4.dp)
             )
@@ -307,6 +314,7 @@ private fun GalleryLoadingPreview() {
                     id = 10L,
                     style = 1
                 ),
+                isPlaying = false,
                 onPlay = {
 
                 },

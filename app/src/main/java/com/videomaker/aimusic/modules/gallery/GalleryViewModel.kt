@@ -8,15 +8,26 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Size
 import androidx.compose.runtime.Immutable
+import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.RemoteConfigKeys
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.media.library.BundledContentLibrary
 import com.videomaker.aimusic.media.library.MusicSongLibrary
+import com.videomaker.aimusic.modules.gallery.banner.BannerSong
+import com.videomaker.aimusic.modules.gallery.banner.BannerTemplate
+import com.videomaker.aimusic.modules.gallery.banner.HomeBannerConfigItem
+import com.videomaker.aimusic.modules.gallery.banner.HomeBannerConfigParser
+import com.videomaker.aimusic.modules.gallery.banner.HomeBannerUi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,7 +57,9 @@ sealed class GalleryUiState {
         val vibeTags: List<VibeTag>,
         val selectedVibeTagId: String?,       // null = "All"
         val templateListState: TemplateListState,
-        val featuredTemplates: List<VideoTemplate> = emptyList()
+        val featuredTemplates: List<VideoTemplate> = emptyList(),
+        /** Remote-config driven banner list. Empty → legacy featured-templates carousel is shown. */
+        val homeBanners: List<HomeBannerUi> = emptyList()
     ) : GalleryUiState()
     data class Error(val message: String) : GalleryUiState()
 }
@@ -69,6 +82,8 @@ sealed class GalleryNavigationEvent {
     data object NavigateToAllTopSongs : GalleryNavigationEvent()
     data class NavigateToAllTemplates(val selectedVibeTagId: String?) : GalleryNavigationEvent()
     data object NavigateToCreate : GalleryNavigationEvent()
+    /** Open the song preview (Song tab player) for a banner song. */
+    data class NavigateToSongPreview(val songId: Long) : GalleryNavigationEvent()
 }
 
 // ============================================
@@ -79,6 +94,8 @@ class GalleryViewModel(
     private val application: Application,
     private val imageLoader: ImageLoader,
     private val templateRepository: TemplateRepository,
+    private val songRepository: SongRepository,
+    private val remoteConfig: RemoteConfig,
     private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
     private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator,
     private val preferencesManager: PreferencesManager
@@ -211,6 +228,7 @@ class GalleryViewModel(
                     preloadCarouselImages(trendingSongs)
                     preloadFeaturedThumbnails(featuredTemplates)
                     preloadGridThumbnails(templatesInitial)
+                    resolveHomeBanners()
                     return@launch
                 }
 
@@ -223,6 +241,7 @@ class GalleryViewModel(
                     featuredTemplates = emptyList()
                 )
                 preloadCarouselImages(trendingSongs)
+                resolveHomeBanners()
 
                 // …then keep waiting for the real responses and swap in.
                 val realTemplates = templatesDeferred.await()
@@ -457,6 +476,129 @@ class GalleryViewModel(
                 android.util.Log.e("GalleryViewModel", "❌ Template grid tap ad reload exception: ${e.message}", e)
             }
         }
+    }
+
+    // ============================================
+    // HOME BANNER LIST (remote config)
+    // ============================================
+
+    /** Banner song tapped → preview it in the Song tab. */
+    fun onSongBannerClick(songId: Long, position: Int) {
+        Analytics.trackBannerClickSong(songId = songId, position = position)
+        _navigationEvent.value = GalleryNavigationEvent.NavigateToSongPreview(songId)
+    }
+
+    /** Banner template tapped → open template detail (reuses the ad-aware template flow). */
+    fun onTemplateBannerClick(template: VideoTemplate, position: Int) {
+        Analytics.trackBannerClickTemplate(templateId = template.id, position = position)
+        onTemplateClick(template, AnalyticsEvent.Value.Location.GALLERY_BANNER)
+    }
+
+    /**
+     * Reads the `home_banner_list` remote config, shows shimmer placeholders immediately, then
+     * resolves each item by id. An item whose id fails to load falls back to a geo top-2
+     * song/template of the same type (no duplicates); an item with no available fallback is dropped.
+     */
+    private fun resolveHomeBanners() {
+        viewModelScope.launch {
+            val items = HomeBannerConfigParser.parse(
+                remoteConfig.getString(RemoteConfigKeys.HOME_BANNER_LIST)
+            )
+            if (items.isEmpty()) {
+                patchHomeBanners(emptyList())
+                return@launch
+            }
+
+            // 1) Shimmer placeholders so the new carousel shows immediately (no legacy flash).
+            patchHomeBanners(
+                items.mapIndexed { index, item ->
+                    when (item) {
+                        is HomeBannerConfigItem.Template ->
+                            HomeBannerUi.TemplateBanner(index, BannerTemplate(item.name, item.id, item.style), null)
+                        is HomeBannerConfigItem.Song ->
+                            HomeBannerUi.SongBanner(index, BannerSong(item.name, item.id, item.style), null)
+                    }
+                }
+            )
+
+            // 2) Fetch every configured id in parallel.
+            val fetched: List<Pair<HomeBannerConfigItem, Any?>> = items.map { item ->
+                async(Dispatchers.IO) {
+                    item to when (item) {
+                        is HomeBannerConfigItem.Template -> templateRepository.getTemplateById(item.id).getOrNull()
+                        is HomeBannerConfigItem.Song -> songRepository.getSongById(item.id).getOrNull()
+                    }
+                }
+            }.awaitAll()
+
+            // 3) Track ids already shown so geo fallbacks stay unique.
+            val usedTemplateIds = mutableSetOf<String>()
+            val usedSongIds = mutableSetOf<Long>()
+            fetched.forEach { (item, content) ->
+                when {
+                    item is HomeBannerConfigItem.Template && content is VideoTemplate -> usedTemplateIds += content.id
+                    item is HomeBannerConfigItem.Song && content is MusicSong -> usedSongIds += content.id
+                }
+            }
+
+            // 4) Lazily-loaded geo fallback pools (top 2 by region).
+            var templateFallbacks: MutableList<VideoTemplate>? = null
+            var songFallbacks: MutableList<MusicSong>? = null
+
+            val resolved = fetched.mapIndexedNotNull { index, (item, content) ->
+                when (item) {
+                    is HomeBannerConfigItem.Template -> {
+                        val template = (content as? VideoTemplate) ?: run {
+                            if (templateFallbacks == null) {
+                                templateFallbacks = templateRepository.getFeaturedTemplates(limit = 2)
+                                    .getOrElse { emptyList() }.toMutableList()
+                            }
+                            templateFallbacks?.removeFirstWhere { it.id !in usedTemplateIds }
+                                ?.also { usedTemplateIds += it.id }
+                        } ?: return@mapIndexedNotNull null
+                        HomeBannerUi.TemplateBanner(
+                            position = index,
+                            style = BannerTemplate(
+                                name = item.name.ifBlank { template.name },
+                                id = template.id,
+                                style = item.style
+                            ),
+                            template = template
+                        )
+                    }
+                    is HomeBannerConfigItem.Song -> {
+                        val song = (content as? MusicSong) ?: run {
+                            if (songFallbacks == null) {
+                                songFallbacks = songRepository.getFeaturedSongs(limit = 2)
+                                    .getOrElse { emptyList() }.toMutableList()
+                            }
+                            songFallbacks?.removeFirstWhere { it.id !in usedSongIds }
+                                ?.also { usedSongIds += it.id }
+                        } ?: return@mapIndexedNotNull null
+                        HomeBannerUi.SongBanner(
+                            position = index,
+                            style = BannerSong(
+                                name = item.name.ifBlank { song.name },
+                                id = song.id,
+                                style = item.style
+                            ),
+                            song = song
+                        )
+                    }
+                }
+            }
+            patchHomeBanners(resolved)
+        }
+    }
+
+    private fun patchHomeBanners(banners: List<HomeBannerUi>) {
+        val current = _uiState.value as? GalleryUiState.Success ?: return
+        _uiState.value = current.copy(homeBanners = banners)
+    }
+
+    private fun <T> MutableList<T>.removeFirstWhere(predicate: (T) -> Boolean): T? {
+        val index = indexOfFirst(predicate)
+        return if (index >= 0) removeAt(index) else null
     }
 
     fun onNavigationHandled() {

@@ -492,6 +492,11 @@ fun HomeScreen(
                             onNavigateToSearch = onNavigateToSearch,
                             onNavigateToTemplateDetail = onNavigateToTemplateDetail,
                             onNavigateToAllTemplates = onNavigateToAllTemplates,
+                            onNavigateToSongPreview = { songId ->
+                                // Switch to the Song tab and open the preview player for this song.
+                                coroutineScope.launch { pagerState.animateScrollToPage(1) }
+                                songsViewModel.onSongClickById(songId)
+                            },
                             topBarHeight = topBarHeight
                         )
                         1 -> SongsTabContent(
@@ -787,6 +792,7 @@ private fun GalleryTabContent(
     onNavigateToSearch: () -> Unit = {},
     onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTemplates: (String?) -> Unit = {},
+    onNavigateToSongPreview: (Long) -> Unit = {},
     topBarHeight: Dp = 0.dp
 ) {
     GalleryScreen(
@@ -799,6 +805,7 @@ private fun GalleryTabContent(
         onNavigateToSongDetail = {
             // TODO: Navigate to song detail
         },
+        onNavigateToSongPreview = onNavigateToSongPreview,
         onNavigateToTemplateDetail = onNavigateToTemplateDetail,
         onNavigateToAllTopSongs = {
             // TODO: Navigate to all top songs

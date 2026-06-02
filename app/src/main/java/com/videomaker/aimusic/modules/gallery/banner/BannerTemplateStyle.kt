@@ -86,6 +86,7 @@ fun BannerTemplateStyle(
             .fillMaxWidth()
             .aspectRatio(388 / 200f)
             .border(2.dp, Color.White.copy(0.12f), RoundedCornerShape(16.dp))
+            .clickableSingle { onClick.invoke() }
     ) {
         // ✅ Only show image if request exists (within visible range)
         if (imageRequest != null) {

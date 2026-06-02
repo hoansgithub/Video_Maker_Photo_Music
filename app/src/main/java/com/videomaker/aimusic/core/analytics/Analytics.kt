@@ -361,6 +361,38 @@ object Analytics {
         )
     }
 
+    /** Home banner (remote-config list) — user tapped a template banner. [position] = 0-based index in the config list (AD slot excluded). */
+    fun trackBannerClickTemplate(templateId: String, position: Int) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.BANNER_CLICK_TEMPLATE,
+            params = mapOf(
+                AnalyticsEvent.Param.TEMPLATE_ID to templateId,
+                AnalyticsEvent.Param.POSITION to position
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.TEMPLATE_ID,
+                AnalyticsEvent.Param.POSITION
+            ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    /** Home banner (remote-config list) — user tapped a song banner. [position] = 0-based index in the config list (AD slot excluded). */
+    fun trackBannerClickSong(songId: Long, position: Int) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.BANNER_CLICK_SONG,
+            params = mapOf(
+                AnalyticsEvent.Param.SONG_ID to songId,
+                AnalyticsEvent.Param.POSITION to position
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.SONG_ID,
+                AnalyticsEvent.Param.POSITION
+            ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackTemplatePreview(templateId: String, templateName: String, location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_PREVIEW,

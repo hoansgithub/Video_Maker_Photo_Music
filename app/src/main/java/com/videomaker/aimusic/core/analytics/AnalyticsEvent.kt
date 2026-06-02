@@ -41,6 +41,12 @@ object AnalyticsEvent {
     const val TEMPLATE_GENRE_CLICK = "template_genre_click"
 
     // ============================================
+    // HOME BANNER (remote-config banner list)
+    // ============================================
+    const val BANNER_CLICK_TEMPLATE = "banner_click_template"
+    const val BANNER_CLICK_SONG = "banner_click_song"
+
+    // ============================================
     // 4. TEMPLATE CONTEXT
     // ============================================
     const val TEMPLATE_IMPRESSION = "template_impress"
@@ -274,6 +280,7 @@ object AnalyticsEvent {
         const val TO = "to"
         const val LOCATION = "location"
         const val SECTION = "section"
+        const val POSITION = "position"
 
         const val GENRE_ID = "genre_id"
         const val GENRE_NAME = "genre_name"
