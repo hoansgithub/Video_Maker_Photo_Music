@@ -25,6 +25,7 @@ import co.alcheclub.lib.acccore.di.koin.getAllSingletons
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.TimeoutCancellationException
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.ImageDecoderDecoder
@@ -167,7 +168,7 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                 try {
                     val adsLoaderService = org.koin.core.context.GlobalContext.get()
                         .get<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
-                    val success = com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                    val success = InterstitialAdHelperExt.preloadInterstitial(
                         adsLoaderService = adsLoaderService,
                         placement = placement,
                         loadTimeoutMillis = 30_000L,
@@ -530,6 +531,43 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         appOpenAdManager.setShouldShowCallback { wasBackgrounded.getAndSet(false) }
 
         android.util.Log.d("VideoMakerApp", "✅ App open ad manager initialized (2-layer: background + foreground, minimize mode)")
+
+        // ============================================
+        // AD CLICK CONTEXT — PLACEMENT SWITCHING
+        // ============================================
+        // When user clicks a banner/native ad, leaves to advertiser, then returns:
+        // - Switch AOA placements to post-click units (or suppress if disabled)
+        // - Reset after resume completes so next background uses normal placements
+        val adClickContextTracker = org.koin.core.context.GlobalContext.get().get<com.videomaker.aimusic.core.ads.AdClickContextTracker>()
+        val hasProcessedAdClickReturn = java.util.concurrent.atomic.AtomicBoolean(false)
+
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : androidx.lifecycle.DefaultLifecycleObserver {
+            override fun onStart(owner: androidx.lifecycle.LifecycleOwner) {
+                if (adClickContextTracker.shouldUsePostAdClickPlacement()) {
+                    hasProcessedAdClickReturn.set(false)
+                    appOpenAdManager.setBackgroundPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_AFTER_AD_CLICK)
+                    appOpenAdManager.setForegroundPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_AFTER_AD_CLICK)
+                    android.util.Log.d("VideoMakerApp", "Ad click return detected - switching to post-click AOA placement")
+                } else {
+                    appOpenAdManager.setBackgroundPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_AOA)
+                    appOpenAdManager.setForegroundPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_FOREGROUND)
+                }
+            }
+
+            override fun onResume(owner: androidx.lifecycle.LifecycleOwner) {
+                if (adClickContextTracker.shouldUsePostAdClickPlacement()) {
+                    hasProcessedAdClickReturn.set(true)
+                }
+            }
+
+            override fun onStop(owner: androidx.lifecycle.LifecycleOwner) {
+                hasProcessedAdClickReturn.set(false)
+                if (adClickContextTracker.shouldUsePostAdClickPlacement()) {
+                    adClickContextTracker.reset()
+                    android.util.Log.d("VideoMakerApp", "Ad click context reset - next foreground uses normal placements")
+                }
+            }
+        })
 
         configureNotifications()
         primeNotificationScheduleConfigFromCache()

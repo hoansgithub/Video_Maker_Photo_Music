@@ -96,6 +96,7 @@ import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -850,6 +851,7 @@ private fun ProjectsStaggeredGrid(
     onShareProject: (Project) -> Unit,
     spacing: Dp
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     if (projects.isEmpty()) return
 
     // ✅ Create mixed list with ad inserted at position 2 (after first project)
@@ -904,7 +906,8 @@ private fun ProjectsStaggeredGrid(
                 NativeAdView(
                     placement = AdPlacement.NATIVE_LIBRARY_CREATED_VIDEO,
                     modifier = Modifier.fillMaxSize(),
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             }
         }

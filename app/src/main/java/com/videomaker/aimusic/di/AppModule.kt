@@ -379,6 +379,19 @@ val adsModule = module {
         )
     }
 
+    // Ad Click Context Tracker (singleton - tracks ad click background state)
+    single { com.videomaker.aimusic.core.ads.AdClickContextTracker() }
+
+    // Ad Click Detector (singleton - handles ad click detection + preloads post-click AOA)
+    single {
+        com.videomaker.aimusic.core.ads.AdClickDetector(
+            application = androidContext() as android.app.Application,
+            adClickContextTracker = get(),
+            adsLoaderService = get(),
+            applicationScope = (androidContext().applicationContext as com.videomaker.aimusic.VideoMakerApplication).applicationScope
+        )
+    }
+
     // Ad Initializer (singleton - validates ad system initialization)
     single {
         com.videomaker.aimusic.core.ads.AdInitializer(
@@ -690,7 +703,8 @@ class SongsViewModelFactory(
     private val getGenresUseCase: GetGenresUseCase,
     private val clearSongCacheUseCase: ClearSongCacheUseCase,
     private val songRepository: SongRepository,
-    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
+    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(): SongsViewModel = SongsViewModel(
         getSuggestedSongsUseCase = getSuggestedSongsUseCase,
@@ -698,7 +712,8 @@ class SongsViewModelFactory(
         getGenresUseCase = getGenresUseCase,
         clearSongCacheUseCase = clearSongCacheUseCase,
         songRepository = songRepository,
-        trendingPopupCoordinator = trendingPopupCoordinator
+        trendingPopupCoordinator = trendingPopupCoordinator,
+        adsLoaderService = adsLoaderService
     )
 }
 
@@ -756,11 +771,13 @@ class TemplateListViewModelFactory(
  * Factory wrapper for SuggestedSongsListViewModel.
  */
 class SuggestedSongsListViewModelFactory(
-    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase
+    private val getSuggestedSongsUseCase: GetSuggestedSongsUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(): com.videomaker.aimusic.modules.suggestedsongs.SuggestedSongsListViewModel {
         return com.videomaker.aimusic.modules.suggestedsongs.SuggestedSongsListViewModel(
-            getSuggestedSongsUseCase = getSuggestedSongsUseCase
+            getSuggestedSongsUseCase = getSuggestedSongsUseCase,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -769,11 +786,13 @@ class SuggestedSongsListViewModelFactory(
  * Factory wrapper for WeeklyRankingListViewModel.
  */
 class WeeklyRankingListViewModelFactory(
-    private val getWeeklyRankingSongsUseCase: GetWeeklyRankingSongsUseCase
+    private val getWeeklyRankingSongsUseCase: GetWeeklyRankingSongsUseCase,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(): com.videomaker.aimusic.modules.weeklyranking.WeeklyRankingListViewModel {
         return com.videomaker.aimusic.modules.weeklyranking.WeeklyRankingListViewModel(
-            getWeeklyRankingSongsUseCase = getWeeklyRankingSongsUseCase
+            getWeeklyRankingSongsUseCase = getWeeklyRankingSongsUseCase,
+            adsLoaderService = adsLoaderService
         )
     }
 }
@@ -1037,7 +1056,8 @@ val presentationModule = module {
             getGenresUseCase = get(),
             clearSongCacheUseCase = get(),
             songRepository = get(),
-            trendingPopupCoordinator = get()
+            trendingPopupCoordinator = get(),
+            adsLoaderService = get()
         )
     }
 
@@ -1080,14 +1100,16 @@ val presentationModule = module {
     // Suggested Songs List ViewModel factory (singleton - stateless factory)
     single {
         SuggestedSongsListViewModelFactory(
-            getSuggestedSongsUseCase = get()
+            getSuggestedSongsUseCase = get(),
+            adsLoaderService = get()
         )
     }
 
     // Weekly Ranking List ViewModel factory (singleton - stateless factory)
     single {
         WeeklyRankingListViewModelFactory(
-            getWeeklyRankingSongsUseCase = get()
+            getWeeklyRankingSongsUseCase = get(),
+            adsLoaderService = get()
         )
     }
 

@@ -100,6 +100,22 @@
     <key>ad_interstitial_unlock_quality</key>
     <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/3669507647","enabled":true},{"id":"ca-app-pub-7121075950716954/3529906841","enabled":true}],"extras":{"retry_max":6}}</value>
   </entry>
+  <entry>
+    <key>ad_interstitial_music_player_try</key>
+    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/7530599719","enabled":true},{"id":"ca-app-pub-7121075950716954/4904436375","enabled":true}],"extras":{"retry_max":6}}</value>
+  </entry>
+  <entry>
+    <key>ad_interstitial_picker_done</key>
+    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/1254485881","enabled":true},{"id":"ca-app-pub-7121075950716954/9965191360","enabled":true}],"extras":{"retry_max":6}}</value>
+  </entry>
+  <entry>
+    <key>ad_interstitial_onboarding_complete</key>
+    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/9773619674","enabled":true},{"id":"ca-app-pub-7121075950716954/2667109676","enabled":true}],"extras":{"retry_max":6}}</value>
+  </entry>
+  <entry>
+    <key>ad_interstitial_notification_open</key>
+    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/6137626994","enabled":true}],"extras":{"retry_max":6}}</value>
+  </entry>
 
   <!-- Ad Placements - Native -->
   <entry>
@@ -151,6 +167,18 @@
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1192669490","enabled":true},{"id":"ca-app-pub-7121075950716954/7566506155","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
+    <key>ad_native_template_previewer_banner</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1709251222","enabled":true},{"id":"ca-app-pub-7121075950716954/3435442033","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_editor_banner</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1709251222","enabled":true},{"id":"ca-app-pub-7121075950716954/3435442033","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_asset_picker_banner</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1709251222","enabled":true},{"id":"ca-app-pub-7121075950716954/3435442033","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
     <key>ad_native_music_player</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/4156165171","enabled":true},{"id":"ca-app-pub-7121075950716954/9216920167","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
@@ -181,6 +209,22 @@
   <entry>
     <key>ad_native_songs_station</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/2115862172","enabled":true},{"id":"ca-app-pub-7121075950716954/3794255449","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_station_infeed</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/6943442204","enabled":true},{"id":"ca-app-pub-7121075950716954/5456924546","enabled":true}],"extras":{"layout":"native_small_row","infeed_interval":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_ranking_infeed</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/6943442204","enabled":true},{"id":"ca-app-pub-7121075950716954/5456924546","enabled":true}],"extras":{"layout":"native_small_row","infeed_interval":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_suggested_infeed</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/6943442204","enabled":true},{"id":"ca-app-pub-7121075950716954/5456924546","enabled":true}],"extras":{"layout":"native_small_row","infeed_interval":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_search_music_infeed</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/6943442204","enabled":true},{"id":"ca-app-pub-7121075950716954/5456924546","enabled":true}],"extras":{"layout":"native_small_row","infeed_interval":10}}</value>
   </entry>
   <entry>
     <key>ad_native_template_previewer_loading</key>
@@ -229,6 +273,12 @@
     <value>{"enabled":true,"type":"rewardedInterstitial","units":[{"id":"ca-app-pub-7121075950716954/4370724539","enabled":true},{"id":"ca-app-pub-7121075950716954/6805316184","enabled":true}]}</value>
   </entry>
 
+  <!-- Banner → Native toggle (true = replace all banners with native ads) -->
+  <entry>
+    <key>ad_banner_use_native</key>
+    <value>true</value>
+  </entry>
+
   <!-- Ad Placements - Banner -->
   <entry>
     <key>ad_banner_home</key>
@@ -259,6 +309,10 @@
   <entry>
     <key>ad_appopen_foreground</key>
     <value>{"enabled":true,"type":"appOpen","units":[{"id":"ca-app-pub-7121075950716954/6000852048","enabled":true},{"id":"ca-app-pub-7121075950716954/9757555227","enabled":true}]}</value>
+  </entry>
+  <entry>
+    <key>ad_appopen_aoa_after_click</key>
+    <value>{"enabled":false,"type":"appOpen","units":[{"id":"ca-app-pub-7121075950716954/2469844727","enabled":true},{"id":"ca-app-pub-7121075950716954/8843681380","enabled":true}]}</value>
   </entry>
 
   <!-- Ad Quality Config -->

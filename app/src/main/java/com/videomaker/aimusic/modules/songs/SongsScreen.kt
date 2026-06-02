@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
@@ -71,7 +72,11 @@ import com.videomaker.aimusic.ui.components.RankingSongCardPlaceholder
 import com.videomaker.aimusic.ui.components.SectionHeader
 import com.videomaker.aimusic.ui.components.ShimmerBox
 import com.videomaker.aimusic.ui.components.SongListItem
+import com.videomaker.aimusic.ui.components.SongFeedItem
 import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
+import com.videomaker.aimusic.ui.components.buildSongFeedWithAds
+import com.videomaker.aimusic.ui.components.DEFAULT_INFEED_INTERVAL
+import com.videomaker.aimusic.ui.components.songFeedItemKey
 import com.videomaker.aimusic.ui.components.SongsSearchField
 import com.videomaker.aimusic.ui.components.SuggestSongCard
 import com.videomaker.aimusic.ui.components.SuggestSongCardPlaceholder
@@ -82,27 +87,9 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import org.koin.compose.koinInject
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
-// ============================================
-// STATION GRID ITEM (Song + Ad)
-// ============================================
-
-@Immutable
-private sealed class StationGridItem {
-    data class SongItem(val song: MusicSong) : StationGridItem()
-    data object AdItem : StationGridItem()
-}
-
-/**
- * Stable key function for station grid items
- */
-private fun stationItemKey(item: StationGridItem): String = when (item) {
-    is StationGridItem.SongItem -> "song_${item.song.id}"
-    is StationGridItem.AdItem -> "ad_native_station"
-}
-
-// Ad insertion position - 4th position (after 3rd song at index 2)
-private const val STATION_AD_INSERTION_INDEX = 3
+// Uses shared SongFeedItem + buildSongFeedWithAds from ui.components.SongFeedItem
 
 // ============================================
 // SONGS SCREEN
@@ -252,8 +239,17 @@ private fun SongsContent(
     onNavigateToWeeklyRankingList: () -> Unit,
     onSearchClick: () -> Unit
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val dimens = AppDimens.current
     var lastTrackedLocation by remember { mutableStateOf<String?>(null) }
+
+    // Read infeed ad interval from placement config
+    val adsLoaderService: AdsLoaderService = koinInject()
+    val infeedInterval = remember {
+        val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_STATION_INFEED)
+        val value = config?.extras?.get("infeed_interval")
+        value?.toString()?.trim('"')?.toIntOrNull() ?: DEFAULT_INFEED_INTERVAL
+    }
 
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
@@ -270,6 +266,14 @@ private fun SongsContent(
                     lastTrackedLocation = location
                 }
             }
+    }
+
+    // Build feed items at composable scope to avoid recomputing inside LazyListScope
+    val stationFeedItems = remember(stationState, infeedInterval) {
+        when (stationState) {
+            is SectionState.Success -> buildSongFeedWithAds(stationState.data, infeedInterval)
+            else -> emptyList()
+        }
     }
 
     PullToRefreshBox(
@@ -346,7 +350,8 @@ private fun SongsContent(
                     NativeAdView(
                         placement = AdPlacement.NATIVE_SONGS_STATION,
                         autoLoad = true,
-                        isDebug = BuildConfig.DEBUG
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
                     )
                 }
                 Spacer(modifier = Modifier.height(dimens.spaceMd))
@@ -378,37 +383,64 @@ private fun SongsContent(
                     }
                 }
                 is SectionState.Success -> {
-                    val songs = (stationState as SectionState.Success<List<MusicSong>>).data
+                    val songs = stationState.data
                     items(
-                        items = songs,
-                        key = { song -> "station_${song.id}" },
-                        contentType = { "station_song" }
-                    ) { song ->
-                        val dimens = AppDimens.current
-                        val sessionManager: MusicPlaybackSessionManager = koinInject()
-                        StationSongItem(
-                            song = song,
-                            onSongClick = {
-                                Analytics.trackSongClick(
-                                    songId = song.id.toString(),
-                                    songName = song.name,
-                                    location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                        items = stationFeedItems,
+                        key = { item -> songFeedItemKey(item, "station_") },
+                        contentType = { item ->
+                            when (item) {
+                                is SongFeedItem.Song -> "station_song"
+                                is SongFeedItem.Ad -> "station_ad"
+                            }
+                        }
+                    ) { item ->
+                        when (item) {
+                            is SongFeedItem.Song -> {
+                                val song = item.song
+                                val dimens = AppDimens.current
+                                val sessionManager: MusicPlaybackSessionManager = koinInject()
+                                StationSongItem(
+                                    song = song,
+                                    onSongClick = {
+                                        Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                                        )
+                                        onSongClick(song, songs, AnalyticsEvent.Value.Location.SONG_STATIONS, selectedGenre)
+                                    },
+                                    modifier = Modifier
+                                        .padding(
+                                            horizontal = dimens.spaceLg,
+                                            vertical = dimens.spaceXs
+                                        )
+                                        .onFirstVisible(key = song.id) {
+                                            sessionManager.trackSongImpressionAndMark(
+                                                songId = song.id.toString(),
+                                                songName = song.name,
+                                                location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                                            )
+                                        }
                                 )
-                                onSongClick(song, songs, AnalyticsEvent.Value.Location.SONG_STATIONS, selectedGenre)
-                            },
-                            modifier = Modifier
-                                .padding(
-                                    horizontal = dimens.spaceLg,
-                                    vertical = dimens.spaceXs
-                                )
-                                .onFirstVisible(key = song.id) {
-                                    sessionManager.trackSongImpressionAndMark(
-                                        songId = song.id.toString(),
-                                        songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                            }
+                            is SongFeedItem.Ad -> {
+                                val dimens = AppDimens.current
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceXs)
+                                        .clip(RoundedCornerShape(dimens.radiusXl))
+                                        .background(MaterialTheme.colorScheme.surface)
+                                ) {
+                                    NativeAdView(
+                                        placement = AdPlacement.NATIVE_STATION_INFEED,
+                                        autoLoad = true,
+                                        isDebug = BuildConfig.DEBUG,
+                                        onAdClicked = { adClickDetector.onAdClick(it) }
                                     )
                                 }
-                        )
+                            }
+                        }
                     }
                     // Pagination trigger: load more when last item is visible
                     if (songs.isNotEmpty()) {

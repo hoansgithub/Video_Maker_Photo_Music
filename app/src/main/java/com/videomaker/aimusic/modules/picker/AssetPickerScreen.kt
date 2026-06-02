@@ -11,6 +11,8 @@ import androidx.core.content.FileProvider
 import java.io.File
 import androidx.activity.compose.BackHandler
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -118,6 +120,7 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextPrimaryDark
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
 /**
  * Thumbnail size in pixels for image grid
@@ -182,6 +185,8 @@ fun AssetPickerScreen(
     onAssetsAdded: () -> Unit = {},
     onNavigateToTemplatePreviewer: (templateId: String, imageUris: List<String>, overrideSongId: Long) -> Unit = { _, _, _ -> }
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -326,11 +331,22 @@ fun AssetPickerScreen(
                 is AssetPickerNavigationEvent.NavigateToEditorWithData -> onNavigateToEditorWithData(event.initialData)
                 is AssetPickerNavigationEvent.AssetsAdded -> onAssetsAdded()
                 is AssetPickerNavigationEvent.SelectionConfirmed -> {
-                    // Store selection in cache and navigate back
-                    android.util.Log.d("AssetPickerScreen", "📦 Storing ${event.selectedUris.size} URIs in cache: ${event.selectedUris.joinToString()}")
+                    // Store selection in cache
                     AssetSelectionCache.setSelection(event.selectedUris)
-                    android.util.Log.d("AssetPickerScreen", "🔙 Navigating back to EditorScreen")
-                    onNavigateBack()
+
+                    // Show interstitial if preloaded (non-blocking), then navigate back
+                    if (event.shouldShowAd && activity != null) {
+                        InterstitialAdHelperExt.showInterstitial(
+                            adsLoaderService = adsLoaderService,
+                            activity = activity,
+                            placement = AdPlacement.INTERSTITIAL_PICKER_DONE,
+                            action = { onNavigateBack() },
+                            bypassFrequencyCap = true,
+                            showLoadingOverlay = false
+                        )
+                    } else {
+                        onNavigateBack()
+                    }
                 }
                 is AssetPickerNavigationEvent.NavigateToTemplatePreviewer ->
                     onNavigateToTemplatePreviewer(event.templateId, event.imageUris, event.overrideSongId)
@@ -591,12 +607,25 @@ fun AssetPickerScreen(
                 onCameraClick = onCameraClick
             )
         }
-        BannerAdView(
-            placement = AdPlacement.BANNER_ASSET_PICKER,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-        )
+        // Remote Config toggle: native ad (default) or standard banner
+        if (adPlacementConfigService.bannerUseNative) {
+            NativeAdView(
+                placement = AdPlacement.NATIVE_ASSET_PICKER_BANNER,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                isDebug = com.videomaker.aimusic.BuildConfig.DEBUG,
+                onAdClicked = { adClickDetector.onAdClick(it) }
+            )
+        } else {
+            BannerAdView(
+                placement = AdPlacement.BANNER_ASSET_PICKER,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                onAdClicked = { adClickDetector.onAdClick(it) }
+            )
+        }
     }
 
     if (showExitConfirmDialog) {

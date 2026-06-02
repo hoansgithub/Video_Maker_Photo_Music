@@ -40,6 +40,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.compose.koinInject
 import kotlin.math.abs
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
 /**
  * Remote-config driven home banner carousel.
@@ -57,6 +58,7 @@ fun HomeBannerCarousel(
     modifier: Modifier = Modifier,
     autoSlideIntervalMs: Long = 4000L,
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     if (banners.isEmpty()) return
 
     val dimens = AppDimens.current
@@ -147,7 +149,8 @@ fun HomeBannerCarousel(
                 NativeAdView(
                     placement = AdPlacement.NATIVE_GALLERY_HOT_TPT,
                     autoLoad = true,
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             }
             return@HorizontalPager

@@ -46,6 +46,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
 // ============================================
 // FULLSCREEN NATIVE AD STEP
@@ -66,6 +67,7 @@ fun FullscreenAdStep(
     adsLoaderService: AdsLoaderService = koinInject(),
     onboardingMusicPlayer: com.videomaker.aimusic.core.playback.OnboardingMusicPlayer = koinInject()
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     // Pause the onboarding background song only while this fullscreen step is the visible page.
     // Keyed on isCurrentPage because the pager pre-composes adjacent pages (beyondViewportPageCount).
     androidx.compose.runtime.DisposableEffect(isCurrentPage) {
@@ -216,7 +218,8 @@ fun FullscreenAdStep(
         NativeAdView(
             placement = AdPlacement.NATIVE_ONBOARDING_FULLSCREEN,
             modifier = Modifier.fillMaxSize(),
-            isDebug = BuildConfig.DEBUG,  // Show debug label only in debug build
+            isDebug = BuildConfig.DEBUG,  // Show debug label only in debug build,
+            onAdClicked = { adClickDetector.onAdClick(it) }
         )
 
         // Shimmer loading overlay (rendered second, covers ad until loaded)

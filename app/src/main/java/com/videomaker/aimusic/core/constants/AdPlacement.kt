@@ -484,6 +484,42 @@ object AdPlacement {
     const val NATIVE_HOME_BANNER = "ad_native_home_banner"
 
     /**
+     * Template previewer bottom banner native ad.
+     * Replaces standard banner when ad_banner_use_native is true.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1709251222
+     * - Secondary: ca-app-pub-7121075950716954/3435442033
+     *
+     * Remote Config key: ad_native_template_previewer_banner
+     */
+    const val NATIVE_TEMPLATE_PREVIEWER_BANNER = "ad_native_template_previewer_banner"
+
+    /**
+     * Editor bottom banner native ad.
+     * Replaces standard banner when ad_banner_use_native is true.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1709251222
+     * - Secondary: ca-app-pub-7121075950716954/3435442033
+     *
+     * Remote Config key: ad_native_editor_banner
+     */
+    const val NATIVE_EDITOR_BANNER = "ad_native_editor_banner"
+
+    /**
+     * Asset picker bottom banner native ad.
+     * Replaces standard banner when ad_banner_use_native is true.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1709251222
+     * - Secondary: ca-app-pub-7121075950716954/3435442033
+     *
+     * Remote Config key: ad_native_asset_picker_banner
+     */
+    const val NATIVE_ASSET_PICKER_BANNER = "ad_native_asset_picker_banner"
+
+    /**
      * Fullscreen native ad shown between onboarding pages.
      * Displayed as a full-screen overlay with close button.
      * Injected after page 1, 2, or 3 (configurable).
@@ -678,6 +714,58 @@ object AdPlacement {
      * Remote Config key: ad_native_songs_station
      */
     const val NATIVE_SONGS_STATION = "ad_native_songs_station"
+
+    /**
+     * Native ad inserted every Xth position in the station songs list (in-feed repeating).
+     * X is configurable via Remote Config extras "infeed_interval" (default: 10).
+     * If total songs < X but >= 1, ad is shown after the last song.
+     * Same placement reused across all genre tabs.
+     *
+     * Layout: native_small_row (horizontal row, matches song list items)
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6943442204
+     * - Secondary: ca-app-pub-7121075950716954/5456924546
+     *
+     * Remote Config key: ad_native_station_infeed
+     */
+    const val NATIVE_STATION_INFEED = "ad_native_station_infeed"
+
+    /**
+     * Native ad inserted every Xth position in the weekly ranking full list.
+     * Same config structure as NATIVE_STATION_INFEED.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6943442204
+     * - Secondary: ca-app-pub-7121075950716954/5456924546
+     *
+     * Remote Config key: ad_native_ranking_infeed
+     */
+    const val NATIVE_RANKING_INFEED = "ad_native_ranking_infeed"
+
+    /**
+     * Native ad inserted every Xth position in the suggested songs full list.
+     * Same config structure as NATIVE_STATION_INFEED.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6943442204
+     * - Secondary: ca-app-pub-7121075950716954/5456924546
+     *
+     * Remote Config key: ad_native_suggested_infeed
+     */
+    const val NATIVE_SUGGESTED_INFEED = "ad_native_suggested_infeed"
+
+    /**
+     * Native ad inserted every Xth position in search music results.
+     * Same config structure as NATIVE_STATION_INFEED.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6943442204
+     * - Secondary: ca-app-pub-7121075950716954/5456924546
+     *
+     * Remote Config key: ad_native_search_music_infeed
+     */
+    const val NATIVE_SEARCH_MUSIC_INFEED = "ad_native_search_music_infeed"
 
     /**
      * Native ad shown during export video generating state.
@@ -940,6 +1028,85 @@ object AdPlacement {
     const val REWARD_UNLOCK_SONG = "ad_reward_unlock_song"
 
     // ============================================
+    // INTERSTITIAL — MUSIC PLAYER "TRY IT"
+    // ============================================
+
+    /**
+     * Interstitial ad shown when user taps "Try it" in music player for a free/unlocked song.
+     * Timing: Preloaded when music player opens, shown on "Try it" tap if ready.
+     * If ad not loaded yet, navigation proceeds normally (non-blocking).
+     * Premium/locked songs show rewarded ad (REWARD_UNLOCK_SONG) instead.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/7530599719
+     * - Secondary: ca-app-pub-7121075950716954/4904436375
+     *
+     * Remote Config key: ad_interstitial_music_player_try
+     */
+    const val INTERSTITIAL_MUSIC_PLAYER_TRY = "ad_interstitial_music_player_try"
+
+    // ============================================
+    // INTERSTITIAL — PHOTO PICKER DONE (EDIT MODE)
+    // ============================================
+
+    /**
+     * Interstitial ad shown when user taps "Done" in photo picker while in edit mode.
+     * Timing: Loaded on tap with loading overlay, 10s timeout.
+     * If ad fails to load, navigation proceeds normally (non-blocking).
+     * Only shown in edit mode (replacing images from editor), not create/template modes.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/1254485881
+     * - Secondary: ca-app-pub-7121075950716954/9965191360
+     *
+     * Remote Config key: ad_interstitial_picker_done
+     */
+    const val INTERSTITIAL_PICKER_DONE = "ad_interstitial_picker_done"
+
+    /**
+     * Interstitial ad shown when user completes onboarding ("Get started" / last page CTA).
+     * Preloaded on onboarding screen init. Non-blocking: if ad not ready, proceed immediately.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/9773619674
+     * - Secondary: ca-app-pub-7121075950716954/2667109676
+     *
+     * Remote Config key: ad_interstitial_onboarding_complete
+     */
+    const val INTERSTITIAL_ONBOARDING_COMPLETE = "ad_interstitial_onboarding_complete"
+
+    /**
+     * Interstitial ad shown when the app is opened from a notification tap.
+     * Timing: Shown with loading overlay immediately when notification intent is detected.
+     * Blocks navigation until ad loads or times out (10s).
+     *
+     * Ad units:
+     * - Primary: ca-app-pub-7121075950716954/6137626994
+     *
+     * Remote Config key: ad_interstitial_notification_open
+     */
+    const val INTERSTITIAL_NOTIFICATION_OPEN = "ad_interstitial_notification_open"
+
+    // ============================================
+    // APP OPEN — POST AD CLICK
+    // ============================================
+
+    /**
+     * App Open Ad shown when user returns after clicking a banner/native ad.
+     * Uses dedicated ad units to allow independent monetization tuning
+     * for post-click returns vs normal app opens.
+     *
+     * Disabled by default — enable via Firebase Remote Config to monetize post-click returns.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/2469844727
+     * - Secondary: ca-app-pub-7121075950716954/8843681380
+     *
+     * Remote Config key: ad_appopen_aoa_after_click
+     */
+    const val APP_OPEN_AFTER_AD_CLICK = "ad_appopen_aoa_after_click"
+
+    // ============================================
     // INTERSTITIAL — QUALITY UNLOCK
     // ============================================
 
@@ -963,6 +1130,7 @@ object AdPlacement {
     val ALL_PLACEMENTS = listOf(
         APP_OPEN_AOA,
         APP_OPEN_FOREGROUND,
+        APP_OPEN_AFTER_AD_CLICK,
         INTERSTITIAL_SPLASH,
         INTERSTITIAL_OPEN_APP,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
@@ -997,9 +1165,16 @@ object AdPlacement {
         NATIVE_WIDGET_BOTTOM,
         NATIVE_LIBRARY_CREATED_VIDEO,
         NATIVE_HOME_BANNER,
+        NATIVE_TEMPLATE_PREVIEWER_BANNER,
+        NATIVE_EDITOR_BANNER,
+        NATIVE_ASSET_PICKER_BANNER,
         NATIVE_GALLERY_GRID,
         NATIVE_GALLERY_HOT_TPT,
         NATIVE_SONGS_STATION,
+        NATIVE_STATION_INFEED,
+        NATIVE_RANKING_INFEED,
+        NATIVE_SUGGESTED_INFEED,
+        NATIVE_SEARCH_MUSIC_INFEED,
         NATIVE_TEMPLATE_PREVIEWER_LOADING,
         NATIVE_TEMPLATE_RATIO_SHEET,
         NATIVE_POPUP_TRENDING_TEMPLATE,
@@ -1018,6 +1193,10 @@ object AdPlacement {
         REWARD_UNLOCK_QUALITY,
         REWARD_UNLOCK_EFFECT_SET,
         REWARD_UNLOCK_TEMPLATE,
-        REWARD_UNLOCK_SONG
+        REWARD_UNLOCK_SONG,
+        INTERSTITIAL_MUSIC_PLAYER_TRY,
+        INTERSTITIAL_PICKER_DONE,
+        INTERSTITIAL_ONBOARDING_COMPLETE,
+        INTERSTITIAL_NOTIFICATION_OPEN
     )
 }

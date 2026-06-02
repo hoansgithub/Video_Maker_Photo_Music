@@ -69,6 +69,8 @@ import com.videomaker.aimusic.widget.components.SmartSearchWidget
 import com.videomaker.aimusic.widget.components.TrendingSongWidget
 import com.videomaker.aimusic.widget.components.TrendingWidget
 import com.videomaker.aimusic.widget.model.WidgetType
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import org.koin.compose.koinInject
 
 private const val TAG = "WidgetScreen"
 
@@ -84,6 +86,7 @@ fun WidgetScreen(
     onNavigateToSearch: () -> Unit,
     onNavigateToSongPlayer: (songId: Long) -> Unit,
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val pinWidgetEvent by viewModel.pinWidgetEvent.collectAsStateWithLifecycle()
@@ -301,7 +304,8 @@ fun WidgetScreen(
             NativeAdView(
                 placement = AdPlacement.NATIVE_WIDGET_BOTTOM,
                 modifier = Modifier.fillMaxWidth(),
-                isDebug = BuildConfig.DEBUG
+                isDebug = BuildConfig.DEBUG,
+                onAdClicked = { adClickDetector.onAdClick(it) }
             )
         }
     }

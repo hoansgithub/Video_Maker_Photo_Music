@@ -39,11 +39,14 @@ import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.FoundationBlack_Gray_100
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.TextSecondary
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import org.koin.compose.koinInject
 
 @Composable
 fun UnifiedSearchEmptyContent(
     onExploreMore: () -> Unit,
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val dimens = AppDimens.current
 
     LazyColumn(
@@ -62,7 +65,8 @@ fun UnifiedSearchEmptyContent(
                 NativeAdView(
                     placement = AdPlacement.NATIVE_SEARCH_INFEED,
                     modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             }
         }

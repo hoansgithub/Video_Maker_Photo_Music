@@ -222,24 +222,25 @@ class MusicPlayerViewModel(
         }
     }
 
-    fun onUseToCreateClick(onProceed: () -> Unit) {
+    fun onUseToCreateClick(onProceed: () -> Unit, onProceedWithAd: () -> Unit) {
+        val current = _currentSong.value
         viewModelScope.launch(Dispatchers.IO) {
-            songRepository.incrementUseCount(song.id)
+            songRepository.incrementUseCount(current.id)
         }
 
-        if (song.isPremium && !unlockedSongsManager.isUnlocked(song.id)) {
+        if (current.isPremium && !unlockedSongsManager.isUnlocked(current.id)) {
             onSongUnlockedCallback = onProceed
             rewardedAdController.requestAd(
                 onReward = {
                     viewModelScope.launch {
-                        unlockedSongsManager.unlockSong(song.id)
+                        unlockedSongsManager.unlockSong(current.id)
                         onSongUnlockedCallback?.invoke()
                         onSongUnlockedCallback = null
                     }
                 },
                 onSkip = {
                     viewModelScope.launch {
-                        unlockedSongsManager.unlockSong(song.id)
+                        unlockedSongsManager.unlockSong(current.id)
                         onSongUnlockedCallback?.invoke()
                         onSongUnlockedCallback = null
                     }
@@ -247,7 +248,9 @@ class MusicPlayerViewModel(
                 checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_SONG) }
             )
         } else {
-            onProceed()
+            // Free/unlocked song — show interstitial with loading overlay
+            // Ad loads on tap with 10s timeout; proceeds immediately if ad fails
+            onProceedWithAd()
         }
     }
 

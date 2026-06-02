@@ -49,6 +49,8 @@ import com.videomaker.aimusic.ui.theme.Neutral_N200
 import com.videomaker.aimusic.ui.theme.Neutral_N800
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import org.koin.compose.koinInject
 
 @Composable
 fun PopupTrendingSong(
@@ -56,6 +58,7 @@ fun PopupTrendingSong(
     onCTA: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     LaunchedEffect(item.id) {
         Analytics.track(
             AnalyticsEvent.REWARD_SONG_RENDER,
@@ -243,7 +246,8 @@ fun PopupTrendingSong(
                 NativeAdView(
                     placement = AdPlacement.NATIVE_POPUP_TRENDING_SONG,
                     modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             }
         }

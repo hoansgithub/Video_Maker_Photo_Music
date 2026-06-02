@@ -50,6 +50,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import org.koin.compose.koinInject
 
 class OnboardingSurveyActivity : AppCompatActivity() {
 
@@ -90,6 +92,7 @@ class OnboardingSurveyActivity : AppCompatActivity() {
 
     @Composable
     private fun SurveyStep(step: OnboardingSurveyStep) {
+        val adClickDetector: AdClickDetector = koinInject()
         val config = remember(step) { configFor(step) }
         val density = LocalDensity.current
         val scope = rememberCoroutineScope()
@@ -220,6 +223,7 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                         placement = config.placement,
                         modifier = Modifier.fillMaxWidth(),
                         isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
                     )
                 }
             }

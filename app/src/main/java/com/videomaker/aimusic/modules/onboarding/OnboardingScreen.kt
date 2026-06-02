@@ -124,6 +124,8 @@ fun OnboardingScreen(
                     placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
                     delayMs = 1000L
                 )
+                // Preload interstitial for feature selection "Get started" button
+                VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE)
                 hasPreloadedFeatureSelection = true
             }
         }

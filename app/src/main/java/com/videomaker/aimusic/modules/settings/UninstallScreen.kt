@@ -90,6 +90,8 @@ import com.videomaker.aimusic.ui.theme.Primary_N500
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.utils.innerShadowCustom
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,6 +103,7 @@ fun UninstallScreen(
     onNavigateToAllSongs: () -> Unit,
     onNavigateToSongPlayer: (songId: Long) -> Unit,
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val context = LocalContext.current
     val activity = context as? android.app.Activity
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -457,7 +460,8 @@ fun UninstallScreen(
             NativeAdView(
                 placement = AdPlacement.NATIVE_UNINSTALL_BOTTOM,
                 modifier = Modifier.fillMaxWidth(),
-                isDebug = BuildConfig.DEBUG
+                isDebug = BuildConfig.DEBUG,
+                onAdClicked = { adClickDetector.onAdClick(it) }
             )
         }
     }

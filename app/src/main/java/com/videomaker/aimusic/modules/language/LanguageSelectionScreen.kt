@@ -95,6 +95,7 @@ import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
 /**
  * LanguageSelectionScreen - Language picker for onboarding and settings.
@@ -113,6 +114,7 @@ fun LanguageSelectionScreen(
     languageConfigService: LanguageConfigService = koinInject(),
     languageManager: LanguageManager = koinInject()
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     LaunchedEffect(Unit) {
         Analytics.track(name = AnalyticsEvent.LANGUAGE_SHOW)
     }
@@ -443,7 +445,8 @@ fun LanguageSelectionScreen(
                 NativeAdView(
                     placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
                     modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
 
                 // PRIMARY ad - top layer, fades out when user selects
@@ -452,7 +455,8 @@ fun LanguageSelectionScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .alpha(if (delayedHasSelection) 0f else 1f),
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             }
         }

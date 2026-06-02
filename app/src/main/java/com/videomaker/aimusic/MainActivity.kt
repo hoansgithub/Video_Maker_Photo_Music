@@ -3,6 +3,7 @@ package com.videomaker.aimusic
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import java.util.concurrent.atomic.AtomicReference
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -55,6 +56,9 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.widget.appwidget.WidgetActions
 import kotlinx.coroutines.delay
 import org.koin.android.ext.android.inject
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import kotlinx.coroutines.launch
 
@@ -78,6 +82,7 @@ class MainActivity : AppCompatActivity() {
 
     private val notificationScheduler: NotificationScheduler by inject()
     private val notificationConversionTracker: NotificationConversionTracker by inject()
+    private val adsLoaderService: AdsLoaderService by inject()
 
     // Observed by AppNavigation to trigger deep-link navigation.
     // Set only on first launch (not rotation) and on new widget intents.
@@ -90,6 +95,10 @@ class MainActivity : AppCompatActivity() {
 
     // Track if we're ready to show UI (ads must be initialized first on cold start)
     private var isReadyToShowUI: Boolean by mutableStateOf(false)
+
+    // Deferred notification intent — waiting for ads init before showing interstitial
+    // AtomicReference for thread-safe access (ads init callback may run on background thread)
+    private val pendingNotificationAdIntent = AtomicReference<Intent?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -179,6 +188,10 @@ class MainActivity : AppCompatActivity() {
                 if (!isReadyToShowUI && !isFinishing && !isDestroyed) {
                     android.util.Log.w(TAG, "⏱️ Ad initialization timeout - showing UI anyway")
                     isReadyToShowUI = true
+                    // Timeout — skip ad, just proceed with deep link
+                    pendingNotificationAdIntent.getAndSet(null)?.let { intent ->
+                        pendingDeepLink = intent
+                    }
                 }
             }
 
@@ -188,6 +201,10 @@ class MainActivity : AppCompatActivity() {
                     android.util.Log.d(TAG, "✅ Ads initialized via MainActivity (widget/shortcut cold start)")
                     // Now it's safe to show UI
                     isReadyToShowUI = true
+                    // Show deferred notification interstitial now that ads are ready
+                    pendingNotificationAdIntent.getAndSet(null)?.let { intent ->
+                        showNotificationInterstitial(intent)
+                    }
                 } else {
                     android.util.Log.w(TAG, "⚠️ Activity destroyed - skipping UI update")
                 }
@@ -310,12 +327,33 @@ class MainActivity : AppCompatActivity() {
         trackNotificationClickIfNeeded(intent)
         when {
             intent.action == ACTION_UNINSTALL_APP -> navigateToUninstall = true
-            intent.action == NotificationDeepLinkFactory.ACTION_NOTIF_TRENDING_SONG -> pendingDeepLink = intent
-            intent.action == NotificationDeepLinkFactory.ACTION_NOTIF_VIRAL_TEMPLATE -> pendingDeepLink = intent
-            intent.action == NotificationDeepLinkFactory.ACTION_NOTIF_MY_VIDEO -> pendingDeepLink = intent
-            intent.action == NotificationDeepLinkFactory.ACTION_NOTIF_RESUME_TEMPLATE -> pendingDeepLink = intent
+            intent.action in NOTIFICATION_ACTIONS -> {
+                if (VideoMakerApplication.isAdsInitialized()) {
+                    // Hot start or ads already ready — show interstitial immediately
+                    showNotificationInterstitial(intent)
+                } else {
+                    // Cold start — defer until ads initialized
+                    pendingNotificationAdIntent.set(intent)
+                }
+            }
             isWidgetIntent(intent) -> pendingDeepLink = intent
         }
+    }
+
+    private fun showNotificationInterstitial(intent: Intent) {
+        InterstitialAdHelperExt.showInterstitial(
+            adsLoaderService = adsLoaderService,
+            activity = this,
+            placement = AdPlacement.INTERSTITIAL_NOTIFICATION_OPEN,
+            action = {
+                if (!isFinishing && !isDestroyed) {
+                    pendingDeepLink = intent
+                }
+            },
+            bypassFrequencyCap = true,
+            showLoadingOverlay = true,
+            loadTimeoutMillis = 10_000L
+        )
     }
 
     private fun trackShortcutIfNeeded(intent: Intent) {

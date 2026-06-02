@@ -168,6 +168,18 @@ object RemoteConfigKeys {
     const val TRENDING_POPUP_DAILY_CAP = "trending_popup_daily_cap"
 
     // ============================================
+    // AD BANNER → NATIVE TOGGLE
+    // ============================================
+
+    /**
+     * When true, banner ad placements render as native ads instead.
+     * Applies to all banner slots (home, editor, template previewer, asset picker, export).
+     *
+     * Default: true (use native ads everywhere)
+     */
+    const val AD_BANNER_USE_NATIVE = "ad_banner_use_native"
+
+    // ============================================
     // RATING POPUP
     // ============================================
 

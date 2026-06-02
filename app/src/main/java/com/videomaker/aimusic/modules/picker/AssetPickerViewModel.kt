@@ -167,7 +167,7 @@ sealed class AssetPickerNavigationEvent {
     /** Assets added to existing project - just go back */
     data object AssetsAdded : AssetPickerNavigationEvent()
     /** Editing mode: return selected URIs without saving to DB */
-    data class SelectionConfirmed(val selectedUris: List<String>) : AssetPickerNavigationEvent()
+    data class SelectionConfirmed(val selectedUris: List<String>, val shouldShowAd: Boolean = false) : AssetPickerNavigationEvent()
     /** Template mode / song-to-video mode: confirm selection with URIs directly */
     data class NavigateToTemplatePreviewer(
         val templateId: String,
@@ -314,6 +314,20 @@ class AssetPickerViewModel(
                 }
             }.onFailure { e ->
                 android.util.Log.e("AssetPickerVM", "❌ Exit ad preload exception: ${e.message}", e)
+            }
+        }
+
+        // Preload "Done" interstitial for edit mode only
+        if (isEditingMode) {
+            viewModelScope.launch {
+                runCatching {
+                    InterstitialAdHelperExt.preloadInterstitial(
+                        adsLoaderService = adsLoaderService,
+                        placement = AdPlacement.INTERSTITIAL_PICKER_DONE,
+                        loadTimeoutMillis = null,
+                        showLoadingOverlay = false
+                    )
+                }
             }
         }
     }
@@ -854,9 +868,13 @@ class AssetPickerViewModel(
                 isEditingMode -> {
                     // Editing mode - return selected URIs without saving to DB
                     // Used by ImagesBottomSheet to replace current assets list
+                    val isAdReady = adsLoaderService.isInterstitialReady(
+                        AdPlacement.INTERSTITIAL_PICKER_DONE
+                    )
                     _navigationEvent.send(
                         AssetPickerNavigationEvent.SelectionConfirmed(
-                            selectedUris = uris.map { it.toString() }
+                            selectedUris = uris.map { it.toString() },
+                            shouldShowAd = isAdReady
                         )
                     )
                 }

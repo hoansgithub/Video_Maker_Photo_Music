@@ -39,7 +39,9 @@ import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Slideshow
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import co.alcheclub.lib.acccore.ads.mediation.AdLoadResult
 import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.ui.components.AdBadge
@@ -57,6 +59,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -121,6 +124,29 @@ import androidx.lifecycle.lifecycleScope
 import com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.videomaker.aimusic.core.ads.AdClickDetector
+
+// ============================================
+// HELPER - Music player ad refresh throttle
+// ============================================
+
+/** Tracks last force-reload timestamp per placement to enforce 5s throttle */
+private object MusicPlayerAdRefresh {
+    @Volatile
+    var lastRefreshMs = 0L
+    private const val THROTTLE_MS = 5_000L
+
+    /** Returns true if enough time has passed since last refresh (and updates timestamp). */
+    @Synchronized
+    fun shouldRefresh(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastRefreshMs >= THROTTLE_MS) {
+            lastRefreshMs = now
+            return true
+        }
+        return false
+    }
+}
 
 // ============================================
 // HELPER - Release player async to avoid ANR
@@ -178,6 +204,7 @@ fun MusicPlayerBottomSheet(
     onDismiss: () -> Unit,
     onUseToCreate: () -> Unit,
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     var bottomSectionHeight by remember { mutableStateOf(0) }
     val playerFactory = koinInject<MusicPlayerViewModelFactory>()
     val viewModel: MusicPlayerViewModel = viewModel(
@@ -224,6 +251,8 @@ fun MusicPlayerBottomSheet(
     var swipeAccumulated by remember { mutableFloatStateOf(0f) }
 
     val context = LocalContext.current
+    val activity = context as? android.app.Activity
+
     // Player is created once per sheet open and released on close.
     // CacheDataSource.Factory routes playback through the 50 MB disk cache
     // so the same mp3 URL is only downloaded once across sessions.
@@ -637,7 +666,24 @@ fun MusicPlayerBottomSheet(
                                     location = categoryLocation
                                 )
                                 Analytics.trackCreationStart(AnalyticsEvent.Value.Location.SONG)
-                                viewModel.onUseToCreateClick(onProceed = onUseToCreate)
+                                viewModel.onUseToCreateClick(
+                                    onProceed = onUseToCreate,
+                                    onProceedWithAd = {
+                                        if (activity != null) {
+                                            InterstitialAdHelperExt.showInterstitial(
+                                                adsLoaderService = adsLoaderService,
+                                                activity = activity,
+                                                placement = AdPlacement.INTERSTITIAL_MUSIC_PLAYER_TRY,
+                                                action = { onUseToCreate() },
+                                                bypassFrequencyCap = true,
+                                                loadTimeoutMillis = 10_000L,
+                                                showLoadingOverlay = true
+                                            )
+                                        } else {
+                                            onUseToCreate()
+                                        }
+                                    }
+                                )
                             })
                             .padding(14.dp)
                     ) {
@@ -676,14 +722,40 @@ fun MusicPlayerBottomSheet(
                     }
                 }
             }
-            // Standard ad loading overlay - covers entire fullscreen sheet
-            AdsLoadingOverlay()
-
             if (bottomSectionHeight == 0) {
                 Spacer(Modifier.navigationBarsPadding())
             }
 
             // ── Native ad (small row banner) ──────────────────
+            // Force-reload a fresh ad on every song change (5s throttle).
+            // Loads new ad in background — only swaps when load succeeds.
+            // Old ad stays visible until then. Skips initial song (sheet open).
+            var adRefreshKey by remember { mutableIntStateOf(0) }
+            var isFirstSong by remember { mutableStateOf(true) }
+            LaunchedEffect(currentSong) {
+                if (isFirstSong) {
+                    isFirstSong = false
+                    return@LaunchedEffect
+                }
+                if (MusicPlayerAdRefresh.shouldRefresh()) {
+                    try {
+                        val result = adsLoaderService.loadNative(
+                            placement = AdPlacement.NATIVE_MUSIC_PLAYER,
+                            forceReload = true
+                        )
+                        when (result) {
+                            is AdLoadResult.Success,
+                            is AdLoadResult.AlreadyLoading -> adRefreshKey++
+                            else -> {} // Keep old ad on failure
+                        }
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Log.w("MusicPlayerBottomSheet", "Ad refresh failed, keeping old ad", e)
+                    }
+                }
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -692,13 +764,19 @@ fun MusicPlayerBottomSheet(
                             size.height  // Measure actual height dynamically!
                     }
             ) {
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_MUSIC_PLAYER,
-                    modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG
-                )
+                key(adRefreshKey) {
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_MUSIC_PLAYER,
+                        modifier = Modifier.fillMaxWidth(),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                }
             }
         }  // End Column
+
+        // Loading overlay — rendered on top of the sheet inside the fullscreen Box
+        AdsLoadingOverlay()
 
     }  // End Box
 

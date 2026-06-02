@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.theme.AppDimens
+import com.videomaker.aimusic.core.ads.AdClickDetector
 
 @Stable
 private sealed class SongListItemType {
@@ -43,6 +44,7 @@ fun ContentSong(
     onSongClick: (MusicSong) -> Unit,
     onDeleteSongClick: (MusicSong) -> Unit,
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val dimens = AppDimens.current
     val sessionManager: MusicPlaybackSessionManager = koinInject()
 
@@ -105,7 +107,8 @@ fun ContentSong(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 22.dp),
-                        isDebug = BuildConfig.DEBUG
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
                     )
                 }
             }

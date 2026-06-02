@@ -37,6 +37,8 @@ import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.FoundationBlack_100
 import com.videomaker.aimusic.ui.theme.FoundationBlack_Gray_100
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import org.koin.compose.koinInject
 
 @Composable
 fun UnifiedSearchLoadingContent(
@@ -44,6 +46,7 @@ fun UnifiedSearchLoadingContent(
     relatedSearches: List<String> = emptyList(),
     onRelatedSearchClick: (String) -> Unit = {}
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val dimens = AppDimens.current
 
     ProvideShimmerEffect {
@@ -64,7 +67,8 @@ fun UnifiedSearchLoadingContent(
                     NativeAdView(
                         placement = AdPlacement.NATIVE_SEARCH_INFEED,
                         modifier = Modifier.fillMaxWidth(),
-                        isDebug = BuildConfig.DEBUG
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
                     )
                 }
             }

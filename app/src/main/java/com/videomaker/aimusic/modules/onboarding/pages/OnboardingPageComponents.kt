@@ -70,6 +70,8 @@ import com.videomaker.aimusic.ui.theme.Neutral_N600
 import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import org.koin.compose.koinInject
 
 // ============================================
 // WELCOME PAGE TEMPLATE
@@ -90,6 +92,7 @@ internal fun WelcomePage(
     onCta: () -> Unit,
     pageIndex: Int = 0  // 0-based index for ad placement
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     // Map page index to ad placement
     val adPlacement = when (pageIndex) {
         0 -> AdPlacement.NATIVE_ONBOARDING_PAGE1
@@ -174,7 +177,8 @@ internal fun WelcomePage(
                 NativeAdView(
                     placement = adPlacement,
                     modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             }
         }
@@ -199,6 +203,7 @@ internal fun WelcomePageDynamic(
     onCta: () -> Unit,
     pageIndex: Int = 0
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     var bottomSectionHeight by remember { mutableStateOf(0) }
     val adPlacement = when (pageIndex) {
         0 -> AdPlacement.NATIVE_ONBOARDING_PAGE1
@@ -454,7 +459,8 @@ internal fun WelcomePageDynamic(
                 NativeAdView(
                     placement = adPlacement,
                     modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             }
         }
@@ -476,6 +482,7 @@ internal fun DynamicCarousel(
     onCta: () -> Unit,
     pageIndex: Int = 0
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     var bottomSectionHeight by remember { mutableStateOf(0) }
     val totalSlides = maxOf(1, thumbnailUrls.size + localFallbackResIds.size)
     val pagerState = rememberPagerState(pageCount = { totalSlides })
@@ -620,7 +627,8 @@ internal fun DynamicCarousel(
                 NativeAdView(
                     placement = adPlacement,
                     modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             }
         }
@@ -640,6 +648,7 @@ internal fun IndiaPage3Carousel(
     onCta: () -> Unit,
     pageIndex: Int = 0
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
     val pagerState = rememberPagerState(pageCount = { 3 })
 
     val images = listOf(
@@ -754,7 +763,8 @@ internal fun IndiaPage3Carousel(
                 NativeAdView(
                     placement = adPlacement,
                     modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             }
         }

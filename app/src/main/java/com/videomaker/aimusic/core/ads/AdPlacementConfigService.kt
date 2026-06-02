@@ -79,11 +79,23 @@ class AdPlacementConfigService(
      * Thread-safe property that can be updated from Remote Config
      * Default: 60 seconds between interstitial ads
      */
+    @Volatile
     var interstitialIntervalSeconds: Int = DEFAULT_INTERSTITIAL_INTERVAL
         private set  // Only update() can modify
 
+    @Volatile
     private var quality720pAdType: String = DEFAULT_QUALITY_AD_TYPE
+    @Volatile
     private var quality1080pAdType: String = DEFAULT_QUALITY_AD_TYPE
+
+    /**
+     * When true, banner ad slots render as native ads instead of standard banners.
+     * Controlled via Remote Config key [RemoteConfigKeys.AD_BANNER_USE_NATIVE].
+     * Default: true
+     */
+    @Volatile
+    var bannerUseNative: Boolean = true
+        private set
     init {
         try {
             registerAllPlacements()
@@ -142,6 +154,20 @@ class AdPlacementConfigService(
                 "ca-app-pub-7121075950716954/9757555227"   // Secondary
             ),
             enabled = true
+        )
+
+        // App Open Ad - Post ad click (shown when user returns after clicking banner/native ad)
+        // Uses dedicated ad units for independent monetization tuning
+        // Disabled by default — enable via Firebase Remote Config
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.APP_OPEN_AFTER_AD_CLICK,
+            type = "appOpen",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2469844727",  // Primary
+                "ca-app-pub-7121075950716954/8843681380"   // Secondary
+            ),
+            enabled = false  // Disabled by default - enable via Firebase to monetize post-click returns
         )
 
         // ============================================
@@ -705,6 +731,70 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Station in-feed repeating native ad (every Xth song in station list)
+        // X configurable via extras "infeed_interval" (default: 10)
+        // Same placement reused across all genre tabs
+        // Layout: native_small_row (horizontal row, matches song items)
+        // Waterfall: Primary unit -> Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.NATIVE_STATION_INFEED,
+            type = "native",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6943442204",  // Primary
+                "ca-app-pub-7121075950716954/5456924546"   // Secondary
+            ),
+            extras = mapOf(
+                "layout" to "native_small_row",
+                "infeed_interval" to 10
+            ),
+            enabled = true
+        )
+
+        // Weekly ranking in-feed repeating native ad
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.NATIVE_RANKING_INFEED,
+            type = "native",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6943442204",
+                "ca-app-pub-7121075950716954/5456924546"
+            ),
+            extras = mapOf(
+                "layout" to "native_small_row",
+                "infeed_interval" to 10
+            ),
+            enabled = true
+        )
+
+        // Suggested songs in-feed repeating native ad
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.NATIVE_SUGGESTED_INFEED,
+            type = "native",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6943442204",
+                "ca-app-pub-7121075950716954/5456924546"
+            ),
+            extras = mapOf(
+                "layout" to "native_small_row",
+                "infeed_interval" to 10
+            ),
+            enabled = true
+        )
+
+        // Search music results in-feed repeating native ad
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.NATIVE_SEARCH_MUSIC_INFEED,
+            type = "native",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6943442204",
+                "ca-app-pub-7121075950716954/5456924546"
+            ),
+            extras = mapOf(
+                "layout" to "native_small_row",
+                "infeed_interval" to 10
+            ),
+            enabled = true
+        )
+
         // Trending template popup native ad (bottom of "Don't miss it" popup, Gallery tab)
         // Layout: native_small_row
         // Waterfall: Primary unit -> Secondary unit
@@ -755,6 +845,48 @@ class AdPlacementConfigService(
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/1192669490",  // Primary (NA_high_lib)
                 "ca-app-pub-7121075950716954/7566506155"   // Secondary (NA_all_lib)
+            ),
+            enabled = true
+        )
+
+        // Template Previewer Banner Native Ad (replaces standard banner)
+        // Shown at the bottom of the template previewer screen
+        // Layout: native_small_row (horizontal row) to fit banner dimensions
+        // Waterfall: Primary unit -> Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_BANNER,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1709251222",  // Primary
+                "ca-app-pub-7121075950716954/3435442033"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Editor Banner Native Ad (replaces standard banner)
+        // Shown at the bottom of the editor screen
+        // Layout: native_small_row (horizontal row) to fit banner dimensions
+        // Waterfall: Primary unit -> Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_EDITOR_BANNER,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1709251222",  // Primary
+                "ca-app-pub-7121075950716954/3435442033"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Asset Picker Banner Native Ad (replaces standard banner)
+        // Shown at the bottom of the asset picker screen
+        // Layout: native_small_row (horizontal row) to fit banner dimensions
+        // Waterfall: Primary unit -> Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ASSET_PICKER_BANNER,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1709251222",  // Primary
+                "ca-app-pub-7121075950716954/3435442033"   // Secondary
             ),
             enabled = true
         )
@@ -901,6 +1033,56 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Music player "Try it" interstitial (shown for free/unlocked songs)
+        // Preloaded when music player opens, non-blocking if not ready
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_MUSIC_PLAYER_TRY,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7530599719",  // Primary
+                "ca-app-pub-7121075950716954/4904436375"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Photo picker "Done" interstitial (edit mode only)
+        // Loaded on tap with overlay, non-blocking if failed
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_PICKER_DONE,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1254485881",  // Primary
+                "ca-app-pub-7121075950716954/9965191360"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Onboarding "Get started" interstitial
+        // Preloaded on screen init, non-blocking if not ready
+        // Waterfall: Primary unit → Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9773619674",  // Primary
+                "ca-app-pub-7121075950716954/2667109676"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Notification open interstitial
+        // Shown with loading overlay when app opens from notification tap
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_NOTIFICATION_OPEN,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6137626994"   // Primary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }
@@ -1042,6 +1224,11 @@ class AdPlacementConfigService(
         quality1080pAdType = config.getString(KEY_QUALITY_1080P_AD_TYPE, DEFAULT_QUALITY_AD_TYPE)
         Log.d(TAG, "📊 Quality ad types — 720p: $quality720pAdType, 1080p: $quality1080pAdType")
 
+        // Banner → Native toggle
+        bannerUseNative = config.getString(
+            com.videomaker.aimusic.core.constants.RemoteConfigKeys.AD_BANNER_USE_NATIVE, "true"
+        ).toBoolean()
+        Log.d(TAG, "📊 Banner use native: $bannerUseNative")
     }
 
     /**
