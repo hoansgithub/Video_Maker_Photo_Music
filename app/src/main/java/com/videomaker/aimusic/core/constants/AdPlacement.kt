@@ -1039,6 +1039,18 @@ object AdPlacement {
      */
     const val INTERSTITIAL_ONBOARDING_COMPLETE = "ad_interstitial_onboarding_complete"
 
+    /**
+     * Interstitial ad shown when the app is opened from a notification tap.
+     * Timing: Shown with loading overlay immediately when notification intent is detected.
+     * Blocks navigation until ad loads or times out (10s).
+     *
+     * Ad units:
+     * - Primary: ca-app-pub-7121075950716954/6137626994
+     *
+     * Remote Config key: ad_interstitial_notification_open
+     */
+    const val INTERSTITIAL_NOTIFICATION_OPEN = "ad_interstitial_notification_open"
+
     // ============================================
     // INTERSTITIAL — QUALITY UNLOCK
     // ============================================
@@ -1125,6 +1137,7 @@ object AdPlacement {
         REWARD_UNLOCK_SONG,
         INTERSTITIAL_MUSIC_PLAYER_TRY,
         INTERSTITIAL_PICKER_DONE,
-        INTERSTITIAL_ONBOARDING_COMPLETE
+        INTERSTITIAL_ONBOARDING_COMPLETE,
+        INTERSTITIAL_NOTIFICATION_OPEN
     )
 }

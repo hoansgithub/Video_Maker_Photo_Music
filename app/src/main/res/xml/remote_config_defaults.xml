@@ -112,6 +112,10 @@
     <key>ad_interstitial_onboarding_complete</key>
     <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/9773619674","enabled":true},{"id":"ca-app-pub-7121075950716954/2667109676","enabled":true}],"extras":{"retry_max":6}}</value>
   </entry>
+  <entry>
+    <key>ad_interstitial_notification_open</key>
+    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/6137626994","enabled":true}],"extras":{"retry_max":6}}</value>
+  </entry>
 
   <!-- Ad Placements - Native -->
   <entry>

@@ -1004,6 +1004,17 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Notification open interstitial
+        // Shown with loading overlay when app opens from notification tap
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_NOTIFICATION_OPEN,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6137626994"   // Primary
+            ),
+            enabled = true
+        )
+
         val count = registrationCount.get()
         Log.d(TAG, "✅ Registered $count ad placements with local fallback configs")
     }
