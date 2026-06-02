@@ -1,6 +1,8 @@
 package com.videomaker.aimusic.modules.home.components
 
 import android.graphics.BlurMaskFilter
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -48,11 +50,15 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.toRect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -129,17 +135,23 @@ fun HomeFabOverlay(
                     derivedStateOf { collapseProgress() > SW_MOUNT }
                 }
                 if (swVisible) {
-                    SeeWhatsNewPill(
-                        onClick = onRefreshClick,
+                    Row(
                         modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(end = (FAB_SIZE + FAB_GAP).dp)
-                            .drawWithContent {
-                                val reveal = ((collapseProgress() - SW_START) / (1f - SW_START))
-                                    .coerceIn(0f, 1f)
-                                clipRect(right = size.width * reveal) { this@drawWithContent.drawContent() }
-                            }
-                    )
+                            .padding(end = FAB_SIZE.dp)
+                            .fillMaxWidth()
+                            .align(Alignment.BottomEnd),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        SeeWhatsNewPill(
+                            onClick = onRefreshClick,
+                            modifier = Modifier
+                                .drawWithContent {
+                                    val reveal = ((collapseProgress() - SW_START) / (1f - SW_START))
+                                        .coerceIn(0f, 1f)
+                                    clipRect(right = size.width * reveal) { this@drawWithContent.drawContent() }
+                                }
+                        )
+                    }
                 }
             }
         } else {
@@ -264,13 +276,13 @@ private fun SeeWhatsNewPill(
         modifier = modifier
             .height(52.dp)
             .background(color = NewIdeasBackground, shape = PillShape)
-            .border(width = 1.dp, color = Primary.copy(0.7f), shape = PillShape)
             .innerShadow(
                 shape = PillShape,
-                color = Color(0x3DFFFFFF),
+                color = Color(0x66FFFFFF), // #FFFFFF3D
                 blur = 12.dp,
                 offsetY = (-3).dp
             )
+            .border(width = 1.dp, color = Primary.copy(0.7f), shape = PillShape)
             .clickableSingle(onClick = onClick)
             .padding(start = 24.dp, end = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -299,26 +311,41 @@ fun Modifier.innerShadow(
     blur: Dp,
     offsetX: Dp = 0.dp,
     offsetY: Dp = 0.dp,
+    spread: Dp = 0.dp,
 ) = this.drawWithContent {
     drawContent()
-
     drawIntoCanvas { canvas ->
-        val paint = Paint().apply {
-            this.color = color
+        val outline = shape.createOutline(size, layoutDirection, this)
+
+        // paint vẽ vùng glow (giữ nguyên alpha của color)
+        val shadowPaint = Paint().apply { this.color = color }
+
+        // layer composite ở alpha = 1 (KHÔNG truyền shadowPaint vào saveLayer)
+        canvas.saveLayer(size.toRect(), Paint())
+
+        // 1. tô đầy shape bằng màu glow
+        canvas.drawOutline(outline, shadowPaint)
+
+        // 2. đục lỗ phần giữa bằng shape blur + offset
+        shadowPaint.asFrameworkPaint().apply {
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
+            if (blur.toPx() > 0f) {
+                maskFilter = BlurMaskFilter(blur.toPx(), BlurMaskFilter.Blur.NORMAL)
+            }
         }
+        shadowPaint.color = Color.Black // DST_OUT chỉ dùng alpha, màu gì cũng được
 
-        val frameworkPaint = paint.asFrameworkPaint().apply {
-            maskFilter =
-                BlurMaskFilter(blur.toPx(), BlurMaskFilter.Blur.NORMAL)
-        }
-
-        canvas.saveLayer(size.toRect(), paint)
-
+        val inflate = spread.toPx()
+        canvas.translate(offsetX.toPx(), offsetY.toPx())
         canvas.drawOutline(
-            outline = shape.createOutline(size, layoutDirection, this),
-            paint = paint
+            if (inflate != 0f)
+                shape.createOutline(
+                    Size(size.width + inflate, size.height + inflate),
+                    layoutDirection, this
+                )
+            else outline,
+            shadowPaint
         )
-
         canvas.restore()
     }
 }

@@ -57,6 +57,14 @@
     <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/9739651039","enabled":true},{"id":"ca-app-pub-7121075950716954/8170207041","enabled":true}],"extras":{"retry_max":6}}</value>
   </entry>
   <entry>
+    <key>ad_interstitial_editor_after_prepare</key>
+    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/6955884647","enabled":true},{"id":"ca-app-pub-7121075950716954/3004197192","enabled":true}],"extras":{"retry_max":6}}</value>
+  </entry>
+  <entry>
+    <key>ad_interstitial_onboarding</key>
+    <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/7891516199","enabled":true},{"id":"ca-app-pub-7121075950716954/6578434529","enabled":true}],"extras":{"retry_max":6}}</value>
+  </entry>
+  <entry>
     <key>ad_interstitial_export_result_exit</key>
     <value>{"enabled":true,"type":"interstitial","units":[{"id":"ca-app-pub-7121075950716954/5408312336","enabled":true},{"id":"ca-app-pub-7121075950716954/5188820489","enabled":true}],"extras":{"retry_max":6}}</value>
   </entry>
@@ -147,6 +155,10 @@
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/8980354700","enabled":true},{"id":"ca-app-pub-7121075950716954/1293436372","enabled":true}],"extras":{"layout":"native_full_screen_bait","close_delay":2,"inject_after":1,"click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
+    <key>ad_native_post_reward</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/5630360530","enabled":true},{"id":"ca-app-pub-7121075950716954/4143842872","enabled":true}],"extras":{"layout":"native_full_screen_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
     <key>ad_native_home_banner</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1192669490","enabled":true},{"id":"ca-app-pub-7121075950716954/7566506155","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
@@ -169,6 +181,14 @@
   <entry>
     <key>ad_native_export_generating</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/9046582121","enabled":true},{"id":"ca-app-pub-7121075950716954/1359663791","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_export_preparing</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1709251222","enabled":true},{"id":"ca-app-pub-7121075950716954/3435442033","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_export_result</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/6973716424","enabled":true},{"id":"ca-app-pub-7121075950716954/8652109693","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
     <key>ad_native_songs_station</key>

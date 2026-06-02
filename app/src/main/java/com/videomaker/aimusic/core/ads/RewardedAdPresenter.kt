@@ -11,6 +11,7 @@ import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
 import com.videomaker.aimusic.R
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
+import org.koin.compose.koinInject
 
 /**
  * Reusable Rewarded Ad Presenter Composable
@@ -55,6 +56,9 @@ fun RewardedAdPresenter(
     val context = LocalContext.current
     val activity = context as? Activity
 
+    // Global post-reward fullscreen native ad (preloaded + shown for every rewarded placement)
+    val postRewardNativeAdManager = koinInject<PostRewardNativeAdManager>()
+
     LaunchedEffect(shouldPresent) {
         if (!shouldPresent) return@LaunchedEffect
         var adShown = false
@@ -88,6 +92,10 @@ fun RewardedAdPresenter(
             // 5. Present ad and wait for result (blocking)
             onAdShown?.invoke()
             adShown = true
+
+            // HOOK: preload post-reward native ad and show it while reward is on screen
+            postRewardNativeAdManager.onRewardedAdShown()
+
             val result = if (isInterstitial) {
                 adsLoaderService.presentRewardedInterstitial(
                     placement = placement,
@@ -122,6 +130,8 @@ fun RewardedAdPresenter(
             onAdFailed()
         } finally {
             if (adShown) {
+                // HOOK: reward ad closed - prevent post-reward native from showing late
+                postRewardNativeAdManager.onRewardedAdClosed()
                 onAdClosed?.invoke()
             }
         }

@@ -23,6 +23,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.compose.koinInject
+import com.videomaker.aimusic.core.ads.PostRewardNativeAd
+import com.videomaker.aimusic.core.ads.PostRewardNativeAdManager
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -200,14 +204,26 @@ class MainActivity : AppCompatActivity() {
             if (isReadyToShowUI) {
                 VideoMakerTheme {
                     Surface(modifier = Modifier.fillMaxSize()) {
-                        AppNavigation(
-                            initialHomeTab = startupInitialTab,
-                            pendingDeepLink = pendingDeepLink,
-                            onDeepLinkConsumed = { pendingDeepLink = null },
-                            navigateToUninstall = navigateToUninstall,
-                            onUninstallNavigationConsumed = { navigateToUninstall = false },
-                            showWelcomeBack = showWelcomeBack
-                        )
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            AppNavigation(
+                                initialHomeTab = startupInitialTab,
+                                pendingDeepLink = pendingDeepLink,
+                                onDeepLinkConsumed = { pendingDeepLink = null },
+                                navigateToUninstall = navigateToUninstall,
+                                onUninstallNavigationConsumed = { navigateToUninstall = false },
+                                showWelcomeBack = showWelcomeBack
+                            )
+
+                            // Global post-reward fullscreen native ad (triggered by ANY rewarded ad)
+                            val postRewardNativeAdManager = koinInject<PostRewardNativeAdManager>()
+                            val showPostRewardNativeAd by postRewardNativeAdManager.showNativeAd
+                                .collectAsStateWithLifecycle()
+                            if (showPostRewardNativeAd) {
+                                PostRewardNativeAd(
+                                    onClose = postRewardNativeAdManager::onNativeAdClosed
+                                )
+                            }
+                        }
                     }
                 }
             } else {

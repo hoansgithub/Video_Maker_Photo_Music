@@ -173,6 +173,26 @@ object Analytics {
         )
     }
 
+    /**
+     * Tab render: system displays the given tab. Must fire BEFORE any rewarded
+     * popup event on that tab, with the same timing as [trackTabView].
+     * No-op for unknown tab names.
+     */
+    fun trackTabRender(tabName: String) {
+        val eventName = when (tabName) {
+            AnalyticsEvent.Value.TabName.GALLERY -> AnalyticsEvent.TAB_GALLERY_RENDER
+            AnalyticsEvent.Value.TabName.SONG -> AnalyticsEvent.TAB_SONG_RENDER
+            AnalyticsEvent.Value.TabName.LIBRARY -> AnalyticsEvent.TAB_LIBRARY_RENDER
+            else -> return
+        }
+        trackWithPolicy(
+            eventName = eventName,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackTabSwitch(from: String, to: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.TAB_SWITCH,
@@ -356,6 +376,38 @@ object Analytics {
                 AnalyticsEvent.Param.TEMPLATE_ID,
                 AnalyticsEvent.Param.TEMPLATE_NAME,
                 AnalyticsEvent.Param.LOCATION
+            ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    /** Home banner (remote-config list) — user tapped a template banner. [position] = 0-based index in the config list (AD slot excluded). */
+    fun trackBannerClickTemplate(templateId: String, position: Int) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.BANNER_CLICK_TEMPLATE,
+            params = mapOf(
+                AnalyticsEvent.Param.TEMPLATE_ID to templateId,
+                AnalyticsEvent.Param.POSITION to position
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.TEMPLATE_ID,
+                AnalyticsEvent.Param.POSITION
+            ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    /** Home banner (remote-config list) — user tapped a song banner. [position] = 0-based index in the config list (AD slot excluded). */
+    fun trackBannerClickSong(songId: Long, position: Int) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.BANNER_CLICK_SONG,
+            params = mapOf(
+                AnalyticsEvent.Param.SONG_ID to songId,
+                AnalyticsEvent.Param.POSITION to position
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.SONG_ID,
+                AnalyticsEvent.Param.POSITION
             ),
             policy = TrackingPolicy.NORMAL
         )

@@ -69,6 +69,8 @@ class OnboardingActivity : AppCompatActivity() {
         android.util.Log.d("OnboardingActivity", "🔄 Preloading PAGE3 ad + Fullscreen ad (safety net)")
         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE3)
         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
+        // Independent onboarding interstitial (only shows if enabled on Firebase)
+        VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING)
 
         setContent {
             VideoMakerTheme {

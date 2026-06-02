@@ -149,6 +149,11 @@ val dataModule = module {
             songRepository = get()
         ).also { it.observeProcessLifecycle() }
     }
+    single {
+        com.videomaker.aimusic.core.playback.BannerSongPlayer(
+            context = androidContext()
+        ).also { it.registerLifecycle() }
+    }
 
     // ============================================
     // TRENDING POPUP
@@ -362,6 +367,16 @@ val adsModule = module {
         co.alcheclub.lib.acccore.ads.loader.AdsLoaderService(configService = placementConfigService).apply {
             setAdMediator(get<co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator>())
         }
+    }
+
+    // Post-Reward Native Ad Manager (global singleton for all rewarded ad locations)
+    // Shows fullscreen native ad immediately when loaded (while reward potentially still on screen)
+    // Uses VideoMakerApplication.applicationScope - app-level lifecycle
+    single {
+        com.videomaker.aimusic.core.ads.PostRewardNativeAdManager(
+            adsLoaderService = get(),
+            coroutineScope = (androidContext().applicationContext as com.videomaker.aimusic.VideoMakerApplication).applicationScope
+        )
     }
 
     // Ad Initializer (singleton - validates ad system initialization)
@@ -646,6 +661,8 @@ class GalleryViewModelFactory(
     private val application: android.app.Application,
     private val imageLoader: coil.ImageLoader,
     private val templateRepository: TemplateRepository,
+    private val songRepository: SongRepository,
+    private val remoteConfig: co.alcheclub.lib.acccore.remoteconfig.RemoteConfig,
     private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
     private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator,
     private val preferencesManager: PreferencesManager
@@ -655,6 +672,8 @@ class GalleryViewModelFactory(
             application = application,
             imageLoader = imageLoader,
             templateRepository = templateRepository,
+            songRepository = songRepository,
+            remoteConfig = remoteConfig,
             adsLoaderService = adsLoaderService,
             trendingPopupCoordinator = trendingPopupCoordinator,
             preferencesManager = preferencesManager
@@ -1008,6 +1027,8 @@ val presentationModule = module {
                 ?: error("applicationContext is not an Application instance"),
             imageLoader = get(),
             templateRepository = get(),
+            songRepository = get(),
+            remoteConfig = get(),
             adsLoaderService = get(),
             trendingPopupCoordinator = get(),
             preferencesManager = get()

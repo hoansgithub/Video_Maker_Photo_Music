@@ -101,6 +101,24 @@ object RemoteConfigKeys {
     const val NOTIFICATION_SCHEDULE_CONFIG = "notification_schedule_config"
 
     // ============================================
+    // HOME BANNER LIST
+    // ============================================
+
+    /**
+     * Ordered list of home (Gallery) banners. JSON array of items:
+     * ```json
+     * [
+     *   { "type": "BannerTemplate", "data": { "name": "Summer Vibes", "id": "template_001", "style": 1 } },
+     *   { "type": "BannerSong",     "data": { "name": "Blinding Lights", "id": 1001, "style": 2 } }
+     * ]
+     * ```
+     * `type` selects the banner kind, `data.id` fetches the real template/song,
+     * `data.style` (1 or 2) picks the UI variant, `data.name` is the banner title.
+     * Empty / missing / malformed → legacy featured-templates carousel is shown instead.
+     */
+    const val HOME_BANNER_LIST = "home_banner_list"
+
+    // ============================================
     // ONBOARDING DYNAMIC CONTENT
     // ============================================
 

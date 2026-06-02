@@ -91,6 +91,7 @@ import com.videomaker.aimusic.ui.components.QualityPicker
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.TimeoutCancellationException
@@ -311,6 +312,26 @@ fun EditorScreen(
                 }
             }
             // Event auto-consumed by Channel - no manual cleanup needed
+        }
+    }
+
+    // Show the "after prepare" interstitial once: editor appears (Loading -> Success),
+    // stays for 1s, then the (preloaded) fullscreen-image interstitial is shown.
+    var afterPrepareInterShown by remember { mutableStateOf(false) }
+    val isEditorReady = uiState is EditorUiState.Success
+    LaunchedEffect(isEditorReady) {
+        if (isEditorReady && !afterPrepareInterShown && activity != null) {
+            afterPrepareInterShown = true
+            delay(1000)
+            InterstitialAdHelperExt.showInterstitial(
+                adsLoaderService = adsLoaderService,
+                activity = activity,
+                placement = AdPlacement.INTERSTITIAL_EDITOR_AFTER_PREPARE,
+                action = { /* no-op: keep editing after the ad closes */ },
+                onShown = { viewModel.stopPlayback() },
+                bypassFrequencyCap = true,   // always show right after prepare
+                showLoadingOverlay = false   // background preloaded, don't block editing
+            )
         }
     }
 
