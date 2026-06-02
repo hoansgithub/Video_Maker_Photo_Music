@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
@@ -90,7 +91,7 @@ import org.koin.compose.koinInject
 @Immutable
 private sealed class StationGridItem {
     data class SongItem(val song: MusicSong) : StationGridItem()
-    data object AdItem : StationGridItem()
+    data class AdItem(val index: Int) : StationGridItem()
 }
 
 /**
@@ -98,11 +99,39 @@ private sealed class StationGridItem {
  */
 private fun stationItemKey(item: StationGridItem): String = when (item) {
     is StationGridItem.SongItem -> "song_${item.song.id}"
-    is StationGridItem.AdItem -> "ad_native_station"
+    is StationGridItem.AdItem -> "ad_native_station_${item.index}"
 }
 
-// Ad insertion position - 4th position (after 3rd song at index 2)
-private const val STATION_AD_INSERTION_INDEX = 3
+/** Default interval for in-feed ads if config unavailable */
+private const val DEFAULT_INFEED_INTERVAL = 10
+
+/**
+ * Build station items list with native ads inserted at every [interval] songs.
+ * If total songs < interval but >= 1, one ad is placed after the last song.
+ */
+private fun buildStationItemsWithAds(
+    songs: List<MusicSong>,
+    interval: Int
+): List<StationGridItem> {
+    if (songs.isEmpty() || interval <= 0) return songs.map { StationGridItem.SongItem(it) }
+
+    val result = mutableListOf<StationGridItem>()
+    var adIndex = 0
+
+    for (i in songs.indices) {
+        result.add(StationGridItem.SongItem(songs[i]))
+        if ((i + 1) % interval == 0) {
+            result.add(StationGridItem.AdItem(adIndex++))
+        }
+    }
+
+    // If fewer songs than interval but at least 1, show ad after last song
+    if (songs.size in 1 until interval) {
+        result.add(StationGridItem.AdItem(adIndex))
+    }
+
+    return result
+}
 
 // ============================================
 // SONGS SCREEN
@@ -255,6 +284,14 @@ private fun SongsContent(
     val dimens = AppDimens.current
     var lastTrackedLocation by remember { mutableStateOf<String?>(null) }
 
+    // Read infeed ad interval from placement config
+    val adsLoaderService: AdsLoaderService = koinInject()
+    val infeedInterval = remember {
+        val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_STATION_INFEED)
+        val value = config?.extras?.get("infeed_interval")
+        value?.toString()?.trim('"')?.toIntOrNull() ?: DEFAULT_INFEED_INTERVAL
+    }
+
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .drop(1)
@@ -378,37 +415,64 @@ private fun SongsContent(
                     }
                 }
                 is SectionState.Success -> {
-                    val songs = (stationState as SectionState.Success<List<MusicSong>>).data
+                    val songs = stationState.data
+                    val stationItems = buildStationItemsWithAds(songs, infeedInterval)
                     items(
-                        items = songs,
-                        key = { song -> "station_${song.id}" },
-                        contentType = { "station_song" }
-                    ) { song ->
-                        val dimens = AppDimens.current
-                        val sessionManager: MusicPlaybackSessionManager = koinInject()
-                        StationSongItem(
-                            song = song,
-                            onSongClick = {
-                                Analytics.trackSongClick(
-                                    songId = song.id.toString(),
-                                    songName = song.name,
-                                    location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                        items = stationItems,
+                        key = { item -> stationItemKey(item) },
+                        contentType = { item ->
+                            when (item) {
+                                is StationGridItem.SongItem -> "station_song"
+                                is StationGridItem.AdItem -> "station_ad"
+                            }
+                        }
+                    ) { item ->
+                        when (item) {
+                            is StationGridItem.SongItem -> {
+                                val song = item.song
+                                val dimens = AppDimens.current
+                                val sessionManager: MusicPlaybackSessionManager = koinInject()
+                                StationSongItem(
+                                    song = song,
+                                    onSongClick = {
+                                        Analytics.trackSongClick(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                                        )
+                                        onSongClick(song, songs, AnalyticsEvent.Value.Location.SONG_STATIONS, selectedGenre)
+                                    },
+                                    modifier = Modifier
+                                        .padding(
+                                            horizontal = dimens.spaceLg,
+                                            vertical = dimens.spaceXs
+                                        )
+                                        .onFirstVisible(key = song.id) {
+                                            sessionManager.trackSongImpressionAndMark(
+                                                songId = song.id.toString(),
+                                                songName = song.name,
+                                                location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                                            )
+                                        }
                                 )
-                                onSongClick(song, songs, AnalyticsEvent.Value.Location.SONG_STATIONS, selectedGenre)
-                            },
-                            modifier = Modifier
-                                .padding(
-                                    horizontal = dimens.spaceLg,
-                                    vertical = dimens.spaceXs
-                                )
-                                .onFirstVisible(key = song.id) {
-                                    sessionManager.trackSongImpressionAndMark(
-                                        songId = song.id.toString(),
-                                        songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                            }
+                            is StationGridItem.AdItem -> {
+                                val dimens = AppDimens.current
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceXs)
+                                        .clip(RoundedCornerShape(dimens.radiusXl))
+                                        .background(MaterialTheme.colorScheme.surface)
+                                ) {
+                                    NativeAdView(
+                                        placement = AdPlacement.NATIVE_STATION_INFEED,
+                                        autoLoad = true,
+                                        isDebug = BuildConfig.DEBUG
                                     )
                                 }
-                        )
+                            }
+                        }
                     }
                     // Pagination trigger: load more when last item is visible
                     if (songs.isNotEmpty()) {

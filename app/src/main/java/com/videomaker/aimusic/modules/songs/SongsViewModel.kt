@@ -10,6 +10,8 @@ import com.videomaker.aimusic.domain.usecase.ClearSongCacheUseCase
 import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
 import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.GetWeeklyRankingSongsUseCase
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.media.library.BundledContentLibrary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -54,7 +56,8 @@ class SongsViewModel(
     private val getGenresUseCase: GetGenresUseCase,
     private val clearSongCacheUseCase: ClearSongCacheUseCase,
     private val songRepository: SongRepository,
-    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
+    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator,
+    private val adsLoaderService: AdsLoaderService
 ) : ViewModel() {
 
     /** Called by HomeScreen when the Songs tab settles into focus. */
@@ -117,6 +120,10 @@ class SongsViewModel(
 
     init {
         loadAll()
+        // Preload station in-feed native ad so it's ready when user scrolls
+        viewModelScope.launch(Dispatchers.IO) {
+            adsLoaderService.loadNative(AdPlacement.NATIVE_STATION_INFEED)
+        }
     }
 
     // Each section loads independently — UI shows shimmer per section

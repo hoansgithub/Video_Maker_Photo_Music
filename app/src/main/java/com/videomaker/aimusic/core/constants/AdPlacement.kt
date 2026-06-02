@@ -633,6 +633,22 @@ object AdPlacement {
     const val NATIVE_SONGS_STATION = "ad_native_songs_station"
 
     /**
+     * Native ad inserted every Xth position in the station songs list (in-feed repeating).
+     * X is configurable via Remote Config extras "infeed_interval" (default: 10).
+     * If total songs < X but >= 1, ad is shown after the last song.
+     * Same placement reused across all genre tabs.
+     *
+     * Layout: native_small_row (horizontal row, matches song list items)
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6943442204
+     * - Secondary: ca-app-pub-7121075950716954/5456924546
+     *
+     * Remote Config key: ad_native_station_infeed
+     */
+    const val NATIVE_STATION_INFEED = "ad_native_station_infeed"
+
+    /**
      * Native ad shown during export video generating state.
      * Timing: Displayed at bottom of "Generating" overlay while video is being exported.
      * Waits 10 seconds for ad to load, then displays for 2 more seconds if loaded.
@@ -961,6 +977,7 @@ object AdPlacement {
         NATIVE_GALLERY_GRID,
         NATIVE_GALLERY_HOT_TPT,
         NATIVE_SONGS_STATION,
+        NATIVE_STATION_INFEED,
         NATIVE_TEMPLATE_PREVIEWER_LOADING,
         NATIVE_TEMPLATE_RATIO_SHEET,
         NATIVE_POPUP_TRENDING_TEMPLATE,

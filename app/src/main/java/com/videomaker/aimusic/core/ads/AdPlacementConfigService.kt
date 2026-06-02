@@ -664,6 +664,25 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Station in-feed repeating native ad (every Xth song in station list)
+        // X configurable via extras "infeed_interval" (default: 10)
+        // Same placement reused across all genre tabs
+        // Layout: native_small_row (horizontal row, matches song items)
+        // Waterfall: Primary unit -> Secondary unit
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.NATIVE_STATION_INFEED,
+            type = "native",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6943442204",  // Primary
+                "ca-app-pub-7121075950716954/5456924546"   // Secondary
+            ),
+            extras = mapOf(
+                "layout" to "native_small_row",
+                "infeed_interval" to 10
+            ),
+            enabled = true
+        )
+
         // Trending template popup native ad (bottom of "Don't miss it" popup, Gallery tab)
         // Layout: native_small_row
         // Waterfall: Primary unit -> Secondary unit

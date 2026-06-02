@@ -171,6 +171,10 @@
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/2115862172","enabled":true},{"id":"ca-app-pub-7121075950716954/3794255449","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
+    <key>ad_native_station_infeed</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/6943442204","enabled":true},{"id":"ca-app-pub-7121075950716954/5456924546","enabled":true}],"extras":{"layout":"native_small_row","infeed_interval":10}}</value>
+  </entry>
+  <entry>
     <key>ad_native_template_previewer_loading</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/2672745463","enabled":true},{"id":"ca-app-pub-7121075950716954/5298908808","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>

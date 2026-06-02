@@ -671,7 +671,8 @@ class SongsViewModelFactory(
     private val getGenresUseCase: GetGenresUseCase,
     private val clearSongCacheUseCase: ClearSongCacheUseCase,
     private val songRepository: SongRepository,
-    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
+    private val trendingPopupCoordinator: com.videomaker.aimusic.core.popup.TrendingPopupCoordinator,
+    private val adsLoaderService: AdsLoaderService
 ) {
     fun create(): SongsViewModel = SongsViewModel(
         getSuggestedSongsUseCase = getSuggestedSongsUseCase,
@@ -679,7 +680,8 @@ class SongsViewModelFactory(
         getGenresUseCase = getGenresUseCase,
         clearSongCacheUseCase = clearSongCacheUseCase,
         songRepository = songRepository,
-        trendingPopupCoordinator = trendingPopupCoordinator
+        trendingPopupCoordinator = trendingPopupCoordinator,
+        adsLoaderService = adsLoaderService
     )
 }
 
@@ -1016,7 +1018,8 @@ val presentationModule = module {
             getGenresUseCase = get(),
             clearSongCacheUseCase = get(),
             songRepository = get(),
-            trendingPopupCoordinator = get()
+            trendingPopupCoordinator = get(),
+            adsLoaderService = get()
         )
     }
 
