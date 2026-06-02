@@ -269,7 +269,7 @@ val dataModule = module {
     single { DeviceInfoProvider(androidContext()) }
 
     // Rating trigger
-    single { RatingTriggerManager(get(), get(), get()) }
+    single { RatingTriggerManager(get(), get(), get(), get()) }
     single { MediaPermissionCoordinator(get()) }
     single { NotificationPermissionCoordinator(get()) }
 

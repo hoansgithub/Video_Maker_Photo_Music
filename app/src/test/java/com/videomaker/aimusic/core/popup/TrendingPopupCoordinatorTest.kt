@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.random.Random
@@ -170,5 +171,24 @@ class TrendingPopupCoordinatorTest {
         check(nav is TrendingPopupNavEvent.OpenTemplatePreviewer)
         assertEquals("", nav.templateId)
         assertEquals(pick.id, nav.overrideSongId)
+    }
+
+    @Test
+    fun `isPopupEligible returns true when eligible and false when capped`() = runBlocking {
+        val clock = FakeClock(nowMs, todayEpochDay)
+        val coord = coordinator(
+            config = TrendingPopupConfigValues(intervalMinutes = 60L, dailyCap = 1L),
+            clock = clock
+        )
+
+        // Initially eligible
+        assertTrue(coord.isPopupEligible(TrendingPopupTab.GALLERY))
+
+        // Focus tab to show popup
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        coord.onTemplatePopupDismissed()
+
+        // Daily cap of 1 reached, should no longer be eligible today
+        assertFalse(coord.isPopupEligible(TrendingPopupTab.GALLERY))
     }
 }

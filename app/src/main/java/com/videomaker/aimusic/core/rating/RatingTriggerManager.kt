@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
+import com.videomaker.aimusic.core.popup.TrendingPopupTab
 
 /**
  * Pure function for testing trigger conditions in isolation.
@@ -41,7 +43,8 @@ fun shouldShowRating(
 class RatingTriggerManager(
     private val preferencesManager: PreferencesManager,
     private val remoteConfig: RemoteConfig,
-    private val submitFeedbackUseCase: SubmitFeedbackUseCase
+    private val submitFeedbackUseCase: SubmitFeedbackUseCase,
+    private val trendingPopupCoordinator: TrendingPopupCoordinator
 ) {
     companion object {
         private const val TAG = "RatingTriggerManager"
@@ -50,6 +53,20 @@ class RatingTriggerManager(
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    init {
+        scope.launch {
+            trendingPopupCoordinator.popupUserDismissEvent.collect {
+                if (isRatingDeferred) {
+                    isRatingDeferred = false
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "popupUserDismissEvent collected, triggering deferred rating popup.")
+                    }
+                    triggerRatingPopupIfEligible(location = "home")
+                }
+            }
+        }
+    }
 
     private val _ratingStep = MutableStateFlow(RatingStep.None)
     val ratingStep: StateFlow<RatingStep> = _ratingStep.asStateFlow()
@@ -62,6 +79,7 @@ class RatingTriggerManager(
 
     private var satisfactionResponse = ""
     private var lastStarRating = 0
+    private var isRatingDeferred = false
 
     private fun triggerRatingPopupIfEligible(location: String) {
         if (preferencesManager.ratingCompleted) {
@@ -162,15 +180,33 @@ class RatingTriggerManager(
     /**
      * Call when user focuses the home screen.
      */
-    fun onHomeScreenFocused() {
+    fun onHomeScreenFocused(currentTab: Int) {
         val sessionId = preferencesManager.getAppSessionId()
         val lastTriggeredSessionId = preferencesManager.ratingLastTriggeredHomeSessionId
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "onHomeScreenFocused: sessionId=$sessionId, lastTriggeredSessionId=$lastTriggeredSessionId")
+            Log.d(TAG, "onHomeScreenFocused: sessionId=$sessionId, lastTriggeredSessionId=$lastTriggeredSessionId, currentTab=$currentTab")
         }
         if (sessionId >= 2 && lastTriggeredSessionId != sessionId) {
+            val isPromotePopupEligible = when (currentTab) {
+                0 -> trendingPopupCoordinator.isPopupEligible(TrendingPopupTab.GALLERY)
+                1 -> trendingPopupCoordinator.isPopupEligible(TrendingPopupTab.SONGS)
+                else -> false
+            }
+
+            if (isPromotePopupEligible) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "Promote popup is eligible on tab $currentTab. Deferring rating popup.")
+                }
+                preferencesManager.ratingLastTriggeredHomeSessionId = sessionId
+                isRatingDeferred = true
+                return
+            }
+
+            isRatingDeferred = false
             preferencesManager.ratingLastTriggeredHomeSessionId = sessionId
             triggerRatingPopupIfEligible(location = "home")
+        } else {
+            isRatingDeferred = false
         }
     }
 
