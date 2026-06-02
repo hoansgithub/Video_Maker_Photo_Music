@@ -71,6 +71,18 @@ class TrendingPopupCoordinator(
         t is TrendingPopupState.Showing || s is TrendingPopupState.Showing
     }.stateIn(scope, SharingStarted.Eagerly, false)
 
+    /**
+     * Which popup surface (Home tab) is currently visible to the user.
+     * null = no popup-eligible surface is visible (e.g. My Videos tab, or a pushed route).
+     *
+     * The UI uses this to decide WHETHER to render a popup whose state is already [Showing]:
+     * the template popup renders only while GALLERY is active, the song popup only while SONGS
+     * is active. The [Showing] state itself is preserved when the surface changes, so swiping
+     * away hides the popup and swiping back shows it again.
+     */
+    private val _activeTab = MutableStateFlow<TrendingPopupTab?>(null)
+    val activeTab: StateFlow<TrendingPopupTab?> = _activeTab.asStateFlow()
+
     private val _navigationEvent = Channel<TrendingPopupNavEvent>(Channel.BUFFERED)
     val navigationEvent = _navigationEvent.receiveAsFlow()
 
@@ -83,7 +95,17 @@ class TrendingPopupCoordinator(
     val popupUserDismissEvent = _popupUserDismissEvent.receiveAsFlow()
 
     fun onTabFocused(tab: TrendingPopupTab) {
+        _activeTab.value = tab
         scope.launch { evaluateAndMaybeShow(tab) }
+    }
+
+    /**
+     * Called when a Home surface that must NOT show a trending popup becomes active
+     * (e.g. the My Videos tab). Hides any visible popup without discarding its [Showing]
+     * state, so it reappears when the user swipes back to its own tab.
+     */
+    fun onPopupSurfaceInactive() {
+        _activeTab.value = null
     }
 
     private suspend fun evaluateAndMaybeShow(tab: TrendingPopupTab) {

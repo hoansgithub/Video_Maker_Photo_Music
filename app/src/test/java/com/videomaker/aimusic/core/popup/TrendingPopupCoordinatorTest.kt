@@ -160,6 +160,38 @@ class TrendingPopupCoordinatorTest {
     }
 
     @Test
+    fun `activeTab reflects the focused tab`() = runBlocking {
+        val coord = coordinator()
+        assertEquals(null, coord.activeTab.first())
+
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        assertEquals(TrendingPopupTab.GALLERY, coord.activeTab.first())
+
+        coord.onTabFocused(TrendingPopupTab.SONGS)
+        assertEquals(TrendingPopupTab.SONGS, coord.activeTab.first())
+    }
+
+    @Test
+    fun `leaving popup surface clears activeTab but preserves Showing state`() = runBlocking {
+        val coord = coordinator()
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        val pick = (coord.templatePopup.first() as TrendingPopupState.Showing).content
+
+        // User swipes to a non-popup surface (e.g. My Videos): popup must be hidden from view...
+        coord.onPopupSurfaceInactive()
+        assertEquals(null, coord.activeTab.first())
+        // ...but its state is preserved so it reappears on returning to Gallery ("show lại").
+        val stillShowing = coord.templatePopup.first()
+        assertTrue(stillShowing is TrendingPopupState.Showing)
+        assertEquals(pick.id, (stillShowing as TrendingPopupState.Showing).content.id)
+
+        // Returning to Gallery restores the same popup without re-picking.
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        assertEquals(TrendingPopupTab.GALLERY, coord.activeTab.first())
+        assertEquals(pick.id, (coord.templatePopup.first() as TrendingPopupState.Showing).content.id)
+    }
+
+    @Test
     fun `cta emits OpenTemplatePreviewer for song with overrideSongId`() = runBlocking {
         val coord = coordinator()
         coord.onTabFocused(TrendingPopupTab.SONGS)

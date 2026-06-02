@@ -73,6 +73,7 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
+import com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
 import com.videomaker.aimusic.core.rating.RatingTriggerManager
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.gallery.GalleryScreen
@@ -150,6 +151,7 @@ fun HomeScreen(
     val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
     val adsLoaderService = koinInject<AdsLoaderService>()
     val ratingTriggerManager = koinInject<RatingTriggerManager>()
+    val trendingPopupCoordinator = koinInject<TrendingPopupCoordinator>()
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -448,7 +450,9 @@ fun HomeScreen(
                         songsViewModel.onTabFocused()
                         Analytics.trackRefreshStartSong()
                     }
-                    else -> Unit
+                    // My Videos tab: no trending popup belongs here. Clear the active surface
+                    // so any Showing popup is hidden (and restored when swiping back).
+                    else -> trendingPopupCoordinator.onPopupSurfaceInactive()
                 }
             }
     }
