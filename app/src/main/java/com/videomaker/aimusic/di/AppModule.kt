@@ -146,7 +146,8 @@ val dataModule = module {
     single {
         com.videomaker.aimusic.core.playback.OnboardingMusicPlayer(
             context = androidContext(),
-            songRepository = get()
+            songRepository = get(),
+            regionProvider = get()
         ).also { it.observeProcessLifecycle() }
     }
     single {

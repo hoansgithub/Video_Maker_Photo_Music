@@ -4,6 +4,7 @@ import android.content.Context
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.core.os.ConfigurationCompat
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -52,6 +53,9 @@ class RegionProvider(
 
     private val ipDetectionStarted = AtomicBoolean(false)
 
+    @Volatile
+    private var ipDetectionDone = CompletableDeferred<Unit>()
+
     /**
      * Returns the resolved region code. Safe to call from any thread.
      * Never blocks -- returns immediately with the best available region.
@@ -90,6 +94,18 @@ class RegionProvider(
     fun getRegionCodeImmediate(): String = getRegionCode()
 
     /**
+     * Suspends until IP detection finishes (or times out), then returns the
+     * best available region code. Use this when accurate geo-targeting matters
+     * more than instant return (e.g. onboarding song fetch during splash).
+     */
+    suspend fun awaitRegionCode(timeoutMs: Long = OVERALL_TIMEOUT_MS): String {
+        // Ensure IP detection is running
+        getRegionCode()
+        withTimeoutOrNull(timeoutMs) { ipDetectionDone.await() }
+        return getRegionCode()
+    }
+
+    /**
      * Detect if cached region might be from old language-based system.
      */
     private fun shouldMigrateCache(cachedRegion: String?): Boolean {
@@ -113,6 +129,7 @@ class RegionProvider(
         cached = null
         ipRegionCached = null
         ipDetectionStarted.set(false)
+        ipDetectionDone = CompletableDeferred()
         preferencesManager.setUserRegion("")
     }
 
@@ -164,6 +181,7 @@ class RegionProvider(
             } else {
                 Log.w(TAG, "IP detection failed (all services timed out or errored)")
             }
+            ipDetectionDone.complete(Unit)
         }
     }
 

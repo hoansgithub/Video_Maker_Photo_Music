@@ -9,6 +9,7 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import com.videomaker.aimusic.core.data.local.RegionProvider
 import com.videomaker.aimusic.domain.repository.SongRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -41,6 +42,7 @@ import kotlinx.coroutines.launch
 class OnboardingMusicPlayer(
     private val context: Context,
     private val songRepository: SongRepository,
+    private val regionProvider: RegionProvider,
     mainDispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
     private val engineFactory: () -> OnboardingAudioEngine = { ExoPlayerOnboardingAudioEngine(context) }
 ) {
@@ -121,6 +123,10 @@ class OnboardingMusicPlayer(
     private fun ensureLoaded() {
         if (released || engine != null || loadJob?.isActive == true) return
         loadJob = scope.launch {
+            // Wait for IP geolocation so getFeaturedSongs uses the correct region.
+            // Splash screen lasts 5+ seconds, so this adds no perceived delay.
+            regionProvider.awaitRegionCode()
+
             var url: String? = null
             for (attempt in 0 until MAX_LOAD_ATTEMPTS) {
                 if (released) return@launch

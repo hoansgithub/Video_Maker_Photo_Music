@@ -703,11 +703,11 @@ class AdPlacementConfigService(
         )
 
         // Featured templates carousel native ad (shown at 2nd position)
-        // Layout: native_small_clean (matches 16:9 carousel ratio)
+        // Layout: native_showcase_item (fullscreen media with gradient + CTA overlay)
         // Waterfall: Primary unit -> Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_GALLERY_HOT_TPT,
-            layoutName = "native_small_clean",
+            layoutName = "native_showcase_item",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/1840370904",  // Primary
                 "ca-app-pub-7121075950716954/5831815710"   // Secondary
