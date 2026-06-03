@@ -427,6 +427,9 @@ object AnalyticsEvent {
             // Trending popup source locations
             const val POPUP_TRENDING_TEMPLATE = "popup_trending_template"
             const val POPUP_TRENDING_SONG = "popup_trending_song"
+
+            // Trending popup template/song impression + click (promote-content popups)
+            const val POPUP_PROMOTE_CONTENT = "popup_promote_content"
         }
 
         object Section {

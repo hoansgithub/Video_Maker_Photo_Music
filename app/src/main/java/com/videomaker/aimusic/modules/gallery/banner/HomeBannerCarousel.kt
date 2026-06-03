@@ -32,7 +32,9 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.analytics.trackSongImpressionAndMark
 import com.videomaker.aimusic.core.playback.BannerSongPlayer
+import com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.AppDimens
@@ -63,6 +65,7 @@ fun HomeBannerCarousel(
 
     val dimens = AppDimens.current
     val player = koinInject<BannerSongPlayer>()
+    val sessionManager = koinInject<MusicPlaybackSessionManager>()
     val activeSongId by player.activeSongId.collectAsStateWithLifecycle()
 
     val carouselSize = banners.size + 1 // +1 for the AD slot at logical index 1
@@ -120,8 +123,20 @@ fun HomeBannerCarousel(
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { settledPage ->
-                val songId = (bannerAt(settledPage) as? HomeBannerUi.SongBanner)?.song?.id
-                player.onBannerSettled(songId)
+                val songBanner = bannerAt(settledPage) as? HomeBannerUi.SongBanner
+                player.onBannerSettled(songBanner?.song?.id)
+
+                // The user is now looking at this song banner → song_impression (location = banner).
+                // Skip local placeholders (the underlying song is a stand-in, not the real one).
+                val seenSong = songBanner?.song
+                if (isVisible && seenSong != null && songBanner?.isPlaceholder == false) {
+                    sessionManager.trackSongImpressionAndMark(
+                        songId = seenSong.id.toString(),
+                        songName = seenSong.name,
+                        location = AnalyticsEvent.Value.Location.HOME_BANNER
+                    )
+                }
+
                 if (isVisible && hasPendingUserSwipe) {
                     Analytics.trackGallerySwipe(AnalyticsEvent.Value.Location.GALLERY_BANNER)
                     hasPendingUserSwipe = false
@@ -194,9 +209,34 @@ fun HomeBannerCarousel(
                             style = banner.style,
                             isPlaying = !banner.isPlaceholder && activeSongId == song.id,
                             placeholderImageUrl = banner.placeholderImageUrl,
-                            onPlay = { if (!banner.isPlaceholder) player.toggle(song) },
+                            onPlay = {
+                                if (!banner.isPlaceholder) {
+                                    // toggle() pauses if this song is already active, else plays.
+                                    if (activeSongId == song.id) {
+                                        Analytics.trackSongPause(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.HOME_BANNER
+                                        )
+                                    } else {
+                                        Analytics.trackSongPlay(
+                                            songId = song.id.toString(),
+                                            songName = song.name,
+                                            location = AnalyticsEvent.Value.Location.HOME_BANNER
+                                        )
+                                    }
+                                    player.toggle(song)
+                                }
+                            },
                             onClick = {
-                                if (!banner.isPlaceholder) onSongBannerClick(song.id, banner.position)
+                                if (!banner.isPlaceholder) {
+                                    Analytics.trackSongClick(
+                                        songId = song.id.toString(),
+                                        songName = song.name,
+                                        location = AnalyticsEvent.Value.Location.HOME_BANNER
+                                    )
+                                    onSongBannerClick(song.id, banner.position)
+                                }
                             }
                         )
                     }
