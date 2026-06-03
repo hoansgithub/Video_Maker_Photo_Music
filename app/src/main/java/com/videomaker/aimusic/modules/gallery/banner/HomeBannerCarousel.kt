@@ -31,6 +31,7 @@ import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.analytics.trackSongImpressionAndMark
 import com.videomaker.aimusic.core.playback.BannerSongPlayer
@@ -56,7 +57,7 @@ fun HomeBannerCarousel(
     banners: List<HomeBannerUi>,
     isVisible: Boolean,
     onTemplateBannerClick: (VideoTemplate, Int) -> Unit,
-    onSongBannerClick: (Long, Int) -> Unit,
+    onSongBannerClick: (MusicSong, Int) -> Unit,
     modifier: Modifier = Modifier,
     autoSlideIntervalMs: Long = 4000L,
 ) {
@@ -235,7 +236,7 @@ fun HomeBannerCarousel(
                                         songName = song.name,
                                         location = AnalyticsEvent.Value.Location.HOME_BANNER
                                     )
-                                    onSongBannerClick(song.id, banner.position)
+                                    onSongBannerClick(song, banner.position)
                                 }
                             }
                         )

@@ -79,6 +79,7 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.VibeTag
@@ -141,7 +142,7 @@ fun GalleryScreen(
     listState: LazyListState = rememberLazyListState(),
     onUserInteraction: () -> Unit = {},
     onNavigateToSongDetail: (Long) -> Unit = {},
-    onNavigateToSongPreview: (Long) -> Unit = {},
+    onNavigateToSongPreview: (MusicSong) -> Unit = {},
     onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTopSongs: () -> Unit = {},
     onNavigateToAllTemplates: (String?) -> Unit = {},
@@ -218,7 +219,7 @@ fun GalleryScreen(
                     viewModel.onNavigationHandled()
                 }
                 is GalleryNavigationEvent.NavigateToSongPreview -> {
-                    onNavigateToSongPreview(event.songId)
+                    onNavigateToSongPreview(event.song)
                     viewModel.onNavigationHandled()
                 }
                 is GalleryNavigationEvent.NavigateToTemplateDetail -> {
@@ -257,9 +258,9 @@ fun GalleryScreen(
                     onUserInteraction()
                     viewModel.onTemplateBannerClick(template, position)
                 },
-                onSongBannerClick = { songId, position ->
+                onSongBannerClick = { song, position ->
                     onUserInteraction()
-                    viewModel.onSongBannerClick(songId, position)
+                    viewModel.onSongBannerClick(song, position)
                 },
                 onVibeTagSelected = { selectedTagId ->
                     onUserInteraction()
@@ -368,7 +369,7 @@ private fun GalleryContent(
     isVisible: Boolean,
     onRefresh: () -> Unit,
     onTemplateBannerClick: (VideoTemplate, Int) -> Unit,
-    onSongBannerClick: (Long, Int) -> Unit,
+    onSongBannerClick: (MusicSong, Int) -> Unit,
     onVibeTagSelected: (String?) -> Unit,
     onTemplateClick: (VideoTemplate, String) -> Unit,
     onSeeAllTemplates: () -> Unit,

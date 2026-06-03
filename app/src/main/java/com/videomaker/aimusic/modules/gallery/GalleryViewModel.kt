@@ -83,7 +83,7 @@ sealed class GalleryNavigationEvent {
     data class NavigateToAllTemplates(val selectedVibeTagId: String?) : GalleryNavigationEvent()
     data object NavigateToCreate : GalleryNavigationEvent()
     /** Open the song preview (Song tab player) for a banner song. */
-    data class NavigateToSongPreview(val songId: Long) : GalleryNavigationEvent()
+    data class NavigateToSongPreview(val song: MusicSong) : GalleryNavigationEvent()
 }
 
 // ============================================
@@ -482,10 +482,16 @@ class GalleryViewModel(
     // HOME BANNER LIST (remote config)
     // ============================================
 
-    /** Banner song tapped → preview it in the Song tab. */
-    fun onSongBannerClick(songId: Long, position: Int) {
-        Analytics.trackBannerClickSong(songId = songId, position = position)
-        _navigationEvent.value = GalleryNavigationEvent.NavigateToSongPreview(songId)
+    /**
+     * Banner song tapped → preview it in the Song tab. The banner already holds the fully
+     * resolved [MusicSong] (loaded + cached during banner resolution), so we forward the object
+     * itself — the Song tab can open the player synchronously with no re-fetch, avoiding the
+     * network round-trip that previously made the preview popup appear late (or not at all when
+     * a settle race cleared it before the fetch returned).
+     */
+    fun onSongBannerClick(song: MusicSong, position: Int) {
+        Analytics.trackBannerClickSong(songId = song.id, position = position)
+        _navigationEvent.value = GalleryNavigationEvent.NavigateToSongPreview(song)
     }
 
     /** Banner template tapped → open template detail (reuses the ad-aware template flow). */

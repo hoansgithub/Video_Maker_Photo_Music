@@ -49,7 +49,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.Stable
+import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -291,6 +293,17 @@ fun ProjectsTabContent(
         viewModel.startObservingProjects()
     }
 
+    // Hide the music player the moment the inner pager COMMITS to switching sub-tabs
+    // (targetPage flips at the swipe/fling commit, before settledPage updates), so the sheet
+    // disappears together with the swipe instead of lingering through the animation and then
+    // popping out late — same smooth behaviour as the outer Home tabs. A small drag that snaps
+    // back keeps targetPage unchanged, so the player isn't dismissed by accident.
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.targetPage }
+            .distinctUntilChanged()
+            .collect { viewModel.onDismissPlayer() }
+    }
+
     // Animate LazyRow to selected tab when pager settles, and notify VM for swipe case
     LaunchedEffect(pagerState.settledPage) {
         val currentPage = pagerState.settledPage
@@ -300,7 +313,6 @@ fun ProjectsTabContent(
                 to = libraryTabByIndex(currentPage)
             )
             lastSettledPage = currentPage
-            viewModel.onDismissPlayer()
         }
         lazyListState.animateScrollToItem(pagerState.settledPage)
         viewModel.onTabSelected(pagerState.settledPage)
