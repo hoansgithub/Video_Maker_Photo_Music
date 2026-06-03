@@ -368,18 +368,23 @@ private fun Modifier.glassBorderWithInsetShadow(
     )
 
     // 2) Inset box-shadow: 0 0 8px 0 #F8F8F840 inset
-    // Approximate by drawing a stroked rect inset by half the blur
+    // Approximate by drawing a stroked rect inset by half the blur.
+    // Guard: skip if the component is too small for the inset (e.g. during enter animation).
     val insetAmount = blurPx * 0.5f
-    if (size.width > insetAmount * 2 && size.height > insetAmount * 2) {
-        inset(insetAmount) {
-            drawRoundRect(
-                color = InsetShadowColor,
-                cornerRadius = CornerRadius(
-                    (cornerPx - insetAmount).coerceAtLeast(0f),
-                    (cornerPx - insetAmount).coerceAtLeast(0f)
-                ),
-                style = Stroke(width = blurPx)
-            )
+    if (size.width > insetAmount * 2 + 1f && size.height > insetAmount * 2 + 1f) {
+        try {
+            inset(insetAmount) {
+                drawRoundRect(
+                    color = InsetShadowColor,
+                    cornerRadius = CornerRadius(
+                        (cornerPx - insetAmount).coerceAtLeast(0f),
+                        (cornerPx - insetAmount).coerceAtLeast(0f)
+                    ),
+                    style = Stroke(width = blurPx)
+                )
+            }
+        } catch (_: IllegalArgumentException) {
+            // Size became negative between check and draw (float precision / animation)
         }
     }
 }
