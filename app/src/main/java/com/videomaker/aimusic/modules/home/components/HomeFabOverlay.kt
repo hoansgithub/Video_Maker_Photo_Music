@@ -74,7 +74,6 @@ import com.videomaker.aimusic.ui.theme.Primary
 
 private const val ANIM_MS = 700           // Songs "See What's New" reveal duration
 private const val FAB_SIZE = 52
-private const val FAB_GAP = 12
 private const val SW_START = 0.4f          // CTA2 begins REVEALING (clip) once progress passes this
 // CTA2 is added/removed from composition only at this near-zero progress (i.e. at the
 // extremes, when the list is settled) — NOT at SW_START. Toggling composition mid-animation
@@ -139,7 +138,7 @@ fun HomeFabOverlay(
                         modifier = Modifier
                             .padding(end = FAB_SIZE.dp)
                             .fillMaxWidth()
-                            .align(Alignment.BottomEnd),
+                            .align(Alignment.Center),
                         horizontalArrangement = Arrangement.Center
                     ) {
                         SeeWhatsNewPill(
@@ -244,7 +243,7 @@ private fun CreateMorphButton(
                 tint = Color.Unspecified,
                 modifier = Modifier
                     .size(24.dp)
-                    // Glides the + to the circle's centre as the pill collapses.
+                    // Glides the + to the circle's center as the pill collapses.
                     .graphicsLayer { translationX = (contentWidthPx - fabPx) * progress() }
             )
             Text(
@@ -274,7 +273,6 @@ private fun SeeWhatsNewPill(
 ) {
     Row(
         modifier = modifier
-            .height(52.dp)
             .background(color = NewIdeasBackground, shape = PillShape)
             .innerShadow(
                 shape = PillShape,
@@ -284,9 +282,9 @@ private fun SeeWhatsNewPill(
             )
             .border(width = 1.dp, color = Primary.copy(0.7f), shape = PillShape)
             .clickableSingle(onClick = onClick)
-            .padding(start = 24.dp, end = 18.dp),
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
             text = "See What's New",

@@ -42,6 +42,7 @@ import com.videomaker.aimusic.core.notification.NotificationDeepLinkFactory
 import com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
 import com.videomaker.aimusic.core.popup.TrendingPopupNavEvent
 import com.videomaker.aimusic.core.popup.TrendingPopupState
+import com.videomaker.aimusic.core.popup.TrendingPopupTab
 import com.videomaker.aimusic.di.AssetPickerViewModelFactory
 import com.videomaker.aimusic.di.EditorViewModelFactory
 import com.videomaker.aimusic.di.ExportViewModelFactory
@@ -153,6 +154,7 @@ fun AppNavigation(
     val trendingPopupCoordinator = koinInject<TrendingPopupCoordinator>()
     val templatePopupState by trendingPopupCoordinator.templatePopup.collectAsStateWithLifecycle()
     val songPopupState by trendingPopupCoordinator.songPopup.collectAsStateWithLifecycle()
+    val activePopupTab by trendingPopupCoordinator.activeTab.collectAsStateWithLifecycle()
 
     val ratingTriggerManager = koinInject<com.videomaker.aimusic.core.rating.RatingTriggerManager>()
     val ratingStep by ratingTriggerManager.ratingStep.collectAsStateWithLifecycle()
@@ -817,22 +819,33 @@ fun AppNavigation(
         }
     )
 
-    // Trending popups rendered at navigation level (outside NavDisplay) so the Dialog
-    // persists when the back stack changes (e.g., shortcut pushing TemplateList).
-    (templatePopupState as? TrendingPopupState.Showing)?.let { showing ->
-        PopupTrendingTemplate(
-            item = showing.content,
-            onCTA = { trendingPopupCoordinator.onTemplatePopupCta(showing.content) },
-            onDismiss = { trendingPopupCoordinator.onTemplatePopupDismissed() }
-        )
+    // Trending popups are rendered at navigation level (outside NavDisplay) but are gated by
+    // the active surface so they only appear where they belong:
+    //   - the template popup ONLY on the Home Gallery tab
+    //   - the song popup ONLY on the Home Songs tab
+    // They must NOT overlay other routes (e.g. ConfirmUninstall) or the My Videos tab. The
+    // popup's Showing state is preserved when the surface changes, so swiping/navigating away
+    // hides it and returning to its own tab shows it again.
+    val isHomeOnTop = backStack.lastOrNull() is AppRoute.Home
+
+    if (isHomeOnTop && activePopupTab == TrendingPopupTab.GALLERY) {
+        (templatePopupState as? TrendingPopupState.Showing)?.let { showing ->
+            PopupTrendingTemplate(
+                item = showing.content,
+                onCTA = { trendingPopupCoordinator.onTemplatePopupCta(showing.content) },
+                onDismiss = { trendingPopupCoordinator.onTemplatePopupDismissed() }
+            )
+        }
     }
 
-    (songPopupState as? TrendingPopupState.Showing)?.let { showing ->
-        PopupTrendingSong(
-            item = showing.content,
-            onCTA = { trendingPopupCoordinator.onSongPopupCta(showing.content) },
-            onDismiss = { trendingPopupCoordinator.onSongPopupDismissed() }
-        )
+    if (isHomeOnTop && activePopupTab == TrendingPopupTab.SONGS) {
+        (songPopupState as? TrendingPopupState.Showing)?.let { showing ->
+            PopupTrendingSong(
+                item = showing.content,
+                onCTA = { trendingPopupCoordinator.onSongPopupCta(showing.content) },
+                onDismiss = { trendingPopupCoordinator.onSongPopupDismissed() }
+            )
+        }
     }
 
     // Global rating popup overlay
