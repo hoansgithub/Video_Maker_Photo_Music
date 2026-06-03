@@ -18,17 +18,13 @@ import kotlinx.serialization.json.jsonPrimitive
  *
  * Handles intelligent language sorting based on:
  * 1. Device language (ALWAYS FIRST - respects user's explicit choice)
- * 2. User's region detection (uses RegionProvider with region_detection_config):
- *    - IP-based geolocation (if enabled via remote config, VPN-aware)
+ * 2. User's region detection (via RegionProvider):
+ *    - IP-based geolocation (always runs in background, non-blocking)
  *    - SIM card country (physical location, permanent)
  *    - Network operator country (physical location, ignores VPN)
  *    - System locale country (last fallback)
  * 3. Remote Config priorities (updatable without app release)
  * 4. Hardcoded fallback priorities
- *
- * Region detection respects region_detection_config:
- * - When use_ip_geolocation = true: Uses IP detection first, falls back to SIM/Network/Locale
- * - When use_ip_geolocation = false: Uses SIM → Network → Locale only
  *
  * Remote Config Format:
  * ```json
@@ -47,7 +43,7 @@ import kotlinx.serialization.json.jsonPrimitive
  * Registration happens centrally in VideoMakerApplication.kt.
  *
  * @param context Application context for device language detection
- * @param regionProvider Provides region code with IP detection support
+ * @param regionProvider Provides region code (non-blocking, IP detection runs in parallel)
  */
 class LanguageConfigService(
     private val context: Context,
@@ -69,28 +65,23 @@ class LanguageConfigService(
      *
      * Sorting priority:
      * 1. Device language (ALWAYS FIRST - respects user's explicit choice)
-     * 2. Region-based priorities (uses RegionProvider with IP detection if enabled)
+     * 2. Region-based priorities (IP detection runs in parallel, non-blocking)
      * 3. Rest of languages in default order
-     *
-     * Region detection (via RegionProvider):
-     * - If region_detection_config.use_ip_geolocation = true:
-     *   IP → Persisted → SIM → Network → Locale → "us"
-     * - If region_detection_config.use_ip_geolocation = false:
-     *   Persisted → SIM → Network → Locale → "us"
      *
      * @return Sorted list with device language first, then region priorities, rest after
      */
     /**
-     * Sort languages using full region detection (may block for IP detection).
-     * Call from a background thread / IO dispatcher.
+     * Sort languages using region detection (non-blocking).
+     * IP detection runs in background; returns cached/persisted/system region immediately.
+     * Safe to call from any thread.
      */
     fun getSortedLanguages(): List<SupportedLanguage> {
         return sortByRegion(regionProvider.getRegionCode().uppercase())
     }
 
     /**
-     * Sort languages using system region only (SIM/locale). Never blocks.
-     * Safe to call during composition or from the main thread.
+     * Alias for [getSortedLanguages] -- both are non-blocking.
+     * Kept for API compatibility.
      */
     fun getSortedLanguagesImmediate(): List<SupportedLanguage> {
         return sortByRegion(regionProvider.getRegionCodeImmediate().uppercase())

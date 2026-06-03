@@ -196,7 +196,6 @@ val dataModule = module {
 
     // Language config service (singleton - ConfigurableObject for Remote Config)
     // Centralized registration: Explicitly registered in VideoMakerApplication.kt
-    // Uses RegionProvider for region detection (includes IP detection if enabled via region_detection_config)
     single {
         com.videomaker.aimusic.core.language.LanguageConfigService(
             context = androidContext(),
@@ -239,18 +238,12 @@ val dataModule = module {
     // Supabase client (singleton)
     single { SupabaseClientProvider.instance }
 
-    // Region detection config service (singleton - ConfigurableObject for Remote Config)
-    // Centralized registration: Explicitly registered in VideoMakerApplication.kt
-    single {
-        com.videomaker.aimusic.core.data.remote.RegionDetectionConfig()
-    }
-
     // Region provider (singleton - auto-detected from system: SIM → Network → Locale → IP)
+    // IP detection always runs in background on first access (non-blocking)
     single {
         RegionProvider(
             context = androidContext(),
-            preferencesManager = get(),
-            regionDetectionConfig = get()
+            preferencesManager = get()
         )
     }
 

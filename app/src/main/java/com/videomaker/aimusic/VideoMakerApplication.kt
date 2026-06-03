@@ -645,7 +645,6 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                     // App ConfigurableObjects
                     get<com.videomaker.aimusic.core.ads.AdPlacementConfigService>(),
                     get<com.videomaker.aimusic.core.language.LanguageConfigService>(),
-                    get<com.videomaker.aimusic.core.data.remote.RegionDetectionConfig>(),
                     get<com.videomaker.aimusic.core.notification.NotificationScheduleConfigService>(),
                     // ACCCore ConfigurableObjects
                     get<co.alcheclub.lib.acccore.ads.loader.PlacementConfigService>()
