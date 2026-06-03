@@ -165,6 +165,15 @@ class TrendingPopupCoordinator(
                 _templatePopup.value = TrendingPopupState.Showing(pick)
                 trackShow(contentType = "template", contentId = pick.id,
                     location = AnalyticsEvent.Value.Location.POPUP_TRENDING_TEMPLATE)
+                // The promote-content template is now visible → template_impression.
+                runCatching {
+                    Analytics.trackTemplateImpression(
+                        templateId = pick.id,
+                        templateName = pick.name,
+                        location = AnalyticsEvent.Value.Location.POPUP_PROMOTE_CONTENT,
+                        screenSessionId = ""
+                    )
+                }
             }
             TrendingPopupTab.SONGS -> {
                 val pick = selector.pickSong(excludeIds) ?: return
@@ -172,6 +181,15 @@ class TrendingPopupCoordinator(
                 _songPopup.value = TrendingPopupState.Showing(pick)
                 trackShow(contentType = "song", contentId = pick.id.toString(),
                     location = AnalyticsEvent.Value.Location.POPUP_TRENDING_SONG)
+                // The promote-content song is now visible → song_impression.
+                runCatching {
+                    Analytics.trackSongImpression(
+                        songId = pick.id.toString(),
+                        songName = pick.name,
+                        location = AnalyticsEvent.Value.Location.POPUP_PROMOTE_CONTENT,
+                        screenSessionId = ""
+                    )
+                }
             }
         }
     }
@@ -213,6 +231,14 @@ class TrendingPopupCoordinator(
     fun onTemplatePopupCta(template: VideoTemplate) {
         trackCta(contentType = "template", contentId = template.id,
             location = AnalyticsEvent.Value.Location.POPUP_TRENDING_TEMPLATE)
+        // User selected the promote-content template → template_click.
+        runCatching {
+            Analytics.trackTemplateClick(
+                templateId = template.id,
+                templateName = template.name,
+                location = AnalyticsEvent.Value.Location.POPUP_PROMOTE_CONTENT
+            )
+        }
         _templatePopup.value = TrendingPopupState.Hidden
         _navigationEvent.trySend(
             TrendingPopupNavEvent.OpenTemplatePreviewer(
@@ -226,6 +252,14 @@ class TrendingPopupCoordinator(
     fun onSongPopupCta(song: MusicSong) {
         trackCta(contentType = "song", contentId = song.id.toString(),
             location = AnalyticsEvent.Value.Location.POPUP_TRENDING_SONG)
+        // User selected the promote-content song → song_click.
+        runCatching {
+            Analytics.trackSongClick(
+                songId = song.id.toString(),
+                songName = song.name,
+                location = AnalyticsEvent.Value.Location.POPUP_PROMOTE_CONTENT
+            )
+        }
         _songPopup.value = TrendingPopupState.Hidden
         _navigationEvent.trySend(
             TrendingPopupNavEvent.OpenTemplatePreviewer(

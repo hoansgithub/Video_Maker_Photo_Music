@@ -71,6 +71,7 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
 import com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
@@ -420,12 +421,27 @@ fun HomeScreen(
         }
     }
 
+    // Hide a tab's music player the moment the pager COMMITS to leaving that tab, rather than
+    // waiting for the swipe to fully settle. targetPage flips at the gesture/fling commit (well
+    // before settledPage updates), so the sheet disappears together with the swipe motion instead
+    // of lingering through the whole animation and then popping out late.
+    //  - We dismiss a player only when the target is a DIFFERENT tab than the one that owns it,
+    //    so a small drag that snaps back to the Song tab (target stays 1) keeps the player, and
+    //    the banner "Try It" preview (animateScrollToPage(1) → target 1) is never wiped.
+    //  - Songs player → tab 1, Projects player → tab 2.
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.targetPage }
+            .distinctUntilChanged()
+            .collect { targetPage ->
+                if (targetPage != 1) songsViewModel.onDismissPlayer()
+                if (targetPage != 2) projectsViewModel.onDismissPlayer()
+            }
+    }
+
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { settledPage ->
-                songsViewModel.onDismissPlayer()
-                projectsViewModel.onDismissPlayer()
                 val currentTab = tabNameByIndex(settledPage)
                 // Tab render must precede any rewarded popup on this tab, same timing as tab_view.
                 Analytics.trackTabRender(currentTab)
@@ -503,10 +519,20 @@ fun HomeScreen(
                             onNavigateToSearch = onNavigateToSearch,
                             onNavigateToTemplateDetail = onNavigateToTemplateDetail,
                             onNavigateToAllTemplates = onNavigateToAllTemplates,
-                            onNavigateToSongPreview = { songId ->
+                            onNavigateToSongPreview = { song ->
                                 // Switch to the Song tab and open the preview player for this song.
+                                // The banner hands us the already-resolved MusicSong, so open the
+                                // player SYNCHRONOUSLY (no re-fetch) — the popup appears immediately
+                                // instead of after a network round-trip. animateScrollToPage(1) sets
+                                // targetPage = 1, and the tab-leave handler only dismisses the Song
+                                // player when the target is NOT the Song tab, so this just-opened
+                                // popup survives the page change.
                                 coroutineScope.launch { pagerState.animateScrollToPage(1) }
-                                songsViewModel.onSongClickById(songId)
+                                songsViewModel.onSongClick(
+                                    song = song,
+                                    playlist = emptyList(),
+                                    categoryLocation = AnalyticsEvent.Value.Location.SONG_PREVIEW,
+                                )
                             },
                             topBarHeight = topBarHeight
                         )
@@ -813,7 +839,7 @@ private fun GalleryTabContent(
     onNavigateToSearch: () -> Unit = {},
     onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTemplates: (String?) -> Unit = {},
-    onNavigateToSongPreview: (Long) -> Unit = {},
+    onNavigateToSongPreview: (MusicSong) -> Unit = {},
     topBarHeight: Dp = 0.dp
 ) {
     GalleryScreen(
