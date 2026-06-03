@@ -103,6 +103,7 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.permission.MediaPermissionCoordinator
+import com.videomaker.aimusic.core.rating.RatingTriggerManager
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -194,6 +195,7 @@ fun AssetPickerScreen(
     val activity = context as? Activity
     val adsLoaderService = koinInject<AdsLoaderService>()
     val mediaPermissionCoordinator = koinInject<MediaPermissionCoordinator>()
+    val ratingTriggerManager = koinInject<RatingTriggerManager>()
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridScrollState by viewModel.gridScrollState.collectAsStateWithLifecycle()
@@ -287,6 +289,17 @@ fun AssetPickerScreen(
                 popType = AnalyticsEvent.Value.PopType.CUSTOM
             )
         }
+    }
+
+    // Enforce one popup at a time: the media permission popup takes priority over the
+    // global rating popup. While a permission dialog is visible, suppress the rating
+    // overlay so it only appears after the permission flow resolves (Permission -> Rating).
+    val isPermissionPopupVisible = showPermissionPromoDialog || showPermissionSettingsDialog
+    LaunchedEffect(isPermissionPopupVisible) {
+        ratingTriggerManager.setRatingSuppressed(isPermissionPopupVisible)
+    }
+    DisposableEffect(Unit) {
+        onDispose { ratingTriggerManager.setRatingSuppressed(false) }
     }
 
     // Handle navigation events - Channel pattern (Google official) - one-time delivery, no replay

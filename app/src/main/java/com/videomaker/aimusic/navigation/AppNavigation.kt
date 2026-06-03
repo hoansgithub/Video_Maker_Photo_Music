@@ -158,6 +158,7 @@ fun AppNavigation(
 
     val ratingTriggerManager = koinInject<com.videomaker.aimusic.core.rating.RatingTriggerManager>()
     val ratingStep by ratingTriggerManager.ratingStep.collectAsStateWithLifecycle()
+    val ratingSuppressed by ratingTriggerManager.isSuppressed.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -848,9 +849,12 @@ fun AppNavigation(
         }
     }
 
-    // Global rating popup overlay
+    // Global rating popup overlay.
+    // Suppressed while a higher-priority popup (e.g. the picker permission dialog) is visible,
+    // so only one popup shows at a time. The pending step is preserved and reappears once released.
+    val effectiveRatingStep = if (ratingSuppressed) RatingStep.None else ratingStep
     AnimatedContent(
-        targetState = ratingStep,
+        targetState = effectiveRatingStep,
         transitionSpec = { fadeIn() togetherWith fadeOut() },
         label = "rating_popup_transition"
     ) { step ->

@@ -71,6 +71,22 @@ class RatingTriggerManager(
     private val _ratingStep = MutableStateFlow(RatingStep.None)
     val ratingStep: StateFlow<RatingStep> = _ratingStep.asStateFlow()
 
+    /**
+     * When true, the global rating overlay must stay hidden even if [ratingStep] is set.
+     * Used to enforce "one popup at a time" — e.g. the media permission popup takes
+     * priority over the rating popup, so the rating is deferred until permission resolves.
+     */
+    private val _suppressed = MutableStateFlow(false)
+    val isSuppressed: StateFlow<Boolean> = _suppressed.asStateFlow()
+
+    /**
+     * Suppress (true) or release (false) the rating overlay. The pending [ratingStep] is
+     * preserved while suppressed, so the popup reappears once suppression is released.
+     */
+    fun setRatingSuppressed(suppressed: Boolean) {
+        _suppressed.value = suppressed
+    }
+
     private val _showRatingPopup = Channel<Unit>(Channel.BUFFERED)
     val showRatingPopup = _showRatingPopup.receiveAsFlow()
 
