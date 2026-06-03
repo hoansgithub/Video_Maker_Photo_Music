@@ -366,7 +366,7 @@ private fun PageGrid(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(
-                        items = pageState.items,
+                        items = pageState.items.distinctBy { it.id },
                         key = { it.id },
                         contentType = { "template" }  // Better item recycling
                     ) { template ->

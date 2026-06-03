@@ -521,7 +521,13 @@ fun AssetPickerScreen(
             popType = AnalyticsEvent.Value.PopType.SYSTEM
         )
         if (granted) {
-            cameraUri?.let { cameraLauncher.launch(it) }
+            cameraUri?.let { uri ->
+                try {
+                    cameraLauncher.launch(uri)
+                } catch (e: android.content.ActivityNotFoundException) {
+                    android.util.Log.e("AssetPicker", "No camera app available: ${e.message}")
+                }
+            }
         }
     }
 
@@ -540,7 +546,11 @@ fun AssetPickerScreen(
                 context, Manifest.permission.CAMERA
             ) == PackageManager.PERMISSION_GRANTED
             if (hasCameraPermission) {
-                cameraLauncher.launch(uri)
+                try {
+                    cameraLauncher.launch(uri)
+                } catch (e: android.content.ActivityNotFoundException) {
+                    android.util.Log.e("AssetPicker", "No camera app available: ${e.message}")
+                }
             } else {
                 Analytics.trackPermissionRender(
                     perType = AnalyticsEvent.Value.PerType.CAMERA,

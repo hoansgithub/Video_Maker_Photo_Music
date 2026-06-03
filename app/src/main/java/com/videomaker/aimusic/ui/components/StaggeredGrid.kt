@@ -38,7 +38,8 @@ fun StaggeredGrid(
         modifier = modifier
     ) { measurables, constraints ->
         val spacingPx = spacing.roundToPx()
-        val columnWidth = (constraints.maxWidth - spacingPx * (columns - 1)) / columns
+        val columnWidth = ((constraints.maxWidth - spacingPx * (columns - 1)) / columns)
+            .coerceAtLeast(0)
 
         // Track height of each column
         val columnHeights = IntArray(columns) { 0 }
@@ -47,9 +48,9 @@ fun StaggeredGrid(
             // Find shortest column
             val column = columnHeights.indices.minByOrNull { columnHeights[it] } ?: 0
 
-            // Calculate height based on aspect ratio
-            val aspectRatio = aspectRatioProvider(index)
-            val itemHeight = (columnWidth / aspectRatio).toInt()
+            // Calculate height based on aspect ratio; guard against zero/negative aspect ratio
+            val aspectRatio = aspectRatioProvider(index).coerceAtLeast(0.01f)
+            val itemHeight = (columnWidth / aspectRatio).toInt().coerceAtLeast(0)
 
             val placeable = measurable.measure(
                 constraints.copy(
@@ -125,7 +126,8 @@ fun <T> StaggeredGrid(
         modifier = modifier
     ) { measurables, constraints ->
         val spacingPx = spacing.roundToPx()
-        val columnWidth = (constraints.maxWidth - spacingPx * (columns - 1)) / columns
+        val columnWidth = ((constraints.maxWidth - spacingPx * (columns - 1)) / columns)
+            .coerceAtLeast(0)
 
         // Track height of each column
         val columnHeights = IntArray(columns) { 0 }
@@ -134,9 +136,9 @@ fun <T> StaggeredGrid(
             // Find shortest column
             val column = columnHeights.indices.minByOrNull { columnHeights[it] } ?: 0
 
-            // Calculate height based on aspect ratio
-            val aspectRatio = aspectRatios.getOrElse(index) { 1f }
-            val itemHeight = (columnWidth / aspectRatio).toInt()
+            // Calculate height based on aspect ratio; guard against zero/negative aspect ratio
+            val aspectRatio = aspectRatios.getOrElse(index) { 1f }.coerceAtLeast(0.01f)
+            val itemHeight = (columnWidth / aspectRatio).toInt().coerceAtLeast(0)
 
             val placeable = measurable.measure(
                 constraints.copy(
