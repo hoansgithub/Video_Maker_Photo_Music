@@ -94,6 +94,25 @@ class TrendingPopupCoordinator(
     private val _popupUserDismissEvent = Channel<Unit>(Channel.BUFFERED)
     val popupUserDismissEvent = _popupUserDismissEvent.receiveAsFlow()
 
+    fun isPopupEligible(tab: TrendingPopupTab): Boolean {
+        val snapshot = snapshotStore.get(tab)
+        val cfg = config.read()
+        val now = clock.nowMs()
+        val today = clock.todayEpochDay()
+        val otherShowing = when (tab) {
+            TrendingPopupTab.GALLERY -> _songPopup.value is TrendingPopupState.Showing
+            TrendingPopupTab.SONGS -> _templatePopup.value is TrendingPopupState.Showing
+        }
+
+        return gate.evaluate(
+            snapshot = snapshot,
+            config = cfg,
+            nowMs = now,
+            todayEpochDay = today,
+            otherPopupShowing = otherShowing
+        ) == TrendingPopupGate.Decision.Eligible
+    }
+
     fun onTabFocused(tab: TrendingPopupTab) {
         _activeTab.value = tab
         scope.launch { evaluateAndMaybeShow(tab) }

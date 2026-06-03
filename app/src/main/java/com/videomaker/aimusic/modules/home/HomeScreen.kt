@@ -193,7 +193,7 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) {
-        ratingTriggerManager.onHomeScreenFocused()
+        ratingTriggerManager.onHomeScreenFocused(initialTab)
     }
 
     val tabs = listOf(
