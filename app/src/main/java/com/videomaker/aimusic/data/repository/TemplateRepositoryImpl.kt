@@ -34,6 +34,7 @@ class TemplateRepositoryImpl(
         private const val FN_TEMPLATES_SORTED = "get_templates_sorted"
         private const val FN_TEMPLATES_BY_TAG_SORTED = "get_templates_by_tag_sorted"
         private const val FN_FEATURED_TEMPLATES = "get_featured_templates"
+        private const val FN_ACTIVE_VIBE_TAGS = "get_active_vibe_tags"
         private val COLUMNS_TEMPLATE = Columns.raw(
             "id,name,name_i18n,thumbnail_path,preview_path,song_id,effect_set_id,aspect_ratio," +
             "image_duration_ms,transition_pct,is_premium,is_featured,is_active,sort_order,use_count,view_count," +
@@ -141,8 +142,9 @@ class TemplateRepositoryImpl(
     }
 
     override suspend fun getVibeTags(): Result<List<VibeTag>> = withContext(Dispatchers.IO) {
+        val region = regionProvider.getRegionCode()
         val locale = languageManager.getSelectedLanguage()
-        val cacheKey = ApiCacheManager.keyVibeTags(locale)
+        val cacheKey = ApiCacheManager.keyVibeTags(region, locale)
 
         val cached = apiCacheManager.get<List<VibeTag>>(cacheKey)
         if (cached != null) {
@@ -150,19 +152,13 @@ class TemplateRepositoryImpl(
         }
 
         try {
-            // !inner joins through template_vibe_tags → templates, ensuring only tags that have
-            // at least one *active* linked template are returned. This prevents chips that would
-            // always return empty results when tapped.
-            val tags = supabaseClient.from("vibe_tags")
-                .select(Columns.raw("id,display_name,label_i18n,emoji,template_vibe_tags!inner(vibe_tag_id,templates!inner(id,is_active))")) {
-                    filter {
-                        eq("tag_type", "theme")
-                        eq("is_active", true)
-                        eq("template_vibe_tags.templates.is_active", true)
-                    }
-                    order("sort_order", Order.ASCENDING)
-                    limit(100)
-                }
+            // Server-side function returns only tags that have at least one active
+            // template available in the user's region. Uses EXISTS subquery —
+            // no unnecessary join data in the response.
+            val tags = supabaseClient.postgrest
+                .rpc(FN_ACTIVE_VIBE_TAGS, buildJsonObject {
+                    put("p_region", region)
+                })
                 .decodeList<VibeTagDto>()
                 .map {
                     val localizedName = I18nHelper.getLocalizedValue(
@@ -343,29 +339,10 @@ private data class VibeTagRef(
     @SerialName("sort_order") val sortOrder: Int = 0
 )
 
-/**
- * Junction row for the getVibeTags !inner join — discarded after mapping.
- * template_vibe_tags → templates is a many-to-one FK, so PostgREST returns
- * `templates` as a single nested object, not an array.
- */
-@Serializable
-private data class VibeTagJoinDto(
-    @SerialName("vibe_tag_id") val vibeTagId: String = "",
-    val templates: VibeTagTemplateJoinDto? = null
-)
-
-@Serializable
-private data class VibeTagTemplateJoinDto(
-    val id: String = "",
-    @SerialName("is_active") val isActive: Boolean = true
-)
-
 @Serializable
 private data class VibeTagDto(
     val id: String,
     @SerialName("display_name") val displayName: String,
     @SerialName("label_i18n") val labelI18n: JsonObject? = null,
-    val emoji: String = "",
-    // Included only to satisfy the !inner join chain — not used after mapping
-    @SerialName("template_vibe_tags") val templateVibeTags: List<VibeTagJoinDto> = emptyList()
+    val emoji: String = ""
 )

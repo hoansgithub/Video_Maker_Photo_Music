@@ -137,8 +137,8 @@ class ApiCacheManager(context: Context) {
             "songs_genre_v${SONGS_CACHE_SCHEMA_VERSION}_${genre.lowercase().replace(' ', '_')}"
 
         // ── Template cache keys ──────────────────────────────────────────────
-        /** Dynamic key per locale — vibe tag names are localized from Supabase */
-        fun keyVibeTags(locale: String): String = "vibe_tags_theme_${locale}"
+        /** Dynamic key per region + locale — tags filtered by region, names localized */
+        fun keyVibeTags(region: String, locale: String): String = "vibe_tags_theme_${region}_${locale}"
 
         /** Dynamic key per region + locale — template names use name_i18n */
         fun keyTemplates(region: String, locale: String, limit: Int, offset: Int): String =
