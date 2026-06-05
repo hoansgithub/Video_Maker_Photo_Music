@@ -21,8 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -242,22 +240,23 @@ class FeatureSelectionActivity : AppCompatActivity() {
                                     size.height  // Measure actual height dynamically!
                             }
                     ) {
-                        // ALT ad - bottom layer, always at full opacity
-                        NativeAdView(
-                            placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
-                            modifier = Modifier.fillMaxWidth(),
-                            isDebug = BuildConfig.DEBUG,
-                            onAdClicked = { adClickDetector.onAdClick(it) }
-                        )
-
-                        // PRIMARY ad - top layer, fades out when user selects
-                        NativeAdView(
-                            placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION,
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            isDebug = BuildConfig.DEBUG,
-                            onAdClicked = { adClickDetector.onAdClick(it) }
-                        )
+                        if (delayedHasSelection) {
+                            // ALT ad - shown after user selects a feature
+                            NativeAdView(
+                                placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
+                                modifier = Modifier.fillMaxWidth(),
+                                isDebug = BuildConfig.DEBUG,
+                                onAdClicked = { adClickDetector.onAdClick(it) }
+                            )
+                        } else {
+                            // PRIMARY ad - shown before user selects
+                            NativeAdView(
+                                placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION,
+                                modifier = Modifier.fillMaxWidth(),
+                                isDebug = BuildConfig.DEBUG,
+                                onAdClicked = { adClickDetector.onAdClick(it) }
+                            )
+                        }
                     }
                 }
             }
