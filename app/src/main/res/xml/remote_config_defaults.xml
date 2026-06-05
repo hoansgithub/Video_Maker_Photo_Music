@@ -120,7 +120,7 @@
   <!-- Ad Placements - Native -->
   <entry>
     <key>ad_native_onboarding_language</key>
-    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/3045501749","enabled":true},{"id":"ca-app-pub-7121075950716954/5041109698","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/3045501749","enabled":true},{"id":"ca-app-pub-7121075950716954/5041109698","enabled":true}],"extras":{"layout":"native_big_bait_reversed_white","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
     <key>ad_native_onboarding_language_alt</key>
@@ -128,7 +128,7 @@
   </entry>
   <entry>
     <key>ad_native_onboarding_feature_selection</key>
-    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/3797747576","enabled":true},{"id":"ca-app-pub-7121075950716954/9064413900","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/3797747576","enabled":true},{"id":"ca-app-pub-7121075950716954/9064413900","enabled":true}],"extras":{"layout":"native_big_bait_reversed_white","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
     <key>ad_native_onboarding_feature_selection_alt</key>

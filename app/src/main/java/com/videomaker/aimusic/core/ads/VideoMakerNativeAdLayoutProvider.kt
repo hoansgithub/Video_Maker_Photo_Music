@@ -57,10 +57,47 @@ class VideoMakerNativeAdLayoutProvider : NativeAdLayoutProvider {
             "native_full_screen_bait" -> R.layout.native_full_screen_bait
             "native_showcase_item" -> R.layout.native_showcase_item
             "native_project_card" -> R.layout.native_project_card
+            // White CTA variants — for DEFAULT placements (visual differentiation from ALT ads)
+            "native_small_clean_white" -> R.layout.native_small_clean_white
+            "native_small_bait_white" -> R.layout.native_small_bait_white
+            "native_small_bait_reversed_white" -> R.layout.native_small_bait_reversed_white
+            "native_big_clean_white" -> R.layout.native_big_clean_white
+            "native_big_bait_white" -> R.layout.native_big_bait_white
+            "native_big_bait_reversed_white" -> R.layout.native_big_bait_reversed_white
             else -> {
                 android.util.Log.w("NativeAdLayoutProvider", "⚠️ Unknown layout: $layoutName")
                 null
             }
+        }
+    }
+
+    /**
+     * Get aspect ratio (width/height) for Compose sizing.
+     * Small layouts: 390:200 = 1.95, Big layouts: 412:304 ≈ 1.355
+     */
+    override fun getLayoutRatio(layoutName: String): Float? {
+        return when {
+            layoutName.startsWith("native_small_") -> 390f / 200f
+            layoutName.startsWith("native_big_") -> 412f / 304f
+            layoutName.startsWith("native_full_screen_") -> null
+            layoutName == "native_showcase_item" -> null
+            layoutName == "native_project_card" -> null
+            else -> null
+        }
+    }
+
+    /**
+     * Get minimum height (dp) for Compose sizing.
+     * Small layouts: 200dp, Big layouts: 304dp
+     */
+    override fun getLayoutMinHeight(layoutName: String): Int? {
+        return when {
+            layoutName.startsWith("native_small_") -> 200
+            layoutName.startsWith("native_big_") -> 304
+            layoutName.startsWith("native_full_screen_") -> null
+            layoutName == "native_showcase_item" -> null
+            layoutName == "native_project_card" -> null
+            else -> null
         }
     }
 
