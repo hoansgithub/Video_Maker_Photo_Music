@@ -25,6 +25,8 @@ import kotlin.random.Random
 interface PopupSnapshotStore {
     fun get(tab: TrendingPopupTab): TrendingPopupDailySnapshot?
     fun set(tab: TrendingPopupTab, snapshot: TrendingPopupDailySnapshot)
+    fun getFocusCount(tab: TrendingPopupTab): Int
+    fun incrementFocusCount(tab: TrendingPopupTab)
 }
 
 /** Indirection so tests can supply a fake config without Firebase. */
@@ -72,6 +74,12 @@ class TrendingPopupCoordinator(
     }.stateIn(scope, SharingStarted.Eagerly, false)
 
     /**
+     * Optional callback to check if the rating popup is currently visible.
+     * Prevents showing trending popups when rating popup is active.
+     */
+    var isRatingShowing: () -> Boolean = { false }
+
+    /**
      * Which popup surface (Home tab) is currently visible to the user.
      * null = no popup-eligible surface is visible (e.g. My Videos tab, or a pushed route).
      *
@@ -95,14 +103,16 @@ class TrendingPopupCoordinator(
     val popupUserDismissEvent = _popupUserDismissEvent.receiveAsFlow()
 
     fun isPopupEligible(tab: TrendingPopupTab): Boolean {
+        if (snapshotStore.getFocusCount(tab) < 2) return false
+
         val snapshot = snapshotStore.get(tab)
         val cfg = config.read()
         val now = clock.nowMs()
         val today = clock.todayEpochDay()
-        val otherShowing = when (tab) {
+        val otherShowing = (when (tab) {
             TrendingPopupTab.GALLERY -> _songPopup.value is TrendingPopupState.Showing
             TrendingPopupTab.SONGS -> _templatePopup.value is TrendingPopupState.Showing
-        }
+        }) || isRatingShowing()
 
         return gate.evaluate(
             snapshot = snapshot,
@@ -115,6 +125,7 @@ class TrendingPopupCoordinator(
 
     fun onTabFocused(tab: TrendingPopupTab) {
         _activeTab.value = tab
+        snapshotStore.incrementFocusCount(tab)
         scope.launch { evaluateAndMaybeShow(tab) }
     }
 
@@ -134,14 +145,16 @@ class TrendingPopupCoordinator(
         }
         if (alreadyShowing) return
 
+        if (snapshotStore.getFocusCount(tab) < 2) return
+
         val snapshot = snapshotStore.get(tab)
         val cfg = config.read()
         val now = clock.nowMs()
         val today = clock.todayEpochDay()
-        val otherShowing = when (tab) {
+        val otherShowing = (when (tab) {
             TrendingPopupTab.GALLERY -> _songPopup.value is TrendingPopupState.Showing
             TrendingPopupTab.SONGS -> _templatePopup.value is TrendingPopupState.Showing
-        }
+        }) || isRatingShowing()
 
         val decision = gate.evaluate(
             snapshot = snapshot,

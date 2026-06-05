@@ -55,6 +55,9 @@ class RatingTriggerManager(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     init {
+        trendingPopupCoordinator.isRatingShowing = {
+            _ratingStep.value != RatingStep.None && !_suppressed.value
+        }
         scope.launch {
             trendingPopupCoordinator.popupUserDismissEvent.collect {
                 if (isRatingDeferred) {
