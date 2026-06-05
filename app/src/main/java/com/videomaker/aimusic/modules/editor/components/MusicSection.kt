@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.PlayingAnimationBars
@@ -84,7 +85,56 @@ internal fun MusicSection(
             .background(PlayerCardBackground)
             .padding(12.dp)
     ) {
-        // Seeker row - TOP
+        // Song info row - TOP
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Album cover thumbnail
+            AppAsyncImage(
+                imageUrl = coverUrl,
+                contentDescription = songName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(8.dp))
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Song name
+            Text(
+                text = songName,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+
+            // Playing animation indicator
+            if (isPlaying) {
+                Spacer(modifier = Modifier.width(8.dp))
+                PlayingAnimationBars()
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Separator line
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color.White.copy(alpha = 0.1f))
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Seeker row - BOTTOM
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -166,54 +216,19 @@ internal fun MusicSection(
                 modifier = Modifier.width(36.dp)
             )
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Separator line
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(Color.White.copy(alpha = 0.1f))
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Song info row - BOTTOM (display-only)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Album cover thumbnail
-            AppAsyncImage(
-                imageUrl = coverUrl,
-                contentDescription = songName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Song name
-            Text(
-                text = songName,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
-
-            // Playing animation indicator
-            if (isPlaying) {
-                Spacer(modifier = Modifier.width(8.dp))
-                PlayingAnimationBars()
-            }
-        }
     }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF1A1A1A)
+@Composable
+private fun MusicSectionPreview() {
+    MusicSection(
+        songName = "Sunflower - Post Malone, Swae Lee",
+        coverUrl = "",
+        duration = "3:24",
+        currentPosition = 0.35f,
+        isPlaying = true,
+        onSeek = {},
+        onPlayPauseClick = {}
+    )
 }

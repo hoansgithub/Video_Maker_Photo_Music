@@ -301,9 +301,19 @@ class EditorViewModel(
                         val selectedIndex = prev?.selectedAssetIndex
                             ?.coerceIn(0, loadedProject.assets.lastIndex.coerceAtLeast(0)) ?: 0
 
+                        // Backfill missing cover URL for projects saved before cover URL was persisted
+                        var project = loadedProject
+                        if (project.settings.musicSongId != null && project.settings.musicSongCoverUrl == null) {
+                            val song = try { fetchSongWithRetry(project.settings.musicSongId) } catch (_: Exception) { null }
+                            if (song?.coverUrl?.isNotBlank() == true) {
+                                project = project.copy(
+                                    settings = project.settings.copy(musicSongCoverUrl = song.coverUrl)
+                                )
+                            }
+                        }
+
                         // Load beat-sync data if music is selected but beatSyncData is null
                         // (beatSyncData is not persisted in database, must be loaded from Supabase)
-                        var project = loadedProject
                         if (project.settings.musicSongId != null && project.settings.beatSyncData == null) {
                             android.util.Log.d("EditorViewModel", "Loading beat-sync data for saved project: ${project.settings.musicSongId}")
 
@@ -520,6 +530,7 @@ class EditorViewModel(
                     musicSongId = data.musicSongId,
                     musicSongName = song?.name, // For display in UI
                     musicSongUrl = song?.mp3Url, // For playback (same URL as previewer)
+                    musicSongCoverUrl = song?.coverUrl, // For display in music section
                     processedAudioUri = preprocessedUri, // Already preprocessed - ready for preview
                     aspectRatio = data.aspectRatio
                 )
