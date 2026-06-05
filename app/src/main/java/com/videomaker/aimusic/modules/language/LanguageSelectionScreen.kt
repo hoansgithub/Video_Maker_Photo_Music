@@ -441,23 +441,23 @@ fun LanguageSelectionScreen(
                         bottomSectionHeight = size.height  // Measure actual height dynamically!
                     }
             ) {
-                // ALT ad - bottom layer, always at full opacity
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
-                    modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG,
-                    onAdClicked = { adClickDetector.onAdClick(it) }
-                )
-
-                // PRIMARY ad - top layer, fades out when user selects
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .alpha(if (delayedHasSelection) 0f else 1f),
-                    isDebug = BuildConfig.DEBUG,
-                    onAdClicked = { adClickDetector.onAdClick(it) }
-                )
+                if (delayedHasSelection) {
+                    // ALT ad - shown after user selects a language
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
+                        modifier = Modifier.fillMaxWidth(),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                } else {
+                    // PRIMARY ad - shown before user selects
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
+                        modifier = Modifier.fillMaxWidth(),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                }
             }
         }
 
