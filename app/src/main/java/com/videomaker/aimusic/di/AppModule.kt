@@ -504,7 +504,8 @@ class AssetPickerViewModelFactory(
     private val songRepository: SongRepository,
     private val adsLoaderService: AdsLoaderService,
     private val notificationScheduler: NotificationScheduler,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val beatSyncRepository: BeatSyncRepository
 ) {
     fun create(
         projectId: String? = null,
@@ -513,7 +514,9 @@ class AssetPickerViewModelFactory(
         aspectRatio: com.videomaker.aimusic.domain.model.AspectRatio? = null,
         resumeDraftId: String? = null,
         selectedAssetUris: List<String> = emptyList(),
-        isEditingMode: Boolean = false
+        isEditingMode: Boolean = false,
+        durationSongId: Long = -1L,
+        durationTrimStartMs: Long = 0L
     ): AssetPickerViewModel {
         return AssetPickerViewModel(
             context = application,
@@ -524,13 +527,16 @@ class AssetPickerViewModelFactory(
             adsLoaderService = adsLoaderService,
             notificationScheduler = notificationScheduler,
             preferencesManager = preferencesManager,
+            beatSyncRepository = beatSyncRepository,
             projectId = projectId,
             templateId = templateId,
             overrideSongId = overrideSongId,
             aspectRatio = aspectRatio,
             resumeDraftId = resumeDraftId,
             selectedAssetUris = selectedAssetUris,
-            isEditingMode = isEditingMode
+            isEditingMode = isEditingMode,
+            durationSongId = durationSongId,
+            durationTrimStartMs = durationTrimStartMs
         )
     }
 }
@@ -965,7 +971,8 @@ val presentationModule = module {
             songRepository = get(),
             adsLoaderService = get(),
             notificationScheduler = get(),
-            preferencesManager = get()
+            preferencesManager = get(),
+            beatSyncRepository = get()
         )
     }
 

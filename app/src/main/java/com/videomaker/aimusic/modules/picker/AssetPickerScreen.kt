@@ -36,20 +36,25 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -128,6 +133,13 @@ import java.io.File
 private const val THUMBNAIL_SIZE_DP = 120
 private const val GRID_COLUMNS = 3
 
+/** Selection tray sizing */
+private const val TRAY_ITEM_SIZE_DP = 64
+private const val CHECK_BUTTON_SIZE_DP = 56
+
+/** Minimum number of tray cells kept visible (selected + dashed placeholders) */
+private const val TRAY_VISIBLE_SLOTS = 4
+
 /**
  * Delay before loading images to allow initial composition to complete
  * This prevents janky animation when loading images on first render
@@ -197,6 +209,7 @@ fun AssetPickerScreen(
     val ratingTriggerManager = koinInject<RatingTriggerManager>()
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val durationInfo by viewModel.durationInfo.collectAsStateWithLifecycle()
     val gridScrollState by viewModel.gridScrollState.collectAsStateWithLifecycle()
     var hasInitializedPermissionCheck by remember { mutableStateOf(false) }
     var showExitConfirmDialog by remember { mutableStateOf(false) }
@@ -651,19 +664,25 @@ fun AssetPickerScreen(
             AssetPickerContent(
                 uiState = uiState,
                 minSelection = viewModel.minSelection,
+                maxSelection = AssetPickerViewModel.MAX_SELECTION,
+                durationText = durationInfo.formatted,
+                additionalForIdeal = durationInfo.additionalForIdeal,
                 initialGridScrollState = gridScrollState,
                 onAlbumSelect = { albumId -> viewModel.selectAlbum(albumId) },
-                onAssetClick = { asset -> viewModel.toggleAssetSelection(asset) },
+                onAssetClick = { asset -> viewModel.addAssetSelection(asset) },
+                onRemoveSelectedAt = { index -> viewModel.removeSelectedAt(index) },
                 onGridScrollChanged = { index, offset ->
                     viewModel.onGridScrollChanged(index, offset)
                 },
                 onConfirmClick = { viewModel.confirmSelection() },
-                onClearSelection = { viewModel.clearSelection() },
                 onCloseClick = {
                     requestExit()
                 },
                 onRequestFullPermission = {
                     showPermissionGateForMode(PermissionMode.DENIED)
+                },
+                onManageAccess = {
+                    showPermissionGateForMode(PermissionMode.LIMITED)
                 },
                 onAddMorePhotos = onAddMorePhotos,
                 onCameraClick = onCameraClick
@@ -756,27 +775,25 @@ fun AssetPickerScreen(
 private fun AssetPickerContent(
     uiState: AssetPickerUiState,
     minSelection: Int,
+    maxSelection: Int,
+    durationText: String,
+    additionalForIdeal: Int,
     initialGridScrollState: AssetPickerGridScrollState,
     onAlbumSelect: (String) -> Unit,
     onAssetClick: (GalleryAsset) -> Unit,
+    onRemoveSelectedAt: (Int) -> Unit,
     onGridScrollChanged: (Int, Int) -> Unit,
     onConfirmClick: () -> Unit,
-    onClearSelection: () -> Unit,
     onCloseClick: () -> Unit,
     onRequestFullPermission: () -> Unit,
+    onManageAccess: () -> Unit,
     onAddMorePhotos: () -> Unit,
     onCameraClick: () -> Unit
 ) {
-    // Selection count and confirm button
-    val selectedCount =
-        if (uiState is AssetPickerUiState.WithAssets) uiState.selectedAssets.size else 0
-    val canConfirm = selectedCount >= minSelection
-
-
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Header
+        // Header — center shows an album dropdown once assets are loaded, otherwise a title
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -791,10 +808,18 @@ private fun AssetPickerContent(
                 )
             }
 
-            Text(
-                text = stringResource(R.string.picker_title),
-                style = MaterialTheme.typography.titleLarge
-            )
+            if (uiState is AssetPickerUiState.WithAssets && uiState.albums.isNotEmpty()) {
+                AlbumDropdown(
+                    albums = uiState.albums,
+                    selectedAlbumId = uiState.selectedAlbumId,
+                    onAlbumSelect = onAlbumSelect
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.picker_title),
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
 
             IconButton(onClick = onCameraClick) {
                 Icon(
@@ -802,16 +827,6 @@ private fun AssetPickerContent(
                     contentDescription = stringResource(R.string.close)
                 )
             }
-
-        }
-
-        // Album filter chips — only shown when assets are loaded
-        if (uiState is AssetPickerUiState.WithAssets.AllPermission && uiState.albums.isNotEmpty()) {
-            AlbumFilterChips(
-                albums = uiState.albums,
-                selectedAlbumId = uiState.selectedAlbumId,
-                onAlbumSelect = onAlbumSelect
-            )
         }
 
         // Content based on state
@@ -828,17 +843,29 @@ private fun AssetPickerContent(
             }
 
             is AssetPickerUiState.WithAssets -> {
-                // Limited access banner — shown only for partial permission (Android 14+)
-                if (uiState is AssetPickerUiState.WithAssets.LimitPermission) {
-                    LimitedAccessBanner(onAddMoreClick = onAddMorePhotos)
+                val selectedCount = uiState.selectedAssets.size
+                val maxReached = selectedCount >= maxSelection
+                val isLimited = uiState is AssetPickerUiState.WithAssets.LimitPermission
+
+                // Count of how many times each asset is selected (for the "xN" badge)
+                val selectionCountById = remember(uiState.selectedAssets) {
+                    uiState.selectedAssets.groupingBy { it.id }.eachCount()
                 }
 
-                if (uiState.filteredAssets.isEmpty()) {
+                // Limited access banner — shown only for partial permission (Android 14+)
+                if (isLimited) {
+                    LimitedAccessBanner(onManageClick = onManageAccess)
+                }
+
+                if (uiState.filteredAssets.isEmpty() && !isLimited) {
                     EmptyGalleryContent(modifier = Modifier.weight(1f))
                 } else {
                     ImageGrid(
                         assets = uiState.filteredAssets,
-                        selectedAssets = uiState.selectedAssets,
+                        selectionCountById = selectionCountById,
+                        maxReached = maxReached,
+                        showAddTile = isLimited,
+                        onAddTileClick = onAddMorePhotos,
                         onAssetClick = onAssetClick,
                         initialScrollState = initialGridScrollState,
                         onScrollChanged = onGridScrollChanged,
@@ -846,124 +873,16 @@ private fun AssetPickerContent(
                     )
                 }
 
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp, vertical = 14.dp)
-                        .fillMaxWidth()
-                        .background(Color.White.copy(0.1f), RoundedCornerShape(16.dp)),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-
-                        if (uiState.selectedAssets.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.picker_min_selection, minSelection),
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontSize = 14.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier
-                                    .weight(1f)
-                            )
-                        } else {
-
-                            Icon(
-                                painter = painterResource(R.drawable.ic_trash),
-                                tint = Color.White,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clickableSingle {
-                                        onClearSelection.invoke()
-                                    }
-                            )
-
-                            Text(
-                                text = stringResource(
-                                    R.string.picker_current_selection,
-                                    uiState.selectedAssets.size
-                                ),
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontSize = 14.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier
-                                    .weight(1f)
-                            )
-                        }
-
-                        Button(
-                            onClick = onConfirmClick,
-                            enabled = canConfirm,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(
-                                    alpha = 0.4f
-                                )
-                            ),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Text(
-                                stringResource(
-                                    R.string.picker_done,
-                                    uiState.selectedAssets.size,
-                                    AssetPickerViewModel.MAX_SELECTION
-                                )
-                            )
-                        }
-                    }
-
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(PlayerCardBackground)
-                    )
-
-                    val rowState = rememberLazyListState()
-                    LaunchedEffect(uiState.selectedAssets.size) {
-                        if (uiState.selectedAssets.isNotEmpty()) {
-                            rowState.animateScrollToItem(uiState.selectedAssets.size - 1)
-                        }
-                    }
-
-                    LazyRow(
-                        state = rowState,
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp)
-                    ) {
-
-                        items(
-                            items = uiState.selectedAssets,
-                            key = { it.id }
-                        ) { asset ->
-                            ImageGridChooseItem(
-                                asset
-                            ) {
-                                onAssetClick.invoke(asset)
-                            }
-                        }
-
-                        items(maxOf(0, minSelection - uiState.selectedAssets.size)) {
-                            Image(
-                                painter = painterResource(R.drawable.img_out_line),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(80.dp)
-                            )
-                        }
-                    }
-                }
+                PickerSelectionBar(
+                    selectedAssets = uiState.selectedAssets,
+                    minSelection = minSelection,
+                    maxSelection = maxSelection,
+                    durationText = durationText,
+                    additionalForIdeal = additionalForIdeal,
+                    onRemoveSelectedAt = onRemoveSelectedAt,
+                    onConfirmClick = onConfirmClick
+                )
             }
-
 
             is AssetPickerUiState.Initial -> {
                 // Show loading while checking permissions (don't show denied state yet)
@@ -986,44 +905,203 @@ private fun AssetPickerContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Bottom selection bar: estimated duration + dynamic hint message on top,
+ * a horizontally scrollable tray of selected photos (with remove buttons) and
+ * the confirm (check) button below. The confirm button is disabled until
+ * [minSelection] photos are selected.
+ */
 @Composable
-private fun AlbumFilterChips(
-    albums: List<AlbumFilter>,
-    selectedAlbumId: String,
-    onAlbumSelect: (String) -> Unit
+private fun PickerSelectionBar(
+    selectedAssets: List<GalleryAsset>,
+    minSelection: Int,
+    maxSelection: Int,
+    durationText: String,
+    additionalForIdeal: Int,
+    onRemoveSelectedAt: (Int) -> Unit,
+    onConfirmClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        albums.forEach { album ->
-            val isSelected = album.id == selectedAlbumId
+    val selectedCount = selectedAssets.size
+    val canConfirm = selectedCount >= minSelection
+    val maxReached = selectedCount >= maxSelection
 
-            FilterChip(
-                selected = isSelected,
-                onClick = { onAlbumSelect(album.id) },
-                label = {
-                    Text(
-                        text = "${album.displayName} (${album.count})",
-                        style = MaterialTheme.typography.labelMedium
+    val message: String = when {
+        maxReached -> stringResource(R.string.picker_max_reached, maxSelection)
+        selectedCount < minSelection -> stringResource(R.string.picker_min_selection, minSelection)
+        additionalForIdeal > 0 -> stringResource(R.string.picker_add_more_ideal, additionalForIdeal)
+        else -> stringResource(R.string.picker_more_photos_longer, maxSelection)
+    }
+    val messageColor = if (maxReached) Color(0xFFE8A33D) else MaterialTheme.colorScheme.onSurfaceVariant
+
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 12.dp, vertical = 14.dp)
+            .fillMaxWidth()
+            .background(Color.White.copy(0.1f), RoundedCornerShape(16.dp))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
+                color = messageColor,
+                modifier = Modifier.weight(1f)
+            )
+            DurationPill(text = durationText)
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            val rowState = rememberLazyListState()
+            LaunchedEffect(selectedCount) {
+                if (selectedCount > 0) {
+                    rowState.animateScrollToItem(selectedCount - 1)
+                }
+            }
+
+            LazyRow(
+                state = rowState,
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(vertical = 4.dp)
+            ) {
+                // Selected photos — index-keyed because the same photo can appear multiple times
+                itemsIndexed(
+                    items = selectedAssets,
+                    key = { index, asset -> "${asset.id}_$index" }
+                ) { index, asset ->
+                    SelectedTrayItem(
+                        asset = asset,
+                        onRemove = { onRemoveSelectedAt(index) }
                     )
-                },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                )
+                }
+
+                // Empty dashed placeholders so remaining slots stay visible
+                val emptySlots = maxOf(0, TRAY_VISIBLE_SLOTS - selectedCount)
+                items(emptySlots) {
+                    Image(
+                        painter = painterResource(R.drawable.img_out_line),
+                        contentDescription = null,
+                        modifier = Modifier.size(TRAY_ITEM_SIZE_DP.dp)
+                    )
+                }
+            }
+
+            ConfirmCheckButton(
+                enabled = canConfirm,
+                onClick = onConfirmClick
             )
         }
     }
 }
 
 @Composable
+private fun DurationPill(text: String) {
+    Box(
+        modifier = Modifier
+            .background(Color.White.copy(0.12f), RoundedCornerShape(50))
+            .padding(horizontal = 14.dp, vertical = 6.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp
+            ),
+            color = TextPrimaryDark
+        )
+    }
+}
+
+@Composable
+private fun ConfirmCheckButton(
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(CHECK_BUTTON_SIZE_DP.dp)
+            .clip(CircleShape)
+            .background(if (enabled) Primary else Primary.copy(alpha = 0.35f))
+            .clickableSingle(enabled = enabled) { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Check,
+            contentDescription = stringResource(R.string.picker_selected),
+            tint = FoundationBlack,
+            modifier = Modifier.size(28.dp)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AlbumDropdown(
+    albums: List<AlbumFilter>,
+    selectedAlbumId: String,
+    onAlbumSelect: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedName = albums.find { it.id == selectedAlbumId }?.displayName
+        ?: albums.firstOrNull()?.displayName.orEmpty()
+
+    Box {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickableSingle { expanded = true }
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = selectedName,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold
+            )
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            albums.forEach { album ->
+                DropdownMenuItem(
+                    text = { Text("${album.displayName} (${album.count})") },
+                    onClick = {
+                        onAlbumSelect(album.id)
+                        expanded = false
+                    },
+                    trailingIcon = {
+                        if (album.id == selectedAlbumId) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = Primary
+                            )
+                        }
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun LimitedAccessBanner(
-    onAddMoreClick: () -> Unit
+    onManageClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -1043,8 +1121,9 @@ private fun LimitedAccessBanner(
             color = TextPrimaryDark,
             modifier = Modifier.weight(1f)
         )
+        Spacer(Modifier.width(12.dp))
         Text(
-            text = stringResource(R.string.picker_add_more_photos),
+            text = stringResource(R.string.picker_manage_access),
             style = MaterialTheme.typography.labelMedium.copy(
                 fontWeight = FontWeight.SemiBold,
                 color = Primary,
@@ -1053,7 +1132,7 @@ private fun LimitedAccessBanner(
             modifier = Modifier
                 .background(TextPrimaryDark.copy(0.12f), RoundedCornerShape(12.dp))
                 .clickableSingle {
-                    onAddMoreClick.invoke()
+                    onManageClick.invoke()
                 }
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         )
@@ -1063,7 +1142,10 @@ private fun LimitedAccessBanner(
 @Composable
 private fun ImageGrid(
     assets: List<GalleryAsset>,
-    selectedAssets: List<GalleryAsset>,
+    selectionCountById: Map<Long, Int>,
+    maxReached: Boolean,
+    showAddTile: Boolean,
+    onAddTileClick: () -> Unit,
     onAssetClick: (GalleryAsset) -> Unit,
     initialScrollState: AssetPickerGridScrollState,
     onScrollChanged: (Int, Int) -> Unit,
@@ -1093,18 +1175,45 @@ private fun ImageGrid(
         modifier = modifier,
         reverseLayout = false
     ) {
+        // "Add more photos" tile — only in limited-access mode
+        if (showAddTile) {
+            item(key = "add_more_tile") {
+                AddPhotoTile(onClick = onAddTileClick)
+            }
+        }
+
         items(
             items = assets,
             key = { it.id }
         ) { asset ->
-            val isSelected = selectedAssets.any { it.id == asset.id }
-
             ImageGridItem(
                 asset = asset,
-                isSelected = isSelected,
+                selectionCount = selectionCountById[asset.id] ?: 0,
+                maxReached = maxReached,
                 onClick = { onAssetClick(asset) }
             )
         }
+    }
+}
+
+@Composable
+private fun AddPhotoTile(
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.White.copy(0.06f))
+            .clickableSingle(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = stringResource(R.string.picker_add_photos),
+            tint = TextPrimaryDark,
+            modifier = Modifier.size(32.dp)
+        )
     }
 }
 
@@ -1167,44 +1276,68 @@ private fun AssetThumbnail(
 @Composable
 private fun ImageGridItem(
     asset: GalleryAsset,
-    isSelected: Boolean,
+    selectionCount: Int,
+    maxReached: Boolean,
     onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
-            .clickableSingle(onClick = onClick)
+            // Disable adding once the maximum is reached
+            .clickableSingle(enabled = !maxReached, onClick = onClick)
     ) {
         AssetThumbnail(asset = asset)
 
-        if (isSelected) {
+        // Dim the whole grid when the maximum has been reached
+        if (maxReached) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(PickerOverlayBackground.copy(alpha = 0.4f))
             )
-            Image(
-                painter = painterResource(R.drawable.ic_choose_img),
-                contentDescription = stringResource(R.string.picker_selected),
+        }
+
+        // "xN" count badge — clearly shows the photo is selected and how many times
+        if (selectionCount > 0) {
+            CountBadge(
+                count = selectionCount,
                 modifier = Modifier
-                    .size(40.dp)
-                    .align(Alignment.Center)
+                    .padding(6.dp)
+                    .align(Alignment.TopEnd)
             )
         }
     }
 }
 
 @Composable
-private fun ImageGridChooseItem(
+private fun CountBadge(
+    count: Int,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .background(Primary, RoundedCornerShape(8.dp))
+            .padding(horizontal = 8.dp, vertical = 3.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.picker_count_badge, count),
+            color = FoundationBlack,
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp
+        )
+    }
+}
+
+@Composable
+private fun SelectedTrayItem(
     asset: GalleryAsset,
-    onClick: () -> Unit
+    onRemove: () -> Unit
 ) {
     Box(
         modifier = Modifier
-            .size(80.dp)
+            .size(TRAY_ITEM_SIZE_DP.dp)
             .clip(RoundedCornerShape(8.dp))
-            .clickableSingle(onClick = onClick)
     ) {
         AssetThumbnail(asset = asset)
 
@@ -1214,7 +1347,7 @@ private fun ImageGridChooseItem(
             modifier = Modifier
                 .padding(4.dp)
                 .size(20.dp)
-                .clickableSingle { onClick() }
+                .clickableSingle { onRemove() }
                 .align(Alignment.TopEnd)
         )
     }

@@ -109,7 +109,11 @@ sealed interface AppRoute : NavKey {
         val sourceLocation: String? = null,
         val resumeDraftId: String? = null,
         val selectedAssetUris: List<String> = emptyList(),
-        val isEditingMode: Boolean = false
+        val isEditingMode: Boolean = false,
+        // Duration-estimate only (add-images flow): the existing project's song + hook start so the
+        // picker's duration matches what the editor will re-render. Does not affect selection.
+        val durationSongId: Long = -1L,
+        val durationTrimStartMs: Long = 0L
     ) : AppRoute
 
     /**

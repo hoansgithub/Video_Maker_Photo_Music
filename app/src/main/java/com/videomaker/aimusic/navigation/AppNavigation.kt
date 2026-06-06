@@ -559,7 +559,9 @@ fun AppNavigation(
                             aspectRatio = route.aspectRatio,
                             resumeDraftId = route.resumeDraftId,
                             selectedAssetUris = route.selectedAssetUris,
-                            isEditingMode = route.isEditingMode
+                            isEditingMode = route.isEditingMode,
+                            durationSongId = route.durationSongId,
+                            durationTrimStartMs = route.durationTrimStartMs
                         )
                     }
                 )
@@ -619,11 +621,13 @@ fun AppNavigation(
                     onNavigateToExport = { projectId, quality ->
                         backStack.add(AppRoute.Export(projectId, quality))
                     },
-                    onNavigateToAddAssets = { projectId, assetUris ->
+                    onNavigateToAddAssets = { projectId, assetUris, songId, hookStartMs ->
                         backStack.add(AppRoute.AssetPicker(
                             projectId = projectId,
                             selectedAssetUris = assetUris,
-                            isEditingMode = true  // Editing mode: return URIs without saving
+                            isEditingMode = true,  // Editing mode: return URIs without saving
+                            durationSongId = songId,        // for the duration estimate only
+                            durationTrimStartMs = hookStartMs
                         ))
                     }
                 )

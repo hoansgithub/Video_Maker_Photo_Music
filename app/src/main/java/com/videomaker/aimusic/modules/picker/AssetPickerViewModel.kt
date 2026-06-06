@@ -18,8 +18,11 @@ import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.notification.NotificationScheduler
 import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.BeatSyncData
 import com.videomaker.aimusic.domain.model.EditorInitialData
+import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
+import com.videomaker.aimusic.domain.repository.BeatSyncRepository
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
@@ -195,13 +198,18 @@ class AssetPickerViewModel(
     private val adsLoaderService: AdsLoaderService,
     private val notificationScheduler: NotificationScheduler,
     private val preferencesManager: PreferencesManager,
+    private val beatSyncRepository: BeatSyncRepository,
     private val projectId: String? = null, // null = create new project, non-null = add to existing
     private val templateId: String? = null,  // non-null = template mode, bypasses project creation
     private val overrideSongId: Long = -1L,   // >= 0 = song-to-video mode, overrides template song
     private val aspectRatio: AspectRatio? = null,  // User's selected aspect ratio from template previewer
     private val resumeDraftId: String? = null,
     private val selectedAssetUris: List<String> = emptyList(),  // URIs to auto-select (for editing mode)
-    private val isEditingMode: Boolean = false  // true = return URIs without saving to DB
+    private val isEditingMode: Boolean = false,  // true = return URIs without saving to DB
+    // Duration-estimate only (does NOT affect selection/confirm logic). Used by the "add images to
+    // existing project" flow so the picker's estimate matches the editor's beat-synced duration.
+    private val durationSongId: Long = -1L,        // >= 0 = song to load beat-sync data for the estimate
+    private val durationTrimStartMs: Long = 0L     // matches the editor's trimStart for that flow
 ) : ViewModel() {
 
     // Use applicationContext to prevent Activity memory leak
@@ -226,7 +234,7 @@ class AssetPickerViewModel(
     val isSongToVideoMode: Boolean get() = overrideSongId >= 0L
 
     /** Minimum number of images required before confirming */
-    val minSelection: Int get() = 3
+    val minSelection: Int get() = 2
 
     // ============================================
     // STATE
@@ -259,6 +267,32 @@ class AssetPickerViewModel(
 
     // Camera captures are app-private files, so keep them in-memory and merge on reloads.
     private val transientCameraAssets = mutableListOf<GalleryAsset>()
+
+    // ============================================
+    // ESTIMATED DURATION (beat-sync aware)
+    // ============================================
+    // Mirrors the editor: when a song is known we load its beat-sync data and compute the exact
+    // duration the editor will render (Project.calculateBeatSyncDuration). Until/unless beat data
+    // is available, we fall back to the flat 2.8s/photo estimate.
+
+    /**
+     * Picker duration shown in the bottom bar.
+     * @param formatted MM:SS string (matches the editor's Project.formattedDuration)
+     * @param additionalForIdeal extra photos needed to reach the recommended ~15s length
+     */
+    data class PickerDurationInfo(
+        val formatted: String = formatPickerDurationMs(0L),
+        val additionalForIdeal: Int = 0
+    )
+
+    private val _durationInfo = MutableStateFlow(PickerDurationInfo())
+    val durationInfo: StateFlow<PickerDurationInfo> = _durationInfo.asStateFlow()
+
+    // Pre-computed duration per selected-photo count (index = count). Starts as the flat estimate;
+    // rebuilt with real beat-sync timing once beat data loads.
+    @Volatile
+    private var durationByCount: LongArray = LongArray(MAX_SELECTION + 1) { estimateFlatDurationMs(it) }
+    private var beatSyncData: BeatSyncData? = null
 
     init {
         AssetPickerSessionCache.snapshot?.let { cached ->
@@ -328,6 +362,88 @@ class AssetPickerViewModel(
                         showLoadingOverlay = false
                     )
                 }
+            }
+        }
+
+        // Recompute the displayed duration whenever the selection count changes (cheap array lookup).
+        viewModelScope.launch {
+            _uiState.collect { state ->
+                publishDurationInfo(currentSelectedCount(state))
+            }
+        }
+
+        // Resolve the song (template/song mode) and load its beat-sync data so the picker's
+        // estimate matches the editor's real, beat-synced duration.
+        loadBeatSyncForDuration()
+    }
+
+    private fun currentSelectedCount(state: AssetPickerUiState): Int =
+        (state as? AssetPickerUiState.WithAssets)?.selectedAssets?.size ?: 0
+
+    /** Flat 2.8s/photo fallback when no beat-sync data is available. */
+    private fun estimateFlatDurationMs(count: Int): Long =
+        if (count <= 0) 0L else (count * PICKER_DURATION_PER_PHOTO_SEC * 1000).toLong()
+
+    private fun publishDurationInfo(count: Int) {
+        val safeCount = count.coerceIn(0, MAX_SELECTION)
+        val durationMs = durationByCount[safeCount]
+        _durationInfo.value = PickerDurationInfo(
+            formatted = formatPickerDurationMs(durationMs),
+            additionalForIdeal = additionalPhotosForIdeal(safeCount)
+        )
+    }
+
+    /** Smallest number of extra photos so the duration reaches the recommended ~15s (capped at MAX). */
+    private fun additionalPhotosForIdeal(count: Int): Int {
+        if (count >= MAX_SELECTION) return 0
+        var extra = 0
+        while (count + extra < MAX_SELECTION && durationByCount[count + extra] < PICKER_RECOMMENDED_DURATION_MS) {
+            extra++
+        }
+        return extra
+    }
+
+    private fun loadBeatSyncForDuration() {
+        viewModelScope.launch {
+            // Resolve the song whose beat-sync timing drives the estimate. The editor uses
+            // trimStartMs = 0 for new-project flows (song-to-video / template) and the project's
+            // hookStartTimeMs when re-rendering an existing project (add-images flow); the caller
+            // passes the matching durationTrimStartMs.
+            val songId = when {
+                overrideSongId >= 0L -> overrideSongId
+                !templateId.isNullOrBlank() -> resolveTemplateSongId(templateId)
+                durationSongId >= 0L -> durationSongId
+                else -> null
+            } ?: return@launch  // No song context — keep the flat estimate.
+
+            val data = beatSyncRepository.getBeatData(songId).getOrNull()
+                ?: return@launch  // Beat data unavailable — graceful fallback to the flat estimate.
+
+            beatSyncData = data
+            durationByCount = buildDurationTable(data, durationTrimStartMs)
+            publishDurationInfo(currentSelectedCount(_uiState.value))
+        }
+    }
+
+    private suspend fun resolveTemplateSongId(templateId: String): Long? =
+        templateRepository.getTemplates(limit = 100, offset = 0).getOrNull()
+            ?.find { it.id == templateId }
+            ?.songId
+            ?.takeIf { it > 0L }
+
+    private suspend fun buildDurationTable(
+        data: BeatSyncData,
+        trimStartMs: Long
+    ): LongArray = withContext(Dispatchers.Default) {
+        LongArray(MAX_SELECTION + 1) { count ->
+            if (count <= 0) {
+                0L
+            } else {
+                Project.calculateBeatSyncDuration(
+                    beatData = data,
+                    assetCount = count,
+                    trimStartMs = trimStartMs
+                ) ?: estimateFlatDurationMs(count)
             }
         }
     }
@@ -674,26 +790,36 @@ class AssetPickerViewModel(
     }
 
     /**
-     * Toggle selection of an asset
+     * Add one copy of an asset to the selection.
+     *
+     * The same photo can be selected multiple times (each tap appends another instance),
+     * so [AssetPickerUiState.WithAssets.selectedAssets] may contain duplicates. Removal is
+     * index-based via [removeSelectedAt]. Adding is blocked once [MAX_SELECTION] is reached.
      */
-    fun toggleAssetSelection(asset: GalleryAsset) {
+    fun addAssetSelection(asset: GalleryAsset) {
         val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
-        val currentSelection = currentState.selectedAssets.toMutableList()
-        val wasSelected = currentSelection.contains(asset)
-
-        if (wasSelected) {
-            currentSelection.remove(asset)
-            Analytics.trackMediaUnselect()
-        } else {
-            if (currentSelection.size >= MAX_SELECTION) {
-                _messageEvent.value = "Maximum $MAX_SELECTION images can be selected"
-                return
-            }
-            currentSelection.add(asset)
-            Analytics.trackMediaSelect()
+        if (currentState.selectedAssets.size >= MAX_SELECTION) {
+            _messageEvent.value = "Maximum $MAX_SELECTION images can be selected"
+            return
         }
+        val updatedSelection = currentState.selectedAssets + asset
+        Analytics.trackMediaSelect()
+        val updatedState = currentState.copyAssets(selectedAssets = updatedSelection)
+        _uiState.value = updatedState
+        persistSessionSnapshot(updatedState, modeForState(updatedState))
+    }
 
-        val updatedState = currentState.copyAssets(selectedAssets = currentSelection)
+    /**
+     * Remove the selected instance at [index] from the selection tray.
+     * Index-based so a single duplicate can be removed without affecting other copies;
+     * removing immediately frees up a slot.
+     */
+    fun removeSelectedAt(index: Int) {
+        val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
+        if (index !in currentState.selectedAssets.indices) return
+        val updatedSelection = currentState.selectedAssets.toMutableList().apply { removeAt(index) }
+        Analytics.trackMediaUnselect()
+        val updatedState = currentState.copyAssets(selectedAssets = updatedSelection)
         _uiState.value = updatedState
         persistSessionSnapshot(updatedState, modeForState(updatedState))
     }
