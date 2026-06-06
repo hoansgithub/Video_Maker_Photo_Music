@@ -829,7 +829,15 @@ fun AppNavigation(
     // hides it and returning to its own tab shows it again.
     val isHomeOnTop = backStack.lastOrNull() is AppRoute.Home
 
-    if (isHomeOnTop && activePopupTab == TrendingPopupTab.GALLERY) {
+    val isTemplatePopupVisible = isHomeOnTop && activePopupTab == TrendingPopupTab.GALLERY && templatePopupState is TrendingPopupState.Showing
+    val isSongPopupVisible = isHomeOnTop && activePopupTab == TrendingPopupTab.SONGS && songPopupState is TrendingPopupState.Showing
+    val isTrendingPopupVisible = isTemplatePopupVisible || isSongPopupVisible
+
+    LaunchedEffect(isTrendingPopupVisible) {
+        ratingTriggerManager.setRatingSuppressed(isTrendingPopupVisible)
+    }
+
+    if (isTemplatePopupVisible) {
         (templatePopupState as? TrendingPopupState.Showing)?.let { showing ->
             PopupTrendingTemplate(
                 item = showing.content,
@@ -839,7 +847,7 @@ fun AppNavigation(
         }
     }
 
-    if (isHomeOnTop && activePopupTab == TrendingPopupTab.SONGS) {
+    if (isSongPopupVisible) {
         (songPopupState as? TrendingPopupState.Showing)?.let { showing ->
             PopupTrendingSong(
                 item = showing.content,

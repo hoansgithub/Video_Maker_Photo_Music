@@ -168,6 +168,10 @@ val dataModule = module {
                 tab: com.videomaker.aimusic.core.popup.TrendingPopupTab,
                 snapshot: com.videomaker.aimusic.core.popup.TrendingPopupDailySnapshot
             ) = prefs.setTrendingPopupSnapshot(tab, snapshot)
+            override fun getFocusCount(tab: com.videomaker.aimusic.core.popup.TrendingPopupTab) =
+                prefs.getTrendingPopupFocusCount(tab)
+            override fun incrementFocusCount(tab: com.videomaker.aimusic.core.popup.TrendingPopupTab) =
+                prefs.incrementTrendingPopupFocusCount(tab)
         }
     }
 

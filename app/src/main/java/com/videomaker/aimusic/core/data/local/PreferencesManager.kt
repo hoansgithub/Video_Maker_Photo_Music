@@ -47,6 +47,23 @@ class PreferencesManager(context: Context) {
         prefs.edit { putString(trendingPopupKey(tab), raw) }
     }
 
+    fun getTrendingPopupFocusCount(tab: TrendingPopupTab): Int {
+        val key = when (tab) {
+            TrendingPopupTab.GALLERY -> KEY_TRENDING_POPUP_GALLERY_FOCUS_COUNT
+            TrendingPopupTab.SONGS -> KEY_TRENDING_POPUP_SONGS_FOCUS_COUNT
+        }
+        return prefs.getInt(key, 0)
+    }
+
+    fun incrementTrendingPopupFocusCount(tab: TrendingPopupTab) {
+        val key = when (tab) {
+            TrendingPopupTab.GALLERY -> KEY_TRENDING_POPUP_GALLERY_FOCUS_COUNT
+            TrendingPopupTab.SONGS -> KEY_TRENDING_POPUP_SONGS_FOCUS_COUNT
+        }
+        val current = prefs.getInt(key, 0)
+        prefs.edit { putInt(key, current + 1) }
+    }
+
     companion object {
         private const val PREFS_NAME = "video_maker_prefs"
         private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
@@ -83,6 +100,8 @@ class PreferencesManager(context: Context) {
         private const val KEY_VIRAL_TEMPLATE_SNAPSHOT_USAGE = "viral_template_snapshot_usage"
         private const val KEY_TRENDING_POPUP_TEMPLATE_SNAPSHOT = "trending_popup_template_snapshot"
         private const val KEY_TRENDING_POPUP_SONG_SNAPSHOT = "trending_popup_song_snapshot"
+        private const val KEY_TRENDING_POPUP_GALLERY_FOCUS_COUNT = "trending_popup_gallery_focus_count"
+        private const val KEY_TRENDING_POPUP_SONGS_FOCUS_COUNT = "trending_popup_songs_focus_count"
         private const val KEY_APP_SESSION_ID = "notification_app_session_id"
         private const val KEY_APP_LAST_BACKGROUND_AT_MS = "notification_app_last_background_at_ms"
         private const val KEY_VIDEO_REMINDER_GENERATED_AT_PREFIX = "video_reminder_generated_at_"
