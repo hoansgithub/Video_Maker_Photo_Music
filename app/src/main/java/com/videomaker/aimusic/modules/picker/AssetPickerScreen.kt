@@ -2,11 +2,14 @@ package com.videomaker.aimusic.modules.picker
 
 import android.Manifest
 import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -99,6 +102,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.ads.AdClickDetector
 import com.videomaker.aimusic.core.ads.AdPlacementConfigService
@@ -108,6 +112,7 @@ import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.permission.MediaPermissionCoordinator
 import com.videomaker.aimusic.core.rating.RatingTriggerManager
+import com.videomaker.aimusic.domain.model.EditorInitialData
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.FoundationBlack
 import com.videomaker.aimusic.ui.theme.FoundationBlack_100
@@ -122,6 +127,7 @@ import com.videomaker.aimusic.ui.theme.SkeletonPlaceholder
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextPrimaryDark
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.compose.koinInject
 import java.io.File
@@ -146,7 +152,7 @@ private const val TRAY_VISIBLE_SLOTS = 4
  */
 private const val INITIAL_LOAD_DELAY_MS = 100L
 
-private fun readPermissionSnapshot(context: android.content.Context): PermissionSnapshot {
+private fun readPermissionSnapshot(context: Context): PermissionSnapshot {
     val hasFullPermission = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
             ContextCompat.checkSelfPermission(
@@ -192,7 +198,7 @@ private fun readPermissionSnapshot(context: android.content.Context): Permission
 fun AssetPickerScreen(
     viewModel: AssetPickerViewModel,
     onNavigateToEditor: (String) -> Unit,
-    onNavigateToEditorWithData: (com.videomaker.aimusic.domain.model.EditorInitialData) -> Unit = {},
+    onNavigateToEditorWithData: (EditorInitialData) -> Unit = {},
     onNavigateBack: () -> Unit,
     onAssetsAdded: () -> Unit = {},
     onNavigateToTemplatePreviewer: (templateId: String, imageUris: List<String>, overrideSongId: Long) -> Unit = { _, _, _ -> }
@@ -338,7 +344,7 @@ fun AssetPickerScreen(
                 is AssetPickerNavigationEvent.RequestExitWithAd -> {
                     // Show ad if ready, otherwise navigate immediately (non-blocking)
                     if (event.shouldShowAd && activity != null) {
-                        android.util.Log.d("AssetPickerScreen", "📺 Showing exit ad...")
+                        Log.d("AssetPickerScreen", "📺 Showing exit ad...")
 
                         InterstitialAdHelperExt.showInterstitial(
                             adsLoaderService = adsLoaderService,
@@ -347,7 +353,7 @@ fun AssetPickerScreen(
                             action = {
                                 // Ad closed OR failed to show - always navigate as fallback
                                 // (idempotent if onShown already navigated)
-                                android.util.Log.d(
+                                Log.d(
                                     "AssetPickerScreen",
                                     "✅ Exit ad closed - navigating"
                                 )
@@ -355,7 +361,7 @@ fun AssetPickerScreen(
                             },
                             onShown = {
                                 // Navigate immediately when ad shows (parallel)
-                                android.util.Log.d(
+                                Log.d(
                                     "AssetPickerScreen",
                                     "🎬 Exit ad shown - navigating"
                                 )
@@ -367,7 +373,7 @@ fun AssetPickerScreen(
                     } else {
                         // Ad not ready or no activity - navigate immediately
                         if (!event.shouldShowAd) {
-                            android.util.Log.d(
+                            Log.d(
                                 "AssetPickerScreen",
                                 "⚠️ Exit ad not ready - navigating immediately"
                             )
@@ -421,7 +427,7 @@ fun AssetPickerScreen(
 
     // Wait for initial composition to complete, then check permission and load images
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(INITIAL_LOAD_DELAY_MS)
+        delay(INITIAL_LOAD_DELAY_MS)
         hasInitializedPermissionCheck = true
         viewModel.onPermissionSnapshot(
             snapshot = readPermissionSnapshot(context),
@@ -588,8 +594,8 @@ fun AssetPickerScreen(
             cameraUri?.let { uri ->
                 try {
                     cameraLauncher.launch(uri)
-                } catch (e: android.content.ActivityNotFoundException) {
-                    android.util.Log.e("AssetPicker", "No camera app available: ${e.message}")
+                } catch (e: ActivityNotFoundException) {
+                    Log.e("AssetPicker", "No camera app available: ${e.message}")
                 }
             }
         }
@@ -613,8 +619,8 @@ fun AssetPickerScreen(
             if (hasCameraPermission) {
                 try {
                     cameraLauncher.launch(uri)
-                } catch (e: android.content.ActivityNotFoundException) {
-                    android.util.Log.e("AssetPicker", "No camera app available: ${e.message}")
+                } catch (e: ActivityNotFoundException) {
+                    Log.e("AssetPicker", "No camera app available: ${e.message}")
                 }
             } else {
                 Analytics.trackPermissionRender(
@@ -625,7 +631,7 @@ fun AssetPickerScreen(
             }
         } catch (e: IllegalArgumentException) {
             // FileProvider configuration error - log and ignore
-            android.util.Log.e("AssetPicker", "Failed to create camera URI: ${e.message}")
+            Log.e("AssetPicker", "Failed to create camera URI: ${e.message}")
         }
     }
 
@@ -695,7 +701,7 @@ fun AssetPickerScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                isDebug = com.videomaker.aimusic.BuildConfig.DEBUG,
+                isDebug = BuildConfig.DEBUG,
                 onAdClicked = { adClickDetector.onAdClick(it) }
             )
         } else {
@@ -1793,11 +1799,15 @@ private fun AssetPickerContentLoadingPreview() {
             onAssetClick = {},
             onGridScrollChanged = { _, _ -> },
             onConfirmClick = {},
-            onClearSelection = {},
             onCloseClick = {},
             onRequestFullPermission = {},
             onAddMorePhotos = {},
-            onCameraClick = {}
+            maxSelection = 1,
+            durationText = "",
+            additionalForIdeal = 1,
+            onRemoveSelectedAt = {},
+            onManageAccess = {},
+            onCameraClick = {},
         )
     }
 }
@@ -1814,11 +1824,15 @@ private fun AssetPickerContentDeniedPreview() {
             onAssetClick = {},
             onGridScrollChanged = { _, _ -> },
             onConfirmClick = {},
-            onClearSelection = {},
             onCloseClick = {},
             onRequestFullPermission = {},
             onAddMorePhotos = {},
-            onCameraClick = {}
+            maxSelection = 1,
+            durationText = "",
+            additionalForIdeal = 1,
+            onRemoveSelectedAt = {},
+            onManageAccess = {},
+            onCameraClick = {},
         )
     }
 }
@@ -1862,11 +1876,15 @@ private fun AssetPickerContentAllPermissionPreview() {
             onAssetClick = {},
             onGridScrollChanged = { _, _ -> },
             onConfirmClick = {},
-            onClearSelection = {},
             onCloseClick = {},
             onRequestFullPermission = {},
             onAddMorePhotos = {},
-            onCameraClick = {}
+            maxSelection = 1,
+            durationText = "",
+            additionalForIdeal = 1,
+            onRemoveSelectedAt = {},
+            onManageAccess = {},
+            onCameraClick = {},
         )
     }
 }
@@ -1911,11 +1929,15 @@ private fun AssetPickerContentSelectedPreview() {
             onAssetClick = {},
             onGridScrollChanged = { _, _ -> },
             onConfirmClick = {},
-            onClearSelection = {},
             onCloseClick = {},
             onRequestFullPermission = {},
             onAddMorePhotos = {},
-            onCameraClick = {}
+            maxSelection = 1,
+            durationText = "",
+            additionalForIdeal = 1,
+            onRemoveSelectedAt = {},
+            onManageAccess = {},
+            onCameraClick = {},
         )
     }
 }
@@ -1953,11 +1975,15 @@ private fun AssetPickerContentLimitPermissionPreview() {
             onAssetClick = {},
             onGridScrollChanged = { _, _ -> },
             onConfirmClick = {},
-            onClearSelection = {},
             onCloseClick = {},
             onRequestFullPermission = {},
             onAddMorePhotos = {},
-            onCameraClick = {}
+            maxSelection = 1,
+            durationText = "",
+            additionalForIdeal = 1,
+            onRemoveSelectedAt = {},
+            onManageAccess = {},
+            onCameraClick = {},
         )
     }
 }

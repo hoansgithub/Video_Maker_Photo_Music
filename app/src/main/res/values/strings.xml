@@ -307,7 +307,6 @@
     <string name="picker_full_access_settings_message">To start editing, the app requires full access to your photo library. Please update your permission to use this feature.</string>
     <string name="picker_limited_access_message">You\'ve given Video Make access to a select number of photo.</string>
     <string name="picker_add_more_photos">Add</string>
-    <string name="picker_manage_access">Manage</string>
     <string name="picker_go_to_settings">Go to Settings</string>
     <string name="picker_min_selection">Add at least %d photos to create video</string>
     <string name="picker_add_more_ideal">Add %d more photos to create a social-ready ~15s video.</string>
