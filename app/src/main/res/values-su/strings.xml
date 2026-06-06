@@ -292,12 +292,12 @@
     <string name="picker_permission_title">Ijinkeun aksés ka poto</string>
     <string name="picker_permission_message">Pikeun neruskeun, Rehancer peryogi idin pikeun ngaksés Poto anjeun</string>
     <string name="picker_allow_access">Ijinkeun Aksés</string>
-    <string name="picker_give_access">Pasihkeun Aksés</string>
-    <string name="picker_give_access_settings">Aksés ka poto anjeun\ndisabilitasi.</string>
-    <string name="picker_give_access_permission">Siap nyieun?</string>
+    <string name="picker_give_access">Widian Akses</string>
+    <string name="picker_give_access_settings">Akses Foto Peryogi</string>
+    <string name="picker_give_access_permission">Widian Akses Foto pikeun Nyaoskeun Keajaiban</string>
     <string name="picker_not_now">Henteu Ayeuna</string>
-    <string name="picker_full_access_custom_message">Pikeun telusuri video sareng poto anjeun, kami peryogi aksés ka galeri anjeun.</string>
-    <string name="picker_full_access_settings_message"> Pikeun mimiti nyunting, aktipkeun \'Poto\' atawa \'Neundeun\' dina setelan alat anjeun.</string>
+    <string name="picker_full_access_custom_message">Widian akses kana foto anjeun pikeun ngadamel video anu sae pisan dina sababaraha detik. Simkuring henteu ngagunakeun pikeun tujuan sanesna.</string>
+    <string name="picker_full_access_settings_message">Pikeun ngawitan ngédit, aplikasi peryogi aksés pinuh kana galéri poto anjeun. Mangga ropihkeun idin anjeun pikeun ngagunakeun fitur ieu.</string>
     <string name="picker_limited_access_message">Anjeun parantos masihkeun Video Maker aksés ka sababaraha poto.</string>
     <string name="picker_add_more_photos">Tambah</string>
     <string name="picker_go_to_settings">Angkat ka Setelan</string>
@@ -590,4 +590,15 @@
     <string name="popup_premium_song">Lagu Premium</string>
     <string name="popup_premium_template">Template Premium</string>
     <string name="popup_try_it_now">Coba ayeuna</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_permission_title_1">Pilih Foto pikeun Nyaoskeun Keajaiban</string>
+    <string name="picker_permission_message_1">Pilih foto tina galeri anjeun sareng robah janten video anu sae pisan dina sababaraha detik.</string>
+    <string name="picker_allow_access_1">Pilih Foto</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_photos_unavailable_title">Sababaraha foto henteu sayogi</string>
+    <string name="picker_photos_unavailable_subtitle">Kengingkeun aksés kana sadaya foto anjeun supados anjeun tiasa ngadamel video tanpa kaleungitan kenangan favorit anjeun.</string>
+    <string name="picker_manage_access">Atur Akses</string>
+    <string name="picker_keep_limited_access">Teruskeun Akses Wates</string>
 </resources>

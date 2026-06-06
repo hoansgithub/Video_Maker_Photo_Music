@@ -292,12 +292,12 @@
     <string name="picker_permission_title">Zugriff auf Fotos erlauben</string>
     <string name="picker_permission_message">Um fortzufahren, benötigt Rehancer die Erlaubnis, auf deine Fotos zuzugreifen</string>
     <string name="picker_allow_access">Zugriff erlauben</string>
-    <string name="picker_give_access">Zugriff gewähren</string>
-    <string name="picker_give_access_settings">Zugriff auf deine Fotos\nist deaktiviert.</string>
-    <string name="picker_give_access_permission">Bereit zum Erstellen?</string>
+    <string name="picker_give_access">Zugriff erlauben</string>
+    <string name="picker_give_access_settings">Fotozugriff erforderlich</string>
+    <string name="picker_give_access_permission">Fotozugriff erlauben, um Magie zu erschaffen</string>
     <string name="picker_not_now">Nicht jetzt</string>
-    <string name="picker_full_access_custom_message">Um deine Videos und Fotos zu durchsuchen, benötigen wir Zugriff auf deine Galerie.</string>
-    <string name="picker_full_access_settings_message"> Um mit der Bearbeitung zu beginnen, aktiviere \'Fotos\' oder \'Speicher\' in deinen Geräteeinstellungen.</string>
+    <string name="picker_full_access_custom_message">Erlauben Sie den Zugriff auf Ihre Fotos, um in Sekundenschnelle atemberaubende Videos zu erstellen. Wir verwenden sie für keinen anderen Zweck.</string>
+    <string name="picker_full_access_settings_message">Um mit der Bearbeitung zu beginnen, benötigt die App vollen Zugriff auf Ihre Fotomediathek. Bitte aktualisieren Sie Ihre Berechtigung, um diese Funktion zu nutzen.</string>
     <string name="picker_limited_access_message">Du hast Video Maker Zugriff auf eine begrenzte Anzahl von Fotos gegeben.</string>
     <string name="picker_add_more_photos">Hinzufügen</string>
     <string name="picker_go_to_settings">Zu Einstellungen</string>
@@ -590,4 +590,15 @@
     <string name="popup_premium_song">Premium-Song</string>
     <string name="popup_premium_template">Premium-Vorlage</string>
     <string name="popup_try_it_now">Jetzt ausprobieren</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_permission_title_1">Fotos auswählen, um Magie zu erschaffen</string>
+    <string name="picker_permission_message_1">Wählen Sie Fotos aus Ihrer Galerie aus und verwandeln Sie sie in Sekundenschnelle in fantastische Videos.</string>
+    <string name="picker_allow_access_1">Fotos auswählen</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_photos_unavailable_title">Einige Fotos nicht verfügbar</string>
+    <string name="picker_photos_unavailable_subtitle">Erhalten Sie Zugriff auf alle Ihre Fotos, damit Sie Videos erstellen können, ohne Ihre Lieblingserinnerungen zu verpassen.</string>
+    <string name="picker_manage_access">Zugriff verwalten</string>
+    <string name="picker_keep_limited_access">Eingeschränkten Zugriff beibehalten</string>
 </resources>

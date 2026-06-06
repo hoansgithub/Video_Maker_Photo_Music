@@ -201,6 +201,11 @@ object AnalyticsEvent {
     const val PERMISSION_GOTO_SETTING = "permission_goto_setting"
     const val PERMISSION_CHECK = "permission_check"
     const val PERMISSION_ADD_IMAGE = "permission_add_image"
+    const val PERMISSION_NO_ALLOW = "permission_no_allow"
+    const val PERMISSION_NOALLOW_CLICKBTN = "permission_noallow_clickbtn"
+    const val PERMISSION_WARNING_LIMITED = "permission_warning_limited"
+    const val PERMISSION_WARNING_ALLOWBTN = "permission_warning_allowbtn"
+    const val PERMISSION_WARNING_DENYBTN = "permission_warning_denybtn"
 
     // ============================================
     // 17. REPORT FLOW

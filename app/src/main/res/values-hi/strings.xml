@@ -289,12 +289,12 @@
     <string name="picker_permission_title">फ़ोटो तक पहुंच की अनुमति दें</string>
     <string name="picker_permission_message">जारी रखने के लिए, Rehancer को आपकी फ़ोटो तक पहुंच की अनुमति चाहिए</string>
     <string name="picker_allow_access">एक्सेस की अनुमति दें</string>
-    <string name="picker_give_access">ऐक्सेस दें</string>
-    <string name="picker_give_access_settings">आपकी फ़ोटो का ऐक्सेस\nबंद है।</string>
-    <string name="picker_give_access_permission">बनाने के लिए तैयार हैं?</string>
+    <string name="picker_give_access">एक्सेस की अनुमति दें</string>
+    <string name="picker_give_access_settings">फ़ोटो एक्सेस आवश्यक है</string>
+    <string name="picker_give_access_permission">जादू बनाने के लिए फ़ोटो एक्सेस की अनुमति दें</string>
     <string name="picker_not_now">अभी नहीं</string>
-    <string name="picker_full_access_custom_message">आपके वीडियो और फ़ोटो ब्राउज़ करने के लिए, हमें आपकी गैलरी का ऐक्सेस चाहिए।</string>
-    <string name="picker_full_access_settings_message">एडिटिंग शुरू करने के लिए, कृपया अपनी डिवाइस सेटिंग्स में \'Photos\' या \'Storage\' सक्षम करें।</string>
+    <string name="picker_full_access_custom_message">कुछ ही सेकंड में शानदार वीडियो बनाने के लिए अपनी फ़ोटो तक एक्सेस की अनुमति दें। हम इसका उपयोग किसी अन्य उद्देश्य के लिए नहीं करते हैं।</string>
+    <string name="picker_full_access_settings_message">संपादन शुरू करने के लिए, ऐप को आपकी फ़ोटो लाइब्रेरी तक पूर्ण एक्सेस की आवश्यकता है। इस सुविधा का उपयोग करने के लिए कृपया अपनी अनुमति अपडेट करें।</string>
     <string name="picker_limited_access_message">आपने वीडियो मेकर को सीमित संख्या में फ़ोटो तक पहुंच दी है।</string>
     <string name="picker_add_more_photos">जोड़ें</string>
     <string name="picker_go_to_settings">सेटिंग्स पर जाएं</string>
@@ -585,4 +585,15 @@
     <string name="popup_premium_song">प्रीमियम गाना</string>
     <string name="popup_premium_template">प्रीमियम टेम्पलेट</string>
     <string name="popup_try_it_now">अभी आज़माएं</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_permission_title_1">जादू बनाने के लिए फ़ोटो चुनें</string>
+    <string name="picker_permission_message_1">अपनी लाइब्रेरी से फ़ोटो चुनें और उन्हें कुछ ही सेकंड में अद्भुत वीडियो में बदलें।</string>
+    <string name="picker_allow_access_1">फ़ोटो चुनें</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_photos_unavailable_title">कुछ फ़ोटो उपलब्ध नहीं हैं</string>
+    <string name="picker_photos_unavailable_subtitle">अपने सभी फ़ोटो तक पहुँच प्राप्त करें ताकि आप अपनी पसंदीदा यादों को खोए बिना वीडियो बना सकें।</string>
+    <string name="picker_manage_access">पहुँच प्रबंधित करें</string>
+    <string name="picker_keep_limited_access">सीमित पहुँच बनाए रखें</string>
 </resources>

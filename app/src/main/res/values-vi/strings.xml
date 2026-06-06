@@ -286,12 +286,12 @@
     <string name="picker_permission_title">Cần Quyền Truy Cập Ảnh</string>
     <string name="picker_permission_message">Để tạo video từ ảnh của bạn, chúng tôi cần quyền truy cập vào thư viện ảnh của bạn.</string>
     <string name="picker_allow_access">Cho Phép Truy Cập</string>
-    <string name="picker_give_access">Cho Truy Cập</string>
-    <string name="picker_give_access_settings">Quyền truy cập ảnh của bạn\nhiện đang bị tắt.</string>
-    <string name="picker_give_access_permission">Sẵn sàng sáng tạo?</string>
+    <string name="picker_give_access">Cho phép truy cập</string>
+    <string name="picker_give_access_settings">Yêu cầu quyền truy cập ảnh</string>
+    <string name="picker_give_access_permission">Cho phép truy cập ảnh để tạo nên điều kỳ diệu</string>
     <string name="picker_not_now">Để Sau</string>
-    <string name="picker_full_access_custom_message">Để duyệt video và ảnh của bạn, chúng tôi cần quyền truy cập vào thư viện của bạn.</string>
-    <string name="picker_full_access_settings_message">Để bắt đầu chỉnh sửa, hãy bật \'Ảnh\' hoặc \'Bộ nhớ\' trong cài đặt thiết bị của bạn.</string>
+    <string name="picker_full_access_custom_message">Cho phép truy cập vào ảnh của bạn để tạo ra những video tuyệt vời chỉ trong vài giây. Chúng tôi không sử dụng cho bất kỳ mục đích nào khác.</string>
+    <string name="picker_full_access_settings_message">Để bắt đầu chỉnh sửa, ứng dụng yêu cầu quyền truy cập đầy đủ vào thư viện ảnh của bạn. Vui lòng cập nhật quyền của bạn để sử dụng tính năng này.</string>
     <string name="picker_limited_access_message">Bạn đã cấp cho Video Maker quyền truy cập vào một số lượng ảnh giới hạn.</string>
     <string name="picker_add_more_photos">Thêm</string>
     <string name="picker_go_to_settings">Đến Cài Đặt</string>
@@ -582,4 +582,15 @@
     <string name="popup_premium_song">Bài hát Premium</string>
     <string name="popup_premium_template">Mẫu Premium</string>
     <string name="popup_try_it_now">Dùng thử ngay</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_permission_title_1">Chọn ảnh để tạo nên điều kỳ diệu</string>
+    <string name="picker_permission_message_1">Chọn ảnh từ thư viện của bạn và biến chúng thành những video tuyệt vời chỉ trong vài giây.</string>
+    <string name="picker_allow_access_1">Chọn ảnh</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_photos_unavailable_title">Một số ảnh không khả dụng</string>
+    <string name="picker_photos_unavailable_subtitle">Cho phép truy cập vào tất cả ảnh của bạn để bạn có thể tạo video mà không bỏ lỡ những kỷ niệm yêu thích.</string>
+    <string name="picker_manage_access">Quản lý truy cập</string>
+    <string name="picker_keep_limited_access">Giữ quyền truy cập giới hạn</string>
 </resources>

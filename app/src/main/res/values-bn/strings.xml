@@ -292,12 +292,12 @@
     <string name="picker_permission_title">ছবিতে অ্যাক্সেসের অনুমতি দিন</string>
     <string name="picker_permission_message">চালিয়ে যেতে, Rehancer-এর আপনার ফটোতে অ্যাক্সেস করার অনুমতি প্রয়োজন</string>
     <string name="picker_allow_access">অ্যাক্সেস দিন</string>
-    <string name="picker_give_access">অ্যাক্সেস দিন</string>
-    <string name="picker_give_access_settings">আপনার ছবিতে অ্যাক্সেস\nবন্ধ আছে।</string>
-    <string name="picker_give_access_permission">তৈরি করতে প্রস্তুত?</string>
+    <string name="picker_give_access">অ্যাক্সেস মঞ্জুর করুন</string>
+    <string name="picker_give_access_settings">ফটো অ্যাক্সেস প্রয়োজন</string>
+    <string name="picker_give_access_permission">ম্যাজিক তৈরি করতে ফটো অ্যাক্সেস মঞ্জুর করুন</string>
     <string name="picker_not_now">এখন না</string>
-    <string name="picker_full_access_custom_message">আপনার ভিডিও এবং ছবি ব্রাউজ করতে আমাদের গ্যালারিতে অ্যাক্সেস প্রয়োজন।</string>
-    <string name="picker_full_access_settings_message"> সম্পাদনা শুরু করতে আপনার ডিভাইস সেটিংসে \'ফটো\' বা \'স্টোরেজ\' সক্রিয় করুন।</string>
+    <string name="picker_full_access_custom_message">কয়েক সেকেন্ডের মধ্যে দুর্দান্ত ভিডিও তৈরি করতে আপনার ফটোগুলিতে অ্যাক্সেস মঞ্জুর করুন। আমরা এটি অন্য কোনও উদ্দেশ্যে ব্যবহার করি না।</string>
+    <string name="picker_full_access_settings_message">সম্পাদনা শুরু করতে, অ্যাপটির আপনার ফটো লাইব্রেরিতে সম্পূর্ণ অ্যাক্সেস প্রয়োজন। এই ফিচারটি ব্যবহার করতে দয়া করে আপনার অনুমতি আপডেট করুন।</string>
     <string name="picker_limited_access_message">আপনি Video Maker-কে সীমিত সংখ্যক ছবিতে অ্যাক্সেস দিয়েছেন।</string>
     <string name="picker_add_more_photos">যোগ করুন</string>
     <string name="picker_go_to_settings">সেটিংসে যান</string>
@@ -590,4 +590,15 @@
     <string name="popup_premium_song">প্রিমিয়াম গান</string>
     <string name="popup_premium_template">প্রিমিয়াম টেমপ্লেট</string>
     <string name="popup_try_it_now">এখনই চেষ্টা করুন</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_permission_title_1">ম্যাজিক তৈরি করতে ফটো চয়ন করুন</string>
+    <string name="picker_permission_message_1">আপনার লাইব্রেরি থেকে ফটোগुली চয়ন করুন এবং সেগুলিকে কয়েক সেকেন্ডের মধ্যে দুর্দান্ত ভিডিওতে রূপান্তর করুন।</string>
+    <string name="picker_allow_access_1">ফটো চয়ন করুন</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_photos_unavailable_title">কিছু ফটো উপলব্ধ নেই</string>
+    <string name="picker_photos_unavailable_subtitle">আপনার সমস্ত ফটো অ্যাক্সেস করুন যাতে আপনি আপনার প্রিয় স্মৃতিগুলি না হারিয়ে ভিডিও তৈরি করতে পারেন।</string>
+    <string name="picker_manage_access">অ্যাক্সেস পরিচালনা করুন</string>
+    <string name="picker_keep_limited_access">সীমিত অ্যাক্সেস রাখুন</string>
 </resources>

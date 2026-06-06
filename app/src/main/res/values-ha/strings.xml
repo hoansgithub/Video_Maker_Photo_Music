@@ -292,12 +292,12 @@
     <string name="picker_permission_title">Yarda da shiga hotuna</string>
     <string name="picker_permission_message">Don ci gaba, Rehancer yana buƙatar izinin ku don shiga Hotuna</string>
     <string name="picker_allow_access">Yarda da Shiga</string>
-    <string name="picker_give_access">Ba da Shiga</string>
-    <string name="picker_give_access_settings">Shiga zuwa hotunanka\nba a kunna shi ba.</string>
-    <string name="picker_give_access_permission">Shirye don ƙirƙira?</string>
+    <string name="picker_give_access">Bada Izini</string>
+    <string name="picker_give_access_settings">Ana Bukatar Izinin Hoto</string>
+    <string name="picker_give_access_permission">Bada Izinin Hoto don Ƙirƙirar Sihiri</string>
     <string name="picker_not_now">Ba yanzu ba</string>
-    <string name="picker_full_access_custom_message">Don bincika bidiyoyi da hotuna, muna buƙatar shiga gallery ɗinku.</string>
-    <string name="picker_full_access_settings_message"> Don farawa gyarawa, kunna \'Hotuna\' ko \'Ajiya\' a saitunan na\'urar ku.</string>
+    <string name="picker_full_access_custom_message">Bada izinin shiga hotunanku don ƙirƙirar bidiyo masu ban mamaki a cikin daƙiƙa kaɗan. Ba ma amfani da su ga kowane dalili daban.</string>
+    <string name="picker_full_access_settings_message">Don fara gyarawa, aikace-aikacen yana buƙatar cikakken izini ga ma\'ajiyar hotunanku. Da fatan za a sabunta izinin ku don amfani da wannan rukunin.</string>
     <string name="picker_limited_access_message">Kun ba Video Maker damar shiga ƙarancin hotuna.</string>
     <string name="picker_add_more_photos">Ƙara</string>
     <string name="picker_go_to_settings">Je zuwa Saiti</string>
@@ -590,4 +590,15 @@
     <string name="popup_premium_song">Waƙar Premium</string>
     <string name="popup_premium_template">Template na Premium</string>
     <string name="popup_try_it_now">Gwada yanzu</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_permission_title_1">Zaɓi Hotuna don Ƙirƙirar Sihiri</string>
+    <string name="picker_permission_message_1">Zaɓi hotuna daga ma\'ajiyar ku kuma mayar da su zuwa bidiyo masu ban mamaki a cikin daƙiƙa kaɗan.</string>
+    <string name="picker_allow_access_1">Zaɓi Hotuna</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_photos_unavailable_title">Wasu hotuna ba su samuwa</string>
+    <string name="picker_photos_unavailable_subtitle">Sami damar shiga duk hotunanku don ku sami damar ƙirƙirar bidiyoyi ba tare da rasa abubuwan da kuke so ba.</string>
+    <string name="picker_manage_access">Sarrafa Izini</string>
+    <string name="picker_keep_limited_access">Ci gaba da Izini Mai Iyaka</string>
 </resources>

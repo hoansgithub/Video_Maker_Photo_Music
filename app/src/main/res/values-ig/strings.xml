@@ -293,12 +293,12 @@
     <string name="picker_permission_title">Kwe ka ọ bata na foto</string>
     <string name="picker_permission_message">Iji gaa n\'ihu, Rehancer chọrọ ikike gị iji nweta Foto gị</string>
     <string name="picker_allow_access">Kwe Ka Ọ Bata</string>
-    <string name="picker_give_access">Nye Ikike</string>
-    <string name="picker_give_access_settings">Nnweta foto gị\naghachiri.</string>
-    <string name="picker_give_access_permission">Dị njikere imepụta?</string>
+    <string name="picker_give_access">Nye Ohere</string>
+    <string name="picker_give_access_settings">Achọrọ Ohere Foto</string>
+    <string name="picker_give_access_permission">Nye Ohere Foto iji Mepụta Anwansi</string>
     <string name="picker_not_now">Ọ Bụghị Ugbu A</string>
-    <string name="picker_full_access_custom_message">Iji gwa-gwa video na foto gị, anyị chọrọ nnweta ụlọ ihe ngosi gị.</string>
-    <string name="picker_full_access_settings_message"> Iji bido idezi, biko kwado \'Foto\' ma ọ bụ \'Nchekwa\' n\'ime ntọala ngwaọrụ gị.</string>
+    <string name="picker_full_access_custom_message">Nye ohere ịbanye na foto gị iji mepụta vidiyo dị egwu n\'ime sekọnd ole na ole. Anyị anaghị eji ya maka ebumnuche ọ bụla ọzọ.</string>
+    <string name="picker_full_access_settings_message">Iji malite idezi, ngwa ahụ chọrọ ohere zuru ezu n\'ọba foto gị. Biko melite ikike gị iji jiri njirimara a.</string>
     <string name="picker_limited_access_message">I nyeela Video Make nnweta ọnụọgụgụ foto ụfọdụ.</string>
     <string name="picker_add_more_photos">Tinye</string>
     <string name="picker_go_to_settings">Gaa na Ntọala</string>
@@ -591,4 +591,15 @@
     <string name="popup_premium_song">Abụ Premium</string>
     <string name="popup_premium_template">Ụkpụrụ Premium</string>
     <string name="popup_try_it_now">Nwaa ugbu a</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_permission_title_1">Họrọ Foto iji Mepụta Anwansi</string>
+    <string name="picker_permission_message_1">Họrọ foto n\'ọba akwụkwọ gị wee mee ha ka ha bụrụ vidiyo dị egwu n\'ime sekọnd ole na ole.</string>
+    <string name="picker_allow_access_1">Họrọ Foto</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_photos_unavailable_title">Ụfọdụ foto adịghị</string>
+    <string name="picker_photos_unavailable_subtitle">Nweta ohere ịbanye na foto gị niile ka ị nwee ike ịmepụta vidiyo na-enweghị atụfu ncheta kachasị amasị gị.</string>
+    <string name="picker_manage_access">Jikwaa Ohere</string>
+    <string name="picker_keep_limited_access">Dowe Ohere Dị Iche</string>
 </resources>
