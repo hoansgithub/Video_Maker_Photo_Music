@@ -312,3 +312,11 @@ val NewIdeasBackground = Color(0xFF1E1E1E)
 val PreviewCardBackground = Color(0xFF242424)
 val PreviewButtonBackground = Color(0xFF2A2A2A)
 
+// ============================================
+// PICKER SCREEN
+// ============================================
+val PickerDialogBackground = Color(0xFF373737)
+val PickerOverlayBackground = Color(0xFF2C2C2C)
+val SkeletonPlaceholder = Color(0xFFD9D9D9)
+
+

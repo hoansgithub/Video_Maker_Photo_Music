@@ -55,7 +55,7 @@ internal fun resolveFullPermissionPromptDecision(
     if (permissionMode == PermissionMode.FULL) {
         return FullPermissionPromptDecision.NONE
     }
-    if (blockedAfterSecondAttempt) {
+    if (permissionMode == PermissionMode.DENIED && blockedAfterSecondAttempt) {
         return FullPermissionPromptDecision.SHOW_SETTINGS
     }
     if (permissionMode == PermissionMode.DENIED) {

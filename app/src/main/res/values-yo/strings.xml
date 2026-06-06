@@ -292,12 +292,12 @@
     <string name="picker_permission_title">Gbà láàyè láti wọlé sí àwọn fọ́tò</string>
     <string name="picker_permission_message">Láti tẹ̀síwájú, Rehancer nílò ìgbàláàyè rẹ láti wọlé sí Àwọn Fọ́tò</string>
     <string name="picker_allow_access">Gbà Láàyè</string>
-    <string name="picker_give_access">Fún Láàyè</string>
-    <string name="picker_give_access_settings">Wíwọlé sí àwọn fọ́tò rẹ\nti pa.</string>
-    <string name="picker_give_access_permission">Ṣetán láti ṣẹ?</string>
+    <string name="picker_give_access">Gba Ohun-elo laaye</string>
+    <string name="picker_give_access_settings">Gba Ohun-elo laaye fun Fọto</string>
+    <string name="picker_give_access_permission">Gba Ohun-elo laaye fun Fọto lati Ṣẹda Idan</string>
     <string name="picker_not_now">Kì í ṣe Báyìí</string>
-    <string name="picker_full_access_custom_message">Láti ṣàwárí àwọn fídíò àti fọ́tò rẹ, a nílò wíwọlé sí gàlẹ́rì rẹ.</string>
-    <string name="picker_full_access_settings_message"> Láti bẹ̀rẹ̀ ṣíṣàtúnṣe, mú \'Àwọn Fọ́tò\' tàbí \'Ìtọ́jú\' jáde nínú ìtọ́sọ́nà ẹ̀rọ rẹ.</string>
+    <string name="picker_full_access_custom_message">Gba ohun-elo laaye fun fọto rẹ lati ṣẹda fidio to dara ni iṣẹju-aaya diẹ. A ko lo fun eyikeyi nkan miiran.</string>
+    <string name="picker_full_access_settings_message">Lati bẹrẹ ṣiṣatunṣe, ohun elo nilo iwọle kikun si ile-ikawe fọto rẹ. Jọwọ ṣe imudojuiwọn igbanilaaye rẹ lati lo ẹya yii.</string>
     <string name="picker_limited_access_message">O ti fún Video Maker ní wíwọlé sí iye fọ́tò díẹ̀.</string>
     <string name="picker_add_more_photos">Fi Kún</string>
     <string name="picker_go_to_settings">Lọ sí Ìtọ́sọ́nà</string>
@@ -590,4 +590,15 @@
     <string name="popup_premium_song">Orin Premium</string>
     <string name="popup_premium_template">Àpẹẹrẹ Premium</string>
     <string name="popup_try_it_now">Gbiyanju rẹ̀ báyìí</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_permission_title_1">Yan Awọn Fọto lati Ṣẹda Idan</string>
+    <string name="picker_permission_message_1">Yan awọn fọto lati ile-ikawe rẹ ki o sọ wọn di awọn fidio iyanu ni awọn aaya diẹ.</string>
+    <string name="picker_allow_access_1">Yan Awọn Fọto</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_photos_unavailable_title">Awọn fọto kan ko wa</string>
+    <string name="picker_photos_unavailable_subtitle">Gba iwọle si gbogbo awọn fọto rẹ ki o le ṣẹda awọn fidio laisi sisọnu awọn iranti ayanfẹ rẹ.</string>
+    <string name="picker_manage_access">Ṣakoso Iwọle</string>
+    <string name="picker_keep_limited_access">Tọju Iwọle to Lopin</string>
 </resources>

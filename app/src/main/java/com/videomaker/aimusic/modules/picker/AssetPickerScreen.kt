@@ -1,29 +1,18 @@
 package com.videomaker.aimusic.modules.picker
 
-import android.app.Activity
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
-import androidx.core.content.FileProvider
-import java.io.File
 import androidx.activity.compose.BackHandler
-import co.alcheclub.lib.acccore.ads.compose.BannerAdView
-import co.alcheclub.lib.acccore.ads.compose.NativeAdView
-import com.videomaker.aimusic.core.ads.AdPlacementConfigService
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
-import com.videomaker.aimusic.core.constants.AdPlacement
-import org.koin.compose.koinInject
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,10 +25,9 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
@@ -54,8 +42,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -80,7 +66,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -88,40 +73,53 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.videomaker.aimusic.R
-import com.videomaker.aimusic.core.analytics.Analytics
-import com.videomaker.aimusic.core.analytics.AnalyticsEvent
-import com.videomaker.aimusic.core.permission.MediaPermissionCoordinator
-import com.videomaker.aimusic.core.rating.RatingTriggerManager
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
+import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.permission.MediaPermissionCoordinator
+import com.videomaker.aimusic.core.rating.RatingTriggerManager
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.FoundationBlack
 import com.videomaker.aimusic.ui.theme.FoundationBlack_100
 import com.videomaker.aimusic.ui.theme.FoundationBlack_200
 import com.videomaker.aimusic.ui.theme.Neutral_N500
 import com.videomaker.aimusic.ui.theme.Neutral_N700
+import com.videomaker.aimusic.ui.theme.PickerDialogBackground
+import com.videomaker.aimusic.ui.theme.PickerOverlayBackground
 import com.videomaker.aimusic.ui.theme.PlayerCardBackground
 import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.SkeletonPlaceholder
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextPrimaryDark
-import kotlinx.coroutines.flow.collect
+import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
-import com.videomaker.aimusic.core.ads.AdClickDetector
+import org.koin.compose.koinInject
+import java.io.File
 
 /**
  * Thumbnail size in pixels for image grid
@@ -143,6 +141,7 @@ private fun readPermissionSnapshot(context: android.content.Context): Permission
                 context,
                 Manifest.permission.READ_MEDIA_IMAGES
             ) == PackageManager.PERMISSION_GRANTED
+
         else ->
             ContextCompat.checkSelfPermission(
                 context,
@@ -150,10 +149,10 @@ private fun readPermissionSnapshot(context: android.content.Context): Permission
             ) == PackageManager.PERMISSION_GRANTED
     }
     val hasLimitedPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
-        ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
-        ) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+            ) == PackageManager.PERMISSION_GRANTED
 
     return PermissionSnapshot(
         fullGranted = hasFullPermission,
@@ -205,6 +204,7 @@ fun AssetPickerScreen(
     var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
     var showPermissionPromoDialog by remember { mutableStateOf(false) }
     var showPermissionSettingsDialog by remember { mutableStateOf(false) }
+    var showPhotosUnavailableDialog by remember { mutableStateOf(false) }
     var hasHandledEntryDeniedPrompt by remember { mutableStateOf(false) }
     var hasHandledEntryLimitedPrompt by remember { mutableStateOf(false) }
 
@@ -219,8 +219,10 @@ fun AssetPickerScreen(
                     Manifest.permission.READ_MEDIA_IMAGES,
                     Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
                 )
+
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
                 arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
+
             else ->
                 arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
@@ -231,7 +233,7 @@ fun AssetPickerScreen(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
         val fullGranted = result[Manifest.permission.READ_MEDIA_IMAGES] == true ||
-            result[Manifest.permission.READ_EXTERNAL_STORAGE] == true
+                result[Manifest.permission.READ_EXTERNAL_STORAGE] == true
         val limitedGranted = result[Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED] == true
         val button = when {
             fullGranted -> AnalyticsEvent.Value.Option.ALLOW
@@ -245,13 +247,16 @@ fun AssetPickerScreen(
         )
         mediaPermissionCoordinator.onSystemPermissionResult(fullGranted = fullGranted)
         val blockedAfterResult = !fullGranted &&
-            mediaPermissionCoordinator.isBlockedAfterSecondNonFull()
+                mediaPermissionCoordinator.isBlockedAfterSecondNonFull()
         showPermissionPromoDialog = false
-        hasHandledEntryLimitedPrompt = true
+        hasHandledEntryLimitedPrompt = fullGranted || limitedGranted
         hasHandledEntryDeniedPrompt = true
         showPermissionSettingsDialog = false
-        if (!fullGranted && limitedGranted && !blockedAfterResult) {
-            mediaPermissionCoordinator.markLimitedUpsellShownInCurrentSession()
+        if (!fullGranted && limitedGranted) {
+            if (!mediaPermissionCoordinator.hasShownLimitedUpsellThisSession()) {
+                mediaPermissionCoordinator.markLimitedUpsellShownInCurrentSession()
+                showPhotosUnavailableDialog = true
+            }
         }
         viewModel.onPermissionSnapshot(
             snapshot = PermissionSnapshot(
@@ -271,19 +276,27 @@ fun AssetPickerScreen(
         when (decision) {
             FullPermissionPromptDecision.NONE -> Unit
             FullPermissionPromptDecision.SHOW_PROMO -> {
-                mediaPermissionCoordinator.markLimitedUpsellShownInCurrentSession()
                 showPermissionSettingsDialog = false
-                showPermissionPromoDialog = true
+                if (mode == PermissionMode.LIMITED) {
+                    mediaPermissionCoordinator.markLimitedUpsellShownInCurrentSession()
+                    showPermissionPromoDialog = false
+                    showPhotosUnavailableDialog = true
+                } else {
+                    showPhotosUnavailableDialog = false
+                    showPermissionPromoDialog = true
+                }
             }
+
             FullPermissionPromptDecision.SHOW_SETTINGS -> {
                 showPermissionPromoDialog = false
+                showPhotosUnavailableDialog = false
                 showPermissionSettingsDialog = true
             }
         }
     }
 
-    LaunchedEffect(showPermissionPromoDialog) {
-        if (showPermissionPromoDialog) {
+    LaunchedEffect(showPermissionPromoDialog, showPhotosUnavailableDialog) {
+        if (showPermissionPromoDialog || showPhotosUnavailableDialog) {
             Analytics.trackPermissionRender(
                 perType = AnalyticsEvent.Value.PerType.MEDIA,
                 popType = AnalyticsEvent.Value.PopType.CUSTOM
@@ -294,7 +307,8 @@ fun AssetPickerScreen(
     // Enforce one popup at a time: the media permission popup takes priority over the
     // global rating popup. While a permission dialog is visible, suppress the rating
     // overlay so it only appears after the permission flow resolves (Permission -> Rating).
-    val isPermissionPopupVisible = showPermissionPromoDialog || showPermissionSettingsDialog
+    val isPermissionPopupVisible =
+        showPermissionPromoDialog || showPermissionSettingsDialog || showPhotosUnavailableDialog
     LaunchedEffect(isPermissionPopupVisible) {
         ratingTriggerManager.setRatingSuppressed(isPermissionPopupVisible)
     }
@@ -320,12 +334,18 @@ fun AssetPickerScreen(
                             action = {
                                 // Ad closed OR failed to show - always navigate as fallback
                                 // (idempotent if onShown already navigated)
-                                android.util.Log.d("AssetPickerScreen", "✅ Exit ad closed - navigating")
+                                android.util.Log.d(
+                                    "AssetPickerScreen",
+                                    "✅ Exit ad closed - navigating"
+                                )
                                 onNavigateBack()
                             },
                             onShown = {
                                 // Navigate immediately when ad shows (parallel)
-                                android.util.Log.d("AssetPickerScreen", "🎬 Exit ad shown - navigating")
+                                android.util.Log.d(
+                                    "AssetPickerScreen",
+                                    "🎬 Exit ad shown - navigating"
+                                )
                                 onNavigateBack()
                             },
                             bypassFrequencyCap = true,  // Exit ads always show
@@ -334,14 +354,20 @@ fun AssetPickerScreen(
                     } else {
                         // Ad not ready or no activity - navigate immediately
                         if (!event.shouldShowAd) {
-                            android.util.Log.d("AssetPickerScreen", "⚠️ Exit ad not ready - navigating immediately")
+                            android.util.Log.d(
+                                "AssetPickerScreen",
+                                "⚠️ Exit ad not ready - navigating immediately"
+                            )
                         }
                         onNavigateBack()
                     }
                 }
 
                 is AssetPickerNavigationEvent.NavigateToEditor -> onNavigateToEditor(event.projectId)
-                is AssetPickerNavigationEvent.NavigateToEditorWithData -> onNavigateToEditorWithData(event.initialData)
+                is AssetPickerNavigationEvent.NavigateToEditorWithData -> onNavigateToEditorWithData(
+                    event.initialData
+                )
+
                 is AssetPickerNavigationEvent.AssetsAdded -> onAssetsAdded()
                 is AssetPickerNavigationEvent.SelectionConfirmed -> {
                     // Store selection in cache
@@ -361,8 +387,13 @@ fun AssetPickerScreen(
                         onNavigateBack()
                     }
                 }
+
                 is AssetPickerNavigationEvent.NavigateToTemplatePreviewer ->
-                    onNavigateToTemplatePreviewer(event.templateId, event.imageUris, event.overrideSongId)
+                    onNavigateToTemplatePreviewer(
+                        event.templateId,
+                        event.imageUris,
+                        event.overrideSongId
+                    )
             }
             // Event auto-consumed by Channel - no manual cleanup needed
         }
@@ -426,6 +457,7 @@ fun AssetPickerScreen(
         )
         if (mediaPermissionCoordinator.canRequestSystemPermission(context)) {
             showPermissionPromoDialog = false
+            showPhotosUnavailableDialog = false
             Analytics.trackPermissionRender(
                 perType = AnalyticsEvent.Value.PerType.MEDIA,
                 popType = AnalyticsEvent.Value.PopType.SYSTEM
@@ -433,6 +465,7 @@ fun AssetPickerScreen(
             permissionLauncher.launch(permissionsToRequest)
         } else {
             showPermissionPromoDialog = false
+            showPhotosUnavailableDialog = false
             showPermissionSettingsDialog = true
         }
     }
@@ -444,6 +477,7 @@ fun AssetPickerScreen(
             popType = AnalyticsEvent.Value.PopType.CUSTOM
         )
         showPermissionPromoDialog = false
+        showPhotosUnavailableDialog = false
     }
 
     LaunchedEffect(uiState, hasInitializedPermissionCheck) {
@@ -463,17 +497,21 @@ fun AssetPickerScreen(
                     }
                 }
             }
+
             is AssetPickerUiState.WithAssets.LimitPermission -> {
                 if (!hasHandledEntryLimitedPrompt) {
                     hasHandledEntryLimitedPrompt = true
                     showPermissionGateForMode(PermissionMode.LIMITED)
                 }
             }
+
             is AssetPickerUiState.WithAssets.AllPermission -> {
                 mediaPermissionCoordinator.onFullPermissionGranted()
                 showPermissionPromoDialog = false
+                showPhotosUnavailableDialog = false
                 showPermissionSettingsDialog = false
             }
+
             else -> Unit
         }
     }
@@ -547,7 +585,8 @@ fun AssetPickerScreen(
     // Creates a temp file URI via FileProvider and launches the camera
     val onCameraClick: () -> Unit = {
         try {
-            val photoFile = File(context.cacheDir, "images/camera_${System.currentTimeMillis()}.jpg")
+            val photoFile =
+                File(context.cacheDir, "images/camera_${System.currentTimeMillis()}.jpg")
             photoFile.parentFile?.mkdirs()
             val uri = FileProvider.getUriForFile(
                 context,
@@ -619,7 +658,7 @@ fun AssetPickerScreen(
                     viewModel.onGridScrollChanged(index, offset)
                 },
                 onConfirmClick = { viewModel.confirmSelection() },
-                onClearSelection = {viewModel.clearSelection()},
+                onClearSelection = { viewModel.clearSelection() },
                 onCloseClick = {
                     requestExit()
                 },
@@ -697,6 +736,13 @@ fun AssetPickerScreen(
         )
     }
 
+    if (showPhotosUnavailableDialog) {
+        AssetPickerPhotosUnavailableDialog(
+            onManageAccess = onGiveAccess,
+            onKeepLimited = onNotNow
+        )
+    }
+
     if (showPermissionSettingsDialog) {
         AssetPickerPermissionSettingsDialog(
             onOpenSettings = openAppSettings,
@@ -722,7 +768,8 @@ private fun AssetPickerContent(
     onCameraClick: () -> Unit
 ) {
     // Selection count and confirm button
-    val selectedCount = if (uiState is AssetPickerUiState.WithAssets) uiState.selectedAssets.size else 0
+    val selectedCount =
+        if (uiState is AssetPickerUiState.WithAssets) uiState.selectedAssets.size else 0
     val canConfirm = selectedCount >= minSelection
 
 
@@ -814,7 +861,7 @@ private fun AssetPickerContent(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
 
-                        if (uiState.selectedAssets.isEmpty()){
+                        if (uiState.selectedAssets.isEmpty()) {
                             Text(
                                 text = stringResource(R.string.picker_min_selection, minSelection),
                                 style = MaterialTheme.typography.bodySmall.copy(
@@ -838,7 +885,10 @@ private fun AssetPickerContent(
                             )
 
                             Text(
-                                text = stringResource(R.string.picker_current_selection, uiState.selectedAssets.size),
+                                text = stringResource(
+                                    R.string.picker_current_selection,
+                                    uiState.selectedAssets.size
+                                ),
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontSize = 14.sp
                                 ),
@@ -853,7 +903,9 @@ private fun AssetPickerContent(
                             enabled = canConfirm,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
-                                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(
+                                    alpha = 0.4f
+                                )
                             ),
                             shape = RoundedCornerShape(16.dp)
                         ) {
@@ -895,12 +947,12 @@ private fun AssetPickerContent(
                         ) { asset ->
                             ImageGridChooseItem(
                                 asset
-                            ){
+                            ) {
                                 onAssetClick.invoke(asset)
                             }
                         }
 
-                        items(maxOf(0, minSelection - uiState.selectedAssets.size)){
+                        items(maxOf(0, minSelection - uiState.selectedAssets.size)) {
                             Image(
                                 painter = painterResource(R.drawable.img_out_line),
                                 contentDescription = null,
@@ -1130,7 +1182,7 @@ private fun ImageGridItem(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF2C2C2C).copy(alpha = 0.4f))
+                    .background(PickerOverlayBackground.copy(alpha = 0.4f))
             )
             Image(
                 painter = painterResource(R.drawable.ic_choose_img),
@@ -1221,17 +1273,19 @@ private fun AssetPickerFullAccessPromoDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xff373737), RoundedCornerShape(16.dp)),
+                    .background(PickerDialogBackground, RoundedCornerShape(16.dp)),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
+                Spacer(Modifier.height(12.dp))
                 Image(
                     painter = painterResource(R.drawable.img_popup_asset_permission),
                     contentDescription = null,
                     contentScale = ContentScale.FillWidth,
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .width(100.dp)
+                        .height(100.dp)
                 )
+                Spacer(Modifier.height(24.dp))
                 Text(
                     text = stringResource(R.string.picker_give_access_permission),
                     style = MaterialTheme.typography.titleLarge,
@@ -1293,6 +1347,108 @@ private fun AssetPickerFullAccessPromoDialog(
 }
 
 @Composable
+private fun AssetPickerPhotosUnavailableDialog(
+    onManageAccess: () -> Unit,
+    onKeepLimited: () -> Unit
+) {
+    LaunchedEffect(Unit) {
+        Analytics.track(AnalyticsEvent.PERMISSION_WARNING_LIMITED)
+    }
+
+    Dialog(
+        onDismissRequest = {
+        },
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .clickableSingle {
+                }
+                .fillMaxSize()
+                .padding(top = 106.dp, start = 16.dp, end = 16.dp)
+        ) {
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(PickerDialogBackground, RoundedCornerShape(24.dp)),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(Modifier.height(24.dp))
+                Image(
+                    painter = painterResource(R.drawable.img_photo_unavailable),
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .aspectRatio(1.5f)
+                )
+                Spacer(Modifier.height(24.dp))
+                Text(
+                    text = stringResource(R.string.picker_photos_unavailable_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.W700,
+                    fontSize = 24.sp,
+                    color = TextPrimary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.picker_photos_unavailable_subtitle),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.W400,
+                    fontSize = 15.sp,
+                    color = FoundationBlack_200,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .padding(horizontal = 24.dp)
+                        .fillMaxWidth()
+                )
+                Spacer(Modifier.height(32.dp))
+
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 24.dp)
+                        .fillMaxWidth()
+                        .background(Primary, RoundedCornerShape(160.dp))
+                        .clickableSingle {
+                            Analytics.track(AnalyticsEvent.PERMISSION_WARNING_ALLOWBTN)
+                            onManageAccess.invoke()
+                        }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.picker_manage_access),
+                        fontWeight = FontWeight.W600,
+                        fontSize = 16.sp,
+                        color = FoundationBlack,
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.picker_keep_limited_access),
+                    fontWeight = FontWeight.W600,
+                    fontSize = 16.sp,
+                    color = Neutral_N500,
+                    modifier = Modifier
+                        .clickableSingle {
+                            Analytics.track(AnalyticsEvent.PERMISSION_WARNING_DENYBTN)
+                            onKeepLimited.invoke()
+                        }
+                        .padding(16.dp)
+                )
+                Spacer(Modifier.height(20.dp))
+            }
+
+        }
+    }
+}
+
+@Composable
 private fun AssetPickerPermissionSettingsDialog(
     onOpenSettings: () -> Unit,
     onDismiss: () -> Unit
@@ -1312,8 +1468,10 @@ private fun AssetPickerPermissionSettingsDialog(
 
             Column(
                 modifier = Modifier
+
+
                     .fillMaxWidth()
-                    .background(Color(0xff373737), RoundedCornerShape(16.dp)),
+                    .background(PickerDialogBackground, RoundedCornerShape(16.dp)),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
@@ -1390,10 +1548,14 @@ private fun AssetPickerPermissionSettingsDialog(
 private fun PermissionDeniedContent(
     onRequestPermission: () -> Unit
 ) {
+    LaunchedEffect(Unit) {
+        Analytics.track(AnalyticsEvent.PERMISSION_NO_ALLOW)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-    ){
+    ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             contentPadding = PaddingValues(8.dp),
@@ -1405,7 +1567,7 @@ private fun PermissionDeniedContent(
                     modifier = Modifier
                         .aspectRatio(1f)
                         .clip(RoundedCornerShape(4.dp))
-                        .background(Color(0xFFD9D9D9).copy(0.05f))
+                        .background(SkeletonPlaceholder.copy(0.05f))
                 )
             }
             items(3) {
@@ -1416,8 +1578,8 @@ private fun PermissionDeniedContent(
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    Color(0xFFD9D9D9).copy(0.04f),
-                                    Color(0xFFD9D9D9).copy(0.02f),
+                                    SkeletonPlaceholder.copy(0.04f),
+                                    SkeletonPlaceholder.copy(0.02f),
                                 )
                             )
                         )
@@ -1431,7 +1593,7 @@ private fun PermissionDeniedContent(
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    Color(0xFFD9D9D9).copy(0.01f),
+                                    SkeletonPlaceholder.copy(0.01f),
                                     Color.Transparent
                                 )
                             )
@@ -1449,7 +1611,7 @@ private fun PermissionDeniedContent(
         ) {
 
             Text(
-                text = stringResource(R.string.picker_permission_title),
+                text = stringResource(R.string.picker_permission_title_1),
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 24.sp
@@ -1460,7 +1622,7 @@ private fun PermissionDeniedContent(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = stringResource(R.string.picker_permission_message),
+                text = stringResource(R.string.picker_permission_message_1),
                 style = MaterialTheme.typography.bodyLarge,
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center,
@@ -1470,13 +1632,233 @@ private fun PermissionDeniedContent(
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = onRequestPermission,
+                onClick = {
+                    Analytics.track(AnalyticsEvent.PERMISSION_NOALLOW_CLICKBTN)
+                    onRequestPermission()
+                },
                 shape = RoundedCornerShape(120.dp)
             ) {
-                Text(stringResource(R.string.picker_allow_access), modifier = Modifier.padding(vertical = 8.dp))
+                Text(
+                    stringResource(R.string.picker_allow_access_1),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
             }
 
         }
     }
-
 }
+
+@Preview(showBackground = true)
+@Composable
+private fun AssetPickerContentLoadingPreview() {
+    VideoMakerTheme {
+        AssetPickerContent(
+            uiState = AssetPickerUiState.Loading,
+            minSelection = 1,
+            initialGridScrollState = AssetPickerGridScrollState(),
+            onAlbumSelect = {},
+            onAssetClick = {},
+            onGridScrollChanged = { _, _ -> },
+            onConfirmClick = {},
+            onClearSelection = {},
+            onCloseClick = {},
+            onRequestFullPermission = {},
+            onAddMorePhotos = {},
+            onCameraClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AssetPickerContentDeniedPreview() {
+    VideoMakerTheme {
+        AssetPickerContent(
+            uiState = AssetPickerUiState.DeniedPermission,
+            minSelection = 1,
+            initialGridScrollState = AssetPickerGridScrollState(),
+            onAlbumSelect = {},
+            onAssetClick = {},
+            onGridScrollChanged = { _, _ -> },
+            onConfirmClick = {},
+            onClearSelection = {},
+            onCloseClick = {},
+            onRequestFullPermission = {},
+            onAddMorePhotos = {},
+            onCameraClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AssetPickerContentAllPermissionPreview() {
+    val mockAssets = remember {
+        (1..12).map { id ->
+            val bucket = if (id <= 8) "Camera" else "Screenshots"
+            GalleryAsset(
+                id = id.toLong(),
+                uri = Uri.EMPTY,
+                displayName = "IMG_$id.jpg",
+                dateAdded = System.currentTimeMillis() / 1000 - id * 3600,
+                width = 1080,
+                height = 1080,
+                bucketId = if (bucket == "Camera") 1L else 2L,
+                bucketName = bucket
+            )
+        }
+    }
+    val mockAlbums = listOf(
+        AlbumFilter(id = AlbumFilterType.ALL, displayName = "All", count = 12),
+        AlbumFilter(id = "camera", displayName = "Camera", bucketId = 1L, count = 8),
+        AlbumFilter(id = "screenshots", displayName = "Screenshots", bucketId = 2L, count = 4)
+    )
+    val uiState = AssetPickerUiState.WithAssets.AllPermission(
+        assets = mockAssets,
+        filteredAssets = mockAssets,
+        selectedAssets = emptyList(),
+        albums = mockAlbums,
+        selectedAlbumId = AlbumFilterType.ALL
+    )
+    VideoMakerTheme {
+        AssetPickerContent(
+            uiState = uiState,
+            minSelection = 1,
+            initialGridScrollState = AssetPickerGridScrollState(),
+            onAlbumSelect = {},
+            onAssetClick = {},
+            onGridScrollChanged = { _, _ -> },
+            onConfirmClick = {},
+            onClearSelection = {},
+            onCloseClick = {},
+            onRequestFullPermission = {},
+            onAddMorePhotos = {},
+            onCameraClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AssetPickerContentSelectedPreview() {
+    val mockAssets = remember {
+        (1..12).map { id ->
+            val bucket = if (id <= 8) "Camera" else "Screenshots"
+            GalleryAsset(
+                id = id.toLong(),
+                uri = Uri.EMPTY,
+                displayName = "IMG_$id.jpg",
+                dateAdded = System.currentTimeMillis() / 1000 - id * 3600,
+                width = 1080,
+                height = 1080,
+                bucketId = if (bucket == "Camera") 1L else 2L,
+                bucketName = bucket
+            )
+        }
+    }
+    val mockAlbums = listOf(
+        AlbumFilter(id = AlbumFilterType.ALL, displayName = "All", count = 12),
+        AlbumFilter(id = "camera", displayName = "Camera", bucketId = 1L, count = 8),
+        AlbumFilter(id = "screenshots", displayName = "Screenshots", bucketId = 2L, count = 4)
+    )
+    val selectedAssets = listOf(mockAssets[0], mockAssets[1])
+    val uiState = AssetPickerUiState.WithAssets.AllPermission(
+        assets = mockAssets,
+        filteredAssets = mockAssets,
+        selectedAssets = selectedAssets,
+        albums = mockAlbums,
+        selectedAlbumId = AlbumFilterType.ALL
+    )
+    VideoMakerTheme {
+        AssetPickerContent(
+            uiState = uiState,
+            minSelection = 3,
+            initialGridScrollState = AssetPickerGridScrollState(),
+            onAlbumSelect = {},
+            onAssetClick = {},
+            onGridScrollChanged = { _, _ -> },
+            onConfirmClick = {},
+            onClearSelection = {},
+            onCloseClick = {},
+            onRequestFullPermission = {},
+            onAddMorePhotos = {},
+            onCameraClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AssetPickerContentLimitPermissionPreview() {
+    val mockAssets = remember {
+        (1..4).map { id ->
+            GalleryAsset(
+                id = id.toLong(),
+                uri = Uri.EMPTY,
+                displayName = "IMG_$id.jpg",
+                dateAdded = System.currentTimeMillis() / 1000 - id * 3600,
+                width = 1080,
+                height = 1080,
+                bucketId = 1L,
+                bucketName = "Camera"
+            )
+        }
+    }
+    val uiState = AssetPickerUiState.WithAssets.LimitPermission(
+        assets = mockAssets,
+        filteredAssets = mockAssets,
+        selectedAssets = emptyList(),
+        albums = emptyList(),
+        selectedAlbumId = AlbumFilterType.ALL
+    )
+    VideoMakerTheme {
+        AssetPickerContent(
+            uiState = uiState,
+            minSelection = 1,
+            initialGridScrollState = AssetPickerGridScrollState(),
+            onAlbumSelect = {},
+            onAssetClick = {},
+            onGridScrollChanged = { _, _ -> },
+            onConfirmClick = {},
+            onClearSelection = {},
+            onCloseClick = {},
+            onRequestFullPermission = {},
+            onAddMorePhotos = {},
+            onCameraClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AssetPickerPromoDialogPreview() {
+    VideoMakerTheme {
+        AssetPickerFullAccessPromoDialog(
+            onGiveAccess = {},
+            onNotNow = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AssetPickerPhotosUnavailableDialogPreview() {
+    VideoMakerTheme {
+        AssetPickerPhotosUnavailableDialog(
+            onManageAccess = {},
+            onKeepLimited = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AssetPickerSettingsDialogPreview() {
+    VideoMakerTheme {
+        AssetPickerPermissionSettingsDialog(
+            onOpenSettings = {},
+            onDismiss = {}
+        )
+    }
+}
+

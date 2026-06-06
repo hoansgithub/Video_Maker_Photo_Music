@@ -292,12 +292,12 @@
     <string name="picker_permission_title">Ngidini akses menyang foto</string>
     <string name="picker_permission_message">Kanggo nerusake, Rehancer butuh ijin sampeyan kanggo ngakses Foto</string>
     <string name="picker_allow_access">Ijini Akses</string>
-    <string name="picker_give_access">Wenehake Akses</string>
-    <string name="picker_give_access_settings">Akses menyang foto sampeyan\ndisabilitasi.</string>
-    <string name="picker_give_access_permission">Siap nggawe?</string>
+    <string name="picker_give_access">Izinkan Akses</string>
+    <string name="picker_give_access_settings">Akses Foto Dibutuhake</string>
+    <string name="picker_give_access_permission">Izinkan Akses Foto kanggo Nggawe Keajaiban</string>
     <string name="picker_not_now">Ora Saiki</string>
-    <string name="picker_full_access_custom_message">Kanggo telusuri video lan foto sampeyan, kita butuh akses menyang galeri sampeyan.</string>
-    <string name="picker_full_access_settings_message"> Kanggo miwiti nyunting, aktifake \'Foto\' utawa \'Penyimpen\' ing setelan piranti sampeyan.</string>
+    <string name="picker_full_access_custom_message">Izinkan akses menyang foto sampeyan kanggo nggawe video sing nggumunake ing sawetara detik. Kita ora nggunakake kanggo tujuan liyane.</string>
+    <string name="picker_full_access_settings_message">Kanggo miwiti nyunting, aplikasi mbutuhake akses lengkap menyang perpustakaan foto sampeyan. Mangga nganyari izin sampeyan kanggo nggunakake fitur iki.</string>
     <string name="picker_limited_access_message">Sampeyan wis menehi Video Maker akses menyang sawetara foto.</string>
     <string name="picker_add_more_photos">Tambah</string>
     <string name="picker_go_to_settings">Menyang Setelan</string>
@@ -590,4 +590,15 @@
     <string name="popup_premium_song">Lagu Premium</string>
     <string name="popup_premium_template">Template Premium</string>
     <string name="popup_try_it_now">Coba saiki</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_permission_title_1">Pilih Foto kanggo Nggawe Keajaiban</string>
+    <string name="picker_permission_message_1">Pilih foto saka perpustakaan sampeyan lan dadekake video sing nggumunake ing sawetara detik.</string>
+    <string name="picker_allow_access_1">Pilih Foto</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_photos_unavailable_title">Sawetara foto ora kasedhiya</string>
+    <string name="picker_photos_unavailable_subtitle">Entuk akses menyang kabeh foto sampeyan supaya sampeyan bisa nggawe video tanpa kelangan kenangan favorit.</string>
+    <string name="picker_manage_access">Atur Akses</string>
+    <string name="picker_keep_limited_access">Tetep Batasi Akses</string>
 </resources>

@@ -287,12 +287,12 @@
     <string name="picker_permission_title">Kailangan ang Access sa Larawan</string>
     <string name="picker_permission_message">Para gumawa ng mga video mula sa iyong mga larawan, kailangan namin ng pahintulot na ma-access ang iyong library ng larawan.</string>
     <string name="picker_allow_access">Payagan ang Access</string>
-    <string name="picker_give_access">Bigyan ng Access</string>
-    <string name="picker_give_access_settings">Naka-off ang access\nsa iyong mga larawan.</string>
-    <string name="picker_give_access_permission">Handa nang gumawa?</string>
+    <string name="picker_give_access">Ipapahintulot ang Access</string>
+    <string name="picker_give_access_settings">Kailangan ng Access sa Larawan</string>
+    <string name="picker_give_access_permission">Ipapahintulot ang Access sa Larawan para Gumawa ng Magic</string>
     <string name="picker_not_now">Huwag muna</string>
-    <string name="picker_full_access_custom_message">Para ma-browse ang iyong mga video at larawan, kailangan namin ng access sa iyong gallery.</string>
-    <string name="picker_full_access_settings_message">Para makapagsimulang mag-edit, i-enable ang \'Photos\' o \'Storage\' sa settings ng iyong device.</string>
+    <string name="picker_full_access_custom_message">Payagan ang access sa iyong mga larawan upang lumikha ng mga nakamamanghang video sa ilang segundo. Hindi namin ito ginagamit para sa anumang iba pang layunin.</string>
+    <string name="picker_full_access_settings_message">Upang simulan ang pag-edit, nangangailangan ang app ng buong access sa iyong library ng larawan. Pakibago ang iyong pahintulot upang magamit ang tampok na ito.</string>
     <string name="picker_limited_access_message">Binigyan mo ang Video Maker ng access sa ilang larawan lamang.</string>
     <string name="picker_add_more_photos">Magdagdag</string>
     <string name="picker_go_to_settings">Pumunta sa Settings</string>
@@ -583,4 +583,15 @@
     <string name="popup_premium_song">Premium na Kanta</string>
     <string name="popup_premium_template">Premium na Template</string>
     <string name="popup_try_it_now">Subukan ngayon</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_permission_title_1">Pumili ng mga Larawan para Gumawa ng Magic</string>
+    <string name="picker_permission_message_1">Pumili ng mga larawan mula sa iyong library at gawin itong kamangha-manghang mga video sa loob ng ilang segundo.</string>
+    <string name="picker_allow_access_1">Pumili ng Larawan</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_photos_unavailable_title">May ilang larawan na hindi magagamit</string>
+    <string name="picker_photos_unavailable_subtitle">Kumuha ng access sa lahat ng iyong larawan para makagawa ka ng mga video nang hindi nawawala ang iyong mga paboritong alaala.</string>
+    <string name="picker_manage_access">Pamahalaan ang Access</string>
+    <string name="picker_keep_limited_access">Panatilihin ang Limitadong Access</string>
 </resources>

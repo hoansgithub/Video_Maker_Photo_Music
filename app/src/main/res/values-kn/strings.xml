@@ -292,12 +292,12 @@
     <string name="picker_permission_title">ಫೋಟೋಗಳಿಗೆ ಪ್ರವೇಶ ಅನುಮತಿ</string>
     <string name="picker_permission_message">ಮುಂದುವರಿಯಲು, Rehancer-ಗೆ ನಿಮ್ಮ ಫೋಟೋಗಳಿಗೆ ಪ್ರವೇಶ ಅನುಮತಿ ಅಗತ್ಯ</string>
     <string name="picker_allow_access">ಪ್ರವೇಶ ಅನುಮತಿ</string>
-    <string name="picker_give_access">ಪ್ರವೇಶ ನೀಡಿ</string>
-    <string name="picker_give_access_settings">ನಿಮ್ಮ ಫೋಟೋಗಳಿಗೆ ಪ್ರವೇಶ\nಆಫ್ ಮಾಡಲಾಗಿದೆ.</string>
-    <string name="picker_give_access_permission">ರಚಿಸಲು ಸಿದ್ಧರಿದ್ದೀರಾ?</string>
+    <string name="picker_give_access">ಅನುಮತಿ ನೀಡಿ</string>
+    <string name="picker_give_access_settings">ಫೋಟೋ ಪ್ರವೇಶ ಅಗತ್ಯವಿದೆ</string>
+    <string name="picker_give_access_permission">ಮ್ಯಾಜಿಕ್ ರಚಿಸಲು ಫೋಟೋ ಪ್ರವೇಶಕ್ಕೆ ಅನುಮತಿ ನೀಡಿ</string>
     <string name="picker_not_now">ಈಗ ಬೇಡ</string>
-    <string name="picker_full_access_custom_message">ನಿಮ್ಮ ವೀಡಿಯೋ ಮತ್ತು ಫೋಟೋಗಳನ್ನು ಬ್ರೌಸ್ ಮಾಡಲು ನಾವು ಗ್ಯಾಲರಿಗೆ ಪ್ರವೇಶ ಅಗತ್ಯ.</string>
-    <string name="picker_full_access_settings_message"> ಸಂಪಾದನೆ ಪ್ರಾರಂಭಿಸಲು ಸಾಧನ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ \'ಫೋಟೋ\' ಅಥವಾ \'ಸ್ಟೋರೇಜ್\' ಸಕ್ರಿಯಗೊಳಿಸಿ.</string>
+    <string name="picker_full_access_custom_message">ಕೆಲವೇ ಸೆಕೆಂಡುಗಳಲ್ಲಿ ಅದ್ಭುತ ವೀಡಿಯೊಗಳನ್ನು ರಚಿಸಲು ನಿಮ್ಮ ಫೋಟೋಗಳಿಗೆ ಪ್ರವೇಶವನ್ನು ಅನುಮತಿಸಿ. ನಾವು ಇದನ್ನು ಬೇರೆ ಯಾವುದೇ ಉದ್ದೇಶಕ್ಕಾಗಿ ಬಳಸುವುದಿಲ್ಲ.</string>
+    <string name="picker_full_access_settings_message">ಸಂಪಾದನೆಯನ್ನು ಪ್ರಾರಂಭಿಸಲು, ಅಪ್ಲಿಕೇಶನ್‌ಗೆ ನಿಮ್ಮ ಫೋಟೋ ಲೈಬ್ರರಿಗೆ ಪೂರ್ಣ ಪ್ರವೇಶದ ಅಗತ್ಯವಿದೆ. ಈ ವೈಶಿಷ್ಟ್ಯವನ್ನು ಬಳಸಲು ದಯವಿಟ್ಟು ನಿಮ್ಮ ಅನುಮತಿಯನ್ನು ನವೀಕರಿಸಿ.</string>
     <string name="picker_limited_access_message">ನೀವು Video Maker-ಗೆ ಸೀಮಿತ ಫೋಟೋಗಳಿಗೆ ಪ್ರವೇಶ ನೀಡಿದ್ದೀರಿ.</string>
     <string name="picker_add_more_photos">ಸೇರಿಸಿ</string>
     <string name="picker_go_to_settings">ಸೆಟ್ಟಿಂಗ್‌ಗಳಿಗೆ ಹೋಗಿ</string>
@@ -590,4 +590,15 @@
     <string name="popup_premium_song">ಪ್ರೀಮಿಯಂ ಹಾಡು</string>
     <string name="popup_premium_template">ಪ್ರೀಮಿಯಂ ಟೆಂಪ್ಲೇಟ್</string>
     <string name="popup_try_it_now">ಈಗ ಪ್ರಯತ್ನಿಸಿ</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_permission_title_1">ಮ್ಯಾಜಿಕ್ ರಚಿಸಲು ಫೋಟೋಗಳನ್ನು ಆರಿಸಿ</string>
+    <string name="picker_permission_message_1">ನಿಮ್ಮ ಲೈಬ್ರರಿಯಿಂದ ಫೋಟೋಗಳನ್ನು ಆರಿಸಿ ಮತ್ತು ಅವುಗಳನ್ನು ಕೆಲವೇ ಸೆಕೆಂಡುಗಳಲ್ಲಿ ಅದ್ಭುತ ವೀಡಿಯೊಗಳಾಗಿ ಪರಿವರ್ತಿಸಿ.</string>
+    <string name="picker_allow_access_1">ಫೋಟೋಗಳನ್ನು ಆರಿಸಿ</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_photos_unavailable_title">ಕೆಲವು ಫೋಟೋಗಳು ಲಭ್ಯವಿಲ್ಲ</string>
+    <string name="picker_photos_unavailable_subtitle">ನಿಮ್ಮ ಎಲ್ಲಾ ಫೋಟೋಗಳಿಗೆ ಪ್ರವೇಶವನ್ನು ಪಡೆಯಿರಿ ಇದರಿಂದ ನಿಮ್ಮ ನೆಚ್ಚಿನ ನೆನಪುಗಳನ್ನು ಕಳೆದುಕೊಳ್ಳದೆ ನೀವು ವೀಡಿಯೊಗಳನ್ನು ರಚಿಸಬಹುದು.</string>
+    <string name="picker_manage_access">ಪ್ರವೇಶವನ್ನು ನಿರ್ವಹಿಸಿ</string>
+    <string name="picker_keep_limited_access">ಸೀಮิต ಪ್ರವೇಶವನ್ನು ಮುಂದುವರಿಸಿ</string>
 </resources>

@@ -287,12 +287,12 @@
     <string name="picker_permission_title">Acceso a Fotos Requerido</string>
     <string name="picker_permission_message">Para crear vídeos con tus fotos, necesitamos permiso para acceder a tu biblioteca de fotos.</string>
     <string name="picker_allow_access">Permitir Acceso</string>
-    <string name="picker_give_access">Dar Acceso</string>
-    <string name="picker_give_access_settings">El acceso a tus fotos\nestá desactivado.</string>
-    <string name="picker_give_access_permission">¿Listo para crear?</string>
+    <string name="picker_give_access">Permitir acceso</string>
+    <string name="picker_give_access_settings">Se requiere acceso a las fotos</string>
+    <string name="picker_give_access_permission">Permitir acceso a las fotos para crear magia</string>
     <string name="picker_not_now">Ahora no</string>
-    <string name="picker_full_access_custom_message">Para explorar tus videos y fotos, necesitamos acceso a tu galería.</string>
-    <string name="picker_full_access_settings_message">Para empezar a editar, habilita \'Fotos\' o \'Almacenamiento\' en la configuración de tu dispositivo.</string>
+    <string name="picker_full_access_custom_message">Permite el acceso a tus fotos para crear videos impresionantes en segundos. No las usamos para ningún otro propósito.</string>
+    <string name="picker_full_access_settings_message">Para comenzar a editar, la aplicación requiere acceso completo a tu biblioteca de fotos. Actualiza tus permisos para usar esta función.</string>
     <string name="picker_limited_access_message">Has dado acceso a Video Maker a un número limitado de fotos.</string>
     <string name="picker_add_more_photos">Agregar</string>
     <string name="picker_go_to_settings">Ir a Configuración</string>
@@ -583,4 +583,15 @@
     <string name="popup_premium_song">Canción Premium</string>
     <string name="popup_premium_template">Plantilla Premium</string>
     <string name="popup_try_it_now">Pruébalo ahora</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_permission_title_1">Elige fotos para crear magia</string>
+    <string name="picker_permission_message_1">Elige fotos de tu biblioteca y conviértelas en videos increíbles en segundos.</string>
+    <string name="picker_allow_access_1">Elegir fotos</string>
+
+    <!-- New Picker Permissions Strings -->
+    <string name="picker_photos_unavailable_title">Algunas fotos no están disponibles</string>
+    <string name="picker_photos_unavailable_subtitle">Accede a todas tus fotos para que puedas crear videos sin perder tus recuerdos favoritos.</string>
+    <string name="picker_manage_access">Administrar acceso</string>
+    <string name="picker_keep_limited_access">Mantener acceso limitado</string>
 </resources>
