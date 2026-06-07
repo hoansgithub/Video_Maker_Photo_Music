@@ -1,7 +1,6 @@
-package com.videomaker.aimusic.modules.genretemplate
+package com.videomaker.aimusic.modules.featureselection
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,9 +35,7 @@ fun PersonalizingScreen() {
             color = Primary,
             strokeWidth = 4.dp
         )
-
         Spacer(modifier = Modifier.height(24.dp))
-
         Text(
             text = stringResource(R.string.personalizing_title),
             fontSize = 20.sp,
@@ -46,9 +43,7 @@ fun PersonalizingScreen() {
             color = Color.White,
             textAlign = TextAlign.Center
         )
-
         Spacer(modifier = Modifier.height(8.dp))
-
         Text(
             text = stringResource(R.string.personalizing_subtitle),
             fontSize = 14.sp,

@@ -61,4 +61,6 @@ val PLATFORM_CONFIG = OnboardingSurveyStepConfig(
 fun configFor(step: OnboardingSurveyStep): OnboardingSurveyStepConfig = when (step) {
     OnboardingSurveyStep.FEATURE -> FEATURE_CONFIG
     OnboardingSurveyStep.PLATFORM -> PLATFORM_CONFIG
+    OnboardingSurveyStep.AI_LEVEL ->
+        error("AI_LEVEL renders via AiLevelScreen, not OnboardingSurveyList")
 }

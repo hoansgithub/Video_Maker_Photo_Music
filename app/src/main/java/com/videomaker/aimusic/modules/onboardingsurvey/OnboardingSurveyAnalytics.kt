@@ -16,6 +16,12 @@ object OnboardingSurveyAnalytics {
     const val PARAM_PLATFORM = "platform"
     const val PARAM_PLATFORM_COUNT = "platform_count"
 
+    // AI creation-style screen events / params
+    const val EVENT_AI_LEVEL_RENDER = "creation_style_render"
+    const val EVENT_AI_LEVEL_SELECT = "creation_style_select"
+    const val EVENT_AI_LEVEL_NEXT = "creation_style_next"
+    const val PARAM_AI_LEVEL = "creation_style"
+
     /**
      * Expands selected ids into indexed params: `${paramKey}1` → id1, `${paramKey}2` → id2, …
      * Iteration order is preserved; index starts at 1.

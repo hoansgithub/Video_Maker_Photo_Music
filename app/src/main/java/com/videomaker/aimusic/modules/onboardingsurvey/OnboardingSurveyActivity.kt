@@ -132,6 +132,10 @@ class OnboardingSurveyActivity : AppCompatActivity() {
     @Composable
     private fun SurveyStep(step: OnboardingSurveyStep) {
         val adClickDetector: AdClickDetector = koinInject()
+        if (step == OnboardingSurveyStep.AI_LEVEL) {
+            AiLevelStep(adClickDetector = adClickDetector)
+            return
+        }
         val config = remember(step) { configFor(step) }
         val density = LocalDensity.current
         val scope = rememberCoroutineScope()
@@ -429,17 +433,117 @@ class OnboardingSurveyActivity : AppCompatActivity() {
         LaunchedEffect(step) {
             when (step) {
                 OnboardingSurveyStep.FEATURE -> {
-                    if (OnboardingSurveyStep.PLATFORM in viewModel.enabledSteps) {
-                        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SOCIAL)
+                    when {
+                        OnboardingSurveyStep.PLATFORM in viewModel.enabledSteps ->
+                            VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SOCIAL)
+                        OnboardingSurveyStep.AI_LEVEL in viewModel.enabledSteps ->
+                            VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL)
+                        else -> {
+                            VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
+                            VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
+                        }
+                    }
+                }
+                OnboardingSurveyStep.PLATFORM -> {
+                    if (OnboardingSurveyStep.AI_LEVEL in viewModel.enabledSteps) {
+                        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL)
                     } else {
                         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
                         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
                     }
                 }
-                OnboardingSurveyStep.PLATFORM -> {
+                OnboardingSurveyStep.AI_LEVEL -> {
                     VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
                     VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
                 }
+            }
+        }
+    }
+
+    @Composable
+    private fun AiLevelStep(adClickDetector: AdClickDetector) {
+        val density = LocalDensity.current
+        val selectedIds by viewModel.selectedAiLevel.collectAsStateWithLifecycle()
+        val selectedId = selectedIds.firstOrNull() ?: AI_LEVEL_ITEMS.first().id
+
+        var bottomSectionHeight by remember { mutableStateOf(0) }
+        val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
+
+        LaunchedEffect(Unit) {
+            Analytics.track(name = OnboardingSurveyAnalytics.EVENT_AI_LEVEL_RENDER)
+        }
+
+        Column(
+            modifier = Modifier
+                .statusBarsPadding()
+                .fillMaxSize()
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                AiLevelScreen(
+                    items = AI_LEVEL_ITEMS,
+                    selectedId = selectedId,
+                    onSelect = { id ->
+                        viewModel.selectAiLevel(id)
+                        Analytics.track(
+                            name = OnboardingSurveyAnalytics.EVENT_AI_LEVEL_SELECT,
+                            params = mapOf(OnboardingSurveyAnalytics.PARAM_AI_LEVEL to id),
+                        )
+                    },
+                    bottomPaddingDp = bottomPaddingDp,
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomEnd)
+                        .then(
+                            if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
+                            else Modifier
+                        )
+                        .clickableSingle { }
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.img_bg_cta_onboard),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize(),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(top = 10.dp, bottom = 12.dp)
+                    ) {
+                        OnboardingCtaButton(
+                            text = stringResource(R.string.onboarding_next),
+                            onClick = {
+                                Analytics.track(
+                                    name = OnboardingSurveyAnalytics.EVENT_AI_LEVEL_NEXT,
+                                    params = mapOf(OnboardingSurveyAnalytics.PARAM_AI_LEVEL to selectedId),
+                                )
+                                viewModel.onNext()
+                            },
+                            enabled = true,
+                            color = Primary,
+                            icon = R.drawable.ic_right_arrow,
+                        )
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = bottomPaddingDp)
+                    .onSizeChanged { size ->
+                        if (size.height > bottomSectionHeight) bottomSectionHeight = size.height
+                    }
+            ) {
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_ONBOARDING_AI_LEVEL,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
+                )
             }
         }
     }

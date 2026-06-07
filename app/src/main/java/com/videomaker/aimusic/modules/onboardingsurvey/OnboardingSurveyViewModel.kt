@@ -25,6 +25,12 @@ class OnboardingSurveyViewModel(
     private val _selectedPlatforms = MutableStateFlow<Set<String>>(emptySet())
     val selectedPlatforms: StateFlow<Set<String>> = _selectedPlatforms.asStateFlow()
 
+    // AI_LEVEL is single-select with item 1 pre-selected (analytics-only screen).
+    private val _selectedAiLevel = MutableStateFlow(setOf(AI_LEVEL_ITEMS.first().id))
+    val selectedAiLevel: StateFlow<Set<String>> = _selectedAiLevel.asStateFlow()
+
+    fun selectAiLevel(id: String) { _selectedAiLevel.value = setOf(id) }
+
     // One-time forward navigation event (collected once in the Activity).
     private val _navToNext = Channel<Unit>(Channel.BUFFERED)
     val navToNext = _navToNext.receiveAsFlow()
@@ -40,13 +46,19 @@ class OnboardingSurveyViewModel(
     fun selectedFlow(step: OnboardingSurveyStep): StateFlow<Set<String>> = when (step) {
         OnboardingSurveyStep.FEATURE -> selectedFeatures
         OnboardingSurveyStep.PLATFORM -> selectedPlatforms
+        OnboardingSurveyStep.AI_LEVEL -> selectedAiLevel
     }
 
     /** Toggles selection. Returns true if [id] is now selected (used to decide select-tracking / ad reload). */
     fun toggle(step: OnboardingSurveyStep, id: String): Boolean {
+        if (step == OnboardingSurveyStep.AI_LEVEL) {
+            selectAiLevel(id)
+            return true
+        }
         val flow = when (step) {
             OnboardingSurveyStep.FEATURE -> _selectedFeatures
             OnboardingSurveyStep.PLATFORM -> _selectedPlatforms
+            OnboardingSurveyStep.AI_LEVEL -> _selectedFeatures // unreachable (handled above)
         }
         val current = flow.value
         val nowSelected = id !in current

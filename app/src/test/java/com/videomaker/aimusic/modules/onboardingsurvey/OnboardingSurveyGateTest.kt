@@ -11,32 +11,48 @@ class OnboardingSurveyGateTest {
 
     private val featureKey = RemoteConfigKeys.ONBOARDING_FEATURE_SELECTION_ENABLED
     private val platformKey = RemoteConfigKeys.ONBOARDING_PLATFORM_SELECTION_ENABLED
+    private val aiLevelKey = RemoteConfigKeys.ONBOARDING_AI_LEVEL_ENABLED
 
     @Test
-    fun `both keys absent defaults to both steps in order`() {
+    fun `all keys absent defaults to all three steps in order`() {
         val rc = FakeRemoteConfig()
         assertEquals(
-            listOf(OnboardingSurveyStep.FEATURE, OnboardingSurveyStep.PLATFORM),
+            listOf(OnboardingSurveyStep.FEATURE, OnboardingSurveyStep.PLATFORM, OnboardingSurveyStep.AI_LEVEL),
             OnboardingSurveyGate.enabledSteps(rc)
         )
         assertTrue(OnboardingSurveyGate.isAnyEnabled(rc))
     }
 
     @Test
-    fun `feature off keeps only platform`() {
+    fun `ai level off keeps feature and platform`() {
+        val rc = FakeRemoteConfig(mapOf(aiLevelKey to false))
+        assertEquals(
+            listOf(OnboardingSurveyStep.FEATURE, OnboardingSurveyStep.PLATFORM),
+            OnboardingSurveyGate.enabledSteps(rc)
+        )
+    }
+
+    @Test
+    fun `feature off keeps platform and ai level`() {
         val rc = FakeRemoteConfig(mapOf(featureKey to false))
-        assertEquals(listOf(OnboardingSurveyStep.PLATFORM), OnboardingSurveyGate.enabledSteps(rc))
+        assertEquals(
+            listOf(OnboardingSurveyStep.PLATFORM, OnboardingSurveyStep.AI_LEVEL),
+            OnboardingSurveyGate.enabledSteps(rc)
+        )
     }
 
     @Test
-    fun `platform off keeps only feature`() {
+    fun `platform off keeps feature and ai level`() {
         val rc = FakeRemoteConfig(mapOf(platformKey to false))
-        assertEquals(listOf(OnboardingSurveyStep.FEATURE), OnboardingSurveyGate.enabledSteps(rc))
+        assertEquals(
+            listOf(OnboardingSurveyStep.FEATURE, OnboardingSurveyStep.AI_LEVEL),
+            OnboardingSurveyGate.enabledSteps(rc)
+        )
     }
 
     @Test
-    fun `both off yields empty and isAnyEnabled false`() {
-        val rc = FakeRemoteConfig(mapOf(featureKey to false, platformKey to false))
+    fun `all off yields empty and isAnyEnabled false`() {
+        val rc = FakeRemoteConfig(mapOf(featureKey to false, platformKey to false, aiLevelKey to false))
         assertTrue(OnboardingSurveyGate.enabledSteps(rc).isEmpty())
         assertFalse(OnboardingSurveyGate.isAnyEnabled(rc))
     }

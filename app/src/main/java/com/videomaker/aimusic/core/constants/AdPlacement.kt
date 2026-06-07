@@ -901,6 +901,15 @@ object AdPlacement {
      */
     const val NATIVE_ONBOARDING_PERSONALIZING = "ad_native_onboarding_personalizing"
 
+    /** Native ad — onboarding AI creation-style (AI_LEVEL) survey screen. RC key: ad_native_onboarding_ai_level */
+    const val NATIVE_ONBOARDING_AI_LEVEL = "ad_native_onboarding_ai_level"
+
+    /** Native ad — onboarding content-filter (CONTENT_EXCLUSIVE) screen. RC key: ad_native_onboarding_content_exclusive */
+    const val NATIVE_ONBOARDING_CONTENT_EXCLUSIVE = "ad_native_onboarding_content_exclusive"
+
+    /** Native ad — onboarding photo-privacy (MEDIA_PRIVACY) screen. RC key: ad_native_onboarding_media_privacy */
+    const val NATIVE_ONBOARDING_MEDIA_PRIVACY = "ad_native_onboarding_media_privacy"
+
     /**
      * Rewarded ad shown when user wants to download video to gallery.
      * Timing: User clicks download button → dialog appears → user watches ad → download proceeds.
@@ -1194,6 +1203,9 @@ object AdPlacement {
         NATIVE_ONBOARDING_SELECT_MUSIC,
         NATIVE_ONBOARDING_SELECT_TPT,
         NATIVE_ONBOARDING_PERSONALIZING,
+        NATIVE_ONBOARDING_AI_LEVEL,
+        NATIVE_ONBOARDING_CONTENT_EXCLUSIVE,
+        NATIVE_ONBOARDING_MEDIA_PRIVACY,
         NATIVE_ONBOARDING_SELECT,
         NATIVE_ONBOARDING_SELECT_ALT,
         NATIVE_ONBOARDING_SOCIAL,

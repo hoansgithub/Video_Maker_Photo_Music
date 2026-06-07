@@ -599,6 +599,27 @@
     <string name="template_pick_title">What template style do you prefer?</string>
     <string name="template_pick_subtitle">Pick a template style and let us handle the transitions and effects for you. This step won’t affect your personalized content.</string>
 
+    <!-- AI_LEVEL (creation style) -->
+    <string name="ai_level_title">Choose your creation style</string>
+    <string name="ai_level_light_touch_title">Light Touch</string>
+    <string name="ai_level_light_touch_banner">Keep it authentic. Look like you, just better</string>
+    <string name="ai_level_deep_swap_title">Deep Swap</string>
+    <string name="ai_level_deep_swap_banner">Push creativity further. Become anyone, try anything.</string>
+
+    <!-- CONTENT_EXCLUSIVE (content filter) -->
+    <string name="content_exclusive_title">Filter your music and template feed</string>
+    <string name="content_exclusive_family_title">Family Friendly</string>
+    <string name="content_exclusive_family_subtitle">Block explicit lyrics and aggressive dancing.</string>
+    <string name="content_exclusive_unfiltered_title">Unfiltered</string>
+    <string name="content_exclusive_unfiltered_subtitle">Show all trending videos and mature themes.</string>
+
+    <!-- MEDIA_PRIVACY (photo privacy) -->
+    <string name="media_privacy_title">Choose your photo privacy setting</string>
+    <string name="media_privacy_private_title">Private Mode</string>
+    <string name="media_privacy_private_subtitle">Delete my photos after each creation. Best for maximum privacy.</string>
+    <string name="media_privacy_quick_title">Quick Remake</string>
+    <string name="media_privacy_quick_subtitle">Save my profile for faster future creations. Create new videos in 1 tap.</string>
+
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">Welcome back!</string>
     <string name="welcome_back_subtitle">Here\'s what\'s new today:</string>

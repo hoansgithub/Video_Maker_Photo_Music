@@ -132,6 +132,8 @@ object RemoteConfigKeys {
     const val ONBOARDING_GENRE_SELECTION_ENABLED = "onboarding_genre_selection_enabled"
     const val ONBOARDING_PERSONALIZING_ENABLED = "onboarding_personalizing_enabled"
     const val ONBOARDING_TEMPLATE_PICK_ENABLED = "onboarding_template_pick_enabled"
+    const val ONBOARDING_CONTENT_EXCLUSIVE_ENABLED = "onboarding_content_exclusive_enabled"
+    const val ONBOARDING_MEDIA_PRIVACY_ENABLED = "onboarding_media_privacy_enabled"
 
     // ============================================
     // ONBOARDING SURVEY SCREENS (after language) — AB test on/off per screen
@@ -139,6 +141,7 @@ object RemoteConfigKeys {
 
     const val ONBOARDING_FEATURE_SELECTION_ENABLED = "onboarding_feature_selection_enabled"
     const val ONBOARDING_PLATFORM_SELECTION_ENABLED = "onboarding_platform_selection_enabled"
+    const val ONBOARDING_AI_LEVEL_ENABLED = "onboarding_ai_level_enabled"
 
     /**
      * Dynamic sort order for the Feature Survey items (JSON array of item IDs).

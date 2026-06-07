@@ -10,7 +10,6 @@ import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -87,8 +86,9 @@ fun RemoteConfig.getStepEnabled(key: String): Boolean =
 
 fun RemoteConfig.isGenreTemplateFlowAllOff(): Boolean =
     !getStepEnabled(RemoteConfigKeys.ONBOARDING_GENRE_SELECTION_ENABLED) &&
-    !getStepEnabled(RemoteConfigKeys.ONBOARDING_PERSONALIZING_ENABLED) &&
-    !getStepEnabled(RemoteConfigKeys.ONBOARDING_TEMPLATE_PICK_ENABLED)
+    !getStepEnabled(RemoteConfigKeys.ONBOARDING_TEMPLATE_PICK_ENABLED) &&
+    !getStepEnabled(RemoteConfigKeys.ONBOARDING_CONTENT_EXCLUSIVE_ENABLED) &&
+    !getStepEnabled(RemoteConfigKeys.ONBOARDING_MEDIA_PRIVACY_ENABLED)
 
 class GenreTemplateViewModel(
     private val templateRepository: TemplateRepository,
@@ -98,23 +98,23 @@ class GenreTemplateViewModel(
 
     // Feature flags - default true so existing behaviour is preserved when keys not set in RC
     val isGenreSelectionEnabled = remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_GENRE_SELECTION_ENABLED)
-    val isPersonalizingEnabled = remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_PERSONALIZING_ENABLED)
     val isTemplatePickEnabled = remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_TEMPLATE_PICK_ENABLED)
+    val isContentExclusiveEnabled = remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_CONTENT_EXCLUSIVE_ENABLED)
+    val isMediaPrivacyEnabled = remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_MEDIA_PRIVACY_ENABLED)
+
+    private val enabledSteps: List<GenreTemplateStep> = GenreTemplateGate.enabledSteps(remoteConfig)
 
     // Fired when the flow should proceed to FeatureSelectionActivity (all remaining steps done/skipped)
     private val _navToNext = Channel<Unit>(Channel.BUFFERED)
     val navToNext = _navToNext.receiveAsFlow()
 
-    private var personalizingStartedAt = 0L
-    private val personalizingMinDurationMs = 2500L
+    // Single-select choices for the two new analytics-only screens (item 1 pre-selected).
+    val selectedContentFilter = mutableStateOf(CONTENT_EXCLUSIVE_ITEMS.first().id)
+    val selectedPrivacy = mutableStateOf(MEDIA_PRIVACY_ITEMS.first().id)
 
     // Initial visible step: first enabled screen in the fixed order
     private val _currentStep = MutableStateFlow(
-        when {
-            isGenreSelectionEnabled -> GenreTemplateStep.GENRE_SELECTION
-            isPersonalizingEnabled -> GenreTemplateStep.PERSONALIZING
-            else -> GenreTemplateStep.TEMPLATE_PICK
-        }
+        enabledSteps.firstOrNull() ?: GenreTemplateStep.TEMPLATE_PICK
     )
     val currentStep: StateFlow<GenreTemplateStep> = _currentStep.asStateFlow()
 
@@ -131,16 +131,12 @@ class GenreTemplateViewModel(
     init {
         loadGenres()
         when {
-            !isGenreSelectionEnabled && !isPersonalizingEnabled && !isTemplatePickEnabled -> {
+            enabledSteps.isEmpty() -> {
                 // All steps off → skip the whole activity immediately
                 viewModelScope.launch { _navToNext.send(Unit) }
             }
-            !isGenreSelectionEnabled -> {
-                // No genre selection screen; auto-start template loading (no genre → hot/geo templates)
-                if (isPersonalizingEnabled) {
-                    _currentStep.value = GenreTemplateStep.PERSONALIZING
-                    personalizingStartedAt = System.currentTimeMillis()
-                }
+            !isGenreSelectionEnabled && isTemplatePickEnabled -> {
+                // No genre screen but template pick is first → preload templates (no genre).
                 loadTemplates()
             }
         }
@@ -167,15 +163,15 @@ class GenreTemplateViewModel(
 
     fun isStep1Valid(): Boolean = selectedGenre.value != null
 
-    fun goToStep2() {
+    fun onGenreNext() {
         if (isTemplatesLoading.value) return
-        if (isPersonalizingEnabled) {
-            _currentStep.value = GenreTemplateStep.PERSONALIZING
-            personalizingStartedAt = System.currentTimeMillis()
+        if (isTemplatePickEnabled) {
+            // Stay on GENRE_SELECTION while templates load (CTA disabled via isTemplatesLoading),
+            // then transition to TEMPLATE_PICK inside loadTemplates().
+            loadTemplates()
+        } else {
+            advanceFrom(GenreTemplateStep.GENRE_SELECTION)
         }
-        // When PERSONALIZING is off the user stays on GENRE_SELECTION while loading;
-        // isTemplatesLoading.value = true will disable the CTA button during that time.
-        loadTemplates()
     }
 
     private fun loadTemplates() {
@@ -199,20 +195,14 @@ class GenreTemplateViewModel(
             isTemplatesLoading.value = false
 
             when {
-                !isTemplatePickEnabled -> {
-                    // Template pick screen is off → proceed directly to next activity
-                    awaitPersonalizingMinDuration()
-                    _navToNext.send(Unit)
-                }
                 templates.isNotEmpty() -> {
-                    awaitPersonalizingMinDuration()
                     _currentStep.value = GenreTemplateStep.TEMPLATE_PICK
                 }
                 else -> {
-                    // Templates unavailable and we can't go back to pick a genre → skip forward
+                    // Templates unavailable. If we can't return to pick a genre, skip the template
+                    // step and continue to the next enabled step (or finish).
                     if (!isGenreSelectionEnabled) {
-                        awaitPersonalizingMinDuration()
-                        _navToNext.send(Unit)
+                        advanceFrom(GenreTemplateStep.TEMPLATE_PICK)
                     } else {
                         templatesError.value = "No templates available"
                     }
@@ -231,10 +221,23 @@ class GenreTemplateViewModel(
         _currentStep.value = GenreTemplateStep.GENRE_SELECTION
     }
 
-    private suspend fun awaitPersonalizingMinDuration() {
-        if (!isPersonalizingEnabled || personalizingStartedAt == 0L) return
-        val elapsed = System.currentTimeMillis() - personalizingStartedAt
-        val remaining = personalizingMinDurationMs - elapsed
-        if (remaining > 0) delay(remaining)
+    fun onTemplateNext() = advanceFrom(GenreTemplateStep.TEMPLATE_PICK)
+
+    fun selectContentFilter(id: String) { selectedContentFilter.value = id }
+    fun onContentExclusiveNext() = advanceFrom(GenreTemplateStep.CONTENT_EXCLUSIVE)
+
+    fun selectPrivacy(id: String) { selectedPrivacy.value = id }
+    fun onMediaPrivacyNext() = advanceFrom(GenreTemplateStep.MEDIA_PRIVACY)
+
+    private fun advanceFrom(step: GenreTemplateStep) {
+        val next = GenreTemplateGate.nextStep(enabledSteps, step)
+        if (next == null) {
+            viewModelScope.launch { _navToNext.send(Unit) }
+        } else if (next == GenreTemplateStep.TEMPLATE_PICK) {
+            // Reaching TEMPLATE_PICK requires templates; load then transition.
+            loadTemplates()
+        } else {
+            _currentStep.value = next
+        }
     }
 }
