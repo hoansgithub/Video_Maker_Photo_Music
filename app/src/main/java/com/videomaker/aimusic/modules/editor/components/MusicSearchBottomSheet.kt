@@ -193,7 +193,8 @@ internal fun MusicSearchBottomSheet(
             Analytics.trackSongSelect(
                 songId = song.id.toString(),
                 songName = song.name,
-                location = selectedSongLocation
+                location = selectedSongLocation,
+                isPremium = song.isPremium
             )
         }
     }
@@ -547,12 +548,14 @@ internal fun MusicSearchBottomSheet(
                                     Analytics.trackSongClick(
                                         songId = song.id.toString(),
                                         songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
+                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH,
+                                        isPremium = song.isPremium
                                     )
                                     Analytics.trackSongPreview(
                                         songId = song.id.toString(),
                                         songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
+                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH,
+                                        isPremium = song.isPremium
                                     )
                                     focusManager.clearFocus()
                                     keyboardController?.hide()
@@ -562,7 +565,8 @@ internal fun MusicSearchBottomSheet(
                                     sessionManager.trackSongImpressionAndMark(
                                         songId = song.id.toString(),
                                         songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
+                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH,
+                                        isPremium = song.isPremium
                                     )
                                 }
                             )
@@ -675,12 +679,14 @@ internal fun MusicSearchBottomSheet(
                                         Analytics.trackSongClick(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                            isPremium = song.isPremium
                                         )
                                         Analytics.trackSongPreview(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                            isPremium = song.isPremium
                                         )
                                         focusManager.clearFocus()
                                         keyboardController?.hide()
@@ -690,7 +696,8 @@ internal fun MusicSearchBottomSheet(
                                         sessionManager.trackSongImpressionAndMark(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                            isPremium = song.isPremium
                                         )
                                     }
                                 )
@@ -788,12 +795,14 @@ internal fun MusicSearchBottomSheet(
                                         Analytics.trackSongClick(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                            isPremium = song.isPremium
                                         )
                                         Analytics.trackSongPreview(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                            isPremium = song.isPremium
                                         )
                                         focusManager.clearFocus()
                                         keyboardController?.hide()
@@ -803,7 +812,8 @@ internal fun MusicSearchBottomSheet(
                                         sessionManager.trackSongImpressionAndMark(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                            isPremium = song.isPremium
                                         )
                                     }
                                 )

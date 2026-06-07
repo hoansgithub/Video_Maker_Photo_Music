@@ -318,7 +318,8 @@ fun UninstallScreen(
                                             templateId = template.id,
                                             templateName = template.name,
                                             location = AnalyticsEvent.Value.Location.UNINSTALL,
-                                            screenSessionId = ""
+                                            screenSessionId = "",
+                                            isPremium = template.isPremium
                                         )
                                     }
                             )

@@ -207,7 +207,8 @@ fun UnifiedSearchIdleContent(
                                     Analytics.trackTemplateClick(
                                         templateId = template.id,
                                         templateName = template.name,
-                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM,
+                                        isPremium = template.isPremium
                                     )
                                     onTemplateClick.invoke(template.id)
                                 },
@@ -286,7 +287,8 @@ fun UnifiedSearchIdleContent(
                                             Analytics.trackSongClick(
                                                 songId = song.id.toString(),
                                                 songName = song.name,
-                                                location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                                location = AnalyticsEvent.Value.Location.SEARCH_RCM,
+                                                isPremium = song.isPremium
                                             )
                                             onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RCM)
                                         },
@@ -294,7 +296,8 @@ fun UnifiedSearchIdleContent(
                                             sessionManager.trackSongImpressionAndMark(
                                                 songId = song.id.toString(),
                                                 songName = song.name,
-                                                location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                                location = AnalyticsEvent.Value.Location.SEARCH_RCM,
+                                                isPremium = song.isPremium
                                             )
                                         }
                                     )

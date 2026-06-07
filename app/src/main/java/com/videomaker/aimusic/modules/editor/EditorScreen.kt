@@ -669,7 +669,8 @@ fun EditorScreen(
                             Analytics.trackEditorSongClick(
                                 videoId = videoId,
                                 songId = song.id.toString(),
-                                songName = song.name
+                                songName = song.name,
+                                isPremium = song.isPremium
                             )
                         }
                     },
@@ -679,7 +680,8 @@ fun EditorScreen(
                             Analytics.trackEditorSongSelect(
                                 videoId = videoId,
                                 songId = song.id.toString(),
-                                songName = song.name
+                                songName = song.name,
+                                isPremium = song.isPremium
                             )
                         }
                         viewModel.updateMusicTrack(

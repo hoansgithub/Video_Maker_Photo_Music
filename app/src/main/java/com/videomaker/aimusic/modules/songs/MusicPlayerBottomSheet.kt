@@ -304,7 +304,8 @@ fun MusicPlayerBottomSheet(
                             Analytics.trackSongPreview(
                                 songId = currentSong.id.toString(),
                                 songName = currentSong.name,
-                                location = categoryLocation
+                                location = categoryLocation,
+                                isPremium = currentSong.isPremium
                             )
                             hasTrackedAutoPreview = true
                         }
@@ -531,7 +532,8 @@ fun MusicPlayerBottomSheet(
                                             Analytics.trackSongPause(
                                                 songId = currentSong.id.toString(),
                                                 songName = currentSong.name,
-                                                location = categoryLocation
+                                                location = categoryLocation,
+                                                isPremium = currentSong.isPremium
                                             )
                                         }
                                         player.playbackState == Player.STATE_ENDED -> {
@@ -541,7 +543,8 @@ fun MusicPlayerBottomSheet(
                                             Analytics.trackSongPlay(
                                                 songId = currentSong.id.toString(),
                                                 songName = currentSong.name,
-                                                location = categoryLocation
+                                                location = categoryLocation,
+                                                isPremium = currentSong.isPremium
                                             )
                                         }
                                         else -> {
@@ -549,7 +552,8 @@ fun MusicPlayerBottomSheet(
                                             Analytics.trackSongPlay(
                                                 songId = currentSong.id.toString(),
                                                 songName = currentSong.name,
-                                                location = categoryLocation
+                                                location = categoryLocation,
+                                                isPremium = currentSong.isPremium
                                             )
                                         }
                                     }
@@ -663,7 +667,8 @@ fun MusicPlayerBottomSheet(
                                 Analytics.trackSongSelect(
                                     songId = currentSong.id.toString(),
                                     songName = currentSong.name,
-                                    location = categoryLocation
+                                    location = categoryLocation,
+                                    isPremium = currentSong.isPremium
                                 )
                                 Analytics.trackCreationStart(AnalyticsEvent.Value.Location.SONG)
                                 viewModel.onUseToCreateClick(

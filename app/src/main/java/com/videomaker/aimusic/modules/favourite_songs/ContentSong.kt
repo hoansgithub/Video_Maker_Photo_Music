@@ -96,7 +96,8 @@ fun ContentSong(
                                 sessionManager.trackSongImpressionAndMark(
                                     songId = item.song.id.toString(),
                                     songName = item.song.name,
-                                    location = AnalyticsEvent.Value.Location.SONG_FAVORITE
+                                    location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
+                                    isPremium = item.song.isPremium
                                 )
                             }
                     )

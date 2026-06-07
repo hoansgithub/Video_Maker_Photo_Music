@@ -376,6 +376,16 @@ object AnalyticsEvent {
     object Value {
         const val ALL = "all"
 
+        /**
+         * Content monetization type for template/song context events.
+         * Derived from the item's `is_premium` flag:
+         * premium item -> [ADS], free item -> [FREE].
+         */
+        object Type {
+            const val ADS = "ads"
+            const val FREE = "free"
+        }
+
         object TabName {
             const val GALLERY = "gallery"
             const val SONG = "song"

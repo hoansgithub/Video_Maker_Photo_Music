@@ -223,14 +223,16 @@ fun LikeTemplateEmpty(
                                         templateId = template.id,
                                         templateName = template.name,
                                         location = AnalyticsEvent.Value.Location.LIBRARY_RCM,
-                                        screenSessionId = ""
+                                        screenSessionId = "",
+                                        isPremium = template.isPremium
                                     )
                                 },
                                 onClick = {
                                     Analytics.trackTemplateClick(
                                         templateId = template.id,
                                         templateName = template.name,
-                                        location = AnalyticsEvent.Value.Location.LIBRARY_RCM
+                                        location = AnalyticsEvent.Value.Location.LIBRARY_RCM,
+                                        isPremium = template.isPremium
                                     )
                                     onTemplateClick(template.id)
                                 }
