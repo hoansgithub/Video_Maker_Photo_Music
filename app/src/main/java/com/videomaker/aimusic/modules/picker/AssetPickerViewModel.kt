@@ -393,28 +393,41 @@ class AssetPickerViewModel(
         )
     }
 
+    // Fires media_*_state events whenever a selection changes (add/remove/camera).
+    // Matches the promote message rendered by PickerSelectionBar:
+    //   - count >= MAX_SELECTION              → media_limitphoto_state
+    //   - count >= 2 AND duration >= 15s      → media_morephoto_state
+    //   - count >= 2 (still under 15s)        → media_nphoto_state
+    //   - count < 2                           → no promote state (min-selection message)
+    private fun trackPromoteState() {
+        val count = currentSelectedCount(_uiState.value).coerceIn(0, MAX_SELECTION)
+        when {
+            count >= MAX_SELECTION -> Analytics.trackMediaLimitPhotoState()
+            count >= 2 && durationByCount[count] >= PICKER_RECOMMENDED_DURATION_MS ->
+                Analytics.trackMediaMorePhotoState()
+            count >= 2 -> Analytics.trackMediaNPhotoState()
+            else -> {}
+        }
+    }
+
     /**
-     * Extra photos to suggest so the estimated duration lands as *close as possible* to the
-     * recommended ~15s — allowing a slight overshoot rather than stopping strictly under it.
-     * Picks the total count whose duration is nearest to the recommended length, minus the
-     * current count. durationByCount is monotonically increasing, so we walk up until adding
-     * another photo would land *further* from the target than the current best.
+     * Extra photos to suggest until the estimated duration first reaches the recommended ~15s.
+     * Picks the smallest total count whose duration ≥ recommended length, so the user is nudged
+     * past the threshold even when the last step slightly overshoots. durationByCount is
+     * monotonically increasing.
      *
-     * e.g. if 5 photos ≈ 15.2s (just over) and 4 photos ≈ 12.4s, 5 is nearer to 15s → suggest
-     * reaching 5, not 4. With the flat 2.8s/photo fallback: 3 selected → target 5 (14s) → suggest 2.
+     * e.g. flat 2.8s/photo: 5 photos = 14s (< 15) → still suggest reaching 6 (≈16.8s).
+     * Beat-sync example: 4 = 13.5s, 5 = 17s → suggest reaching 5 (first to cross 15s).
      */
     private fun additionalPhotosForIdeal(count: Int): Int {
         if (count >= MAX_SELECTION) return 0
-        var best = count
-        var next = count + 1
-        while (next <= MAX_SELECTION) {
-            val bestDelta = kotlin.math.abs(durationByCount[best] - PICKER_RECOMMENDED_DURATION_MS)
-            val nextDelta = kotlin.math.abs(durationByCount[next] - PICKER_RECOMMENDED_DURATION_MS)
-            if (nextDelta > bestDelta) break  // moving away from ~15s — stop (durations only grow)
-            best = next
-            next++
+        if (durationByCount[count] >= PICKER_RECOMMENDED_DURATION_MS) return 0
+        for (n in (count + 1)..MAX_SELECTION) {
+            if (durationByCount[n] >= PICKER_RECOMMENDED_DURATION_MS) {
+                return n - count
+            }
         }
-        return (best - count).coerceAtLeast(0)
+        return MAX_SELECTION - count
     }
 
     private fun loadBeatSyncForDuration() {
@@ -821,6 +834,7 @@ class AssetPickerViewModel(
         val updatedState = currentState.copyAssets(selectedAssets = updatedSelection)
         _uiState.value = updatedState
         persistSessionSnapshot(updatedState, modeForState(updatedState))
+        trackPromoteState()
     }
 
     /**
@@ -836,6 +850,7 @@ class AssetPickerViewModel(
         val updatedState = currentState.copyAssets(selectedAssets = updatedSelection)
         _uiState.value = updatedState
         persistSessionSnapshot(updatedState, modeForState(updatedState))
+        trackPromoteState()
     }
 
     /**
@@ -905,6 +920,7 @@ class AssetPickerViewModel(
                 _uiState.value = initialState
                 persistSessionSnapshot(initialState, modeForState(initialState))
             }
+            trackPromoteState()
         }
     }
 

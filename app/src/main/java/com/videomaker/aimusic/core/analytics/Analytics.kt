@@ -683,6 +683,33 @@ object Analytics {
         )
     }
 
+    fun trackMediaNPhotoState() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.MEDIA_NPHOTO_STATE,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackMediaMorePhotoState() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.MEDIA_MOREPHOTO_STATE,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackMediaLimitPhotoState() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.MEDIA_LIMITPHOTO_STATE,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackSearchOpen(location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SEARCH_OPEN,

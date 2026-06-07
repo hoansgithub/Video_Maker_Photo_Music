@@ -102,6 +102,9 @@ object AnalyticsEvent {
     const val MEDIA_SELECT = "media_select"
     const val MEDIA_UNSELECT = "media_unselect"
     const val MEDIA_COMPLETE = "media_complete"
+    const val MEDIA_NPHOTO_STATE = "media_nphoto_state"
+    const val MEDIA_MOREPHOTO_STATE = "media_morephoto_state"
+    const val MEDIA_LIMITPHOTO_STATE = "media_limitphoto_state"
     const val VIDEO_GENERATE = "video_generate"
     const val VIDEO_GENERATE_COMPLETE = "video_generate_complete"
 
