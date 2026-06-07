@@ -16,7 +16,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,22 +38,17 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -117,11 +112,14 @@ import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.FoundationBlack
 import com.videomaker.aimusic.ui.theme.FoundationBlack_100
 import com.videomaker.aimusic.ui.theme.FoundationBlack_200
+import com.videomaker.aimusic.ui.theme.Neutral_Black
+import com.videomaker.aimusic.ui.theme.Neutral_N100
+import com.videomaker.aimusic.ui.theme.Neutral_N50
 import com.videomaker.aimusic.ui.theme.Neutral_N500
 import com.videomaker.aimusic.ui.theme.Neutral_N700
+import com.videomaker.aimusic.ui.theme.Neutral_N900
 import com.videomaker.aimusic.ui.theme.PickerDialogBackground
 import com.videomaker.aimusic.ui.theme.PickerOverlayBackground
-import com.videomaker.aimusic.ui.theme.PlayerCardBackground
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SkeletonPlaceholder
 import com.videomaker.aimusic.ui.theme.TextPrimary
@@ -140,11 +138,17 @@ private const val THUMBNAIL_SIZE_DP = 120
 private const val GRID_COLUMNS = 3
 
 /** Selection tray sizing */
-private const val TRAY_ITEM_SIZE_DP = 64
-private const val CHECK_BUTTON_SIZE_DP = 56
+private const val TRAY_ITEM_SIZE_DP = 68
+private const val CHECK_BUTTON_SIZE_DP = 48
 
 /** Minimum number of tray cells kept visible (selected + dashed placeholders) */
-private const val TRAY_VISIBLE_SLOTS = 4
+private const val TRAY_VISIBLE_SLOTS = 5
+
+/**
+ * Below this many selected photos the bar shows the "Add at least N photos" nudge instead of the
+ * "Add N more photos for a ~15s video" hint. Matches the design's "<3 images" vs ">=3 images" states.
+ */
+private const val PICKER_IDEAL_MESSAGE_MIN_COUNT = 2
 
 /**
  * Delay before loading images to allow initial composition to complete
@@ -687,9 +691,11 @@ fun AssetPickerScreen(
                 onRequestFullPermission = {
                     showPermissionGateForMode(PermissionMode.DENIED)
                 },
-                onManageAccess = {
-                    showPermissionGateForMode(PermissionMode.LIMITED)
-                },
+                // Banner "Manage Access" behaves exactly like the limited-permission popup CTA:
+                // it checks the system-prompt frequency cap and either launches the system
+                // permission prompt (cap available) or shows the settings education screen
+                // (cap exhausted) — never a silent no-op.
+                onManageAccess = onGiveAccess,
                 onAddMorePhotos = onAddMorePhotos,
                 onCameraClick = onCameraClick
             )
@@ -814,10 +820,14 @@ private fun AssetPickerContent(
                 )
             }
 
-            if (uiState is AssetPickerUiState.WithAssets && uiState.albums.isNotEmpty()) {
+            // The album dropdown only makes sense once there are real gallery images to filter.
+            // With no permission, or limited permission whose accessible set is still empty,
+            // the header keeps the plain "Select your image" title.
+            val withAssets = uiState as? AssetPickerUiState.WithAssets
+            if (withAssets != null && withAssets.assets.isNotEmpty()) {
                 AlbumDropdown(
-                    albums = uiState.albums,
-                    selectedAlbumId = uiState.selectedAlbumId,
+                    albums = withAssets.albums,
+                    selectedAlbumId = withAssets.selectedAlbumId,
                     onAlbumSelect = onAlbumSelect
                 )
             } else {
@@ -858,36 +868,51 @@ private fun AssetPickerContent(
                     uiState.selectedAssets.groupingBy { it.id }.eachCount()
                 }
 
-                // Limited access banner — shown only for partial permission (Android 14+)
-                if (isLimited) {
-                    LimitedAccessBanner(onManageClick = onManageAccess)
-                }
-
-                if (uiState.filteredAssets.isEmpty() && !isLimited) {
-                    EmptyGalleryContent(modifier = Modifier.weight(1f))
+                if (uiState.assets.isEmpty()) {
+                    // No accessible photos yet. For limited access this means the user granted
+                    // partial access but nothing is visible — reuse the no-permission screen, but
+                    // wire its CTA to the system photo picker so they can choose which photos to
+                    // expose. The new banner + [+] grid only appears once the list is non-empty.
+                    if (isLimited) {
+                        PermissionDeniedContent(
+                            onRequestPermission = onAddMorePhotos
+                        )
+                    } else {
+                        EmptyGalleryContent(modifier = Modifier.weight(1f))
+                    }
                 } else {
-                    ImageGrid(
-                        assets = uiState.filteredAssets,
-                        selectionCountById = selectionCountById,
-                        maxReached = maxReached,
-                        showAddTile = isLimited,
-                        onAddTileClick = onAddMorePhotos,
-                        onAssetClick = onAssetClick,
-                        initialScrollState = initialGridScrollState,
-                        onScrollChanged = onGridScrollChanged,
-                        modifier = Modifier.weight(1f)
+                    // Limited access banner — shown only for partial permission (Android 14+)
+                    if (isLimited) {
+                        LimitedAccessBanner(onManageClick = onManageAccess)
+                    }
+
+                    if (uiState.filteredAssets.isEmpty() && !isLimited) {
+                        EmptyGalleryContent(modifier = Modifier.weight(1f))
+                    } else {
+                        ImageGrid(
+                            assets = uiState.filteredAssets,
+                            selectionCountById = selectionCountById,
+                            maxReached = maxReached,
+                            showAddTile = isLimited,
+                            onAddTileClick = onAddMorePhotos,
+                            onAssetClick = onAssetClick,
+                            initialScrollState = initialGridScrollState,
+                            onScrollChanged = onGridScrollChanged,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    PickerSelectionBar(
+                        isLimit = isLimited,
+                        selectedAssets = uiState.selectedAssets,
+                        minSelection = minSelection,
+                        maxSelection = maxSelection,
+                        durationText = durationText,
+                        additionalForIdeal = additionalForIdeal,
+                        onRemoveSelectedAt = onRemoveSelectedAt,
+                        onConfirmClick = onConfirmClick
                     )
                 }
-
-                PickerSelectionBar(
-                    selectedAssets = uiState.selectedAssets,
-                    minSelection = minSelection,
-                    maxSelection = maxSelection,
-                    durationText = durationText,
-                    additionalForIdeal = additionalForIdeal,
-                    onRemoveSelectedAt = onRemoveSelectedAt,
-                    onConfirmClick = onConfirmClick
-                )
             }
 
             is AssetPickerUiState.Initial -> {
@@ -919,6 +944,7 @@ private fun AssetPickerContent(
  */
 @Composable
 private fun PickerSelectionBar(
+    isLimit: Boolean,
     selectedAssets: List<GalleryAsset>,
     minSelection: Int,
     maxSelection: Int,
@@ -933,38 +959,40 @@ private fun PickerSelectionBar(
 
     val message: String = when {
         maxReached -> stringResource(R.string.picker_max_reached, maxSelection)
-        selectedCount < minSelection -> stringResource(R.string.picker_min_selection, minSelection)
+        selectedCount < PICKER_IDEAL_MESSAGE_MIN_COUNT ->
+            stringResource(R.string.picker_min_selection, minSelection)
         additionalForIdeal > 0 -> stringResource(R.string.picker_add_more_ideal, additionalForIdeal)
         else -> stringResource(R.string.picker_more_photos_longer, maxSelection)
     }
-    val messageColor = if (maxReached) Color(0xFFE8A33D) else MaterialTheme.colorScheme.onSurfaceVariant
+    val messageColor = if (maxReached) Color(0xFFEAA235) else Neutral_N50
 
     Column(
         modifier = Modifier
-            .padding(horizontal = 12.dp, vertical = 14.dp)
             .fillMaxWidth()
-            .background(Color.White.copy(0.1f), RoundedCornerShape(16.dp))
-            .padding(12.dp),
+            .background(Neutral_Black)
+            .padding(top = 12.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
-                color = messageColor,
-                modifier = Modifier.weight(1f)
-            )
-            DurationPill(text = durationText)
+        if (isLimit.not()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
+                    color = messageColor,
+                    modifier = Modifier.weight(1f)
+                )
+                DurationPill(text = durationText)
+            }
         }
 
-        Row(
+        Box(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             val rowState = rememberLazyListState()
             LaunchedEffect(selectedCount) {
@@ -975,9 +1003,9 @@ private fun PickerSelectionBar(
 
             LazyRow(
                 state = rowState,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(vertical = 4.dp)
+                contentPadding = PaddingValues(vertical = 4.dp, horizontal = 12.dp)
             ) {
                 // Selected photos — index-keyed because the same photo can appear multiple times
                 itemsIndexed(
@@ -999,12 +1027,54 @@ private fun PickerSelectionBar(
                         modifier = Modifier.size(TRAY_ITEM_SIZE_DP.dp)
                     )
                 }
+
+                if (selectedAssets.size > 4) {
+                    item {
+                        Spacer(Modifier.width(TRAY_ITEM_SIZE_DP.dp))
+                    }
+                }
             }
 
-            ConfirmCheckButton(
-                enabled = canConfirm,
-                onClick = onConfirmClick
-            )
+            Box(
+                modifier = Modifier
+                    .height(TRAY_ITEM_SIZE_DP.dp)
+                    .align(Alignment.CenterEnd)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colorStops = arrayOf(
+                                0.0f to Color.Transparent,
+                                0.2f to Color(0xCC333333),
+                                0.5f to Color(0xFF333333),
+                                1.0f to Color(0xFF333333)
+                            )
+                        )
+                    )
+                    .padding(start = 12.dp, end = 20.dp),
+                contentAlignment = Alignment.Center
+            ){
+                ConfirmCheckButton(
+                    enabled = canConfirm,
+                    onClick = onConfirmClick
+                )
+            }
+        }
+
+        if (isLimit) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),
+                    color = messageColor,
+                    modifier = Modifier.weight(1f)
+                )
+                DurationPill(text = durationText)
+            }
         }
     }
 }
@@ -1013,16 +1083,16 @@ private fun PickerSelectionBar(
 private fun DurationPill(text: String) {
     Box(
         modifier = Modifier
-            .background(Color.White.copy(0.12f), RoundedCornerShape(50))
-            .padding(horizontal = 14.dp, vertical = 6.dp)
+            .background(Color.White.copy(0.08f), RoundedCornerShape(160.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelLarge.copy(
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp
+                fontWeight = FontWeight.W500,
+                fontSize = 16.sp
             ),
-            color = TextPrimaryDark
+            color = Neutral_N50
         )
     }
 }
@@ -1044,7 +1114,7 @@ private fun ConfirmCheckButton(
             imageVector = Icons.Default.Check,
             contentDescription = stringResource(R.string.picker_selected),
             tint = FoundationBlack,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(24.dp)
         )
     }
 }
@@ -1060,12 +1130,15 @@ private fun AlbumDropdown(
     val selectedName = albums.find { it.id == selectedAlbumId }?.displayName
         ?: albums.firstOrNull()?.displayName.orEmpty()
 
+    // With a single album there is nothing to switch to — show plain text, no chevron, no menu.
+    val hasMultipleAlbums = albums.size > 1
+
     Box {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .clickableSingle { expanded = true }
+                .then(if (hasMultipleAlbums) Modifier.clickableSingle { expanded = true } else Modifier)
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Text(
@@ -1073,14 +1146,16 @@ private fun AlbumDropdown(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold
             )
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = null
-            )
+            if (hasMultipleAlbums) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null
+                )
+            }
         }
 
         DropdownMenu(
-            expanded = expanded,
+            expanded = expanded && hasMultipleAlbums,
             onDismissRequest = { expanded = false }
         ) {
             albums.forEach { album ->
@@ -1114,24 +1189,24 @@ private fun LimitedAccessBanner(
             .padding(8.dp)
             .fillMaxWidth()
             .background(Color.White.copy(0.1f), RoundedCornerShape(8.dp))
-            .padding(16.dp),
+            .padding(vertical = 16.dp, horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = stringResource(R.string.picker_limited_access_message),
+            text = "You're allowing limited access.\nGrant full access to see all memories",
             style = MaterialTheme.typography.bodySmall.copy(
                 fontWeight = FontWeight.W400,
-                fontSize = 14.sp
+                fontSize = 13.sp
             ),
             color = TextPrimaryDark,
             modifier = Modifier.weight(1f)
         )
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(8.dp))
         Text(
-            text = stringResource(R.string.picker_manage_access),
+            text = "Manage",
             style = MaterialTheme.typography.labelMedium.copy(
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.W500,
                 color = Primary,
                 fontSize = 16.sp
             ),
@@ -1210,12 +1285,12 @@ private fun AddPhotoTile(
         modifier = Modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
-            .background(Color.White.copy(0.06f))
+            .background(Neutral_N900)
             .clickableSingle(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = Icons.Default.Add,
+            painter = painterResource(R.drawable.ic_circle_plus_v2),
             contentDescription = stringResource(R.string.picker_add_photos),
             tint = TextPrimaryDark,
             modifier = Modifier.size(32.dp)
@@ -1289,28 +1364,28 @@ private fun ImageGridItem(
     Box(
         modifier = Modifier
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(12.dp))
             // Disable adding once the maximum is reached
             .clickableSingle(enabled = !maxReached, onClick = onClick)
     ) {
         AssetThumbnail(asset = asset)
-
-        // Dim the whole grid when the maximum has been reached
-        if (maxReached) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(PickerOverlayBackground.copy(alpha = 0.4f))
-            )
-        }
 
         // "xN" count badge — clearly shows the photo is selected and how many times
         if (selectionCount > 0) {
             CountBadge(
                 count = selectionCount,
                 modifier = Modifier
-                    .padding(6.dp)
+                    .padding(top = 4.dp, end = 6.dp)
                     .align(Alignment.TopEnd)
+            )
+        }
+
+        // Dim the whole grid when the maximum has been reached
+        if (maxReached) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(PickerOverlayBackground.copy(alpha = 0.6f))
             )
         }
     }
@@ -1323,14 +1398,16 @@ private fun CountBadge(
 ) {
     Box(
         modifier = modifier
-            .background(Primary, RoundedCornerShape(8.dp))
-            .padding(horizontal = 8.dp, vertical = 3.dp)
+            .background(Primary, RoundedCornerShape(6.dp))
+            .border(1.dp, Color.Black.copy(0.12f), RoundedCornerShape(6.dp))
+            .padding(horizontal = 4.dp, vertical = 3.dp)
     ) {
         Text(
             text = stringResource(R.string.picker_count_badge, count),
-            color = FoundationBlack,
-            fontWeight = FontWeight.Bold,
-            fontSize = 12.sp
+            color = Neutral_N100,
+            fontWeight = FontWeight.W600,
+            lineHeight = 14.sp,
+            fontSize = 11.sp
         )
     }
 }

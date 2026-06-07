@@ -310,7 +310,7 @@
     <string name="picker_go_to_settings">Go to Settings</string>
     <string name="picker_min_selection">Add at least %d photos to create video</string>
     <string name="picker_add_more_ideal">Add %d more photos to create a social-ready ~15s video.</string>
-    <string name="picker_more_photos_longer">More photos, longer video. (Max %d)</string>
+    <string name="picker_more_photos_longer">More photos, longer video (Max %d)</string>
     <string name="picker_max_reached">You\'ve reached the maximum of %d photos.</string>
     <string name="picker_count_badge">x%d</string>
     <string name="picker_add_photos">Add photos</string>

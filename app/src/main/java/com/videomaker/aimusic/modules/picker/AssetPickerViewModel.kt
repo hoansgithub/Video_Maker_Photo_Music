@@ -393,14 +393,28 @@ class AssetPickerViewModel(
         )
     }
 
-    /** Smallest number of extra photos so the duration reaches the recommended ~15s (capped at MAX). */
+    /**
+     * Extra photos to suggest so the estimated duration lands as *close as possible* to the
+     * recommended ~15s — allowing a slight overshoot rather than stopping strictly under it.
+     * Picks the total count whose duration is nearest to the recommended length, minus the
+     * current count. durationByCount is monotonically increasing, so we walk up until adding
+     * another photo would land *further* from the target than the current best.
+     *
+     * e.g. if 5 photos ≈ 15.2s (just over) and 4 photos ≈ 12.4s, 5 is nearer to 15s → suggest
+     * reaching 5, not 4. With the flat 2.8s/photo fallback: 3 selected → target 5 (14s) → suggest 2.
+     */
     private fun additionalPhotosForIdeal(count: Int): Int {
         if (count >= MAX_SELECTION) return 0
-        var extra = 0
-        while (count + extra < MAX_SELECTION && durationByCount[count + extra] < PICKER_RECOMMENDED_DURATION_MS) {
-            extra++
+        var best = count
+        var next = count + 1
+        while (next <= MAX_SELECTION) {
+            val bestDelta = kotlin.math.abs(durationByCount[best] - PICKER_RECOMMENDED_DURATION_MS)
+            val nextDelta = kotlin.math.abs(durationByCount[next] - PICKER_RECOMMENDED_DURATION_MS)
+            if (nextDelta > bestDelta) break  // moving away from ~15s — stop (durations only grow)
+            best = next
+            next++
         }
-        return extra
+        return (best - count).coerceAtLeast(0)
     }
 
     private fun loadBeatSyncForDuration() {
@@ -1068,17 +1082,10 @@ class AssetPickerViewModel(
     // ============================================
 
     private fun buildAlbumFilters(assets: List<GalleryAsset>): List<AlbumFilter> {
-        val filters = mutableListOf<AlbumFilter>()
-
-        // All Media filter
-        filters.add(
-            AlbumFilter(
-                id = AlbumFilterType.ALL,
-                displayName = "All",
-                bucketId = null,
-                count = assets.size
-            )
-        )
+        // Build the real (bucket-backed) albums first. The synthetic "All" album is only useful
+        // when there is more than one real album to switch between — with a single album, "All"
+        // would just duplicate it, so we omit it and show that one album without a dropdown.
+        val realAlbums = mutableListOf<AlbumFilter>()
 
         // Group by bucket and find Camera/Screenshots
         val bucketGroups = assets.groupBy { it.bucketId }
@@ -1089,7 +1096,7 @@ class AssetPickerViewModel(
             name == "camera" || name == "dcim"
         }
         cameraAssets.firstOrNull()?.let { firstCameraAsset ->
-            filters.add(
+            realAlbums.add(
                 AlbumFilter(
                     id = AlbumFilterType.CAMERA,
                     displayName = "Camera",
@@ -1105,7 +1112,7 @@ class AssetPickerViewModel(
             name.contains("screenshot") || name.contains("screen shot")
         }
         screenshotAssets.firstOrNull()?.let { firstScreenshotAsset ->
-            filters.add(
+            realAlbums.add(
                 AlbumFilter(
                     id = AlbumFilterType.SCREENSHOTS,
                     displayName = "Screenshots",
@@ -1116,7 +1123,7 @@ class AssetPickerViewModel(
         }
 
         // Add other albums (sorted by count, top 10)
-        val existingBucketIds = filters.mapNotNull { it.bucketId }.toSet()
+        val existingBucketIds = realAlbums.mapNotNull { it.bucketId }.toSet()
         val otherAlbums = bucketGroups
             .filter { (bucketId, _) -> bucketId !in existingBucketIds }
             .mapNotNull { (bucketId, albumAssets) ->
@@ -1132,9 +1139,24 @@ class AssetPickerViewModel(
             .sortedByDescending { it.count }
             .take(10)
 
-        filters.addAll(otherAlbums)
+        realAlbums.addAll(otherAlbums)
 
-        return filters
+        // Only prepend "All" when there are genuinely 2+ distinct album types to choose between.
+        return if (realAlbums.size >= 2) {
+            buildList {
+                add(
+                    AlbumFilter(
+                        id = AlbumFilterType.ALL,
+                        displayName = "All",
+                        bucketId = null,
+                        count = assets.size
+                    )
+                )
+                addAll(realAlbums)
+            }
+        } else {
+            realAlbums
+        }
     }
 
     /**

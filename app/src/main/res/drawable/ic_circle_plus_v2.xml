@@ -1,13 +1,13 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="27dp"
-    android:height="27dp"
-    android:viewportWidth="27"
-    android:viewportHeight="27">
+<!--  ~ Copyright (C) 2026 The Android Open Source Project  ~  ~ Licensed under the Apache License, Version 2.0 (the "License");  ~ you may not use this file except in compliance with the License.  ~ You may obtain a copy of the License at  ~  ~      http://www.apache.org/licenses/LICENSE-2.0  ~  ~ Unless required by applicable law or agreed to in writing, software  ~ distributed under the License is distributed on an "AS IS" BASIS,  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  ~ See the License for the specific language governing permissions and  ~ limitations under the License.  --><vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="32dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
   <path
-      android:pathData="M12.293,17.881V14.528H8.941V12.293H12.293V8.941H14.528V12.293H17.881V14.528H14.528V17.881H12.293Z"
-      android:fillColor="#EDF340"/>
+      android:pathData="M14.667,21.333V17.333H10.667V14.666H14.667V10.666H17.333V14.666H21.333V17.333H17.333V21.333H14.667Z"
+      android:fillColor="#ffffff"/>
   <path
-      android:pathData="M13.411,1.118C6.622,1.118 1.118,6.622 1.118,13.411C1.118,20.2 6.622,25.704 13.411,25.704C20.2,25.704 25.704,20.2 25.704,13.411C25.704,6.622 20.2,1.118 13.411,1.118ZM3.353,13.411C3.353,7.856 7.856,3.353 13.411,3.353C18.966,3.353 23.469,7.856 23.469,13.411C23.469,18.966 18.966,23.469 13.411,23.469C7.856,23.469 3.353,18.966 3.353,13.411Z"
-      android:fillColor="#EDF340"
+      android:pathData="M16,1.333C7.9,1.333 1.333,7.899 1.333,16C1.333,24.1 7.9,30.666 16,30.666C24.1,30.666 30.667,24.1 30.667,16C30.667,7.899 24.1,1.333 16,1.333ZM4,16C4,9.372 9.373,4 16,4C22.627,4 28,9.372 28,16C28,22.627 22.627,28 16,28C9.373,28 4,22.627 4,16Z"
+      android:fillColor="#ffffff"
       android:fillType="evenOdd"/>
 </vector>
