@@ -206,7 +206,7 @@ class TrendingPopupCoordinatorTest {
     }
 
     @Test
-    fun `cta emits OpenTemplatePreviewer for song with overrideSongId`() = runBlocking {
+    fun `cta emits OpenSongPlayer for song`() = runBlocking {
         val coord = coordinator()
         coord.onTabFocused(TrendingPopupTab.SONGS)
         coord.onTabFocused(TrendingPopupTab.SONGS)
@@ -214,9 +214,8 @@ class TrendingPopupCoordinatorTest {
 
         coord.onSongPopupCta(pick)
         val nav = coord.navigationEvent.first()
-        check(nav is TrendingPopupNavEvent.OpenTemplatePreviewer)
-        assertEquals("", nav.templateId)
-        assertEquals(pick.id, nav.overrideSongId)
+        check(nav is TrendingPopupNavEvent.OpenSongPlayer)
+        assertEquals(pick.id, nav.songId)
     }
 
     @Test

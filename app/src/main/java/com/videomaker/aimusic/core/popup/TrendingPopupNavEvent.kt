@@ -10,4 +10,8 @@ sealed class TrendingPopupNavEvent {
         val overrideSongId: Long,
         val sourceLocation: String
     ) : TrendingPopupNavEvent()
+
+    data class OpenSongPlayer(
+        val songId: Long
+    ) : TrendingPopupNavEvent()
 }

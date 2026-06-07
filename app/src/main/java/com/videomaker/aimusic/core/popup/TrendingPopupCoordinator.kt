@@ -275,10 +275,8 @@ class TrendingPopupCoordinator(
         }
         _songPopup.value = TrendingPopupState.Hidden
         _navigationEvent.trySend(
-            TrendingPopupNavEvent.OpenTemplatePreviewer(
-                templateId = "",
-                overrideSongId = song.id,
-                sourceLocation = AnalyticsEvent.Value.Location.POPUP_TRENDING_SONG
+            TrendingPopupNavEvent.OpenSongPlayer(
+                songId = song.id
             )
         )
     }
