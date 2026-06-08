@@ -40,6 +40,7 @@ import com.videomaker.aimusic.modules.language.OnboardingCtaButton
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+import kotlinx.coroutines.delay
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.videomaker.aimusic.core.ads.AdClickDetector
 import org.koin.compose.koinInject
@@ -57,6 +58,27 @@ class GenreTemplateActivity : AppCompatActivity() {
             val adClickDetector: AdClickDetector = koinInject()
             var bottomSectionHeight by remember { mutableStateOf(0) }
             val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
+
+            // MEDIA_PRIVACY dual-ad swap: show the primary native until the user taps a privacy
+            // option, then (after a 0.5s IAB viewability delay) swap to the ALT placement.
+            var mediaPrivacyTapped by remember { mutableStateOf(false) }
+            var mediaPrivacyAltActive by remember { mutableStateOf(false) }
+            LaunchedEffect(mediaPrivacyTapped) {
+                if (mediaPrivacyTapped && !mediaPrivacyAltActive) {
+                    delay(500)
+                    mediaPrivacyAltActive = true
+                }
+            }
+
+            // CONTENT_EXCLUSIVE dual-ad swap: same behavior as MEDIA_PRIVACY.
+            var contentExclusiveTapped by remember { mutableStateOf(false) }
+            var contentExclusiveAltActive by remember { mutableStateOf(false) }
+            LaunchedEffect(contentExclusiveTapped) {
+                if (contentExclusiveTapped && !contentExclusiveAltActive) {
+                    delay(500)
+                    contentExclusiveAltActive = true
+                }
+            }
 
             LaunchedEffect(Unit) {
                 viewModel.navToNext.collect { navigateToFeatureSelection() }
@@ -111,6 +133,7 @@ class GenreTemplateActivity : AppCompatActivity() {
                                         selectedId = viewModel.selectedContentFilter.value,
                                         onSelect = { id ->
                                             viewModel.selectContentFilter(id)
+                                            contentExclusiveTapped = true
                                             Analytics.track(
                                                 name = "content_filter_select",
                                                 params = mapOf("content_filter" to id),
@@ -124,6 +147,7 @@ class GenreTemplateActivity : AppCompatActivity() {
                                         selectedId = viewModel.selectedPrivacy.value,
                                         onSelect = { id ->
                                             viewModel.selectPrivacy(id)
+                                            mediaPrivacyTapped = true
                                             Analytics.track(
                                                 name = "photo_privacy_select",
                                                 params = mapOf("photo_privacy" to id),
@@ -248,8 +272,12 @@ class GenreTemplateActivity : AppCompatActivity() {
                         val adPlacement = when (currentStep) {
                             GenreTemplateStep.GENRE_SELECTION -> AdPlacement.NATIVE_ONBOARDING_SELECT_MUSIC
                             GenreTemplateStep.TEMPLATE_PICK -> AdPlacement.NATIVE_ONBOARDING_SELECT_TPT
-                            GenreTemplateStep.CONTENT_EXCLUSIVE -> AdPlacement.NATIVE_ONBOARDING_CONTENT_EXCLUSIVE
-                            GenreTemplateStep.MEDIA_PRIVACY -> AdPlacement.NATIVE_ONBOARDING_MEDIA_PRIVACY
+                            GenreTemplateStep.CONTENT_EXCLUSIVE ->
+                                if (contentExclusiveAltActive) AdPlacement.NATIVE_ONBOARDING_CONTENT_EXCLUSIVE_ALT
+                                else AdPlacement.NATIVE_ONBOARDING_CONTENT_EXCLUSIVE
+                            GenreTemplateStep.MEDIA_PRIVACY ->
+                                if (mediaPrivacyAltActive) AdPlacement.NATIVE_ONBOARDING_MEDIA_PRIVACY_ALT
+                                else AdPlacement.NATIVE_ONBOARDING_MEDIA_PRIVACY
                         }
                         // key(adPlacement) forces NativeAdView to remount when placement changes,
                         // resetting its internal isAdLoaded/adRevision state. Without this, stale

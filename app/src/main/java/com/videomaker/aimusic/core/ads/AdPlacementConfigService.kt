@@ -484,6 +484,72 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // AI_LEVEL / Start Selection screen native (shown until first selection). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_AI_LEVEL,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7416163032",  // Pro_AIMV_NA_high_Start Selection
+                "ca-app-pub-7121075950716954/2091839691"   // Pro_AIMV_NA_all_Start Selection
+            ),
+            enabled = true
+        )
+
+        // AI_LEVEL / Start Selection screen ALT native (swapped in after first selection).
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_AI_LEVEL_ALT,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4789999695",  // Pro_AIMV_NA_high_Start Selection_alt
+                "ca-app-pub-7121075950716954/4814050422"   // Pro_AIMV_NA_all_Start Selection_alt
+            ),
+            enabled = true
+        )
+
+        // Content-filter / age screen native (shown until first selection). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_CONTENT_EXCLUSIVE,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9874805416",  // Pro_AIMV_NA_high_Age
+                "ca-app-pub-7121075950716954/8465676358"   // Pro_AIMV_NA_all_Age
+            ),
+            enabled = true
+        )
+
+        // Content-filter / age screen ALT native (swapped in after first selection).
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_CONTENT_EXCLUSIVE_ALT,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4598428004",  // Pro_AIMV_NA_high_Age_alt
+                "ca-app-pub-7121075950716954/9683233721"   // Pro_AIMV_NA_all_Age_alt
+            ),
+            enabled = true
+        )
+
+        // Photo-privacy screen native (shown until first selection). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_MEDIA_PRIVACY,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7057070389",  // Pro_AIMV_NA_high_Media Privacy
+                "ca-app-pub-7121075950716954/8178580360"   // Pro_AIMV_NA_all_Media Privacy
+            ),
+            enabled = true
+        )
+
+        // Photo-privacy screen ALT native (swapped in after first selection).
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_MEDIA_PRIVACY_ALT,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/3093774644",  // Pro_AIMV_NA_high_Media Privacy_alt
+                "ca-app-pub-7121075950716954/2926253685"   // Pro_AIMV_NA_all_Media Privacy_alt
+            ),
+            enabled = true
+        )
+
         // Platform survey screen native (shown after the feature screen). Single placement, waterfall.
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_SOCIAL,

@@ -469,6 +469,17 @@ class OnboardingSurveyActivity : AppCompatActivity() {
         var bottomSectionHeight by remember { mutableStateOf(0) }
         val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
 
+        // Dual-ad swap: show the primary native until the user taps a selection, then
+        // (after a 0.5s IAB viewability delay) swap to the ALT placement.
+        var aiLevelTapped by remember { mutableStateOf(false) }
+        var aiLevelAltActive by remember { mutableStateOf(false) }
+        LaunchedEffect(aiLevelTapped) {
+            if (aiLevelTapped && !aiLevelAltActive) {
+                delay(500)
+                aiLevelAltActive = true
+            }
+        }
+
         LaunchedEffect(Unit) {
             Analytics.track(name = OnboardingSurveyAnalytics.EVENT_AI_LEVEL_RENDER)
         }
@@ -484,6 +495,7 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                     selectedId = selectedId,
                     onSelect = { id ->
                         viewModel.selectAiLevel(id)
+                        aiLevelTapped = true
                         Analytics.track(
                             name = OnboardingSurveyAnalytics.EVENT_AI_LEVEL_SELECT,
                             params = mapOf(OnboardingSurveyAnalytics.PARAM_AI_LEVEL to id),
@@ -538,12 +550,18 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                         if (size.height > bottomSectionHeight) bottomSectionHeight = size.height
                     }
             ) {
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_ONBOARDING_AI_LEVEL,
-                    modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG,
-                    onAdClicked = { adClickDetector.onAdClick(it) }
-                )
+                val aiLevelPlacement =
+                    if (aiLevelAltActive) AdPlacement.NATIVE_ONBOARDING_AI_LEVEL_ALT
+                    else AdPlacement.NATIVE_ONBOARDING_AI_LEVEL
+                // key(placement) remounts NativeAdView on swap so it resets its load state.
+                key(aiLevelPlacement) {
+                    NativeAdView(
+                        placement = aiLevelPlacement,
+                        modifier = Modifier.fillMaxWidth(),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                }
             }
         }
     }
