@@ -2,6 +2,7 @@ package com.videomaker.aimusic.core.popup
 
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.SongRepository
@@ -53,7 +54,8 @@ class TrendingPopupCoordinator(
     private val clock: PopupClock,
     private val gate: TrendingPopupGate,
     selectorRandom: Random = Random.Default,
-    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
+    private val preloadAd: (String) -> Unit = {}
 ) {
     private val selector = TrendingPopupSelector(
         templateRepository = templateRepository,
@@ -126,7 +128,35 @@ class TrendingPopupCoordinator(
     fun onTabFocused(tab: TrendingPopupTab) {
         _activeTab.value = tab
         snapshotStore.incrementFocusCount(tab)
+
+        // Preload the popup ad one visit ahead: when focusCount reaches 1 (first visit),
+        // the popup won't fire yet (needs >= 2), but if the gate conditions pass,
+        // the next visit will show it. Preloading now ensures the ad is ready.
+        if (snapshotStore.getFocusCount(tab) == 1) {
+            maybePreloadAdForNextVisit(tab)
+        }
+
         scope.launch { evaluateAndMaybeShow(tab) }
+    }
+
+    private fun maybePreloadAdForNextVisit(tab: TrendingPopupTab) {
+        val snapshot = snapshotStore.get(tab)
+        val cfg = config.read()
+        val now = clock.nowMs()
+        val today = clock.todayEpochDay()
+        val decision = gate.evaluate(
+            snapshot = snapshot,
+            config = cfg,
+            nowMs = now,
+            todayEpochDay = today,
+            otherPopupShowing = false // ignore transient state for preload
+        )
+        if (decision != TrendingPopupGate.Decision.Eligible) return
+
+        when (tab) {
+            TrendingPopupTab.GALLERY -> preloadAd(AdPlacement.NATIVE_POPUP_TRENDING_TEMPLATE)
+            TrendingPopupTab.SONGS -> preloadAd(AdPlacement.NATIVE_POPUP_TRENDING_SONG)
+        }
     }
 
     /**

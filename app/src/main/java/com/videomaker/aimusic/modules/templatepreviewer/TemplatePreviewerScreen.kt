@@ -553,6 +553,12 @@ fun TemplatePreviewerScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.size(48.dp)
+                    )
                     Text(
                         text = state.message,
                         color = Color.White,
@@ -560,7 +566,21 @@ fun TemplatePreviewerScreen(
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 32.dp)
                     )
-                    Button(onClick = viewModel::onNavigateBack) { Text("Go Back") }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(
+                            onClick = viewModel::onNavigateBack,
+                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = Color.White.copy(alpha = 0.15f)
+                            )
+                        ) {
+                            Text(stringResource(R.string.back))
+                        }
+                        Button(onClick = viewModel::retry) {
+                            Text(stringResource(R.string.retry))
+                        }
+                    }
                 }
             }
         }

@@ -212,7 +212,7 @@
   </entry>
   <entry>
     <key>ad_native_songs_station</key>
-    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/2115862172","enabled":true},{"id":"ca-app-pub-7121075950716954/3794255449","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/2115862172","enabled":true},{"id":"ca-app-pub-7121075950716954/3794255449","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
     <key>ad_native_station_infeed</key>

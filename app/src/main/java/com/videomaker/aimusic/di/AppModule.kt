@@ -195,7 +195,8 @@ val dataModule = module {
             snapshotStore = get(),
             config = get(),
             clock = get(),
-            gate = get()
+            gate = get(),
+            preloadAd = { placement -> com.videomaker.aimusic.VideoMakerApplication.preloadNativeAd(placement) }
         )
     }
 

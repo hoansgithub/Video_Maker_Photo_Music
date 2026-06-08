@@ -213,6 +213,11 @@ class TemplatePreviewerViewModel(
     // PUBLIC METHODS
     // ============================================
 
+    /** Retry loading templates after an error. */
+    fun retry() {
+        loadInitialTemplates()
+    }
+
     fun refresh(excludeIds: Set<String> = emptySet()) {
         viewModelScope.launch {
             _uiState.value = TemplatePreviewerUiState.Loading
