@@ -602,4 +602,34 @@
     <string name="retention_dialog_subtitle">अभी मत जाइए — कुछ अद्भुत होने वाला है।</string>
     <string name="retention_dialog_close">बंद करें</string>
     <string name="retention_dialog_stay">रुकें</string>
+
+    <!-- Onboarding survey & asset picker -->
+    <string name="ai_level_title">अपनी रचना शैली चुनें</string>
+    <string name="ai_level_light_touch_title">हल्का बदलाव</string>
+    <string name="ai_level_light_touch_banner">स्वाभाविक बने रहें।\nआप जैसे दिखें, बस और बेहतर</string>
+    <string name="ai_level_deep_swap_title">डीप स्वैप</string>
+    <string name="ai_level_deep_swap_banner">रचनात्मकता को और आगे ले जाएँ।\nकोई भी बनें, कुछ भी आज़माएँ।</string>
+    <string name="content_exclusive_title">अपने संगीत और\nटेम्पलेट फ़ीड को फ़िल्टर करें</string>
+    <string name="content_exclusive_family_title">परिवार के अनुकूल</string>
+    <string name="content_exclusive_family_subtitle">अश्लील बोल और आक्रामक नृत्य ब्लॉक करें।</string>
+    <string name="content_exclusive_unfiltered_title">बिना फ़िल्टर</string>
+    <string name="content_exclusive_unfiltered_subtitle">सभी ट्रेंडिंग वीडियो और वयस्क थीम दिखाएँ।</string>
+    <string name="genre_step_title">आपको कौन-सा संगीत पसंद है?</string>
+    <string name="genre_step_subtitle">यह चरण हमें आपके लिए बेहतर संगीत सुझाने में मदद करता है। इससे आपकी वैयक्तिकृत सामग्री पर असर नहीं पड़ेगा।</string>
+    <string name="media_privacy_title">अपनी फ़ोटो की गोपनीयता\nसेटिंग चुनें</string>
+    <string name="media_privacy_private_title">निजी मोड</string>
+    <string name="media_privacy_private_subtitle">हर रचना के बाद मेरी फ़ोटो हटाएँ। अधिकतम गोपनीयता के लिए सर्वोत्तम।</string>
+    <string name="media_privacy_quick_title">त्वरित रीमेक</string>
+    <string name="media_privacy_quick_subtitle">भविष्य में तेज़ रचना के लिए मेरी प्रोफ़ाइल सहेजें। 1 टैप में नए वीडियो बनाएँ।</string>
+    <string name="personalizing_title">आपका अनुभव वैयक्तिकृत किया जा रहा है…</string>
+    <string name="personalizing_subtitle">कृपया एक क्षण प्रतीक्षा करें जब तक हम आपके लिए बेहतरीन स्टाइल टेम्पलेट तैयार करते हैं।</string>
+    <string name="picker_add_more_ideal">सोशल के लिए तैयार ~15 सेकंड का वीडियो बनाने हेतु %d और फ़ोटो जोड़ें।</string>
+    <string name="picker_add_photos">फ़ोटो जोड़ें</string>
+    <string name="picker_count_badge">x%d</string>
+    <string name="picker_max_reached">आप %d फ़ोटो की अधिकतम सीमा तक पहुँच गए हैं।</string>
+    <string name="picker_more_photos_longer">अधिक फ़ोटो, लंबा वीडियो (अधिकतम %d)</string>
+    <string name="template_pick_title">आपको कौन-सी टेम्पलेट शैली पसंद है?</string>
+    <string name="template_pick_subtitle">एक टेम्पलेट शैली चुनें और ट्रांज़िशन व इफ़ेक्ट हम पर छोड़ दें। इस चरण से आपकी वैयक्तिकृत सामग्री पर असर नहीं पड़ेगा।</string>
+    <string name="error_data_load_failed">आवश्यक डेटा लोड नहीं हो सका। कृपया अपना इंटरनेट कनेक्शन जाँचें और पुनः प्रयास करें।</string>
+    <string name="quality_ad_not_available">विज्ञापन अभी उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें या कम गुणवत्ता चुनें।</string>
 </resources>

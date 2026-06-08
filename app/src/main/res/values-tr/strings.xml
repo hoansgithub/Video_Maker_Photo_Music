@@ -600,4 +600,34 @@
     <string name="retention_dialog_subtitle">Şimdi gitme — harika bir şey olmak üzere.</string>
     <string name="retention_dialog_close">Kapat</string>
     <string name="retention_dialog_stay">Kal</string>
+
+    <!-- Onboarding survey & asset picker -->
+    <string name="ai_level_title">Yaratım tarzını seç</string>
+    <string name="ai_level_light_touch_title">Hafif Dokunuş</string>
+    <string name="ai_level_light_touch_banner">Doğallığını koru.\nKendin gibi görün, sadece daha iyi</string>
+    <string name="ai_level_deep_swap_title">Derin Değişim</string>
+    <string name="ai_level_deep_swap_banner">Yaratıcılığı daha da ileri taşı.\nHerkes ol, her şeyi dene.</string>
+    <string name="content_exclusive_title">Müzik ve şablon\nakışını filtrele</string>
+    <string name="content_exclusive_family_title">Aileye Uygun</string>
+    <string name="content_exclusive_family_subtitle">Müstehcen sözleri ve agresif dansları engelle.</string>
+    <string name="content_exclusive_unfiltered_title">Filtresiz</string>
+    <string name="content_exclusive_unfiltered_subtitle">Tüm trend videoları ve yetişkin temalarını göster.</string>
+    <string name="genre_step_title">Hangi müziği seversin?</string>
+    <string name="genre_step_subtitle">Bu adım, sana daha iyi müzik önermemize yardımcı olur. Kişiselleştirilmiş içeriğini etkilemez.</string>
+    <string name="media_privacy_title">Fotoğraf gizlilik\nayarını seç</string>
+    <string name="media_privacy_private_title">Gizli Mod</string>
+    <string name="media_privacy_private_subtitle">Her oluşturmadan sonra fotoğraflarımı sil. Maksimum gizlilik için en iyisi.</string>
+    <string name="media_privacy_quick_title">Hızlı Yeniden Yapım</string>
+    <string name="media_privacy_quick_subtitle">Gelecekte daha hızlı oluşturmak için profilimi kaydet. Yeni videoları 1 dokunuşla oluştur.</string>
+    <string name="personalizing_title">Deneyimin kişiselleştiriliyor…</string>
+    <string name="personalizing_subtitle">Senin için mükemmel stil şablonlarını hazırlarken lütfen biraz bekle.</string>
+    <string name="picker_add_more_ideal">Sosyal medyaya hazır ~15 sn\'lik video oluşturmak için %d fotoğraf daha ekle.</string>
+    <string name="picker_add_photos">Fotoğraf ekle</string>
+    <string name="picker_count_badge">x%d</string>
+    <string name="picker_max_reached">Maksimum %d fotoğraf sınırına ulaştın.</string>
+    <string name="picker_more_photos_longer">Daha fazla fotoğraf, daha uzun video (En fazla %d)</string>
+    <string name="template_pick_title">Hangi şablon stilini tercih edersin?</string>
+    <string name="template_pick_subtitle">Bir şablon stili seç, geçişleri ve efektleri senin için biz halledelim. Bu adım kişiselleştirilmiş içeriğini etkilemez.</string>
+    <string name="error_data_load_failed">Gerekli veriler yüklenemedi. Lütfen internet bağlantını kontrol edip tekrar dene.</string>
+    <string name="quality_ad_not_available">Reklam şu anda kullanılamıyor. Lütfen daha sonra tekrar dene veya daha düşük bir kalite seç.</string>
 </resources>

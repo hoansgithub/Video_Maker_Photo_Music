@@ -608,4 +608,32 @@
     <string name="retention_dialog_subtitle">Ahapụla ugbu a — ihe ịtụnanya na-achọ ime.</string>
     <string name="retention_dialog_close">Mechie</string>
     <string name="retention_dialog_stay">Nọrọ</string>
+
+    <!-- Onboarding survey & asset picker -->
+    <string name="ai_level_title">Họrọ ụdị okike gị</string>
+    <string name="ai_level_light_touch_title">Mmetụ Dị Nro</string>
+    <string name="ai_level_light_touch_banner">Debe ya n\'ụzọ eziokwu.\nYie ka gị, naanị ka mma</string>
+    <string name="ai_level_deep_swap_title">Mgbanwe Miri Emi</string>
+    <string name="ai_level_deep_swap_banner">Kwalite okike karịa.\nBụrụ onye ọ bụla, nwaa ihe ọ bụla.</string>
+    <string name="content_exclusive_title">Nyochaa egwu gị na\ntemplate gị</string>
+    <string name="content_exclusive_family_title">Dabara Ezinụlọ</string>
+    <string name="content_exclusive_family_subtitle">Gbochie okwu rụrụ arụ na ịgba egwu siri ike.</string>
+    <string name="content_exclusive_unfiltered_title">Enweghị Nyocha</string>
+    <string name="content_exclusive_unfiltered_subtitle">Gosi vidiyo niile na-ewu ewu na isiokwu ndị okenye.</string>
+    <string name="genre_step_title">Kedu egwu ị na-amasị gị?</string>
+    <string name="genre_step_subtitle">Nzọụkwụ a na-enyere anyị aka ịtụ aro egwu ka mma maka gị. Ọ gaghị emetụta ọdịnaya ahaziri maka gị.</string>
+    <string name="media_privacy_title">Họrọ ntọala nzuzo\nnke foto gị</string>
+    <string name="media_privacy_private_title">Ọnọdụ Nzuzo</string>
+    <string name="media_privacy_private_subtitle">Hichapụ foto m mgbe ọ bụla emechara okike. Kacha mma maka nzuzo kachasị.</string>
+    <string name="media_privacy_quick_title">Memegharị Ngwa Ngwa</string>
+    <string name="media_privacy_quick_subtitle">Chekwaa profaịlụ m maka okike ngwa ngwa n\'ọdịnihu. Mepụta vidiyo ọhụrụ na mpị 1.</string>
+    <string name="personalizing_title">Na-ahazi ahụmahụ gị…</string>
+    <string name="personalizing_subtitle">Biko chere obere oge ka anyị na-akwado template ụdị zuru oke maka gị.</string>
+    <string name="picker_add_more_ideal">Tinye foto %d ọzọ iji mepụta vidiyo ~15s dị njikere maka mgbasa ozi.</string>
+    <string name="picker_add_photos">Tinye foto</string>
+    <string name="picker_count_badge">x%d</string>
+    <string name="picker_max_reached">Ị ruola oke nke foto %d.</string>
+    <string name="picker_more_photos_longer">Foto ka ọtụtụ, vidiyo ka ogologo (Oke %d)</string>
+    <string name="template_pick_title">Kedu ụdị template ị na-ahọrọ?</string>
+    <string name="template_pick_subtitle">Họrọ ụdị template ma hapụ anyị ka anyị lekọta mgbanwe na mmetụta maka gị. Nzọụkwụ a agaghị emetụta ọdịnaya ahaziri maka gị.</string>
 </resources>

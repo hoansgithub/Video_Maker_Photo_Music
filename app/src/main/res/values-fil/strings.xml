@@ -600,4 +600,34 @@
     <string name="retention_dialog_subtitle">Huwag umalis ngayon — may kahanga-hangang mangyayari.</string>
     <string name="retention_dialog_close">Isara</string>
     <string name="retention_dialog_stay">Manatili</string>
+
+    <!-- Onboarding survey & asset picker -->
+    <string name="ai_level_title">Piliin ang iyong istilo ng paglikha</string>
+    <string name="ai_level_light_touch_title">Bahagyang Pagbabago</string>
+    <string name="ai_level_light_touch_banner">Panatilihing natural.\nMukhang ikaw pa rin, mas maganda lang</string>
+    <string name="ai_level_deep_swap_title">Malalim na Pagpapalit</string>
+    <string name="ai_level_deep_swap_banner">Higit pang pagkamalikhain.\nMaging sinuman, subukan ang kahit ano.</string>
+    <string name="content_exclusive_title">I-filter ang iyong musika at\ntemplate feed</string>
+    <string name="content_exclusive_family_title">Pangpamilya</string>
+    <string name="content_exclusive_family_subtitle">I-block ang malalaswang liriko at agresibong pagsayaw.</string>
+    <string name="content_exclusive_unfiltered_title">Walang Filter</string>
+    <string name="content_exclusive_unfiltered_subtitle">Ipakita ang lahat ng trending na video at temang pang-adulto.</string>
+    <string name="genre_step_title">Anong musika ang gusto mo?</string>
+    <string name="genre_step_subtitle">Tumutulong ang hakbang na ito para makapagmungkahi kami ng mas magandang musika para sa iyo. Hindi nito maaapektuhan ang iyong personalisadong content.</string>
+    <string name="media_privacy_title">Piliin ang setting ng\nprivacy ng iyong larawan</string>
+    <string name="media_privacy_private_title">Pribadong Mode</string>
+    <string name="media_privacy_private_subtitle">Burahin ang aking mga larawan pagkatapos ng bawat paglikha. Pinakamahusay para sa pinakamataas na privacy.</string>
+    <string name="media_privacy_quick_title">Mabilis na Paggawa-Muli</string>
+    <string name="media_privacy_quick_subtitle">I-save ang aking profile para sa mas mabilis na paglikha sa hinaharap. Gumawa ng bagong video sa 1 tap.</string>
+    <string name="personalizing_title">Pino-personalize ang iyong karanasan…</string>
+    <string name="personalizing_subtitle">Maghintay sandali habang inihahanda namin ang mga perpektong template ng istilo para sa iyo.</string>
+    <string name="picker_add_more_ideal">Magdagdag ng %d pang larawan para gumawa ng ~15s na video na handa sa social.</string>
+    <string name="picker_add_photos">Magdagdag ng larawan</string>
+    <string name="picker_count_badge">x%d</string>
+    <string name="picker_max_reached">Naabot mo na ang maximum na %d na larawan.</string>
+    <string name="picker_more_photos_longer">Mas maraming larawan, mas mahabang video (Max %d)</string>
+    <string name="template_pick_title">Anong istilo ng template ang gusto mo?</string>
+    <string name="template_pick_subtitle">Pumili ng istilo ng template at kami na ang bahala sa mga transition at effect para sa iyo. Hindi maaapektuhan ng hakbang na ito ang iyong personalisadong content.</string>
+    <string name="error_data_load_failed">Nabigong i-load ang kinakailangang data. Pakisuri ang iyong koneksyon sa internet at subukang muli.</string>
+    <string name="quality_ad_not_available">Hindi available ang ad sa ngayon. Subukang muli mamaya o pumili ng mas mababang kalidad.</string>
 </resources>

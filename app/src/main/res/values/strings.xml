@@ -2,8 +2,8 @@
     <string name="app_name">Muvio Video Maker</string>
 
     <!-- Facebook SDK (Analytics only) -->
-    <string name="facebook_app_id">2394935491027358</string>
-    <string name="facebook_client_token">59adbbae92079f20f43d002f331d8e9d</string>
+    <string name="facebook_app_id" translatable="false">2394935491027358</string>
+    <string name="facebook_client_token" translatable="false">59adbbae92079f20f43d002f331d8e9d</string>
 
     <!-- Loading -->
     <string name="loading">Loading…</string>

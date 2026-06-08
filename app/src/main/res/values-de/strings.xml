@@ -607,4 +607,32 @@
     <string name="retention_dialog_subtitle">Geh jetzt nicht — gleich passiert etwas Großartiges.</string>
     <string name="retention_dialog_close">Schließen</string>
     <string name="retention_dialog_stay">Bleiben</string>
+
+    <!-- Onboarding survey & asset picker -->
+    <string name="ai_level_title">Wähle deinen Kreativstil</string>
+    <string name="ai_level_light_touch_title">Leichte Anpassung</string>
+    <string name="ai_level_light_touch_banner">Bleib authentisch.\nSieh aus wie du, nur besser</string>
+    <string name="ai_level_deep_swap_title">Deep Swap</string>
+    <string name="ai_level_deep_swap_banner">Geh kreativ noch weiter.\nWerde jeder, probier alles aus.</string>
+    <string name="content_exclusive_title">Filtere deinen Musik- und\nVorlagen-Feed</string>
+    <string name="content_exclusive_family_title">Familienfreundlich</string>
+    <string name="content_exclusive_family_subtitle">Anstößige Texte und aggressives Tanzen blockieren.</string>
+    <string name="content_exclusive_unfiltered_title">Ungefiltert</string>
+    <string name="content_exclusive_unfiltered_subtitle">Alle angesagten Videos und Themen für Erwachsene anzeigen.</string>
+    <string name="genre_step_title">Welche Musik magst du?</string>
+    <string name="genre_step_subtitle">Dieser Schritt hilft uns, dir bessere Musik vorzuschlagen. Er beeinflusst deine personalisierten Inhalte nicht.</string>
+    <string name="media_privacy_title">Wähle deine\nFoto-Datenschutzeinstellung</string>
+    <string name="media_privacy_private_title">Privatmodus</string>
+    <string name="media_privacy_private_subtitle">Meine Fotos nach jeder Erstellung löschen. Optimal für maximalen Datenschutz.</string>
+    <string name="media_privacy_quick_title">Schnelle Neuerstellung</string>
+    <string name="media_privacy_quick_subtitle">Mein Profil für schnellere künftige Erstellungen speichern. Neue Videos mit 1 Tipp erstellen.</string>
+    <string name="personalizing_title">Dein Erlebnis wird personalisiert…</string>
+    <string name="personalizing_subtitle">Bitte warte einen Moment, während wir die perfekten Stilvorlagen für dich vorbereiten.</string>
+    <string name="picker_add_more_ideal">Füge %d weitere Fotos hinzu, um ein ~15-sekündiges, social-taugliches Video zu erstellen.</string>
+    <string name="picker_add_photos">Fotos hinzufügen</string>
+    <string name="picker_count_badge">x%d</string>
+    <string name="picker_max_reached">Du hast das Maximum von %d Fotos erreicht.</string>
+    <string name="picker_more_photos_longer">Mehr Fotos, längeres Video (max. %d)</string>
+    <string name="template_pick_title">Welchen Vorlagenstil bevorzugst du?</string>
+    <string name="template_pick_subtitle">Wähle einen Vorlagenstil und überlass uns die Übergänge und Effekte. Dieser Schritt beeinflusst deine personalisierten Inhalte nicht.</string>
 </resources>

@@ -607,4 +607,32 @@
     <string name="retention_dialog_subtitle">Kada ka tafi yanzu — wani abu mai ban mamaki zai faru.</string>
     <string name="retention_dialog_close">Rufe</string>
     <string name="retention_dialog_stay">Zauna</string>
+
+    <!-- Onboarding survey & asset picker -->
+    <string name="ai_level_title">Zaɓi salon ƙirƙirarka</string>
+    <string name="ai_level_light_touch_title">Ɗan Gyara</string>
+    <string name="ai_level_light_touch_banner">Ka kasance na zahiri.\nKa yi kama da kanka, kawai mafi kyau</string>
+    <string name="ai_level_deep_swap_title">Babban Canji</string>
+    <string name="ai_level_deep_swap_banner">Ƙara haɓaka ƙwarewa.\nZama duk wani, gwada komai.</string>
+    <string name="content_exclusive_title">Tace kiɗanka da\ntemplate ɗinka</string>
+    <string name="content_exclusive_family_title">Mai Dacewa da Iyali</string>
+    <string name="content_exclusive_family_subtitle">Toshe kalmomin batsa da rawa mai tsanani.</string>
+    <string name="content_exclusive_unfiltered_title">Ba a Tace ba</string>
+    <string name="content_exclusive_unfiltered_subtitle">Nuna duk shahararrun bidiyo da batutuwan manya.</string>
+    <string name="genre_step_title">Wane irin kiɗa kake so?</string>
+    <string name="genre_step_subtitle">Wannan matakin yana taimaka mana mu ba ka shawarar kiɗa mafi kyau. Ba zai shafi abubuwan da aka keɓe maka ba.</string>
+    <string name="media_privacy_title">Zaɓi saitin sirri\nna hotunanka</string>
+    <string name="media_privacy_private_title">Yanayin Sirri</string>
+    <string name="media_privacy_private_subtitle">Share hotunana bayan kowane ƙirƙira. Mafi kyau don ƙarin sirri.</string>
+    <string name="media_privacy_quick_title">Sake Yi da Sauri</string>
+    <string name="media_privacy_quick_subtitle">Ajiye bayanaina don ƙirƙira da sauri nan gaba. Ƙirƙiri sabbin bidiyo da taɓawa 1.</string>
+    <string name="personalizing_title">Ana keɓe ƙwarewarka…</string>
+    <string name="personalizing_subtitle">Don Allah a jira ɗan lokaci yayin da muke shirya cikakkun template na salo a gare ka.</string>
+    <string name="picker_add_more_ideal">Ƙara ƙarin hotuna %d don ƙirƙirar bidiyo na ~15s da ya dace da yanar gizo.</string>
+    <string name="picker_add_photos">Ƙara hotuna</string>
+    <string name="picker_count_badge">x%d</string>
+    <string name="picker_max_reached">Ka kai iyaka na hotuna %d.</string>
+    <string name="picker_more_photos_longer">Ƙarin hotuna, doguwar bidiyo (Iyaka %d)</string>
+    <string name="template_pick_title">Wane salon template kake so?</string>
+    <string name="template_pick_subtitle">Zaɓi salon template ka bar mu mu kula da sauyi da tasiri a gare ka. Wannan matakin ba zai shafi abubuwan da aka keɓe maka ba.</string>
 </resources>

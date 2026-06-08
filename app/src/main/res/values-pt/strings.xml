@@ -600,4 +600,34 @@
     <string name="retention_dialog_subtitle">Não saia agora — algo incrível está prestes a acontecer.</string>
     <string name="retention_dialog_close">Fechar</string>
     <string name="retention_dialog_stay">Ficar</string>
+
+    <!-- Onboarding survey & asset picker -->
+    <string name="ai_level_title">Escolha seu estilo de criação</string>
+    <string name="ai_level_light_touch_title">Toque Leve</string>
+    <string name="ai_level_light_touch_banner">Mantenha a autenticidade.\nPareça você, só que melhor</string>
+    <string name="ai_level_deep_swap_title">Troca Profunda</string>
+    <string name="ai_level_deep_swap_banner">Leve a criatividade além.\nSeja qualquer um, experimente de tudo.</string>
+    <string name="content_exclusive_title">Filtre sua música e\nseu feed de modelos</string>
+    <string name="content_exclusive_family_title">Para Toda a Família</string>
+    <string name="content_exclusive_family_subtitle">Bloqueie letras explícitas e danças agressivas.</string>
+    <string name="content_exclusive_unfiltered_title">Sem Filtro</string>
+    <string name="content_exclusive_unfiltered_subtitle">Mostre todos os vídeos em alta e temas adultos.</string>
+    <string name="genre_step_title">Que música você curte?</string>
+    <string name="genre_step_subtitle">Esta etapa nos ajuda a sugerir músicas melhores para você. Ela não afetará seu conteúdo personalizado.</string>
+    <string name="media_privacy_title">Escolha a configuração de\nprivacidade das suas fotos</string>
+    <string name="media_privacy_private_title">Modo Privado</string>
+    <string name="media_privacy_private_subtitle">Excluir minhas fotos após cada criação. Ideal para máxima privacidade.</string>
+    <string name="media_privacy_quick_title">Refazer Rápido</string>
+    <string name="media_privacy_quick_subtitle">Salvar meu perfil para criações mais rápidas no futuro. Crie novos vídeos com 1 toque.</string>
+    <string name="personalizing_title">Personalizando sua experiência…</string>
+    <string name="personalizing_subtitle">Aguarde um momento enquanto preparamos os modelos de estilo perfeitos para você.</string>
+    <string name="picker_add_more_ideal">Adicione mais %d fotos para criar um vídeo de ~15s pronto para redes sociais.</string>
+    <string name="picker_add_photos">Adicionar fotos</string>
+    <string name="picker_count_badge">x%d</string>
+    <string name="picker_max_reached">Você atingiu o máximo de %d fotos.</string>
+    <string name="picker_more_photos_longer">Mais fotos, vídeo mais longo (Máx. %d)</string>
+    <string name="template_pick_title">Que estilo de modelo você prefere?</string>
+    <string name="template_pick_subtitle">Escolha um estilo de modelo e deixe que cuidamos das transições e dos efeitos para você. Esta etapa não afetará seu conteúdo personalizado.</string>
+    <string name="error_data_load_failed">Falha ao carregar os dados necessários. Verifique sua conexão com a internet e tente novamente.</string>
+    <string name="quality_ad_not_available">O anúncio não está disponível no momento. Tente novamente mais tarde ou escolha uma qualidade menor.</string>
 </resources>

@@ -607,4 +607,32 @@
     <string name="retention_dialog_subtitle">Ulah indit ayeuna — aya anu luar biasa bakal kajadian.</string>
     <string name="retention_dialog_close">Tutup</string>
     <string name="retention_dialog_stay">Tetep</string>
+
+    <!-- Onboarding survey & asset picker -->
+    <string name="ai_level_title">Pilih gaya kreasi anjeun</string>
+    <string name="ai_level_light_touch_title">Sentuhan Hampang</string>
+    <string name="ai_level_light_touch_banner">Tetep alami.\nKatingali kawas anjeun, ngan leuwih alus</string>
+    <string name="ai_level_deep_swap_title">Robahan Jero</string>
+    <string name="ai_level_deep_swap_banner">Dorong kreativitas leuwih jauh.\nJadi saha waé, cobian naon waé.</string>
+    <string name="content_exclusive_title">Saring musik jeung\nfeed témplat anjeun</string>
+    <string name="content_exclusive_family_title">Ramah Kulawarga</string>
+    <string name="content_exclusive_family_subtitle">Blokir lirik kasar jeung jogéd agrésif.</string>
+    <string name="content_exclusive_unfiltered_title">Teu Disaring</string>
+    <string name="content_exclusive_unfiltered_subtitle">Témbongkeun sakabéh vidéo tren jeung téma déwasa.</string>
+    <string name="genre_step_title">Musik naon nu anjeun resep?</string>
+    <string name="genre_step_subtitle">Léngkah ieu ngabantosan kami nyarankeun musik anu langkung saé pikeun anjeun. Ieu moal mangaruhan kontén anu dipersonalisasi.</string>
+    <string name="media_privacy_title">Pilih setélan privasi\nfoto anjeun</string>
+    <string name="media_privacy_private_title">Mode Pribadi</string>
+    <string name="media_privacy_private_subtitle">Pupus foto kuring sanggeus unggal kreasi. Pangsaéna pikeun privasi maksimal.</string>
+    <string name="media_privacy_quick_title">Damel Deui Gancang</string>
+    <string name="media_privacy_quick_subtitle">Simpen profil kuring pikeun kreasi anu langkung gancang ka hareup. Damel vidéo anyar ku 1 ketuk.</string>
+    <string name="personalizing_title">Ngepersonalisasi pangalaman anjeun…</string>
+    <string name="personalizing_subtitle">Mangga antosan sakedap bari kami nyiapkeun témplat gaya anu sampurna pikeun anjeun.</string>
+    <string name="picker_add_more_ideal">Tambihan %d foto deui pikeun ngadamel vidéo ~15 detik nu siap dibagikeun.</string>
+    <string name="picker_add_photos">Tambih foto</string>
+    <string name="picker_count_badge">x%d</string>
+    <string name="picker_max_reached">Anjeun parantos ngahontal maksimal %d foto.</string>
+    <string name="picker_more_photos_longer">Langkung seueur foto, vidéo langkung panjang (Maks %d)</string>
+    <string name="template_pick_title">Gaya témplat naon nu anjeun pikaresep?</string>
+    <string name="template_pick_subtitle">Pilih gaya témplat sareng antep kami ngurus transisi sareng éfékna pikeun anjeun. Léngkah ieu moal mangaruhan kontén anu dipersonalisasi.</string>
 </resources>

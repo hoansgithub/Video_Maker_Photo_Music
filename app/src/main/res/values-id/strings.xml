@@ -600,4 +600,34 @@
     <string name="retention_dialog_subtitle">Jangan pergi sekarang — sesuatu yang luar biasa akan segera terjadi.</string>
     <string name="retention_dialog_close">Tutup</string>
     <string name="retention_dialog_stay">Tetap</string>
+
+    <!-- Onboarding survey & asset picker -->
+    <string name="ai_level_title">Pilih gaya kreasimu</string>
+    <string name="ai_level_light_touch_title">Sentuhan Ringan</string>
+    <string name="ai_level_light_touch_banner">Tetap autentik.\nTerlihat seperti dirimu, hanya lebih baik</string>
+    <string name="ai_level_deep_swap_title">Ubah Total</string>
+    <string name="ai_level_deep_swap_banner">Dorong kreativitas lebih jauh.\nJadi siapa saja, coba apa saja.</string>
+    <string name="content_exclusive_title">Filter musik dan\nfeed templatemu</string>
+    <string name="content_exclusive_family_title">Ramah Keluarga</string>
+    <string name="content_exclusive_family_subtitle">Blokir lirik vulgar dan tarian agresif.</string>
+    <string name="content_exclusive_unfiltered_title">Tanpa Filter</string>
+    <string name="content_exclusive_unfiltered_subtitle">Tampilkan semua video tren dan tema dewasa.</string>
+    <string name="genre_step_title">Musik apa yang kamu suka?</string>
+    <string name="genre_step_subtitle">Langkah ini membantu kami menyarankan musik yang lebih baik untukmu. Ini tidak akan memengaruhi konten yang dipersonalisasi.</string>
+    <string name="media_privacy_title">Pilih pengaturan privasi\nfotomu</string>
+    <string name="media_privacy_private_title">Mode Pribadi</string>
+    <string name="media_privacy_private_subtitle">Hapus fotoku setelah setiap kreasi. Terbaik untuk privasi maksimal.</string>
+    <string name="media_privacy_quick_title">Buat Ulang Cepat</string>
+    <string name="media_privacy_quick_subtitle">Simpan profilku untuk kreasi lebih cepat di masa depan. Buat video baru dengan 1 ketukan.</string>
+    <string name="personalizing_title">Mempersonalisasi pengalamanmu…</string>
+    <string name="personalizing_subtitle">Mohon tunggu sebentar saat kami menyiapkan template gaya yang sempurna untukmu.</string>
+    <string name="picker_add_more_ideal">Tambahkan %d foto lagi untuk membuat video ~15 detik yang siap dibagikan.</string>
+    <string name="picker_add_photos">Tambah foto</string>
+    <string name="picker_count_badge">x%d</string>
+    <string name="picker_max_reached">Kamu telah mencapai maksimum %d foto.</string>
+    <string name="picker_more_photos_longer">Lebih banyak foto, video lebih panjang (Maks %d)</string>
+    <string name="template_pick_title">Gaya template apa yang kamu sukai?</string>
+    <string name="template_pick_subtitle">Pilih gaya template dan biarkan kami mengurus transisi serta efeknya untukmu. Langkah ini tidak akan memengaruhi konten yang dipersonalisasi.</string>
+    <string name="error_data_load_failed">Gagal memuat data yang diperlukan. Periksa koneksi internetmu dan coba lagi.</string>
+    <string name="quality_ad_not_available">Iklan tidak tersedia saat ini. Coba lagi nanti atau pilih kualitas yang lebih rendah.</string>
 </resources>
