@@ -601,4 +601,10 @@
     <string name="picker_photos_unavailable_subtitle">ನಿಮ್ಮ ಎಲ್ಲಾ ಫೋಟೋಗಳಿಗೆ ಪ್ರವೇಶವನ್ನು ಪಡೆಯಿರಿ ಇದರಿಂದ ನಿಮ್ಮ ನೆಚ್ಚಿನ ನೆನಪುಗಳನ್ನು ಕಳೆದುಕೊಳ್ಳದೆ ನೀವು ವೀಡಿಯೊಗಳನ್ನು ರಚಿಸಬಹುದು.</string>
     <string name="picker_manage_access">ಪ್ರವೇಶವನ್ನು ನಿರ್ವಹಿಸಿ</string>
     <string name="picker_keep_limited_access">ಸೀಮิต ಪ್ರವೇಶವನ್ನು ಮುಂದುವರಿಸಿ</string>
+
+    <!-- Retention Dialog -->
+    <string name="retention_dialog_title">ಅದ್ಭುತ ವಿಷಯಗಳನ್ನು ಅನ್ವೇಷಿಸಲು ಉಳಿಯಿರಿ</string>
+    <string name="retention_dialog_subtitle">ಈಗ ಹೋಗಬೇಡಿ — ಅದ್ಭುತವಾದದ್ದು ನಡೆಯಲಿದೆ.</string>
+    <string name="retention_dialog_close">ಮುಚ್ಚಿ</string>
+    <string name="retention_dialog_stay">ಉಳಿಯಿರಿ</string>
 </resources>

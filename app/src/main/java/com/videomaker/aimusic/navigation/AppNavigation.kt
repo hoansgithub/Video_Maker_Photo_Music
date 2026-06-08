@@ -4,6 +4,7 @@ package com.videomaker.aimusic.navigation
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -22,7 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -86,6 +90,7 @@ import com.videomaker.aimusic.modules.unifiedsearch.UnifiedSearchViewModelFactor
 import com.videomaker.aimusic.modules.welcomeback.WelcomeBackScreen
 import com.videomaker.aimusic.ui.components.PopupTrendingSong
 import com.videomaker.aimusic.ui.components.PopupTrendingTemplate
+import com.videomaker.aimusic.ui.components.RetentionDialog
 import com.videomaker.aimusic.widget.WidgetScreen
 import com.videomaker.aimusic.widget.WidgetViewModel
 import com.videomaker.aimusic.widget.appwidget.WidgetActions
@@ -136,6 +141,7 @@ fun AppNavigation(
     showWelcomeBack: Boolean = false
 ) {
     val activity = LocalContext.current as? Activity
+    var showRetentionDialog by remember { mutableStateOf(false) }
     // When Welcome Back must be shown on cold start, seed it on TOP of Home so HomeScreen
     // doesn't compose first (which would prematurely trigger the Trending Popup via
     // onTabFocused). After the user taps Continue, WelcomeBack pops and Home composes,
@@ -377,14 +383,7 @@ fun AppNavigation(
             rememberSaveableStateHolderNavEntryDecorator(),  // Preserves rememberSaveable state
             rememberViewModelStoreNavEntryDecorator()        // Scopes ViewModels to NavEntry
         ),
-        onBack = {
-            // At root (Home) — exit the app; otherwise pop
-            if (backStack.size > 1) {
-                backStack.safeRemoveLast()
-            } else {
-                activity?.finish()
-            }
-        },
+        onBack = { backStack.safeRemoveLast() },
         // Push: new screen slides in from right, current shifts left
         transitionSpec = {
             slideInHorizontally(initialOffsetX = { it }, animationSpec = slideAnimSpec) togetherWith
@@ -426,6 +425,11 @@ fun AppNavigation(
                     if (route.initialSongId != -1L) {
                         songsViewModel.onSongClickById(route.initialSongId)
                     }
+                }
+
+                // Intercept back (button + swipe gesture) at root to show retention dialog
+                BackHandler(enabled = !showRetentionDialog) {
+                    showRetentionDialog = true
                 }
 
                 HomeScreen(
@@ -837,6 +841,13 @@ fun AppNavigation(
             }
         }
     )
+
+    if (showRetentionDialog) {
+        RetentionDialog(
+            onClose = { activity?.finish() },
+            onStay = { showRetentionDialog = false }
+        )
+    }
 
     // Trending popups are rendered at navigation level (outside NavDisplay) but are gated by
     // the active surface so they only appear where they belong:

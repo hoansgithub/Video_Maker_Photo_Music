@@ -594,4 +594,10 @@
     <string name="picker_photos_unavailable_subtitle">Kumuha ng access sa lahat ng iyong larawan para makagawa ka ng mga video nang hindi nawawala ang iyong mga paboritong alaala.</string>
     <string name="picker_manage_access">Pamahalaan ang Access</string>
     <string name="picker_keep_limited_access">Panatilihin ang Limitadong Access</string>
+
+    <!-- Retention Dialog -->
+    <string name="retention_dialog_title">Manatili at mag-explore ng mga kahanga-hanga</string>
+    <string name="retention_dialog_subtitle">Huwag umalis ngayon — may kahanga-hangang mangyayari.</string>
+    <string name="retention_dialog_close">Isara</string>
+    <string name="retention_dialog_stay">Manatili</string>
 </resources>

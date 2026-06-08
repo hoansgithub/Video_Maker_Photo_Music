@@ -601,4 +601,10 @@
     <string name="picker_photos_unavailable_subtitle">আপনার সমস্ত ফটো অ্যাক্সেস করুন যাতে আপনি আপনার প্রিয় স্মৃতিগুলি না হারিয়ে ভিডিও তৈরি করতে পারেন।</string>
     <string name="picker_manage_access">অ্যাক্সেস পরিচালনা করুন</string>
     <string name="picker_keep_limited_access">সীমিত অ্যাক্সেস রাখুন</string>
+
+    <!-- Retention Dialog -->
+    <string name="retention_dialog_title">দারুণ কিছু দেখতে থাকুন</string>
+    <string name="retention_dialog_subtitle">এখনই যাবেন না — আশ্চর্যজনক কিছু হতে চলেছে।</string>
+    <string name="retention_dialog_close">বন্ধ</string>
+    <string name="retention_dialog_stay">থাকুন</string>
 </resources>

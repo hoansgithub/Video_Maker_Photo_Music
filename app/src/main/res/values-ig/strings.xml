@@ -602,4 +602,10 @@
     <string name="picker_photos_unavailable_subtitle">Nweta ohere ịbanye na foto gị niile ka ị nwee ike ịmepụta vidiyo na-enweghị atụfu ncheta kachasị amasị gị.</string>
     <string name="picker_manage_access">Jikwaa Ohere</string>
     <string name="picker_keep_limited_access">Dowe Ohere Dị Iche</string>
+
+    <!-- Retention Dialog -->
+    <string name="retention_dialog_title">Nọrọ ka ị chọpụta ihe mara mma</string>
+    <string name="retention_dialog_subtitle">Ahapụla ugbu a — ihe ịtụnanya na-achọ ime.</string>
+    <string name="retention_dialog_close">Mechie</string>
+    <string name="retention_dialog_stay">Nọrọ</string>
 </resources>

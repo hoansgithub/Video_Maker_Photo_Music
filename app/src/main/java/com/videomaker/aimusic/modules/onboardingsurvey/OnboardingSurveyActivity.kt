@@ -2,6 +2,7 @@ package com.videomaker.aimusic.modules.onboardingsurvey
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -100,6 +101,17 @@ class OnboardingSurveyActivity : AppCompatActivity() {
             }
 
             VideoMakerTheme {
+                var showExitDialog by remember { mutableStateOf(false) }
+
+                BackHandler { showExitDialog = true }
+
+                if (showExitDialog) {
+                    com.videomaker.aimusic.modules.onboarding.OnboardingExitDialog(
+                        onExit = { finish() },
+                        onDismiss = { showExitDialog = false }
+                    )
+                }
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

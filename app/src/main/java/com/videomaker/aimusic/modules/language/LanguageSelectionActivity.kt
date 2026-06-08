@@ -5,9 +5,14 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -88,6 +93,17 @@ class LanguageSelectionActivity : AppCompatActivity() {
 
         setContent {
             VideoMakerTheme {
+                var showExitDialog by remember { mutableStateOf(false) }
+
+                BackHandler { showExitDialog = true }
+
+                if (showExitDialog) {
+                    com.videomaker.aimusic.modules.onboarding.OnboardingExitDialog(
+                        onExit = { finish() },
+                        onDismiss = { showExitDialog = false }
+                    )
+                }
+
                 LanguageSelectionScreen(
                     showBackButton = false,
                     onLanguageSelected = { languageCode ->
