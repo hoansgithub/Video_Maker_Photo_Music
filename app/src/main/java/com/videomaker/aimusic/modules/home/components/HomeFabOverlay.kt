@@ -134,23 +134,16 @@ fun HomeFabOverlay(
                     derivedStateOf { collapseProgress() > SW_MOUNT }
                 }
                 if (swVisible) {
-                    Row(
+                    SeeWhatsNewPill(
+                        onClick = onRefreshClick,
                         modifier = Modifier
-                            .padding(end = FAB_SIZE.dp)
-                            .fillMaxWidth()
-                            .align(Alignment.Center),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        SeeWhatsNewPill(
-                            onClick = onRefreshClick,
-                            modifier = Modifier
-                                .drawWithContent {
-                                    val reveal = ((collapseProgress() - SW_START) / (1f - SW_START))
-                                        .coerceIn(0f, 1f)
-                                    clipRect(right = size.width * reveal) { this@drawWithContent.drawContent() }
-                                }
-                        )
-                    }
+                            .drawWithContent {
+                                val reveal = ((collapseProgress() - SW_START) / (1f - SW_START))
+                                    .coerceIn(0f, 1f)
+                                clipRect(right = size.width * reveal) { this@drawWithContent.drawContent() }
+                            }
+                            .align(Alignment.Center)
+                    )
                 }
             }
         } else {
