@@ -101,6 +101,11 @@ class RatingTriggerManager(
     private var isRatingDeferred = false
 
     private fun triggerRatingPopupIfEligible(location: String) {
+        if (!preferencesManager.isOnboardingComplete()) {
+            if (BuildConfig.DEBUG) Log.d(TAG, "Onboarding not completed, skipping trigger.")
+            return
+        }
+
         if (preferencesManager.ratingCompleted) {
             if (BuildConfig.DEBUG) Log.d(TAG, "Rating already completed, skipping trigger.")
             return
@@ -196,16 +201,15 @@ class RatingTriggerManager(
         }
     }
 
-    /**
-     * Call when user focuses the home screen.
-     */
     fun onHomeScreenFocused(currentTab: Int) {
+        preferencesManager.ratingHomeFocusCount++
+        val homeFocusCount = preferencesManager.ratingHomeFocusCount
         val sessionId = preferencesManager.getAppSessionId()
         val lastTriggeredSessionId = preferencesManager.ratingLastTriggeredHomeSessionId
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "onHomeScreenFocused: sessionId=$sessionId, lastTriggeredSessionId=$lastTriggeredSessionId, currentTab=$currentTab")
+            Log.d(TAG, "onHomeScreenFocused: homeFocusCount=$homeFocusCount, sessionId=$sessionId, lastTriggeredSessionId=$lastTriggeredSessionId, currentTab=$currentTab")
         }
-        if (sessionId >= 2 && lastTriggeredSessionId != sessionId) {
+        if (homeFocusCount >= 2 && lastTriggeredSessionId != sessionId) {
             val isPromotePopupEligible = when (currentTab) {
                 0 -> trendingPopupCoordinator.isPopupEligible(TrendingPopupTab.GALLERY)
                 1 -> trendingPopupCoordinator.isPopupEligible(TrendingPopupTab.SONGS)
