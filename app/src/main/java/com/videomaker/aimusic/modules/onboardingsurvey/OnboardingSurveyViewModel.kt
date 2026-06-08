@@ -54,6 +54,20 @@ class OnboardingSurveyViewModel(
         return nowSelected
     }
 
+    /**
+     * Auto-selects [firstId] for [step] if nothing is currently selected.
+     * Returns true if a selection was actually made.
+     */
+    fun autoSelectFirst(step: OnboardingSurveyStep, firstId: String): Boolean {
+        val flow = when (step) {
+            OnboardingSurveyStep.FEATURE -> _selectedFeatures
+            OnboardingSurveyStep.PLATFORM -> _selectedPlatforms
+        }
+        if (flow.value.isNotEmpty()) return false
+        flow.value = setOf(firstId)
+        return true
+    }
+
     fun onNext() {
         val next = OnboardingSurveyGate.nextStep(enabledSteps, _currentStep.value)
         if (next == null) {

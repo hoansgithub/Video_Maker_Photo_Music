@@ -139,6 +139,10 @@
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/5275683453","enabled":true},{"id":"ca-app-pub-7121075950716954/3802133920","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
+    <key>ad_native_onboarding_select_alt</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/5275683453","enabled":true},{"id":"ca-app-pub-7121075950716954/3802133920","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
     <key>ad_native_onboarding_social</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/4700282623","enabled":true},{"id":"ca-app-pub-7121075950716954/3387200953","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>

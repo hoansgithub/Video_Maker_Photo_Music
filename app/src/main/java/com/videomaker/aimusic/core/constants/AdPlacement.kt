@@ -404,6 +404,14 @@ object AdPlacement {
     const val NATIVE_ONBOARDING_SELECT = "ad_native_onboarding_select"
 
     /**
+     * ALT native ad for feature survey screen (shown after first selection, replaces NATIVE_ONBOARDING_SELECT).
+     * Swapped in after 0.5s IAB viewability delay once the user makes their first selection.
+     * Ad units: ca-app-pub-7121075950716954/5275683453 → ca-app-pub-7121075950716954/3802133920
+     * Remote Config key: ad_native_onboarding_select_alt
+     */
+    const val NATIVE_ONBOARDING_SELECT_ALT = "ad_native_onboarding_select_alt"
+
+    /**
      * Platform survey screen native (shown after the feature screen). Single placement waterfall:
      * Pro_NA_high_social (primary) → Pro_NA_all_social (secondary). Reloaded on each selection tap.
      * Ad units: ca-app-pub-7121075950716954/4700282623 → ca-app-pub-7121075950716954/3387200953
@@ -1187,6 +1195,7 @@ object AdPlacement {
         NATIVE_ONBOARDING_SELECT_TPT,
         NATIVE_ONBOARDING_PERSONALIZING,
         NATIVE_ONBOARDING_SELECT,
+        NATIVE_ONBOARDING_SELECT_ALT,
         NATIVE_ONBOARDING_SOCIAL,
         REWARD_INTER_DOWNLOAD_VIDEO,
         REWARD_REMOVE_WATERMARK,
