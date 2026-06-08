@@ -17,11 +17,11 @@ object GenreTemplateGate {
         if (remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_TEMPLATE_PICK_ENABLED)) {
             add(GenreTemplateStep.TEMPLATE_PICK)
         }
-        if (remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_CONTENT_EXCLUSIVE_ENABLED)) {
-            add(GenreTemplateStep.CONTENT_EXCLUSIVE)
-        }
         if (remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_MEDIA_PRIVACY_ENABLED)) {
             add(GenreTemplateStep.MEDIA_PRIVACY)
+        }
+        if (remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_CONTENT_EXCLUSIVE_ENABLED)) {
+            add(GenreTemplateStep.CONTENT_EXCLUSIVE)
         }
     }
 

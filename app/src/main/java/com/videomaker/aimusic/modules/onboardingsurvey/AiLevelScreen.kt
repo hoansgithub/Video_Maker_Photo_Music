@@ -94,11 +94,9 @@ private fun AiLevelCard(
             Image(
                 painter = painterResource(item.imageRes),
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.FillWidth,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
-                    .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)),
+                    .fillMaxWidth(),
             )
             Text(
                 text = stringResource(item.titleRes),

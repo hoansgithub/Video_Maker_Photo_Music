@@ -78,6 +78,7 @@ private fun ChoiceCard(
     Box(
         modifier = modifier
             .clip(shape)
+            .height(280.dp)
             .background(Color.Black.copy(alpha = 0.2f))
             .border(
                 width = if (selected) 2.dp else 1.dp,
@@ -85,7 +86,7 @@ private fun ChoiceCard(
                 shape = shape,
             )
             .clickableSingle { onClick() }
-            .padding(16.dp),
+            .padding(vertical = 16.dp, horizontal = 12.dp),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -117,7 +118,7 @@ private fun ChoiceCard(
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
             Text(
                 text = stringResource(item.subtitleRes),
                 color = Neutral_N600,

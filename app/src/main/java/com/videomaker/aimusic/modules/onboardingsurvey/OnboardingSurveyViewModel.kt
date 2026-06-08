@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.onboardingsurvey
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
@@ -74,6 +75,7 @@ class OnboardingSurveyViewModel(
         val flow = when (step) {
             OnboardingSurveyStep.FEATURE -> _selectedFeatures
             OnboardingSurveyStep.PLATFORM -> _selectedPlatforms
+            else -> return false
         }
         if (flow.value.isNotEmpty()) return false
         flow.value = setOf(firstId)
