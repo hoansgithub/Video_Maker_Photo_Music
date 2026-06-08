@@ -359,4 +359,80 @@
     <key>ad_native_popup_trending_song</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1938387916","enabled":true},{"id":"ca-app-pub-7121075950716954/8994750854","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
+
+  <!-- Ad Placements - Native (additional) -->
+  <entry>
+    <key>ad_native_onboarding_personalizing</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/8979456910","enabled":true},{"id":"ca-app-pub-7121075950716954/8646238825","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_onboarding_select_music</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/3016683795","enabled":true},{"id":"ca-app-pub-7121075950716954/8624233693","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_onboarding_select_tpt</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/3543297405","enabled":true},{"id":"ca-app-pub-7121075950716954/7166847649","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_projects_grid</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/6293185105","enabled":true},{"id":"ca-app-pub-7121075950716954/6536223106","enabled":true}],"extras":{"layout":"native_project_card","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_welcome_back</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/9525024469","enabled":true},{"id":"ca-app-pub-7121075950716954/1552989505","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+
+  <!-- Ad Placements - Rewarded (additional) -->
+  <entry>
+    <key>ad_reward_download_video</key>
+    <value>{"enabled":true,"type":"rewarded","units":[{"id":"ca-app-pub-7121075950716954/5841454382","enabled":true},{"id":"ca-app-pub-7121075950716954/7948742970","enabled":true}]}</value>
+  </entry>
+
+  <!-- Ad Download Type -->
+  <entry>
+    <key>ad_download_ad_type</key>
+    <value>rewardedInterstitial</value>
+  </entry>
+
+  <!-- Interstitial Interval (duplicate key in Firebase) -->
+  <entry>
+    <key>interstitial_interval_seconds</key>
+    <value>5</value>
+  </entry>
+
+  <!-- Home Banner List -->
+  <entry>
+    <key>home_banner_list</key>
+    <value>[{"type":"BannerTemplate","data":{"name":"Going Viral right now","id":"352b676a-6505-4e8d-9a25-2f2db93bc16b","style":1}},{"type":"BannerSong","data":{"name":"World Cup Music Hit","id":601010,"style":1}},{"type":"BannerTemplate","data":{"name":"Fresh Drop Just Landed","id":"923b423e-4572-4172-aa0c-2443841b14b4","style":2}},{"type":"BannerSong","data":{"name":"Turn Photo into Video Music","id":2036,"style":2}}]</value>
+  </entry>
+
+  <!-- Onboarding Genre Template Steps -->
+  <entry>
+    <key>onboarding_genre_selection_enabled</key>
+    <value>false</value>
+  </entry>
+  <entry>
+    <key>onboarding_personalizing_enabled</key>
+    <value>false</value>
+  </entry>
+  <entry>
+    <key>onboarding_template_pick_enabled</key>
+    <value>false</value>
+  </entry>
+
+  <!-- Rating Popup -->
+  <entry>
+    <key>rating_popup_trigger_count</key>
+    <value>5</value>
+  </entry>
+  <entry>
+    <key>rating_popup_daily_cap</key>
+    <value>2</value>
+  </entry>
+
+  <!-- Region Detection -->
+  <entry>
+    <key>region_detection_config</key>
+    <value>{"use_ip_geolocation":true,"ip_timeout_ms":10000}</value>
+  </entry>
 </defaults>
