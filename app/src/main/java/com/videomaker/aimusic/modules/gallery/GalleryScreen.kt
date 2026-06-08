@@ -421,6 +421,8 @@ private fun GalleryContent(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
+                    start = dimens.spaceSm,
+                    end = dimens.spaceSm,
                     top = topBarHeight + dimens.spaceSm,
                     bottom = dimens.space3Xl + dimens.space2Xl
                 ),
@@ -432,7 +434,7 @@ private fun GalleryContent(
                     GallerySearchField(
                         onClick = onSearchClick,
                         modifier = Modifier.padding(
-                            horizontal = dimens.spaceLg,
+                            horizontal = dimens.spaceSm,
                             vertical = dimens.spaceXs
                         )
                     )
@@ -494,7 +496,7 @@ private fun GalleryContent(
                     is TemplateListState.Loading -> {
                         item(key = "loading_skeleton", contentType = "loading_skeleton", span = StaggeredGridItemSpan.FullLine) {
                             TemplateGridSkeleton(
-                                modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                                modifier = Modifier.padding(horizontal = dimens.spaceSm)
                             )
                         }
                     }
@@ -526,7 +528,7 @@ private fun GalleryContent(
                                 }
                             }
                         ) { item ->
-                            Box(modifier = Modifier.padding(horizontal = dimens.spaceLg)) {
+                            Box {
                                 when (item) {
                                     is GalleryGridItem.TemplateItem -> {
                                         val template = item.template
