@@ -130,7 +130,7 @@ class GenreTemplateActivity : AppCompatActivity() {
 
                                 GenreTemplateStep.CONTENT_EXCLUSIVE -> {
                                     ContentExclusiveScreen(
-                                        selectedId = viewModel.selectedContentFilter.value,
+                                        selectedId = viewModel.selectedContentFilter.value.orEmpty(),
                                         onSelect = { id ->
                                             viewModel.selectContentFilter(id)
                                             contentExclusiveTapped = true
@@ -144,7 +144,7 @@ class GenreTemplateActivity : AppCompatActivity() {
 
                                 GenreTemplateStep.MEDIA_PRIVACY -> {
                                     MediaPrivacyScreen(
-                                        selectedId = viewModel.selectedPrivacy.value,
+                                        selectedId = viewModel.selectedPrivacy.value.orEmpty(),
                                         onSelect = { id ->
                                             viewModel.selectPrivacy(id)
                                             mediaPrivacyTapped = true
@@ -237,13 +237,15 @@ class GenreTemplateActivity : AppCompatActivity() {
                                             OnboardingCtaButton(
                                                 text = stringResource(R.string.onboarding_next),
                                                 onClick = {
+                                                    val selected = viewModel.selectedContentFilter.value
+                                                        ?: return@OnboardingCtaButton
                                                     Analytics.track(
                                                         name = "content_feed_next",
-                                                        params = mapOf("option" to viewModel.selectedContentFilter.value),
+                                                        params = mapOf("option" to selected),
                                                     )
                                                     viewModel.onContentExclusiveNext()
                                                 },
-                                                enabled = true,
+                                                enabled = viewModel.selectedContentFilter.value != null,
                                                 color = Primary,
                                                 icon = R.drawable.ic_right_arrow
                                             )
@@ -253,13 +255,15 @@ class GenreTemplateActivity : AppCompatActivity() {
                                             OnboardingCtaButton(
                                                 text = stringResource(R.string.onboarding_next),
                                                 onClick = {
+                                                    val selected = viewModel.selectedPrivacy.value
+                                                        ?: return@OnboardingCtaButton
                                                     Analytics.track(
                                                         name = "privacy_next",
-                                                        params = mapOf("option" to viewModel.selectedPrivacy.value),
+                                                        params = mapOf("option" to selected),
                                                     )
                                                     viewModel.onMediaPrivacyNext()
                                                 },
-                                                enabled = true,
+                                                enabled = viewModel.selectedPrivacy.value != null,
                                                 color = Primary,
                                                 icon = R.drawable.ic_right_arrow
                                             )

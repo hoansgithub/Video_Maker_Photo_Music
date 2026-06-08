@@ -108,9 +108,10 @@ class GenreTemplateViewModel(
     private val _navToNext = Channel<Unit>(Channel.BUFFERED)
     val navToNext = _navToNext.receiveAsFlow()
 
-    // Single-select choices for the two new analytics-only screens (item 1 pre-selected).
-    val selectedContentFilter = mutableStateOf(CONTENT_EXCLUSIVE_ITEMS.first().id)
-    val selectedPrivacy = mutableStateOf(MEDIA_PRIVACY_ITEMS.first().id)
+    // Single-select choices for the two new analytics-only screens.
+    // No pre-selection: null until the user taps an item.
+    val selectedContentFilter = mutableStateOf<String?>(null)
+    val selectedPrivacy = mutableStateOf<String?>(null)
 
     // Initial visible step: first enabled screen in the fixed order
     private val _currentStep = MutableStateFlow(

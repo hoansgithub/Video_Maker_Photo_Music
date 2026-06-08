@@ -26,8 +26,9 @@ class OnboardingSurveyViewModel(
     private val _selectedPlatforms = MutableStateFlow<Set<String>>(emptySet())
     val selectedPlatforms: StateFlow<Set<String>> = _selectedPlatforms.asStateFlow()
 
-    // AI_LEVEL is single-select with item 1 pre-selected (analytics-only screen).
-    private val _selectedAiLevel = MutableStateFlow(setOf(AI_LEVEL_ITEMS.first().id))
+    // AI_LEVEL is single-select with no pre-selection (analytics-only screen):
+    // empty until the user taps an item.
+    private val _selectedAiLevel = MutableStateFlow<Set<String>>(emptySet())
     val selectedAiLevel: StateFlow<Set<String>> = _selectedAiLevel.asStateFlow()
 
     fun selectAiLevel(id: String) { _selectedAiLevel.value = setOf(id) }

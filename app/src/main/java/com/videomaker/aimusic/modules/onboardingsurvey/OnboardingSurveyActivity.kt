@@ -464,7 +464,8 @@ class OnboardingSurveyActivity : AppCompatActivity() {
     private fun AiLevelStep(adClickDetector: AdClickDetector) {
         val density = LocalDensity.current
         val selectedIds by viewModel.selectedAiLevel.collectAsStateWithLifecycle()
-        val selectedId = selectedIds.firstOrNull() ?: AI_LEVEL_ITEMS.first().id
+        // No pre-selection: empty string means nothing is selected (no item highlighted).
+        val selectedId = selectedIds.firstOrNull().orEmpty()
 
         var bottomSectionHeight by remember { mutableStateOf(0) }
         val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
@@ -534,7 +535,7 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                                 )
                                 viewModel.onNext()
                             },
-                            enabled = true,
+                            enabled = selectedIds.isNotEmpty(),
                             color = Primary,
                             icon = R.drawable.ic_right_arrow,
                         )
