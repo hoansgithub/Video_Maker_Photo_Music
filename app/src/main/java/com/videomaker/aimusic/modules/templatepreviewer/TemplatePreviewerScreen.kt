@@ -1555,8 +1555,11 @@ private fun TemplateThumbnailPage(
                 autoPlay = true,
                 loop = true,
                 startFromHook = true,
-                // Mute (but keep playing) while an ad is on screen, so playback resumes
-                // seamlessly when the ad closes — per product spec.
+                // Pause (release audio focus) while an ad is on screen, then resume on
+                // close. Merely muting kept the player holding AUDIOFOCUS_GAIN, which
+                // conflicts with the ad SDK's fullscreen video ad and left the ad stuck/
+                // uncloseable. Volume mute is kept as defense-in-depth.
+                isAdShowing = isAdShowing,
                 volume = if (isAdShowing) 0f else 1.0f
             )
         }

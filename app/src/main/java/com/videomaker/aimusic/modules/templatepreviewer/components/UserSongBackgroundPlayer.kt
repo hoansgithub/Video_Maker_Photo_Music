@@ -7,6 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
@@ -60,6 +61,10 @@ private fun ExoPlayer.releaseAsync() {
  * @param loop Whether to loop the song (default: true)
  * @param startFromHook Whether to start from hook position (default: true)
  * @param volume Playback volume (default: 1.0)
+ * @param isAdShowing When true, the player is PAUSED (not just muted) so it releases
+ *        audio focus while a fullscreen ad is on screen. Holding AUDIOFOCUS_GAIN with a
+ *        silently-playing player conflicts with the ad SDK's video ad and can leave the
+ *        ad stuck/uncloseable. Resumes automatically when the ad closes.
  * @param onPlaybackStateChanged Callback for playback state changes
  */
 @OptIn(UnstableApi::class)
@@ -71,9 +76,14 @@ fun UserSongBackgroundPlayer(
     loop: Boolean = true,
     startFromHook: Boolean = true,
     volume: Float = 1.0f,
+    isAdShowing: Boolean = false,
     onPlaybackStateChanged: ((Int) -> Unit)? = null
 ) {
     val context = LocalContext.current
+
+    // Latest ad-showing flag accessible inside the long-lived player listener without
+    // recreating it, so STATE_READY auto-play can be suppressed while an ad is on screen.
+    val adShowingState = rememberUpdatedState(isAdShowing)
 
     val player = remember(song.id) {
         // Configure instant playback with minimal buffer
@@ -112,12 +122,14 @@ fun UserSongBackgroundPlayer(
                 when (playbackState) {
                     Player.STATE_READY -> {
                         // Auto-play here when player is ready and autoPlay is enabled
-                        // This is the first time we can safely call play()
-                        if (autoPlay && !player.isPlaying) {
+                        // This is the first time we can safely call play().
+                        // Skip while an ad is on screen so we don't grab audio focus
+                        // under a fullscreen ad — the isAdShowing effect resumes on close.
+                        if (autoPlay && !adShowingState.value && !player.isPlaying) {
                             android.util.Log.d("UserSongBackgroundPlayer", "Player STATE_READY - Starting auto-play")
                             player.play()
                         } else {
-                            android.util.Log.d("UserSongBackgroundPlayer", "Player STATE_READY - Skipping auto-play (autoPlay=$autoPlay, isPlaying=${player.isPlaying})")
+                            android.util.Log.d("UserSongBackgroundPlayer", "Player STATE_READY - Skipping auto-play (autoPlay=$autoPlay, isAdShowing=${adShowingState.value}, isPlaying=${player.isPlaying})")
                         }
                     }
                     Player.STATE_ENDED -> {
@@ -132,6 +144,25 @@ fun UserSongBackgroundPlayer(
     // player creation, so changes (e.g., mute on AD show) wouldn't take effect.
     LaunchedEffect(player, volume) {
         player.volume = volume
+    }
+
+    // Pause (not just mute) while an ad is on screen, then resume on close.
+    //
+    // The player is created with handleAudioFocus=true, so it holds AUDIOFOCUS_GAIN the
+    // whole time it's playing — even at volume 0. A fullscreen AdMob video interstitial/
+    // rewarded ad needs that focus to play; with us refusing to release it the ad can get
+    // stuck and its close button never activates. Calling pause() makes ExoPlayer abandon
+    // audio focus; resuming replays from the current position so playback is still seamless.
+    LaunchedEffect(player, isAdShowing) {
+        if (isAdShowing) {
+            if (player.isPlaying) {
+                android.util.Log.d("UserSongBackgroundPlayer", "Ad showing - pausing music (release audio focus)")
+                player.pause()
+            }
+        } else if (autoPlay && player.playbackState == Player.STATE_READY && !player.isPlaying) {
+            android.util.Log.d("UserSongBackgroundPlayer", "Ad closed - resuming music")
+            player.play()
+        }
     }
 
     // Track whether music was playing before pause (for ad interruption)
