@@ -87,8 +87,8 @@ class GenreTemplateActivity : AppCompatActivity() {
             LaunchedEffect(currentStep) {
                 when (currentStep) {
                     GenreTemplateStep.TEMPLATE_PICK -> Analytics.track(name = "vibe_template_render")
-                    GenreTemplateStep.CONTENT_EXCLUSIVE -> Analytics.track(name = "content_filter_render")
-                    GenreTemplateStep.MEDIA_PRIVACY -> Analytics.track(name = "photo_privacy_render")
+                    GenreTemplateStep.CONTENT_EXCLUSIVE -> Analytics.track(name = "content_feed_render")
+                    GenreTemplateStep.MEDIA_PRIVACY -> Analytics.track(name = "privacy_render")
                     else -> {}
                 }
             }
@@ -135,8 +135,8 @@ class GenreTemplateActivity : AppCompatActivity() {
                                             viewModel.selectContentFilter(id)
                                             contentExclusiveTapped = true
                                             Analytics.track(
-                                                name = "content_filter_select",
-                                                params = mapOf("content_filter" to id),
+                                                name = "content_feed_select",
+                                                params = mapOf("option" to id),
                                             )
                                         },
                                     )
@@ -149,8 +149,8 @@ class GenreTemplateActivity : AppCompatActivity() {
                                             viewModel.selectPrivacy(id)
                                             mediaPrivacyTapped = true
                                             Analytics.track(
-                                                name = "photo_privacy_select",
-                                                params = mapOf("photo_privacy" to id),
+                                                name = "privacy_select",
+                                                params = mapOf("option" to id),
                                             )
                                         },
                                     )
@@ -238,8 +238,8 @@ class GenreTemplateActivity : AppCompatActivity() {
                                                 text = stringResource(R.string.onboarding_next),
                                                 onClick = {
                                                     Analytics.track(
-                                                        name = "content_filter_next",
-                                                        params = mapOf("content_filter" to viewModel.selectedContentFilter.value),
+                                                        name = "content_feed_next",
+                                                        params = mapOf("option" to viewModel.selectedContentFilter.value),
                                                     )
                                                     viewModel.onContentExclusiveNext()
                                                 },
@@ -254,8 +254,8 @@ class GenreTemplateActivity : AppCompatActivity() {
                                                 text = stringResource(R.string.onboarding_next),
                                                 onClick = {
                                                     Analytics.track(
-                                                        name = "photo_privacy_next",
-                                                        params = mapOf("photo_privacy" to viewModel.selectedPrivacy.value),
+                                                        name = "privacy_next",
+                                                        params = mapOf("option" to viewModel.selectedPrivacy.value),
                                                     )
                                                     viewModel.onMediaPrivacyNext()
                                                 },

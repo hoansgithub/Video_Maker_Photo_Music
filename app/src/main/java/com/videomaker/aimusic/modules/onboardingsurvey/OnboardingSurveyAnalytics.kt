@@ -20,7 +20,7 @@ object OnboardingSurveyAnalytics {
     const val EVENT_AI_LEVEL_RENDER = "creation_style_render"
     const val EVENT_AI_LEVEL_SELECT = "creation_style_select"
     const val EVENT_AI_LEVEL_NEXT = "creation_style_next"
-    const val PARAM_AI_LEVEL = "creation_style"
+    const val PARAM_AI_LEVEL = "option"
 
     /**
      * Expands selected ids into indexed params: `${paramKey}1` → id1, `${paramKey}2` → id2, …
