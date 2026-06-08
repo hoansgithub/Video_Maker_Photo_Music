@@ -370,18 +370,18 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                         }
                 ) {
                     if (isFeatureStep) {
-                        // FEATURE: both ads stay in tree (loaded/cached), only one visible.
-                        Box(modifier = if (!delayedHasSelection) Modifier.fillMaxWidth() else Modifier.size(0.dp)) {
+                        // FEATURE: dual-ad swap (matches Language/Feature Selection pattern).
+                        // if/else ensures only one NativeAdView is in composition at a time.
+                        if (delayedHasSelection) {
                             NativeAdView(
-                                placement = AdPlacement.NATIVE_ONBOARDING_SELECT,
+                                placement = AdPlacement.NATIVE_ONBOARDING_SELECT_ALT,
                                 modifier = Modifier.fillMaxWidth(),
                                 isDebug = BuildConfig.DEBUG,
                                 onAdClicked = { adClickDetector.onAdClick(it) },
                             )
-                        }
-                        Box(modifier = if (delayedHasSelection) Modifier.fillMaxWidth() else Modifier.size(0.dp)) {
+                        } else {
                             NativeAdView(
-                                placement = AdPlacement.NATIVE_ONBOARDING_SELECT_ALT,
+                                placement = AdPlacement.NATIVE_ONBOARDING_SELECT,
                                 modifier = Modifier.fillMaxWidth(),
                                 isDebug = BuildConfig.DEBUG,
                                 onAdClicked = { adClickDetector.onAdClick(it) },
