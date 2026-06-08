@@ -473,6 +473,17 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Feature survey screen ALT native (swapped in after first selection).
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_SELECT_ALT,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/5275683453",  // Pro_NA_high_select
+                "ca-app-pub-7121075950716954/3802133920"   // Pro_NA_all_select
+            ),
+            enabled = true
+        )
+
         // Platform survey screen native (shown after the feature screen). Single placement, waterfall.
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_SOCIAL,

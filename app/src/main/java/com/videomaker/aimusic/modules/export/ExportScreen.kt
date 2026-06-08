@@ -519,6 +519,7 @@ fun ExportScreen(
 
             is ExportUiState.Cancelled -> {
                 CancelledContent(
+                    onRetryClick = viewModel::retryExport,
                     onBackClick = viewModel::navigateBack
                 )
             }
@@ -606,7 +607,7 @@ fun ExportScreen(
         placement = AdPlacement.NATIVE_EXPORT_PREPARING,
         modifier = Modifier
             .fillMaxWidth()
-            .height(50.dp),
+            .height(100.dp),
         isDebug = BuildConfig.DEBUG,
         onAdClicked = { adClickDetector.onAdClick(it) }
     )
@@ -1431,6 +1432,7 @@ private fun ErrorContent(
 
 @Composable
 private fun CancelledContent(
+    onRetryClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     Column(
@@ -1455,6 +1457,22 @@ private fun CancelledContent(
         Spacer(modifier = Modifier.height(48.dp))
 
         Button(
+            onClick = onRetryClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.export_try_again),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedButton(
             onClick = onBackClick,
             modifier = Modifier
                 .fillMaxWidth()
@@ -1727,6 +1745,7 @@ private fun CancelledContentPreview() {
             contentAlignment = Alignment.Center
         ) {
             CancelledContent(
+                onRetryClick = {},
                 onBackClick = {}
             )
         }

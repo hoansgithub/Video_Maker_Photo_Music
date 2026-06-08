@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.shadow
@@ -159,12 +159,11 @@ internal fun ImagesBottomSheet(
                         },
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Current images
-                    items(
+                    // Current images (index in key to support duplicate images)
+                    itemsIndexed(
                         items = assets,
-                        key = { asset -> asset.id }
-                    ) { asset ->
-                        val index = assets.indexOf(asset)
+                        key = { index, asset -> "${asset.id}_$index" }
+                    ) { index, asset ->
 
                         // Show drop indicator line before this item
                         if (dropIndex == index && draggedAssetId != null) {

@@ -140,6 +140,16 @@ object RemoteConfigKeys {
     const val ONBOARDING_FEATURE_SELECTION_ENABLED = "onboarding_feature_selection_enabled"
     const val ONBOARDING_PLATFORM_SELECTION_ENABLED = "onboarding_platform_selection_enabled"
 
+    /**
+     * Dynamic sort order for the Feature Survey items (JSON array of item IDs).
+     * Items in the array appear first in that order; any remaining items are appended
+     * in their hardcoded order.
+     *
+     * Example: `["ai_dance_video", "music_video_templates", "lyric_videos"]`
+     * Empty / missing / malformed → hardcoded order preserved.
+     */
+    const val ONBOARDING_FEATURE_SURVEY_ORDER = "onboarding_feature_survey_order"
+
     // ============================================
     // TRENDING POPUP
     // ============================================

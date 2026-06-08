@@ -3,6 +3,7 @@ package com.videomaker.aimusic.modules.featureselection
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -115,6 +116,17 @@ class FeatureSelectionActivity : AppCompatActivity() {
             }
 
             VideoMakerTheme {
+                var showExitDialog by remember { mutableStateOf(false) }
+
+                BackHandler { showExitDialog = true }
+
+                if (showExitDialog) {
+                    com.videomaker.aimusic.modules.onboarding.OnboardingExitDialog(
+                        onExit = { finish() },
+                        onDismiss = { showExitDialog = false }
+                    )
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()

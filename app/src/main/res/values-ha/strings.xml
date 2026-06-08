@@ -601,4 +601,10 @@
     <string name="picker_photos_unavailable_subtitle">Sami damar shiga duk hotunanku don ku sami damar ƙirƙirar bidiyoyi ba tare da rasa abubuwan da kuke so ba.</string>
     <string name="picker_manage_access">Sarrafa Izini</string>
     <string name="picker_keep_limited_access">Ci gaba da Izini Mai Iyaka</string>
+
+    <!-- Retention Dialog -->
+    <string name="retention_dialog_title">Zauna don ganin abubuwa masu ban mamaki</string>
+    <string name="retention_dialog_subtitle">Kada ka tafi yanzu — wani abu mai ban mamaki zai faru.</string>
+    <string name="retention_dialog_close">Rufe</string>
+    <string name="retention_dialog_stay">Zauna</string>
 </resources>

@@ -605,6 +605,12 @@
     <string name="welcome_back_vibe_tags">• 8 new songs • 3 hot templates 🚀</string>
     <string name="welcome_back_continue">Continue</string>
 
+    <!-- Retention Dialog -->
+    <string name="retention_dialog_title">Stay to explore stunning things</string>
+    <string name="retention_dialog_subtitle">Don\'t leave now—something amazing is about to happen.</string>
+    <string name="retention_dialog_close">Close</string>
+    <string name="retention_dialog_stay">Stay</string>
+
     <!-- Popup Trending -->
     <string name="popup_dont_miss_it">DON\'T MISS IT</string>
     <string name="popup_premium_song">Premium Song</string>

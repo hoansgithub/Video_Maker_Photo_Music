@@ -601,4 +601,10 @@
     <string name="picker_photos_unavailable_subtitle">Gba iwọle si gbogbo awọn fọto rẹ ki o le ṣẹda awọn fidio laisi sisọnu awọn iranti ayanfẹ rẹ.</string>
     <string name="picker_manage_access">Ṣakoso Iwọle</string>
     <string name="picker_keep_limited_access">Tọju Iwọle to Lopin</string>
+
+    <!-- Retention Dialog -->
+    <string name="retention_dialog_title">Duro lati ṣawari awọn ohun iyanu</string>
+    <string name="retention_dialog_subtitle">Maṣe lọ bayi — ohun iyanu kan fẹ ṣẹlẹ.</string>
+    <string name="retention_dialog_close">Pa</string>
+    <string name="retention_dialog_stay">Duro</string>
 </resources>

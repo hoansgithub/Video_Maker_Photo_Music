@@ -1,45 +1,22 @@
 package com.videomaker.aimusic.modules.onboarding
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.VideoMakerApplication
 import com.videomaker.aimusic.core.analytics.Analytics
@@ -47,7 +24,6 @@ import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.onboarding.pages.DynamicCarousel
 import com.videomaker.aimusic.modules.onboarding.pages.FullscreenAdStep
 import com.videomaker.aimusic.modules.onboarding.pages.WelcomePageDynamic
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.compose.koinInject
@@ -76,23 +52,11 @@ fun OnboardingScreen(
 
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { pageList.size })
-    var totalDrag by remember { mutableFloatStateOf(0f) }
-    var showSwipeHint by remember { mutableStateOf(true) }
-    val swipeHintComposition by rememberLottieComposition(
-        LottieCompositionSpec.RawRes(R.raw.onboarding_leftswipe)
-    )
-
-    LaunchedEffect(Unit) {
-        delay(3_000)
-        showSwipeHint = false
-    }
-
     // Track analytics when page changes
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { page ->
-                if (page > 0) showSwipeHint = false
                 val pageData = pageList[page]
                 if (pageData is OnboardingPage.Welcome) {
                     val onboardingStep = pageData.pageIndex + 1
@@ -102,12 +66,6 @@ fun OnboardingScreen(
                     )
                 }
             }
-    }
-
-    LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.isScrollInProgress }.collect { isScrolling ->
-            if (isScrolling) showSwipeHint = false
-        }
     }
 
     var hasPreloadedFeatureSelection by remember { mutableStateOf(false) }
@@ -161,7 +119,7 @@ fun OnboardingScreen(
         modifier = Modifier
             .fillMaxSize(),
         beyondViewportPageCount = 1,
-        userScrollEnabled = pagerState.currentPage != pagerState.pageCount - 1
+        userScrollEnabled = false
     ) { page ->
         val pageData = pageList[page]
         val isLastPage = page == pageList.lastIndex
@@ -172,7 +130,6 @@ fun OnboardingScreen(
                     isCurrentPage = page == pagerState.currentPage,
                     onClose = {
                         preloadFeatureSelectionIfNeeded(page, "closed ad")
-                        showSwipeHint = false
                         coroutineScope.launch {
                             if (page < pageList.lastIndex) {
                                 pagerState.animateScrollToPage(page + 1)
@@ -188,7 +145,6 @@ fun OnboardingScreen(
                 com.videomaker.aimusic.modules.onboarding.pages.OnboardingInterstitialAdStep(
                     isCurrentPage = page == pagerState.currentPage,
                     onClose = {
-                        showSwipeHint = false
                         // If the user arrived here by swiping BACK, continue backwards
                         // after closing the ad; otherwise advance forward as usual.
                         val arrivedBySwipingBack = lastPageBeforeCurrent > page
@@ -227,7 +183,6 @@ fun OnboardingScreen(
                                 params = emptyMap()
                             )
                             preloadFeatureSelectionIfNeeded(page, "tapped Continue")
-                            showSwipeHint = false
                             if (isLastPage) {
                                 onComplete()
                             } else {
@@ -262,80 +217,31 @@ fun OnboardingScreen(
                         R.string.onboarding_page2_subtitle
                     }
 
-                    val pageModifier = if (isLastPage) {
-                        Modifier.pointerInput(Unit) {
-                            detectHorizontalDragGestures(
-                                onDragStart = { totalDrag = 0f },
-                                onHorizontalDrag = { change, dragAmount ->
-                                    change.consume()
-                                    totalDrag += dragAmount
-                                },
-                                onDragEnd = {
-                                    val shouldComplete = totalDrag <= -80f
-                                    totalDrag = 0f
-                                    if (shouldComplete) onComplete()
-                                },
-                                onDragCancel = { totalDrag = 0f }
+                    WelcomePageDynamic(
+                        thumbnailUrl = thumbnailUrl,
+                        nameSong = contentState.nameSong,
+                        nameArtist = contentState.nameArtist,
+                        videoUrl = videoUrl,
+                        localFallbackResId = localFallback,
+                        title = stringResource(titleRes),
+                        subtitle = stringResource(subtitleRes),
+                        ctaText = stringResource(R.string.onboarding_next),
+                        onCta = {
+                            Analytics.track(
+                                name = "onboarding_${pageData.pageIndex + 1}_next",
+                                params = emptyMap()
                             )
-                        }
-                    } else {
-                        Modifier
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .then(pageModifier)
-                    ) {
-                        WelcomePageDynamic(
-                            thumbnailUrl = thumbnailUrl,
-                            nameSong = contentState.nameSong,
-                            nameArtist = contentState.nameArtist,
-                            videoUrl = videoUrl,
-                            localFallbackResId = localFallback,
-                            title = stringResource(titleRes),
-                            subtitle = stringResource(subtitleRes),
-                            ctaText = stringResource(R.string.onboarding_next),
-                            onCta = {
-                                Analytics.track(
-                                    name = "onboarding_${pageData.pageIndex + 1}_next",
-                                    params = emptyMap()
-                                )
-                                preloadFeatureSelectionIfNeeded(page, "tapped Continue")
-                                showSwipeHint = false
-                                if (isLastPage) {
-                                    onComplete()
-                                } else {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(page + 1)
-                                    }
+                            preloadFeatureSelectionIfNeeded(page, "tapped Continue")
+                            if (isLastPage) {
+                                onComplete()
+                            } else {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(page + 1)
                                 }
-                            },
-                            pageIndex = pageData.pageIndex
-                        )
-
-                        if (showSwipeHint && pagerState.settledPage == 0) {
-                            Column(
-                                modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .background(Color.Black.copy(0.7f), RoundedCornerShape(24.dp))
-                                    .padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                LottieAnimation(
-                                    composition = swipeHintComposition,
-                                    iterations = LottieConstants.IterateForever,
-                                    modifier = Modifier.size(90.dp)
-                                )
-                                Text(
-                                    text = stringResource(R.string.onboarding_swipe_next),
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.W500,
-                                    color = Color.White
-                                )
                             }
-                        }
-                    }
+                        },
+                        pageIndex = pageData.pageIndex
+                    )
                 }
             }
         }

@@ -593,4 +593,10 @@
     <string name="picker_photos_unavailable_subtitle">Cho phép truy cập vào tất cả ảnh của bạn để bạn có thể tạo video mà không bỏ lỡ những kỷ niệm yêu thích.</string>
     <string name="picker_manage_access">Quản lý truy cập</string>
     <string name="picker_keep_limited_access">Giữ quyền truy cập giới hạn</string>
+
+    <!-- Retention Dialog -->
+    <string name="retention_dialog_title">Ở lại khám phá điều tuyệt vời</string>
+    <string name="retention_dialog_subtitle">Đừng rời đi — điều tuyệt vời sắp xảy ra.</string>
+    <string name="retention_dialog_close">Đóng</string>
+    <string name="retention_dialog_stay">Ở lại</string>
 </resources>

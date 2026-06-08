@@ -889,7 +889,7 @@ fun EditorScreen(
                 placement = AdPlacement.NATIVE_EDITOR_BANNER,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(100.dp),
                 isDebug = BuildConfig.DEBUG,
                 onAdClicked = { adClickDetector.onAdClick(it) }
             )

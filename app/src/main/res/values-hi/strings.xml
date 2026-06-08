@@ -596,4 +596,10 @@
     <string name="picker_photos_unavailable_subtitle">अपने सभी फ़ोटो तक पहुँच प्राप्त करें ताकि आप अपनी पसंदीदा यादों को खोए बिना वीडियो बना सकें।</string>
     <string name="picker_manage_access">पहुँच प्रबंधित करें</string>
     <string name="picker_keep_limited_access">सीमित पहुँच बनाए रखें</string>
+
+    <!-- Retention Dialog -->
+    <string name="retention_dialog_title">शानदार चीज़ें देखने के लिए रुकें</string>
+    <string name="retention_dialog_subtitle">अभी मत जाइए — कुछ अद्भुत होने वाला है।</string>
+    <string name="retention_dialog_close">बंद करें</string>
+    <string name="retention_dialog_stay">रुकें</string>
 </resources>

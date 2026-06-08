@@ -50,7 +50,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.ui.components.TagChipRow
@@ -58,6 +62,7 @@ import com.videomaker.aimusic.ui.components.TemplateCard
 import com.videomaker.aimusic.ui.theme.AppDimens
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 /**
  * Template List Screen - Paginated template browsing with vibe tag filtering
@@ -272,6 +277,17 @@ private fun PagedContent(
 }
 
 // ============================================
+// GRID ITEMS (Template + Ad)
+// ============================================
+
+private const val AD_INSERTION_INDEX = 3
+
+private sealed class TemplateGridItem {
+    data class TemplateItem(val template: VideoTemplate) : TemplateGridItem()
+    data object AdItem : TemplateGridItem()
+}
+
+// ============================================
 // HELPERS
 // ============================================
 
@@ -308,6 +324,27 @@ private fun PageGrid(
     val dimens = AppDimens.current
     val gridState = rememberLazyGridState()
     val pullRefreshState = rememberPullToRefreshState()
+    val adClickDetector: AdClickDetector = koinInject()
+
+    // Build grid items list (templates + ad at AD_INSERTION_INDEX)
+    val distinctTemplates = remember(pageState.items) {
+        pageState.items.distinctBy { it.id }
+    }
+    val gridItems = remember(distinctTemplates) {
+        buildList {
+            if (distinctTemplates.size < AD_INSERTION_INDEX) {
+                distinctTemplates.forEach { add(TemplateGridItem.TemplateItem(it)) }
+                add(TemplateGridItem.AdItem)
+            } else {
+                distinctTemplates.forEachIndexed { index, template ->
+                    add(TemplateGridItem.TemplateItem(template))
+                    if (index == AD_INSERTION_INDEX - 1) {
+                        add(TemplateGridItem.AdItem)
+                    }
+                }
+            }
+        }
+    }
 
     // Detect scroll near bottom (6 items threshold like short-drama-app)
     // Add gridState to remember dependencies for proper updates
@@ -366,18 +403,41 @@ private fun PageGrid(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(
-                        items = pageState.items.distinctBy { it.id },
-                        key = { it.id },
-                        contentType = { "template" }  // Better item recycling
-                    ) { template ->
-                        TemplateCard(
-                            name = template.name,
-                            thumbnailPath = template.thumbnailPath,
-                            aspectRatio = parseAspectRatio(template.aspectRatio),
-                            isPremium = template.isPremium,
-                            useCount = template.useCount,
-                            onClick = { onTemplateClick(template) }
-                        )
+                        items = gridItems,
+                        key = { item ->
+                            when (item) {
+                                is TemplateGridItem.TemplateItem -> "template_${item.template.id}"
+                                is TemplateGridItem.AdItem -> "ad_native_gallery_grid"
+                            }
+                        },
+                        contentType = { item ->
+                            when (item) {
+                                is TemplateGridItem.TemplateItem -> "template"
+                                is TemplateGridItem.AdItem -> "ad"
+                            }
+                        }
+                    ) { item ->
+                        when (item) {
+                            is TemplateGridItem.TemplateItem -> {
+                                val template = item.template
+                                TemplateCard(
+                                    name = template.name,
+                                    thumbnailPath = template.thumbnailPath,
+                                    aspectRatio = parseAspectRatio(template.aspectRatio),
+                                    isPremium = template.isPremium,
+                                    useCount = template.useCount,
+                                    onClick = { onTemplateClick(template) }
+                                )
+                            }
+                            is TemplateGridItem.AdItem -> {
+                                NativeAdView(
+                                    placement = AdPlacement.NATIVE_GALLERY_GRID,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    isDebug = BuildConfig.DEBUG,
+                                    onAdClicked = { adClickDetector.onAdClick(it) }
+                                )
+                            }
+                        }
                     }
 
                     // Loading more indicator

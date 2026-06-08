@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -29,6 +31,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,8 +48,11 @@ fun OnboardingSurveyList(
     onToggle: (String) -> Unit,
     bottomPaddingDp: Dp,
     modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
+    onItemPositioned: ((String, Offset) -> Unit)? = null,
 ) {
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
             start = 20.dp,
@@ -77,6 +85,12 @@ fun OnboardingSurveyList(
                 item = item,
                 selected = item.id in selectedIds,
                 onClick = { onToggle(item.id) },
+                modifier = if (onItemPositioned != null) {
+                    Modifier.onGloballyPositioned { coords ->
+                        val topLeft = coords.positionInRoot()
+                        onItemPositioned(item.id, topLeft + Offset(coords.size.width / 2f, 0f))
+                    }
+                } else Modifier,
             )
         }
     }
@@ -87,9 +101,10 @@ private fun SurveyRow(
     item: SurveyItem,
     selected: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(120.dp))
             .background(if (selected) Primary.copy(0.12f) else Color.Black.copy(0.2f))

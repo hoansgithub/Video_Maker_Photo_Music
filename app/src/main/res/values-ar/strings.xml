@@ -594,4 +594,10 @@
     <string name="picker_photos_unavailable_subtitle">احصل على حق الوصول إلى جميع صورك حتى تتمكن من إنشاء مقاطع فيديو دون تفويت ذكرياتك المفضلة.</string>
     <string name="picker_manage_access">إدارة الوصول</string>
     <string name="picker_keep_limited_access">الاحتفاظ بالوصول المحدود</string>
+
+    <!-- Retention Dialog -->
+    <string name="retention_dialog_title">ابقَ لاستكشاف أشياء مذهلة</string>
+    <string name="retention_dialog_subtitle">لا تغادر الآن — شيء رائع على وشك الحدوث.</string>
+    <string name="retention_dialog_close">إغلاق</string>
+    <string name="retention_dialog_stay">ابقَ</string>
 </resources>

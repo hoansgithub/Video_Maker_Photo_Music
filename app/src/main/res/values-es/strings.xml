@@ -594,4 +594,10 @@
     <string name="picker_photos_unavailable_subtitle">Accede a todas tus fotos para que puedas crear videos sin perder tus recuerdos favoritos.</string>
     <string name="picker_manage_access">Administrar acceso</string>
     <string name="picker_keep_limited_access">Mantener acceso limitado</string>
+
+    <!-- Retention Dialog -->
+    <string name="retention_dialog_title">Quédate y explora cosas increíbles</string>
+    <string name="retention_dialog_subtitle">No te vayas ahora — algo increíble está a punto de pasar.</string>
+    <string name="retention_dialog_close">Cerrar</string>
+    <string name="retention_dialog_stay">Quedarme</string>
 </resources>

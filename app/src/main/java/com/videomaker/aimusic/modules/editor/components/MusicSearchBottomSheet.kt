@@ -106,6 +106,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // ============================================
@@ -826,7 +827,10 @@ internal fun MusicSearchBottomSheet(
     )
 
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        try {
+            delay(100)
+            focusRequester.requestFocus()
+        } catch (_: Exception) { }
     }
 }
 

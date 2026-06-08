@@ -601,4 +601,10 @@
     <string name="picker_photos_unavailable_subtitle">Entuk akses menyang kabeh foto sampeyan supaya sampeyan bisa nggawe video tanpa kelangan kenangan favorit.</string>
     <string name="picker_manage_access">Atur Akses</string>
     <string name="picker_keep_limited_access">Tetep Batasi Akses</string>
+
+    <!-- Retention Dialog -->
+    <string name="retention_dialog_title">Tetep lan jelajahi barang sing apik</string>
+    <string name="retention_dialog_subtitle">Aja lunga saiki — ana sing luar biasa arep kedadeyan.</string>
+    <string name="retention_dialog_close">Tutup</string>
+    <string name="retention_dialog_stay">Tetep</string>
 </resources>

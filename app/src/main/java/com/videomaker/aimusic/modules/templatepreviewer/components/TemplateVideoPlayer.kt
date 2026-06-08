@@ -7,9 +7,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -118,8 +123,8 @@ fun TemplateVideoPlayer(
 
     // Retry mechanism state
     var retryCount by remember(videoUrl) { mutableStateOf(0) }
-    var isRetrying by remember { mutableStateOf(false) }
-    var maxRetries = 5  // Not state - used only for logic, not UI rendering
+    var maxRetries by remember(videoUrl) { mutableStateOf(3) }
+    val isRetrying = retryCount > 0 && isLoading  // Derived — no separate state needed
 
     val player = remember(videoUrl) {
         // Configure instant playback with minimal buffer
@@ -161,16 +166,16 @@ fun TemplateVideoPlayer(
                         isLoading = false
                         hasError = false
                         isPrepared = true
-                        isRetrying = false
-                        retryCount = 0  // Reset retry count on successful load
                         // Log buffered duration to verify lazy loading
                         val bufferedMs = player.bufferedPosition - player.currentPosition
                         android.util.Log.d("TemplateVideoPlayer", "STATE_READY - Buffered: ${bufferedMs}ms, playing=${player.isPlaying}, autoPlay=$autoPlay")
+                        // Log retry outcome before resetting count
                         if (retryCount > 0) {
                             android.util.Log.i("TemplateVideoPlayer", "✅ RETRY SUCCESS after $retryCount attempts - URL: $videoUrl")
                         } else {
                             android.util.Log.d("TemplateVideoPlayer", "✅ Video loaded successfully on first try - URL: $videoUrl")
                         }
+                        retryCount = 0  // Reset after logging
 
                         // Notify parent that video is ready
                         onVideoReady?.invoke()
@@ -218,7 +223,7 @@ fun TemplateVideoPlayer(
                 android.util.Log.e("TemplateVideoPlayer", "💬 Error Message: ${error.message}")
                 android.util.Log.e("TemplateVideoPlayer", "🔍 Error Cause: ${error.cause?.javaClass?.simpleName} - ${error.cause?.message}")
                 android.util.Log.e("TemplateVideoPlayer", "📱 Device: ${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})")
-                android.util.Log.e("TemplateVideoPlayer", "🔄 Retry Count: $retryCount / $maxRetries")
+                android.util.Log.e("TemplateVideoPlayer", "🔄 Retry Count: $retryCount")
                 android.util.Log.e("TemplateVideoPlayer", "⏱️  Timestamp: ${System.currentTimeMillis()}")
                 android.util.Log.e("TemplateVideoPlayer", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                 android.util.Log.e("TemplateVideoPlayer", "Full stack trace:", error)
@@ -263,12 +268,9 @@ fun TemplateVideoPlayer(
                     }
                 }
 
-                maxRetries = retryLimit
-
                 // Attempt auto-retry if within limits
                 if (shouldRetry && retryCount < retryLimit) {
                     retryCount++
-                    isRetrying = true
                     hasError = false
                     isLoading = true
 
@@ -313,7 +315,6 @@ fun TemplateVideoPlayer(
                             android.util.Log.e("TemplateVideoPlayer", "Retry failed with exception", e)
                             hasError = true
                             isLoading = false
-                            isRetrying = false
                             errorMessage = context.getString(com.videomaker.aimusic.R.string.error_video_playback_failed)
                         }
                     }
@@ -321,7 +322,6 @@ fun TemplateVideoPlayer(
                     // Max retries exhausted or non-retryable error
                     hasError = true
                     isLoading = false
-                    isRetrying = false
 
                     if (retryCount >= retryLimit) {
                         android.util.Log.e("TemplateVideoPlayer", "❌ Max retries ($retryLimit) exhausted - giving up")
@@ -485,7 +485,7 @@ fun TemplateVideoPlayer(
             }
         }
 
-        // Error state
+        // Error state with retry
         if (hasError) {
             Box(
                 modifier = Modifier
@@ -493,13 +493,52 @@ fun TemplateVideoPlayer(
                     .background(Color.Black.copy(alpha = 0.7f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = errorMessage,
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 32.dp)
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = errorMessage,
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
+                    Button(
+                        onClick = {
+                            // Reset state for fresh retry (resets auto-retry counter too)
+                            hasError = false
+                            isLoading = true
+                            retryCount = 0
+                            coroutineScope.launch {
+                                try {
+                                    player.stop()
+                                    player.clearMediaItems()
+                                    delay(200)
+                                    player.setMediaItem(
+                                        MediaItem.Builder().setUri(Uri.parse(videoUrl)).build()
+                                    )
+                                    player.prepare()
+                                } catch (e: Exception) {
+                                    hasError = true
+                                    isLoading = false
+                                    errorMessage = context.getString(
+                                        com.videomaker.aimusic.R.string.error_video_playback_failed
+                                    )
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White.copy(alpha = 0.2f)
+                        ),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
+                        Text(
+                            text = context.getString(com.videomaker.aimusic.R.string.retry),
+                            color = Color.White
+                        )
+                    }
+                }
             }
         }
 
