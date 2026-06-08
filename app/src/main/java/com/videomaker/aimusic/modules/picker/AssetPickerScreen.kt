@@ -1482,6 +1482,7 @@ private fun AssetPickerPermissionSettingsDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                 )
+                Spacer(Modifier.height(24.dp))
                 Text(
                     text = stringResource(R.string.picker_give_access_settings),
                     style = MaterialTheme.typography.titleLarge,

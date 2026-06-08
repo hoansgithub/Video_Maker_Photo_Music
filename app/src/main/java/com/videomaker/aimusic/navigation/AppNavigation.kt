@@ -204,6 +204,20 @@ fun AppNavigation(
                         )
                     }
                 }
+                is TrendingPopupNavEvent.OpenSongPlayer -> {
+                    val homeIndex = backStack.indexOfLast { it is AppRoute.Home }
+                    if (homeIndex != -1) {
+                        backStack[homeIndex] = AppRoute.Home(initialTab = 1, initialSongId = event.songId)
+                        while (backStack.size > homeIndex + 1) {
+                            backStack.removeLast()
+                        }
+                    } else {
+                        backStack.apply {
+                            clear()
+                            add(AppRoute.Home(initialTab = 1, initialSongId = event.songId))
+                        }
+                    }
+                }
             }
         }
     }
