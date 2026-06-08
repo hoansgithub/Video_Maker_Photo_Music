@@ -11,20 +11,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,7 +59,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import com.videomaker.aimusic.core.util.NumberFormatter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -77,11 +76,13 @@ import coil.size.Precision
 import coil.size.Size
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.AdClickDetector
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
-import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.util.NumberFormatter
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.ui.components.ContentTag
@@ -90,7 +91,6 @@ import com.videomaker.aimusic.ui.components.PageIndicator
 import com.videomaker.aimusic.ui.components.PrimaryButton
 import com.videomaker.aimusic.ui.components.SectionHeader
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
-import com.videomaker.aimusic.ui.components.StaggeredGrid
 import com.videomaker.aimusic.ui.components.TagChipRow
 import com.videomaker.aimusic.ui.components.TemplateCard
 import com.videomaker.aimusic.ui.theme.AppDimens
@@ -99,14 +99,13 @@ import com.videomaker.aimusic.ui.theme.Gray200
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
 import com.videomaker.aimusic.ui.theme.SearchFieldBorder
-import com.videomaker.aimusic.ui.theme.TextTertiary
 import com.videomaker.aimusic.ui.theme.TemplateBadgeBackground
-import com.videomaker.aimusic.ui.theme.White12
+import com.videomaker.aimusic.ui.theme.TextTertiary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+import com.videomaker.aimusic.ui.theme.White12
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import com.videomaker.aimusic.core.ads.AdClickDetector
 import org.koin.compose.koinInject
 
 // ============================================
@@ -139,7 +138,7 @@ fun GalleryScreen(
     viewModel: GalleryViewModel,
     topBarHeight: Dp = 0.dp,
     isVisible: Boolean = true,
-    listState: LazyListState = rememberLazyListState(),
+    listState: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
     onUserInteraction: () -> Unit = {},
     onNavigateToSongDetail: (Long) -> Unit = {},
     onNavigateToSongPreview: (MusicSong) -> Unit = {},
@@ -357,7 +356,7 @@ private fun GalleryErrorContent(message: String) {
 @Composable
 private fun GalleryContent(
     topBarHeight: Dp = 0.dp,
-    listState: LazyListState,
+    listState: LazyStaggeredGridState,
     onUserInteraction: () -> Unit,
     featuredTemplates: List<VideoTemplate>,
     homeBanners: List<com.videomaker.aimusic.modules.gallery.banner.HomeBannerUi>,
@@ -417,111 +416,184 @@ private fun GalleryContent(
             onRefresh = onRefresh,
             modifier = Modifier.fillMaxSize()
         ) {
-            LazyColumn(
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Fixed(2),
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = topBarHeight + dimens.spaceSm,  // Reduced from spaceLg to spaceSm
+                    top = topBarHeight + dimens.spaceSm,
                     bottom = dimens.space3Xl + dimens.space2Xl
-                )
+                ),
+                horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm),
+                verticalItemSpacing = dimens.spaceSm
             ) {
-            // Section 1: Search Field
-            item(key = "search", contentType = "search") {
-                GallerySearchField(
-                    onClick = onSearchClick,
-                    modifier = Modifier.padding(
-                        horizontal = dimens.spaceLg,
-                        vertical = dimens.spaceXs  // Reduced from spaceMd to spaceXs
-                    )
-                )
-            }
-
-            // Section 2: Home banner carousel.
-            // Prefer the remote-config banner list; fall back to the legacy featured carousel.
-            if (homeBanners.isNotEmpty()) {
-                item(key = "spacer0", contentType = "spacer") {
-                    Spacer(modifier = Modifier.height(dimens.spaceMd))
-                }
-
-                item(key = "home_banners", contentType = "home_banners") {
-                    com.videomaker.aimusic.modules.gallery.banner.HomeBannerCarousel(
-                        banners = homeBanners,
-                        isVisible = isVisible,
-                        onTemplateBannerClick = onTemplateBannerClick,
-                        onSongBannerClick = onSongBannerClick
+                // Section 1: Search Field
+                item(key = "search", contentType = "search", span = StaggeredGridItemSpan.FullLine) {
+                    GallerySearchField(
+                        onClick = onSearchClick,
+                        modifier = Modifier.padding(
+                            horizontal = dimens.spaceLg,
+                            vertical = dimens.spaceXs
+                        )
                     )
                 }
-            } else if (featuredTemplates.isNotEmpty()) {
-                item(key = "spacer0", contentType = "spacer") {
-                    Spacer(modifier = Modifier.height(dimens.spaceMd))
-                }
 
-                item(key = "featured_templates", contentType = "featured_carousel") {
-                    FeaturedTemplatesCarousel(
-                        templates = featuredTemplates,
-                        isVisible = isVisible,
-                        onTemplateClick = onTemplateClick
-                    )
-                }
-            }
+                // Section 2: Home banner carousel.
+                if (homeBanners.isNotEmpty()) {
+                    item(key = "spacer0", contentType = "spacer", span = StaggeredGridItemSpan.FullLine) {
+                        Spacer(modifier = Modifier.height(dimens.spaceMd))
+                    }
 
-            item(key = "spacer1", contentType = "spacer") {
-                Spacer(modifier = Modifier.height(dimens.spaceMd))
-            }
-
-            // Section 3: Templates header + tag chips
-            item(key = "templates_header", contentType = "templates_header") {
-                SectionHeader(
-                    title = stringResource(R.string.gallery_templates),
-                    icon = Icons.Default.Star,
-                    iconTint = GoldAccent,
-                    onSeeAllClick = onSeeAllTemplates
-                )
-                Spacer(modifier = Modifier.height(dimens.spaceSm))
-                TagChipRow(
-                    vibeTags = vibeTags,
-                    selectedTagId = selectedVibeTagId,
-                    onTagSelected = onVibeTagSelected,
-                    modifier = Modifier.padding(bottom = dimens.spaceSm)
-                )
-            }
-
-            // Templates grid — shows loading shimmer or results
-            item(key = "template_grid", contentType = "template_grid") {
-                when (templateListState) {
-                    is TemplateListState.Loading -> TemplateGridSkeleton(
-                        modifier = Modifier.padding(horizontal = dimens.spaceLg)
-                    )
-                    is TemplateListState.Success -> {
-                        StaggeredTemplateGrid(
-                            templates = templateListState.templates,
-                            unlockedTemplateIds = unlockedTemplateIds,
+                    item(key = "home_banners", contentType = "home_banners", span = StaggeredGridItemSpan.FullLine) {
+                        com.videomaker.aimusic.modules.gallery.banner.HomeBannerCarousel(
+                            banners = homeBanners,
                             isVisible = isVisible,
-                            onTemplateClick = onTemplateClick,
-                            spacing = dimens.spaceSm,
-                            modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                            onTemplateBannerClick = onTemplateBannerClick,
+                            onSongBannerClick = onSongBannerClick
                         )
                     }
-                }
-            }
+                } else if (featuredTemplates.isNotEmpty()) {
+                    item(key = "spacer0", contentType = "spacer", span = StaggeredGridItemSpan.FullLine) {
+                        Spacer(modifier = Modifier.height(dimens.spaceMd))
+                    }
 
-            // Loading more indicator
-            if (templateListState is TemplateListState.Success && templateListState.isLoadingMore) {
-                item(key = "loading_more", contentType = "loading_more") {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(dimens.spaceLg),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        androidx.compose.material3.CircularProgressIndicator(
-                            modifier = Modifier.size(32.dp),
-                            color = Primary
+                    item(key = "featured_templates", contentType = "featured_carousel", span = StaggeredGridItemSpan.FullLine) {
+                        FeaturedTemplatesCarousel(
+                            templates = featuredTemplates,
+                            isVisible = isVisible,
+                            onTemplateClick = onTemplateClick
                         )
                     }
                 }
+
+                item(key = "spacer1", contentType = "spacer", span = StaggeredGridItemSpan.FullLine) {
+                    Spacer(modifier = Modifier.height(dimens.spaceMd))
+                }
+
+                // Section 3: Templates header + tag chips
+                item(key = "templates_header", contentType = "templates_header", span = StaggeredGridItemSpan.FullLine) {
+                    SectionHeader(
+                        title = stringResource(R.string.gallery_templates),
+                        icon = Icons.Default.Star,
+                        iconTint = GoldAccent,
+                        onSeeAllClick = onSeeAllTemplates
+                    )
+                    Spacer(modifier = Modifier.height(dimens.spaceSm))
+                    TagChipRow(
+                        vibeTags = vibeTags,
+                        selectedTagId = selectedVibeTagId,
+                        onTagSelected = onVibeTagSelected,
+                        modifier = Modifier.padding(bottom = dimens.spaceSm)
+                    )
+                }
+
+                // Section 4: Templates grid items directly inside LazyVerticalStaggeredGrid
+                when (templateListState) {
+                    is TemplateListState.Loading -> {
+                        item(key = "loading_skeleton", contentType = "loading_skeleton", span = StaggeredGridItemSpan.FullLine) {
+                            TemplateGridSkeleton(
+                                modifier = Modifier.padding(horizontal = dimens.spaceLg)
+                            )
+                        }
+                    }
+                    is TemplateListState.Success -> {
+                        val templates = templateListState.templates
+                        val gridItems = buildList {
+                            if (templates.size < AD_INSERTION_INDEX) {
+                                templates.forEachIndexed { index, template ->
+                                    add(GalleryGridItem.TemplateItem(template, index))
+                                }
+                                add(GalleryGridItem.AdItem)
+                            } else {
+                                templates.forEachIndexed { index, template ->
+                                    add(GalleryGridItem.TemplateItem(template, index))
+                                    if (index == AD_INSERTION_INDEX - 1) {
+                                        add(GalleryGridItem.AdItem)
+                                    }
+                                }
+                            }
+                        }
+
+                        items(
+                            items = gridItems,
+                            key = ::galleryItemKey,
+                            contentType = { item ->
+                                when (item) {
+                                    is GalleryGridItem.TemplateItem -> "template"
+                                    is GalleryGridItem.AdItem -> "ad"
+                                }
+                            }
+                        ) { item ->
+                            Box(modifier = Modifier.padding(horizontal = dimens.spaceLg)) {
+                                when (item) {
+                                    is GalleryGridItem.TemplateItem -> {
+                                        val template = item.template
+                                        val templateIndex = item.index
+                                        val aspectRatio = remember(template.aspectRatio) {
+                                            parseAspectRatio(template.aspectRatio)
+                                        }
+
+                                        TemplateCard(
+                                            name = template.name,
+                                            thumbnailPath = template.thumbnailPath,
+                                            aspectRatio = aspectRatio,
+                                            isPremium = template.isPremium,
+                                            isUnlocked = unlockedTemplateIds.contains(template.id),
+                                            showHotTag = templateIndex < 10,
+                                            useCount = template.useCount,
+                                            viewCount = template.viewCount,
+                                            modifier = Modifier.onFirstVisible(key = template.id) {
+                                                Analytics.trackTemplateImpression(
+                                                    templateId = template.id,
+                                                    templateName = template.name,
+                                                    location = AnalyticsEvent.Value.Location.HOME_TEMPLATE,
+                                                    screenSessionId = "",
+                                                    isPremium = template.isPremium
+                                                )
+                                            },
+                                            onClick = {
+                                                Analytics.trackTemplateClick(
+                                                    templateId = template.id,
+                                                    templateName = template.name,
+                                                    location = AnalyticsEvent.Value.Location.GALLERY_TEMPLATE,
+                                                    isPremium = template.isPremium
+                                                )
+                                                onTemplateClick(template, AnalyticsEvent.Value.Location.GALLERY_TEMPLATE)
+                                            }
+                                        )
+                                    }
+                                    is GalleryGridItem.AdItem -> {
+                                        val adClickDetector: AdClickDetector = koinInject()
+                                        NativeAdView(
+                                            placement = AdPlacement.NATIVE_GALLERY_GRID,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            isDebug = BuildConfig.DEBUG,
+                                            onAdClicked = { adClickDetector.onAdClick(it) }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Loading more indicator
+                if (templateListState is TemplateListState.Success && templateListState.isLoadingMore) {
+                    item(key = "loading_more", contentType = "loading_more", span = StaggeredGridItemSpan.FullLine) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(dimens.spaceLg),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            androidx.compose.material3.CircularProgressIndicator(
+                                modifier = Modifier.size(32.dp),
+                                color = Primary
+                            )
+                        }
+                    }
+                }
             }
-        }
         }
 
     }
@@ -934,112 +1006,7 @@ private fun TemplateGridSkeleton(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-private fun StaggeredTemplateGrid(
-    templates: List<VideoTemplate>,
-    unlockedTemplateIds: Set<String>,
-    isVisible: Boolean,
-    onTemplateClick: (VideoTemplate, String) -> Unit,
-    spacing: Dp,
-    modifier: Modifier = Modifier,
-    columns: Int = 2
-) {
-    val adClickDetector: AdClickDetector = koinInject()
-    if (templates.isEmpty()) return
 
-    // ✅ FIX: Build grid items list (templates + ad)
-    // Position: AD_INSERTION_INDEX (4th position), or last if < 3 items
-    val gridItems = remember(templates) {
-        buildList {
-            if (templates.size < AD_INSERTION_INDEX) {
-                // Show ad at last position if < 3 templates
-                templates.forEachIndexed { index, template ->
-                    add(GalleryGridItem.TemplateItem(template, index))
-                }
-                add(GalleryGridItem.AdItem)
-            } else {
-                // Insert ad at AD_INSERTION_INDEX (after 3rd template at index 2)
-                templates.forEachIndexed { index, template ->
-                    add(GalleryGridItem.TemplateItem(template, index))
-                    if (index == AD_INSERTION_INDEX - 1) {  // After (AD_INSERTION_INDEX - 1)th template
-                        add(GalleryGridItem.AdItem)
-                    }
-                }
-            }
-        }
-    }
-
-    // Pre-calculate aspect ratios once when grid items change
-    // Use stable keys (size + first element) to avoid excess layout invalidation
-    // that races with SubcomposeAsyncImage state transitions causing
-    // "LayoutNode should be attached to an owner" crash
-    val aspectRatios = remember(gridItems.size, gridItems.firstOrNull()) {
-        gridItems.map { item ->
-            when (item) {
-                is GalleryGridItem.TemplateItem -> parseAspectRatio(item.template.aspectRatio)
-                is GalleryGridItem.AdItem -> 9f / 16f  // 9:16 portrait (matches native_project_card)
-            }
-        }
-    }
-    StaggeredGrid(
-        items = gridItems,
-        aspectRatios = aspectRatios,
-        columns = columns,
-        spacing = spacing,
-        modifier = modifier,
-        key = ::galleryItemKey
-    ) { item ->
-        when (item) {
-            is GalleryGridItem.TemplateItem -> {
-                val template = item.template
-                val templateIndex = item.index
-
-                // ✅ OPTIMIZED: Pre-calculate aspect ratio for this specific template
-                val aspectRatio = remember(template.aspectRatio) {
-                    parseAspectRatio(template.aspectRatio)
-                }
-
-                TemplateCard(
-                    name = template.name,
-                    thumbnailPath = template.thumbnailPath,
-                    aspectRatio = aspectRatio,
-                    isPremium = template.isPremium,
-                    isUnlocked = unlockedTemplateIds.contains(template.id),  // Check if template is unlocked
-                    showHotTag = templateIndex < 10,  // Show HOT tag for top 10 templates
-                    useCount = template.useCount,  // For backward compatibility
-                    viewCount = template.viewCount,  // Display count shown to users
-                    modifier = Modifier.onFirstVisible(key = template.id) {
-                        Analytics.trackTemplateImpression(
-                            templateId = template.id,
-                            templateName = template.name,
-                            location = AnalyticsEvent.Value.Location.HOME_TEMPLATE,
-                            screenSessionId = "",
-                            isPremium = template.isPremium
-                        )
-                    },
-                    onClick = {
-                        Analytics.trackTemplateClick(
-                            templateId = template.id,
-                            templateName = template.name,
-                            location = AnalyticsEvent.Value.Location.GALLERY_TEMPLATE,
-                            isPremium = template.isPremium
-                        )
-                        onTemplateClick(template, AnalyticsEvent.Value.Location.GALLERY_TEMPLATE)
-                    }
-                )
-            }
-            is GalleryGridItem.AdItem -> {
-                // Native ad card (9:16 portrait, matches template cards)
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_GALLERY_GRID,
-                    modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG,
-                    onAdClicked = { adClickDetector.onAdClick(it) }
-                )
-            }
-        }
-    }
-}
 
 // ============================================
 // VIDEO TEMPLATE HELPERS (kept as-is)
@@ -1094,7 +1061,7 @@ private fun GalleryContentPreview() {
             )
             GalleryContent(
                 topBarHeight = 56.dp,
-                listState = rememberLazyListState(),
+                listState = rememberLazyStaggeredGridState(),
                 onUserInteraction = {},
                 featuredTemplates = previewTemplates.take(5),
                 homeBanners = emptyList(),

@@ -9,11 +9,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -24,12 +22,14 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -37,22 +37,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.media3.common.Player
-import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.decode.BitmapFactoryDecoder
+import coil.request.ImageRequest
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.domain.model.MusicSong
-import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
-import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.Neutral_N100
 import com.videomaker.aimusic.ui.theme.Neutral_N500
 import com.videomaker.aimusic.ui.theme.PlaceholderBackground
 import com.videomaker.aimusic.ui.theme.Primary
-import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
-import com.videomaker.aimusic.ui.theme.White16
 
 @Composable
 fun BannerSongStyle(
@@ -63,6 +59,44 @@ fun BannerSongStyle(
     onPlay: () -> Unit,
     onClick: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val imgBgBannerSong1Painter = rememberAsyncImagePainter(
+        model = remember {
+            ImageRequest.Builder(context)
+                .data(R.drawable.img_bg_banner_song1)
+                .decoderFactory(BitmapFactoryDecoder.Factory())
+                .crossfade(true)
+                .build()
+        }
+    )
+    val imgBannerSong1Painter = rememberAsyncImagePainter(
+        model = remember {
+            ImageRequest.Builder(context)
+                .data(R.drawable.img_banner_song1)
+                .decoderFactory(BitmapFactoryDecoder.Factory())
+                .crossfade(true)
+                .build()
+        }
+    )
+    val imgBgBannerSong1_1Painter = rememberAsyncImagePainter(
+        model = remember {
+            ImageRequest.Builder(context)
+                .data(R.drawable.img_bg_banner_song1_1)
+                .decoderFactory(BitmapFactoryDecoder.Factory())
+                .crossfade(true)
+                .build()
+        }
+    )
+    val imgBgBannerSong2Painter = rememberAsyncImagePainter(
+        model = remember {
+            ImageRequest.Builder(context)
+                .data(R.drawable.img_bg_banner_song2)
+                .decoderFactory(BitmapFactoryDecoder.Factory())
+                .crossfade(true)
+                .build()
+        }
+    )
+
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
@@ -73,7 +107,7 @@ fun BannerSongStyle(
     ) {
         if (style.style == 1) {
             Image(
-                painter = painterResource( R.drawable.img_bg_banner_song1),
+                painter = imgBgBannerSong1Painter,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 alignment = Alignment.TopEnd,
@@ -99,7 +133,7 @@ fun BannerSongStyle(
                 )
                 Box{
                     Image(
-                        painter = painterResource( R.drawable.img_banner_song1),
+                        painter = imgBannerSong1Painter,
                         contentDescription = null,
                         contentScale = ContentScale.FillHeight,
                         modifier = Modifier
@@ -126,7 +160,7 @@ fun BannerSongStyle(
                 }
             }
             Image(
-                painter = painterResource( R.drawable.img_bg_banner_song1_1),
+                painter = imgBgBannerSong1_1Painter,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 alignment = Alignment.TopEnd,
@@ -135,7 +169,7 @@ fun BannerSongStyle(
             )
         } else {
             Image(
-                painter = painterResource( R.drawable.img_bg_banner_song2),
+                painter = imgBgBannerSong2Painter,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 alignment = Alignment.TopEnd,

@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
+import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
@@ -108,6 +109,7 @@ fun TemplateCard(
             .diskCacheKey("grid_$thumbnailPath")
             .crossfade(true)  // Smooth fade-in animation
             .crossfade(200)  // 200ms crossfade duration
+            .decoderFactory(BitmapFactoryDecoder.Factory())
             .listener(
                 onError = { request, result ->
                     android.util.Log.e("TemplateCard", "Failed to load thumbnail (attempt ${retryCount + 1}/3): ${thumbnailPath}, error: ${result.throwable.message}")
