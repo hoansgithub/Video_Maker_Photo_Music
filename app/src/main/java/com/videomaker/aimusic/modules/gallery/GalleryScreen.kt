@@ -472,19 +472,21 @@ private fun GalleryContent(
 
                 // Section 3: Templates header + tag chips
                 item(key = "templates_header", contentType = "templates_header", span = StaggeredGridItemSpan.FullLine) {
-                    SectionHeader(
-                        title = stringResource(R.string.gallery_templates),
-                        icon = Icons.Default.Star,
-                        iconTint = GoldAccent,
-                        onSeeAllClick = onSeeAllTemplates
-                    )
-                    Spacer(modifier = Modifier.height(dimens.spaceSm))
-                    TagChipRow(
-                        vibeTags = vibeTags,
-                        selectedTagId = selectedVibeTagId,
-                        onTagSelected = onVibeTagSelected,
-                        modifier = Modifier.padding(bottom = dimens.spaceSm)
-                    )
+                    Column {
+                        SectionHeader(
+                            title = stringResource(R.string.gallery_templates),
+                            icon = Icons.Default.Star,
+                            iconTint = GoldAccent,
+                            onSeeAllClick = onSeeAllTemplates
+                        )
+                        Spacer(modifier = Modifier.height(dimens.spaceSm))
+                        TagChipRow(
+                            vibeTags = vibeTags,
+                            selectedTagId = selectedVibeTagId,
+                            onTagSelected = onVibeTagSelected,
+                            modifier = Modifier.padding(bottom = dimens.spaceSm)
+                        )
+                    }
                 }
 
                 // Section 4: Templates grid items directly inside LazyVerticalStaggeredGrid

@@ -625,6 +625,16 @@ class AssetPickerViewModel(
         val currentWithAssets = _uiState.value as? AssetPickerUiState.WithAssets
         if (!forceReload && currentWithAssets != null && modeForState(currentWithAssets) == newMode) {
             persistSessionSnapshot(currentWithAssets, newMode)
+            // todo need to test again
+            if (source == PermissionUpdateSource.RESUME) {
+                val preferredSelectedUris = currentWithAssets.selectedAssets.map { it.uri.toString() }
+                loadImages(
+                    permissionMode = newMode,
+                    preferredSelectedUris = preferredSelectedUris,
+                    preferredAlbumId = currentWithAssets.selectedAlbumId,
+                    forceShowLoading = false
+                )
+            }
             return
         }
 
