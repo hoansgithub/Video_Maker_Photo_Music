@@ -1061,7 +1061,7 @@ private fun TemplatePreviewerReadyContent(
                 .fillMaxWidth()
                 .navigationBarsPadding()
                 .padding(horizontal = 24.dp, vertical = 16.dp)
-                .padding(bottom = 60.dp),  // Space for banner ad (50dp + 10dp spacing)
+                .padding(bottom = 110.dp),  // Space for native ad banner (100dp + 10dp spacing)
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -1177,7 +1177,7 @@ private fun TemplatePreviewerReadyContent(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .navigationBarsPadding()
-                    .height(50.dp),
+                    .height(100.dp),
                 isDebug = BuildConfig.DEBUG,
                 onAdClicked = { adClickDetector.onAdClick(it) }
             )

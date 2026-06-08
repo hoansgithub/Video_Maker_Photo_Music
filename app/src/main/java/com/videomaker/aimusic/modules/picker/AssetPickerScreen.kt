@@ -706,7 +706,7 @@ fun AssetPickerScreen(
                 placement = AdPlacement.NATIVE_ASSET_PICKER_BANNER,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(100.dp),
                 isDebug = BuildConfig.DEBUG,
                 onAdClicked = { adClickDetector.onAdClick(it) }
             )

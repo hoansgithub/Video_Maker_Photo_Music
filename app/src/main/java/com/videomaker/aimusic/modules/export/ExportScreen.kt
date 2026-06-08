@@ -606,7 +606,7 @@ fun ExportScreen(
         placement = AdPlacement.NATIVE_EXPORT_PREPARING,
         modifier = Modifier
             .fillMaxWidth()
-            .height(50.dp),
+            .height(100.dp),
         isDebug = BuildConfig.DEBUG,
         onAdClicked = { adClickDetector.onAdClick(it) }
     )
