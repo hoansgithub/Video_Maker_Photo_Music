@@ -605,7 +605,8 @@ fun ExportScreen(
     NativeAdView(
         placement = AdPlacement.NATIVE_EXPORT_PREPARING,
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .height(50.dp),
         isDebug = BuildConfig.DEBUG,
         onAdClicked = { adClickDetector.onAdClick(it) }
     )
@@ -1279,9 +1280,7 @@ private fun SuccessContent(
 
             NativeAdView(
                 placement = AdPlacement.NATIVE_EXPORT_RESULT,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp),
+                modifier = Modifier.fillMaxWidth(),
                 isDebug = BuildConfig.DEBUG,
                 onAdClicked = { adClickDetector.onAdClick(it) }
             )

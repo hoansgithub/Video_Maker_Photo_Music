@@ -57,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
@@ -95,6 +96,7 @@ import org.koin.compose.koinInject
 import com.videomaker.aimusic.ui.theme.SearchFieldBackground
 import com.videomaker.aimusic.ui.theme.SearchFieldBorder
 import com.videomaker.aimusic.ui.theme.SplashBackground
+import com.videomaker.aimusic.ui.theme.TextMuted
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.theme.TextTertiary
@@ -144,6 +146,8 @@ internal fun MusicSearchBottomSheet(
     val displayText by viewModel.displayText.collectAsStateWithLifecycle()
     val genres by viewModel.genres.collectAsStateWithLifecycle()
     val suggestedSongs by viewModel.suggestedSongs.collectAsStateWithLifecycle()
+    val selectedGenre by viewModel.selectedGenre.collectAsStateWithLifecycle()
+    val suggestedSongsLoading by viewModel.suggestedSongsLoading.collectAsStateWithLifecycle()
 
     // Global music preview state - shared across the whole app
     val previewingSongId by MusicPreviewManager.previewingSongId.collectAsStateWithLifecycle()
@@ -327,6 +331,8 @@ internal fun MusicSearchBottomSheet(
         focusManager.clearFocus()
     }
 
+    val sheetHeight = (LocalConfiguration.current.screenHeightDp * 2 / 3).dp
+
     ModalBottomSheet(
         onDismissRequest = {
             MusicPreviewManager.clearPreviewState()
@@ -334,49 +340,35 @@ internal fun MusicSearchBottomSheet(
         },
         sheetState = sheetState,
         containerColor = SplashBackground,
-        dragHandle = null,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        modifier = Modifier.fillMaxHeight() // Full screen height, covers all content including tabs
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
     ) {
         // Box wrapper to allow overlay to cover entire bottom sheet area
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.height(sheetHeight)) {
             Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 20.dp)
-                .padding(top = 24.dp, bottom = 32.dp)
+                .padding(bottom = 32.dp)
         ) {
-            // Title with close and confirm buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            // Title row with centered title and confirm button on right
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
             ) {
+                // Centered title
                 Text(
                     text = stringResource(R.string.song_search_change_music),
-                    color = TextPrimary,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
+                    color = TextMuted,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    lineHeight = 18.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
 
-                // Close button (left)
-                IconButton(onClick = {
-                    MusicPreviewManager.clearPreviewState()
-                    onDismiss()
-                }) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.close),
-                        tint = TextSecondary
-                    )
-                }
-
-                // Confirm button (right) - only visible when song is selected
+                // Confirm button - right aligned, only visible when song is selected
                 if (selectedForConfirmId != null) {
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    // Check if selected song is locked
                     val selectedSong = remember(selectedForConfirmId, uiState, suggestedSongs) {
                         val selectedId = selectedForConfirmId
                         when (val state = uiState) {
@@ -386,46 +378,48 @@ internal fun MusicSearchBottomSheet(
                     }
                     val isLocked = selectedSong?.let { isSongLocked(it) } ?: false
 
-                    if (isLocked) {
-                        // Locked song - show "Done" button with ad badge
-                        Box(
-                            modifier = Modifier
-                                .height(40.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(MaterialTheme.colorScheme.primary)
-                                .clickableSingle { onConfirmClick() }
-                                .padding(horizontal = 12.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                    Box(modifier = Modifier.align(Alignment.CenterEnd)) {
+                        if (isLocked) {
+                            // Locked song - show "Done" button with ad badge
+                            Box(
+                                modifier = Modifier
+                                    .height(36.dp)
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .clickableSingle { onConfirmClick() }
+                                    .padding(horizontal = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Done,
+                                        contentDescription = stringResource(R.string.confirm),
+                                        tint = SplashBackground,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    AdBadge(style = AdBadgeStyle.Small(textColor = SplashBackground))
+                                }
+                            }
+                        } else {
+                            // Unlocked song - show checkmark button
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .clickableSingle { onConfirmClick() },
+                                contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Done,
+                                    imageVector = Icons.Default.Check,
                                     contentDescription = stringResource(R.string.confirm),
                                     tint = SplashBackground,
                                     modifier = Modifier.size(20.dp)
                                 )
-                                AdBadge(style = AdBadgeStyle.Small(textColor = SplashBackground))
                             }
-                        }
-                    } else {
-                        // Unlocked song - show checkmark button
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary)
-                                .clickableSingle { onConfirmClick() },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = stringResource(R.string.confirm),
-                                tint = SplashBackground,
-                                modifier = Modifier.size(24.dp)
-                            )
                         }
                     }
                 }
@@ -627,44 +621,33 @@ internal fun MusicSearchBottomSheet(
                             }
                         }
 
-                        // Genres section
+                        // Genre filter chips
                         if (genres.isNotEmpty()) {
-                            item(key = "empty_genre_header") {
-                                Text(
-                                    text = stringResource(R.string.song_search_explore_by_genre),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(horizontal = dimens.spaceMd)
-                                )
-                                Spacer(modifier = Modifier.height(dimens.spaceSm))
-                            }
                             item(key = "empty_genre_chips") {
                                 LazyRow(
-                                    contentPadding = PaddingValues(horizontal = dimens.spaceMd),
                                     horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
                                 ) {
+                                    item(key = "all") {
+                                        AppFilterChip(
+                                            text = stringResource(R.string.settings_all),
+                                            isSelected = selectedGenre == null,
+                                            onClick = { viewModel.onGenreSelected(null) }
+                                        )
+                                    }
                                     items(genres, key = { it.id }) { genre ->
                                         AppFilterChip(
                                             text = genre.displayName,
-                                            onClick = { viewModel.onGenreClick(genre) }
+                                            isSelected = selectedGenre == genre.id,
+                                            onClick = { viewModel.onGenreSelected(genre.id) }
                                         )
                                     }
                                 }
-                                Spacer(modifier = Modifier.height(dimens.spaceXl))
+                                Spacer(modifier = Modifier.height(dimens.spaceMd))
                             }
                         }
 
                         // Suggested songs section
                         if (suggestedSongs.isNotEmpty()) {
-                            item(key = "empty_suggested_header") {
-                                Text(
-                                    text = stringResource(R.string.song_search_suggested),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(horizontal = dimens.spaceMd)
-                                )
-                                Spacer(modifier = Modifier.height(dimens.spaceSm))
-                            }
                             items(suggestedSongs, key = { "empty_song_${it.id}" }) { song ->
                                 SongListItem(
                                     name = song.name,
@@ -743,44 +726,48 @@ internal fun MusicSearchBottomSheet(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(vertical = dimens.spaceMd)
                     ) {
-                        // Genres section
+                        // Genre filter chips
                         if (genres.isNotEmpty()) {
-                            item(key = "genre_header") {
-                                Text(
-                                    text = stringResource(R.string.song_search_explore_by_genre),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(horizontal = dimens.spaceMd)
-                                )
-                                Spacer(modifier = Modifier.height(dimens.spaceSm))
-                            }
                             item(key = "genre_chips") {
                                 LazyRow(
-                                    contentPadding = PaddingValues(horizontal = dimens.spaceMd),
                                     horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
                                 ) {
+                                    item(key = "all") {
+                                        AppFilterChip(
+                                            text = stringResource(R.string.settings_all),
+                                            isSelected = selectedGenre == null,
+                                            onClick = { viewModel.onGenreSelected(null) }
+                                        )
+                                    }
                                     items(genres, key = { it.id }) { genre ->
                                         AppFilterChip(
                                             text = genre.displayName,
-                                            onClick = { viewModel.onGenreClick(genre) }
+                                            isSelected = selectedGenre == genre.id,
+                                            onClick = { viewModel.onGenreSelected(genre.id) }
                                         )
                                     }
                                 }
-                                Spacer(modifier = Modifier.height(dimens.spaceXl))
+                                Spacer(modifier = Modifier.height(dimens.spaceMd))
                             }
                         }
 
-                        // Suggested songs section
-                        if (suggestedSongs.isNotEmpty()) {
-                            item(key = "suggested_header") {
-                                Text(
-                                    text = stringResource(R.string.song_search_suggested),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(horizontal = dimens.spaceMd)
-                                )
-                                Spacer(modifier = Modifier.height(dimens.spaceSm))
+                        // Loading indicator when switching genres
+                        if (suggestedSongsLoading) {
+                            item(key = "genre_loading") {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = dimens.spaceXl),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
                             }
+                        } else {
+                            // Song list (filtered by genre via ViewModel)
                             items(suggestedSongs, key = { "suggested_${it.id}" }) { song ->
                                 SongListItem(
                                     name = song.name,
@@ -840,5 +827,95 @@ internal fun MusicSearchBottomSheet(
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, backgroundColor = 0xFF101010)
+@Composable
+private fun MusicSearchContentPreview() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(SplashBackground)
+            .padding(horizontal = 20.dp)
+            .padding(top = 16.dp, bottom = 32.dp)
+    ) {
+        // Centered title
+        Text(
+            text = "Change music",
+            color = TextMuted,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            lineHeight = 18.sp,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Search field
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = SearchFieldBackground,
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .border(
+                    width = 1.dp,
+                    color = SearchFieldBorder,
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.MusicNote,
+                    contentDescription = null,
+                    tint = TextTertiary,
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Search songs...",
+                    color = TextTertiary,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Sample song items - selected + playing
+        SongListItem(
+            name = "Sunflower",
+            artist = "Post Malone, Swae Lee",
+            coverUrl = "",
+            isPlaying = true,
+            isSelected = true,
+            onSongClick = {}
+        )
+        // Normal item
+        SongListItem(
+            name = "Blinding Lights",
+            artist = "The Weeknd",
+            coverUrl = "",
+            onSongClick = {}
+        )
+        // Selected but not playing
+        SongListItem(
+            name = "Shape of You",
+            artist = "Ed Sheeran",
+            coverUrl = "",
+            isSelected = true,
+            onSongClick = {}
+        )
+        // Normal item
+        SongListItem(
+            name = "Stay With Me",
+            artist = "Sam Smith",
+            coverUrl = "",
+            onSongClick = {}
+        )
     }
 }

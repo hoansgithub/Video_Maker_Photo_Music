@@ -45,6 +45,7 @@ data class ProjectSettings(
     val overlayFrameId: String? = null,
     val musicSongId: Long? = null,
     val musicSongName: String? = null, // Cached for display only
+    val musicSongArtist: String? = null, // Cached for display only
     val musicSongUrl: String? = null, // Cached for offline playback
     val musicSongCoverUrl: String? = null, // Cached for display only
     val customAudioUri: Uri? = null,

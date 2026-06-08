@@ -77,6 +77,9 @@ class VideoMakerNativeAdLayoutProvider : NativeAdLayoutProvider {
      */
     override fun getLayoutRatio(layoutName: String): Float? {
         return when {
+            // Row layouts: compact horizontal rows — must match before prefix catch-all
+            layoutName == "native_small_row" -> 390f / 116f  // 100dp content + 16dp padding
+            layoutName == "native_big_row" -> 390f / 174f    // 150dp content + 24dp padding
             layoutName.startsWith("native_small_") -> 390f / 200f
             layoutName.startsWith("native_big_") -> 412f / 304f
             layoutName.startsWith("native_full_screen_") -> null
@@ -92,6 +95,9 @@ class VideoMakerNativeAdLayoutProvider : NativeAdLayoutProvider {
      */
     override fun getLayoutMinHeight(layoutName: String): Int? {
         return when {
+            // Row layouts: compact horizontal rows — must match before prefix catch-all
+            layoutName == "native_small_row" -> 116  // 100dp content + 16dp padding
+            layoutName == "native_big_row" -> 174    // 150dp content + 24dp padding
             layoutName.startsWith("native_small_") -> 200
             layoutName.startsWith("native_big_") -> 304
             layoutName.startsWith("native_full_screen_") -> null

@@ -79,6 +79,12 @@ class SongSearchViewModel(
     private val _suggestedSongs = MutableStateFlow<List<MusicSong>>(emptyList())
     val suggestedSongs: StateFlow<List<MusicSong>> = _suggestedSongs.asStateFlow()
 
+    private val _selectedGenre = MutableStateFlow<String?>(null) // null = "All"
+    val selectedGenre: StateFlow<String?> = _selectedGenre.asStateFlow()
+
+    private val _suggestedSongsLoading = MutableStateFlow(false)
+    val suggestedSongsLoading: StateFlow<Boolean> = _suggestedSongsLoading.asStateFlow()
+
     private val _navigationEvent = MutableStateFlow<SongSearchNavigationEvent?>(null)
     val navigationEvent: StateFlow<SongSearchNavigationEvent?> = _navigationEvent.asStateFlow()
 
@@ -111,7 +117,7 @@ class SongSearchViewModel(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            getSuggestedSongsUseCase(limit = 8)
+            getSuggestedSongsUseCase(limit = 15)
                 .onSuccess { _suggestedSongs.value = it }
         }
 
@@ -205,6 +211,25 @@ class SongSearchViewModel(
         acquireExplicitSearchControl()
         _displayText.value = genre.displayName
         launchGenreSearch(genre)
+    }
+
+    /**
+     * Called when a genre filter chip is tapped in the bottom sheet.
+     * null = "All" (reload suggested songs), non-null = filter by genre.
+     */
+    fun onGenreSelected(genreId: String?) {
+        if (_selectedGenre.value == genreId) return
+        _selectedGenre.value = genreId
+        _suggestedSongsLoading.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = if (genreId == null) {
+                getSuggestedSongsUseCase(limit = 15)
+            } else {
+                getSongsByGenreUseCase(genreId, limit = 15)
+            }
+            result.onSuccess { _suggestedSongs.value = it }
+            _suggestedSongsLoading.value = false
+        }
     }
 
     /** Opens the music player bottom sheet for the given song. */

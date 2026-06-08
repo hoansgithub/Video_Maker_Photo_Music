@@ -26,6 +26,7 @@ data class ProjectEntity(
     val overlayFrameId: String? = null,
     val musicSongId: Long? = null,
     val musicSongName: String? = null, // Cached song name for display
+    val musicSongArtist: String? = null, // Cached artist name for display
     val musicSongUrl: String? = null, // Cached song URL for playback
     val musicSongCoverUrl: String? = null, // Cached cover URL for display
     val customAudioUri: String? = null,
