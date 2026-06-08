@@ -27,7 +27,7 @@ import com.videomaker.aimusic.data.local.database.entity.ProjectEntity
         LikedSongEntity::class,
         LikedTemplateEntity::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = true
 )
 abstract class ProjectDatabase : RoomDatabase() {
@@ -128,6 +128,12 @@ abstract class ProjectDatabase : RoomDatabase() {
             }
         }
 
+        internal val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE projects ADD COLUMN musicSongArtist TEXT")
+            }
+        }
+
         @Volatile
         private var INSTANCE: ProjectDatabase? = null
 
@@ -143,7 +149,7 @@ abstract class ProjectDatabase : RoomDatabase() {
                 ProjectDatabase::class.java,
                 DATABASE_NAME
             )
-                .addMigrations(MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
+                .addMigrations(MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
                 .fallbackToDestructiveMigration(dropAllTables = false)
                 .build()
         }

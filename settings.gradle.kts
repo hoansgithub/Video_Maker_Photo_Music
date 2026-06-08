@@ -58,15 +58,15 @@ include(":app")
 
 // ============================================
 // LOCAL COMPOSITE BUILD - ACCCoreAndroid
-// DISABLED - Using version 0.0.48 from GitHub Packages
+// DISABLED - Using published package 0.0.49
 // ============================================
-// includeBuild("../ACCCoreAndroid") {
-//     dependencySubstitution {
-//         substitute(module("co.alcheclub.lib:acccore")).using(project(":ACCCore"))
-//         substitute(module("co.alcheclub.lib:acccore-firebase")).using(project(":ACCCore-Firebase"))
-//         substitute(module("co.alcheclub.lib:acccore-facebook")).using(project(":ACCCore-Facebook"))
-//         substitute(module("co.alcheclub.lib:acccore-revenuecat")).using(project(":ACCCore-RevenueCat"))
-//         substitute(module("co.alcheclub.lib:acccore-ads")).using(project(":ACCCore-Ads"))
-//         substitute(module("co.alcheclub.lib:acccore-appsflyer")).using(project(":ACCCore-AppsFlyer"))
-//     }
-// }
+//includeBuild("../ACCCoreAndroid") {
+//    dependencySubstitution {
+//        substitute(module("co.alcheclub.lib:acccore")).using(project(":ACCCore"))
+//        substitute(module("co.alcheclub.lib:acccore-firebase")).using(project(":ACCCore-Firebase"))
+//        substitute(module("co.alcheclub.lib:acccore-facebook")).using(project(":ACCCore-Facebook"))
+//        substitute(module("co.alcheclub.lib:acccore-revenuecat")).using(project(":ACCCore-RevenueCat"))
+//        substitute(module("co.alcheclub.lib:acccore-ads")).using(project(":ACCCore-Ads"))
+//        substitute(module("co.alcheclub.lib:acccore-appsflyer")).using(project(":ACCCore-AppsFlyer"))
+//    }
+//}

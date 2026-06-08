@@ -473,6 +473,11 @@ fun EditorScreen(
                                 )
                                 showVolumeSheet = true
                             },
+                            onMusicSelectorClick = {
+                                wasPlayingBeforeMusicSheet = state.isPlaying
+                                if (state.isPlaying) viewModel.stopPlayback()
+                                showMusicSearchSheet = true
+                            },
                             modifier = Modifier.padding(paddingValues)
                         )
                     }
@@ -1024,6 +1029,7 @@ internal fun EditorMainContent(
     onEffectClick: () -> Unit,
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit = {},
+    onMusicSelectorClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -1058,6 +1064,7 @@ internal fun EditorMainContent(
         MusicSection(
             songName = project.settings.musicSongName
                 ?: stringResource(R.string.editor_no_music_selected),
+            artistName = project.settings.musicSongArtist ?: "",
             coverUrl = project.settings.musicSongCoverUrl ?: "",
             duration = project.formattedDuration,
             currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,
@@ -1074,7 +1081,8 @@ internal fun EditorMainContent(
             },
             onSeekStart = onSeekStart,
             onSeekEnd = onSeekEnd,
-            onPlayPauseClick = onPlayPauseClick
+            onPlayPauseClick = onPlayPauseClick,
+            onMusicSelectorClick = onMusicSelectorClick
         )
 
         Spacer(modifier = Modifier.height(8.dp))

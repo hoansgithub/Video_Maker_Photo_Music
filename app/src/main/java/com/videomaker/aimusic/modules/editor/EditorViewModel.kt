@@ -24,6 +24,7 @@ import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -301,13 +302,18 @@ class EditorViewModel(
                         val selectedIndex = prev?.selectedAssetIndex
                             ?.coerceIn(0, loadedProject.assets.lastIndex.coerceAtLeast(0)) ?: 0
 
-                        // Backfill missing cover URL for projects saved before cover URL was persisted
+                        // Backfill missing cover URL or artist for projects saved before these fields were persisted
                         var project = loadedProject
-                        if (project.settings.musicSongId != null && project.settings.musicSongCoverUrl == null) {
+                        if (project.settings.musicSongId != null &&
+                            (project.settings.musicSongCoverUrl == null || project.settings.musicSongArtist == null)
+                        ) {
                             val song = try { fetchSongWithRetry(project.settings.musicSongId) } catch (_: Exception) { null }
-                            if (song?.coverUrl?.isNotBlank() == true) {
+                            if (song != null) {
                                 project = project.copy(
-                                    settings = project.settings.copy(musicSongCoverUrl = song.coverUrl)
+                                    settings = project.settings.copy(
+                                        musicSongCoverUrl = project.settings.musicSongCoverUrl ?: song.coverUrl,
+                                        musicSongArtist = project.settings.musicSongArtist ?: song.artist
+                                    )
                                 )
                             }
                         }
@@ -529,6 +535,7 @@ class EditorViewModel(
                     templateId = data.templateId,
                     musicSongId = data.musicSongId,
                     musicSongName = song?.name, // For display in UI
+                    musicSongArtist = song?.artist, // For display in music section
                     musicSongUrl = song?.mp3Url, // For playback (same URL as previewer)
                     musicSongCoverUrl = song?.coverUrl, // For display in music section
                     processedAudioUri = preprocessedUri, // Already preprocessed - ready for preview
@@ -802,6 +809,7 @@ class EditorViewModel(
                     it.copy(
                         musicSongId = songId,
                         musicSongName = song?.name,
+                        musicSongArtist = song?.artist,
                         musicSongUrl = song?.mp3Url,
                         musicSongCoverUrl = song?.coverUrl,
                         customAudioUri = null,
@@ -823,13 +831,30 @@ class EditorViewModel(
     }
 
     fun updateMusicTrack(songId: Long, songName: String, songUrl: String, songCoverUrl: String) {
+        // Immediately update display-only fields (MusicSection UI) without touching
+        // player-facing fields (musicSongId, beatSyncData, processedAudioUri, etc.)
+        // to avoid triggering an error/loading state in the composition player
+        updatePendingSettings {
+            it.copy(
+                musicSongName = songName,
+                musicSongCoverUrl = songCoverUrl
+            )
+        }
+
+        // Show composing overlay for the entire music change process
+        val currentState = _uiState.value as? EditorUiState.Success
+        if (currentState != null) {
+            _uiState.value = currentState.copy(isProcessingAudio = true)
+        }
+
         viewModelScope.launch {
             try {
-                // Fetch song to get hookStartTimeMs
-                val song = songRepository.getSongById(songId).getOrNull()
+                // Fetch song and beat-sync data in parallel to reduce wait time
+                val songDeferred = async { songRepository.getSongById(songId).getOrNull() }
+                val beatSyncDeferred = async { loadBeatSyncWithRetry(songId) }
 
-                // Load beat-sync data with retry logic
-                val beatSyncData = loadBeatSyncWithRetry(songId)
+                val song = songDeferred.await()
+                val beatSyncData = beatSyncDeferred.await()
 
                 // Beat-sync load failure already shows error dialog and returns null
                 if (beatSyncData == null) {
@@ -875,6 +900,7 @@ class EditorViewModel(
                     it.copy(
                         musicSongId = songId,
                         musicSongName = songName,
+                        musicSongArtist = song?.artist,
                         musicSongUrl = songUrl,
                         musicSongCoverUrl = songCoverUrl,
                         customAudioUri = null,
@@ -895,6 +921,12 @@ class EditorViewModel(
                 // ANY failure (beat-sync load, preprocessing, etc.) → show error dialog
                 android.util.Log.e("EditorViewModel", "Music update failed: ${e.message}", e)
                 _showBeatSyncErrorDialog.value = true
+            } finally {
+                // Hide composing overlay regardless of success or failure
+                val finalState = _uiState.value as? EditorUiState.Success
+                if (finalState != null) {
+                    _uiState.value = finalState.copy(isProcessingAudio = false)
+                }
             }
         }
     }

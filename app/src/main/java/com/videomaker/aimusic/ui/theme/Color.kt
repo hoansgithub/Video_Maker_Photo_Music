@@ -298,6 +298,10 @@ val TemplateBadgeBackground = Color(0xE5282828) // Use-count badge bg (#282828, 
 // MUSIC PLAYER
 // ============================================
 val PlayerCardBackground = Color(0xFF373737)    // Song info + seeker card background
+val PlayerCardGlass = Color(0xD1323232)         // Glass card background (rgba(50,50,50,0.82))
+val PlayerCardBorder = White12                  // Glass card border (#FFFFFF1F)
+val PlayerCardInnerGlow = White16               // Inner shadow glow (rgba(255,255,255,0.16))
+val PlayerCardTopHighlight = White12            // Top edge highlight (rgba(255,255,255,0.12))
 
 // ============================================
 // WELCOME BACK SCREEN

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
@@ -74,8 +75,7 @@ fun SongListItem(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(dimens.radiusLg),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            else Color.Transparent
+            containerColor = Color.Transparent
         )
     ) {
         Row(
@@ -84,61 +84,43 @@ fun SongListItem(
                 .padding(dimens.spaceSm),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Thumbnail with overlay for playing/loading state
-            Box {
-                AppAsyncImage(
-                    imageUrl = coverUrl,
-                    contentDescription = name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(dimens.radiusMd))
-                )
-
-                // Playing animation or loading indicator overlay
-                when {
-                    isLoading -> {
-                        Box(
-                            modifier = Modifier
-                                .size(64.dp)
-                                .clip(RoundedCornerShape(dimens.radiusMd))
-                                .background(Color.Black.copy(alpha = 0.5f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
-                        }
-                    }
-                    isPlaying -> {
-                        Box(
-                            modifier = Modifier
-                                .size(64.dp)
-                                .clip(RoundedCornerShape(dimens.radiusMd))
-                                .background(Color.Black.copy(alpha = 0.5f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            PlayingAnimationBars()
-                        }
-                    }
-                }
-            }
+            // Thumbnail
+            AppAsyncImage(
+                imageUrl = coverUrl,
+                contentDescription = name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(dimens.radiusMd))
+            )
 
             Spacer(modifier = Modifier.width(dimens.spaceMd))
 
+            // Song name + artist
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = name,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        fontSize = 15.sp
-                    ),
-                    color = if (isSelected) MaterialTheme.colorScheme.primary else TextPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                // Title row with animated bars when playing
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 15.sp
+                        ),
+                        color = TextPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (isPlaying) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        PlayingAnimationBars(
+                            barColor = MaterialTheme.colorScheme.primary,
+                            barWidth = 3.dp,
+                            maxBarHeight = 14.dp,
+                            containerSize = 16.dp
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(dimens.spaceXxs))
                 Text(
                     text = artist,
@@ -152,17 +134,18 @@ fun SongListItem(
                 )
             }
 
-            // Play/Pause indicator
-            if (isPlaying || isSelected) {
+            // Green checkmark when selected
+            if (isSelected) {
+                Spacer(modifier = Modifier.width(8.dp))
                 Icon(
-                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    imageVector = Icons.Default.Check,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
             }
 
-            if (isShowOption){
+            if (isShowOption) {
                 Spacer(modifier = Modifier.width(dimens.spaceMd))
                 SongItemMore {
                     onClickDelete.invoke()
@@ -215,11 +198,17 @@ fun SongItemMore(
  * 3 bouncing bars animation for playing state
  */
 @Composable
-internal fun PlayingAnimationBars() {
+internal fun PlayingAnimationBars(
+    modifier: Modifier = Modifier,
+    barColor: Color = Color.White,
+    barWidth: androidx.compose.ui.unit.Dp = 4.dp,
+    maxBarHeight: androidx.compose.ui.unit.Dp = 20.dp,
+    containerSize: androidx.compose.ui.unit.Dp = 24.dp
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.size(24.dp)
+        modifier = modifier.size(containerSize)
     ) {
         repeat(3) { index ->
             var height by remember { mutableStateOf(0.4f) }
@@ -244,10 +233,10 @@ internal fun PlayingAnimationBars() {
 
             Box(
                 modifier = Modifier
-                    .width(4.dp)
-                    .height(20.dp * height)
+                    .width(barWidth)
+                    .height(maxBarHeight * height)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Color.White)
+                    .background(barColor)
             )
         }
     }
@@ -271,7 +260,7 @@ fun SongListItemPlaceholder(modifier: Modifier = Modifier) {
     ) {
         ShimmerBox(
             modifier = Modifier
-                .size(64.dp)
+                .size(40.dp)
                 .clip(RoundedCornerShape(dimens.radiusMd))
         )
         Spacer(modifier = Modifier.width(dimens.spaceMd))
