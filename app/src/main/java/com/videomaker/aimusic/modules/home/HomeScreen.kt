@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -221,7 +223,7 @@ fun HomeScreen(
     var lastSettledPage by remember { mutableIntStateOf(pagerState.currentPage) }
     var hasSentInitialTabView by remember { mutableStateOf(false) }
 
-    val galleryListState = rememberLazyListState()
+    val galleryListState = rememberLazyStaggeredGridState()
     val songsListState = rememberLazyListState()
 
     val galleryUiState by galleryViewModel.uiState.collectAsStateWithLifecycle()
@@ -249,13 +251,13 @@ fun HomeScreen(
 
             val targetVisibleItem = visibleItems.firstOrNull { it.index == targetIndex }
             if (targetVisibleItem != null) {
-                (-targetVisibleItem.offset).coerceAtLeast(0)
+                (-targetVisibleItem.offset.y).coerceAtLeast(0)
             } else {
                 val firstVisible = visibleItems.first()
                 if (firstVisible.index > targetIndex) {
-                    val avgSize = visibleItems.sumOf { it.size } / visibleItems.size
+                    val avgSize = visibleItems.sumOf { it.size.height } / visibleItems.size
                     val estimatedPassed = (firstVisible.index - targetIndex) * avgSize
-                    (estimatedPassed - firstVisible.offset).coerceAtLeast(0)
+                    (estimatedPassed - firstVisible.offset.y).coerceAtLeast(0)
                 } else {
                     0
                 }
@@ -833,7 +835,7 @@ private fun HomeTopBar(
 private fun GalleryTabContent(
     viewModel: GalleryViewModel,
     isVisible: Boolean,
-    listState: LazyListState,
+    listState: LazyStaggeredGridState,
     onUserInteraction: () -> Unit,
     onCreateClick: () -> Unit,
     onNavigateToSearch: () -> Unit = {},

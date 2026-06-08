@@ -395,6 +395,7 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
             }
             .crossfade(200)
             .respectCacheHeaders(true)
+            .decoderDispatcher(Dispatchers.Default)
             .apply {
                 if (BuildConfig.DEBUG) {
                     logger(DebugLogger())
