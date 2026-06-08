@@ -86,9 +86,11 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
     // ✅ Guard to ensure shader preloading happens only once (not on every foreground)
     private val shaderPreloadedOnce = AtomicBoolean(false)
 
-    // Tracks whether the app has been backgrounded at least once (warm return detection)
-    // Set to true in onStop, consumed atomically in AppOpenAdManager.shouldShowCallback
+    // Tracks whether the app has lost focus (warm return detection)
+    // Set in onPause (multitask) and onStop (full background), consumed in shouldShowCallback
+    // Skips cold start: first onPause is ignored via hasPausedOnce guard
     private val wasBackgrounded = AtomicBoolean(false)
+    private val hasPausedOnce = AtomicBoolean(false)
 
     companion object {
         // Track if ads have been initialized (global, survives Activity destruction)
@@ -477,9 +479,16 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
             }
         })
 
-        // AOA_MINIMIZE: track when app goes to background (warm return detection)
-        // PROCESS-LIFETIME OBSERVER: intentionally not removed (matches ProcessLifecycleOwner lifetime)
+        // AOA: track when app loses focus or goes to background (warm return detection)
+        // - onPause: multitask, Recent Apps (foreground ad trigger)
+        // - onStop: full background, home button (background ad trigger)
+        // First onPause is skipped (cold start → splash → home, no ad needed)
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : androidx.lifecycle.DefaultLifecycleObserver {
+            override fun onPause(owner: androidx.lifecycle.LifecycleOwner) {
+                if (hasPausedOnce.getAndSet(true)) {
+                    wasBackgrounded.set(true)
+                }
+            }
             override fun onStop(owner: androidx.lifecycle.LifecycleOwner) {
                 wasBackgrounded.set(true)
             }
@@ -540,12 +549,10 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         // - Switch AOA placements to post-click units (or suppress if disabled)
         // - Reset after resume completes so next background uses normal placements
         val adClickContextTracker = org.koin.core.context.GlobalContext.get().get<com.videomaker.aimusic.core.ads.AdClickContextTracker>()
-        val hasProcessedAdClickReturn = java.util.concurrent.atomic.AtomicBoolean(false)
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : androidx.lifecycle.DefaultLifecycleObserver {
             override fun onStart(owner: androidx.lifecycle.LifecycleOwner) {
                 if (adClickContextTracker.shouldUsePostAdClickPlacement()) {
-                    hasProcessedAdClickReturn.set(false)
                     appOpenAdManager.setBackgroundPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_AFTER_AD_CLICK)
                     appOpenAdManager.setForegroundPlacement(com.videomaker.aimusic.core.constants.AdPlacement.APP_OPEN_AFTER_AD_CLICK)
                     android.util.Log.d("VideoMakerApp", "Ad click return detected - switching to post-click AOA placement")
@@ -557,13 +564,8 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
             override fun onResume(owner: androidx.lifecycle.LifecycleOwner) {
                 if (adClickContextTracker.shouldUsePostAdClickPlacement()) {
-                    hasProcessedAdClickReturn.set(true)
-                }
-            }
-
-            override fun onStop(owner: androidx.lifecycle.LifecycleOwner) {
-                hasProcessedAdClickReturn.set(false)
-                if (adClickContextTracker.shouldUsePostAdClickPlacement()) {
+                    // Reset AFTER using the flag — the post-click placement was already
+                    // set in onStart, so next background/foreground cycle uses normal placements
                     adClickContextTracker.reset()
                     android.util.Log.d("VideoMakerApp", "Ad click context reset - next foreground uses normal placements")
                 }
