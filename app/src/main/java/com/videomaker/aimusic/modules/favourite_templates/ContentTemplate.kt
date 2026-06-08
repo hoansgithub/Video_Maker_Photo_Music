@@ -105,7 +105,8 @@ fun ContentTemplate(
                                     templateId = item.template.id,
                                     templateName = item.template.name,
                                     location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE,
-                                    screenSessionId = ""
+                                    screenSessionId = "",
+                                    isPremium = item.template.isPremium
                                 )
                             },
                             onClickDelete = {

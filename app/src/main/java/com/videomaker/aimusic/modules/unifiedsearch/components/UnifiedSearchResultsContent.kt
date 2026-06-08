@@ -222,7 +222,8 @@ fun UnifiedSearchResultsContent(
                                                     Analytics.trackTemplateClick(
                                                         templateId = template.id,
                                                         templateName = template.name,
-                                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM,
+                                                        isPremium = template.isPremium
                                                     )
                                                     onTemplateClick(template.id)
                                                           },
@@ -233,7 +234,8 @@ fun UnifiedSearchResultsContent(
                                                             templateId = template.id,
                                                             templateName = template.name,
                                                             location = AnalyticsEvent.Value.Location.SEARCH_RCM,
-                                                            screenSessionId = ""
+                                                            screenSessionId = "",
+                                                            isPremium = template.isPremium
                                                         )
                                                     }
                                             )
@@ -262,7 +264,8 @@ fun UnifiedSearchResultsContent(
                                                     Analytics.trackSongClick(
                                                         songId = song.id.toString(),
                                                         songName = song.name,
-                                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM,
+                                                        isPremium = song.isPremium
                                                     )
                                                     onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RCM)
                                                 },
@@ -270,7 +273,8 @@ fun UnifiedSearchResultsContent(
                                                     sessionManager.trackSongImpressionAndMark(
                                                         songId = song.id.toString(),
                                                         songName = song.name,
-                                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                                        location = AnalyticsEvent.Value.Location.SEARCH_RCM,
+                                                        isPremium = song.isPremium
                                                     )
                                                 }
                                             )
@@ -359,7 +363,8 @@ fun UnifiedSearchResultsContent(
                                         Analytics.trackTemplateClick(
                                             templateId = template.id,
                                             templateName = template.name,
-                                            location = AnalyticsEvent.Value.Location.SEARCH_RCM
+                                            location = AnalyticsEvent.Value.Location.SEARCH_RCM,
+                                            isPremium = template.isPremium
                                         )
                                         onTemplateClick.invoke(template.id)
                                     },
@@ -401,7 +406,8 @@ fun UnifiedSearchResultsContent(
                                                 Analytics.trackSongClick(
                                                     songId = song.id.toString(),
                                                     songName = song.name,
-                                                    location = AnalyticsEvent.Value.Location.SEARCH_RESULT
+                                                    location = AnalyticsEvent.Value.Location.SEARCH_RESULT,
+                                                    isPremium = song.isPremium
                                                 )
                                                 onSongClick(song, AnalyticsEvent.Value.Location.SEARCH_RESULT)
                                             },
@@ -409,7 +415,8 @@ fun UnifiedSearchResultsContent(
                                                 sessionManager.trackSongImpressionAndMark(
                                                     songId = song.id.toString(),
                                                     songName = song.name,
-                                                    location = AnalyticsEvent.Value.Location.SEARCH_RESULT
+                                                    location = AnalyticsEvent.Value.Location.SEARCH_RESULT,
+                                                    isPremium = song.isPremium
                                                 )
                                             }
                                         )
@@ -529,7 +536,8 @@ internal fun UnifiedTemplateGrid(
                     templateId = template.id,
                     templateName = template.name,
                     location = impressionLocation,
-                    screenSessionId = ""
+                    screenSessionId = "",
+                    isPremium = template.isPremium
                 )
             }
         )

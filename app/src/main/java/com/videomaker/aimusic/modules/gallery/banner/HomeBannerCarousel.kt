@@ -134,7 +134,8 @@ fun HomeBannerCarousel(
                     sessionManager.trackSongImpressionAndMark(
                         songId = seenSong.id.toString(),
                         songName = seenSong.name,
-                        location = AnalyticsEvent.Value.Location.HOME_BANNER
+                        location = AnalyticsEvent.Value.Location.HOME_BANNER,
+                        isPremium = seenSong.isPremium
                     )
                 }
 
@@ -217,13 +218,15 @@ fun HomeBannerCarousel(
                                         Analytics.trackSongPause(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.HOME_BANNER
+                                            location = AnalyticsEvent.Value.Location.HOME_BANNER,
+                                            isPremium = song.isPremium
                                         )
                                     } else {
                                         Analytics.trackSongPlay(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.HOME_BANNER
+                                            location = AnalyticsEvent.Value.Location.HOME_BANNER,
+                                            isPremium = song.isPremium
                                         )
                                     }
                                     player.toggle(song)
@@ -234,7 +237,8 @@ fun HomeBannerCarousel(
                                     Analytics.trackSongClick(
                                         songId = song.id.toString(),
                                         songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.HOME_BANNER
+                                        location = AnalyticsEvent.Value.Location.HOME_BANNER,
+                                        isPremium = song.isPremium
                                     )
                                     onSongBannerClick(song, banner.position)
                                 }

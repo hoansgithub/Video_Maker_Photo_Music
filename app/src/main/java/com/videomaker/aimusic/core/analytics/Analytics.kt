@@ -283,17 +283,26 @@ object Analytics {
         )
     }
 
+    /**
+     * Maps an item's `is_premium` flag to the analytics `type` param value:
+     * premium -> "ads", free -> "free".
+     */
+    private fun premiumType(isPremium: Boolean): String =
+        if (isPremium) AnalyticsEvent.Value.Type.ADS else AnalyticsEvent.Value.Type.FREE
+
     fun trackTemplateImpression(
         templateId: String,
         templateName: String,
         location: String,
-        screenSessionId: String
+        screenSessionId: String,
+        isPremium: Boolean
     ) {
         val params = mapOf(
             AnalyticsEvent.Param.TEMPLATE_ID to templateId,
             AnalyticsEvent.Param.TEMPLATE_NAME to templateName,
             AnalyticsEvent.Param.LOCATION to location,
-            AnalyticsEvent.Param.SCREEN_SESSION_ID to screenSessionId
+            AnalyticsEvent.Param.SCREEN_SESSION_ID to screenSessionId,
+            AnalyticsEvent.Param.TYPE to premiumType(isPremium)
         )
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_IMPRESSION,
@@ -311,13 +320,15 @@ object Analytics {
         songId: String,
         songName: String,
         location: String,
-        screenSessionId: String
+        screenSessionId: String,
+        isPremium: Boolean
     ) {
         val params = mapOf(
             AnalyticsEvent.Param.SONG_ID to songId,
             AnalyticsEvent.Param.SONG_NAME to songName,
             AnalyticsEvent.Param.LOCATION to location,
-            AnalyticsEvent.Param.SCREEN_SESSION_ID to screenSessionId
+            AnalyticsEvent.Param.SCREEN_SESSION_ID to screenSessionId,
+            AnalyticsEvent.Param.TYPE to premiumType(isPremium)
         )
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_IMPRESSION,
@@ -364,13 +375,14 @@ object Analytics {
         )
     }
 
-    fun trackTemplateClick(templateId: String, templateName: String, location: String) {
+    fun trackTemplateClick(templateId: String, templateName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_CLICK,
             params = mapOf(
                 AnalyticsEvent.Param.TEMPLATE_ID to templateId,
                 AnalyticsEvent.Param.TEMPLATE_NAME to templateName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.TEMPLATE_ID,
@@ -413,13 +425,14 @@ object Analytics {
         )
     }
 
-    fun trackTemplatePreview(templateId: String, templateName: String, location: String) {
+    fun trackTemplatePreview(templateId: String, templateName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_PREVIEW,
             params = mapOf(
                 AnalyticsEvent.Param.TEMPLATE_ID to templateId,
                 AnalyticsEvent.Param.TEMPLATE_NAME to templateName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.TEMPLATE_ID,
@@ -430,13 +443,14 @@ object Analytics {
         )
     }
 
-    fun trackTemplateFavorite(templateId: String, templateName: String, location: String) {
+    fun trackTemplateFavorite(templateId: String, templateName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_FAVORITE,
             params = mapOf(
                 AnalyticsEvent.Param.TEMPLATE_ID to templateId,
                 AnalyticsEvent.Param.TEMPLATE_NAME to templateName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.TEMPLATE_ID,
@@ -447,13 +461,14 @@ object Analytics {
         )
     }
 
-    fun trackTemplateUnfavorite(templateId: String, templateName: String, location: String) {
+    fun trackTemplateUnfavorite(templateId: String, templateName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_UNFAVORITE,
             params = mapOf(
                 AnalyticsEvent.Param.TEMPLATE_ID to templateId,
                 AnalyticsEvent.Param.TEMPLATE_NAME to templateName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.TEMPLATE_ID,
@@ -464,14 +479,15 @@ object Analytics {
         )
     }
 
-    fun trackTemplateSelect(templateId: String, templateName: String, location: String) {
+    fun trackTemplateSelect(templateId: String, templateName: String, location: String, isPremium: Boolean) {
         getRatingTriggerManager()?.onTemplateSelected()
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_SELECT,
             params = mapOf(
                 AnalyticsEvent.Param.TEMPLATE_ID to templateId,
                 AnalyticsEvent.Param.TEMPLATE_NAME to templateName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.TEMPLATE_ID,
@@ -482,13 +498,14 @@ object Analytics {
         )
     }
 
-    fun trackSongClick(songId: String, songName: String, location: String) {
+    fun trackSongClick(songId: String, songName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_CLICK,
             params = mapOf(
                 AnalyticsEvent.Param.SONG_ID to songId,
                 AnalyticsEvent.Param.SONG_NAME to songName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.SONG_ID,
@@ -517,13 +534,14 @@ object Analytics {
         )
     }
 
-    fun trackSongPlay(songId: String, songName: String, location: String) {
+    fun trackSongPlay(songId: String, songName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_PLAY,
             params = mapOf(
                 AnalyticsEvent.Param.SONG_ID to songId,
                 AnalyticsEvent.Param.SONG_NAME to songName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.SONG_ID,
@@ -534,13 +552,14 @@ object Analytics {
         )
     }
 
-    fun trackSongPause(songId: String, songName: String, location: String) {
+    fun trackSongPause(songId: String, songName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_PAUSE,
             params = mapOf(
                 AnalyticsEvent.Param.SONG_ID to songId,
                 AnalyticsEvent.Param.SONG_NAME to songName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.SONG_ID,
@@ -551,13 +570,14 @@ object Analytics {
         )
     }
 
-    fun trackSongPreview(songId: String, songName: String, location: String) {
+    fun trackSongPreview(songId: String, songName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_PREVIEW,
             params = mapOf(
                 AnalyticsEvent.Param.SONG_ID to songId,
                 AnalyticsEvent.Param.SONG_NAME to songName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.SONG_ID,
@@ -568,13 +588,14 @@ object Analytics {
         )
     }
 
-    fun trackSongFavorite(songId: String, songName: String, location: String) {
+    fun trackSongFavorite(songId: String, songName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_FAVORITE,
             params = mapOf(
                 AnalyticsEvent.Param.SONG_ID to songId,
                 AnalyticsEvent.Param.SONG_NAME to songName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.SONG_ID,
@@ -585,13 +606,14 @@ object Analytics {
         )
     }
 
-    fun trackSongUnfavorite(songId: String, songName: String, location: String) {
+    fun trackSongUnfavorite(songId: String, songName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_UNFAVORITE,
             params = mapOf(
                 AnalyticsEvent.Param.SONG_ID to songId,
                 AnalyticsEvent.Param.SONG_NAME to songName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.SONG_ID,
@@ -602,14 +624,15 @@ object Analytics {
         )
     }
 
-    fun trackSongSelect(songId: String, songName: String, location: String) {
+    fun trackSongSelect(songId: String, songName: String, location: String, isPremium: Boolean) {
         getRatingTriggerManager()?.onSongSelected()
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_SELECT,
             params = mapOf(
                 AnalyticsEvent.Param.SONG_ID to songId,
                 AnalyticsEvent.Param.SONG_NAME to songName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.SONG_ID,
@@ -679,6 +702,33 @@ object Analytics {
             eventName = AnalyticsEvent.MEDIA_COMPLETE,
             params = mapOf(AnalyticsEvent.Param.MEDIA_QUANTITY to mediaQuantity),
             requiredParams = setOf(AnalyticsEvent.Param.MEDIA_QUANTITY),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackMediaNPhotoState() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.MEDIA_NPHOTO_STATE,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackMediaMorePhotoState() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.MEDIA_MOREPHOTO_STATE,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackMediaLimitPhotoState() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.MEDIA_LIMITPHOTO_STATE,
+            params = emptyMap(),
+            requiredParams = emptySet(),
             policy = TrackingPolicy.NORMAL
         )
     }
@@ -804,13 +854,14 @@ object Analytics {
         )
     }
 
-    fun trackTemplateOption(templateId: String, templateName: String, location: String) {
+    fun trackTemplateOption(templateId: String, templateName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_OPTION,
             params = mapOf(
                 AnalyticsEvent.Param.TEMPLATE_ID to templateId,
                 AnalyticsEvent.Param.TEMPLATE_NAME to templateName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.TEMPLATE_ID,
@@ -821,13 +872,14 @@ object Analytics {
         )
     }
 
-    fun trackTemplateShare(templateId: String, templateName: String, location: String) {
+    fun trackTemplateShare(templateId: String, templateName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_SHARE,
             params = mapOf(
                 AnalyticsEvent.Param.TEMPLATE_ID to templateId,
                 AnalyticsEvent.Param.TEMPLATE_NAME to templateName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.TEMPLATE_ID,
@@ -838,13 +890,14 @@ object Analytics {
         )
     }
 
-    fun trackTemplateReport(templateId: String, templateName: String, location: String) {
+    fun trackTemplateReport(templateId: String, templateName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_REPORT,
             params = mapOf(
                 AnalyticsEvent.Param.TEMPLATE_ID to templateId,
                 AnalyticsEvent.Param.TEMPLATE_NAME to templateName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.TEMPLATE_ID,
@@ -872,13 +925,14 @@ object Analytics {
         )
     }
 
-    fun trackSongShare(songId: String, songName: String, location: String) {
+    fun trackSongShare(songId: String, songName: String, location: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_SHARE,
             params = mapOf(
                 AnalyticsEvent.Param.SONG_ID to songId,
                 AnalyticsEvent.Param.SONG_NAME to songName,
-                AnalyticsEvent.Param.LOCATION to location
+                AnalyticsEvent.Param.LOCATION to location,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.SONG_ID,
@@ -1240,13 +1294,14 @@ object Analytics {
         )
     }
 
-    fun trackEditorSongClick(videoId: String, songId: String, songName: String) {
+    fun trackEditorSongClick(videoId: String, songId: String, songName: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_CLICK,
             params = mapOf(
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.SONG_ID to songId,
-                AnalyticsEvent.Param.SONG_NAME to songName
+                AnalyticsEvent.Param.SONG_NAME to songName,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.VIDEO_ID,
@@ -1257,14 +1312,15 @@ object Analytics {
         )
     }
 
-    fun trackEditorSongSelect(videoId: String, songId: String, songName: String) {
+    fun trackEditorSongSelect(videoId: String, songId: String, songName: String, isPremium: Boolean) {
         getRatingTriggerManager()?.onSongSelected()
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_SELECT,
             params = mapOf(
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.SONG_ID to songId,
-                AnalyticsEvent.Param.SONG_NAME to songName
+                AnalyticsEvent.Param.SONG_NAME to songName,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.VIDEO_ID,
@@ -2476,13 +2532,15 @@ fun com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager.trackSongIm
     songId: String,
     songName: String,
     location: String,
+    isPremium: Boolean,
     screenSessionId: String = ""
 ) {
     Analytics.trackSongImpression(
         songId = songId,
         songName = songName,
         location = location,
-        screenSessionId = screenSessionId
+        screenSessionId = screenSessionId,
+        isPremium = isPremium
     )
     songId.toLongOrNull()?.let { markImpressed(it) }
 }

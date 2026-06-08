@@ -137,7 +137,8 @@ class MusicPlayerViewModel(
             songId = prev.id.toString(),
             songName = prev.name,
             location = AnalyticsEvent.Value.Location.SONG_PLAYER,
-            screenSessionId = ""
+            screenSessionId = "",
+            isPremium = prev.isPremium
         )
         sessionManager.markImpressed(prev.id)
     }
@@ -159,7 +160,8 @@ class MusicPlayerViewModel(
             songId = next.id.toString(),
             songName = next.name,
             location = AnalyticsEvent.Value.Location.SONG_PLAYER,
-            screenSessionId = ""
+            screenSessionId = "",
+            isPremium = next.isPremium
         )
     }
 

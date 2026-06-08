@@ -405,7 +405,8 @@ private fun SongsContent(
                                         Analytics.trackSongClick(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                                            location = AnalyticsEvent.Value.Location.SONG_STATIONS,
+                                            isPremium = song.isPremium
                                         )
                                         onSongClick(song, songs, AnalyticsEvent.Value.Location.SONG_STATIONS, selectedGenre)
                                     },
@@ -418,7 +419,8 @@ private fun SongsContent(
                                             sessionManager.trackSongImpressionAndMark(
                                                 songId = song.id.toString(),
                                                 songName = song.name,
-                                                location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                                                location = AnalyticsEvent.Value.Location.SONG_STATIONS,
+                                                isPremium = song.isPremium
                                             )
                                         }
                                 )
@@ -547,7 +549,8 @@ private fun SuggestSongsList(
                             Analytics.trackSongClick(
                                 songId = song.id.toString(),
                                 songName = song.name,
-                                location = AnalyticsEvent.Value.Location.SONG_FORYOU
+                                location = AnalyticsEvent.Value.Location.SONG_FORYOU,
+                                isPremium = song.isPremium
                             )
                             onSongClick(song, state.data, AnalyticsEvent.Value.Location.SONG_FORYOU, null)
                         },
@@ -555,7 +558,8 @@ private fun SuggestSongsList(
                             sessionManager.trackSongImpressionAndMark(
                                 songId = song.id.toString(),
                                 songName = song.name,
-                                location = AnalyticsEvent.Value.Location.SONG_FORYOU
+                                location = AnalyticsEvent.Value.Location.SONG_FORYOU,
+                                isPremium = song.isPremium
                             )
                         }
                     )
@@ -672,7 +676,8 @@ private fun WeeklyRankingPager(
                         Analytics.trackSongClick(
                             songId = song.id.toString(),
                             songName = song.name,
-                            location = AnalyticsEvent.Value.Location.SONG_RANKING
+                            location = AnalyticsEvent.Value.Location.SONG_RANKING,
+                            isPremium = song.isPremium
                         )
                         onSongClick(song, songs, AnalyticsEvent.Value.Location.SONG_RANKING, null)
                     },
@@ -680,7 +685,8 @@ private fun WeeklyRankingPager(
                         sessionManager.trackSongImpressionAndMark(
                             songId = song.id.toString(),
                             songName = song.name,
-                            location = AnalyticsEvent.Value.Location.SONG_RANKING
+                            location = AnalyticsEvent.Value.Location.SONG_RANKING,
+                            isPremium = song.isPremium
                         )
                     }
                 )
@@ -742,7 +748,8 @@ private fun StationSongsSection(
                             Analytics.trackSongClick(
                                 songId = song.id.toString(),
                                 songName = song.name,
-                                location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                                location = AnalyticsEvent.Value.Location.SONG_STATIONS,
+                                isPremium = song.isPremium
                             )
                             onSongClick(song, state.data, AnalyticsEvent.Value.Location.SONG_STATIONS, selectedGenre)
                         },
@@ -755,7 +762,8 @@ private fun StationSongsSection(
                                 sessionManager.trackSongImpressionAndMark(
                                     songId = song.id.toString(),
                                     songName = song.name,
-                                    location = AnalyticsEvent.Value.Location.SONG_STATIONS
+                                    location = AnalyticsEvent.Value.Location.SONG_STATIONS,
+                                    isPremium = song.isPremium
                                 )
                             }
                     )

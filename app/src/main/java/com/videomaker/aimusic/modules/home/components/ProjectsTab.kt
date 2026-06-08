@@ -454,14 +454,14 @@ fun ProjectsTabContent(
                                 ContentTemplate(
                                     state = templateStateLocal,
                                     onTemplateClick = { templateId ->
-                                        val templateName = templateStateLocal
+                                        val template = templateStateLocal
                                             .firstOrNull { it.id == templateId }
-                                            ?.name
-                                            ?: "unknown"
+                                        val templateName = template?.name ?: "unknown"
                                         Analytics.trackTemplateClick(
                                             templateId = templateId,
                                             templateName = templateName,
-                                            location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE
+                                            location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE,
+                                            isPremium = template?.isPremium ?: false
                                         )
                                         onNavigateToTemplateDetail(
                                             templateId,
@@ -469,19 +469,20 @@ fun ProjectsTabContent(
                                         )
                                     },
                                     onDeleteTemplateClick = {
-                                        val templateName = templateStateLocal
+                                        val template = templateStateLocal
                                             .firstOrNull { template -> template.id == it }
-                                            ?.name
-                                            ?: "unknown"
+                                        val templateName = template?.name ?: "unknown"
                                         Analytics.trackTemplateOption(
                                             templateId = it,
                                             templateName = templateName,
-                                            location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE
+                                            location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE,
+                                            isPremium = template?.isPremium ?: false
                                         )
                                         Analytics.trackTemplateUnfavorite(
                                             templateId = it,
                                             templateName = templateName,
-                                            location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE
+                                            location = AnalyticsEvent.Value.Location.TEMPLATE_FAVORITE,
+                                            isPremium = template?.isPremium ?: false
                                         )
                                         viewModel.onUnlikeTemplate(it)
                                         showRemovedMessage = true
@@ -511,7 +512,8 @@ fun ProjectsTabContent(
                                         Analytics.trackSongClick(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE
+                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
+                                            isPremium = song.isPremium
                                         )
                                         viewModel.onSongClick(song, songStateLocal)
                                     },
@@ -524,7 +526,8 @@ fun ProjectsTabContent(
                                         Analytics.trackSongUnfavorite(
                                             songId = it.id.toString(),
                                             songName = it.name,
-                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE
+                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
+                                            isPremium = it.isPremium
                                         )
                                         viewModel.onUnlikeSong(it)
                                         showRemovedMessage = true
@@ -539,7 +542,8 @@ fun ProjectsTabContent(
                                         Analytics.trackSongClick(
                                             songId = song.id.toString(),
                                             songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE
+                                            location = AnalyticsEvent.Value.Location.SONG_FAVORITE,
+                                            isPremium = song.isPremium
                                         )
                                         viewModel.onSongClick(song)
                                     }

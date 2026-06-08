@@ -102,6 +102,9 @@ object AnalyticsEvent {
     const val MEDIA_SELECT = "media_select"
     const val MEDIA_UNSELECT = "media_unselect"
     const val MEDIA_COMPLETE = "media_complete"
+    const val MEDIA_NPHOTO_STATE = "media_nphoto_state"
+    const val MEDIA_MOREPHOTO_STATE = "media_morephoto_state"
+    const val MEDIA_LIMITPHOTO_STATE = "media_limitphoto_state"
     const val VIDEO_GENERATE = "video_generate"
     const val VIDEO_GENERATE_COMPLETE = "video_generate_complete"
 
@@ -372,6 +375,16 @@ object AnalyticsEvent {
     // ============================================
     object Value {
         const val ALL = "all"
+
+        /**
+         * Content monetization type for template/song context events.
+         * Derived from the item's `is_premium` flag:
+         * premium item -> [ADS], free item -> [FREE].
+         */
+        object Type {
+            const val ADS = "ads"
+            const val FREE = "free"
+        }
 
         object TabName {
             const val GALLERY = "gallery"

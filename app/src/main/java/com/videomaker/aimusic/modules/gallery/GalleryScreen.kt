@@ -670,7 +670,8 @@ private fun FeaturedTemplatesCarousel(
                     templateId = template.id,
                     templateName = template.name,
                     location = AnalyticsEvent.Value.Location.HOME_BANNER,
-                    screenSessionId = ""
+                    screenSessionId = "",
+                    isPremium = template.isPremium
                 )
             }
     }
@@ -720,7 +721,8 @@ private fun FeaturedTemplatesCarousel(
                             Analytics.trackTemplateClick(
                                 templateId = template.id,
                                 templateName = template.name,
-                                location = AnalyticsEvent.Value.Location.GALLERY_BANNER
+                                location = AnalyticsEvent.Value.Location.GALLERY_BANNER,
+                                isPremium = template.isPremium
                             )
                             onTemplateClick(template, AnalyticsEvent.Value.Location.GALLERY_BANNER)
                         }
@@ -1011,14 +1013,16 @@ private fun StaggeredTemplateGrid(
                             templateId = template.id,
                             templateName = template.name,
                             location = AnalyticsEvent.Value.Location.HOME_TEMPLATE,
-                            screenSessionId = ""
+                            screenSessionId = "",
+                            isPremium = template.isPremium
                         )
                     },
                     onClick = {
                         Analytics.trackTemplateClick(
                             templateId = template.id,
                             templateName = template.name,
-                            location = AnalyticsEvent.Value.Location.GALLERY_TEMPLATE
+                            location = AnalyticsEvent.Value.Location.GALLERY_TEMPLATE,
+                            isPremium = template.isPremium
                         )
                         onTemplateClick(template, AnalyticsEvent.Value.Location.GALLERY_TEMPLATE)
                     }

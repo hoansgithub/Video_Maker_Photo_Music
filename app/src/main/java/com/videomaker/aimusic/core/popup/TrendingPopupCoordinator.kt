@@ -184,7 +184,8 @@ class TrendingPopupCoordinator(
                         templateId = pick.id,
                         templateName = pick.name,
                         location = AnalyticsEvent.Value.Location.POPUP_PROMOTE_CONTENT,
-                        screenSessionId = ""
+                        screenSessionId = "",
+                        isPremium = pick.isPremium
                     )
                 }
             }
@@ -200,7 +201,8 @@ class TrendingPopupCoordinator(
                         songId = pick.id.toString(),
                         songName = pick.name,
                         location = AnalyticsEvent.Value.Location.POPUP_PROMOTE_CONTENT,
-                        screenSessionId = ""
+                        screenSessionId = "",
+                        isPremium = pick.isPremium
                     )
                 }
             }
@@ -249,7 +251,8 @@ class TrendingPopupCoordinator(
             Analytics.trackTemplateClick(
                 templateId = template.id,
                 templateName = template.name,
-                location = AnalyticsEvent.Value.Location.POPUP_PROMOTE_CONTENT
+                location = AnalyticsEvent.Value.Location.POPUP_PROMOTE_CONTENT,
+                isPremium = template.isPremium
             )
         }
         _templatePopup.value = TrendingPopupState.Hidden
@@ -270,7 +273,8 @@ class TrendingPopupCoordinator(
             Analytics.trackSongClick(
                 songId = song.id.toString(),
                 songName = song.name,
-                location = AnalyticsEvent.Value.Location.POPUP_PROMOTE_CONTENT
+                location = AnalyticsEvent.Value.Location.POPUP_PROMOTE_CONTENT,
+                isPremium = song.isPremium
             )
         }
         _songPopup.value = TrendingPopupState.Hidden

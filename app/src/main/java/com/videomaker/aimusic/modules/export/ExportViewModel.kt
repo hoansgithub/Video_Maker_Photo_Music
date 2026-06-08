@@ -517,15 +517,16 @@ class ExportViewModel(
      * Handle template click - navigate to template detail
      */
     fun onTemplateClick(templateId: String) {
-        val templateName = (_featuredTemplatesState.value as? FeaturedTemplatesState.Success)
+        val template = (_featuredTemplatesState.value as? FeaturedTemplatesState.Success)
             ?.templates
             ?.firstOrNull { it.id == templateId }
-            ?.name
-            ?: "unknown"
+        val templateName = template?.name ?: "unknown"
+        val templateIsPremium = template?.isPremium ?: false
         Analytics.trackTemplateClick(
             templateId = templateId,
             templateName = templateName,
-            location = AnalyticsEvent.Value.Location.RESULT_RCM
+            location = AnalyticsEvent.Value.Location.RESULT_RCM,
+            isPremium = templateIsPremium
         )
 
         // Check if template grid tap ad is ready

@@ -107,7 +107,8 @@ class UninstallViewModel(
         Analytics.trackTemplateClick(
             templateId = template.id,
             templateName = template.name,
-            location = AnalyticsEvent.Value.Location.UNINSTALL
+            location = AnalyticsEvent.Value.Location.UNINSTALL,
+            isPremium = template.isPremium
         )
 
         // Always show ad (bypass frequency cap like template grid tap ads)
@@ -139,7 +140,8 @@ class UninstallViewModel(
         Analytics.trackSongClick(
             songId = song.id.toString(),
             songName = song.name,
-            location = AnalyticsEvent.Value.Location.UNINSTALL
+            location = AnalyticsEvent.Value.Location.UNINSTALL,
+            isPremium = song.isPremium
         )
         _navigationEvent.value = UninstallNavigationEvent.NavigateToSongPlayer(song.id)
     }

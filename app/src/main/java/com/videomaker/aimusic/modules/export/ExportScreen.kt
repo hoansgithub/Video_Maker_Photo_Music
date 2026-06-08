@@ -1549,7 +1549,8 @@ private fun FeaturedTemplatesGrid(
                                     templateId = template.id,
                                     templateName = template.name,
                                     location = AnalyticsEvent.Value.Location.RESULT_RCM,
-                                    screenSessionId = ""
+                                    screenSessionId = "",
+                                    isPremium = template.isPremium
                                 )
                             },
                             onClick = { onTemplateClick(template) }

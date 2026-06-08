@@ -129,7 +129,7 @@ fun EditorScreen(
     onNavigateBack: () -> Unit,
     onNavigateToPreview: (String) -> Unit,
     onNavigateToExport: (String, com.videomaker.aimusic.domain.model.VideoQuality) -> Unit,
-    onNavigateToAddAssets: (String, List<String>) -> Unit
+    onNavigateToAddAssets: (projectId: String, assetUris: List<String>, songId: Long, hookStartMs: Long) -> Unit
 ) {
     val adClickDetector: AdClickDetector = koinInject()
     val adPlacementConfigService: AdPlacementConfigService = koinInject()
@@ -669,7 +669,8 @@ fun EditorScreen(
                             Analytics.trackEditorSongClick(
                                 videoId = videoId,
                                 songId = song.id.toString(),
-                                songName = song.name
+                                songName = song.name,
+                                isPremium = song.isPremium
                             )
                         }
                     },
@@ -679,7 +680,8 @@ fun EditorScreen(
                             Analytics.trackEditorSongSelect(
                                 videoId = videoId,
                                 songId = song.id.toString(),
-                                songName = song.name
+                                songName = song.name,
+                                isPremium = song.isPremium
                             )
                         }
                         viewModel.updateMusicTrack(
@@ -778,9 +780,16 @@ fun EditorScreen(
                             showImagesSheet = false
                         },
                         onAddImages = {
-                            // Navigate to asset picker in editing mode
+                            // Navigate to asset picker in editing mode.
+                            // Pass the project's song + hook start so the picker's duration estimate
+                            // matches what the editor will re-render after assets change.
                             val currentAssetUris = successState.displayAssets.map { it.uri.toString() }
-                            onNavigateToAddAssets(successState.project.id, currentAssetUris)
+                            onNavigateToAddAssets(
+                                successState.project.id,
+                                currentAssetUris,
+                                successState.project.settings.musicSongId ?: -1L,
+                                successState.project.settings.hookStartTimeMs
+                            )
                         },
                         onConfirm = { updatedAssets ->
                             scope.launch {

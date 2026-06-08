@@ -783,7 +783,8 @@ private fun TemplatePreviewerReadyContent(
                 Analytics.trackTemplatePreview(
                     templateId = template.id,
                     templateName = template.name,
-                    location = trackingLocation
+                    location = trackingLocation,
+                    isPremium = template.isPremium
                 )
                 // Impression on first entry is already fired by the source list
                 // (home_template / home_banner / search_result / etc.). Only fire
@@ -793,7 +794,8 @@ private fun TemplatePreviewerReadyContent(
                         templateId = template.id,
                         templateName = template.name,
                         location = AnalyticsEvent.Value.Location.PREVIEW_SWIPE,
-                        screenSessionId = ""
+                        screenSessionId = "",
+                        isPremium = template.isPremium
                     )
                 }
                 isFirstSettledEmission = false
@@ -1085,7 +1087,8 @@ private fun TemplatePreviewerReadyContent(
                                         Analytics.trackTemplateUnfavorite(
                                             templateId = template.id,
                                             templateName = template.name,
-                                            location = templateEventLocation
+                                            location = templateEventLocation,
+                                            isPremium = template.isPremium
                                         )
                                         onLikeTemplate(template)
                                     }
@@ -1103,7 +1106,8 @@ private fun TemplatePreviewerReadyContent(
                                         Analytics.trackTemplateFavorite(
                                             templateId = template.id,
                                             templateName = template.name,
-                                            location = templateEventLocation
+                                            location = templateEventLocation,
+                                            isPremium = template.isPremium
                                         )
                                         onLikeTemplate(template)
                                     }
@@ -1130,14 +1134,16 @@ private fun TemplatePreviewerReadyContent(
                     Analytics.trackTemplateClick(
                         templateId = template.id,
                         templateName = template.name,
-                        location = templateEventLocation
+                        location = templateEventLocation,
+                        isPremium = template.isPremium
                     )
                     val defaultRatio = aspectRatioFromString(template.aspectRatio)
                     Analytics.trackRatioSelect(defaultRatio.shortLabel)
                     Analytics.trackTemplateSelect(
                         templateId = template.id,
                         templateName = template.name,
-                        location = templateEventLocation
+                        location = templateEventLocation,
+                        isPremium = template.isPremium
                     )
                     val isLocked = template.isPremium && !unlockedTemplateIds.contains(template.id)
                     if (isLocked) {
