@@ -468,6 +468,15 @@ fun EditorScreen(
                                 showVolumeSheet = true
                             },
                             onMusicSelectorClick = {
+                                val videoId = currentVideoId()
+                                if (videoId != null) {
+                                    Analytics.trackSongEdit(
+                                        videoId = videoId,
+                                        songId = currentSongId(),
+                                        songName = currentSongName(),
+                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR
+                                    )
+                                }
                                 wasPlayingBeforeMusicSheet = state.isPlaying
                                 if (state.isPlaying) viewModel.stopPlayback()
                                 showMusicSearchSheet = true
@@ -669,7 +678,8 @@ fun EditorScreen(
                                 videoId = videoId,
                                 songId = song.id.toString(),
                                 songName = song.name,
-                                isPremium = song.isPremium
+                                isPremium = song.isPremium,
+                                location = AnalyticsEvent.Value.Location.VIDEO_EDITOR
                             )
                         }
                     },
@@ -680,7 +690,8 @@ fun EditorScreen(
                                 videoId = videoId,
                                 songId = song.id.toString(),
                                 songName = song.name,
-                                isPremium = song.isPremium
+                                isPremium = song.isPremium,
+                                location = AnalyticsEvent.Value.Location.VIDEO_EDITOR
                             )
                         }
                         viewModel.updateMusicTrack(
@@ -701,7 +712,8 @@ fun EditorScreen(
                             Analytics.trackSongClose(
                                 videoId = videoId,
                                 songId = currentSongId(),
-                                songName = currentSongName()
+                                songName = currentSongName(),
+                                location = AnalyticsEvent.Value.Location.VIDEO_EDITOR
                             )
                         }
                         showMusicSearchSheet = false
