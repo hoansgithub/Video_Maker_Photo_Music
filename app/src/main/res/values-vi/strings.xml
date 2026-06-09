@@ -599,4 +599,34 @@
     <string name="retention_dialog_subtitle">Đừng rời đi — điều tuyệt vời sắp xảy ra.</string>
     <string name="retention_dialog_close">Đóng</string>
     <string name="retention_dialog_stay">Ở lại</string>
+
+    <!-- Onboarding survey & asset picker -->
+    <string name="ai_level_title">Chọn phong cách sáng tạo của bạn</string>
+    <string name="ai_level_light_touch_title">Chỉnh nhẹ</string>
+    <string name="ai_level_light_touch_banner">Giữ nét tự nhiên.\nVẫn là bạn, chỉ đẹp hơn</string>
+    <string name="ai_level_deep_swap_title">Biến hóa sâu</string>
+    <string name="ai_level_deep_swap_banner">Sáng tạo không giới hạn.\nHóa thân thành bất kỳ ai, thử mọi điều.</string>
+    <string name="content_exclusive_title">Lọc nhạc và\nnguồn mẫu của bạn</string>
+    <string name="content_exclusive_family_title">Phù hợp gia đình</string>
+    <string name="content_exclusive_family_subtitle">Chặn lời bài hát nhạy cảm và điệu nhảy phản cảm.</string>
+    <string name="content_exclusive_unfiltered_title">Không lọc</string>
+    <string name="content_exclusive_unfiltered_subtitle">Hiển thị mọi video thịnh hành và chủ đề người lớn.</string>
+    <string name="genre_step_title">Bạn thích nhạc gì?</string>
+    <string name="genre_step_subtitle">Bước này giúp chúng tôi gợi ý nhạc phù hợp hơn cho bạn. Nó sẽ không ảnh hưởng đến nội dung cá nhân hóa của bạn.</string>
+    <string name="media_privacy_title">Chọn cài đặt quyền riêng tư\ncho ảnh của bạn</string>
+    <string name="media_privacy_private_title">Chế độ riêng tư</string>
+    <string name="media_privacy_private_subtitle">Xóa ảnh của tôi sau mỗi lần tạo. Tốt nhất cho quyền riêng tư tối đa.</string>
+    <string name="media_privacy_quick_title">Làm lại nhanh</string>
+    <string name="media_privacy_quick_subtitle">Lưu hồ sơ của tôi để tạo nhanh hơn về sau. Tạo video mới chỉ với 1 chạm.</string>
+    <string name="personalizing_title">Đang cá nhân hóa trải nghiệm của bạn…</string>
+    <string name="personalizing_subtitle">Vui lòng đợi trong giây lát trong khi chúng tôi chuẩn bị các mẫu phong cách hoàn hảo cho bạn.</string>
+    <string name="picker_add_more_ideal">Thêm %d ảnh nữa để tạo video ~15 giây sẵn sàng chia sẻ.</string>
+    <string name="picker_add_photos">Thêm ảnh</string>
+    <string name="picker_count_badge">x%d</string>
+    <string name="picker_max_reached">Bạn đã đạt tối đa %d ảnh.</string>
+    <string name="picker_more_photos_longer">Càng nhiều ảnh, video càng dài (Tối đa %d)</string>
+    <string name="template_pick_title">Bạn thích phong cách mẫu nào?</string>
+    <string name="template_pick_subtitle">Chọn một phong cách mẫu và để chúng tôi xử lý các hiệu ứng chuyển cảnh cho bạn. Bước này sẽ không ảnh hưởng đến nội dung cá nhân hóa của bạn.</string>
+    <string name="error_data_load_failed">Không tải được dữ liệu cần thiết. Vui lòng kiểm tra kết nối internet và thử lại.</string>
+    <string name="quality_ad_not_available">Quảng cáo hiện không khả dụng. Vui lòng thử lại sau hoặc chọn chất lượng thấp hơn.</string>
 </resources>

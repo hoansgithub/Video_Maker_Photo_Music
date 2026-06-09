@@ -607,4 +607,32 @@
     <string name="retention_dialog_subtitle">Aja lunga saiki — ana sing luar biasa arep kedadeyan.</string>
     <string name="retention_dialog_close">Tutup</string>
     <string name="retention_dialog_stay">Tetep</string>
+
+    <!-- Onboarding survey & asset picker -->
+    <string name="ai_level_title">Pilih gaya kreasimu</string>
+    <string name="ai_level_light_touch_title">Owahan Entheng</string>
+    <string name="ai_level_light_touch_banner">Tetep alami.\nKaton kaya kowe, mung luwih apik</string>
+    <string name="ai_level_deep_swap_title">Owahan Jero</string>
+    <string name="ai_level_deep_swap_banner">Dorong kreativitas luwih adoh.\nDadi sapa wae, nyoba apa wae.</string>
+    <string name="content_exclusive_title">Saring musik lan\nfeed templatemu</string>
+    <string name="content_exclusive_family_title">Ramah Kulawarga</string>
+    <string name="content_exclusive_family_subtitle">Blokir lirik kasar lan jogetan agresif.</string>
+    <string name="content_exclusive_unfiltered_title">Tanpa Saringan</string>
+    <string name="content_exclusive_unfiltered_subtitle">Tampilake kabeh video tren lan tema diwasa.</string>
+    <string name="genre_step_title">Musik apa sing kok senengi?</string>
+    <string name="genre_step_subtitle">Langkah iki mbantu aku menehi saran musik sing luwih apik kanggo kowe. Iki ora bakal mengaruhi konten sing dipersonalisasi.</string>
+    <string name="media_privacy_title">Pilih setelan privasi\nfotomu</string>
+    <string name="media_privacy_private_title">Mode Pribadi</string>
+    <string name="media_privacy_private_subtitle">Busak fotoku sawise saben kreasi. Paling apik kanggo privasi maksimal.</string>
+    <string name="media_privacy_quick_title">Gawe Maneh Cepet</string>
+    <string name="media_privacy_quick_subtitle">Simpen profilku kanggo kreasi luwih cepet ing mbesuk. Gawe video anyar nganggo 1 ketukan.</string>
+    <string name="personalizing_title">Ngepersonalisasi pengalamanmu…</string>
+    <string name="personalizing_subtitle">Mangga ngenteni sedhela nalika aku nyiapake template gaya sing sampurna kanggo kowe.</string>
+    <string name="picker_add_more_ideal">Tambahake %d foto maneh kanggo nggawe video ~15 detik sing siap kanggo sosial.</string>
+    <string name="picker_add_photos">Tambah foto</string>
+    <string name="picker_count_badge">x%d</string>
+    <string name="picker_max_reached">Kowe wis tekan maksimum %d foto.</string>
+    <string name="picker_more_photos_longer">Luwih akeh foto, video luwih dawa (Maks %d)</string>
+    <string name="template_pick_title">Gaya template apa sing kok senengi?</string>
+    <string name="template_pick_subtitle">Pilih gaya template lan aku sing ngurus transisi lan efeke kanggo kowe. Langkah iki ora bakal mengaruhi konten sing dipersonalisasi.</string>
 </resources>

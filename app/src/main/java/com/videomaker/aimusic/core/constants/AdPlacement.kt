@@ -902,6 +902,60 @@ object AdPlacement {
     const val NATIVE_ONBOARDING_PERSONALIZING = "ad_native_onboarding_personalizing"
 
     /**
+     * Native ad — onboarding AI creation-style (AI_LEVEL / Start Selection) survey screen.
+     * Single placement waterfall, shown until the user makes their first selection.
+     * Ad units: ca-app-pub-7121075950716954/7416163032 (Pro_AIMV_NA_high_Start Selection)
+     *         → ca-app-pub-7121075950716954/2091839691 (Pro_AIMV_NA_all_Start Selection)
+     * RC key: ad_native_onboarding_ai_level
+     */
+    const val NATIVE_ONBOARDING_AI_LEVEL = "ad_native_onboarding_ai_level"
+
+    /**
+     * ALT native ad for AI_LEVEL / Start Selection screen (swapped in after the first selection,
+     * replaces NATIVE_ONBOARDING_AI_LEVEL following a 0.5s IAB viewability delay).
+     * Ad units: ca-app-pub-7121075950716954/4789999695 (Pro_AIMV_NA_high_Start Selection_alt)
+     *         → ca-app-pub-7121075950716954/4814050422 (Pro_AIMV_NA_all_Start Selection_alt)
+     * RC key: ad_native_onboarding_ai_level_alt
+     */
+    const val NATIVE_ONBOARDING_AI_LEVEL_ALT = "ad_native_onboarding_ai_level_alt"
+
+    /**
+     * Native ad — onboarding content-filter / age (CONTENT_EXCLUSIVE) screen. Single placement
+     * waterfall, shown until the user makes their first selection.
+     * Ad units: ca-app-pub-7121075950716954/9874805416 (Pro_AIMV_NA_high_Age)
+     *         → ca-app-pub-7121075950716954/8465676358 (Pro_AIMV_NA_all_Age)
+     * RC key: ad_native_onboarding_content_exclusive
+     */
+    const val NATIVE_ONBOARDING_CONTENT_EXCLUSIVE = "ad_native_onboarding_content_exclusive"
+
+    /**
+     * ALT native ad for content-filter / age screen (swapped in after the first selection, replaces
+     * NATIVE_ONBOARDING_CONTENT_EXCLUSIVE following a 0.5s IAB viewability delay).
+     * Ad units: ca-app-pub-7121075950716954/4598428004 (Pro_AIMV_NA_high_Age_alt)
+     *         → ca-app-pub-7121075950716954/9683233721 (Pro_AIMV_NA_all_Age_alt)
+     * RC key: ad_native_onboarding_content_exclusive_alt
+     */
+    const val NATIVE_ONBOARDING_CONTENT_EXCLUSIVE_ALT = "ad_native_onboarding_content_exclusive_alt"
+
+    /**
+     * Native ad — onboarding photo-privacy (MEDIA_PRIVACY) screen. Single placement waterfall,
+     * shown until the user makes their first selection.
+     * Ad units: ca-app-pub-7121075950716954/7057070389 (Pro_AIMV_NA_high_Media Privacy)
+     *         → ca-app-pub-7121075950716954/8178580360 (Pro_AIMV_NA_all_Media Privacy)
+     * RC key: ad_native_onboarding_media_privacy
+     */
+    const val NATIVE_ONBOARDING_MEDIA_PRIVACY = "ad_native_onboarding_media_privacy"
+
+    /**
+     * ALT native ad for photo-privacy screen (swapped in after the first selection, replaces
+     * NATIVE_ONBOARDING_MEDIA_PRIVACY following a 0.5s IAB viewability delay).
+     * Ad units: ca-app-pub-7121075950716954/3093774644 (Pro_AIMV_NA_high_Media Privacy_alt)
+     *         → ca-app-pub-7121075950716954/2926253685 (Pro_AIMV_NA_all_Media Privacy_alt)
+     * RC key: ad_native_onboarding_media_privacy_alt
+     */
+    const val NATIVE_ONBOARDING_MEDIA_PRIVACY_ALT = "ad_native_onboarding_media_privacy_alt"
+
+    /**
      * Rewarded ad shown when user wants to download video to gallery.
      * Timing: User clicks download button → dialog appears → user watches ad → download proceeds.
      * User MUST watch the full ad to earn the reward (download permission).
@@ -1194,6 +1248,12 @@ object AdPlacement {
         NATIVE_ONBOARDING_SELECT_MUSIC,
         NATIVE_ONBOARDING_SELECT_TPT,
         NATIVE_ONBOARDING_PERSONALIZING,
+        NATIVE_ONBOARDING_AI_LEVEL,
+        NATIVE_ONBOARDING_AI_LEVEL_ALT,
+        NATIVE_ONBOARDING_CONTENT_EXCLUSIVE,
+        NATIVE_ONBOARDING_CONTENT_EXCLUSIVE_ALT,
+        NATIVE_ONBOARDING_MEDIA_PRIVACY,
+        NATIVE_ONBOARDING_MEDIA_PRIVACY_ALT,
         NATIVE_ONBOARDING_SELECT,
         NATIVE_ONBOARDING_SELECT_ALT,
         NATIVE_ONBOARDING_SOCIAL,

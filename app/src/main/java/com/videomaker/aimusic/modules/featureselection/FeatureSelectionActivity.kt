@@ -51,6 +51,11 @@ import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import kotlinx.coroutines.launch
 import com.videomaker.aimusic.core.ads.AdClickDetector
 import org.koin.compose.koinInject
+import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
+import com.videomaker.aimusic.core.constants.RemoteConfigKeys
+import com.videomaker.aimusic.modules.genretemplate.getStepEnabled
+
+private enum class FeatureSelectionStep { FEATURE_SELECT, PERSONALIZING }
 
 class FeatureSelectionActivity : AppCompatActivity() {
 
@@ -58,6 +63,7 @@ class FeatureSelectionActivity : AppCompatActivity() {
     private val onboardingViewModel: OnboardingViewModel by viewModel()
     private val onboardingMusicPlayer: com.videomaker.aimusic.core.playback.OnboardingMusicPlayer by inject()
     private val adsLoaderService: AdsLoaderService by inject()
+    private val remoteConfig: RemoteConfig by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,6 +77,11 @@ class FeatureSelectionActivity : AppCompatActivity() {
             val adClickDetector: AdClickDetector = koinInject()
             val density = LocalDensity.current
             var isSaving by remember { mutableStateOf(false) }
+
+            var step by remember { mutableStateOf(FeatureSelectionStep.FEATURE_SELECT) }
+            val personalizingEnabled = remember {
+                remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_PERSONALIZING_ENABLED)
+            }
 
             // Track bottom section height dynamically (button + ad)
             var bottomSectionHeight by remember { mutableStateOf(0) }
@@ -127,6 +138,26 @@ class FeatureSelectionActivity : AppCompatActivity() {
                     )
                 }
 
+                if (step == FeatureSelectionStep.PERSONALIZING) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFF1A1A1A))
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            PersonalizingScreen()
+                        }
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            NativeAdView(
+                                placement = AdPlacement.NATIVE_ONBOARDING_PERSONALIZING,
+                                modifier = Modifier.fillMaxWidth(),
+                                isDebug = BuildConfig.DEBUG,
+                                onAdClicked = { adClickDetector.onAdClick(it) }
+                            )
+                        }
+                    }
+                    return@VideoMakerTheme
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -193,36 +224,36 @@ class FeatureSelectionActivity : AppCompatActivity() {
                                                         initialTab
                                                     )
 
-                                                    // Mark onboarding as COMPLETE (simplified flow)
-                                                    // This is the END of the full flow: Language → Onboarding → Feature Selection
-                                                    android.util.Log.d(
-                                                        "FeatureSelection",
-                                                        "🎯 Marking onboarding as COMPLETE"
-                                                    )
-
-                                                    // ✅ Launch coroutine to call suspend function
-                                                    lifecycleScope.launch {
-                                                        preferencesManager.setOnboardingComplete(
-                                                            true
-                                                        )
-
-                                                        // Verify it was saved
-                                                        val isComplete =
-                                                            preferencesManager.isOnboardingComplete()
-                                                        android.util.Log.d(
-                                                            "FeatureSelection",
-                                                            "🎯 Verified onboarding complete: $isComplete"
-                                                        )
-
-                                                        // Show interstitial ad, then navigate
-                                                        InterstitialAdHelperExt.showInterstitial(
-                                                            adsLoaderService = adsLoaderService,
-                                                            activity = this@FeatureSelectionActivity,
-                                                            placement = AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE,
-                                                            action = { navigateToMain(initialTab) },
-                                                            bypassFrequencyCap = true,
-                                                            showLoadingOverlay = false
-                                                        )
+                                                    if (personalizingEnabled) {
+                                                        // Show the PERSONALIZING screen, then complete after a
+                                                        // 2.5s min-duration. The timer runs in lifecycleScope so
+                                                        // it is decoupled from recomposition.
+                                                        step = FeatureSelectionStep.PERSONALIZING
+                                                        lifecycleScope.launch {
+                                                            delay(2500)
+                                                            preferencesManager.setOnboardingComplete(true)
+                                                            InterstitialAdHelperExt.showInterstitial(
+                                                                adsLoaderService = adsLoaderService,
+                                                                activity = this@FeatureSelectionActivity,
+                                                                placement = AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE,
+                                                                action = { navigateToMain(initialTab) },
+                                                                bypassFrequencyCap = true,
+                                                                showLoadingOverlay = false
+                                                            )
+                                                        }
+                                                    } else {
+                                                        // No personalizing → mark complete and navigate now.
+                                                        lifecycleScope.launch {
+                                                            preferencesManager.setOnboardingComplete(true)
+                                                            InterstitialAdHelperExt.showInterstitial(
+                                                                adsLoaderService = adsLoaderService,
+                                                                activity = this@FeatureSelectionActivity,
+                                                                placement = AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE,
+                                                                action = { navigateToMain(initialTab) },
+                                                                bypassFrequencyCap = true,
+                                                                showLoadingOverlay = false
+                                                            )
+                                                        }
                                                     }
                                                 }.onFailure {
                                                     isSaving = false

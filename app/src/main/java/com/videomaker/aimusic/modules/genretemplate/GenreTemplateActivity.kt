@@ -40,6 +40,7 @@ import com.videomaker.aimusic.modules.language.OnboardingCtaButton
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+import kotlinx.coroutines.delay
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.videomaker.aimusic.core.ads.AdClickDetector
 import org.koin.compose.koinInject
@@ -55,9 +56,29 @@ class GenreTemplateActivity : AppCompatActivity() {
 
         setContent {
             val adClickDetector: AdClickDetector = koinInject()
-            var isSaving by remember { mutableStateOf(false) }
             var bottomSectionHeight by remember { mutableStateOf(0) }
             val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
+
+            // MEDIA_PRIVACY dual-ad swap: show the primary native until the user taps a privacy
+            // option, then (after a 0.5s IAB viewability delay) swap to the ALT placement.
+            var mediaPrivacyTapped by remember { mutableStateOf(false) }
+            var mediaPrivacyAltActive by remember { mutableStateOf(false) }
+            LaunchedEffect(mediaPrivacyTapped) {
+                if (mediaPrivacyTapped && !mediaPrivacyAltActive) {
+                    delay(500)
+                    mediaPrivacyAltActive = true
+                }
+            }
+
+            // CONTENT_EXCLUSIVE dual-ad swap: same behavior as MEDIA_PRIVACY.
+            var contentExclusiveTapped by remember { mutableStateOf(false) }
+            var contentExclusiveAltActive by remember { mutableStateOf(false) }
+            LaunchedEffect(contentExclusiveTapped) {
+                if (contentExclusiveTapped && !contentExclusiveAltActive) {
+                    delay(500)
+                    contentExclusiveAltActive = true
+                }
+            }
 
             LaunchedEffect(Unit) {
                 viewModel.navToNext.collect { navigateToFeatureSelection() }
@@ -66,6 +87,8 @@ class GenreTemplateActivity : AppCompatActivity() {
             LaunchedEffect(currentStep) {
                 when (currentStep) {
                     GenreTemplateStep.TEMPLATE_PICK -> Analytics.track(name = "vibe_template_render")
+                    GenreTemplateStep.CONTENT_EXCLUSIVE -> Analytics.track(name = "content_feed_render")
+                    GenreTemplateStep.MEDIA_PRIVACY -> Analytics.track(name = "privacy_render")
                     else -> {}
                 }
             }
@@ -105,8 +128,32 @@ class GenreTemplateActivity : AppCompatActivity() {
                                     )
                                 }
 
-                                GenreTemplateStep.PERSONALIZING -> {
-                                    PersonalizingScreen()
+                                GenreTemplateStep.CONTENT_EXCLUSIVE -> {
+                                    ContentExclusiveScreen(
+                                        selectedId = viewModel.selectedContentFilter.value.orEmpty(),
+                                        onSelect = { id ->
+                                            viewModel.selectContentFilter(id)
+                                            contentExclusiveTapped = true
+                                            Analytics.track(
+                                                name = "content_feed_select",
+                                                params = mapOf("option" to id),
+                                            )
+                                        },
+                                    )
+                                }
+
+                                GenreTemplateStep.MEDIA_PRIVACY -> {
+                                    MediaPrivacyScreen(
+                                        selectedId = viewModel.selectedPrivacy.value.orEmpty(),
+                                        onSelect = { id ->
+                                            viewModel.selectPrivacy(id)
+                                            mediaPrivacyTapped = true
+                                            Analytics.track(
+                                                name = "privacy_select",
+                                                params = mapOf("option" to id),
+                                            )
+                                        },
+                                    )
                                 }
 
                                 GenreTemplateStep.TEMPLATE_PICK -> {
@@ -159,7 +206,7 @@ class GenreTemplateActivity : AppCompatActivity() {
                                                                     ?: "")
                                                             )
                                                         )
-                                                        viewModel.goToStep2()
+                                                        viewModel.onGenreNext()
                                                     }
                                                 },
                                                 enabled = viewModel.isStep1Valid() && !viewModel.isTemplatesLoading.value,
@@ -174,21 +221,52 @@ class GenreTemplateActivity : AppCompatActivity() {
                                                 onClick = {
                                                     val template = viewModel.selectedTemplate.value
                                                         ?: return@OnboardingCtaButton
-                                                    if (isSaving) return@OnboardingCtaButton
-                                                    isSaving = true
                                                     Analytics.track(
                                                         name = "vibe_template_next",
                                                         params = mapOf("template_id" to template.id)
                                                     )
-                                                    navigateToFeatureSelection()
+                                                    viewModel.onTemplateNext()
                                                 },
-                                                enabled = viewModel.selectedTemplate.value != null && !isSaving,
+                                                enabled = viewModel.selectedTemplate.value != null,
                                                 color = Primary,
                                                 icon = R.drawable.ic_right_arrow
                                             )
                                         }
 
-                                        else -> { /* No button during personalizing */
+                                        GenreTemplateStep.CONTENT_EXCLUSIVE -> {
+                                            OnboardingCtaButton(
+                                                text = stringResource(R.string.onboarding_next),
+                                                onClick = {
+                                                    val selected = viewModel.selectedContentFilter.value
+                                                        ?: return@OnboardingCtaButton
+                                                    Analytics.track(
+                                                        name = "content_feed_next",
+                                                        params = mapOf("option" to selected),
+                                                    )
+                                                    viewModel.onContentExclusiveNext()
+                                                },
+                                                enabled = viewModel.selectedContentFilter.value != null,
+                                                color = Primary,
+                                                icon = R.drawable.ic_right_arrow
+                                            )
+                                        }
+
+                                        GenreTemplateStep.MEDIA_PRIVACY -> {
+                                            OnboardingCtaButton(
+                                                text = stringResource(R.string.onboarding_next),
+                                                onClick = {
+                                                    val selected = viewModel.selectedPrivacy.value
+                                                        ?: return@OnboardingCtaButton
+                                                    Analytics.track(
+                                                        name = "privacy_next",
+                                                        params = mapOf("option" to selected),
+                                                    )
+                                                    viewModel.onMediaPrivacyNext()
+                                                },
+                                                enabled = viewModel.selectedPrivacy.value != null,
+                                                color = Primary,
+                                                icon = R.drawable.ic_right_arrow
+                                            )
                                         }
                                     }
                                 }
@@ -197,8 +275,13 @@ class GenreTemplateActivity : AppCompatActivity() {
 
                         val adPlacement = when (currentStep) {
                             GenreTemplateStep.GENRE_SELECTION -> AdPlacement.NATIVE_ONBOARDING_SELECT_MUSIC
-                            GenreTemplateStep.PERSONALIZING -> AdPlacement.NATIVE_ONBOARDING_PERSONALIZING
                             GenreTemplateStep.TEMPLATE_PICK -> AdPlacement.NATIVE_ONBOARDING_SELECT_TPT
+                            GenreTemplateStep.CONTENT_EXCLUSIVE ->
+                                if (contentExclusiveAltActive) AdPlacement.NATIVE_ONBOARDING_CONTENT_EXCLUSIVE_ALT
+                                else AdPlacement.NATIVE_ONBOARDING_CONTENT_EXCLUSIVE
+                            GenreTemplateStep.MEDIA_PRIVACY ->
+                                if (mediaPrivacyAltActive) AdPlacement.NATIVE_ONBOARDING_MEDIA_PRIVACY_ALT
+                                else AdPlacement.NATIVE_ONBOARDING_MEDIA_PRIVACY
                         }
                         // key(adPlacement) forces NativeAdView to remount when placement changes,
                         // resetting its internal isAdLoaded/adRevision state. Without this, stale

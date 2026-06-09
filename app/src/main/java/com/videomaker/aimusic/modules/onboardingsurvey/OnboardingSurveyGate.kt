@@ -18,6 +18,9 @@ object OnboardingSurveyGate {
         if (remoteConfig.stepEnabled(RemoteConfigKeys.ONBOARDING_PLATFORM_SELECTION_ENABLED)) {
             add(OnboardingSurveyStep.PLATFORM)
         }
+        if (remoteConfig.stepEnabled(RemoteConfigKeys.ONBOARDING_AI_LEVEL_ENABLED)) {
+            add(OnboardingSurveyStep.AI_LEVEL)
+        }
     }
 
     fun isAnyEnabled(remoteConfig: RemoteConfig): Boolean = enabledSteps(remoteConfig).isNotEmpty()

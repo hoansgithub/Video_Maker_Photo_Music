@@ -600,4 +600,34 @@
     <string name="retention_dialog_subtitle">لا تغادر الآن — شيء رائع على وشك الحدوث.</string>
     <string name="retention_dialog_close">إغلاق</string>
     <string name="retention_dialog_stay">ابقَ</string>
+
+    <!-- Onboarding survey & asset picker -->
+    <string name="ai_level_title">اختر أسلوب الإبداع الخاص بك</string>
+    <string name="ai_level_light_touch_title">لمسة خفيفة</string>
+    <string name="ai_level_light_touch_banner">حافظ على المظهر الطبيعي.\nتبدو مثل نفسك، لكن بشكل أفضل</string>
+    <string name="ai_level_deep_swap_title">تبديل عميق</string>
+    <string name="ai_level_deep_swap_banner">ادفع الإبداع إلى أبعد حد.\nكن أي شخص، وجرّب أي شيء.</string>
+    <string name="content_exclusive_title">صفِّ موسيقاك\nوقوالبك</string>
+    <string name="content_exclusive_family_title">مناسب للعائلة</string>
+    <string name="content_exclusive_family_subtitle">حظر الكلمات الصريحة والرقص الجريء.</string>
+    <string name="content_exclusive_unfiltered_title">بدون تصفية</string>
+    <string name="content_exclusive_unfiltered_subtitle">عرض جميع الفيديوهات الرائجة والمواضيع للبالغين.</string>
+    <string name="genre_step_title">ما نوع الموسيقى التي تحبها؟</string>
+    <string name="genre_step_subtitle">تساعدنا هذه الخطوة على اقتراح موسيقى أفضل لك. لن تؤثر على المحتوى المخصص لك.</string>
+    <string name="media_privacy_title">اختر إعداد خصوصية\nالصور الخاص بك</string>
+    <string name="media_privacy_private_title">الوضع الخاص</string>
+    <string name="media_privacy_private_subtitle">احذف صوري بعد كل عملية إنشاء. الأفضل لأقصى درجات الخصوصية.</string>
+    <string name="media_privacy_quick_title">إعادة إنشاء سريعة</string>
+    <string name="media_privacy_quick_subtitle">احفظ ملفي الشخصي لإنشاء أسرع في المستقبل. أنشئ فيديوهات جديدة بنقرة واحدة.</string>
+    <string name="personalizing_title">جارٍ تخصيص تجربتك…</string>
+    <string name="personalizing_subtitle">يرجى الانتظار قليلاً بينما نحضّر لك قوالب الأنماط المثالية.</string>
+    <string name="picker_add_more_ideal">أضف %d صورة أخرى لإنشاء فيديو ~15 ثانية جاهز للمشاركة.</string>
+    <string name="picker_add_photos">إضافة صور</string>
+    <string name="picker_count_badge">x%d</string>
+    <string name="picker_max_reached">لقد وصلت إلى الحد الأقصى وهو %d صورة.</string>
+    <string name="picker_more_photos_longer">المزيد من الصور، فيديو أطول (بحد أقصى %d)</string>
+    <string name="template_pick_title">ما نمط القالب الذي تفضله؟</string>
+    <string name="template_pick_subtitle">اختر نمط قالب ودعنا نتولى الانتقالات والتأثيرات نيابةً عنك. لن تؤثر هذه الخطوة على المحتوى المخصص لك.</string>
+    <string name="error_data_load_failed">تعذّر تحميل البيانات المطلوبة. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.</string>
+    <string name="quality_ad_not_available">الإعلان غير متاح حالياً. يرجى المحاولة لاحقاً أو اختيار جودة أقل.</string>
 </resources>

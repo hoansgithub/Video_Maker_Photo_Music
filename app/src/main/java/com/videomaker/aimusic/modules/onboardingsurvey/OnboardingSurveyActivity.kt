@@ -132,6 +132,10 @@ class OnboardingSurveyActivity : AppCompatActivity() {
     @Composable
     private fun SurveyStep(step: OnboardingSurveyStep) {
         val adClickDetector: AdClickDetector = koinInject()
+        if (step == OnboardingSurveyStep.AI_LEVEL) {
+            AiLevelStep(adClickDetector = adClickDetector)
+            return
+        }
         val config = remember(step) { configFor(step) }
         val density = LocalDensity.current
         val scope = rememberCoroutineScope()
@@ -429,16 +433,135 @@ class OnboardingSurveyActivity : AppCompatActivity() {
         LaunchedEffect(step) {
             when (step) {
                 OnboardingSurveyStep.FEATURE -> {
-                    if (OnboardingSurveyStep.PLATFORM in viewModel.enabledSteps) {
-                        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SOCIAL)
+                    when {
+                        OnboardingSurveyStep.PLATFORM in viewModel.enabledSteps ->
+                            VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SOCIAL)
+                        OnboardingSurveyStep.AI_LEVEL in viewModel.enabledSteps ->
+                            VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL)
+                        else -> {
+                            VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
+                            VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
+                        }
+                    }
+                }
+                OnboardingSurveyStep.PLATFORM -> {
+                    if (OnboardingSurveyStep.AI_LEVEL in viewModel.enabledSteps) {
+                        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL)
                     } else {
                         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
                         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
                     }
                 }
-                OnboardingSurveyStep.PLATFORM -> {
+                OnboardingSurveyStep.AI_LEVEL -> {
                     VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
                     VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun AiLevelStep(adClickDetector: AdClickDetector) {
+        val density = LocalDensity.current
+        val selectedIds by viewModel.selectedAiLevel.collectAsStateWithLifecycle()
+        // No pre-selection: empty string means nothing is selected (no item highlighted).
+        val selectedId = selectedIds.firstOrNull().orEmpty()
+
+        var bottomSectionHeight by remember { mutableStateOf(0) }
+        val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
+
+        // Dual-ad swap: show the primary native until the user taps a selection, then
+        // (after a 0.5s IAB viewability delay) swap to the ALT placement.
+        var aiLevelTapped by remember { mutableStateOf(false) }
+        var aiLevelAltActive by remember { mutableStateOf(false) }
+        LaunchedEffect(aiLevelTapped) {
+            if (aiLevelTapped && !aiLevelAltActive) {
+                delay(500)
+                aiLevelAltActive = true
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            Analytics.track(name = OnboardingSurveyAnalytics.EVENT_AI_LEVEL_RENDER)
+        }
+
+        Column(
+            modifier = Modifier
+                .statusBarsPadding()
+                .fillMaxSize()
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                AiLevelScreen(
+                    items = AI_LEVEL_ITEMS,
+                    selectedId = selectedId,
+                    onSelect = { id ->
+                        viewModel.selectAiLevel(id)
+                        aiLevelTapped = true
+                        Analytics.track(
+                            name = OnboardingSurveyAnalytics.EVENT_AI_LEVEL_SELECT,
+                            params = mapOf(OnboardingSurveyAnalytics.PARAM_AI_LEVEL to id),
+                        )
+                    },
+                    bottomPaddingDp = bottomPaddingDp,
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomEnd)
+                        .then(
+                            if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
+                            else Modifier
+                        )
+                        .clickableSingle { }
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.img_bg_cta_onboard),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize(),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(top = 10.dp, bottom = 12.dp)
+                    ) {
+                        OnboardingCtaButton(
+                            text = stringResource(R.string.onboarding_next),
+                            onClick = {
+                                Analytics.track(
+                                    name = OnboardingSurveyAnalytics.EVENT_AI_LEVEL_NEXT,
+                                    params = mapOf(OnboardingSurveyAnalytics.PARAM_AI_LEVEL to selectedId),
+                                )
+                                viewModel.onNext()
+                            },
+                            enabled = selectedIds.isNotEmpty(),
+                            color = Primary,
+                            icon = R.drawable.ic_right_arrow,
+                        )
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = bottomPaddingDp)
+                    .onSizeChanged { size ->
+                        if (size.height > bottomSectionHeight) bottomSectionHeight = size.height
+                    }
+            ) {
+                val aiLevelPlacement =
+                    if (aiLevelAltActive) AdPlacement.NATIVE_ONBOARDING_AI_LEVEL_ALT
+                    else AdPlacement.NATIVE_ONBOARDING_AI_LEVEL
+                // key(placement) remounts NativeAdView on swap so it resets its load state.
+                key(aiLevelPlacement) {
+                    NativeAdView(
+                        placement = aiLevelPlacement,
+                        modifier = Modifier.fillMaxWidth(),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
                 }
             }
         }

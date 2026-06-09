@@ -607,4 +607,32 @@
     <string name="retention_dialog_subtitle">ಈಗ ಹೋಗಬೇಡಿ — ಅದ್ಭುತವಾದದ್ದು ನಡೆಯಲಿದೆ.</string>
     <string name="retention_dialog_close">ಮುಚ್ಚಿ</string>
     <string name="retention_dialog_stay">ಉಳಿಯಿರಿ</string>
+
+    <!-- Onboarding survey & asset picker -->
+    <string name="ai_level_title">ನಿಮ್ಮ ಸೃಷ್ಟಿ ಶೈಲಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="ai_level_light_touch_title">ಲಘು ಸ್ಪರ್ಶ</string>
+    <string name="ai_level_light_touch_banner">ಸಹಜವಾಗಿರಿಸಿ.\nನೀವಂತೆಯೇ ಕಾಣಿರಿ, ಸ್ವಲ್ಪ ಉತ್ತಮವಾಗಿ</string>
+    <string name="ai_level_deep_swap_title">ಡೀಪ್ ಸ್ವ್ಯಾಪ್</string>
+    <string name="ai_level_deep_swap_banner">ಸೃಜನಶೀಲತೆಯನ್ನು ಮತ್ತಷ್ಟು ಮುಂದೆ ಕೊಂಡೊಯ್ಯಿರಿ.\nಯಾರೇ ಆಗಿರಿ, ಏನನ್ನೂ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="content_exclusive_title">ನಿಮ್ಮ ಸಂಗೀತ ಮತ್ತು\nಟೆಂಪ್ಲೇಟ್ ಫೀಡ್ ಫಿಲ್ಟರ್ ಮಾಡಿ</string>
+    <string name="content_exclusive_family_title">ಕುಟುಂಬ ಸ್ನೇಹಿ</string>
+    <string name="content_exclusive_family_subtitle">ಅಶ್ಲೀಲ ಸಾಹಿತ್ಯ ಮತ್ತು ಆಕ್ರಮಣಕಾರಿ ನೃತ್ಯವನ್ನು ನಿರ್ಬಂಧಿಸಿ.</string>
+    <string name="content_exclusive_unfiltered_title">ಫಿಲ್ಟರ್ ಇಲ್ಲದೆ</string>
+    <string name="content_exclusive_unfiltered_subtitle">ಎಲ್ಲಾ ಟ್ರೆಂಡಿಂಗ್ ವೀಡಿಯೊಗಳು ಮತ್ತು ವಯಸ್ಕ ವಿಷಯಗಳನ್ನು ತೋರಿಸಿ.</string>
+    <string name="genre_step_title">ನಿಮಗೆ ಯಾವ ಸಂಗೀತ ಇಷ್ಟ?</string>
+    <string name="genre_step_subtitle">ಈ ಹಂತವು ನಿಮಗೆ ಉತ್ತಮ ಸಂಗೀತವನ್ನು ಸೂಚಿಸಲು ನಮಗೆ ಸಹಾಯ ಮಾಡುತ್ತದೆ. ಇದು ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ವಿಷಯದ ಮೇಲೆ ಪರಿಣಾಮ ಬೀರುವುದಿಲ್ಲ.</string>
+    <string name="media_privacy_title">ನಿಮ್ಮ ಫೋಟೋ ಗೌಪ್ಯತೆ\nಸೆಟ್ಟಿಂಗ್ ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="media_privacy_private_title">ಖಾಸಗಿ ಮೋಡ್</string>
+    <string name="media_privacy_private_subtitle">ಪ್ರತಿ ಸೃಷ್ಟಿಯ ನಂತರ ನನ್ನ ಫೋಟೋಗಳನ್ನು ಅಳಿಸಿ. ಗರಿಷ್ಠ ಗೌಪ್ಯತೆಗೆ ಉತ್ತಮ.</string>
+    <string name="media_privacy_quick_title">ತ್ವರಿತ ಮರುಸೃಷ್ಟಿ</string>
+    <string name="media_privacy_quick_subtitle">ಭವಿಷ್ಯದ ವೇಗದ ಸೃಷ್ಟಿಗಾಗಿ ನನ್ನ ಪ್ರೊಫೈಲ್ ಉಳಿಸಿ. 1 ಟ್ಯಾಪ್‌ನಲ್ಲಿ ಹೊಸ ವೀಡಿಯೊಗಳನ್ನು ರಚಿಸಿ.</string>
+    <string name="personalizing_title">ನಿಮ್ಮ ಅನುಭವವನ್ನು ವೈಯಕ್ತೀಕರಿಸಲಾಗುತ್ತಿದೆ…</string>
+    <string name="personalizing_subtitle">ನಾವು ನಿಮಗಾಗಿ ಪರಿಪೂರ್ಣ ಶೈಲಿ ಟೆಂಪ್ಲೇಟ್‌ಗಳನ್ನು ಸಿದ್ಧಪಡಿಸುವವರೆಗೆ ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ಕಾಯಿರಿ.</string>
+    <string name="picker_add_more_ideal">ಸಾಮಾಜಿಕ-ಸಿದ್ಧ ~15 ಸೆಕೆಂಡ್ ವೀಡಿಯೊ ರಚಿಸಲು ಇನ್ನೂ %d ಫೋಟೋಗಳನ್ನು ಸೇರಿಸಿ.</string>
+    <string name="picker_add_photos">ಫೋಟೋಗಳನ್ನು ಸೇರಿಸಿ</string>
+    <string name="picker_count_badge">x%d</string>
+    <string name="picker_max_reached">ನೀವು ಗರಿಷ್ಠ %d ಫೋಟೋಗಳನ್ನು ತಲುಪಿದ್ದೀರಿ.</string>
+    <string name="picker_more_photos_longer">ಹೆಚ್ಚು ಫೋಟೋಗಳು, ಉದ್ದದ ವೀಡಿಯೊ (ಗರಿಷ್ಠ %d)</string>
+    <string name="template_pick_title">ನೀವು ಯಾವ ಟೆಂಪ್ಲೇಟ್ ಶೈಲಿಯನ್ನು ಇಷ್ಟಪಡುತ್ತೀರಿ?</string>
+    <string name="template_pick_subtitle">ಒಂದು ಟೆಂಪ್ಲೇಟ್ ಶೈಲಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ ಮತ್ತು ಪರಿವರ್ತನೆಗಳು ಹಾಗೂ ಪರಿಣಾಮಗಳನ್ನು ನಮಗೆ ಬಿಡಿ. ಈ ಹಂತವು ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ವಿಷಯದ ಮೇಲೆ ಪರಿಣಾಮ ಬೀರುವುದಿಲ್ಲ.</string>
 </resources>

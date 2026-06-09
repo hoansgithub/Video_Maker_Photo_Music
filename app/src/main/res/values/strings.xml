@@ -2,8 +2,8 @@
     <string name="app_name">Muvio Video Maker</string>
 
     <!-- Facebook SDK (Analytics only) -->
-    <string name="facebook_app_id">2394935491027358</string>
-    <string name="facebook_client_token">59adbbae92079f20f43d002f331d8e9d</string>
+    <string name="facebook_app_id" translatable="false">2394935491027358</string>
+    <string name="facebook_client_token" translatable="false">59adbbae92079f20f43d002f331d8e9d</string>
 
     <!-- Loading -->
     <string name="loading">Loading…</string>
@@ -598,6 +598,27 @@
     <string name="personalizing_subtitle">Please wait a moment while we prepare the perfect style templates for you.</string>
     <string name="template_pick_title">What template style do you prefer?</string>
     <string name="template_pick_subtitle">Pick a template style and let us handle the transitions and effects for you. This step won’t affect your personalized content.</string>
+
+    <!-- AI_LEVEL (creation style) -->
+    <string name="ai_level_title">Choose your creation style</string>
+    <string name="ai_level_light_touch_title">Light Touch</string>
+    <string name="ai_level_light_touch_banner">Keep it authentic.\nLook like you, just better</string>
+    <string name="ai_level_deep_swap_title">Deep Swap</string>
+    <string name="ai_level_deep_swap_banner">Push creativity further.\nBecome anyone, try anything.</string>
+
+    <!-- CONTENT_EXCLUSIVE (content filter) -->
+    <string name="content_exclusive_title">Filter your music and\ntemplate feed</string>
+    <string name="content_exclusive_family_title">Family Friendly</string>
+    <string name="content_exclusive_family_subtitle">Block explicit lyrics and aggressive dancing.</string>
+    <string name="content_exclusive_unfiltered_title">Unfiltered</string>
+    <string name="content_exclusive_unfiltered_subtitle">Show all trending videos and mature themes.</string>
+
+    <!-- MEDIA_PRIVACY (photo privacy) -->
+    <string name="media_privacy_title">Choose your photo\nprivacy setting</string>
+    <string name="media_privacy_private_title">Private Mode</string>
+    <string name="media_privacy_private_subtitle">Delete my photos after each creation. Best for maximum privacy.</string>
+    <string name="media_privacy_quick_title">Quick Remake</string>
+    <string name="media_privacy_quick_subtitle">Save my profile for faster future creations. Create new videos in 1 tap.</string>
 
     <!-- Welcome Back Screen -->
     <string name="welcome_back_title">Welcome back!</string>
