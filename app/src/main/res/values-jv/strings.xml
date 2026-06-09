@@ -59,10 +59,6 @@
     <string name="onboarding_page3_title">Bebarengan Luwih Apik!</string>
     <string name="onboarding_page3_subtitle">Bebarengan luwih apik. Undang kanca kanggo nuduhake seneng</string>
     <string name="onboarding_swipe_next">Geser menyang selajengipun</string>
-    <string name="onboarding_exit_title">Metu saka Setup?</string>
-    <string name="onboarding_exit_message">Sampeyan bisa ngganti preferensi mengko ing Setelan.</string>
-    <string name="onboarding_exit_confirm">Metu</string>
-    <string name="onboarding_exit_dismiss">Lanjutake</string>
     <string name="root_no_internet_title">Ora Ana Koneksi Internet</string>
     <string name="root_no_internet_message">Piranti sampeyan saiki offline. Sambung maneh kanggo nerusake kemajuan</string>
     <string name="root_try_again">Coba Maneh</string>

@@ -59,10 +59,6 @@
     <string name="onboarding_page3_title">Tare Mafi Kyau!</string>
     <string name="onboarding_page3_subtitle">Tare mafi kyau. Gayyaci abokai don raba jin daɗi</string>
     <string name="onboarding_swipe_next">Murɗa zuwa na gaba</string>
-    <string name="onboarding_exit_title">Fita daga Saiti?</string>
-    <string name="onboarding_exit_message">Kuna iya canza fifikon ku daga baya a Saiti.</string>
-    <string name="onboarding_exit_confirm">Fita</string>
-    <string name="onboarding_exit_dismiss">Ci gaba</string>
     <string name="root_no_internet_title">Babu Haɗin Intanet</string>
     <string name="root_no_internet_message">Na\'urar ku tana offline yanzu. Da fatan a sake haɗa don ci gaba da ci gaban ku</string>
     <string name="root_try_again">Sake gwadawa</string>

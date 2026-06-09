@@ -59,10 +59,6 @@
     <string name="onboarding_page3_title">একসাথে আরও ভালো!</string>
     <string name="onboarding_page3_subtitle">একসাথে আরও ভালো। বন্ধুদের আমন্ত্রণ জানান মজা ভাগ করতে</string>
     <string name="onboarding_swipe_next">পরবর্তীতে সোয়াইপ করুন</string>
-    <string name="onboarding_exit_title">সেটআপ থেকে বের হবেন?</string>
-    <string name="onboarding_exit_message">আপনি পরে সেটিংসে পছন্দ পরিবর্তন করতে পারবেন।</string>
-    <string name="onboarding_exit_confirm">বের হন</string>
-    <string name="onboarding_exit_dismiss">চালিয়ে যান</string>
     <string name="root_no_internet_title">ইন্টারনেট সংযোগ নেই</string>
     <string name="root_no_internet_message">আপনার ডিভাইস বর্তমানে অফলাইনে আছে। অগ্রগতি চালিয়ে যেতে পুনরায় সংযুক্ত হন</string>
     <string name="root_try_again">আবার চেষ্টা করুন</string>

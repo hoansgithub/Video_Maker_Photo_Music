@@ -59,10 +59,6 @@
     <string name="onboarding_page3_title">Babarengan Leuwih Hadé!</string>
     <string name="onboarding_page3_subtitle">Babarengan leuwih hadé. Ajak babaturan pikeun babarengan senang</string>
     <string name="onboarding_swipe_next">Geser ka salajengna</string>
-    <string name="onboarding_exit_title">Kaluar tina Setup?</string>
-    <string name="onboarding_exit_message">Anjeun tiasa ngarobah preferensi engké dina Setelan.</string>
-    <string name="onboarding_exit_confirm">Kaluar</string>
-    <string name="onboarding_exit_dismiss">Lajengkeun</string>
     <string name="root_no_internet_title">Teu Aya Sambungan Internet</string>
     <string name="root_no_internet_message">Alat anjeun ayeuna offline. Punten sambungkeun deui pikeun neruskeun kamajuan</string>
     <string name="root_try_again">Cobaan Deui</string>

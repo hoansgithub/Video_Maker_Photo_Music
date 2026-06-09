@@ -93,6 +93,9 @@ class TrendingPopupCoordinator(
     private val _activeTab = MutableStateFlow<TrendingPopupTab?>(null)
     val activeTab: StateFlow<TrendingPopupTab?> = _activeTab.asStateFlow()
 
+    /** Tracks which tabs have already had their popup ad preloaded this session. */
+    private val preloadedThisSession = mutableSetOf<TrendingPopupTab>()
+
     private val _navigationEvent = Channel<TrendingPopupNavEvent>(Channel.BUFFERED)
     val navigationEvent = _navigationEvent.receiveAsFlow()
 
@@ -129,11 +132,13 @@ class TrendingPopupCoordinator(
         _activeTab.value = tab
         snapshotStore.incrementFocusCount(tab)
 
-        // Preload the popup ad one visit ahead: when focusCount reaches 1 (first visit),
-        // the popup won't fire yet (needs >= 2), but if the gate conditions pass,
-        // the next visit will show it. Preloading now ensures the ad is ready.
-        if (snapshotStore.getFocusCount(tab) == 1) {
+        // First tab focus each session: preload the ad but skip showing.
+        // Second+ focus: the ad is ready, so evaluate and show the popup.
+        // Uses an in-memory set (not persisted) so it resets on every app relaunch.
+        if (tab !in preloadedThisSession) {
+            preloadedThisSession.add(tab)
             maybePreloadAdForNextVisit(tab)
+            return
         }
 
         scope.launch { evaluateAndMaybeShow(tab) }

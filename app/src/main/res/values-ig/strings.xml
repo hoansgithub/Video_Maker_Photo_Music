@@ -60,10 +60,6 @@
     <string name="onboarding_page3_title">Mma Ọ Bụ Ọnụ!</string>
     <string name="onboarding_page3_subtitle">Mma ọ bụ ọnụ. Kpọọ ndị enyi ị bụrụ ọchị</string>
     <string name="onboarding_swipe_next">Kụọ aka gaa n\'ihu</string>
-    <string name="onboarding_exit_title">Pụọ na Nchịkwa?</string>
-    <string name="onboarding_exit_message">Ị nwere ike ịgbanwe nhọrọ gị mgbe ọ bụla ka emeso n\'ime Ntọala.</string>
-    <string name="onboarding_exit_confirm">Pụọ</string>
-    <string name="onboarding_exit_dismiss">Gaa n\'ihu</string>
     <string name="root_no_internet_title">Enweghị Njikọ Internet</string>
     <string name="root_no_internet_message">Ngwaọrụ gị adịghị n\'ịntanetị ugbu a. Biko jikọọ ọzọ ị gagharị ịgagharị</string>
     <string name="root_try_again">Nwaa Ọzọ</string>

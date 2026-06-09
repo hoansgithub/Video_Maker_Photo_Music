@@ -59,10 +59,6 @@
     <string name="onboarding_page3_title">Papọ̀ Dára Jù!</string>
     <string name="onboarding_page3_subtitle">Papọ̀ dára jù. Pe àwọn ọ̀rẹ́ láti pín igbádùn</string>
     <string name="onboarding_swipe_next">Fàwọ́n sí ìsàlẹ̀</string>
-    <string name="onboarding_exit_title">Jáde kúrò ní Ìpìlẹ̀?</string>
-    <string name="onboarding_exit_message">O lè yí àwọn aṣàyàn rẹ padà lẹ́yìn nínú Ìtọ́sọ́nà.</string>
-    <string name="onboarding_exit_confirm">Jáde</string>
-    <string name="onboarding_exit_dismiss">Tẹ̀síwájú</string>
     <string name="root_no_internet_title">Kò Sí Ìsopọ̀ Íńtánẹ́ẹ̀tì</string>
     <string name="root_no_internet_message">Ẹ̀rọ rẹ wà lórí offline ní báyìí. Jọwọ tún sopọ̀ láti tẹ̀síwájú pẹ̀lú ìlọsíwájú rẹ</string>
     <string name="root_try_again">Gbìyànjú Lẹ́ẹ̀kan Sí</string>

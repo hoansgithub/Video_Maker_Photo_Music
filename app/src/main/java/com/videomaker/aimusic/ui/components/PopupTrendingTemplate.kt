@@ -71,7 +71,7 @@ fun PopupTrendingTemplate(
     Dialog(
         onDismissRequest = {
         },
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
     ) {
         Column(
             modifier = Modifier

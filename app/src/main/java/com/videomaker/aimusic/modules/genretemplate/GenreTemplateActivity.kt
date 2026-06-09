@@ -116,9 +116,9 @@ class GenreTemplateActivity : AppCompatActivity() {
                 BackHandler { showExitDialog = true }
 
                 if (showExitDialog) {
-                    com.videomaker.aimusic.modules.onboarding.OnboardingExitDialog(
-                        onExit = { finish() },
-                        onDismiss = { showExitDialog = false }
+                    com.videomaker.aimusic.ui.components.RetentionDialog(
+                        onClose = { finish() },
+                        onStay = { showExitDialog = false }
                     )
                 }
 

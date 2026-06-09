@@ -59,10 +59,6 @@
     <string name="onboarding_page3_title">ಒಟ್ಟಿಗೆ ಉತ್ತಮ!</string>
     <string name="onboarding_page3_subtitle">ಒಟ್ಟಿಗೆ ಉತ್ತಮ. ಸ್ನೇಹಿತರನ್ನು ಮೋಜು ಹಂಚಿಕೊಳ್ಳಲು ಆಹ್ವಾನಿಸಿ</string>
     <string name="onboarding_swipe_next">ಮುಂದೆ ಸ್ವೈಪ್ ಮಾಡಿ</string>
-    <string name="onboarding_exit_title">ಸೆಟಪ್ ತೊರೆಯುವಿರಾ?</string>
-    <string name="onboarding_exit_message">ನೀವು ನಂತರ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಆದ್ಯತೆಗಳನ್ನು ಬದಲಾಯಿಸಬಹುದು.</string>
-    <string name="onboarding_exit_confirm">ತೊರೆಯಿರಿ</string>
-    <string name="onboarding_exit_dismiss">ಮುಂದುವರಿಯಿರಿ</string>
     <string name="root_no_internet_title">ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಇಲ್ಲ</string>
     <string name="root_no_internet_message">ನಿಮ್ಮ ಸಾಧನ ಪ್ರಸ್ತುತ ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದೆ. ಮುಂದುವರಿಯಲು ಮರುಸಂಪರ್ಕಿಸಿ</string>
     <string name="root_try_again">ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ</string>

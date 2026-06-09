@@ -59,10 +59,6 @@
     <string name="onboarding_page3_title">Gemeinsam besser!</string>
     <string name="onboarding_page3_subtitle">Gemeinsam besser. Lade Freunde ein, den Spaß zu teilen</string>
     <string name="onboarding_swipe_next">Weiter wischen</string>
-    <string name="onboarding_exit_title">Setup verlassen?</string>
-    <string name="onboarding_exit_message">Du kannst deine Einstellungen später in den Einstellungen ändern.</string>
-    <string name="onboarding_exit_confirm">Verlassen</string>
-    <string name="onboarding_exit_dismiss">Weiter</string>
     <string name="root_no_internet_title">Keine Internetverbindung</string>
     <string name="root_no_internet_message">Dein Gerät ist derzeit offline. Bitte stelle die Verbindung wieder her, um fortzufahren</string>
     <string name="root_try_again">Erneut versuchen</string>

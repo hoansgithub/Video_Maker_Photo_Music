@@ -55,10 +55,6 @@
     <string name="onboarding_page3_title">Tuyệt Hơn Khi Cùng Nhau!</string>
     <string name="onboarding_page3_subtitle">Tuyệt hơn khi cùng nhau. Mời bạn bè của bạn để chia sẻ niềm vui.</string>
     <string name="onboarding_swipe_next">Vuốt để tiếp tục</string>
-    <string name="onboarding_exit_title">Thoát khỏi cài đặt?</string>
-    <string name="onboarding_exit_message">Bạn luôn có thể thay đổi tùy chọn sau trong Cài đặt.</string>
-    <string name="onboarding_exit_confirm">Thoát</string>
-    <string name="onboarding_exit_dismiss">Tiếp tục</string>
     <string name="root_no_internet_title">Không Có Kết Nối Internet</string>
     <string name="root_no_internet_message">Thiết bị của bạn đang ngoại tuyến. Vui lòng kết nối lại để tiếp tục.</string>
     <string name="root_try_again">Thử Lại</string>
