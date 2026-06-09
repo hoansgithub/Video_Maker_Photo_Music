@@ -796,11 +796,11 @@ class AdPlacementConfigService(
         // In-feed placement that blends with song list items
         // Position: 4th position (index 3), or last if < 3 items
         // Persists through genre chip tag filtering
-        // Layout: native_small_row (horizontal row, matches song items)
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
         // Waterfall: Primary unit -> Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_SONGS_STATION,
-            layoutName = "native_small_row",
+            layoutName = "native_big_bait",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/2115862172",  // Primary
                 "ca-app-pub-7121075950716954/3794255449"   // Secondary

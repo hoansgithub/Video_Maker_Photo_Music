@@ -709,11 +709,10 @@ object AdPlacement {
      * Position: 4th position (index 3), or last position if total items < 3.
      * Persists through genre chip tag filtering.
      *
-     * Layout: native_small_row (horizontal row, matches song list items)
-     * - Media view on left (ad creative)
-     * - Headline + body text in center
-     * - CTA button on right
-     * - Blends with song list items
+     * Layout: native_big_bait (large vertical layout with clickbait CTA)
+     * - Media view at top
+     * - Headline + body text below
+     * - CTA button at bottom
      *
      * Ad units (priority order):
      * - Primary: ca-app-pub-7121075950716954/2115862172
