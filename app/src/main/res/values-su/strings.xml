@@ -631,4 +631,11 @@
     <string name="picker_more_photos_longer">Langkung seueur foto, vidéo langkung panjang (Maks %d)</string>
     <string name="template_pick_title">Gaya témplat naon nu anjeun pikaresep?</string>
     <string name="template_pick_subtitle">Pilih gaya témplat sareng antep kami ngurus transisi sareng éfékna pikeun anjeun. Léngkah ieu moal mangaruhan kontén anu dipersonalisasi.</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">LAGU HITS</string>
+    <string name="banner_featured">UNGGULAN</string>
+    <string name="banner_trending_now">KEUR NGETREN</string>
+    <string name="banner_new_arrivals">PANGANYARNA</string>
+
 </resources>

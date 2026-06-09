@@ -626,4 +626,11 @@
     <string name="template_pick_subtitle">Pilih gaya template dan biarkan kami mengurus transisi serta efeknya untukmu. Langkah ini tidak akan memengaruhi konten yang dipersonalisasi.</string>
     <string name="error_data_load_failed">Gagal memuat data yang diperlukan. Periksa koneksi internetmu dan coba lagi.</string>
     <string name="quality_ad_not_available">Iklan tidak tersedia saat ini. Coba lagi nanti atau pilih kualitas yang lebih rendah.</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">LAGU HITS</string>
+    <string name="banner_featured">UNGGULAN</string>
+    <string name="banner_trending_now">SEDANG TREN</string>
+    <string name="banner_new_arrivals">TERBARU</string>
+
 </resources>

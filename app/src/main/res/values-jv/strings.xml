@@ -631,4 +631,11 @@
     <string name="picker_more_photos_longer">Luwih akeh foto, video luwih dawa (Maks %d)</string>
     <string name="template_pick_title">Gaya template apa sing kok senengi?</string>
     <string name="template_pick_subtitle">Pilih gaya template lan aku sing ngurus transisi lan efeke kanggo kowe. Langkah iki ora bakal mengaruhi konten sing dipersonalisasi.</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">LAGU HITS</string>
+    <string name="banner_featured">UNGGULAN</string>
+    <string name="banner_trending_now">LAGI NGETREN</string>
+    <string name="banner_new_arrivals">PALING ANYAR</string>
+
 </resources>

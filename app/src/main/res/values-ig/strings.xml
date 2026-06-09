@@ -632,4 +632,11 @@
     <string name="picker_more_photos_longer">Foto ka ọtụtụ, vidiyo ka ogologo (Oke %d)</string>
     <string name="template_pick_title">Kedu ụdị template ị na-ahọrọ?</string>
     <string name="template_pick_subtitle">Họrọ ụdị template ma hapụ anyị ka anyị lekọta mgbanwe na mmetụta maka gị. Nzọụkwụ a agaghị emetụta ọdịnaya ahaziri maka gị.</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">EGWU NA-EWU EWU</string>
+    <string name="banner_featured">PỤRỤ IICHE</string>
+    <string name="banner_trending_now">NA-EWU EWU UGBU A</string>
+    <string name="banner_new_arrivals">OHURU</string>
+
 </resources>

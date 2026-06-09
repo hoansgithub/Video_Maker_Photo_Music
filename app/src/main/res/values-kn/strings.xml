@@ -631,4 +631,11 @@
     <string name="picker_more_photos_longer">ಹೆಚ್ಚು ಫೋಟೋಗಳು, ಉದ್ದದ ವೀಡಿಯೊ (ಗರಿಷ್ಠ %d)</string>
     <string name="template_pick_title">ನೀವು ಯಾವ ಟೆಂಪ್ಲೇಟ್ ಶೈಲಿಯನ್ನು ಇಷ್ಟಪಡುತ್ತೀರಿ?</string>
     <string name="template_pick_subtitle">ಒಂದು ಟೆಂಪ್ಲೇಟ್ ಶೈಲಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ ಮತ್ತು ಪರಿವರ್ತನೆಗಳು ಹಾಗೂ ಪರಿಣಾಮಗಳನ್ನು ನಮಗೆ ಬಿಡಿ. ಈ ಹಂತವು ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ವಿಷಯದ ಮೇಲೆ ಪರಿಣಾಮ ಬೀರುವುದಿಲ್ಲ.</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">ಹಿಟ್ ಹಾಡು</string>
+    <string name="banner_featured">ವೈಶಿಷ್ಟ್ಯ</string>
+    <string name="banner_trending_now">ಈಗ ಟ್ರೆಂಡಿಂಗ್</string>
+    <string name="banner_new_arrivals">ಹೊಸ ಆಗಮನ</string>
+
 </resources>

@@ -631,4 +631,11 @@
     <string name="picker_more_photos_longer">Àwọn fọ́tò púpọ̀ sí i, fídíò gígùn (Òpin %d)</string>
     <string name="template_pick_title">Ọ̀nà àwòṣe wo ló wù ọ́?</string>
     <string name="template_pick_subtitle">Yan ọ̀nà àwòṣe kí o sì jẹ́ kí a bójú tó àwọn ìyípadà àti ipa fún ọ. Ìgbésẹ̀ yìí kò ní nípa lórí àkóónú tí a ṣe àkànṣe fún ọ.</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">ORIN OLÓKIKÌ</string>
+    <string name="banner_featured">ÀYÀNFẸ́</string>
+    <string name="banner_trending_now">ORIN TÓ GBÀJÚMỌ̀</string>
+    <string name="banner_new_arrivals">TÓ ṢẸ̀ṢẸ̀ DÉ</string>
+
 </resources>

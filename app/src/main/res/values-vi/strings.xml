@@ -625,4 +625,11 @@
     <string name="template_pick_subtitle">Chọn một phong cách mẫu và để chúng tôi xử lý các hiệu ứng chuyển cảnh cho bạn. Bước này sẽ không ảnh hưởng đến nội dung cá nhân hóa của bạn.</string>
     <string name="error_data_load_failed">Không tải được dữ liệu cần thiết. Vui lòng kiểm tra kết nối internet và thử lại.</string>
     <string name="quality_ad_not_available">Quảng cáo hiện không khả dụng. Vui lòng thử lại sau hoặc chọn chất lượng thấp hơn.</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">NHẠC HOT</string>
+    <string name="banner_featured">NỔI BẬT</string>
+    <string name="banner_trending_now">ĐANG THỊNH HÀNH</string>
+    <string name="banner_new_arrivals">MỚI RA MẮT</string>
+
 </resources>

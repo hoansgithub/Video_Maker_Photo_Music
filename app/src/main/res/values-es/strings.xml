@@ -626,4 +626,11 @@
     <string name="template_pick_subtitle">Elige un estilo de plantilla y déjanos encargarnos de las transiciones y los efectos. Este paso no afectará tu contenido personalizado.</string>
     <string name="error_data_load_failed">No se pudieron cargar los datos necesarios. Comprueba tu conexión a internet e inténtalo de nuevo.</string>
     <string name="quality_ad_not_available">El anuncio no está disponible en este momento. Inténtalo más tarde o elige una calidad inferior.</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">ÉXITO MUSICAL</string>
+    <string name="banner_featured">DESTACADO</string>
+    <string name="banner_trending_now">TENDENCIA AHORA</string>
+    <string name="banner_new_arrivals">NOVEDADES</string>
+
 </resources>
