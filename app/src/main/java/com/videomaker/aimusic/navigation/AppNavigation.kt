@@ -856,10 +856,11 @@ fun AppNavigation(
     // They must NOT overlay other routes (e.g. ConfirmUninstall) or the My Videos tab. The
     // popup's Showing state is preserved when the surface changes, so swiping/navigating away
     // hides it and returning to its own tab shows it again.
+    val isMusicPlayerActive by trendingPopupCoordinator.isMusicPlayerActive.collectAsStateWithLifecycle()
     val isHomeOnTop = backStack.lastOrNull() is AppRoute.Home
 
-    val isTemplatePopupVisible = isHomeOnTop && activePopupTab == TrendingPopupTab.GALLERY && templatePopupState is TrendingPopupState.Showing
-    val isSongPopupVisible = isHomeOnTop && activePopupTab == TrendingPopupTab.SONGS && songPopupState is TrendingPopupState.Showing
+    val isTemplatePopupVisible = isHomeOnTop && activePopupTab == TrendingPopupTab.GALLERY && templatePopupState is TrendingPopupState.Showing && !isMusicPlayerActive
+    val isSongPopupVisible = isHomeOnTop && activePopupTab == TrendingPopupTab.SONGS && songPopupState is TrendingPopupState.Showing && !isMusicPlayerActive
     val isTrendingPopupVisible = isTemplatePopupVisible || isSongPopupVisible
 
     LaunchedEffect(isTrendingPopupVisible) {

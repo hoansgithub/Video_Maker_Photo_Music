@@ -277,4 +277,31 @@ class TrendingPopupCoordinatorTest {
         assertEquals(TrendingPopupState.Hidden, coord.templatePopup.first())
         assertFalse(coord.isPopupEligible(TrendingPopupTab.GALLERY))
     }
+
+    @Test
+    fun `trending popup is blocked when music player is active`() = runBlocking {
+        val coord = coordinator()
+        coord.setMusicPlayerActive(true)
+
+        // Focus GALLERY twice
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+
+        assertEquals(TrendingPopupState.Hidden, coord.templatePopup.first())
+        assertFalse(coord.isPopupEligible(TrendingPopupTab.GALLERY))
+    }
+
+    @Test
+    fun `dismissing music player triggers evaluation and shows popup if eligible`() = runBlocking {
+        val coord = coordinator()
+        // Focus GALLERY twice, but it is blocked because music player is active
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        coord.setMusicPlayerActive(true)
+        coord.onTabFocused(TrendingPopupTab.GALLERY)
+        assertEquals(TrendingPopupState.Hidden, coord.templatePopup.first())
+
+        // Dismissing player (setting active to false) should trigger evaluation and show the popup
+        coord.setMusicPlayerActive(false)
+        assertTrue(coord.templatePopup.first() is TrendingPopupState.Showing)
+    }
 }
