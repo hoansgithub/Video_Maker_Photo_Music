@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -246,7 +247,8 @@ fun BannerSongStyle(
                     )
 
                     Text(
-                        text = if (style.style == 1) "HIT SONG" else "FEATURED",
+                        text = if (style.style == 1) stringResource(R.string.banner_hit_song)
+                        else stringResource(R.string.banner_featured),
                         color = if (style.style == 1) Color(0xFF056E94) else Color(0xFF5007C5),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.W700,
@@ -275,7 +277,7 @@ fun BannerSongStyle(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
-                    text = "Try it",
+                    text = stringResource(R.string.music_player_try_it),
                     color = Primary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.W600,

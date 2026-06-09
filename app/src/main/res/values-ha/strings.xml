@@ -631,4 +631,11 @@
     <string name="picker_more_photos_longer">Ƙarin hotuna, doguwar bidiyo (Iyaka %d)</string>
     <string name="template_pick_title">Wane salon template kake so?</string>
     <string name="template_pick_subtitle">Zaɓi salon template ka bar mu mu kula da sauyi da tasiri a gare ka. Wannan matakin ba zai shafi abubuwan da aka keɓe maka ba.</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">SHAHARARRIYAR WAƘA</string>
+    <string name="banner_featured">FITACCE</string>
+    <string name="banner_trending_now">MAI YADUWA YANZU</string>
+    <string name="banner_new_arrivals">SABBIN ZUWA</string>
+
 </resources>

@@ -626,4 +626,11 @@
     <string name="template_pick_subtitle">Pumili ng istilo ng template at kami na ang bahala sa mga transition at effect para sa iyo. Hindi maaapektuhan ng hakbang na ito ang iyong personalisadong content.</string>
     <string name="error_data_load_failed">Nabigong i-load ang kinakailangang data. Pakisuri ang iyong koneksyon sa internet at subukang muli.</string>
     <string name="quality_ad_not_available">Hindi available ang ad sa ngayon. Subukang muli mamaya o pumili ng mas mababang kalidad.</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">SIKAT NA KANTA</string>
+    <string name="banner_featured">TAMPOK</string>
+    <string name="banner_trending_now">USO NGAYON</string>
+    <string name="banner_new_arrivals">MGA BAGO</string>
+
 </resources>

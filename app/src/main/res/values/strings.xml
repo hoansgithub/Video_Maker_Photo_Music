@@ -634,4 +634,10 @@
     <string name="popup_premium_template">Premium Template</string>
     <string name="popup_try_it_now">Try it now</string>
 
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">HIT SONG</string>
+    <string name="banner_featured">FEATURED</string>
+    <string name="banner_trending_now">TRENDING NOW</string>
+    <string name="banner_new_arrivals">NEW ARRIVALS</string>
+
 </resources>

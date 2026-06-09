@@ -631,4 +631,11 @@
     <string name="picker_more_photos_longer">বেশি ছবি, দীর্ঘ ভিডিও (সর্বোচ্চ %d)</string>
     <string name="template_pick_title">আপনি কোন টেমপ্লেট স্টাইল পছন্দ করেন?</string>
     <string name="template_pick_subtitle">একটি টেমপ্লেট স্টাইল বেছে নিন এবং ট্রানজিশন ও ইফেক্ট আমাদের উপর ছেড়ে দিন। এই ধাপটি আপনার ব্যক্তিগতকৃত কন্টেন্টে প্রভাব ফেলবে না।</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">হিট গান</string>
+    <string name="banner_featured">বিশেষ</string>
+    <string name="banner_trending_now">এখন ট্রেন্ডিং</string>
+    <string name="banner_new_arrivals">নতুন আগমন</string>
+
 </resources>

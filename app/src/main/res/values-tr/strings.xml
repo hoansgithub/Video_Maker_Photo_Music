@@ -626,4 +626,11 @@
     <string name="template_pick_subtitle">Bir şablon stili seç, geçişleri ve efektleri senin için biz halledelim. Bu adım kişiselleştirilmiş içeriğini etkilemez.</string>
     <string name="error_data_load_failed">Gerekli veriler yüklenemedi. Lütfen internet bağlantını kontrol edip tekrar dene.</string>
     <string name="quality_ad_not_available">Reklam şu anda kullanılamıyor. Lütfen daha sonra tekrar dene veya daha düşük bir kalite seç.</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">HIT ŞARKI</string>
+    <string name="banner_featured">ÖNE ÇIKAN</string>
+    <string name="banner_trending_now">ŞİMDİ TREND</string>
+    <string name="banner_new_arrivals">YENİ GELENLER</string>
+
 </resources>

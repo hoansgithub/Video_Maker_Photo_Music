@@ -631,4 +631,11 @@
     <string name="picker_more_photos_longer">Mehr Fotos, längeres Video (max. %d)</string>
     <string name="template_pick_title">Welchen Vorlagenstil bevorzugst du?</string>
     <string name="template_pick_subtitle">Wähle einen Vorlagenstil und überlass uns die Übergänge und Effekte. Dieser Schritt beeinflusst deine personalisierten Inhalte nicht.</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">HIT-SONG</string>
+    <string name="banner_featured">EMPFOHLEN</string>
+    <string name="banner_trending_now">IM TREND</string>
+    <string name="banner_new_arrivals">NEUHEITEN</string>
+
 </resources>

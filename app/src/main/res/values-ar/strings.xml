@@ -626,4 +626,11 @@
     <string name="template_pick_subtitle">اختر نمط قالب ودعنا نتولى الانتقالات والتأثيرات نيابةً عنك. لن تؤثر هذه الخطوة على المحتوى المخصص لك.</string>
     <string name="error_data_load_failed">تعذّر تحميل البيانات المطلوبة. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.</string>
     <string name="quality_ad_not_available">الإعلان غير متاح حالياً. يرجى المحاولة لاحقاً أو اختيار جودة أقل.</string>
+
+    <!-- Gallery Banner Badges -->
+    <string name="banner_hit_song">أغنية رائجة</string>
+    <string name="banner_featured">مميّز</string>
+    <string name="banner_trending_now">الأكثر رواجًا</string>
+    <string name="banner_new_arrivals">وصل حديثًا</string>
+
 </resources>
