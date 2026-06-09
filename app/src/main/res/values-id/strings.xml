@@ -603,14 +603,14 @@
     <string name="ai_level_light_touch_banner">Tetap autentik.\nTerlihat seperti dirimu, hanya lebih baik</string>
     <string name="ai_level_deep_swap_title">Ubah Total</string>
     <string name="ai_level_deep_swap_banner">Dorong kreativitas lebih jauh.\nJadi siapa saja, coba apa saja.</string>
-    <string name="content_exclusive_title">Filter musik dan\nfeed templatemu</string>
+    <string name="content_exclusive_title">Filter musik dan feed templatemu</string>
     <string name="content_exclusive_family_title">Ramah Keluarga</string>
     <string name="content_exclusive_family_subtitle">Blokir lirik vulgar dan tarian agresif.</string>
     <string name="content_exclusive_unfiltered_title">Tanpa Filter</string>
     <string name="content_exclusive_unfiltered_subtitle">Tampilkan semua video tren dan tema dewasa.</string>
     <string name="genre_step_title">Musik apa yang kamu suka?</string>
     <string name="genre_step_subtitle">Langkah ini membantu kami menyarankan musik yang lebih baik untukmu. Ini tidak akan memengaruhi konten yang dipersonalisasi.</string>
-    <string name="media_privacy_title">Pilih pengaturan privasi\nfotomu</string>
+    <string name="media_privacy_title">Pilih pengaturan privasi fotomu</string>
     <string name="media_privacy_private_title">Mode Pribadi</string>
     <string name="media_privacy_private_subtitle">Hapus fotoku setelah setiap kreasi. Terbaik untuk privasi maksimal.</string>
     <string name="media_privacy_quick_title">Buat Ulang Cepat</string>

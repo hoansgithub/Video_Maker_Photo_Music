@@ -610,14 +610,14 @@
     <string name="ai_level_light_touch_banner">ಸಹಜವಾಗಿರಿಸಿ.\nನೀವಂತೆಯೇ ಕಾಣಿರಿ, ಸ್ವಲ್ಪ ಉತ್ತಮವಾಗಿ</string>
     <string name="ai_level_deep_swap_title">ಡೀಪ್ ಸ್ವ್ಯಾಪ್</string>
     <string name="ai_level_deep_swap_banner">ಸೃಜನಶೀಲತೆಯನ್ನು ಮತ್ತಷ್ಟು ಮುಂದೆ ಕೊಂಡೊಯ್ಯಿರಿ.\nಯಾರೇ ಆಗಿರಿ, ಏನನ್ನೂ ಪ್ರಯತ್ನಿಸಿ.</string>
-    <string name="content_exclusive_title">ನಿಮ್ಮ ಸಂಗೀತ ಮತ್ತು\nಟೆಂಪ್ಲೇಟ್ ಫೀಡ್ ಫಿಲ್ಟರ್ ಮಾಡಿ</string>
+    <string name="content_exclusive_title">ನಿಮ್ಮ ಸಂಗೀತ ಮತ್ತು ಟೆಂಪ್ಲೇಟ್ ಫೀಡ್ ಫಿಲ್ಟರ್ ಮಾಡಿ</string>
     <string name="content_exclusive_family_title">ಕುಟುಂಬ ಸ್ನೇಹಿ</string>
     <string name="content_exclusive_family_subtitle">ಅಶ್ಲೀಲ ಸಾಹಿತ್ಯ ಮತ್ತು ಆಕ್ರಮಣಕಾರಿ ನೃತ್ಯವನ್ನು ನಿರ್ಬಂಧಿಸಿ.</string>
     <string name="content_exclusive_unfiltered_title">ಫಿಲ್ಟರ್ ಇಲ್ಲದೆ</string>
     <string name="content_exclusive_unfiltered_subtitle">ಎಲ್ಲಾ ಟ್ರೆಂಡಿಂಗ್ ವೀಡಿಯೊಗಳು ಮತ್ತು ವಯಸ್ಕ ವಿಷಯಗಳನ್ನು ತೋರಿಸಿ.</string>
     <string name="genre_step_title">ನಿಮಗೆ ಯಾವ ಸಂಗೀತ ಇಷ್ಟ?</string>
     <string name="genre_step_subtitle">ಈ ಹಂತವು ನಿಮಗೆ ಉತ್ತಮ ಸಂಗೀತವನ್ನು ಸೂಚಿಸಲು ನಮಗೆ ಸಹಾಯ ಮಾಡುತ್ತದೆ. ಇದು ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ವಿಷಯದ ಮೇಲೆ ಪರಿಣಾಮ ಬೀರುವುದಿಲ್ಲ.</string>
-    <string name="media_privacy_title">ನಿಮ್ಮ ಫೋಟೋ ಗೌಪ್ಯತೆ\nಸೆಟ್ಟಿಂಗ್ ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="media_privacy_title">ನಿಮ್ಮ ಫೋಟೋ ಗೌಪ್ಯತೆ ಸೆಟ್ಟಿಂಗ್ ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="media_privacy_private_title">ಖಾಸಗಿ ಮೋಡ್</string>
     <string name="media_privacy_private_subtitle">ಪ್ರತಿ ಸೃಷ್ಟಿಯ ನಂತರ ನನ್ನ ಫೋಟೋಗಳನ್ನು ಅಳಿಸಿ. ಗರಿಷ್ಠ ಗೌಪ್ಯತೆಗೆ ಉತ್ತಮ.</string>
     <string name="media_privacy_quick_title">ತ್ವರಿತ ಮರುಸೃಷ್ಟಿ</string>

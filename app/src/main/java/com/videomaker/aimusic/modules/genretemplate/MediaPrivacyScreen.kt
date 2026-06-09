@@ -43,7 +43,7 @@ fun MediaPrivacyScreen(selectedId: String, onSelect: (String) -> Unit) {
             .fillMaxSize()
             .padding(horizontal = 20.dp),
     ) {
-        Spacer(Modifier.height(60.dp))
+        Spacer(Modifier.height(16.dp))
         Text(
             text = stringResource(R.string.media_privacy_title),
             fontSize = 24.sp,

@@ -611,14 +611,14 @@
     <string name="ai_level_light_touch_banner">Debe ya n\'ụzọ eziokwu.\nYie ka gị, naanị ka mma</string>
     <string name="ai_level_deep_swap_title">Mgbanwe Miri Emi</string>
     <string name="ai_level_deep_swap_banner">Kwalite okike karịa.\nBụrụ onye ọ bụla, nwaa ihe ọ bụla.</string>
-    <string name="content_exclusive_title">Nyochaa egwu gị na\ntemplate gị</string>
+    <string name="content_exclusive_title">Nyochaa egwu gị na template gị</string>
     <string name="content_exclusive_family_title">Dabara Ezinụlọ</string>
     <string name="content_exclusive_family_subtitle">Gbochie okwu rụrụ arụ na ịgba egwu siri ike.</string>
     <string name="content_exclusive_unfiltered_title">Enweghị Nyocha</string>
     <string name="content_exclusive_unfiltered_subtitle">Gosi vidiyo niile na-ewu ewu na isiokwu ndị okenye.</string>
     <string name="genre_step_title">Kedu egwu ị na-amasị gị?</string>
     <string name="genre_step_subtitle">Nzọụkwụ a na-enyere anyị aka ịtụ aro egwu ka mma maka gị. Ọ gaghị emetụta ọdịnaya ahaziri maka gị.</string>
-    <string name="media_privacy_title">Họrọ ntọala nzuzo\nnke foto gị</string>
+    <string name="media_privacy_title">Họrọ ntọala nzuzo nke foto gị</string>
     <string name="media_privacy_private_title">Ọnọdụ Nzuzo</string>
     <string name="media_privacy_private_subtitle">Hichapụ foto m mgbe ọ bụla emechara okike. Kacha mma maka nzuzo kachasị.</string>
     <string name="media_privacy_quick_title">Memegharị Ngwa Ngwa</string>

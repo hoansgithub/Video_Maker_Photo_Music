@@ -610,14 +610,14 @@
     <string name="ai_level_light_touch_banner">Bleib authentisch.\nSieh aus wie du, nur besser</string>
     <string name="ai_level_deep_swap_title">Deep Swap</string>
     <string name="ai_level_deep_swap_banner">Geh kreativ noch weiter.\nWerde jeder, probier alles aus.</string>
-    <string name="content_exclusive_title">Filtere deinen Musik- und\nVorlagen-Feed</string>
+    <string name="content_exclusive_title">Filtere deinen Musik- und Vorlagen-Feed</string>
     <string name="content_exclusive_family_title">Familienfreundlich</string>
     <string name="content_exclusive_family_subtitle">Anstößige Texte und aggressives Tanzen blockieren.</string>
     <string name="content_exclusive_unfiltered_title">Ungefiltert</string>
     <string name="content_exclusive_unfiltered_subtitle">Alle angesagten Videos und Themen für Erwachsene anzeigen.</string>
     <string name="genre_step_title">Welche Musik magst du?</string>
     <string name="genre_step_subtitle">Dieser Schritt hilft uns, dir bessere Musik vorzuschlagen. Er beeinflusst deine personalisierten Inhalte nicht.</string>
-    <string name="media_privacy_title">Wähle deine\nFoto-Datenschutzeinstellung</string>
+    <string name="media_privacy_title">Wähle deine Foto-Datenschutzeinstellung</string>
     <string name="media_privacy_private_title">Privatmodus</string>
     <string name="media_privacy_private_subtitle">Meine Fotos nach jeder Erstellung löschen. Optimal für maximalen Datenschutz.</string>
     <string name="media_privacy_quick_title">Schnelle Neuerstellung</string>
