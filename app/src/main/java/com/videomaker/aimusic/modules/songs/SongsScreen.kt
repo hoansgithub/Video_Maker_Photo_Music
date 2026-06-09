@@ -349,6 +349,7 @@ private fun SongsContent(
                 ) {
                     NativeAdView(
                         placement = AdPlacement.NATIVE_SONGS_STATION,
+                        modifier = Modifier.fillMaxWidth().height(100.dp),
                         autoLoad = true,
                         isDebug = BuildConfig.DEBUG,
                         onAdClicked = { adClickDetector.onAdClick(it) }
@@ -436,6 +437,7 @@ private fun SongsContent(
                                 ) {
                                     NativeAdView(
                                         placement = AdPlacement.NATIVE_STATION_INFEED,
+                                        modifier = Modifier.fillMaxWidth().height(100.dp),
                                         autoLoad = true,
                                         isDebug = BuildConfig.DEBUG,
                                         onAdClicked = { adClickDetector.onAdClick(it) }

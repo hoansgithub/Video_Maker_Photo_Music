@@ -301,6 +301,7 @@ private fun SongsListContent(
                             is SongFeedItem.Ad -> {
                                 NativeAdView(
                                     placement = AdPlacement.NATIVE_SUGGESTED_INFEED,
+                                    modifier = Modifier.fillMaxWidth().height(100.dp),
                                     autoLoad = true,
                                     isDebug = BuildConfig.DEBUG,
                                     onAdClicked = { adClickDetector.onAdClick(it) }

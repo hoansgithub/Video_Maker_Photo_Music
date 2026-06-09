@@ -66,7 +66,7 @@ fun UnifiedSearchLoadingContent(
                     android.util.Log.d("UnifiedSearch", "🔵 Composing NativeAdView (Loading)")
                     NativeAdView(
                         placement = AdPlacement.NATIVE_SEARCH_INFEED,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().height(100.dp),
                         isDebug = BuildConfig.DEBUG,
                         onAdClicked = { adClickDetector.onAdClick(it) }
                     )

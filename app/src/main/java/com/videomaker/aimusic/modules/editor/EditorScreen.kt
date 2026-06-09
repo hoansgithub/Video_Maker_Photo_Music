@@ -100,7 +100,6 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.SnackbarHostState
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
@@ -355,7 +354,6 @@ fun EditorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .navigationBarsPadding()
     ) {
         Box(modifier = Modifier.weight(1f)) {
             // Main editor UI with Scaffold - blur when preview is building

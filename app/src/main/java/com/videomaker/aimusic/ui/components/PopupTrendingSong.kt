@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -73,18 +72,19 @@ fun PopupTrendingSong(
         },
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .clickableSingle {
                 }
                 .fillMaxSize()
                 .background(Color(0xFF000000).copy(0.56f))
                 .padding(top = 81.dp),
-            contentAlignment = Alignment.TopCenter
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .weight(1f)
                     .padding(horizontal = 34.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -238,18 +238,12 @@ fun PopupTrendingSong(
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-            ){
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_POPUP_TRENDING_SONG,
-                    modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG,
-                    onAdClicked = { adClickDetector.onAdClick(it) }
-                )
-            }
+            NativeAdView(
+                placement = AdPlacement.NATIVE_POPUP_TRENDING_SONG,
+                modifier = Modifier.fillMaxWidth().height(100.dp),
+                isDebug = BuildConfig.DEBUG,
+                onAdClicked = { adClickDetector.onAdClick(it) }
+            )
         }
     }
 }
