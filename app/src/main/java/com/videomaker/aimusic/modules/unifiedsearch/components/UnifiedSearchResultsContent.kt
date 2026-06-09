@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
+import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Precision
@@ -568,6 +569,7 @@ private fun ScaledTemplateCard(
         val imageRequest = remember(template.thumbnailPath) {
             ImageRequest.Builder(context)
                 .data(template.thumbnailPath)
+                .decoderFactory(BitmapFactoryDecoder.Factory())
                 .size(Size(200, 350))
                 .precision(Precision.INEXACT)
                 .memoryCachePolicy(CachePolicy.ENABLED)

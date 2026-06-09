@@ -1,6 +1,5 @@
 package com.videomaker.aimusic.modules.welcomeback
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +36,7 @@ import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
@@ -57,8 +57,8 @@ fun WelcomeBackScreen(
             .background(WelcomeBackBackground)
     ) {
         // Background Image and bottom gradient fade
-        Image(
-            painter = painterResource(id = R.drawable.bg_welcome),
+        LocalAsyncImage(
+            resId = R.drawable.bg_welcome,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier

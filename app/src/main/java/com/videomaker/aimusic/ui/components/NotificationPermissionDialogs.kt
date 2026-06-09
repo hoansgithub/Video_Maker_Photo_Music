@@ -1,6 +1,5 @@
 package com.videomaker.aimusic.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.FoundationBlack
 import com.videomaker.aimusic.ui.theme.FoundationBlack_200
@@ -79,8 +79,8 @@ fun NotificationPermissionPromoDialog(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
 
-                    Image(
-                        painter = painterResource(R.drawable.img_popup_noti_permission),
+                    LocalAsyncImage(
+                        resId = R.drawable.img_popup_noti_permission,
                         contentDescription = null,
                         contentScale = ContentScale.FillWidth,
                         modifier = Modifier
@@ -175,8 +175,8 @@ fun NotificationPermissionSettingsGuideDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                Image(
-                    painter = painterResource(R.drawable.img_popup_noti_denied),
+                LocalAsyncImage(
+                    resId = R.drawable.img_popup_noti_denied,
                     contentDescription = null,
                     contentScale = ContentScale.FillWidth,
                     modifier = Modifier

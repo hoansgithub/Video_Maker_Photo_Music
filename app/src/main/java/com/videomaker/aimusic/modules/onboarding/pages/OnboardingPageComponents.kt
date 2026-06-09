@@ -64,6 +64,7 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.ui.theme.FoundationBlack
 import com.videomaker.aimusic.ui.theme.Neutral_N100
 import com.videomaker.aimusic.ui.theme.Neutral_N600
@@ -107,8 +108,8 @@ internal fun WelcomePage(
             .background(MaterialTheme.colorScheme.background)
     ) {
         // Banner image — fills entire area with Crop
-        Image(
-            painter = painterResource(imageResId),
+        LocalAsyncImage(
+            resId = imageResId,
             contentDescription = null,
             modifier = Modifier
                 .fillMaxWidth()
@@ -274,8 +275,8 @@ internal fun WelcomePageDynamic(
                             .align(Alignment.BottomCenter)
                     )
 
-                    Image(
-                        painter = painterResource(R.drawable.img_bg_onboard_page1),
+                    LocalAsyncImage(
+                        resId = R.drawable.img_bg_onboard_page1,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         alignment = Alignment.BottomCenter,
@@ -284,8 +285,8 @@ internal fun WelcomePageDynamic(
                 }
 
                 if (pageIndex == 1){
-                    Image(
-                        painter = painterResource(R.drawable.img_bg_ob2),
+                    LocalAsyncImage(
+                        resId = R.drawable.img_bg_ob2,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         alignment = Alignment.TopCenter,

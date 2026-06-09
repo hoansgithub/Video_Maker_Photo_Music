@@ -67,6 +67,7 @@ import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.ui.components.AppFilterChip
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.RankingSongCard
 import com.videomaker.aimusic.ui.components.RankingSongCardPlaceholder
@@ -156,8 +157,8 @@ fun SongsScreen(
     ProvideShimmerEffect {
         Box(modifier = Modifier.fillMaxSize()) {
             // Background image
-            Image(
-                painter = painterResource(id = R.drawable.bg_home),
+            LocalAsyncImage(
+                resId = R.drawable.bg_home,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()

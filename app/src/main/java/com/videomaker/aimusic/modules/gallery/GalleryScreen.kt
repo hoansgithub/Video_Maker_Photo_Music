@@ -76,6 +76,7 @@ import coil.size.Precision
 import coil.size.Size
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.core.ads.AdClickDetector
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
@@ -230,8 +231,8 @@ fun GalleryScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background image — edge-to-edge, behind everything
-        Image(
-            painter = painterResource(id = R.drawable.bg_home),
+        LocalAsyncImage(
+            resId = R.drawable.bg_home,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()

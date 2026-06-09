@@ -103,6 +103,7 @@ import coil.size.Precision
 import coil.size.Size
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.core.ads.AdClickDetector
 import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
@@ -1526,8 +1527,8 @@ private fun AssetPickerFullAccessPromoDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(Modifier.height(12.dp))
-                Image(
-                    painter = painterResource(R.drawable.img_popup_asset_permission),
+                LocalAsyncImage(
+                    resId = R.drawable.img_popup_asset_permission,
                     contentDescription = null,
                     contentScale = ContentScale.FillWidth,
                     modifier = Modifier
@@ -1624,8 +1625,8 @@ private fun AssetPickerPhotosUnavailableDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(Modifier.height(24.dp))
-                Image(
-                    painter = painterResource(R.drawable.img_photo_unavailable),
+                LocalAsyncImage(
+                    resId = R.drawable.img_photo_unavailable,
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier

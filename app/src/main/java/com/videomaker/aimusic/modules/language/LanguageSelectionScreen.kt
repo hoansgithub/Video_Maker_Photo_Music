@@ -75,6 +75,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -396,8 +397,8 @@ fun LanguageSelectionScreen(
                             )
                             .clickableSingle{}
                     ) {
-                        Image(
-                            painter = painterResource(R.drawable.img_bg_cta_onboard),
+                        LocalAsyncImage(
+                            resId = R.drawable.img_bg_cta_onboard,
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.matchParentSize()

@@ -60,6 +60,7 @@ import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.VideoMakerApplication
 import com.videomaker.aimusic.core.ads.AdClickDetector
 import com.videomaker.aimusic.core.analytics.Analytics
@@ -337,8 +338,8 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                             )
                             .clickableSingle { }
                     ) {
-                        Image(
-                            painter = painterResource(R.drawable.img_bg_cta_onboard),
+                        LocalAsyncImage(
+                            resId = R.drawable.img_bg_cta_onboard,
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.matchParentSize(),
@@ -515,8 +516,8 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                         )
                         .clickableSingle { }
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.img_bg_cta_onboard),
+                    LocalAsyncImage(
+                        resId = R.drawable.img_bg_cta_onboard,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.matchParentSize(),
