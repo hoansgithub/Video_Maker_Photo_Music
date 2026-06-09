@@ -153,7 +153,7 @@ val dataModule = module {
     single {
         com.videomaker.aimusic.core.playback.BannerSongPlayer(
             context = androidContext()
-        ).also { it.registerLifecycle() }
+        )
     }
 
     // ============================================
