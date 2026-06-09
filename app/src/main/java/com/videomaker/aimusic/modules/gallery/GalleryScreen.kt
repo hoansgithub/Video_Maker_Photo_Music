@@ -443,7 +443,7 @@ private fun GalleryContent(
                 // Section 2: Home banner carousel.
                 if (homeBanners.isNotEmpty()) {
                     item(key = "spacer0", contentType = "spacer", span = StaggeredGridItemSpan.FullLine) {
-                        Spacer(modifier = Modifier.height(dimens.spaceMd))
+                        Spacer(modifier = Modifier.height(dimens.spaceXs))
                     }
 
                     item(key = "home_banners", contentType = "home_banners", span = StaggeredGridItemSpan.FullLine) {
@@ -456,7 +456,7 @@ private fun GalleryContent(
                     }
                 } else if (featuredTemplates.isNotEmpty()) {
                     item(key = "spacer0", contentType = "spacer", span = StaggeredGridItemSpan.FullLine) {
-                        Spacer(modifier = Modifier.height(dimens.spaceMd))
+                        Spacer(modifier = Modifier.height(dimens.spaceXxs))
                     }
 
                     item(key = "featured_templates", contentType = "featured_carousel", span = StaggeredGridItemSpan.FullLine) {
@@ -468,9 +468,6 @@ private fun GalleryContent(
                     }
                 }
 
-                item(key = "spacer1", contentType = "spacer", span = StaggeredGridItemSpan.FullLine) {
-                    Spacer(modifier = Modifier.height(dimens.spaceMd))
-                }
 
                 // Section 3: Templates header + tag chips
                 item(key = "templates_header", contentType = "templates_header", span = StaggeredGridItemSpan.FullLine) {

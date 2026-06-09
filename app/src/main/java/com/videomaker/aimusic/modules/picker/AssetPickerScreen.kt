@@ -17,6 +17,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -546,9 +548,17 @@ fun AssetPickerScreen(
     // because re-requesting an already-granted permission returns silently with no UI on most devices.
     // On Android 14+, photos selected via the system photo picker are automatically added to
     // the READ_MEDIA_VISUAL_USER_SELECTED grant, so the MediaStore query will include them after reload.
+    // Guards against spamming the "Add more photos" CTA. The system photo picker can take
+    // longer than the clickableSingle debounce (300ms) to appear, so a second tap could launch
+    // a second picker. We disable the CTA the moment we launch and re-enable only when the
+    // picker is closed (the result callback fires on close, with or without a selection).
+    var isPhotoPickerActive by remember { mutableStateOf(false) }
+
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(20)
     ) { uris ->
+        // Picker closed → re-enable the CTA regardless of whether the user picked anything.
+        isPhotoPickerActive = false
         if (uris.isEmpty()) return@rememberLauncherForActivityResult
 
         uris.forEach { uri ->
@@ -565,10 +575,20 @@ fun AssetPickerScreen(
     }
 
     val onAddMorePhotos = {
-        Analytics.trackPermissionAddImage()
-        photoPickerLauncher.launch(
-            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-        )
+        // Ignore further taps while a picker is already open/launching.
+        if (!isPhotoPickerActive) {
+            isPhotoPickerActive = true
+            Analytics.trackPermissionAddImage()
+            try {
+                photoPickerLauncher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            } catch (e: Exception) {
+                // Launch failed (e.g. no picker available) → restore the CTA so it stays usable.
+                isPhotoPickerActive = false
+                Log.e("AssetPicker", "Failed to launch photo picker: ${e.message}")
+            }
+        }
     }
 
     // Camera URI state — created before launching TakePicture so it survives recomposition
@@ -699,6 +719,7 @@ fun AssetPickerScreen(
                 // (cap exhausted) — never a silent no-op.
                 onManageAccess = onGiveAccess,
                 onAddMorePhotos = onAddMorePhotos,
+                addPhotoEnabled = !isPhotoPickerActive,
                 onCameraClick = onCameraClick
             )
         }
@@ -802,6 +823,7 @@ private fun AssetPickerContent(
     onRequestFullPermission: () -> Unit,
     onManageAccess: () -> Unit,
     onAddMorePhotos: () -> Unit,
+    addPhotoEnabled: Boolean = true,
     onCameraClick: () -> Unit
 ) {
     Column(
@@ -897,6 +919,7 @@ private fun AssetPickerContent(
                             maxReached = maxReached,
                             showAddTile = isLimited,
                             onAddTileClick = onAddMorePhotos,
+                            addTileEnabled = addPhotoEnabled,
                             onAssetClick = onAssetClick,
                             initialScrollState = initialGridScrollState,
                             onScrollChanged = onGridScrollChanged,
@@ -1229,6 +1252,7 @@ private fun ImageGrid(
     maxReached: Boolean,
     showAddTile: Boolean,
     onAddTileClick: () -> Unit,
+    addTileEnabled: Boolean = true,
     onAssetClick: (GalleryAsset) -> Unit,
     initialScrollState: AssetPickerGridScrollState,
     onScrollChanged: (Int, Int) -> Unit,
@@ -1261,7 +1285,10 @@ private fun ImageGrid(
         // "Add more photos" tile — only in limited-access mode
         if (showAddTile) {
             item(key = "add_more_tile") {
-                AddPhotoTile(onClick = onAddTileClick)
+                AddPhotoTile(
+                    enabled = addTileEnabled,
+                    onClick = onAddTileClick
+                )
             }
         }
 
@@ -1281,6 +1308,7 @@ private fun ImageGrid(
 
 @Composable
 private fun AddPhotoTile(
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     Box(
@@ -1288,7 +1316,7 @@ private fun AddPhotoTile(
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
             .background(Neutral_N900)
-            .clickableSingle(onClick = onClick),
+            .clickableSingle(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -1368,7 +1396,10 @@ private fun ImageGridItem(
             .aspectRatio(1f)
             .clip(RoundedCornerShape(12.dp))
             // Disable adding once the maximum is reached
-            .clickableSingle(enabled = !maxReached, onClick = onClick)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                enabled = !maxReached,
+                onClick = onClick)
     ) {
         AssetThumbnail(asset = asset)
 
