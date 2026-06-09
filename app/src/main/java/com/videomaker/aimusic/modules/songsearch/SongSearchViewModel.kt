@@ -85,6 +85,12 @@ class SongSearchViewModel(
     private val _suggestedSongsLoading = MutableStateFlow(false)
     val suggestedSongsLoading: StateFlow<Boolean> = _suggestedSongsLoading.asStateFlow()
 
+    // Suggested/genre pagination
+    @Volatile private var suggestedOffset = 0
+    @Volatile private var suggestedHasMore = true
+    private val _suggestedLoadingMore = MutableStateFlow(false)
+    val suggestedLoadingMore: StateFlow<Boolean> = _suggestedLoadingMore.asStateFlow()
+
     private val _navigationEvent = MutableStateFlow<SongSearchNavigationEvent?>(null)
     val navigationEvent: StateFlow<SongSearchNavigationEvent?> = _navigationEvent.asStateFlow()
 
@@ -117,8 +123,12 @@ class SongSearchViewModel(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            getSuggestedSongsUseCase(limit = 15)
-                .onSuccess { _suggestedSongs.value = it }
+            getSuggestedSongsUseCase(limit = PAGE_SIZE)
+                .onSuccess {
+                    _suggestedSongs.value = it
+                    suggestedOffset = it.size
+                    suggestedHasMore = it.size >= PAGE_SIZE && suggestedOffset < SUGGESTED_MAX_ITEMS
+                }
         }
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -220,14 +230,20 @@ class SongSearchViewModel(
     fun onGenreSelected(genreId: String?) {
         if (_selectedGenre.value == genreId) return
         _selectedGenre.value = genreId
+        suggestedOffset = 0
+        suggestedHasMore = true
         _suggestedSongsLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             val result = if (genreId == null) {
-                getSuggestedSongsUseCase(limit = 15)
+                getSuggestedSongsUseCase(limit = PAGE_SIZE)
             } else {
-                getSongsByGenreUseCase(genreId, limit = 15)
+                getSongsByGenreUseCase(genreId, limit = PAGE_SIZE)
             }
-            result.onSuccess { _suggestedSongs.value = it }
+            result.onSuccess {
+                _suggestedSongs.value = it
+                suggestedOffset = it.size
+                suggestedHasMore = it.size >= PAGE_SIZE && suggestedOffset < SUGGESTED_MAX_ITEMS
+            }
             _suggestedSongsLoading.value = false
         }
     }
@@ -294,6 +310,35 @@ class SongSearchViewModel(
         else SongSearchUiState.Results(query = label, songs = songs)
     }
 
+    /** Called by UI when user scrolls near the end of the suggested songs list. */
+    fun loadMoreSuggested() {
+        if (!_suggestedLoadingMore.compareAndSet(false, true)) return
+        if (!suggestedHasMore) {
+            _suggestedLoadingMore.value = false
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val genreId = _selectedGenre.value
+                val result = if (genreId == null) {
+                    getSuggestedSongsUseCase(offset = suggestedOffset, limit = PAGE_SIZE)
+                } else {
+                    getSongsByGenreUseCase(genreId, limit = PAGE_SIZE, offset = suggestedOffset)
+                }
+                result.onSuccess { newSongs ->
+                    suggestedOffset += newSongs.size
+                    suggestedHasMore = newSongs.size >= PAGE_SIZE && suggestedOffset < SUGGESTED_MAX_ITEMS
+                    val current = _suggestedSongs.value
+                    val existingIds = current.map { it.id }.toSet()
+                    val unique = newSongs.filterNot { it.id in existingIds }
+                    _suggestedSongs.value = current + unique
+                }
+            } finally {
+                _suggestedLoadingMore.value = false
+            }
+        }
+    }
+
     // ============================================
     // PREVIEW METHODS (for music selector in editor)
     // ============================================
@@ -353,5 +398,10 @@ class SongSearchViewModel(
         _previewingSongId.value = null
         _selectedForConfirmId.value = null
         _isLoadingPreview.value = false
+    }
+
+    companion object {
+        private const val PAGE_SIZE = 15
+        private const val SUGGESTED_MAX_ITEMS = 30
     }
 }

@@ -1,6 +1,7 @@
 package com.videomaker.aimusic.modules.songs
 
 import androidx.compose.foundation.Image
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -268,6 +269,20 @@ private fun SongsContent(
             }
     }
 
+    // Scroll-position-based pagination: load more stations when near bottom
+    val shouldLoadMoreStations by remember(listState, stationLoadingMore) {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val totalItems = layoutInfo.totalItemsCount
+            val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            !stationLoadingMore && lastVisibleIndex >= totalItems - 6
+        }
+    }
+
+    LaunchedEffect(shouldLoadMoreStations) {
+        if (shouldLoadMoreStations) onLoadMoreStations()
+    }
+
     // Build feed items at composable scope to avoid recomputing inside LazyListScope
     val stationFeedItems = remember(stationState, infeedInterval) {
         when (stationState) {
@@ -436,6 +451,7 @@ private fun SongsContent(
                                 ) {
                                     NativeAdView(
                                         placement = AdPlacement.NATIVE_STATION_INFEED,
+                                        modifier = Modifier.fillMaxWidth().height(100.dp),
                                         autoLoad = true,
                                         isDebug = BuildConfig.DEBUG,
                                         onAdClicked = { adClickDetector.onAdClick(it) }
@@ -444,23 +460,20 @@ private fun SongsContent(
                             }
                         }
                     }
-                    // Pagination trigger: load more when last item is visible
-                    if (songs.isNotEmpty()) {
+                    // Loading indicator at bottom of station list
+                    if (stationLoadingMore) {
                         item(key = "station_load_more", contentType = "station_load_more") {
-                            LaunchedEffect(songs.size, selectedGenre) { onLoadMoreStations() }
-                            if (stationLoadingMore) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = AppDimens.current.spaceMd),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp),
-                                        strokeWidth = 2.dp,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                    )
-                                }
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = AppDimens.current.spaceMd),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
                             }
                         }
                     }

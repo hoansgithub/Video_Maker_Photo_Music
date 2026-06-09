@@ -300,6 +300,7 @@ private fun WeeklyRankingListContent(
                             is SongFeedItem.Ad -> {
                                 NativeAdView(
                                     placement = AdPlacement.NATIVE_RANKING_INFEED,
+                                    modifier = Modifier.fillMaxWidth().height(100.dp),
                                     autoLoad = true,
                                     isDebug = BuildConfig.DEBUG,
                                     onAdClicked = { adClickDetector.onAdClick(it) }

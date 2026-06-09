@@ -15,16 +15,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -100,7 +96,6 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.SnackbarHostState
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
@@ -355,7 +350,6 @@ fun EditorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .navigationBarsPadding()
     ) {
         Box(modifier = Modifier.weight(1f)) {
             // Main editor UI with Scaffold - blur when preview is building
@@ -813,7 +807,13 @@ fun EditorScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.6f)),
+                        .background(Color.Black.copy(alpha = 0.6f))
+                        .clickable(
+                            enabled = true,
+                            onClick = { /* Block all clicks */ },
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -1035,7 +1035,6 @@ internal fun EditorMainContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
     ) {
         // Real-time Video Preview using CompositionPlayer
         Box(
@@ -1085,7 +1084,7 @@ internal fun EditorMainContent(
             onMusicSelectorClick = onMusicSelectorClick
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Separator
         Box(
@@ -1095,7 +1094,7 @@ internal fun EditorMainContent(
                 .background(Color.White.copy(alpha = 0.1f))
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Settings Tab Bar - Images, Effect, Ratio, Volume (horizontally scrollable)
         val hasMusic =

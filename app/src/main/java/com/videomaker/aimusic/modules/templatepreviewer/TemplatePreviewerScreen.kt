@@ -1196,7 +1196,6 @@ private fun TemplatePreviewerReadyContent(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .navigationBarsPadding()
                     .height(100.dp),
                 isDebug = BuildConfig.DEBUG,
                 onAdClicked = { adClickDetector.onAdClick(it) }
@@ -1207,7 +1206,6 @@ private fun TemplatePreviewerReadyContent(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .navigationBarsPadding()
                     .height(50.dp),
                 onAdClicked = { adClickDetector.onAdClick(it) }
             )

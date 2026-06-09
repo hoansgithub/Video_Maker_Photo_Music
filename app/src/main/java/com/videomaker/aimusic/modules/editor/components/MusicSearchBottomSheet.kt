@@ -50,6 +50,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -69,7 +70,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.core.ads.AdClickDetector
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
@@ -87,7 +91,11 @@ import com.videomaker.aimusic.ui.components.AdBadge
 import com.videomaker.aimusic.ui.components.AdBadgeStyle
 import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
 import com.videomaker.aimusic.ui.components.AppFilterChip
+import com.videomaker.aimusic.ui.components.SongFeedItem
 import com.videomaker.aimusic.ui.components.SongListItem
+import com.videomaker.aimusic.ui.components.buildSongFeedWithAds
+import com.videomaker.aimusic.ui.components.DEFAULT_INFEED_INTERVAL
+import com.videomaker.aimusic.ui.components.songFeedItemKey
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.media.audio.MusicPreviewManager
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
@@ -149,6 +157,7 @@ internal fun MusicSearchBottomSheet(
     val suggestedSongs by viewModel.suggestedSongs.collectAsStateWithLifecycle()
     val selectedGenre by viewModel.selectedGenre.collectAsStateWithLifecycle()
     val suggestedSongsLoading by viewModel.suggestedSongsLoading.collectAsStateWithLifecycle()
+    val suggestedLoadingMore by viewModel.suggestedLoadingMore.collectAsStateWithLifecycle()
 
     // Global music preview state - shared across the whole app
     val previewingSongId by MusicPreviewManager.previewingSongId.collectAsStateWithLifecycle()
@@ -164,8 +173,16 @@ internal fun MusicSearchBottomSheet(
     val audioCache: AudioPreviewCache = koinInject()
     val unlockedSongsManager: UnlockedSongsManager = koinInject()
     val adsLoaderService: AdsLoaderService = koinInject()
+    val adClickDetector: AdClickDetector = koinInject()
     val sessionManager: MusicPlaybackSessionManager = koinInject()
     val screenSessionId = remember { Analytics.newScreenSessionId() }
+
+    // Read infeed ad interval from placement config
+    val infeedInterval = remember {
+        val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_EDITOR_MUSIC_INFEED)
+        val value = config?.extras?.get("infeed_interval")
+        value?.toString()?.trim('"')?.toIntOrNull() ?: DEFAULT_INFEED_INTERVAL
+    }
 
     // State for rewarded ad flow
     var shouldPresentAd by remember { mutableStateOf(false) }
@@ -349,7 +366,6 @@ internal fun MusicSearchBottomSheet(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 32.dp)
         ) {
             // Title row with centered title and confirm button on right
             Box(
@@ -722,6 +738,25 @@ internal fun MusicSearchBottomSheet(
                         }
                     }
 
+                    // Scroll-position-based pagination: load more when near bottom
+                    val shouldLoadMore by remember(listState, suggestedLoadingMore) {
+                        derivedStateOf {
+                            val layoutInfo = listState.layoutInfo
+                            val totalItems = layoutInfo.totalItemsCount
+                            val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                            !suggestedLoadingMore && lastVisibleIndex >= totalItems - 4
+                        }
+                    }
+
+                    LaunchedEffect(shouldLoadMore) {
+                        if (shouldLoadMore) viewModel.loadMoreSuggested()
+                    }
+
+                    // Build feed items at composable scope (not inside LazyListScope)
+                    val suggestedFeedItems = remember(suggestedSongs, infeedInterval) {
+                        buildSongFeedWithAds(suggestedSongs, infeedInterval)
+                    }
+
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
@@ -768,43 +803,91 @@ internal fun MusicSearchBottomSheet(
                                 }
                             }
                         } else {
-                            // Song list (filtered by genre via ViewModel)
-                            items(suggestedSongs, key = { "suggested_${it.id}" }) { song ->
-                                SongListItem(
-                                    name = song.name,
-                                    artist = song.artist,
-                                    coverUrl = song.coverUrl,
-                                    isPlaying = song.id == previewingSongId,
-                                    isSelected = song.id == selectedForConfirmId,
-                                    isLoading = song.id == selectedForConfirmId && isLoadingPreview,
-                                    onSongClick = {
-                                        onSongClick(song)
-                                        selectedSongLocation = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
-                                        Analytics.trackSongClick(
-                                            songId = song.id.toString(),
-                                            songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
-                                            isPremium = song.isPremium
-                                        )
-                                        Analytics.trackSongPreview(
-                                            songId = song.id.toString(),
-                                            songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
-                                            isPremium = song.isPremium
-                                        )
-                                        focusManager.clearFocus()
-                                        keyboardController?.hide()
-                                        MusicPreviewManager.togglePreview(song.id)
-                                    },
-                                    modifier = Modifier.onFirstVisible(key = song.id) {
-                                        sessionManager.trackSongImpressionAndMark(
-                                            songId = song.id.toString(),
-                                            songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
-                                            isPremium = song.isPremium
+                            // Song list with interleaved native ads
+                            items(
+                                items = suggestedFeedItems,
+                                key = { item -> songFeedItemKey(item, "suggested_") },
+                                contentType = { item ->
+                                    when (item) {
+                                        is SongFeedItem.Song -> "song"
+                                        is SongFeedItem.Ad -> "ad"
+                                    }
+                                }
+                            ) { item ->
+                                when (item) {
+                                    is SongFeedItem.Song -> {
+                                        val song = item.song
+                                        SongListItem(
+                                            name = song.name,
+                                            artist = song.artist,
+                                            coverUrl = song.coverUrl,
+                                            isPlaying = song.id == previewingSongId,
+                                            isSelected = song.id == selectedForConfirmId,
+                                            isLoading = song.id == selectedForConfirmId && isLoadingPreview,
+                                            onSongClick = {
+                                                onSongClick(song)
+                                                selectedSongLocation = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                                Analytics.trackSongClick(
+                                                    songId = song.id.toString(),
+                                                    songName = song.name,
+                                                    location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                                    isPremium = song.isPremium
+                                                )
+                                                Analytics.trackSongPreview(
+                                                    songId = song.id.toString(),
+                                                    songName = song.name,
+                                                    location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                                    isPremium = song.isPremium
+                                                )
+                                                focusManager.clearFocus()
+                                                keyboardController?.hide()
+                                                MusicPreviewManager.togglePreview(song.id)
+                                            },
+                                            modifier = Modifier.onFirstVisible(key = song.id) {
+                                                sessionManager.trackSongImpressionAndMark(
+                                                    songId = song.id.toString(),
+                                                    songName = song.name,
+                                                    location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                                    isPremium = song.isPremium
+                                                )
+                                            }
                                         )
                                     }
-                                )
+                                    is SongFeedItem.Ad -> {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(dimens.radiusXl))
+                                                .background(MaterialTheme.colorScheme.surface)
+                                        ) {
+                                            NativeAdView(
+                                                placement = AdPlacement.NATIVE_EDITOR_MUSIC_INFEED,
+                                                modifier = Modifier.fillMaxWidth().height(100.dp),
+                                                autoLoad = true,
+                                                isDebug = BuildConfig.DEBUG,
+                                                onAdClicked = { adClickDetector.onAdClick(it) }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Loading indicator at bottom when loading more
+                            if (suggestedLoadingMore) {
+                                item(key = "suggested_load_more") {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = dimens.spaceMd),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp),
+                                            strokeWidth = 2.dp,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

@@ -100,7 +100,7 @@ internal fun MusicSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
             .clip(glassShape)
             .background(PlayerCardGlass)
             .border(1.dp, PlayerCardBorder, glassShape)
@@ -154,7 +154,7 @@ internal fun MusicSection(
                     size = Size(size.width, 1.dp.toPx())
                 )
             }
-            .padding(12.dp)
+            .padding(horizontal = 10.dp, vertical = 8.dp)
     ) {
         // Song info row - TOP (clickable to open music selector)
         Row(
@@ -162,7 +162,7 @@ internal fun MusicSection(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp))
                 .clickable(onClick = onMusicSelectorClick)
-                .padding(start = 8.dp, top = 4.dp, bottom = 4.dp),
+                .padding(start = 8.dp, top = 2.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Album cover thumbnail
@@ -171,11 +171,11 @@ internal fun MusicSection(
                 contentDescription = songName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(52.dp)
+                    .size(40.dp)
                     .clip(RoundedCornerShape(8.dp))
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             // Song name + artist
             Column(modifier = Modifier.weight(1f)) {
@@ -185,7 +185,7 @@ internal fun MusicSection(
                 ) {
                     Text(
                         text = songName,
-                        fontSize = 15.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = TextPrimary,
                         maxLines = 1,
@@ -226,7 +226,7 @@ internal fun MusicSection(
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         // Separator line
         Box(
@@ -236,17 +236,17 @@ internal fun MusicSection(
                 .background(White10)
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         // Duration label - top left, padded to align with slider track
         Text(
             text = duration,
-            fontSize = 13.sp,
+            fontSize = 12.sp,
             color = TextPrimary,
             modifier = Modifier.padding(start = 8.dp)
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(2.dp))
 
         // Seeker row - slider + play/pause aligned horizontally
         Row(
@@ -310,7 +310,7 @@ internal fun MusicSection(
             // Play/pause button - circle shape, aligned with slider
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
                     .background(White10)
                     .clickable(onClick = onPlayPauseClick),
@@ -320,7 +320,7 @@ internal fun MusicSection(
                     imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                     contentDescription = if (isPlaying) stringResource(R.string.editor_pause) else stringResource(R.string.editor_play),
                     tint = TextPrimary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }

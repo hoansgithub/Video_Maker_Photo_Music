@@ -709,11 +709,10 @@ object AdPlacement {
      * Position: 4th position (index 3), or last position if total items < 3.
      * Persists through genre chip tag filtering.
      *
-     * Layout: native_small_row (horizontal row, matches song list items)
-     * - Media view on left (ad creative)
-     * - Headline + body text in center
-     * - CTA button on right
-     * - Blends with song list items
+     * Layout: native_big_bait (large vertical layout with clickbait CTA)
+     * - Media view at top
+     * - Headline + body text below
+     * - CTA button at bottom
      *
      * Ad units (priority order):
      * - Primary: ca-app-pub-7121075950716954/2115862172
@@ -774,6 +773,18 @@ object AdPlacement {
      * Remote Config key: ad_native_search_music_infeed
      */
     const val NATIVE_SEARCH_MUSIC_INFEED = "ad_native_search_music_infeed"
+
+    /**
+     * Native ad inserted every Xth position in the editor music selector (bottom sheet) song list.
+     * Same config structure as NATIVE_STATION_INFEED.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6943442204
+     * - Secondary: ca-app-pub-7121075950716954/5456924546
+     *
+     * Remote Config key: ad_native_editor_music_infeed
+     */
+    const val NATIVE_EDITOR_MUSIC_INFEED = "ad_native_editor_music_infeed"
 
     /**
      * Native ad shown during export video generating state.
@@ -1237,6 +1248,7 @@ object AdPlacement {
         NATIVE_RANKING_INFEED,
         NATIVE_SUGGESTED_INFEED,
         NATIVE_SEARCH_MUSIC_INFEED,
+        NATIVE_EDITOR_MUSIC_INFEED,
         NATIVE_TEMPLATE_PREVIEWER_LOADING,
         NATIVE_TEMPLATE_RATIO_SHEET,
         NATIVE_POPUP_TRENDING_TEMPLATE,

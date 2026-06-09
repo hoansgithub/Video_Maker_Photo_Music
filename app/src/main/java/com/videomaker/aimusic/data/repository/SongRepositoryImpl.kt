@@ -208,13 +208,17 @@ class SongRepositoryImpl(
         }
     }
 
-    override suspend fun getSongsByGenre(genre: String, limit: Int): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
+    override suspend fun getSongsByGenre(genre: String, limit: Int, offset: Int): Result<List<MusicSong>> = withContext(Dispatchers.IO) {
         val cacheKey = ApiCacheManager.keySongsGenre(genre)
-        apiCacheManager.get<List<MusicSong>>(cacheKey)
-            ?.let {
-                cacheSongsInMemory(it)
-                return@withContext Result.success(it)
-            }
+
+        // Only use cache for first page (offset = 0)
+        if (offset == 0) {
+            apiCacheManager.get<List<MusicSong>>(cacheKey)
+                ?.let {
+                    cacheSongsInMemory(it)
+                    return@withContext Result.success(it)
+                }
+        }
 
         try {
             val songs = supabaseClient.from(TABLE_SONGS)
@@ -223,21 +227,29 @@ class SongRepositoryImpl(
                         eq("is_active", true)
                         contains("genres", listOf(genre))
                     }
-                    limit(limit.toLong())
+                    order("sort_order", Order.DESCENDING)
+                    range(offset.toLong(), (offset + limit - 1).toLong())
                 }
                 .decodeList<SongDto>()
                 .toMusicSongs()
 
             cacheSongsInMemory(songs)
-            apiCacheManager.put(cacheKey, songs)
+
+            // Only cache first page
+            if (offset == 0) {
+                apiCacheManager.put(cacheKey, songs)
+            }
             Result.success(songs)
         } catch (e: Exception) {
             android.util.Log.e("SongRepository", "getSongsByGenre failed for genre=$genre: ${e.message}")
-            apiCacheManager.getStale<List<MusicSong>>(cacheKey)
-                ?.let {
-                    cacheSongsInMemory(it)
-                    return@withContext Result.success(it)
-                }
+            // Only return stale cache for first page
+            if (offset == 0) {
+                apiCacheManager.getStale<List<MusicSong>>(cacheKey)
+                    ?.let {
+                        cacheSongsInMemory(it)
+                        return@withContext Result.success(it)
+                    }
+            }
             Result.failure(Exception(ERROR_LOAD_FAILED, e))
         }
     }

@@ -772,7 +772,7 @@ fun MusicPlayerBottomSheet(
                 key(adRefreshKey) {
                     NativeAdView(
                         placement = AdPlacement.NATIVE_MUSIC_PLAYER,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().height(100.dp),
                         isDebug = BuildConfig.DEBUG,
                         onAdClicked = { adClickDetector.onAdClick(it) }
                     )
