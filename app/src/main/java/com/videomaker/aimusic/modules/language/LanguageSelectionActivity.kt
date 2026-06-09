@@ -79,6 +79,7 @@ class LanguageSelectionActivity : AppCompatActivity() {
             }
             OnboardingSurveyStep.AI_LEVEL -> {
                 VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL)
+                VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL_ALT, 1000L)
             }
             null -> {
                 // No survey screens → welcome pager (OnboardingActivity) is next.

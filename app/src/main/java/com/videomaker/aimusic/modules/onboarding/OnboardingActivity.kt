@@ -21,7 +21,10 @@ import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.data.local.RegionProvider
 import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.genretemplate.GenreTemplateActivity
+import com.videomaker.aimusic.modules.genretemplate.GenreTemplateGate
+import com.videomaker.aimusic.modules.genretemplate.altAdPlacement
 import com.videomaker.aimusic.modules.genretemplate.isGenreTemplateFlowAllOff
+import com.videomaker.aimusic.modules.genretemplate.primaryAdPlacement
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.launch
@@ -105,6 +108,13 @@ class OnboardingActivity : AppCompatActivity() {
         val destination = if (remoteConfig.isGenreTemplateFlowAllOff()) {
             FeatureSelectionActivity::class.java
         } else {
+            // Preload first GenreTemplate step's ad before launching
+            GenreTemplateGate.enabledSteps(remoteConfig).firstOrNull()?.let { step ->
+                VideoMakerApplication.preloadNativeAd(step.primaryAdPlacement())
+                step.altAdPlacement()?.let {
+                    VideoMakerApplication.preloadNativeAdDelayed(it, 1000L)
+                }
+            }
             GenreTemplateActivity::class.java
         }
         startActivity(Intent(this, destination))

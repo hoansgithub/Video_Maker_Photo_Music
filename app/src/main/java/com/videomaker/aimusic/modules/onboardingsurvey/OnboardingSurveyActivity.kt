@@ -437,8 +437,10 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                     when {
                         OnboardingSurveyStep.PLATFORM in viewModel.enabledSteps ->
                             VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SOCIAL)
-                        OnboardingSurveyStep.AI_LEVEL in viewModel.enabledSteps ->
+                        OnboardingSurveyStep.AI_LEVEL in viewModel.enabledSteps -> {
                             VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL)
+                            VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL_ALT, 1000L)
+                        }
                         else -> {
                             VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
                             VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
@@ -448,6 +450,7 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                 OnboardingSurveyStep.PLATFORM -> {
                     if (OnboardingSurveyStep.AI_LEVEL in viewModel.enabledSteps) {
                         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL)
+                        VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL_ALT, 1000L)
                     } else {
                         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
                         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
