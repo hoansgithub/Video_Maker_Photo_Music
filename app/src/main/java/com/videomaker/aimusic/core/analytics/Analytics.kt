@@ -1281,27 +1281,29 @@ object Analytics {
         )
     }
 
-    fun trackSongEdit(videoId: String, songId: String, songName: String) {
+    fun trackSongEdit(videoId: String, songId: String, songName: String, location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_EDIT,
             params = mapOf(
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.SONG_ID to songId,
-                AnalyticsEvent.Param.SONG_NAME to songName
+                AnalyticsEvent.Param.SONG_NAME to songName,
+                AnalyticsEvent.Param.LOCATION to location
             ),
             requiredParams = setOf(AnalyticsEvent.Param.VIDEO_ID),
             policy = TrackingPolicy.NORMAL
         )
     }
 
-    fun trackEditorSongClick(videoId: String, songId: String, songName: String, isPremium: Boolean) {
+    fun trackEditorSongClick(videoId: String, songId: String, songName: String, isPremium: Boolean, location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_CLICK,
             params = mapOf(
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.SONG_ID to songId,
                 AnalyticsEvent.Param.SONG_NAME to songName,
-                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium),
+                AnalyticsEvent.Param.LOCATION to location
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.VIDEO_ID,
@@ -1312,7 +1314,7 @@ object Analytics {
         )
     }
 
-    fun trackEditorSongSelect(videoId: String, songId: String, songName: String, isPremium: Boolean) {
+    fun trackEditorSongSelect(videoId: String, songId: String, songName: String, isPremium: Boolean, location: String) {
         getRatingTriggerManager()?.onSongSelected()
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_SELECT,
@@ -1320,7 +1322,8 @@ object Analytics {
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.SONG_ID to songId,
                 AnalyticsEvent.Param.SONG_NAME to songName,
-                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium),
+                AnalyticsEvent.Param.LOCATION to location
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.VIDEO_ID,
@@ -1331,13 +1334,14 @@ object Analytics {
         )
     }
 
-    fun trackSongClose(videoId: String, songId: String, songName: String) {
+    fun trackSongClose(videoId: String, songId: String, songName: String, location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.SONG_CLOSE,
             params = mapOf(
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.SONG_ID to songId,
-                AnalyticsEvent.Param.SONG_NAME to songName
+                AnalyticsEvent.Param.SONG_NAME to songName,
+                AnalyticsEvent.Param.LOCATION to location
             ),
             requiredParams = setOf(AnalyticsEvent.Param.VIDEO_ID),
             policy = TrackingPolicy.NORMAL
@@ -1445,6 +1449,37 @@ object Analytics {
                 mediaQuality = mediaQuality,
                 mediaQuantity = mediaQuantity
             ),
+            requiredParams = setOf(AnalyticsEvent.Param.VIDEO_ID),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackVideoExportError(
+        videoId: String,
+        errorMessage: String,
+        errorCode: Int? = null,
+        templateId: String? = null,
+        songId: String? = null,
+        quality: String? = null,
+        duration: Long? = null,
+        ratioSize: String? = null,
+        mediaQuantity: Int? = null
+    ) {
+        val params = buildVideoParams(
+            videoId = videoId,
+            templateId = templateId,
+            songId = songId,
+            quality = quality,
+            duration = duration,
+            ratioSize = ratioSize,
+            mediaQuantity = mediaQuantity
+        ).toMutableMap().apply {
+            put(AnalyticsEvent.Param.ERROR_MESSAGE, errorMessage)
+            errorCode?.let { put(AnalyticsEvent.Param.ERROR_CODE, it.toString()) }
+        }
+        trackWithPolicy(
+            eventName = AnalyticsEvent.VIDEO_EXPORT_ERROR,
+            params = params,
             requiredParams = setOf(AnalyticsEvent.Param.VIDEO_ID),
             policy = TrackingPolicy.NORMAL
         )

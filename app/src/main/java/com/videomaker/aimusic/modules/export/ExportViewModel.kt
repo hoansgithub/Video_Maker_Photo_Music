@@ -267,7 +267,7 @@ class ExportViewModel(
             currentProjectSnapshot = project
             // startExport and observeProgress run sequentially in one coroutine —
             // workId is guaranteed to be set before observeProgress reads it.
-            val id = exportRepository.startExport(projectId)
+            val id = exportRepository.startExport(projectId, quality = _currentQuality.value)
             workId = id
 
             // Pre-generate the watermark-free version in parallel so switching is instant
@@ -345,7 +345,20 @@ class ExportViewModel(
                         ratingTriggerManager.onVideoCreated()
                         ExportUiState.Success(progress.outputPath)
                     }
-                    is ExportProgress.Error -> ExportUiState.Error(progress.message)
+                    is ExportProgress.Error -> {
+                        Analytics.trackVideoExportError(
+                            videoId = projectId,
+                            errorMessage = progress.message,
+                            errorCode = progress.errorCode,
+                            templateId = project?.settings?.templateId,
+                            songId = project?.settings?.musicSongId?.toString(),
+                            quality = _currentQuality.value.displayName,
+                            duration = project?.totalDurationMs,
+                            ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
+                            mediaQuantity = project?.assets?.size
+                        )
+                        ExportUiState.Error(progress.message)
+                    }
                     is ExportProgress.Cancelled -> ExportUiState.Cancelled
                 }
             }
@@ -355,7 +368,7 @@ class ExportViewModel(
     private fun startCleanExport() {
         cleanExportJob?.cancel()
         cleanExportJob = viewModelScope.launch {
-            val cleanId = exportRepository.startExport(projectId, forceWatermarkFree = true)
+            val cleanId = exportRepository.startExport(projectId, forceWatermarkFree = true, quality = _currentQuality.value)
             cleanWorkId = cleanId
             android.util.Log.d("ExportViewModel", "🎬 Clean export started: $cleanId")
             exportRepository.observeExportProgress(cleanId).collect { progress ->

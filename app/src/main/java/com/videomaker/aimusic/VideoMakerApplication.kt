@@ -135,6 +135,13 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         fun isAdsInitialized(): Boolean = adsInitialized.get()
 
         /**
+         * Suppress app open ad for the next resume cycle.
+         * Set to true before launching image picker / camera permission dialogs.
+         * Auto-resets via getAndSet(false) in shouldShowCallback.
+         */
+        val suppressAoa = AtomicBoolean(false)
+
+        /**
          * Preload native ad (non-suspend version)
          * Launches coroutine in application scope for background loading
          *
@@ -538,7 +545,10 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
 
         // Suppress callback: only show AOA on warm returns (not first launch)
         // wasBackgrounded is set to true when app goes to background, consumed here
-        appOpenAdManager.setShouldShowCallback { wasBackgrounded.getAndSet(false) }
+        appOpenAdManager.setShouldShowCallback {
+            if (suppressAoa.getAndSet(false)) return@setShouldShowCallback false
+            wasBackgrounded.getAndSet(false)
+        }
 
         android.util.Log.d("VideoMakerApp", "✅ App open ad manager initialized (2-layer: background + foreground, minimize mode)")
 
@@ -693,6 +703,11 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                     )
                 )
             }
+        }
+
+        // Clean up stale preprocessed image cache files from previous sessions
+        applicationScope.launch(Dispatchers.IO) {
+            com.videomaker.aimusic.media.composition.CompositionFactory.cleanupStaleCacheFiles(this@VideoMakerApplication)
         }
 
         // Initialize TransitionShaderLibrary to load shaders from assets

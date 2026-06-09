@@ -5,6 +5,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.domain.repository.ExportProgress
 import com.videomaker.aimusic.domain.repository.ExportRepository
 import com.videomaker.aimusic.media.export.VideoExportWorker
@@ -21,12 +22,13 @@ class ExportRepositoryImpl(
     private val workManager: WorkManager
 ) : ExportRepository {
 
-    override fun startExport(projectId: String, forceWatermarkFree: Boolean): UUID {
+    override fun startExport(projectId: String, forceWatermarkFree: Boolean, quality: VideoQuality): UUID {
         val request = OneTimeWorkRequestBuilder<VideoExportWorker>()
             .setInputData(
                 workDataOf(
                     VideoExportWorker.KEY_PROJECT_ID to projectId,
-                    VideoExportWorker.KEY_FORCE_WATERMARK_FREE to forceWatermarkFree
+                    VideoExportWorker.KEY_FORCE_WATERMARK_FREE to forceWatermarkFree,
+                    VideoExportWorker.KEY_QUALITY to quality.name
                 )
             )
             .build()
@@ -70,7 +72,9 @@ class ExportRepositoryImpl(
             WorkInfo.State.FAILED -> {
                 val error = workInfo.outputData.getString(VideoExportWorker.KEY_ERROR)
                     ?: "Export failed"
-                ExportProgress.Error(error)
+                val errorCode = workInfo.outputData.getInt(VideoExportWorker.KEY_ERROR_CODE, -1)
+                    .takeIf { it >= 0 }
+                ExportProgress.Error(error, errorCode)
             }
 
             WorkInfo.State.CANCELLED -> ExportProgress.Cancelled

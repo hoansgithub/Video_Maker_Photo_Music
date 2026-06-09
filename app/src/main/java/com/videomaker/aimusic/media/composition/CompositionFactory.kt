@@ -18,6 +18,7 @@ import com.videomaker.aimusic.domain.model.BeatSyncData
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.Transition
+import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.media.audio.VolumeAudioProcessor
 import com.videomaker.aimusic.media.audio.FadeoutAudioProcessor
@@ -144,9 +145,9 @@ class CompositionFactory(
      * 3. Use cache URIs for Media3 composition
      * 4. Load TO textures from same cache files
      */
-    suspend fun createComposition(project: Project, includeAudio: Boolean = true, forExport: Boolean = false): Composition {
+    suspend fun createComposition(project: Project, includeAudio: Boolean = true, forExport: Boolean = false, exportQuality: VideoQuality? = null): Composition {
         val settings = project.settings
-        val textureSize = if (forExport) EXPORT_TEXTURE_SIZE else PREVIEW_TEXTURE_SIZE
+        val textureSize = if (forExport) getExportTextureSize(exportQuality) else PREVIEW_TEXTURE_SIZE
         val includeWatermark = shouldApplyWatermark(
             forExport = forExport,
             isWatermarkFree = project.isWatermarkFree
@@ -504,8 +505,34 @@ class CompositionFactory(
         private const val PREVIEW_TEXTURE_SIZE = 360
         private const val EXPORT_TEXTURE_SIZE = 720
 
+        internal fun getExportTextureSize(quality: VideoQuality?): Int {
+            return quality?.height ?: EXPORT_TEXTURE_SIZE
+        }
+
         internal fun shouldApplyWatermark(forExport: Boolean, isWatermarkFree: Boolean): Boolean {
             return forExport && !isWatermarkFree
+        }
+
+        /**
+         * Clean up stale preprocessed image cache files.
+         * Safe to call on app start — preprocessing always creates fresh files.
+         */
+        fun cleanupStaleCacheFiles(context: Context) {
+            try {
+                val cacheDir = File(context.cacheDir, "preprocessed_images")
+                if (cacheDir.exists()) {
+                    val files = cacheDir.listFiles() ?: return
+                    var deletedCount = 0
+                    files.forEach { file ->
+                        if (file.delete()) deletedCount++
+                    }
+                    if (deletedCount > 0) {
+                        android.util.Log.d("CompositionFactory", "Cleaned up $deletedCount stale cache files")
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("CompositionFactory", "Cache cleanup error: ${e.message}")
+            }
         }
     }
 

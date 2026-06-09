@@ -1,7 +1,22 @@
 package com.videomaker.aimusic.modules.onboardingsurvey
 
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.constants.RemoteConfigKeys
+
+/** Maps each survey step to its primary native ad placement. */
+fun OnboardingSurveyStep.primaryAdPlacement(): String = when (this) {
+    OnboardingSurveyStep.FEATURE -> AdPlacement.NATIVE_ONBOARDING_SELECT
+    OnboardingSurveyStep.PLATFORM -> AdPlacement.NATIVE_ONBOARDING_SOCIAL
+    OnboardingSurveyStep.AI_LEVEL -> AdPlacement.NATIVE_ONBOARDING_AI_LEVEL
+}
+
+/** ALT placement for dual-ad swap steps; null for steps without a swap. */
+fun OnboardingSurveyStep.altAdPlacement(): String? = when (this) {
+    OnboardingSurveyStep.FEATURE -> AdPlacement.NATIVE_ONBOARDING_SELECT_ALT
+    OnboardingSurveyStep.AI_LEVEL -> AdPlacement.NATIVE_ONBOARDING_AI_LEVEL_ALT
+    OnboardingSurveyStep.PLATFORM -> null
+}
 
 /**
  * Single source of truth for which survey steps are enabled and how to advance between them.

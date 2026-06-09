@@ -381,6 +381,7 @@ private fun ImageItem(
         val imageRequest = remember(asset.uri) {
             ImageRequest.Builder(context)
                 .data(asset.uri)
+                .size(200) // Downsample for thumbnail - ~80dp wide, 200px is plenty
                 .decoderFactory(BitmapFactoryDecoder.Factory())
                 .build()
         }

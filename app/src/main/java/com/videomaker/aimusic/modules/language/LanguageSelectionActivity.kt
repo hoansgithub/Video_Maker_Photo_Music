@@ -26,7 +26,8 @@ import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
 import com.videomaker.aimusic.modules.onboarding.OnboardingContentViewModel
 import com.videomaker.aimusic.modules.onboardingsurvey.OnboardingSurveyActivity
 import com.videomaker.aimusic.modules.onboardingsurvey.OnboardingSurveyGate
-import com.videomaker.aimusic.modules.onboardingsurvey.OnboardingSurveyStep
+import com.videomaker.aimusic.modules.onboardingsurvey.altAdPlacement
+import com.videomaker.aimusic.modules.onboardingsurvey.primaryAdPlacement
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
 /**
@@ -66,29 +67,21 @@ class LanguageSelectionActivity : AppCompatActivity() {
         // Onboarding entry point: start the looping geo top-1 background song.
         onboardingMusicPlayer.start()
 
-        // Welcome pager ads: preload early since user always reaches OnboardingActivity.
-        // When survey is enabled this gives lead time across the entire survey flow.
-        android.util.Log.d("LanguageSelection", "🔄 Preloading ads (1-step-ahead)")
-        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
-        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
-        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE3)
-        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
-        VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING)
-
-        // Survey first step ads (if survey is enabled)
-        when (OnboardingSurveyGate.enabledSteps(remoteConfig).firstOrNull()) {
-            OnboardingSurveyStep.FEATURE -> {
-                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SELECT)
-                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SELECT_ALT)
+        // True 1-step-ahead: only preload ads for the IMMEDIATE next screen.
+        // Downstream screens handle their own step-ahead preloading.
+        val firstSurveyStep = OnboardingSurveyGate.enabledSteps(remoteConfig).firstOrNull()
+        if (firstSurveyStep != null) {
+            // Survey is next → preload first survey step's ads only
+            android.util.Log.d("LanguageSelection", "🔄 1-step-ahead: preloading ${firstSurveyStep.name} ads")
+            VideoMakerApplication.preloadNativeAd(firstSurveyStep.primaryAdPlacement())
+            firstSurveyStep.altAdPlacement()?.let {
+                VideoMakerApplication.preloadNativeAdDelayed(it, 1000L)
             }
-            OnboardingSurveyStep.PLATFORM -> {
-                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SOCIAL)
-            }
-            OnboardingSurveyStep.AI_LEVEL -> {
-                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL)
-                VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL_ALT, 1000L)
-            }
-            null -> { /* Already preloaded above */ }
+        } else {
+            // No survey → welcome pager is next, preload first two page ads
+            android.util.Log.d("LanguageSelection", "🔄 1-step-ahead: preloading welcome pager page1+page2 ads")
+            VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
+            VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_PAGE2, 1000L)
         }
 
         // Pre-fetch onboarding thumbnails (data ready when OnboardingActivity opens)
