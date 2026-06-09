@@ -6,8 +6,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -46,7 +48,7 @@ fun ChoiceScreen(
             .fillMaxSize()
             .padding(horizontal = 20.dp),
     ) {
-        Spacer(Modifier.height(60.dp))
+        Spacer(Modifier.height(16.dp))
         Text(
             text = stringResource(titleRes),
             fontSize = 24.sp,
@@ -54,7 +56,10 @@ fun ChoiceScreen(
             color = Color.White,
         )
         Spacer(Modifier.height(24.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.height(intrinsicSize = IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             items.forEach { item ->
                 ChoiceCard(
                     item = item,
@@ -78,7 +83,7 @@ private fun ChoiceCard(
     Box(
         modifier = modifier
             .clip(shape)
-            .height(280.dp)
+            .fillMaxHeight()
             .background(Color.Black.copy(alpha = 0.2f))
             .border(
                 width = if (selected) 2.dp else 1.dp,
@@ -126,6 +131,7 @@ private fun ChoiceCard(
                 fontWeight = FontWeight.Normal,
                 textAlign = TextAlign.Center,
             )
+            Spacer(Modifier.height(16.dp))
         }
         if (selected) {
             Image(

@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
-import coil.compose.rememberAsyncImagePainter
 import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -82,16 +81,6 @@ fun BannerTemplateStyle(
         null
     }
 
-    val bannerBgPainter = rememberAsyncImagePainter(
-        model = remember(style.style) {
-            ImageRequest.Builder(context)
-                .data(if (style.style == 1) R.drawable.img_bg_banner_template1 else R.drawable.img_bg_banner_template2)
-                .decoderFactory(BitmapFactoryDecoder.Factory())
-                .crossfade(true)
-                .build()
-        }
-    )
-
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
@@ -133,7 +122,9 @@ fun BannerTemplateStyle(
             )
 
             Image(
-                painter = bannerBgPainter,
+                painter = painterResource(
+                    if (style.style == 1) R.drawable.img_bg_banner_template1 else R.drawable.img_bg_banner_template2
+                ),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

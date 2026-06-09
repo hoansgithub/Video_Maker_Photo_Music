@@ -603,14 +603,14 @@
     <string name="ai_level_light_touch_banner">Mantén la autenticidad.\nLuce como tú, pero mejor</string>
     <string name="ai_level_deep_swap_title">Cambio total</string>
     <string name="ai_level_deep_swap_banner">Lleva la creatividad más lejos.\nConviértete en cualquiera, prueba de todo.</string>
-    <string name="content_exclusive_title">Filtra tu música y\ntus plantillas</string>
+    <string name="content_exclusive_title">Filtra tu música y tus plantillas</string>
     <string name="content_exclusive_family_title">Apto para la familia</string>
     <string name="content_exclusive_family_subtitle">Bloquea letras explícitas y bailes agresivos.</string>
     <string name="content_exclusive_unfiltered_title">Sin filtros</string>
     <string name="content_exclusive_unfiltered_subtitle">Muestra todos los videos en tendencia y temas para adultos.</string>
     <string name="genre_step_title">¿Qué música te gusta?</string>
     <string name="genre_step_subtitle">Este paso nos ayuda a sugerirte mejor música. No afectará tu contenido personalizado.</string>
-    <string name="media_privacy_title">Elige la configuración de\nprivacidad de tus fotos</string>
+    <string name="media_privacy_title">Elige la configuración de privacidad de tus fotos</string>
     <string name="media_privacy_private_title">Modo privado</string>
     <string name="media_privacy_private_subtitle">Eliminar mis fotos después de cada creación. Ideal para la máxima privacidad.</string>
     <string name="media_privacy_quick_title">Recreación rápida</string>

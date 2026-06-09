@@ -610,14 +610,14 @@
     <string name="ai_level_light_touch_banner">Ka kasance na zahiri.\nKa yi kama da kanka, kawai mafi kyau</string>
     <string name="ai_level_deep_swap_title">Babban Canji</string>
     <string name="ai_level_deep_swap_banner">Ƙara haɓaka ƙwarewa.\nZama duk wani, gwada komai.</string>
-    <string name="content_exclusive_title">Tace kiɗanka da\ntemplate ɗinka</string>
+    <string name="content_exclusive_title">Tace kiɗanka da template ɗinka</string>
     <string name="content_exclusive_family_title">Mai Dacewa da Iyali</string>
     <string name="content_exclusive_family_subtitle">Toshe kalmomin batsa da rawa mai tsanani.</string>
     <string name="content_exclusive_unfiltered_title">Ba a Tace ba</string>
     <string name="content_exclusive_unfiltered_subtitle">Nuna duk shahararrun bidiyo da batutuwan manya.</string>
     <string name="genre_step_title">Wane irin kiɗa kake so?</string>
     <string name="genre_step_subtitle">Wannan matakin yana taimaka mana mu ba ka shawarar kiɗa mafi kyau. Ba zai shafi abubuwan da aka keɓe maka ba.</string>
-    <string name="media_privacy_title">Zaɓi saitin sirri\nna hotunanka</string>
+    <string name="media_privacy_title">Zaɓi saitin sirri na hotunanka</string>
     <string name="media_privacy_private_title">Yanayin Sirri</string>
     <string name="media_privacy_private_subtitle">Share hotunana bayan kowane ƙirƙira. Mafi kyau don ƙarin sirri.</string>
     <string name="media_privacy_quick_title">Sake Yi da Sauri</string>

@@ -603,14 +603,14 @@
     <string name="ai_level_light_touch_banner">Panatilihing natural.\nMukhang ikaw pa rin, mas maganda lang</string>
     <string name="ai_level_deep_swap_title">Malalim na Pagpapalit</string>
     <string name="ai_level_deep_swap_banner">Higit pang pagkamalikhain.\nMaging sinuman, subukan ang kahit ano.</string>
-    <string name="content_exclusive_title">I-filter ang iyong musika at\ntemplate feed</string>
+    <string name="content_exclusive_title">I-filter ang iyong musika at template feed</string>
     <string name="content_exclusive_family_title">Pangpamilya</string>
     <string name="content_exclusive_family_subtitle">I-block ang malalaswang liriko at agresibong pagsayaw.</string>
     <string name="content_exclusive_unfiltered_title">Walang Filter</string>
     <string name="content_exclusive_unfiltered_subtitle">Ipakita ang lahat ng trending na video at temang pang-adulto.</string>
     <string name="genre_step_title">Anong musika ang gusto mo?</string>
     <string name="genre_step_subtitle">Tumutulong ang hakbang na ito para makapagmungkahi kami ng mas magandang musika para sa iyo. Hindi nito maaapektuhan ang iyong personalisadong content.</string>
-    <string name="media_privacy_title">Piliin ang setting ng\nprivacy ng iyong larawan</string>
+    <string name="media_privacy_title">Piliin ang setting ng privacy ng iyong larawan</string>
     <string name="media_privacy_private_title">Pribadong Mode</string>
     <string name="media_privacy_private_subtitle">Burahin ang aking mga larawan pagkatapos ng bawat paglikha. Pinakamahusay para sa pinakamataas na privacy.</string>
     <string name="media_privacy_quick_title">Mabilis na Paggawa-Muli</string>

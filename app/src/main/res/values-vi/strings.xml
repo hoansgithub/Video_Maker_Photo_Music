@@ -602,14 +602,14 @@
     <string name="ai_level_light_touch_banner">Giữ nét tự nhiên.\nVẫn là bạn, chỉ đẹp hơn</string>
     <string name="ai_level_deep_swap_title">Biến hóa sâu</string>
     <string name="ai_level_deep_swap_banner">Sáng tạo không giới hạn.\nHóa thân thành bất kỳ ai, thử mọi điều.</string>
-    <string name="content_exclusive_title">Lọc nhạc và\nnguồn mẫu của bạn</string>
+    <string name="content_exclusive_title">Lọc nhạc và nguồn mẫu của bạn</string>
     <string name="content_exclusive_family_title">Phù hợp gia đình</string>
     <string name="content_exclusive_family_subtitle">Chặn lời bài hát nhạy cảm và điệu nhảy phản cảm.</string>
     <string name="content_exclusive_unfiltered_title">Không lọc</string>
     <string name="content_exclusive_unfiltered_subtitle">Hiển thị mọi video thịnh hành và chủ đề người lớn.</string>
     <string name="genre_step_title">Bạn thích nhạc gì?</string>
     <string name="genre_step_subtitle">Bước này giúp chúng tôi gợi ý nhạc phù hợp hơn cho bạn. Nó sẽ không ảnh hưởng đến nội dung cá nhân hóa của bạn.</string>
-    <string name="media_privacy_title">Chọn cài đặt quyền riêng tư\ncho ảnh của bạn</string>
+    <string name="media_privacy_title">Chọn cài đặt quyền riêng tư cho ảnh của bạn</string>
     <string name="media_privacy_private_title">Chế độ riêng tư</string>
     <string name="media_privacy_private_subtitle">Xóa ảnh của tôi sau mỗi lần tạo. Tốt nhất cho quyền riêng tư tối đa.</string>
     <string name="media_privacy_quick_title">Làm lại nhanh</string>

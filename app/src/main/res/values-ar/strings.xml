@@ -603,14 +603,14 @@
     <string name="ai_level_light_touch_banner">حافظ على المظهر الطبيعي.\nتبدو مثل نفسك، لكن بشكل أفضل</string>
     <string name="ai_level_deep_swap_title">تبديل عميق</string>
     <string name="ai_level_deep_swap_banner">ادفع الإبداع إلى أبعد حد.\nكن أي شخص، وجرّب أي شيء.</string>
-    <string name="content_exclusive_title">صفِّ موسيقاك\nوقوالبك</string>
+    <string name="content_exclusive_title">صفِّ موسيقاك وقوالبك</string>
     <string name="content_exclusive_family_title">مناسب للعائلة</string>
     <string name="content_exclusive_family_subtitle">حظر الكلمات الصريحة والرقص الجريء.</string>
     <string name="content_exclusive_unfiltered_title">بدون تصفية</string>
     <string name="content_exclusive_unfiltered_subtitle">عرض جميع الفيديوهات الرائجة والمواضيع للبالغين.</string>
     <string name="genre_step_title">ما نوع الموسيقى التي تحبها؟</string>
     <string name="genre_step_subtitle">تساعدنا هذه الخطوة على اقتراح موسيقى أفضل لك. لن تؤثر على المحتوى المخصص لك.</string>
-    <string name="media_privacy_title">اختر إعداد خصوصية\nالصور الخاص بك</string>
+    <string name="media_privacy_title">اختر إعداد خصوصية الصور الخاص بك</string>
     <string name="media_privacy_private_title">الوضع الخاص</string>
     <string name="media_privacy_private_subtitle">احذف صوري بعد كل عملية إنشاء. الأفضل لأقصى درجات الخصوصية.</string>
     <string name="media_privacy_quick_title">إعادة إنشاء سريعة</string>

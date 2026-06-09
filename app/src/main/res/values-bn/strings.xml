@@ -610,14 +610,14 @@
     <string name="ai_level_light_touch_banner">স্বাভাবিকতা বজায় রাখুন।\nআপনার মতোই দেখতে, শুধু আরও ভালো</string>
     <string name="ai_level_deep_swap_title">ডিপ সোয়াপ</string>
     <string name="ai_level_deep_swap_banner">সৃজনশীলতাকে আরও এগিয়ে নিন।\nযে কেউ হয়ে উঠুন, যা খুশি চেষ্টা করুন।</string>
-    <string name="content_exclusive_title">আপনার সঙ্গীত ও\nটেমপ্লেট ফিড ফিল্টার করুন</string>
+    <string name="content_exclusive_title">আপনার সঙ্গীত ও টেমপ্লেট ফিড ফিল্টার করুন</string>
     <string name="content_exclusive_family_title">পরিবারবান্ধব</string>
     <string name="content_exclusive_family_subtitle">অশ্লীল লিরিক্স এবং আক্রমণাত্মক নাচ ব্লক করুন।</string>
     <string name="content_exclusive_unfiltered_title">ফিল্টারবিহীন</string>
     <string name="content_exclusive_unfiltered_subtitle">সমস্ত ট্রেন্ডিং ভিডিও এবং পরিণত থিম দেখান।</string>
     <string name="genre_step_title">আপনি কোন সঙ্গীত পছন্দ করেন?</string>
     <string name="genre_step_subtitle">এই ধাপটি আপনার জন্য আরও ভালো সঙ্গীত প্রস্তাব করতে সাহায্য করে। এটি আপনার ব্যক্তিগতকৃত কন্টেন্টে প্রভাব ফেলবে না।</string>
-    <string name="media_privacy_title">আপনার ছবির গোপনীয়তা\nসেটিং বেছে নিন</string>
+    <string name="media_privacy_title">আপনার ছবির গোপনীয়তা সেটিং বেছে নিন</string>
     <string name="media_privacy_private_title">প্রাইভেট মোড</string>
     <string name="media_privacy_private_subtitle">প্রতিবার তৈরির পর আমার ছবি মুছে ফেলুন। সর্বোচ্চ গোপনীয়তার জন্য সেরা।</string>
     <string name="media_privacy_quick_title">দ্রুত রিমেক</string>

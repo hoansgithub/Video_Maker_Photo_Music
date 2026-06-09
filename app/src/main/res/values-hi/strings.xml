@@ -605,14 +605,14 @@
     <string name="ai_level_light_touch_banner">स्वाभाविक बने रहें।\nआप जैसे दिखें, बस और बेहतर</string>
     <string name="ai_level_deep_swap_title">डीप स्वैप</string>
     <string name="ai_level_deep_swap_banner">रचनात्मकता को और आगे ले जाएँ।\nकोई भी बनें, कुछ भी आज़माएँ।</string>
-    <string name="content_exclusive_title">अपने संगीत और\nटेम्पलेट फ़ीड को फ़िल्टर करें</string>
+    <string name="content_exclusive_title">अपने संगीत और टेम्पलेट फ़ीड को फ़िल्टर करें</string>
     <string name="content_exclusive_family_title">परिवार के अनुकूल</string>
     <string name="content_exclusive_family_subtitle">अश्लील बोल और आक्रामक नृत्य ब्लॉक करें।</string>
     <string name="content_exclusive_unfiltered_title">बिना फ़िल्टर</string>
     <string name="content_exclusive_unfiltered_subtitle">सभी ट्रेंडिंग वीडियो और वयस्क थीम दिखाएँ।</string>
     <string name="genre_step_title">आपको कौन-सा संगीत पसंद है?</string>
     <string name="genre_step_subtitle">यह चरण हमें आपके लिए बेहतर संगीत सुझाने में मदद करता है। इससे आपकी वैयक्तिकृत सामग्री पर असर नहीं पड़ेगा।</string>
-    <string name="media_privacy_title">अपनी फ़ोटो की गोपनीयता\nसेटिंग चुनें</string>
+    <string name="media_privacy_title">अपनी फ़ोटो की गोपनीयता सेटिंग चुनें</string>
     <string name="media_privacy_private_title">निजी मोड</string>
     <string name="media_privacy_private_subtitle">हर रचना के बाद मेरी फ़ोटो हटाएँ। अधिकतम गोपनीयता के लिए सर्वोत्तम।</string>
     <string name="media_privacy_quick_title">त्वरित रीमेक</string>
