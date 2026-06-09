@@ -168,6 +168,9 @@ class EditorViewModel(
     // Mutex for thread-safe trimmer operations (prevents race conditions)
     private val trimStateMutex = Mutex()
 
+    // Mutex for thread-safe asset replacement (prevents interleaving from rapid changes)
+    private val assetMutex = Mutex()
+
     // Track the actual project ID (might be generated for new projects)
     private var currentProjectId: String? = projectId
     private var hasTrackedReadyToEditGenerateComplete = false
@@ -307,7 +310,11 @@ class EditorViewModel(
                         if (project.settings.musicSongId != null &&
                             (project.settings.musicSongCoverUrl == null || project.settings.musicSongArtist == null)
                         ) {
-                            val song = try { fetchSongWithRetry(project.settings.musicSongId) } catch (_: Exception) { null }
+                            val song = try {
+                                fetchSongWithRetry(project.settings.musicSongId)
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (_: Exception) { null }
                             if (song != null) {
                                 project = project.copy(
                                     settings = project.settings.copy(
@@ -441,12 +448,23 @@ class EditorViewModel(
                 // Load beat-sync data if music is selected
                 val beatSyncData = data.musicSongId?.let { songId ->
                     loadBeatSyncWithRetry(songId)
+                }?.takeIf { beatData ->
+                    // Validate beat-sync data: BPM must be positive and beats must not be empty
+                    (beatData.bpm > 0 && beatData.beats.isNotEmpty()).also { valid ->
+                        if (!valid) {
+                            android.util.Log.e("EditorViewModel", "Invalid beat-sync data: bpm=${beatData.bpm}, beats=${beatData.beats.size}")
+                        }
+                    }
                 }
 
-                // CRITICAL: If music is selected but beat-sync data failed to load, return early
-                // Error dialog is already shown by loadBeatSyncWithRetry, user will be navigated back
+                // CRITICAL: If music is selected but beat-sync data failed to load or is invalid, return early
+                // loadBeatSyncWithRetry already shows error dialog on load failure;
+                // we set it here too for validation failures (idempotent on StateFlow)
                 if (data.musicSongId != null && beatSyncData == null) {
-                    android.util.Log.e("EditorViewModel", "Beat-sync data required but failed to load - aborting initialization")
+                    android.util.Log.e("EditorViewModel", "Beat-sync data required but unavailable - aborting initialization")
+                    if (!_showBeatSyncErrorDialog.value) {
+                        _showBeatSyncErrorDialog.value = true
+                    }
                     return@launch
                 }
 
@@ -1196,9 +1214,9 @@ class EditorViewModel(
      * Handles both existing assets (reordered) and new assets (added from gallery)
      * Triggers only ONE video rebuild
      */
-    suspend fun replaceAssetsFromUris(selectedUris: List<String>) {
+    suspend fun replaceAssetsFromUris(selectedUris: List<String>) = assetMutex.withLock {
         val currentState = _uiState.value
-        if (currentState !is EditorUiState.Success) return
+        if (currentState !is EditorUiState.Success) return@withLock
 
         android.util.Log.d("EditorViewModel", "Replace assets: ${currentState.project.assets.size} → ${selectedUris.size} images")
 
@@ -1221,7 +1239,7 @@ class EditorViewModel(
 
         if (finalAssets.isEmpty()) {
             android.util.Log.w("EditorViewModel", "replaceAssetsFromUris: No valid assets to apply")
-            return
+            return@withLock
         }
 
         // Check if assets actually changed to avoid unnecessary rebuild
@@ -1230,7 +1248,7 @@ class EditorViewModel(
             android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Assets unchanged, skipping update")
             // Clear pending assets but don't update project
             _uiState.value = currentState.copy(pendingAssets = null)
-            return
+            return@withLock
         }
 
         // Recalculate duration and reprocess audio if beat-sync music is present
@@ -1366,9 +1384,24 @@ class EditorViewModel(
                         setPlaybackState(false)
                     }
 
-                    // TODO: Get actual song duration from music player/metadata
-                    // For now using placeholder - will be set when music player loads
-                    val songDurationMs = 180_000L // 3 minutes placeholder
+                    // Get actual song duration from metadata (network URL — needs timeout)
+                    val songDurationMs = withContext(Dispatchers.IO) {
+                        try {
+                            kotlinx.coroutines.withTimeoutOrNull(5000L) {
+                                val retriever = android.media.MediaMetadataRetriever()
+                                try {
+                                    retriever.setDataSource(songUrl, HashMap<String, String>())
+                                    retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
+                                        ?.toLongOrNull() ?: 180_000L
+                                } finally {
+                                    retriever.release()
+                                }
+                            } ?: 180_000L // Timeout fallback
+                        } catch (e: Exception) {
+                            android.util.Log.w("EditorViewModel", "Failed to get song duration, using fallback: ${e.message}")
+                            180_000L // Fallback to 3 minutes
+                        }
+                    }
 
                     // Open trimmer with a window aligned to current video duration.
                     // This keeps music editing tied to the current timeline length.

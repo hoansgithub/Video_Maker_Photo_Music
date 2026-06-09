@@ -1454,6 +1454,37 @@ object Analytics {
         )
     }
 
+    fun trackVideoExportError(
+        videoId: String,
+        errorMessage: String,
+        errorCode: Int? = null,
+        templateId: String? = null,
+        songId: String? = null,
+        quality: String? = null,
+        duration: Long? = null,
+        ratioSize: String? = null,
+        mediaQuantity: Int? = null
+    ) {
+        val params = buildVideoParams(
+            videoId = videoId,
+            templateId = templateId,
+            songId = songId,
+            quality = quality,
+            duration = duration,
+            ratioSize = ratioSize,
+            mediaQuantity = mediaQuantity
+        ).toMutableMap().apply {
+            put(AnalyticsEvent.Param.ERROR_MESSAGE, errorMessage)
+            errorCode?.let { put(AnalyticsEvent.Param.ERROR_CODE, it.toString()) }
+        }
+        trackWithPolicy(
+            eventName = AnalyticsEvent.VIDEO_EXPORT_ERROR,
+            params = params,
+            requiredParams = setOf(AnalyticsEvent.Param.VIDEO_ID),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackVideoShare(
         videoId: String,
         location: String,

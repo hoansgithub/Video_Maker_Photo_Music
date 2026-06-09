@@ -298,10 +298,9 @@ fun VideoPreviewPlayer(
             )
 
             // Only seek if drift is significant to avoid audio glitching
-            // Use larger threshold (200ms) to reduce unnecessary seeks
             val currentAudioPos = audio.currentPosition
             val drift = abs(currentAudioPos - targetAudioPos)
-            if (drift > 200) {
+            if (drift > 100) {
                 android.util.Log.d("VideoPreviewPlayer", "Syncing audio: drift=${drift}ms, seeking to ${targetAudioPos}ms")
                 audio.seekTo(targetAudioPos)
             }
@@ -347,12 +346,9 @@ fun VideoPreviewPlayer(
                         val currentPos = vp.currentPosition.coerceAtLeast(0)
                         val duration = vp.duration.coerceAtLeast(0)
                         onPositionUpdate(currentPos, duration)
-
-                        // DON'T sync continuously - causes glitching!
-                        // Only sync on user actions (seek, play, pause)
                     }
                 }
-                // Re-schedule while players exist
+                // Re-schedule while player exists (cost is negligible — just reads in-memory position)
                 if (videoPlayer != null) {
                     positionHandler.postDelayed(this, POSITION_UPDATE_INTERVAL_MS)
                 }
@@ -591,6 +587,10 @@ fun VideoPreviewPlayer(
                                 android.util.Log.e("VideoPreviewPlayer", "Audio player error occurred", error)
                                 android.util.Log.e("VideoPreviewPlayer", "Audio error code: ${error.errorCode}")
                                 android.util.Log.e("VideoPreviewPlayer", "Audio error message: ${error.message}")
+
+                                // Pause video player so it doesn't keep playing silently
+                                videoPlayer?.pause()
+                                onPlaybackStateChange(false)
 
                                 audio.repeatMode = Player.REPEAT_MODE_ALL
                                 // On error, keep REPEAT_MODE_ALL (already set as default)

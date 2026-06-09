@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.domain.repository
 
+import com.videomaker.aimusic.domain.model.VideoQuality
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
@@ -15,7 +16,7 @@ interface ExportRepository {
      *   Used for pre-generating the clean version in parallel with the watermarked export.
      * @return Work ID for tracking progress
      */
-    fun startExport(projectId: String, forceWatermarkFree: Boolean = false): UUID
+    fun startExport(projectId: String, forceWatermarkFree: Boolean = false, quality: VideoQuality = VideoQuality.DEFAULT): UUID
 
     /**
      * Observe export progress
@@ -61,7 +62,7 @@ sealed class ExportProgress {
      *
      * @param message Error message
      */
-    data class Error(val message: String) : ExportProgress()
+    data class Error(val message: String, val errorCode: Int? = null) : ExportProgress()
 
     /**
      * Export was cancelled by user

@@ -103,6 +103,7 @@ import coil.size.Precision
 import coil.size.Size
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.VideoMakerApplication
 import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.core.ads.AdClickDetector
 import com.videomaker.aimusic.core.ads.AdPlacementConfigService
@@ -467,6 +468,7 @@ fun AssetPickerScreen(
     val openAppSettings = {
         Analytics.trackPermissionGotoSetting()
         pendingPermissionCheckAfterSettings = true
+        VideoMakerApplication.suppressAoa.set(true)
         runCatching {
             context.startActivity(
                 mediaPermissionCoordinator.buildOpenAppSettingsIntent(context)
@@ -490,6 +492,7 @@ fun AssetPickerScreen(
                 perType = AnalyticsEvent.Value.PerType.MEDIA,
                 popType = AnalyticsEvent.Value.PopType.SYSTEM
             )
+            VideoMakerApplication.suppressAoa.set(true)
             permissionLauncher.launch(permissionsToRequest)
         } else {
             showPermissionPromoDialog = false
@@ -581,6 +584,7 @@ fun AssetPickerScreen(
             isPhotoPickerActive = true
             Analytics.trackPermissionAddImage()
             try {
+                VideoMakerApplication.suppressAoa.set(true)
                 photoPickerLauncher.launch(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                 )
@@ -620,6 +624,7 @@ fun AssetPickerScreen(
         if (granted) {
             cameraUri?.let { uri ->
                 try {
+                    VideoMakerApplication.suppressAoa.set(true)
                     cameraLauncher.launch(uri)
                 } catch (e: ActivityNotFoundException) {
                     Log.e("AssetPicker", "No camera app available: ${e.message}")
@@ -645,6 +650,7 @@ fun AssetPickerScreen(
             ) == PackageManager.PERMISSION_GRANTED
             if (hasCameraPermission) {
                 try {
+                    VideoMakerApplication.suppressAoa.set(true)
                     cameraLauncher.launch(uri)
                 } catch (e: ActivityNotFoundException) {
                     Log.e("AssetPicker", "No camera app available: ${e.message}")
@@ -654,6 +660,7 @@ fun AssetPickerScreen(
                     perType = AnalyticsEvent.Value.PerType.CAMERA,
                     popType = AnalyticsEvent.Value.PopType.SYSTEM
                 )
+                VideoMakerApplication.suppressAoa.set(true)
                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
         } catch (e: IllegalArgumentException) {

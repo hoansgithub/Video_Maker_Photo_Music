@@ -147,6 +147,7 @@ object AnalyticsEvent {
     // ============================================
     const val VIDEO_EXPORT = "video_export"
     const val VIDEO_EXPORT_COMPLETE = "video_export_complete"
+    const val VIDEO_EXPORT_ERROR = "video_export_error"
     const val VIDEO_SHARE = "video_share"
     const val VIDEO_DOWNLOAD = "video_download"
 
@@ -368,6 +369,8 @@ object AnalyticsEvent {
         const val CTA = "cta"
         const val LANGUAGE = "language"
         const val TRIGGER = "trigger"
+        const val ERROR_CODE = "error_code"
+        const val ERROR_MESSAGE = "error_message"
     }
 
     // ============================================
