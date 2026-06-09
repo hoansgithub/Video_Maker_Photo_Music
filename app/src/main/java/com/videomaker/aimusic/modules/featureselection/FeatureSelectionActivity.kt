@@ -41,6 +41,7 @@ import com.videomaker.aimusic.modules.onboarding.pages.FeatureSurveyPage
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import androidx.lifecycle.lifecycleScope
@@ -55,6 +56,15 @@ import com.videomaker.aimusic.core.constants.RemoteConfigKeys
 import com.videomaker.aimusic.modules.genretemplate.getStepEnabled
 
 private enum class FeatureSelectionStep { FEATURE_SELECT, PERSONALIZING }
+
+// Personalizing screen: wait until the native ad is ready before ending, but
+// never hold the screen longer than this hard cap (10s) even if no ad arrives.
+private const val PERSONALIZING_AD_TIMEOUT_MS = 10_000L
+// How often to check whether the native ad has loaded.
+private const val PERSONALIZING_AD_POLL_MS = 200L
+// Once the ad is ready, keep it on screen briefly so it actually shows / fires
+// an impression before moving on to the interstitial.
+private const val PERSONALIZING_AD_MIN_DISPLAY_MS = 1_000L
 
 class FeatureSelectionActivity : AppCompatActivity() {
 
@@ -224,12 +234,30 @@ class FeatureSelectionActivity : AppCompatActivity() {
                                                     )
 
                                                     if (personalizingEnabled) {
-                                                        // Show the PERSONALIZING screen, then complete after a
-                                                        // 2.5s min-duration. The timer runs in lifecycleScope so
-                                                        // it is decoupled from recomposition.
+                                                        // Show the PERSONALIZING screen until the native ad is
+                                                        // ready to be displayed (so the user actually sees it),
+                                                        // then complete. If the ad does not become ready within
+                                                        // PERSONALIZING_AD_TIMEOUT_MS (10s), end the screen anyway.
+                                                        // The timer runs in lifecycleScope so it is decoupled
+                                                        // from recomposition.
                                                         step = FeatureSelectionStep.PERSONALIZING
                                                         lifecycleScope.launch {
-                                                            delay(2500)
+                                                            val adShown = withTimeoutOrNull(PERSONALIZING_AD_TIMEOUT_MS) {
+                                                                while (!adsLoaderService.isNativeAdReady(
+                                                                        AdPlacement.NATIVE_ONBOARDING_PERSONALIZING
+                                                                    )
+                                                                ) {
+                                                                    delay(PERSONALIZING_AD_POLL_MS)
+                                                                }
+                                                                true
+                                                            } ?: false
+
+                                                            // Ad became visible → keep it on screen briefly so it
+                                                            // registers an impression before the interstitial.
+                                                            if (adShown) {
+                                                                delay(PERSONALIZING_AD_MIN_DISPLAY_MS)
+                                                            }
+
                                                             preferencesManager.setOnboardingComplete(true)
                                                             InterstitialAdHelperExt.showInterstitial(
                                                                 adsLoaderService = adsLoaderService,
