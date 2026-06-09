@@ -48,7 +48,7 @@ class TrendingPopupCoordinatorTest {
         override suspend fun getSongById(id: Long) = Result.success(items.first { it.id == id })
         override suspend fun searchSongs(query: String) = Result.success(emptyList<MusicSong>())
         override suspend fun getGenres() = Result.success(emptyList<SongGenre>())
-        override suspend fun getSongsByGenre(genre: String, limit: Int) = Result.success(emptyList<MusicSong>())
+        override suspend fun getSongsByGenre(genre: String, limit: Int, offset: Int) = Result.success(emptyList<MusicSong>())
         override suspend fun getSongsPaged(offset: Int, limit: Int) = Result.success(emptyList<MusicSong>())
         override suspend fun getSuggestedSongs(preferredGenres: List<String>, offset: Int, limit: Int) = Result.success(emptyList<MusicSong>())
         override suspend fun getRandomSongs(limit: Int) = Result.success(emptyList<MusicSong>())

@@ -775,6 +775,18 @@ object AdPlacement {
     const val NATIVE_SEARCH_MUSIC_INFEED = "ad_native_search_music_infeed"
 
     /**
+     * Native ad inserted every Xth position in the editor music selector (bottom sheet) song list.
+     * Same config structure as NATIVE_STATION_INFEED.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6943442204
+     * - Secondary: ca-app-pub-7121075950716954/5456924546
+     *
+     * Remote Config key: ad_native_editor_music_infeed
+     */
+    const val NATIVE_EDITOR_MUSIC_INFEED = "ad_native_editor_music_infeed"
+
+    /**
      * Native ad shown during export video generating state.
      * Timing: Displayed at bottom of "Generating" overlay while video is being exported.
      * Waits 10 seconds for ad to load, then displays for 2 more seconds if loaded.
@@ -1236,6 +1248,7 @@ object AdPlacement {
         NATIVE_RANKING_INFEED,
         NATIVE_SUGGESTED_INFEED,
         NATIVE_SEARCH_MUSIC_INFEED,
+        NATIVE_EDITOR_MUSIC_INFEED,
         NATIVE_TEMPLATE_PREVIEWER_LOADING,
         NATIVE_TEMPLATE_RATIO_SHEET,
         NATIVE_POPUP_TRENDING_TEMPLATE,

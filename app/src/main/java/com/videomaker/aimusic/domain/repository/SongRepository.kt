@@ -30,7 +30,7 @@ interface SongRepository {
     /**
      * Get songs by genre
      */
-    suspend fun getSongsByGenre(genre: String, limit: Int = 20): Result<List<MusicSong>>
+    suspend fun getSongsByGenre(genre: String, limit: Int = 20, offset: Int = 0): Result<List<MusicSong>>
 
     /**
      * Get paginated songs

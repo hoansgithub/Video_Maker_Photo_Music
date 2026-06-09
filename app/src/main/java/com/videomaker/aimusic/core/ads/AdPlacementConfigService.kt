@@ -872,6 +872,22 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Editor music selector in-feed native ad (bottom sheet song list)
+        // Same config as NATIVE_STATION_INFEED
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.NATIVE_EDITOR_MUSIC_INFEED,
+            type = "native",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6943442204",
+                "ca-app-pub-7121075950716954/5456924546"
+            ),
+            extras = mapOf(
+                "layout" to "native_small_row",
+                "infeed_interval" to 10
+            ),
+            enabled = true
+        )
+
         // Trending template popup native ad (bottom of "Don't miss it" popup, Gallery tab)
         // Layout: native_small_row
         // Waterfall: Primary unit -> Secondary unit
