@@ -93,6 +93,24 @@ class TrendingPopupCoordinator(
     private val _activeTab = MutableStateFlow<TrendingPopupTab?>(null)
     val activeTab: StateFlow<TrendingPopupTab?> = _activeTab.asStateFlow()
 
+    private val _isMusicPlayerActive = MutableStateFlow(false)
+    val isMusicPlayerActive: StateFlow<Boolean> = _isMusicPlayerActive.asStateFlow()
+
+    fun setMusicPlayerActive(active: Boolean) {
+        if (_isMusicPlayerActive.value != active) {
+            _isMusicPlayerActive.value = active
+            if (!active) {
+                val currentTab = _activeTab.value
+                if (currentTab != null) {
+                    scope.launch {
+                        evaluateAndMaybeShow(currentTab)
+                    }
+                }
+            }
+        }
+    }
+
+
     /** Tracks which tabs have already had their popup ad preloaded this session. */
     private val preloadedThisSession = mutableSetOf<TrendingPopupTab>()
 
@@ -117,7 +135,7 @@ class TrendingPopupCoordinator(
         val otherShowing = (when (tab) {
             TrendingPopupTab.GALLERY -> _songPopup.value is TrendingPopupState.Showing
             TrendingPopupTab.SONGS -> _templatePopup.value is TrendingPopupState.Showing
-        }) || isRatingShowing()
+        }) || isRatingShowing() || _isMusicPlayerActive.value
 
         return gate.evaluate(
             snapshot = snapshot,
@@ -189,7 +207,7 @@ class TrendingPopupCoordinator(
         val otherShowing = (when (tab) {
             TrendingPopupTab.GALLERY -> _songPopup.value is TrendingPopupState.Showing
             TrendingPopupTab.SONGS -> _templatePopup.value is TrendingPopupState.Showing
-        }) || isRatingShowing()
+        }) || isRatingShowing() || _isMusicPlayerActive.value
 
         val decision = gate.evaluate(
             snapshot = snapshot,

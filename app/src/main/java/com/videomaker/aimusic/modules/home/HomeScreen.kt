@@ -479,6 +479,10 @@ fun HomeScreen(
     val audioPreviewCache: AudioPreviewCache = koinInject()
     val songsSelectedSong by songsViewModel.selectedSong.collectAsStateWithLifecycle()
     val projectsSelectedSong by projectsViewModel.selectedSong.collectAsStateWithLifecycle()
+    val isMusicPlayerActive = songsSelectedSong != null || projectsSelectedSong != null
+    LaunchedEffect(isMusicPlayerActive) {
+        trendingPopupCoordinator.setMusicPlayerActive(isMusicPlayerActive)
+    }
     // [Experiment] CTA "Try it" hides while the user scrolls the list to discover other songs
     // during preview; reappears on player interaction or new song select.
     var isSongsCtaVisible by remember { mutableStateOf(true) }
