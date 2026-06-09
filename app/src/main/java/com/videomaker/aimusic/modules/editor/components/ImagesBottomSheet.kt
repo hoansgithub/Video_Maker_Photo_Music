@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.res.stringResource
@@ -59,6 +60,8 @@ import androidx.compose.ui.zIndex
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import coil.compose.AsyncImage
+import coil.decode.BitmapFactoryDecoder
+import coil.request.ImageRequest
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.ui.theme.Gray500
@@ -82,6 +85,7 @@ internal fun ImagesBottomSheet(
     onAddImages: () -> Unit,
     onConfirm: (List<Asset>) -> Unit
 ) {
+    val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
@@ -275,8 +279,14 @@ internal fun ImagesBottomSheet(
                                     .clip(RoundedCornerShape(12.dp))
                                     .shadow(8.dp, RoundedCornerShape(12.dp))
                             ) {
+                                val dragImageRequest = remember(draggedAsset.uri) {
+                                    ImageRequest.Builder(context)
+                                        .data(draggedAsset.uri)
+                                        .decoderFactory(BitmapFactoryDecoder.Factory())
+                                        .build()
+                                }
                                 AsyncImage(
-                                    model = draggedAsset.uri,
+                                    model = dragImageRequest,
                                     contentDescription = "Dragging",
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxSize()
@@ -367,8 +377,15 @@ private fun ImageItem(
             }
     ) {
         // Image
+        val context = LocalContext.current
+        val imageRequest = remember(asset.uri) {
+            ImageRequest.Builder(context)
+                .data(asset.uri)
+                .decoderFactory(BitmapFactoryDecoder.Factory())
+                .build()
+        }
         AsyncImage(
-            model = asset.uri,
+            model = imageRequest,
             contentDescription = "Image ${asset.id}",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()

@@ -6,7 +6,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,13 +26,15 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.VideoMakerApplication
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
@@ -56,6 +57,7 @@ class GenreTemplateActivity : AppCompatActivity() {
 
         setContent {
             val adClickDetector: AdClickDetector = koinInject()
+            val remoteConfig: RemoteConfig = koinInject()
             var bottomSectionHeight by remember { mutableStateOf(0) }
             val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
 
@@ -90,6 +92,21 @@ class GenreTemplateActivity : AppCompatActivity() {
                     GenreTemplateStep.CONTENT_EXCLUSIVE -> Analytics.track(name = "content_feed_render")
                     GenreTemplateStep.MEDIA_PRIVACY -> Analytics.track(name = "privacy_render")
                     else -> {}
+                }
+
+                // 1-step-ahead ad preload
+                val enabledSteps = GenreTemplateGate.enabledSteps(remoteConfig)
+                val next = GenreTemplateGate.nextStep(enabledSteps, currentStep)
+                if (next != null) {
+                    VideoMakerApplication.preloadNativeAd(next.primaryAdPlacement())
+                    next.altAdPlacement()?.let {
+                        VideoMakerApplication.preloadNativeAdDelayed(it, 1000L)
+                    }
+                } else {
+                    // Last step → preload FeatureSelection exit ads
+                    VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION)
+                    VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT, 1000L)
+                    VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE)
                 }
             }
 
@@ -181,8 +198,8 @@ class GenreTemplateActivity : AppCompatActivity() {
                                     .clickableSingle{}
                             ) {
 
-                                Image(
-                                    painter = painterResource(R.drawable.img_bg_cta_onboard),
+                                LocalAsyncImage(
+                                    resId = R.drawable.img_bg_cta_onboard,
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.matchParentSize()
@@ -309,6 +326,10 @@ class GenreTemplateActivity : AppCompatActivity() {
     }
 
     private fun navigateToFeatureSelection() {
+        // Safety net: preload FeatureSelection ads (idempotent on top of last-step preload)
+        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION)
+        VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT, 1000L)
+        VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE)
         startActivity(Intent(this, com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity::class.java))
         finish()
     }

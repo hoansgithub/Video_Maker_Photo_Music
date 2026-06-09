@@ -60,6 +60,7 @@ import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.VideoMakerApplication
 import com.videomaker.aimusic.core.ads.AdClickDetector
 import com.videomaker.aimusic.core.analytics.Analytics
@@ -337,8 +338,8 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                             )
                             .clickableSingle { }
                     ) {
-                        Image(
-                            painter = painterResource(R.drawable.img_bg_cta_onboard),
+                        LocalAsyncImage(
+                            resId = R.drawable.img_bg_cta_onboard,
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.matchParentSize(),
@@ -429,33 +430,35 @@ class OnboardingSurveyActivity : AppCompatActivity() {
             }
         }
 
-        // Preload the next screen's ads (1-step-ahead).
+        // 1-step-ahead: preload the next step's ads when arriving at the current step.
         LaunchedEffect(step) {
+            val enabled = viewModel.enabledSteps
+            val isLastStep = enabled.lastOrNull() == step
+
             when (step) {
                 OnboardingSurveyStep.FEATURE -> {
                     when {
-                        OnboardingSurveyStep.PLATFORM in viewModel.enabledSteps ->
+                        OnboardingSurveyStep.PLATFORM in enabled ->
                             VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SOCIAL)
-                        OnboardingSurveyStep.AI_LEVEL in viewModel.enabledSteps ->
+                        OnboardingSurveyStep.AI_LEVEL in enabled -> {
                             VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL)
-                        else -> {
-                            VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
-                            VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
+                            VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL_ALT, 1000L)
                         }
                     }
                 }
                 OnboardingSurveyStep.PLATFORM -> {
-                    if (OnboardingSurveyStep.AI_LEVEL in viewModel.enabledSteps) {
+                    if (OnboardingSurveyStep.AI_LEVEL in enabled) {
                         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL)
-                    } else {
-                        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
-                        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
+                        VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL_ALT, 1000L)
                     }
                 }
-                OnboardingSurveyStep.AI_LEVEL -> {
-                    VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
-                    VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
-                }
+                OnboardingSurveyStep.AI_LEVEL -> { /* PAGE1/PAGE2 handled below */ }
+            }
+
+            // Last step → preload welcome pager (next screen)
+            if (isLastStep) {
+                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
+                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
             }
         }
     }
@@ -515,8 +518,8 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                         )
                         .clickableSingle { }
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.img_bg_cta_onboard),
+                    LocalAsyncImage(
+                        resId = R.drawable.img_bg_cta_onboard,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.matchParentSize(),

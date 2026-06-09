@@ -66,9 +66,16 @@ class LanguageSelectionActivity : AppCompatActivity() {
         // Onboarding entry point: start the looping geo top-1 background song.
         onboardingMusicPlayer.start()
 
-        // Preload the next screen's ads (1-step-ahead strategy). The next screen depends on
-        // which survey screens are enabled; fall back to the welcome pager ads when none are.
-        android.util.Log.d("LanguageSelection", "🔄 Preloading next-screen ads (1-step-ahead)")
+        // Welcome pager ads: preload early since user always reaches OnboardingActivity.
+        // When survey is enabled this gives lead time across the entire survey flow.
+        android.util.Log.d("LanguageSelection", "🔄 Preloading ads (1-step-ahead)")
+        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
+        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
+        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE3)
+        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
+        VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING)
+
+        // Survey first step ads (if survey is enabled)
         when (OnboardingSurveyGate.enabledSteps(remoteConfig).firstOrNull()) {
             OnboardingSurveyStep.FEATURE -> {
                 VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_SELECT)
@@ -79,16 +86,9 @@ class LanguageSelectionActivity : AppCompatActivity() {
             }
             OnboardingSurveyStep.AI_LEVEL -> {
                 VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL)
+                VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_AI_LEVEL_ALT, 1000L)
             }
-            null -> {
-                // No survey screens → welcome pager (OnboardingActivity) is next.
-                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
-                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE2)
-                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE3)
-                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
-                // Independent onboarding interstitial (only shows if enabled on Firebase)
-                VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING)
-            }
+            null -> { /* Already preloaded above */ }
         }
 
         // Pre-fetch onboarding thumbnails (data ready when OnboardingActivity opens)

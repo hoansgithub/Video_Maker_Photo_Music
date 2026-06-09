@@ -57,6 +57,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.BackgroundDark
 import com.videomaker.aimusic.ui.theme.Black40
@@ -102,8 +103,8 @@ fun RatingSatisfactionPopup(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Smile icon at top center
-                    Image(
-                        painter = painterResource(R.drawable.img_rate_content),
+                    LocalAsyncImage(
+                        resId = R.drawable.img_rate_content,
                         contentDescription = null,
                         modifier = Modifier.fillMaxWidth(0.75f),
                         contentScale = ContentScale.FillWidth

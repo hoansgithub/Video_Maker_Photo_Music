@@ -74,6 +74,7 @@ import androidx.media3.common.util.UnstableApi
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -323,8 +324,8 @@ fun ProjectsTabContent(
         .nestedScroll(scrollHideConnection)
     ) {
         // Background image — edge-to-edge, behind everything
-        Image(
-            painter = painterResource(id = R.drawable.bg_projects),
+        LocalAsyncImage(
+            resId = R.drawable.bg_projects,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
