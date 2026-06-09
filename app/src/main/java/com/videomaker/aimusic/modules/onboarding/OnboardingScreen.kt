@@ -24,7 +24,6 @@ import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.modules.genretemplate.GenreTemplateGate
 import com.videomaker.aimusic.modules.genretemplate.altAdPlacement
-import com.videomaker.aimusic.modules.genretemplate.isGenreTemplateFlowAllOff
 import com.videomaker.aimusic.modules.genretemplate.primaryAdPlacement
 import com.videomaker.aimusic.modules.onboarding.pages.DynamicCarousel
 import com.videomaker.aimusic.modules.onboarding.pages.FullscreenAdStep
@@ -47,12 +46,17 @@ fun OnboardingScreen(
         buildOnboardingPageList(adsLoaderService)
     }
 
-    // Optimize: preload the onboarding interstitial the moment this screen opens, so it's
-    // ready by the time the user swipes to the (later) interstitial ad page and shows instantly.
+    // Preload pager ad pages the moment this screen opens, so they're ready when
+    // the user swipes to them.  PAGE1/PAGE2 are already preloaded by the previous
+    // screen (LanguageSelection or OnboardingSurvey last-step).
     LaunchedEffect(Unit) {
+        if (pageList.any { it is OnboardingPage.FullscreenAd }) {
+            VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
+        }
         if (pageList.any { it is OnboardingPage.InterstitialAd }) {
             VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING)
         }
+        VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE3)
     }
 
     val coroutineScope = rememberCoroutineScope()
@@ -81,21 +85,20 @@ fun OnboardingScreen(
             val isNearEnd = triggeredFromPage >= pageList.size - 2
             if (isNearEnd) {
                 hasPreloadedNextFlow = true
-                if (remoteConfig.isGenreTemplateFlowAllOff()) {
-                    // No GenreTemplate → preload FeatureSelection directly
+                val firstGtStep = GenreTemplateGate.enabledSteps(remoteConfig).firstOrNull()
+                if (firstGtStep != null) {
+                    // GenreTemplate is next → preload first step's ads
+                    android.util.Log.d("OnboardingScreen", "User $action from page $triggeredFromPage/${pageList.lastIndex}, preloading GenreTemplate ${firstGtStep.name} ads")
+                    VideoMakerApplication.preloadNativeAd(firstGtStep.primaryAdPlacement())
+                    firstGtStep.altAdPlacement()?.let {
+                        VideoMakerApplication.preloadNativeAdDelayed(it, 1000L)
+                    }
+                } else {
+                    // FeatureSelection is next → preload all its ads
                     android.util.Log.d("OnboardingScreen", "User $action from page $triggeredFromPage/${pageList.lastIndex}, preloading Feature Selection ads")
                     VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION)
                     VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT, 1000L)
                     VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE)
-                } else {
-                    // GenreTemplate enabled → preload all GenreTemplate step ads
-                    android.util.Log.d("OnboardingScreen", "User $action from page $triggeredFromPage/${pageList.lastIndex}, preloading GenreTemplate ads")
-                    for (step in GenreTemplateGate.enabledSteps(remoteConfig)) {
-                        VideoMakerApplication.preloadNativeAd(step.primaryAdPlacement())
-                        step.altAdPlacement()?.let {
-                            VideoMakerApplication.preloadNativeAdDelayed(it, 1000L)
-                        }
-                    }
                 }
             }
         }

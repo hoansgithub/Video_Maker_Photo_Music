@@ -103,7 +103,7 @@ class GenreTemplateActivity : AppCompatActivity() {
                         VideoMakerApplication.preloadNativeAdDelayed(it, 1000L)
                     }
                 } else {
-                    // Last step → preload FeatureSelection exit ads
+                    // Last step → FeatureSelection is next, preload all its ads
                     VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION)
                     VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT, 1000L)
                     VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE)
