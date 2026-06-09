@@ -40,7 +40,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -69,9 +68,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
@@ -122,7 +118,7 @@ fun LanguageSelectionScreen(
     val density = LocalDensity.current
     var selectedLanguage by remember {
         mutableStateOf(
-            if (languageManager.isLanguageSelectionComplete()) {
+            if (showBackButton && languageManager.isLanguageSelectionComplete()) {
                 languageManager.getSelectedLanguagePreference()
             } else {
                 null
@@ -182,37 +178,6 @@ fun LanguageSelectionScreen(
                     AnalyticsEvent.Param.TRIGGER to AnalyticsEvent.Value.Trigger.IDLE_AUTO_SELECT
                 )
             )
-        }
-    }
-
-    // Auto-select "system" default when returning to the screen (e.g. after ad click)
-    var hasBeenPaused by remember { mutableStateOf(false) }
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_PAUSE -> {
-                    hasBeenPaused = true
-                }
-                Lifecycle.Event.ON_RESUME -> {
-                    if (hasBeenPaused && selectedLanguage == null) {
-                        selectedLanguage = LanguageManager.LANGUAGE_SYSTEM
-                        onLanguageSelected(LanguageManager.LANGUAGE_SYSTEM)
-                        Analytics.track(
-                            name = AnalyticsEvent.LANGUAGE_SELECT,
-                            params = mapOf(
-                                AnalyticsEvent.Param.LANGUAGE to LanguageManager.LANGUAGE_SYSTEM,
-                                AnalyticsEvent.Param.TRIGGER to AnalyticsEvent.Value.Trigger.AD_RETURN_AUTO_SELECT
-                            )
-                        )
-                    }
-                }
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 

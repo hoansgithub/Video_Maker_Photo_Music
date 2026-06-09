@@ -20,7 +20,12 @@ import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.VideoMakerApplication
 import com.videomaker.aimusic.core.analytics.Analytics
+import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.modules.genretemplate.GenreTemplateGate
+import com.videomaker.aimusic.modules.genretemplate.altAdPlacement
+import com.videomaker.aimusic.modules.genretemplate.isGenreTemplateFlowAllOff
+import com.videomaker.aimusic.modules.genretemplate.primaryAdPlacement
 import com.videomaker.aimusic.modules.onboarding.pages.DynamicCarousel
 import com.videomaker.aimusic.modules.onboarding.pages.FullscreenAdStep
 import com.videomaker.aimusic.modules.onboarding.pages.WelcomePageDynamic
@@ -68,23 +73,30 @@ fun OnboardingScreen(
             }
     }
 
-    var hasPreloadedFeatureSelection by remember { mutableStateOf(false) }
+    val remoteConfig: RemoteConfig = koinInject()
+    var hasPreloadedNextFlow by remember { mutableStateOf(false) }
 
-    fun preloadFeatureSelectionIfNeeded(triggeredFromPage: Int, action: String) {
-        if (!hasPreloadedFeatureSelection) {
+    fun preloadNextFlowIfNeeded(triggeredFromPage: Int, action: String) {
+        if (!hasPreloadedNextFlow) {
             val isNearEnd = triggeredFromPage >= pageList.size - 2
             if (isNearEnd) {
-                android.util.Log.d("OnboardingScreen", "User $action from page $triggeredFromPage/${pageList.lastIndex}, preloading Feature Selection ads (primary immediate, ALT delayed 1s)")
-                // Primary: immediate
-                VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION)
-                // ALT: delayed 1s (A/B variant, lower priority)
-                VideoMakerApplication.preloadNativeAdDelayed(
-                    placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
-                    delayMs = 1000L
-                )
-                // Preload interstitial for feature selection "Get started" button
-                VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE)
-                hasPreloadedFeatureSelection = true
+                hasPreloadedNextFlow = true
+                if (remoteConfig.isGenreTemplateFlowAllOff()) {
+                    // No GenreTemplate → preload FeatureSelection directly
+                    android.util.Log.d("OnboardingScreen", "User $action from page $triggeredFromPage/${pageList.lastIndex}, preloading Feature Selection ads")
+                    VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION)
+                    VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT, 1000L)
+                    VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE)
+                } else {
+                    // GenreTemplate enabled → preload all GenreTemplate step ads
+                    android.util.Log.d("OnboardingScreen", "User $action from page $triggeredFromPage/${pageList.lastIndex}, preloading GenreTemplate ads")
+                    for (step in GenreTemplateGate.enabledSteps(remoteConfig)) {
+                        VideoMakerApplication.preloadNativeAd(step.primaryAdPlacement())
+                        step.altAdPlacement()?.let {
+                            VideoMakerApplication.preloadNativeAdDelayed(it, 1000L)
+                        }
+                    }
+                }
             }
         }
     }
@@ -97,7 +109,7 @@ fun OnboardingScreen(
         var previousPage = pagerState.currentPage
         snapshotFlow { pagerState.currentPage }.collect { currentPage ->
             if (previousPage != currentPage && previousPage >= 0) {
-                preloadFeatureSelectionIfNeeded(previousPage, "swiped")
+                preloadNextFlowIfNeeded(previousPage, "swiped")
                 lastPageBeforeCurrent = previousPage
             }
             previousPage = currentPage
@@ -129,7 +141,7 @@ fun OnboardingScreen(
                 FullscreenAdStep(
                     isCurrentPage = page == pagerState.currentPage,
                     onClose = {
-                        preloadFeatureSelectionIfNeeded(page, "closed ad")
+                        preloadNextFlowIfNeeded(page, "closed ad")
                         coroutineScope.launch {
                             if (page < pageList.lastIndex) {
                                 pagerState.animateScrollToPage(page + 1)
@@ -154,7 +166,7 @@ fun OnboardingScreen(
                                     pagerState.animateScrollToPage(page - 1)
                                 }
                             } else {
-                                preloadFeatureSelectionIfNeeded(page, "closed interstitial")
+                                preloadNextFlowIfNeeded(page, "closed interstitial")
                                 if (page < pageList.lastIndex) {
                                     pagerState.animateScrollToPage(page + 1)
                                 } else {
@@ -182,7 +194,7 @@ fun OnboardingScreen(
                                 name = "onboarding_${pageData.pageIndex + 1}_next",
                                 params = emptyMap()
                             )
-                            preloadFeatureSelectionIfNeeded(page, "tapped Continue")
+                            preloadNextFlowIfNeeded(page, "tapped Continue")
                             if (isLastPage) {
                                 onComplete()
                             } else {
@@ -231,7 +243,7 @@ fun OnboardingScreen(
                                 name = "onboarding_${pageData.pageIndex + 1}_next",
                                 params = emptyMap()
                             )
-                            preloadFeatureSelectionIfNeeded(page, "tapped Continue")
+                            preloadNextFlowIfNeeded(page, "tapped Continue")
                             if (isLastPage) {
                                 onComplete()
                             } else {
