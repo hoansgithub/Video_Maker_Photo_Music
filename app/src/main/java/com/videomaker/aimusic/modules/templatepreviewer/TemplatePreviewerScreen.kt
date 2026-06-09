@@ -132,6 +132,7 @@ import kotlinx.coroutines.flow.drop
 import org.koin.compose.koinInject
 import com.videomaker.aimusic.core.ads.AdClickDetector
 import com.videomaker.aimusic.core.ads.AdPlacementConfigService
+import com.videomaker.aimusic.modules.rate.RatingStep
 
 // Virtual page count for infinite-scroll illusion.
 private const val VIRTUAL_PAGE_COUNT = 10_000
@@ -141,6 +142,12 @@ private fun initialVirtualPage(initialPage: Int, templateCount: Int): Int {
     val mid = VIRTUAL_PAGE_COUNT / 2
     return (mid / templateCount) * templateCount + initialPage
 }
+
+private data class PendingAssetPickerNav(
+    val template: com.videomaker.aimusic.domain.model.VideoTemplate,
+    val overrideSongId: Long,
+    val aspectRatio: AspectRatio
+)
 
 // ============================================
 // SCREEN
@@ -178,6 +185,26 @@ fun TemplatePreviewerScreen(
     var showNotificationPromoDialog by remember { mutableStateOf(false) }
     var showNotificationSettingsGuideDialog by remember { mutableStateOf(false) }
     var pendingPermissionCheckAfterSettings by remember { mutableStateOf(false) }
+
+    val ratingStep by ratingTriggerManager.ratingStep.collectAsStateWithLifecycle()
+    var pendingAssetPickerNav by remember { mutableStateOf<PendingAssetPickerNav?>(null) }
+
+    val navigateToAssetPickerOrDefer = { template: com.videomaker.aimusic.domain.model.VideoTemplate, overrideSongId: Long, aspectRatio: AspectRatio ->
+        if (ratingTriggerManager.ratingStep.value != RatingStep.None) {
+            pendingAssetPickerNav = PendingAssetPickerNav(template, overrideSongId, aspectRatio)
+        } else {
+            onNavigateToAssetPicker(template, overrideSongId, aspectRatio)
+        }
+    }
+
+    LaunchedEffect(ratingStep) {
+        if (ratingStep == RatingStep.None) {
+            pendingAssetPickerNav?.let { nav ->
+                onNavigateToAssetPicker(nav.template, nav.overrideSongId, nav.aspectRatio)
+                pendingAssetPickerNav = null
+            }
+        }
+    }
 
     // True while an interstitial or rewarded ad is on screen. Set explicitly via the
     // ad SDK's onShown / close callbacks — lifecycle events alone are not reliable
@@ -234,7 +261,7 @@ fun TemplatePreviewerScreen(
         viewModel.navigationEvent.collect { event ->
             when (event) {
                 is TemplatePreviewerNavigationEvent.NavigateToAssetPicker -> {
-                    onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
+                    navigateToAssetPickerOrDefer(event.template, event.overrideSongId, event.aspectRatio)
                 }
 
                 is TemplatePreviewerNavigationEvent.RequestBackWithAd -> {
@@ -310,17 +337,17 @@ fun TemplatePreviewerScreen(
                             placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_USE,
                             action = {
                                 isAdShowing = false
-                                onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
+                                navigateToAssetPickerOrDefer(event.template, event.overrideSongId, event.aspectRatio)
                             },
                             onShown = {
                                 isAdShowing = true
-                                onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
+                                navigateToAssetPickerOrDefer(event.template, event.overrideSongId, event.aspectRatio)
                             },
                             bypassFrequencyCap = true,
                             showLoadingOverlay = false
                         )
                     } else {
-                        onNavigateToAssetPicker(event.template, event.overrideSongId, event.aspectRatio)
+                        navigateToAssetPickerOrDefer(event.template, event.overrideSongId, event.aspectRatio)
                     }
                 }
 
