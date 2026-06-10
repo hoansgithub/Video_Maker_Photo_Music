@@ -50,16 +50,15 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.toRect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -117,12 +116,14 @@ fun HomeFabOverlay(
         contentAlignment = Alignment.BottomCenter
     ) {
         if (isGalleryTab) {
+            val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                 val fullWidthPx = with(LocalDensity.current) { maxWidth.toPx() }
 
                 CreateMorphButton(
                     progress = collapseProgress,
                     fullWidthPx = fullWidthPx,
+                    isRtl = isRtl,
                     onClick = onCreateClick,
                     modifier = Modifier.align(Alignment.BottomEnd)
                 )
@@ -140,7 +141,11 @@ fun HomeFabOverlay(
                             .drawWithContent {
                                 val reveal = ((collapseProgress() - SW_START) / (1f - SW_START))
                                     .coerceIn(0f, 1f)
-                                clipRect(right = size.width * reveal) { this@drawWithContent.drawContent() }
+                                if (isRtl) {
+                                    clipRect(left = size.width * (1f - reveal)) { this@drawWithContent.drawContent() }
+                                } else {
+                                    clipRect(right = size.width * reveal) { this@drawWithContent.drawContent() }
+                                }
                             }
                             .align(Alignment.Center)
                     )
@@ -165,13 +170,17 @@ fun HomeFabOverlay(
  *
  * Expanded: a centered, content-width pill (measured once via [onGloballyPositioned]).
  * Collapsing: its width animates down to 52dp (becoming the (+) circle) while [progress]
- * glides it from center into the right corner and fades the label out. Single element ⇒ no
+ * glides it from center into the end corner and fades the label out. Single element ⇒ no
  * crossfade / no scale distortion.
+ *
+ * All draw-phase translations are RTL-aware via [isRtl]: the pill collapses toward the
+ * layout-end edge (right in LTR, left in RTL).
  */
 @Composable
 private fun CreateMorphButton(
     progress: () -> Float,
     fullWidthPx: Float,
+    isRtl: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -180,6 +189,8 @@ private fun CreateMorphButton(
     val density = LocalDensity.current
     val fabPx = with(density) { FAB_SIZE.dp.toPx() }
     val contentWidthDp = with(density) { contentWidthPx.toDp() }
+    // +1 in LTR (slides left-to-center when expanded), −1 in RTL (slides right-to-center).
+    val dirSign = if (isRtl) 1f else -1f
 
     Box(
         modifier = modifier
@@ -190,12 +201,13 @@ private fun CreateMorphButton(
             .then(if (measured) Modifier.width(contentWidthDp) else Modifier)
             .height(FAB_SIZE.dp)
             .graphicsLayer {
-                // Centered while expanded, slides into the right corner as it collapses.
-                translationX = -((fullWidthPx - contentWidthPx) / 2f) * (1f - progress())
+                // Centered while expanded, slides into the end corner as it collapses.
+                translationX = dirSign * ((fullWidthPx - contentWidthPx) / 2f) * (1f - progress())
             }
             .drawWithContent {
                 val w = lerp(size.width, fabPx, progress())
-                val left = size.width - w
+                // LTR: pill anchored to right edge; RTL: anchored to left edge.
+                val left = if (isRtl) 0f else size.width - w
                 val radius = CornerRadius(size.height / 2f)
                 drawRoundRect(
                     color = Color.Black.copy(alpha = 0.18f),
@@ -210,14 +222,15 @@ private fun CreateMorphButton(
                     cornerRadius = radius
                 )
                 // Clip the icon + label to the shrinking background.
-                clipRect(left = left, right = size.width) { this@drawWithContent.drawContent() }
+                clipRect(left = left, right = left + w) { this@drawWithContent.drawContent() }
             }
-            .pointerInput(Unit) {
+            .pointerInput(isRtl) {
                 // Only the visible (drawn) part is tappable — avoids a phantom hit target over
                 // the transparent area once collapsed.
                 detectTapGestures { offset ->
                     val w = lerp(size.width.toFloat(), fabPx, progress())
-                    if (offset.x >= size.width - w) onClick()
+                    val hit = if (isRtl) offset.x <= w else offset.x >= size.width - w
+                    if (hit) onClick()
                 }
             }
     ) {
@@ -237,7 +250,10 @@ private fun CreateMorphButton(
                 modifier = Modifier
                     .size(24.dp)
                     // Glides the + to the circle's center as the pill collapses.
-                    .graphicsLayer { translationX = (contentWidthPx - fabPx) * progress() }
+                    // LTR: icon moves right; RTL: icon moves left (Row is mirrored).
+                    .graphicsLayer {
+                        translationX = -dirSign * (contentWidthPx - fabPx) * progress()
+                    }
             )
             Text(
                 text = stringResource(R.string.gallery_create_new_video),
