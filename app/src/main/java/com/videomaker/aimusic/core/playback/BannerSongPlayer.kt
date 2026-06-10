@@ -1,14 +1,11 @@
 package com.videomaker.aimusic.core.playback
 
-import android.app.Activity
-import android.app.Application
 import android.content.Context
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.videomaker.aimusic.domain.model.MusicSong
@@ -17,18 +14,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Plays a single home-banner song inline, with the nuanced pause/resume rules required by the
- * banner feature:
+ * Plays a single home-banner song inline.
  *
  * - Tapping the play CTA starts playback and stops the banner auto-swipe.
- * - **Cleared** (must re-tap to play again): swiping to another banner, switching tabs, or
- *   navigating to another screen and coming back.
- * - **Suspended then resumed automatically**: app sent to background then reopened, or a popup/AD
- *   shown over the app while playing and then dismissed.
+ * - **Cleared** (must re-tap to play again): swiping to another banner, switching tabs,
+ *   navigating to another screen, ad overlay, app background — any focus loss.
  *
- * The distinction between "app background" (resume) and "navigate to another screen" (don't resume)
- * is made with a debounce-free started-activity counter ([ActivityLifecycleCallbacks]) instead of
- * `ProcessLifecycleOwner`, so the navigation-clear can reliably tell the two apart.
+ * The single safe gate is [onScreenInactive], called on the gallery's lifecycle ON_PAUSE.
+ * This covers ALL edge cases (navigation, ads, background, "create" button, etc.).
  *
  * App-scoped Koin `single`. All player interaction happens on the main thread.
  */
@@ -37,61 +30,36 @@ class BannerSongPlayer(
     private val engineFactory: (Context) -> BannerAudioEngine = { ExoPlayerBannerAudioEngine(it) },
 ) {
     private val appContext = context.applicationContext
-    private val mainHandler = Handler(Looper.getMainLooper())
+    private companion object { const val TAG = "BannerSongPlayer" }
 
     private var engine: BannerAudioEngine? = null
 
     // Desired-state flags (main-thread confined).
     private var released = false
     private var playRequested = false
-    private var adPaused = false
-    private var appBackgrounded = false
     private var currentSongId: Long? = null
-
-    /** Count of started activities — `> 0` means the app is in the foreground. No debounce. */
-    private var startedActivities = 0
-    private val isAppForeground: Boolean get() = startedActivities > 0
 
     /** Song the user has requested to play (drives the CTA icon + auto-swipe pause). null = none. */
     private val _activeSongId = MutableStateFlow<Long?>(null)
     val activeSongId: StateFlow<Long?> = _activeSongId.asStateFlow()
 
-    /** Registers the started-activity counter. Called once from DI setup. */
-    fun registerLifecycle() {
-        (appContext as? Application)?.registerActivityLifecycleCallbacks(
-            object : Application.ActivityLifecycleCallbacks {
-                override fun onActivityStarted(activity: Activity) {
-                    startedActivities++
-                    if (startedActivities == 1) onAppForeground()
-                }
-
-                override fun onActivityStopped(activity: Activity) {
-                    startedActivities = (startedActivities - 1).coerceAtLeast(0)
-                    if (startedActivities == 0) onAppBackground()
-                }
-
-                override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
-                override fun onActivityResumed(activity: Activity) = Unit
-                override fun onActivityPaused(activity: Activity) = Unit
-                override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
-                override fun onActivityDestroyed(activity: Activity) = Unit
-            }
-        )
-    }
-
     /** Start (or switch to) inline playback of [song]. Idempotent for the same song. */
     fun play(song: MusicSong) {
-        if (released) return
+        if (released) { Log.d(TAG, "play() aborted: released"); return }
         val url = song.mp3Url
-        if (url.isBlank()) return
+        if (url.isBlank()) { Log.d(TAG, "play() aborted: blank url for ${song.id}"); return }
 
         if (currentSongId != song.id) {
-            // New song: tear down the old engine and prepare a fresh one.
+            Log.d(TAG, "play() new song ${song.id} (was $currentSongId)")
             engine?.release()
             engine = engineFactory(appContext).also { it.prepare(url) }
             currentSongId = song.id
-        } else if (engine == null) {
+        } else if (engine == null || engine?.hasError == true) {
+            Log.d(TAG, "play() recreate engine (null=${engine == null}, error=${engine?.hasError})")
+            engine?.release()
             engine = engineFactory(appContext).also { it.prepare(url) }
+        } else {
+            Log.d(TAG, "play() reuse engine for ${song.id}")
         }
         playRequested = true
         _activeSongId.value = song.id
@@ -105,6 +73,7 @@ class BannerSongPlayer(
 
     /** Convenience toggle used by the banner CTA. */
     fun toggle(song: MusicSong) {
+        Log.d(TAG, "toggle() songId=${song.id}, activeSongId=${_activeSongId.value}")
         if (_activeSongId.value == song.id) pause() else play(song)
     }
 
@@ -114,39 +83,29 @@ class BannerSongPlayer(
      */
     fun onBannerSettled(currentBannerSongId: Long?) {
         val active = _activeSongId.value ?: return
-        if (active != currentBannerSongId) clearPlayIntent()
+        if (active != currentBannerSongId) {
+            Log.d(TAG, "onBannerSettled: clearing (active=$active, settled=$currentBannerSongId)")
+            clearPlayIntent()
+        }
     }
 
     /** Gallery left view via a tab switch (always in the foreground) → clear. */
     fun onScreenHidden() {
-        if (_activeSongId.value != null) clearPlayIntent()
-    }
-
-    /**
-     * Gallery lifecycle stopped. This fires both on app-background and on navigating to another
-     * screen. We defer to the next frame so the started-activity counter settles, then clear only
-     * if the app is still in the foreground (i.e. it was a navigation, not a background) and no
-     * popup/AD overlay is active.
-     */
-    fun onScreenStopped() {
-        if (_activeSongId.value == null) return
-        mainHandler.post {
-            if (_activeSongId.value != null && isAppForeground && !adPaused) {
-                clearPlayIntent()
-            }
+        if (_activeSongId.value != null) {
+            Log.d(TAG, "onScreenHidden: clearing")
+            clearPlayIntent()
         }
     }
 
-    /** A popup/AD is covering the app while playing — suspend (keep the play intent, resume later). */
-    fun pauseForOverlay() {
-        adPaused = true
-        applyPlaybackState()
-    }
-
-    /** Popup/AD dismissed — resume if still requested. */
-    fun resumeFromOverlay() {
-        adPaused = false
-        applyPlaybackState()
+    /**
+     * Safe gate: called on lifecycle ON_PAUSE — covers ALL cases where the gallery
+     * loses focus (navigation, ad overlay, app background, "create" button, etc.).
+     * Always clears the play intent so the user must re-tap to play.
+     */
+    fun onScreenInactive() {
+        if (_activeSongId.value == null) return
+        Log.d(TAG, "onScreenInactive: clearing")
+        clearPlayIntent()
     }
 
     /** Terminal cleanup (e.g. ViewModel/screen disposal). */
@@ -158,17 +117,8 @@ class BannerSongPlayer(
         _activeSongId.value = null
     }
 
-    private fun onAppBackground() {
-        appBackgrounded = true
-        applyPlaybackState()
-    }
-
-    private fun onAppForeground() {
-        appBackgrounded = false
-        applyPlaybackState()
-    }
-
     private fun clearPlayIntent() {
+        Log.d(TAG, "clearPlayIntent (was active=${_activeSongId.value})")
         playRequested = false
         _activeSongId.value = null
         engine?.pause()
@@ -176,7 +126,9 @@ class BannerSongPlayer(
 
     private fun applyPlaybackState() {
         val e = engine ?: return
-        if (playRequested && !adPaused && !appBackgrounded && !released) e.play() else e.pause()
+        val shouldPlay = playRequested && !released
+        Log.d(TAG, "applyPlaybackState: play=$shouldPlay (req=$playRequested, rel=$released)")
+        if (shouldPlay) e.play() else e.pause()
     }
 }
 
@@ -184,6 +136,8 @@ class BannerSongPlayer(
  * Minimal audio seam so [BannerSongPlayer]'s state machine is testable without ExoPlayer.
  */
 interface BannerAudioEngine {
+    /** True when the engine has encountered a playback error and cannot play until re-prepared. */
+    val hasError: Boolean
     /** Buffer [url] looping, but do not start playback yet. */
     fun prepare(url: String)
     fun play()
@@ -194,6 +148,9 @@ interface BannerAudioEngine {
 /** ExoPlayer-backed [BannerAudioEngine]. Must be created/used on the main thread. */
 private class ExoPlayerBannerAudioEngine(context: Context) : BannerAudioEngine {
 
+    override var hasError: Boolean = false
+        private set
+
     private val player: ExoPlayer = ExoPlayer.Builder(context).build().apply {
         setAudioAttributes(
             AudioAttributes.Builder()
@@ -203,9 +160,16 @@ private class ExoPlayerBannerAudioEngine(context: Context) : BannerAudioEngine {
             /* handleAudioFocus = */ true
         )
         repeatMode = Player.REPEAT_MODE_ONE
+        addListener(object : Player.Listener {
+            override fun onPlayerError(error: PlaybackException) {
+                Log.w(TAG, "Banner audio error: ${error.message}")
+                hasError = true
+            }
+        })
     }
 
     override fun prepare(url: String) {
+        hasError = false
         player.setMediaItem(MediaItem.fromUri(url))
         player.playWhenReady = false
         player.prepare()
@@ -221,5 +185,9 @@ private class ExoPlayerBannerAudioEngine(context: Context) : BannerAudioEngine {
 
     override fun release() {
         player.release()
+    }
+
+    companion object {
+        private const val TAG = "BannerSongPlayer"
     }
 }

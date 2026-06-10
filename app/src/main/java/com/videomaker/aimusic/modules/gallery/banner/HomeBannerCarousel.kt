@@ -94,13 +94,16 @@ fun HomeBannerCarousel(
         if (!isVisible) player.onScreenHidden()
     }
 
-    // Pause inline music when navigating to another screen (lifecycle stop while in foreground).
+    // Safe gate: stop inline music whenever the gallery loses focus or carousel leaves viewport.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_STOP) player.onScreenStopped()
+            if (event == Lifecycle.Event.ON_PAUSE) player.onScreenInactive()
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            player.onScreenInactive()
+        }
     }
 
     LaunchedEffect(isDragged, isVisible) {
