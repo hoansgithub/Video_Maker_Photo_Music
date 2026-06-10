@@ -443,7 +443,6 @@ fun TemplateVideoPlayer(
             factory = { ctx ->
                 android.util.Log.d("TemplateVideoPlayer", "Creating PlayerView")
                 PlayerView(ctx).apply {
-                    this.player = player
                     useController = showControls
                     resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                     layoutParams = ViewGroup.LayoutParams(
@@ -452,6 +451,9 @@ fun TemplateVideoPlayer(
                     )
                     setBackgroundColor(android.graphics.Color.BLACK)
                 }
+            },
+            update = { playerView ->
+                playerView.player = player
             },
             modifier = Modifier.fillMaxSize()
         )
