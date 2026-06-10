@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
-import coil.decode.BitmapFactoryDecoder
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.videomaker.aimusic.ui.theme.PlaceholderBackground
@@ -57,7 +56,6 @@ fun AppAsyncImage(
     val imageRequest = remember(imageUrl) {
         ImageRequest.Builder(context)
             .data(imageUrl.ifEmpty { null })
-            .decoderFactory(BitmapFactoryDecoder.Factory())
             .memoryCachePolicy(CachePolicy.ENABLED)
             .diskCachePolicy(CachePolicy.ENABLED)
             .memoryCacheKey(imageUrl.ifEmpty { null })
