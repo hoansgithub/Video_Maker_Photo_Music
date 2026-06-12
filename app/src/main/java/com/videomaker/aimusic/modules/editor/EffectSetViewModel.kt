@@ -39,6 +39,12 @@ sealed class EffectSetUiState {
     data class Error(val message: String) : EffectSetUiState()
 }
 
+sealed class DownloadState {
+    data object NotDownloaded : DownloadState()
+    data class Downloading(val progress: Float) : DownloadState()
+    data object Downloaded : DownloadState()
+}
+
 // ============================================
 // VIEW MODEL
 // ============================================
@@ -71,6 +77,11 @@ class EffectSetViewModel(
     val pendingUnlockEffectSet: StateFlow<EffectSet?> = _pendingUnlockEffectSet.asStateFlow()
 
     // Unlocked effect set IDs (from manager)
+    // Active/clicked effect set ID (specifically clicked by user, even if still downloading)
+    private val _activeEffectSetId = MutableStateFlow<String?>(null)
+    val activeEffectSetId: StateFlow<String?> = _activeEffectSetId.asStateFlow()
+
+    // Unlocked effect set IDs (from manager)
     val unlockedEffectSetIds = unlockedEffectSetsManager.unlockedEffectSetIds
 
     // Callback for when effect set is unlocked (stored until reward earned)
@@ -79,6 +90,10 @@ class EffectSetViewModel(
     // Error message for ad failures
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    // Download states
+    private val _downloadStates = MutableStateFlow<Map<String, DownloadState>>(emptyMap())
+    val downloadStates: StateFlow<Map<String, DownloadState>> = _downloadStates.asStateFlow()
 
     // Pagination state
     private var currentOffset = 0
@@ -96,7 +111,8 @@ class EffectSetViewModel(
      */
     fun isEffectSetUnlocked(effectSet: EffectSet): Boolean {
         // If it's not premium in database, it's always free
-        if (!effectSet.isPremium) return true
+        val requiresUnlock = effectSet.isPremium
+        if (!requiresUnlock) return true
 
         // Otherwise, check if unlocked locally
         return unlockedEffectSetsManager.isUnlocked(effectSet.id)
@@ -113,30 +129,111 @@ class EffectSetViewModel(
         effectSet: EffectSet,
         onUnlockedEffectSetSelected: (EffectSet) -> Unit
     ) {
+        _activeEffectSetId.value = effectSet.id
         if (isEffectSetUnlocked(effectSet)) {
             // Unlocked - proceed with selection
             onUnlockedEffectSetSelected(effectSet)
         } else {
-            // Locked - store effect set and callback, request ad
+            // Locked - request ad directly
             _pendingUnlockEffectSet.value = effectSet
             onUnlockSuccessCallback = onUnlockedEffectSetSelected
+            requestPendingUnlockAd()
+        }
+    }
 
-            rewardedAdController.requestAd(
-                onReward = {
-                    // Unlock effect set and call success callback
-                    viewModelScope.launch {
-                        unlockedEffectSetsManager.unlockEffectSet(effectSet.id)
-                        android.util.Log.d("EffectSetViewModel", "✅ Effect set unlocked: ${effectSet.id}")
+    /**
+     * Requests rewarded ad for the pending effect set.
+     */
+    fun requestPendingUnlockAd() {
+        val effectSet = _pendingUnlockEffectSet.value ?: return
+        rewardedAdController.requestAd(
+            onReward = {
+                // Unlock effect set and call success callback
+                viewModelScope.launch {
+                    unlockedEffectSetsManager.unlockEffectSet(effectSet.id)
+                    android.util.Log.d("EffectSetViewModel", "✅ Effect set unlocked: ${effectSet.id}")
 
-                        onUnlockSuccessCallback?.invoke(effectSet)
+                    onUnlockSuccessCallback?.invoke(effectSet)
 
-                        // Clear state
-                        _pendingUnlockEffectSet.value = null
-                        onUnlockSuccessCallback = null
-                    }
-                },
-                checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_EFFECT_SET) }
-            )
+                    // Clear state
+                    _pendingUnlockEffectSet.value = null
+                    onUnlockSuccessCallback = null
+                }
+            },
+            checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_EFFECT_SET) }
+        )
+    }
+
+    /**
+     * Cancels the pending unlock ad.
+     */
+    fun cancelPendingUnlock() {
+        _pendingUnlockEffectSet.value = null
+        onUnlockSuccessCallback = null
+    }
+
+    /**
+     * Instantly marks an effect set as downloaded.
+     */
+    fun setSelectedEffectSetId(id: String?) {
+        _activeEffectSetId.value = id
+        if (id == null) return
+        if (_downloadStates.value[id] is DownloadState.Downloaded) return
+        _downloadStates.value = _downloadStates.value.toMutableMap().apply {
+            put(id, DownloadState.Downloaded)
+        }
+    }
+
+    /**
+     * Triggers background download for the top 2 sorted effect sets.
+     */
+    private fun triggerAutoDownloads(effectSets: List<EffectSet>) {
+        val targetSets = effectSets.filter { it.sortOrder == 1 || it.sortOrder == 2 }
+            .takeIf { it.size >= 2 }
+            ?: effectSets.take(2)
+
+        targetSets.forEach { effectSet ->
+            val currentState = _downloadStates.value[effectSet.id]
+            if (currentState == null || currentState is DownloadState.NotDownloaded) {
+                startDownload(effectSet.id)
+            }
+        }
+    }
+
+    /**
+     * Start downloading an effect set.
+     */
+    fun startDownload(effectSetId: String, onFinished: () -> Unit = {}) {
+        if (_downloadStates.value[effectSetId] is DownloadState.Downloaded) {
+            onFinished()
+            return
+        }
+        if (_downloadStates.value[effectSetId] is DownloadState.Downloading) {
+            viewModelScope.launch {
+                while (_downloadStates.value[effectSetId] is DownloadState.Downloading) {
+                    delay(100)
+                }
+                if (_downloadStates.value[effectSetId] is DownloadState.Downloaded) {
+                    onFinished()
+                }
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _downloadStates.value = _downloadStates.value.toMutableMap().apply {
+                put(effectSetId, DownloadState.Downloading(0f))
+            }
+            for (progress in 1..10) {
+                delay(200)
+                _downloadStates.value = _downloadStates.value.toMutableMap().apply {
+                    put(effectSetId, DownloadState.Downloading(progress / 10f))
+                }
+            }
+            _downloadStates.value = _downloadStates.value.toMutableMap().apply {
+                put(effectSetId, DownloadState.Downloaded)
+            }
+            onFinished()
         }
     }
 
@@ -189,6 +286,7 @@ class EffectSetViewModel(
                     hasMorePages = effectSets.size >= PAGE_SIZE,
                     isLoadingMore = false
                 )
+                triggerAutoDownloads(effectSets)
             } else {
                 _uiState.value = EffectSetUiState.Error("Failed to load effect sets. Please try again.")
             }

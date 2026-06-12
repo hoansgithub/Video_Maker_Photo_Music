@@ -76,7 +76,8 @@ object TransitionSetLibrary {
                     isActive = jsonSet.isActive,
                     transitions = jsonSet.transitionIds.mapNotNull { id ->
                         TransitionShaderLibrary.getById(id)
-                    }
+                    },
+                    sortOrder = jsonSet.sortOrder
                 )
             }.filter { it.transitions.isNotEmpty() && it.isActive }
 
@@ -110,7 +111,8 @@ object TransitionSetLibrary {
                 description = "Default transitions",
                 thumbnailUrl = "",
                 isPremium = false,
-                transitions = listOfNotNull(TransitionShaderLibrary.getDefault())
+                transitions = listOfNotNull(TransitionShaderLibrary.getDefault()),
+                sortOrder = 0
             )
     }
 
@@ -139,5 +141,6 @@ private data class EffectSetJson(
     val thumbnailUrl: String = "",
     val isPremium: Boolean = false,
     val isActive: Boolean = true,
-    val transitionIds: List<String>
+    val transitionIds: List<String>,
+    val sortOrder: Int = 0
 )

@@ -55,7 +55,10 @@ class EffectSetRepositoryImpl(
             // Only cache first page (offset = 0)
             if (offset == 0) {
                 apiCacheManager.get<List<EffectSet>>(cacheKey)
-                    ?.let { return@withContext Result.success(it) }
+                    ?.let {
+                        TransitionSetLibrary.registerRemote(it)
+                        return@withContext Result.success(it)
+                    }
             }
 
             try {
@@ -64,8 +67,8 @@ class EffectSetRepositoryImpl(
                         filter {
                             eq("is_active", true)
                         }
-                        order("sort_order", Order.DESCENDING)
-                        order("created_at", Order.DESCENDING)
+                        order("sort_order", Order.ASCENDING)
+                        order("created_at", Order.ASCENDING)
                         limit(limit.toLong())
                         this.range(offset.toLong(), (offset + limit - 1).toLong())
                     }
@@ -86,7 +89,10 @@ class EffectSetRepositoryImpl(
                 // Fallback: stale cache for first page, empty list for subsequent pages
                 if (offset == 0) {
                     apiCacheManager.getStale<List<EffectSet>>(cacheKey)
-                        ?.let { return@withContext Result.success(it) }
+                        ?.let {
+                            TransitionSetLibrary.registerRemote(it)
+                            return@withContext Result.success(it)
+                        }
                 }
                 Result.failure(Exception(ERROR_LOAD_FAILED, e))
             }
@@ -106,7 +112,9 @@ class EffectSetRepositoryImpl(
                     .decodeSingleOrNull<EffectSetDto>()
 
                 if (effectSet != null) {
-                    Result.success(effectSet.toEffectSet(::getThumbnailUrl))
+                    val mapped = effectSet.toEffectSet(::getThumbnailUrl)
+                    TransitionSetLibrary.registerRemote(listOf(mapped))
+                    Result.success(mapped)
                 } else {
                     Result.failure(Exception(ERROR_NOT_FOUND))
                 }
@@ -156,7 +164,8 @@ class EffectSetRepositoryImpl(
             isActive = isActive,
             transitions = transitionIds
                 ?.mapNotNull { TransitionShaderLibrary.getById(it) }
-                ?: emptyList()
+                ?: emptyList(),
+            sortOrder = sortOrder
         )
     }
 }
