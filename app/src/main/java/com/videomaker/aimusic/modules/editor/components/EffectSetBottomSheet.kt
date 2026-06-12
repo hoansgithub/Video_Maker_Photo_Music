@@ -1,6 +1,12 @@
 package com.videomaker.aimusic.modules.editor.components
 
-import android.app.Activity
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,22 +30,17 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
@@ -47,68 +48,67 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.rememberCoroutineScope
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import co.alcheclub.lib.acccore.ads.state.AdsLoadingState
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
-import com.videomaker.aimusic.core.analytics.Analytics
-import com.videomaker.aimusic.core.analytics.AnalyticsEvent
-import org.koin.compose.koinInject
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.EffectSet
+import com.videomaker.aimusic.domain.model.Transition
+import com.videomaker.aimusic.domain.model.TransitionCategory
+import com.videomaker.aimusic.modules.editor.DownloadState
 import com.videomaker.aimusic.modules.editor.EffectSetUiState
 import com.videomaker.aimusic.modules.editor.EffectSetViewModel
-import com.videomaker.aimusic.ui.components.AdBadge
-import com.videomaker.aimusic.ui.components.AdBadgeStyle
 import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
 import com.videomaker.aimusic.ui.components.AppAsyncImage
-import com.videomaker.aimusic.ui.theme.Gray500
 import com.videomaker.aimusic.ui.theme.Gray600
-import com.videomaker.aimusic.ui.theme.Gray700
+import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SplashBackground
+import com.videomaker.aimusic.ui.theme.TextOnPrimary
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
+import com.videomaker.aimusic.ui.theme.VideoMakerTheme
+import org.koin.compose.koinInject
 
 // ============================================
-// EFFECT SET BOTTOM SHEET
+// EFFECT SET PANEL (INLINE)
 // ============================================
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EffectSetBottomSheet(
+fun EffectSetPanel(
     viewModel: EffectSetViewModel,
     selectedEffectSetId: String?,
     onDismiss: () -> Unit,
-    onEffectSetSelected: (EffectSet) -> Unit
+    onEffectSetSelected: (EffectSet) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val shouldPresentAd by viewModel.shouldPresentAd.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val unlockedIds by viewModel.unlockedEffectSetIds.collectAsStateWithLifecycle()
+    val downloadStates by viewModel.downloadStates.collectAsStateWithLifecycle()
+    val activeEffectSetId by viewModel.activeEffectSetId.collectAsStateWithLifecycle()
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val gridState = rememberLazyGridState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
-    val activity = context as? Activity
     val adsLoaderService = koinInject<AdsLoaderService>()
-    val coroutineScope = rememberCoroutineScope()
 
-    // Handle rewarded ad presentation using reusable presenter
+    // Synchronize selected ID with view model
+    LaunchedEffect(selectedEffectSetId) {
+        viewModel.setSelectedEffectSetId(selectedEffectSetId)
+    }
+
+    // Handle rewarded ad presentation
     RewardedAdPresenter(
         shouldPresent = shouldPresentAd,
         placement = AdPlacement.REWARD_UNLOCK_EFFECT_SET,
@@ -117,7 +117,7 @@ fun EffectSetBottomSheet(
         onAdFailed = viewModel::onAdFailed
     )
 
-    // Show error message if ad not available
+    // Show error message
     LaunchedEffect(errorMessage) {
         errorMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
@@ -125,12 +125,13 @@ fun EffectSetBottomSheet(
         }
     }
 
-    // Detect when user scrolls near the end to trigger pagination
+    // Detect pagination trigger
     LaunchedEffect(gridState) {
-        val threshold = 8 // Trigger load when 8 items from end (2 rows with 4 columns)
+        val threshold = 8
         snapshotFlow { gridState.layoutInfo }
             .collect { layoutInfo ->
-                val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: return@collect
+                val lastVisibleIndex =
+                    layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: return@collect
                 val totalItems = layoutInfo.totalItemsCount
                 if (totalItems > 0 && lastVisibleIndex >= totalItems - threshold) {
                     viewModel.loadNextPage()
@@ -138,86 +139,154 @@ fun EffectSetBottomSheet(
             }
     }
 
-    Box {
-        ModalBottomSheet(
-            onDismissRequest = onDismiss,
-            sheetState = sheetState,
-            containerColor = SplashBackground,
-            dragHandle = {
+    EffectSetPanelContent(
+        uiState = uiState,
+        selectedId = activeEffectSetId ?: selectedEffectSetId,
+        unlockedIds = unlockedIds,
+        downloadStates = downloadStates,
+        gridState = gridState,
+        snackbarHostState = snackbarHostState,
+        onDismiss = onDismiss,
+        onEffectSetClick = { effectSet ->
+            viewModel.onEffectSetClick(
+                effectSet = effectSet,
+                onUnlockedEffectSetSelected = {
+                    onEffectSetSelected(effectSet)
+                    viewModel.startDownload(effectSet.id)
+                }
+            )
+        },
+        onRetry = { viewModel.onRetry() },
+        modifier = modifier
+    )
+}
+
+// ============================================
+// EFFECT SET PANEL CONTENT (STATELESS)
+// ============================================
+
+@Composable
+fun EffectSetPanelContent(
+    uiState: EffectSetUiState,
+    selectedId: String?,
+    unlockedIds: Set<String>,
+    downloadStates: Map<String, DownloadState>,
+    gridState: LazyGridState,
+    snackbarHostState: SnackbarHostState,
+    onDismiss: () -> Unit,
+    onEffectSetClick: (EffectSet) -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(SplashBackground)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 16.dp, top = 8.dp)
+        ) {
+            // Drag handle top indicator
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(vertical = 8.dp)
+                    .size(width = 36.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Gray600)
+            )
+
+            // Header row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Left Cancel button
                 Box(
                     modifier = Modifier
-                        .padding(vertical = 12.dp)
-                        .size(width = 36.dp, height = 4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(Gray600)
-                )
-            }
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .padding(bottom = 32.dp)
-            ) {
-                // Title row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                        .size(32.dp)
+                        .clickable(onClick = onDismiss),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = stringResource(R.string.editor_effect_sets),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary,
-                        modifier = Modifier.weight(1f)
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_close),
+                        contentDescription = stringResource(R.string.close),
+                        tint = TextPrimary,
+                        modifier = Modifier.size(21.dp)
                     )
-                    IconButton(onClick = onDismiss) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.close),
-                            tint = TextPrimary
-                        )
-                    }
                 }
 
-                Spacer(Modifier.height(16.dp))
+                // Center Title
+                Text(
+                    text = stringResource(R.string.editor_effect_sets),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
 
-                // Content based on state
-                when (val state = uiState) {
+                // Right Confirm/Checkmark button
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(Primary)
+                        .clickable(onClick = onDismiss),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = stringResource(R.string.dialog_ok),
+                        tint = TextOnPrimary,
+                        modifier = Modifier.size(21.dp)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // Content based on state
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                when (uiState) {
                     is EffectSetUiState.Loading -> {
                         LoadingContent()
                     }
 
                     is EffectSetUiState.Success -> {
                         EffectSetGrid(
-                            effectSets = state.effectSets,
-                            selectedId = selectedEffectSetId,
+                            effectSets = uiState.effectSets,
+                            selectedId = selectedId,
                             unlockedIds = unlockedIds,
-                            isLoadingMore = state.isLoadingMore,
+                            downloadStates = downloadStates,
+                            isLoadingMore = uiState.isLoadingMore,
                             gridState = gridState,
-                            onEffectSetClick = { effectSet ->
-                                viewModel.onEffectSetClick(
-                                    effectSet = effectSet,
-                                    onUnlockedEffectSetSelected = onEffectSetSelected
-                                )
-                            }
+                            onEffectSetClick = onEffectSetClick
                         )
                     }
 
                     is EffectSetUiState.Error -> {
                         ErrorContent(
-                            message = state.message,
-                            onRetry = viewModel::onRetry
+                            message = uiState.message,
+                            onRetry = onRetry
                         )
                     }
                 }
-
-                // Snackbar for error messages
-                SnackbarHost(
-                    hostState = snackbarHostState,
-                    modifier = Modifier.padding(16.dp)
-                )
             }
+
+            // Snackbar for error messages
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.padding(8.dp)
+            )
         }
 
         // Ads loading overlay
@@ -234,6 +303,7 @@ private fun EffectSetGrid(
     effectSets: List<EffectSet>,
     selectedId: String?,
     unlockedIds: Set<String>,
+    downloadStates: Map<String, DownloadState>,
     isLoadingMore: Boolean,
     gridState: LazyGridState,
     onEffectSetClick: (EffectSet) -> Unit
@@ -252,10 +322,12 @@ private fun EffectSetGrid(
             contentType = { "effect_set" }
         ) { effectSet ->
             val isLocked = effectSet.isPremium && !unlockedIds.contains(effectSet.id)
+            val downloadState = downloadStates[effectSet.id] ?: DownloadState.NotDownloaded
             EffectSetCard(
                 effectSet = effectSet,
                 isSelected = effectSet.id == selectedId,
                 isLocked = isLocked,
+                downloadState = downloadState,
                 onClick = { onEffectSetClick(effectSet) }
             )
         }
@@ -263,7 +335,7 @@ private fun EffectSetGrid(
         // Loading footer
         if (isLoadingMore) {
             item(
-                span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }
+                span = { androidx.compose.foundation.lazy.grid.GridItemSpan(4) }
             ) {
                 Box(
                     modifier = Modifier
@@ -283,7 +355,7 @@ private fun EffectSetGrid(
 }
 
 // ============================================
-// EFFECT SET CARD
+// EFFECT SET CARD WITH DOWNLOAD SUPPORT
 // ============================================
 
 @Composable
@@ -291,8 +363,25 @@ private fun EffectSetCard(
     effectSet: EffectSet,
     isSelected: Boolean,
     isLocked: Boolean,
+    downloadState: DownloadState,
     onClick: () -> Unit
 ) {
+    val isAutoplay = downloadState is DownloadState.Downloaded
+    val scale = if (isAutoplay) {
+        val infiniteTransition = rememberInfiniteTransition(label = "autoplay")
+        infiniteTransition.animateFloat(
+            initialValue = 1.0f,
+            targetValue = 1.06f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1200, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "scale"
+        ).value
+    } else {
+        1.0f
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -305,6 +394,12 @@ private fun EffectSetCard(
                         color = MaterialTheme.colorScheme.primary,
                         shape = RoundedCornerShape(12.dp)
                     )
+                } else if (isAutoplay) {
+                    Modifier.border(
+                        width = 1.5.dp,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
                 } else {
                     Modifier
                 }
@@ -313,11 +408,14 @@ private fun EffectSetCard(
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Thumbnail with lock overlay
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
         ) {
             AppAsyncImage(
                 imageUrl = effectSet.thumbnailUrl,
@@ -328,26 +426,65 @@ private fun EffectSetCard(
                     .clip(RoundedCornerShape(8.dp))
             )
 
-            // AD badge for locked effect sets
-            if (isLocked) {
-                AdBadge(
-                    style = AdBadgeStyle.Small(
-                        textColor = Color.White,
-                        backgroundColor = Gray700
-                    ),
+            // Right-bottom indicator badge
+            val showNewItem = effectSet.transitions.any { it.isPremium } && downloadState is DownloadState.NotDownloaded
+            val showAds = !showNewItem && effectSet.isPremium && isLocked
+            val showDownload =
+                !showNewItem && !showAds && downloadState is DownloadState.NotDownloaded && !isLocked
+
+            if (showNewItem) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_new_item),
+                    contentDescription = null,
                     modifier = Modifier
-                        .align(Alignment.TopStart)
+                        .align(Alignment.BottomEnd)
                         .padding(4.dp)
+                        .size(18.dp)
                 )
+            } else if (showAds) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_ads),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(4.dp)
+                        .size(18.dp)
+                )
+            } else if (showDownload) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_download),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(4.dp)
+                        .size(18.dp)
+                )
+            }
+
+            if (downloadState is DownloadState.Downloading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.4f))
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        progress = { downloadState.progress },
+                        modifier = Modifier.size(24.dp),
+                        color = Primary,
+                        strokeWidth = 2.5.dp
+                    )
+                }
             }
         }
 
         Spacer(Modifier.height(4.dp))
 
-        // Name - 2 lines max
         Text(
             text = effectSet.name,
-            fontSize = 12.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
             color = TextPrimary,
             maxLines = 2,
@@ -359,6 +496,10 @@ private fun EffectSetCard(
 }
 
 // ============================================
+// AD CONFIRMATION UNLOCK DIALOG
+// ============================================
+
+// ============================================
 // LOADING CONTENT
 // ============================================
 
@@ -367,7 +508,7 @@ private fun LoadingContent() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(400.dp),
+            .height(300.dp),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator(
@@ -390,7 +531,7 @@ private fun ErrorContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(400.dp)
+            .height(300.dp)
             .padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -417,6 +558,195 @@ private fun ErrorContent(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold
             )
+        }
+    }
+}
+
+// ============================================
+// COMPOSE PREVIEWS
+// ============================================
+
+@Preview(name = "Effect Set Card - States", showBackground = true)
+@Composable
+private fun EffectSetCardPreview() {
+    VideoMakerTheme {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(SplashBackground)
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // State 1: Free & Not Downloaded
+            Box(modifier = Modifier.weight(1f)) {
+                EffectSetCard(
+                    effectSet = EffectSet(
+                        id = "1",
+                        name = "Zoom In",
+                        description = "",
+                        isPremium = false
+                    ),
+                    isSelected = false,
+                    isLocked = false,
+                    downloadState = DownloadState.NotDownloaded,
+                    onClick = {}
+                )
+            }
+
+            // State 2: Free & Downloading
+            Box(modifier = Modifier.weight(1f)) {
+                EffectSetCard(
+                    effectSet = EffectSet(
+                        id = "2",
+                        name = "Blur Out",
+                        description = "",
+                        isPremium = false
+                    ),
+                    isSelected = true,
+                    isLocked = false,
+                    downloadState = DownloadState.Downloading(0.5f),
+                    onClick = {}
+                )
+            }
+
+            // State 3: Premium & Locked
+            Box(modifier = Modifier.weight(1f)) {
+                EffectSetCard(
+                    effectSet = EffectSet(
+                        id = "3",
+                        name = "Rotate 3D",
+                        description = "",
+                        isPremium = true
+                    ),
+                    isSelected = false,
+                    isLocked = true,
+                    downloadState = DownloadState.NotDownloaded,
+                    onClick = {}
+                )
+            }
+
+            // State 4: Premium & Downloaded (Selected)
+            Box(modifier = Modifier.weight(1f)) {
+                EffectSetCard(
+                    effectSet = EffectSet(
+                        id = "4",
+                        name = "Geometric",
+                        description = "",
+                        isPremium = true
+                    ),
+                    isSelected = true,
+                    isLocked = false,
+                    downloadState = DownloadState.Downloaded,
+                    onClick = {}
+                )
+            }
+
+            // State 5: Free with Premium Transition (Show New Badge)
+            Box(modifier = Modifier.weight(1f)) {
+                val mockPremiumTransition = Transition(
+                    id = "vhs",
+                    name = "VHS",
+                    category = TransitionCategory.CREATIVE,
+                    shaderCode = "",
+                    isPremium = true
+                )
+                EffectSetCard(
+                    effectSet = EffectSet(
+                        id = "5",
+                        name = "Retro Tape",
+                        description = "",
+                        isPremium = false,
+                        transitions = listOf(mockPremiumTransition)
+                    ),
+                    isSelected = false,
+                    isLocked = false,
+                    downloadState = DownloadState.NotDownloaded,
+                    onClick = {}
+                )
+            }
+        }
+    }
+}
+
+
+@Preview(name = "Effect Set Panel - Success State", showBackground = true)
+@Composable
+private fun EffectSetPanelSuccessPreview() {
+    val mockPremiumTransition = Transition(
+        id = "vhs",
+        name = "VHS",
+        category = TransitionCategory.CREATIVE,
+        shaderCode = "",
+        isPremium = true
+    )
+    val mockEffectSets = listOf(
+        EffectSet(id = "1", name = "Zoom In", description = "", isPremium = false),
+        EffectSet(id = "2", name = "Blur Out", description = "", isPremium = false),
+        EffectSet(id = "3", name = "Rotate 3D", description = "", isPremium = true),
+        EffectSet(id = "4", name = "Geometric", description = "", isPremium = true),
+        EffectSet(id = "5", name = "Retro Tape", description = "", isPremium = false, transitions = listOf(mockPremiumTransition)),
+        EffectSet(id = "6", name = "Bounce", description = "", isPremium = false),
+        EffectSet(id = "7", name = "Glitch", description = "", isPremium = true),
+        EffectSet(id = "8", name = "Split Screen", description = "", isPremium = true)
+    )
+
+    VideoMakerTheme {
+        EffectSetPanelContent(
+            uiState = EffectSetUiState.Success(
+                effectSets = mockEffectSets,
+                hasMorePages = false,
+                isLoadingMore = false
+            ),
+            selectedId = "2",
+            unlockedIds = setOf("3"),
+            downloadStates = mapOf(
+                "1" to DownloadState.NotDownloaded,
+                "2" to DownloadState.Downloading(0.7f),
+                "3" to DownloadState.NotDownloaded,
+                "4" to DownloadState.Downloaded
+            ),
+            gridState = rememberLazyGridState(),
+            snackbarHostState = remember { SnackbarHostState() },
+            onDismiss = {},
+            onEffectSetClick = {},
+            onRetry = {},
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(340.dp)
+        )
+    }
+}
+
+@Preview(name = "Effect Set Panel - Loading & Error States", showBackground = true)
+@Composable
+private fun EffectSetPanelStatesPreview() {
+    VideoMakerTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(SplashBackground),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Loading State:",
+                color = TextPrimary,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp)
+            )
+            Box(modifier = Modifier.height(200.dp)) {
+                LoadingContent()
+            }
+
+            Text(
+                text = "Error State:",
+                color = TextPrimary,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Box(modifier = Modifier.height(200.dp)) {
+                ErrorContent(
+                    message = "Network error. Please check your connection and try again.",
+                    onRetry = {}
+                )
+            }
         }
     }
 }

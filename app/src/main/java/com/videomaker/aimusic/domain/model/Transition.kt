@@ -43,5 +43,6 @@ data class EffectSet(
     val thumbnailUrl: String = "",
     val isPremium: Boolean = false,
     val isActive: Boolean = true,
-    val transitions: List<Transition> = emptyList()
+    val transitions: List<Transition> = emptyList(),
+    val sortOrder: Int = 0
 )

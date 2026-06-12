@@ -1,12 +1,16 @@
 package com.videomaker.aimusic.modules.editor
 
+// import com.videomaker.aimusic.di.MusicPickerViewModelFactory // Commented out - using Supabase only
+// import com.videomaker.aimusic.modules.editor.components.SettingsPanel // Removed - using individual bottom sheets
+// import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen // Commented out - using Supabase only
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -21,16 +25,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,8 +53,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -59,27 +62,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
-// import com.videomaker.aimusic.di.MusicPickerViewModelFactory // Commented out - using Supabase only
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.EffectSet
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
-import com.videomaker.aimusic.modules.editor.components.EffectSetBottomSheet
 import com.videomaker.aimusic.modules.editor.components.ImagesBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSection
 import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
-import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
-// import com.videomaker.aimusic.modules.editor.components.SettingsPanel // Removed - using individual bottom sheets
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
 import com.videomaker.aimusic.modules.editor.components.VideoPreviewPlayer
-import com.videomaker.aimusic.modules.editor.EffectSetViewModel
-// import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen // Commented out - using Supabase only
+import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.ui.components.ErrorOverlay
 import com.videomaker.aimusic.ui.components.ErrorType
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
@@ -89,18 +94,9 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlin.math.roundToInt
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import co.alcheclub.lib.acccore.ads.compose.BannerAdView
-import androidx.compose.material3.SnackbarHostState
-import co.alcheclub.lib.acccore.ads.compose.NativeAdView
-import com.videomaker.aimusic.BuildConfig
-import com.videomaker.aimusic.core.ads.AdClickDetector
-import com.videomaker.aimusic.core.ads.AdPlacementConfigService
+import kotlin.math.roundToInt
 
 /**
  * EditorScreen - Main video editor screen
@@ -358,47 +354,55 @@ fun EditorScreen(
                 topBar = {
                     val successState = uiState as? EditorUiState.Success
                     val selectedQuality = successState?.selectedQuality ?: VideoQuality.DEFAULT
-                    EditorTopBar(
-                        selectedQuality = selectedQuality,
-                        canExport = !showComposingOverlay &&
-                                (successState?.isMusicCached ?: true) &&
-                                !(successState?.isCachingMusic ?: false),
-                        isQualityLocked = viewModel.isQualityLocked(selectedQuality),
-                        onBackClick = { requestExitFromEditor() },
-                        onQualityMenuOpen = {
-                            val state = currentState() ?: return@EditorTopBar
-                            Analytics.trackQualityEdit(
-                                videoId = state.project.id,
-                                qualityNumber = state.selectedQuality.displayName
+                    Box {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = !showEffectSetSheet,
+                            enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                            exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
+                        ) {
+                            EditorTopBar(
+                                selectedQuality = selectedQuality,
+                                canExport = !showComposingOverlay &&
+                                        (successState?.isMusicCached ?: true) &&
+                                        !(successState?.isCachingMusic ?: false),
+                                isQualityLocked = viewModel.isQualityLocked(selectedQuality),
+                                onBackClick = { requestExitFromEditor() },
+                                onQualityMenuOpen = {
+                                    val state = currentState() ?: return@EditorTopBar
+                                    Analytics.trackQualityEdit(
+                                        videoId = state.project.id,
+                                        qualityNumber = state.selectedQuality.displayName
+                                    )
+                                },
+                                onQualityChange = { quality ->
+                                    val state = currentState()
+                                    if (state != null && state.selectedQuality != quality) {
+                                        val videoId = state.project.id
+                                        val qualityLabel = quality.displayName
+                                        Analytics.trackQualityClick(videoId, qualityLabel)
+                                        Analytics.trackQualitySelect(videoId, qualityLabel)
+                                    }
+                                    viewModel.updateQuality(quality)
+                                },
+                                onDoneClick = {
+                                    val state = currentState()
+                                    if (state != null) {
+                                        Analytics.trackVideoExport(
+                                            videoId = state.project.id,
+                                            templateId = state.displaySettings.templateId,
+                                            songId = state.displaySettings.musicSongId?.toString(),
+                                            quality = state.selectedQuality.displayName,
+                                            duration = state.displayProject.totalDurationMs,
+                                            ratioSize = state.displaySettings.aspectRatio.toAnalyticsRatioSize(),
+                                            volume = (state.displaySettings.audioVolume * 100f).roundToInt(),
+                                            mediaQuantity = state.project.assets.size
+                                        )
+                                    }
+                                    viewModel.onDoneClick()
+                                }
                             )
-                        },
-                        onQualityChange = { quality ->
-                            val state = currentState()
-                            if (state != null && state.selectedQuality != quality) {
-                                val videoId = state.project.id
-                                val qualityLabel = quality.displayName
-                                Analytics.trackQualityClick(videoId, qualityLabel)
-                                Analytics.trackQualitySelect(videoId, qualityLabel)
-                            }
-                            viewModel.updateQuality(quality)
-                        },
-                        onDoneClick = {
-                            val state = currentState()
-                            if (state != null) {
-                                Analytics.trackVideoExport(
-                                    videoId = state.project.id,
-                                    templateId = state.displaySettings.templateId,
-                                    songId = state.displaySettings.musicSongId?.toString(),
-                                    quality = state.selectedQuality.displayName,
-                                    duration = state.displayProject.totalDurationMs,
-                                    ratioSize = state.displaySettings.aspectRatio.toAnalyticsRatioSize(),
-                                    volume = (state.displaySettings.audioVolume * 100f).roundToInt(),
-                                    mediaQuantity = state.project.assets.size
-                                )
-                            }
-                            viewModel.onDoneClick()
                         }
-                    )
+                    }
                 },
                 containerColor = SplashBackground, // #101010 (closest to #101313)
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -480,6 +484,35 @@ fun EditorScreen(
                                 wasPlayingBeforeMusicSheet = state.isPlaying
                                 if (state.isPlaying) viewModel.stopPlayback()
                                 showMusicSearchSheet = true
+                            },
+                            showEffectSetPanel = showEffectSetSheet,
+                            effectSetViewModel = effectSetViewModel,
+                            onEffectPanelDismiss = {
+                                val videoId = currentVideoId()
+                                if (videoId != null) {
+                                    Analytics.trackEffectClose(
+                                        videoId = videoId,
+                                        effectId = state.displaySettings.effectSetId,
+                                        effectName = state.effectSetName
+                                    )
+                                }
+                                showEffectSetSheet = false
+                            },
+                            onEffectSetSelected = { effectSet ->
+                                val videoId = currentVideoId()
+                                if (videoId != null) {
+                                    Analytics.trackEffectClick(
+                                        videoId = videoId,
+                                        effectId = effectSet.id,
+                                        effectName = effectSet.name
+                                    )
+                                    Analytics.trackEffectSelect(
+                                        videoId = videoId,
+                                        effectId = effectSet.id,
+                                        effectName = effectSet.name
+                                    )
+                                }
+                                viewModel.updateEffectSet(effectSet.id)
                             },
                             modifier = Modifier.padding(paddingValues)
                         )
@@ -618,45 +651,7 @@ fun EditorScreen(
                 }
             }
 
-            // Effect Set Bottom Sheet
-            if (showEffectSetSheet) {
-                val selectedEffectSetId =
-                    (uiState as? EditorUiState.Success)?.displaySettings?.effectSetId
-                val currentVideoId = (uiState as? EditorUiState.Success)?.project?.id
-                val currentEffectName = (uiState as? EditorUiState.Success)?.effectSetName
-                EffectSetBottomSheet(
-                    viewModel = effectSetViewModel,
-                    selectedEffectSetId = selectedEffectSetId,
-                    onEffectSetSelected = { effectSet ->
-                        val videoId = currentVideoId
-                        if (videoId != null) {
-                            Analytics.trackEffectClick(
-                                videoId = videoId,
-                                effectId = effectSet.id,
-                                effectName = effectSet.name
-                            )
-                            Analytics.trackEffectSelect(
-                                videoId = videoId,
-                                effectId = effectSet.id,
-                                effectName = effectSet.name
-                            )
-                        }
-                        viewModel.updateEffectSet(effectSet.id)
-                        showEffectSetSheet = false
-                    },
-                    onDismiss = {
-                        val videoId = currentVideoId
-                        if (videoId != null) {
-                            Analytics.trackEffectClose(
-                                videoId = videoId,
-                                effectId = selectedEffectSetId,
-                                effectName = currentEffectName
-                            )
-                        }
-                        showEffectSetSheet = false
-                    }
-                )
-            }
+            // Inline panel replaces bottom sheets, so we only handle non-effect sheets here
 
             // Music Search Bottom Sheet
             if (showMusicSearchSheet) {
@@ -1042,6 +1037,10 @@ internal fun EditorMainContent(
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit = {},
     onMusicSelectorClick: () -> Unit = {},
+    showEffectSetPanel: Boolean,
+    effectSetViewModel: EffectSetViewModel,
+    onEffectPanelDismiss: () -> Unit,
+    onEffectSetSelected: (EffectSet) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -1071,58 +1070,107 @@ internal fun EditorMainContent(
             )
         }
 
-        // Music Section - song info and player
-        MusicSection(
-            songName = project.settings.musicSongName
-                ?: stringResource(R.string.editor_no_music_selected),
-            artistName = project.settings.musicSongArtist ?: "",
-            coverUrl = project.settings.musicSongCoverUrl ?: "",
-            duration = project.formattedDuration,
-            currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,
-            isPlaying = isPlaying,
-            onSeek = { position ->
-                if (durationMs > 0) {
-                    onSeek((position * durationMs).toLong())
+        AnimatedContent(
+            targetState = showEffectSetPanel,
+            transitionSpec = {
+                if (targetState) {
+                    (slideInVertically(initialOffsetY = { it }) + fadeIn()) togetherWith
+                            (slideOutVertically(targetOffsetY = { it }) + fadeOut())
+                } else {
+                    (slideInVertically(initialOffsetY = { -it }) + fadeIn()) togetherWith
+                            (slideOutVertically(targetOffsetY = { it }) + fadeOut())
                 }
             },
-            onScrub = { position ->
-                if (durationMs > 0) {
-                    onScrub((position * durationMs).toLong())
+            label = "bottom_controls_transition"
+        ) { isEffectOpen ->
+            if (isEffectOpen) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    EditorPlayerControls(
+                        currentPositionMs = currentPositionMs,
+                        durationMs = durationMs,
+                        isPlaying = isPlaying,
+                        onSeek = { position ->
+                            if (durationMs > 0) {
+                                onSeek((position * durationMs).toLong())
+                            }
+                        },
+                        onScrub = { position ->
+                            if (durationMs > 0) {
+                                onScrub((position * durationMs).toLong())
+                            }
+                        },
+                        onSeekStart = onSeekStart,
+                        onSeekEnd = onSeekEnd,
+                        onPlayPauseClick = onPlayPauseClick,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    com.videomaker.aimusic.modules.editor.components.EffectSetPanel(
+                        viewModel = effectSetViewModel,
+                        selectedEffectSetId = project.settings.effectSetId,
+                        onDismiss = onEffectPanelDismiss,
+                        onEffectSetSelected = onEffectSetSelected,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(340.dp)
+                    )
                 }
-            },
-            onSeekStart = onSeekStart,
-            onSeekEnd = onSeekEnd,
-            onPlayPauseClick = onPlayPauseClick,
-            onMusicSelectorClick = onMusicSelectorClick
-        )
+            } else {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // Music Section - song info and player
+                    MusicSection(
+                        songName = project.settings.musicSongName
+                            ?: stringResource(R.string.editor_no_music_selected),
+                        artistName = project.settings.musicSongArtist ?: "",
+                        coverUrl = project.settings.musicSongCoverUrl ?: "",
+                        duration = project.formattedDuration,
+                        currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,
+                        isPlaying = isPlaying,
+                        onSeek = { position ->
+                            if (durationMs > 0) {
+                                onSeek((position * durationMs).toLong())
+                            }
+                        },
+                        onScrub = { position ->
+                            if (durationMs > 0) {
+                                onScrub((position * durationMs).toLong())
+                            }
+                        },
+                        onSeekStart = onSeekStart,
+                        onSeekEnd = onSeekEnd,
+                        onPlayPauseClick = onPlayPauseClick,
+                        onMusicSelectorClick = onMusicSelectorClick
+                    )
 
-        Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-        // Separator
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(Color.White.copy(alpha = 0.1f))
-        )
+                    // Separator
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(Color.White.copy(alpha = 0.1f))
+                    )
 
-        Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-        // Settings Tab Bar - Images, Effect, Ratio, Volume (horizontally scrollable)
-        val hasMusic =
-            project.settings.musicSongId != null || project.settings.customAudioUri != null
-        SettingsTabBar(
-            currentImageCount = project.assets.size,
-            currentEffectSetName = effectSetName,
-            currentRatio = project.settings.aspectRatio,
-            showMusicControls = hasMusic,
-            currentVolume = project.settings.audioVolume,
-            onImagesClick = onImagesClick,
-            onEffectClick = onEffectClick,
-            onRatioClick = onRatioClick,
-            onVolumeClick = onVolumeClick,
-            modifier = Modifier.fillMaxWidth()
-        )
+                    // Settings Tab Bar - Images, Effect, Ratio, Volume (horizontally scrollable)
+                    val hasMusic =
+                        project.settings.musicSongId != null || project.settings.customAudioUri != null
+                    SettingsTabBar(
+                        currentImageCount = project.assets.size,
+                        currentEffectSetName = effectSetName,
+                        currentRatio = project.settings.aspectRatio,
+                        showMusicControls = hasMusic,
+                        currentVolume = project.settings.audioVolume,
+                        onImagesClick = onImagesClick,
+                        onEffectClick = onEffectClick,
+                        onRatioClick = onRatioClick,
+                        onVolumeClick = onVolumeClick,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -1241,6 +1289,126 @@ private fun ExitConfirmationDialog(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditorPlayerControls(
+    currentPositionMs: Long,
+    durationMs: Long,
+    isPlaying: Boolean,
+    onSeek: (Float) -> Unit,
+    onScrub: (Float) -> Unit = {},
+    onSeekStart: () -> Unit = {},
+    onSeekEnd: () -> Unit = {},
+    onPlayPauseClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val sliderInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    var isDragging by remember { androidx.compose.runtime.mutableStateOf(false) }
+    var localPosition by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+    var lastScrubTime by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
+
+    val currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f
+
+    if (!isDragging) {
+        localPosition = currentPosition
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Play/Pause button
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.1f))
+                .clickable(onClick = onPlayPauseClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        // Slider
+        androidx.compose.material3.Slider(
+            value = localPosition.coerceIn(0f, 1f),
+            onValueChange = { newValue ->
+                if (!isDragging) {
+                    isDragging = true
+                    onSeekStart()
+                }
+                localPosition = newValue
+
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastScrubTime >= 150L) {
+                    lastScrubTime = currentTime
+                    onScrub(newValue)
+                }
+            },
+            onValueChangeFinished = {
+                isDragging = false
+                onSeek(localPosition)
+                onSeekEnd()
+            },
+            modifier = Modifier.weight(1f),
+            colors = androidx.compose.material3.SliderDefaults.colors(
+                thumbColor = Color.White,
+                activeTrackColor = Color.White,
+                inactiveTrackColor = Color.White.copy(alpha = 0.3f),
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent
+            ),
+            thumb = {
+                androidx.compose.material3.SliderDefaults.Thumb(
+                    interactionSource = sliderInteractionSource,
+                    thumbSize = androidx.compose.ui.unit.DpSize(14.dp, 14.dp),
+                    colors = androidx.compose.material3.SliderDefaults.colors(thumbColor = Color.White)
+                )
+            },
+            track = { sliderState ->
+                androidx.compose.material3.SliderDefaults.Track(
+                    sliderState = sliderState,
+                    modifier = Modifier.height(3.dp),
+                    colors = androidx.compose.material3.SliderDefaults.colors(
+                        activeTrackColor = Color.White,
+                        inactiveTrackColor = Color.White.copy(alpha = 0.3f),
+                        activeTickColor = Color.Transparent,
+                        inactiveTickColor = Color.Transparent
+                    ),
+                    drawStopIndicator = null
+                )
+            }
+        )
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        // Time stamp text
+        Text(
+            text = formatTime(currentPositionMs),
+            color = Color.White.copy(alpha = 0.6f),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+private fun formatTime(ms: Long): String {
+    val totalSeconds = ms / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    val hundredths = (ms % 1000) / 10
+    return String.format(java.util.Locale.US, "%d:%02d.%02d", minutes, seconds, hundredths)
 }
 
 // SelectRatioBottomSheet, RatioOptionCard, AspectRatioIcon, DurationBottomSheet,
