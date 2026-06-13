@@ -1064,35 +1064,39 @@ object Analytics {
         )
     }
 
-    fun trackEffectClick(videoId: String, effectId: String, effectName: String) {
+    fun trackEffectClick(videoId: String, effectId: String, effectName: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.EFFECT_CLICK,
             params = mapOf(
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.EFFECT_ID to effectId,
-                AnalyticsEvent.Param.EFFECT_NAME to effectName
+                AnalyticsEvent.Param.EFFECT_NAME to effectName,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.VIDEO_ID,
                 AnalyticsEvent.Param.EFFECT_ID,
-                AnalyticsEvent.Param.EFFECT_NAME
+                AnalyticsEvent.Param.EFFECT_NAME,
+                AnalyticsEvent.Param.TYPE
             ),
             policy = TrackingPolicy.NORMAL
         )
     }
 
-    fun trackEffectSelect(videoId: String, effectId: String, effectName: String) {
+    fun trackEffectSelect(videoId: String, effectId: String, effectName: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.EFFECT_SELECT,
             params = mapOf(
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.EFFECT_ID to effectId,
-                AnalyticsEvent.Param.EFFECT_NAME to effectName
+                AnalyticsEvent.Param.EFFECT_NAME to effectName,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.VIDEO_ID,
                 AnalyticsEvent.Param.EFFECT_ID,
-                AnalyticsEvent.Param.EFFECT_NAME
+                AnalyticsEvent.Param.EFFECT_NAME,
+                AnalyticsEvent.Param.TYPE
             ),
             policy = TrackingPolicy.NORMAL
         )
