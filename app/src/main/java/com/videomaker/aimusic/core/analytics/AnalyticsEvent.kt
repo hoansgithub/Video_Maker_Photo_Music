@@ -142,6 +142,15 @@ object AnalyticsEvent {
     const val QUALITY_SELECT = "quality_select"
     const val QUALITY_CLOSE = "quality_close"
 
+    const val PHOTO_EDIT = "photo_edit"
+    const val PHOTO_CLICK = "photo_click"
+    const val PHOTO_DELETE = "photo_delete"
+    const val PHOTO_DRAG = "photo_drag"
+    const val PHOTO_ADD = "photo_add"
+    const val PHOTO_SELECT = "photo_select"
+    const val PHOTO_CLOSE = "photo_close"
+
+
     // ============================================
     // 10. EXPORT / RESULT / VIDEO ACTIONS
     // ============================================

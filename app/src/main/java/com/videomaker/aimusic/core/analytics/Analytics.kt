@@ -1396,6 +1396,71 @@ object Analytics {
         )
     }
 
+    fun trackPhotoEdit() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_EDIT,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackPhotoClick() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_CLICK,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackPhotoDelete() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_DELETE,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackPhotoDrag() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_DRAG,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackPhotoAdd() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_ADD,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackPhotoSelect() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_SELECT,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackPhotoClose() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_CLOSE,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+
+
     fun trackVideoExport(
         videoId: String,
         templateId: String? = null,

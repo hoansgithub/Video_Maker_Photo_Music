@@ -447,6 +447,7 @@ fun EditorScreen(
                             onScrubComplete = viewModel::clearScrubRequest,
                             onPreviewStateChange = { previewState = it },
                             onImagesClick = {
+                                Analytics.trackPhotoEdit()
                                 showImagesSheet = true
                             },
                             onEffectClick = {
@@ -781,6 +782,7 @@ fun EditorScreen(
                     ImagesBottomSheet(
                         currentAssets = successState.displayAssets,
                         onDismiss = {
+                            Analytics.trackPhotoClose()
                             viewModel.discardPendingAssets()
                             isEditingImages = false
                             showImagesSheet = false
