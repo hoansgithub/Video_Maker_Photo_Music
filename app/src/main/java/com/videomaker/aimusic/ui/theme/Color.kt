@@ -324,4 +324,9 @@ val PickerDialogBackground = Color(0xFF373737)
 val PickerOverlayBackground = Color(0xFF2C2C2C)
 val SkeletonPlaceholder = Color(0xFFD9D9D9)
 
+// ============================================
+// EFFECT SET SHEET
+// ============================================
+val EffectUnselectedBg = Color(0x0FDAD9D9)
+
 

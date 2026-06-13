@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -69,9 +68,10 @@ import com.videomaker.aimusic.domain.model.TransitionCategory
 import com.videomaker.aimusic.modules.editor.DownloadState
 import com.videomaker.aimusic.modules.editor.EffectSetUiState
 import com.videomaker.aimusic.modules.editor.EffectSetViewModel
-import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
 import com.videomaker.aimusic.ui.components.AppAsyncImage
+import com.videomaker.aimusic.ui.theme.EffectUnselectedBg
 import com.videomaker.aimusic.ui.theme.Gray600
+import com.videomaker.aimusic.ui.theme.Neutral_N600
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextOnPrimary
@@ -152,7 +152,6 @@ fun EffectSetPanel(
                 effectSet = effectSet,
                 onUnlockedEffectSetSelected = {
                     onEffectSetSelected(effectSet)
-                    viewModel.startDownload(effectSet.id)
                 }
             )
         },
@@ -288,9 +287,6 @@ fun EffectSetPanelContent(
                 modifier = Modifier.padding(8.dp)
             )
         }
-
-        // Ads loading overlay
-        AdsLoadingOverlay()
     }
 }
 
@@ -371,7 +367,7 @@ private fun EffectSetCard(
         val infiniteTransition = rememberInfiniteTransition(label = "autoplay")
         infiniteTransition.animateFloat(
             initialValue = 1.0f,
-            targetValue = 1.06f,
+            targetValue = 1.04f,
             animationSpec = infiniteRepeatable(
                 animation = tween(1200, easing = LinearEasing),
                 repeatMode = RepeatMode.Reverse
@@ -385,69 +381,65 @@ private fun EffectSetCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Gray600.copy(alpha = 0.3f))
-            .then(
-                if (isSelected) {
-                    Modifier.border(
-                        width = 2.dp,
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                } else if (isAutoplay) {
-                    Modifier.border(
-                        width = 1.5.dp,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                } else {
-                    Modifier
-                }
-            )
-            .clickable(onClick = onClick)
-            .padding(8.dp),
+            .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
+                .size(88.dp)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
                 }
+                .clip(RoundedCornerShape(16.dp))
+                .background(if (isSelected) Color.Transparent else EffectUnselectedBg)
+                .then(
+                    if (isSelected) {
+                        Modifier.border(
+                            width = 2.dp,
+                            color = Color.White,
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                    } else {
+                        Modifier.border(
+                            width = 1.dp,
+                            color = EffectUnselectedBg,
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                    }
+                )
         ) {
             AppAsyncImage(
                 imageUrl = effectSet.thumbnailUrl,
                 contentDescription = effectSet.name,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(8.dp))
+                modifier = Modifier.fillMaxSize()
             )
 
             // Right-bottom indicator badge
-            val showNewItem = effectSet.transitions.any { it.isPremium } && downloadState is DownloadState.NotDownloaded
-            val showAds = !showNewItem && effectSet.isPremium && isLocked
+            val showNewItem = effectSet.isNew && downloadState is DownloadState.NotDownloaded
+            val showAds = effectSet.isPremium && isLocked
             val showDownload =
-                !showNewItem && !showAds && downloadState is DownloadState.NotDownloaded && !isLocked
+                !showAds && downloadState is DownloadState.NotDownloaded && !isLocked
 
             if (showNewItem) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_new_item),
                     contentDescription = null,
                     modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(4.dp)
-                        .size(18.dp)
+                        .align(Alignment.TopStart)
+                        .padding(6.dp)
+                        .size(20.dp)
                 )
-            } else if (showAds) {
+            }
+            
+            if (showAds) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_ads),
                     contentDescription = null,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(4.dp)
+                        .padding(6.dp)
                         .size(18.dp)
                 )
             } else if (showDownload) {
@@ -457,7 +449,7 @@ private fun EffectSetCard(
                     tint = Color.White,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(4.dp)
+                        .padding(6.dp)
                         .size(18.dp)
                 )
             }
@@ -466,27 +458,25 @@ private fun EffectSetCard(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.4f))
-                        .clip(RoundedCornerShape(8.dp)),
+                        .background(Color.Black.copy(alpha = 0.3f)),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        progress = { downloadState.progress },
                         modifier = Modifier.size(24.dp),
-                        color = Primary,
-                        strokeWidth = 2.5.dp
+                        color = Color.White,
+                        strokeWidth = 2.dp
                     )
                 }
             }
         }
 
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(8.dp))
 
         Text(
             text = effectSet.name,
             fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            color = TextPrimary,
+            fontWeight = FontWeight.Normal,
+            color = if (isSelected) Color.White else Neutral_N600,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
@@ -656,7 +646,8 @@ private fun EffectSetCardPreview() {
                         name = "Retro Tape",
                         description = "",
                         isPremium = false,
-                        transitions = listOf(mockPremiumTransition)
+                        transitions = listOf(mockPremiumTransition),
+                        isNew = true
                     ),
                     isSelected = false,
                     isLocked = false,
@@ -684,7 +675,7 @@ private fun EffectSetPanelSuccessPreview() {
         EffectSet(id = "2", name = "Blur Out", description = "", isPremium = false),
         EffectSet(id = "3", name = "Rotate 3D", description = "", isPremium = true),
         EffectSet(id = "4", name = "Geometric", description = "", isPremium = true),
-        EffectSet(id = "5", name = "Retro Tape", description = "", isPremium = false, transitions = listOf(mockPremiumTransition)),
+        EffectSet(id = "5", name = "Retro Tape", description = "", isPremium = false, transitions = listOf(mockPremiumTransition), isNew = true),
         EffectSet(id = "6", name = "Bounce", description = "", isPremium = false),
         EffectSet(id = "7", name = "Glitch", description = "", isPremium = true),
         EffectSet(id = "8", name = "Split Screen", description = "", isPremium = true)

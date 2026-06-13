@@ -148,7 +148,9 @@ class EffectSetRepositoryImpl(
         @SerialName("sort_order")
         val sortOrder: Int = 0,
         @SerialName("transition_ids")
-        val transitionIds: List<String>? = null
+        val transitionIds: List<String>? = null,
+        @SerialName("is_new")
+        val isNew: Boolean = false
     ) {
         /**
          * Maps DTO to domain model.
@@ -165,7 +167,8 @@ class EffectSetRepositoryImpl(
             transitions = transitionIds
                 ?.mapNotNull { TransitionShaderLibrary.getById(it) }
                 ?: emptyList(),
-            sortOrder = sortOrder
+            sortOrder = sortOrder,
+            isNew = isNew
         )
     }
 }

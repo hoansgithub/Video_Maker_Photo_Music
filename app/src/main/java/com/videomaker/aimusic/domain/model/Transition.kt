@@ -44,5 +44,7 @@ data class EffectSet(
     val isPremium: Boolean = false,
     val isActive: Boolean = true,
     val transitions: List<Transition> = emptyList(),
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+    val isNew: Boolean = false
 )
+

@@ -338,10 +338,16 @@ fun EditorScreen(
             com.videomaker.aimusic.modules.editor.components.PreviewState.Building
         )
     }
+    var hasBeenReady by remember { mutableStateOf(false) }
+    LaunchedEffect(previewState) {
+        if (previewState is com.videomaker.aimusic.modules.editor.components.PreviewState.Ready) {
+            hasBeenReady = true
+        }
+    }
     val isPreviewBuilding =
         previewState is com.videomaker.aimusic.modules.editor.components.PreviewState.Building
     val isProcessingAudio = (uiState as? EditorUiState.Success)?.isProcessingAudio == true
-    val showComposingOverlay = isPreviewBuilding || isProcessingAudio
+    val showComposingOverlay = (!hasBeenReady && isPreviewBuilding) || isProcessingAudio
 
     Column(
         modifier = Modifier
@@ -504,12 +510,14 @@ fun EditorScreen(
                                     Analytics.trackEffectClick(
                                         videoId = videoId,
                                         effectId = effectSet.id,
-                                        effectName = effectSet.name
+                                        effectName = effectSet.name,
+                                        isPremium = effectSet.isPremium
                                     )
                                     Analytics.trackEffectSelect(
                                         videoId = videoId,
                                         effectId = effectSet.id,
-                                        effectName = effectSet.name
+                                        effectName = effectSet.name,
+                                        isPremium = effectSet.isPremium
                                     )
                                 }
                                 viewModel.updateEffectSet(effectSet.id)
@@ -799,6 +807,7 @@ fun EditorScreen(
                         },
                         onConfirm = { updatedAssets ->
                             scope.launch {
+                                hasBeenReady = false
                                 // Apply pending assets - this triggers video rebuild
                                 viewModel.applyPendingAssets(updatedAssets)
                                 isEditingImages = false
