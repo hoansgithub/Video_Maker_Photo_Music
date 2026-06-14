@@ -186,7 +186,7 @@ fun EffectSetPanelContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 16.dp, top = 8.dp)
+                .padding(top = 8.dp)
         ) {
             // Drag handle top indicator
             Box(

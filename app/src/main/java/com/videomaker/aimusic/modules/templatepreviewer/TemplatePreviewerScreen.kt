@@ -331,21 +331,26 @@ fun TemplatePreviewerScreen(
 
                 is TemplatePreviewerNavigationEvent.RequestUseTemplateWithAd -> {
                     if (event.shouldShowAd && activity != null) {
-                        InterstitialAdHelperExt.showInterstitial(
-                            adsLoaderService = adsLoaderService,
-                            activity = activity,
-                            placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_USE,
-                            action = {
-                                isAdShowing = false
-                                navigateToAssetPickerOrDefer(event.template, event.overrideSongId, event.aspectRatio)
-                            },
-                            onShown = {
-                                isAdShowing = true
-                                navigateToAssetPickerOrDefer(event.template, event.overrideSongId, event.aspectRatio)
-                            },
-                            bypassFrequencyCap = true,
-                            showLoadingOverlay = false
-                        )
+                        try {
+                            InterstitialAdHelperExt.showInterstitial(
+                                adsLoaderService = adsLoaderService,
+                                activity = activity,
+                                placement = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_USE,
+                                action = {
+                                    isAdShowing = false
+                                    navigateToAssetPickerOrDefer(event.template, event.overrideSongId, event.aspectRatio)
+                                },
+                                onShown = {
+                                    isAdShowing = true
+                                },
+                                bypassFrequencyCap = true,
+                                showLoadingOverlay = false
+                            )
+                        } catch (e: Exception) {
+                            android.util.Log.e("TemplatePreviewerScreen", "Error showing interstitial ad: ${e.message}", e)
+                            isAdShowing = false
+                            navigateToAssetPickerOrDefer(event.template, event.overrideSongId, event.aspectRatio)
+                        }
                     } else {
                         navigateToAssetPickerOrDefer(event.template, event.overrideSongId, event.aspectRatio)
                     }
