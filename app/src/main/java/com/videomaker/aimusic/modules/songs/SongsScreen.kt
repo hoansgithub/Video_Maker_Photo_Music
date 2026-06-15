@@ -1,7 +1,6 @@
 package com.videomaker.aimusic.modules.songs
 
 import androidx.compose.foundation.Image
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -9,12 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -35,8 +34,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,30 +57,31 @@ import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.AdClickDetector
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.analytics.trackSongImpressionAndMark
-import com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
 import com.videomaker.aimusic.core.constants.AdPlacement
+import com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
 import com.videomaker.aimusic.ui.components.AppFilterChip
+import com.videomaker.aimusic.ui.components.DEFAULT_INFEED_INTERVAL
 import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.RankingSongCard
 import com.videomaker.aimusic.ui.components.RankingSongCardPlaceholder
 import com.videomaker.aimusic.ui.components.SectionHeader
 import com.videomaker.aimusic.ui.components.ShimmerBox
-import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.SongFeedItem
+import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.SongListItemPlaceholder
-import com.videomaker.aimusic.ui.components.buildSongFeedWithAds
-import com.videomaker.aimusic.ui.components.DEFAULT_INFEED_INTERVAL
-import com.videomaker.aimusic.ui.components.songFeedItemKey
 import com.videomaker.aimusic.ui.components.SongsSearchField
 import com.videomaker.aimusic.ui.components.SuggestSongCard
 import com.videomaker.aimusic.ui.components.SuggestSongCardPlaceholder
+import com.videomaker.aimusic.ui.components.buildSongFeedWithAds
+import com.videomaker.aimusic.ui.components.songFeedItemKey
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.GoldAccent
 import com.videomaker.aimusic.ui.theme.Primary
@@ -89,7 +89,6 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import org.koin.compose.koinInject
-import com.videomaker.aimusic.core.ads.AdClickDetector
 
 // Uses shared SongFeedItem + buildSongFeedWithAds from ui.components.SongFeedItem
 
@@ -242,8 +241,8 @@ private fun SongsContent(
     onSearchClick: () -> Unit
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val sessionManager: MusicPlaybackSessionManager = koinInject()
     val dimens = AppDimens.current
-    var lastTrackedLocation by remember { mutableStateOf<String?>(null) }
 
     // Read infeed ad interval from placement config
     val adsLoaderService: AdsLoaderService = koinInject()
@@ -254,6 +253,7 @@ private fun SongsContent(
     }
 
     LaunchedEffect(listState) {
+        var lastTrackedLocation: String? = null
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .drop(1)
             .collect { (firstVisibleIndex, _) ->
@@ -331,6 +331,7 @@ private fun SongsContent(
             item(key = "suggest_list", contentType = "horizontal_list") {
                 SuggestSongsList(
                     state = suggestedState,
+                    sessionManager = sessionManager,
                     onSongClick = onSongClick
                 )
                 Spacer(modifier = Modifier.height(dimens.spaceMd))
@@ -350,6 +351,7 @@ private fun SongsContent(
             item(key = "ranking_pager", contentType = "pager") {
                 WeeklyRankingSection(
                     state = rankingState,
+                    sessionManager = sessionManager,
                     onSongClick = onSongClick
                 )
                 Spacer(modifier = Modifier.height(dimens.spaceMd))
@@ -414,7 +416,6 @@ private fun SongsContent(
                             is SongFeedItem.Song -> {
                                 val song = item.song
                                 val dimens = AppDimens.current
-                                val sessionManager: MusicPlaybackSessionManager = koinInject()
                                 StationSongItem(
                                     song = song,
                                     onSongClick = {
@@ -521,13 +522,13 @@ private const val SUGGEST_PLACEHOLDER_COUNT = 5
 @Composable
 private fun SuggestSongsList(
     state: SectionState<List<MusicSong>>,
+    sessionManager: MusicPlaybackSessionManager = koinInject(),
     onSongClick: (song: MusicSong, playlist: List<MusicSong>, location: String, genreId: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
     val horizontalScrollState = rememberScrollState()
     var hasTrackedSwipe by remember { mutableStateOf(false) }
-    val sessionManager: MusicPlaybackSessionManager = koinInject()
 
     LaunchedEffect(horizontalScrollState) {
         snapshotFlow { horizontalScrollState.value }
@@ -609,6 +610,7 @@ private const val RANKING_PLACEHOLDER_COUNT = 3
 @Composable
 private fun WeeklyRankingSection(
     state: SectionState<List<MusicSong>>,
+    sessionManager: MusicPlaybackSessionManager = koinInject(),
     onSongClick: (song: MusicSong, playlist: List<MusicSong>, location: String, genreId: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -630,6 +632,7 @@ private fun WeeklyRankingSection(
         is SectionState.Success -> {
             WeeklyRankingPager(
                 songs = state.data,
+                sessionManager = sessionManager,
                 onSongClick = onSongClick,
                 modifier = modifier
             )
@@ -655,13 +658,13 @@ private fun WeeklyRankingSection(
 @Composable
 private fun WeeklyRankingPager(
     songs: List<MusicSong>,
+    sessionManager: MusicPlaybackSessionManager = koinInject(),
     onSongClick: (song: MusicSong, playlist: List<MusicSong>, location: String, genreId: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
     val pages = remember(songs) { songs.take(9).chunked(3) }
     val pagerState = rememberPagerState(pageCount = { pages.size })
-    val sessionManager: MusicPlaybackSessionManager = koinInject()
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
@@ -730,77 +733,7 @@ private fun StationLoadingPlaceholder(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-private fun StationSongsSection(
-    state: SectionState<List<MusicSong>>,
-    selectedGenre: String?,
-    onSongClick: (song: MusicSong, playlist: List<MusicSong>, location: String, genreId: String?) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val dimens = AppDimens.current
-    val sessionManager: MusicPlaybackSessionManager = koinInject()
-
-    when (state) {
-        is SectionState.Loading -> {
-            Column(modifier = modifier) {
-                repeat(STATION_PLACEHOLDER_COUNT) {
-                    StationSongItemPlaceholder(
-                        modifier = Modifier.padding(
-                            horizontal = dimens.spaceLg,
-                            vertical = dimens.spaceXs
-                        )
-                    )
-                }
-            }
-        }
-        is SectionState.Success -> {
-            Column(modifier = modifier) {
-                state.data.forEach { song ->
-                    StationSongItem(
-                        song = song,
-                        onSongClick = {
-                            Analytics.trackSongClick(
-                                songId = song.id.toString(),
-                                songName = song.name,
-                                location = AnalyticsEvent.Value.Location.SONG_STATIONS,
-                                isPremium = song.isPremium
-                            )
-                            onSongClick(song, state.data, AnalyticsEvent.Value.Location.SONG_STATIONS, selectedGenre)
-                        },
-                        modifier = Modifier
-                            .padding(
-                                horizontal = dimens.spaceLg,
-                                vertical = dimens.spaceXs
-                            )
-                            .onFirstVisible(key = song.id) {
-                                sessionManager.trackSongImpressionAndMark(
-                                    songId = song.id.toString(),
-                                    songName = song.name,
-                                    location = AnalyticsEvent.Value.Location.SONG_STATIONS,
-                                    isPremium = song.isPremium
-                                )
-                            }
-                    )
-                }
-            }
-        }
-        is SectionState.Error -> {
-            Box(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = dimens.spaceLg)
-                    .height(60.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(R.string.error_load_failed),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-        }
-    }
-}
+// StationSongsSection removed as it was unused and contained redundant koinInject calls.
 
 /** Shimmer skeleton matching [StationSongItem] dimensions. */
 @Composable
