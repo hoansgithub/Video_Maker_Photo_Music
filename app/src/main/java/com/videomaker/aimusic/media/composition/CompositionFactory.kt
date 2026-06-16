@@ -194,7 +194,8 @@ class CompositionFactory(
         if (includeAudio && settings.audioNodes.isNotEmpty()) {
             val audioSequences = createMultiTrackAudioSequences(
                 settings.audioNodes,
-                project.totalDurationMs
+                project.totalDurationMs,
+                settings.hookStartTimeMs
             )
             sequences.addAll(audioSequences)
         }
@@ -481,8 +482,14 @@ class CompositionFactory(
             android.util.Log.w("CompositionFactory", "Effect set '$effectSetId' not found, using default")
             return listOfNotNull(TransitionShaderLibrary.getDefault())
         }
-        return effectSet.transitions.ifEmpty {
-            // Effect set exists but has no transitions - fall back to default
+        // Resolve transitions FRESH from TransitionShaderLibrary using transitionIds.
+        // Don't use effectSet.transitions — it's frozen at registration time and misses
+        // shaders downloaded after the EffectSet was cached in TransitionSetLibrary.
+        val resolved = effectSet.transitionIds.mapNotNull {
+            TransitionShaderLibrary.getById(it)
+        }
+        return resolved.ifEmpty {
+            // No transitions resolved - fall back to default
             listOfNotNull(TransitionShaderLibrary.getDefault())
         }
     }
@@ -665,9 +672,12 @@ class CompositionFactory(
      */
     private fun createMultiTrackAudioSequences(
         audioNodes: List<AudioNode>,
-        totalVideoDurationMs: Long
+        totalVideoDurationMs: Long,
+        hookStartTimeMs: Long = 0L
     ): List<EditedMediaItemSequence> {
         return audioNodes.mapNotNull { node ->
+            val isPrimaryNode = node == audioNodes.firstOrNull()
+
             // Prefer preprocessed audio (has fadeout baked in)
             // Verify cached files still exist (LRU eviction safety)
             val resolvedUri: String?
@@ -698,10 +708,16 @@ class CompositionFactory(
             val mediaItemBuilder = MediaItem.Builder().setUri(resolvedUri)
             if (!isPreprocessed) {
                 val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
-                    .setStartPositionMs(node.trimStartMs)
 
-                if (node.trimEndMs != null) {
-                    clippingBuilder.setEndPositionMs(node.trimEndMs)
+                if (node.trimStartMs > 0 || node.trimEndMs != null) {
+                    // Node has explicit trim range
+                    clippingBuilder.setStartPositionMs(node.trimStartMs)
+                    if (node.trimEndMs != null) {
+                        clippingBuilder.setEndPositionMs(node.trimEndMs)
+                    }
+                } else if (isPrimaryNode && hookStartTimeMs > 0) {
+                    // Primary node without trim: use hookStartTimeMs for beat-sync
+                    clippingBuilder.setStartPositionMs(hookStartTimeMs)
                 }
 
                 mediaItemBuilder.setClippingConfiguration(clippingBuilder.build())

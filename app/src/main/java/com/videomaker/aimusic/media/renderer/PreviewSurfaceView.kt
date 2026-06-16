@@ -18,14 +18,19 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
  * Wraps a GLSurfaceView with the VideoRenderer for real-time video preview.
  * Handles lifecycle (pause/resume GL thread) and state updates.
  *
+ * Uses RENDERMODE_CONTINUOUSLY during playback for 60fps rendering,
+ * switches to RENDERMODE_WHEN_DIRTY when paused to save GPU/battery.
+ *
  * @param renderState Current render state — updates take effect on next frame
  * @param playbackClock Shared time source for playback
+ * @param isPlaying Whether video is currently playing (controls render mode)
  * @param modifier Compose modifier
  */
 @Composable
 fun PreviewSurfaceView(
     renderState: RenderState,
     playbackClock: PlaybackClock,
+    isPlaying: Boolean,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -33,22 +38,33 @@ fun PreviewSurfaceView(
 
     val renderer = remember { VideoRenderer(context) }
 
+    // GLSurfaceView instance (created once, reused across recompositions)
+    val glSurfaceView = remember {
+        GLSurfaceView(context).apply {
+            setEGLContextClientVersion(2)
+            setRenderer(renderer)
+            // Start with WHEN_DIRTY; LaunchedEffect(isPlaying) switches to CONTINUOUSLY when playing
+            renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
+        }
+    }
+
     // Update renderer state reactively — @Volatile ensures atomic read on GL thread
     LaunchedEffect(renderState) {
         renderer.renderState = renderState
+        glSurfaceView.requestRender() // Ensure state changes are visible even when paused
     }
 
     LaunchedEffect(playbackClock) {
         renderer.playbackClock = playbackClock
     }
 
-    // GLSurfaceView instance (created once, reused across recompositions)
-    val glSurfaceView = remember {
-        GLSurfaceView(context).apply {
-            setEGLContextClientVersion(2)
-            setRenderer(renderer)
-            // RENDERMODE_CONTINUOUSLY for 60fps render loop
-            renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+    // Switch render mode: CONTINUOUSLY for 60fps during playback, WHEN_DIRTY when paused
+    LaunchedEffect(isPlaying) {
+        if (isPlaying) {
+            glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+        } else {
+            glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
+            glSurfaceView.requestRender() // Render one final frame at paused position
         }
     }
 

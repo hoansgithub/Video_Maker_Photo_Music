@@ -13,6 +13,8 @@ import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+import kotlin.math.cos
+import kotlin.math.PI
 
 /**
  * VideoRenderer - GLSurfaceView.Renderer that renders transitions at 60fps.
@@ -56,9 +58,13 @@ class VideoRenderer(private val context: Context) : GLSurfaceView.Renderer {
     private var viewportWidth = 0
     private var viewportHeight = 0
 
-    // Pre-computed clips cache (invalidated when state changes)
+    // Pre-computed clips cache — individual fields compared to avoid per-frame string allocation
     private var cachedClips: List<BeatSyncClip>? = null
-    private var cachedClipsKey: String = ""
+    private var cachedClipsBpm: Double = 0.0
+    private var cachedClipsBeatsSize: Int = 0
+    private var cachedClipsImageCount: Int = 0
+    private var cachedClipsNumShaders: Int = 0
+    private var cachedClipsHookStartMs: Long = 0L
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GLES20.glClearColor(0f, 0f, 0f, 1f)
@@ -84,6 +90,7 @@ class VideoRenderer(private val context: Context) : GLSurfaceView.Renderer {
         viewportWidth = width
         viewportHeight = height
         GLES20.glViewport(0, 0, width, height)
+        textureManager.setViewportSize(width, height)
         Log.d(TAG, "Surface changed: ${width}x$height")
     }
 
@@ -98,33 +105,38 @@ class VideoRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // Ensure textures are loaded
         textureManager.ensureTextures(state.imageUris)
 
-        // Get current time
-        val timeMs = clock?.currentTimeMs() ?: state.currentTimeMs
+        // Get current time from PlaybackClock
+        val timeMs = clock?.currentTimeMs() ?: 0L
 
         // Calculate which frame to render
         val frameInfo = calculateFrameAt(timeMs, state)
         if (frameInfo == null) {
             // Just show first image
-            drawHoldFrame(textureManager.getTexture(0))
+            drawHoldFrame(textureManager.getTexture(0), textureManager.getAspectRatio(0), state.aspectRatio.ratio)
             return
         }
+
+        val targetAspect = state.aspectRatio.ratio
 
         if (frameInfo.isTransition && frameInfo.toIndex >= 0) {
             // Render transition between two images
             val fromTex = textureManager.getTexture(frameInfo.fromIndex)
             val toTex = textureManager.getTexture(frameInfo.toIndex)
+            val fromAspect = textureManager.getAspectRatio(frameInfo.fromIndex)
+            val toAspect = textureManager.getAspectRatio(frameInfo.toIndex)
             val transition = state.transitions.getOrNull(frameInfo.shaderIndex)
 
             if (transition != null && fromTex != 0 && toTex != 0) {
-                drawTransition(fromTex, toTex, transition, frameInfo.progress, state.aspectRatio.ratio)
+                drawTransition(fromTex, toTex, transition, frameInfo.progress, targetAspect, fromAspect, toAspect)
             } else {
                 // Fallback: show from image
-                drawHoldFrame(fromTex)
+                drawHoldFrame(fromTex, fromAspect, targetAspect)
             }
         } else {
             // Hold frame — show single image
             val tex = textureManager.getTexture(frameInfo.fromIndex)
-            drawHoldFrame(tex)
+            val inputAspect = textureManager.getAspectRatio(frameInfo.fromIndex)
+            drawHoldFrame(tex, inputAspect, targetAspect)
         }
     }
 
@@ -178,8 +190,10 @@ class VideoRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 if (clip.hasTransition && clip.holdDurationMs > 0 && timeInClip >= clip.holdDurationMs) {
                     // In transition phase
                     val transitionTimeMs = timeInClip - clip.holdDurationMs
-                    val progress = (transitionTimeMs.toFloat() / clip.transitionDurationMs.toFloat())
+                    val linearProgress = (transitionTimeMs.toFloat() / clip.transitionDurationMs.toFloat())
                         .coerceIn(0f, 1f)
+                    // Cosine ease-in-out to match export path (TransitionEffect)
+                    val progress = 0.5f - 0.5f * cos(linearProgress * PI.toFloat())
 
                     val fromIndex = clip.imageIndex
                     val toIndex = (clip.imageIndex + 1).coerceAtMost(imageCount - 1)
@@ -193,8 +207,10 @@ class VideoRenderer(private val context: Context) : GLSurfaceView.Renderer {
                     )
                 } else if (clip.hasTransition && clip.holdDurationMs == 0L) {
                     // Transition only (no hold)
-                    val progress = (timeInClip.toFloat() / clip.transitionDurationMs.toFloat())
+                    val linearProgress = (timeInClip.toFloat() / clip.transitionDurationMs.toFloat())
                         .coerceIn(0f, 1f)
+                    // Cosine ease-in-out to match export path (TransitionEffect)
+                    val progress = 0.5f - 0.5f * cos(linearProgress * PI.toFloat())
 
                     val fromIndex = clip.imageIndex
                     val toIndex = (clip.imageIndex + 1).coerceAtMost(imageCount - 1)
@@ -225,9 +241,16 @@ class VideoRenderer(private val context: Context) : GLSurfaceView.Renderer {
         numShaders: Int,
         hookStartTimeMs: Long
     ): List<BeatSyncClip> {
-        val key = "${beatSyncData.bpm}_${beatSyncData.beats.size}_${imageCount}_${numShaders}_$hookStartTimeMs"
-        if (key == cachedClipsKey && cachedClips != null) {
-            return cachedClips!!
+        // Compare individual fields — no string allocation per frame
+        cachedClips?.let { cached ->
+            if (beatSyncData.bpm == cachedClipsBpm &&
+                beatSyncData.beats.size == cachedClipsBeatsSize &&
+                imageCount == cachedClipsImageCount &&
+                numShaders == cachedClipsNumShaders &&
+                hookStartTimeMs == cachedClipsHookStartMs
+            ) {
+                return cached
+            }
         }
 
         val imageSequence = (0 until imageCount).toList()
@@ -240,7 +263,11 @@ class VideoRenderer(private val context: Context) : GLSurfaceView.Renderer {
         )
 
         cachedClips = clips
-        cachedClipsKey = key
+        cachedClipsBpm = beatSyncData.bpm
+        cachedClipsBeatsSize = beatSyncData.beats.size
+        cachedClipsImageCount = imageCount
+        cachedClipsNumShaders = numShaders
+        cachedClipsHookStartMs = hookStartTimeMs
         return clips
     }
 
@@ -248,21 +275,25 @@ class VideoRenderer(private val context: Context) : GLSurfaceView.Renderer {
     // DRAWING
     // ============================================
 
-    private fun drawHoldFrame(textureId: Int) {
+    private fun drawHoldFrame(textureId: Int, inputAspect: Float, targetAspect: Float) {
         if (textureId == 0) return
 
         val program = shaderCache.getPassthroughProgram()
         if (program == 0) return
 
         GLES20.glUseProgram(program)
+        val locs = shaderCache.getLocations(program)
 
         // Bind texture
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
-        val texLoc = GLES20.glGetUniformLocation(program, "uTexFrom")
-        GLES20.glUniform1i(texLoc, 0)
+        GLES20.glUniform1i(locs.uTexFrom, 0)
 
-        drawQuad(program)
+        // Set aspect ratio uniforms for blur-background rendering
+        GLES20.glUniform1f(locs.uInputAspect, inputAspect)
+        GLES20.glUniform1f(locs.uTargetAspect, targetAspect)
+
+        drawQuad(locs)
     }
 
     private fun drawTransition(
@@ -270,52 +301,52 @@ class VideoRenderer(private val context: Context) : GLSurfaceView.Renderer {
         toTex: Int,
         transition: Transition,
         progress: Float,
-        aspectRatio: Float
+        targetAspect: Float,
+        fromInputAspect: Float,
+        toInputAspect: Float
     ) {
         val program = shaderCache.getProgram(transition)
         if (program == 0) return
 
         GLES20.glUseProgram(program)
+        val locs = shaderCache.getLocations(program)
 
         // Bind from texture to unit 0
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fromTex)
-        val fromLoc = GLES20.glGetUniformLocation(program, "uTexFrom")
-        GLES20.glUniform1i(fromLoc, 0)
+        GLES20.glUniform1i(locs.uTexFrom, 0)
 
         // Bind to texture to unit 1
         GLES20.glActiveTexture(GLES20.GL_TEXTURE1)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, toTex)
-        val toLoc = GLES20.glGetUniformLocation(program, "uTexTo")
-        GLES20.glUniform1i(toLoc, 1)
+        GLES20.glUniform1i(locs.uTexTo, 1)
 
-        // Set uniforms
-        val progressLoc = GLES20.glGetUniformLocation(program, "progress")
-        GLES20.glUniform1f(progressLoc, progress)
+        // Set transition uniforms
+        GLES20.glUniform1f(locs.progress, progress)
+        GLES20.glUniform1f(locs.ratio, targetAspect)
 
-        val ratioLoc = GLES20.glGetUniformLocation(program, "ratio")
-        GLES20.glUniform1f(ratioLoc, aspectRatio)
+        // Set per-image aspect ratio uniforms for blur-background rendering
+        GLES20.glUniform1f(locs.uInputAspectFrom, fromInputAspect)
+        GLES20.glUniform1f(locs.uInputAspectTo, toInputAspect)
+        GLES20.glUniform1f(locs.uTargetAspect, targetAspect)
 
-        drawQuad(program)
+        drawQuad(locs)
     }
 
-    private fun drawQuad(program: Int) {
-        val positionLoc = GLES20.glGetAttribLocation(program, "aPosition")
-        val texCoordLoc = GLES20.glGetAttribLocation(program, "aTexCoord")
-
+    private fun drawQuad(locs: ProgramLocations) {
         // Position attribute (x, y) — stride 16 bytes (4 floats * 4 bytes), offset 0
-        GLES20.glEnableVertexAttribArray(positionLoc)
+        GLES20.glEnableVertexAttribArray(locs.aPosition)
         quadBuffer.position(0)
-        GLES20.glVertexAttribPointer(positionLoc, 2, GLES20.GL_FLOAT, false, 16, quadBuffer)
+        GLES20.glVertexAttribPointer(locs.aPosition, 2, GLES20.GL_FLOAT, false, 16, quadBuffer)
 
         // TexCoord attribute (u, v) — stride 16 bytes, offset 8 bytes (2 floats)
-        GLES20.glEnableVertexAttribArray(texCoordLoc)
+        GLES20.glEnableVertexAttribArray(locs.aTexCoord)
         quadBuffer.position(2)
-        GLES20.glVertexAttribPointer(texCoordLoc, 2, GLES20.GL_FLOAT, false, 16, quadBuffer)
+        GLES20.glVertexAttribPointer(locs.aTexCoord, 2, GLES20.GL_FLOAT, false, 16, quadBuffer)
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
 
-        GLES20.glDisableVertexAttribArray(positionLoc)
-        GLES20.glDisableVertexAttribArray(texCoordLoc)
+        GLES20.glDisableVertexAttribArray(locs.aPosition)
+        GLES20.glDisableVertexAttribArray(locs.aTexCoord)
     }
 }

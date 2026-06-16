@@ -12,13 +12,14 @@ import com.videomaker.aimusic.domain.model.Transition
  * (effect set, aspect ratio, images) update fields here directly —
  * no composition rebuild required.
  *
+ * Time and playback state are NOT stored here — the renderer reads
+ * PlaybackClock directly each frame (avoids 60x/sec state copies).
+ *
  * @param imageUris Preprocessed image URIs (with blur background applied)
  * @param transitions Current effect set's transition shaders
  * @param beatSyncData Beat timing data for syncing transitions to music
  * @param aspectRatio Current output aspect ratio
  * @param overlayFrameId ID of selected overlay frame (null = none)
- * @param currentTimeMs Current playback position (updated by PlaybackClock)
- * @param isPlaying Whether playback is active
  * @param hookStartTimeMs Where music playback starts (ms from song start)
  * @param totalDurationMs Total project duration
  */
@@ -28,8 +29,6 @@ data class RenderState(
     val beatSyncData: BeatSyncData? = null,
     val aspectRatio: AspectRatio = AspectRatio.RATIO_9_16,
     val overlayFrameId: String? = null,
-    val currentTimeMs: Long = 0L,
-    val isPlaying: Boolean = false,
     val hookStartTimeMs: Long = 0L,
     val totalDurationMs: Long = 0L
 ) {

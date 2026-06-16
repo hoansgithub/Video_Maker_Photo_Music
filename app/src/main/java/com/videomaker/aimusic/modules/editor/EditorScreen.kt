@@ -46,6 +46,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +63,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
@@ -84,13 +88,11 @@ import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSection
 import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
-import com.videomaker.aimusic.modules.editor.components.VideoPreviewPlayer
+import com.videomaker.aimusic.modules.editor.components.AudioPreviewPlayer
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.media.renderer.PreviewSurfaceView
 import com.videomaker.aimusic.media.renderer.PlaybackClock
 import com.videomaker.aimusic.media.renderer.RenderState
-import com.videomaker.aimusic.ui.components.ErrorOverlay
-import com.videomaker.aimusic.ui.components.ErrorType
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.QualityPicker
 import com.videomaker.aimusic.ui.theme.SplashBackground
@@ -134,6 +136,25 @@ fun EditorScreen(
     val isQualityUnlocked by viewModel.isQualityUnlocked.collectAsStateWithLifecycle()
     val showBeatSyncErrorDialog by viewModel.showBeatSyncErrorDialog.collectAsStateWithLifecycle()
     val renderState by viewModel.renderState.collectAsStateWithLifecycle()
+    // Position/duration are separate StateFlows — only slider/time-label recompose on tick
+    val currentPositionMs by viewModel.currentPositionMs.collectAsStateWithLifecycle()
+    val durationMs by viewModel.durationMs.collectAsStateWithLifecycle()
+
+    // Pause playback when screen pauses, resume when screen resumes
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> viewModel.onScreenPause()
+                Lifecycle.Event.ON_RESUME -> viewModel.onScreenResume()
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     var showExitConfirmation by remember { mutableStateOf(false) }
     // var showMusicPicker by remember { mutableStateOf(false) } // Commented out - using Supabase only
@@ -205,7 +226,7 @@ fun EditorScreen(
 
     LaunchedEffect(
         successStateForTracking?.project?.id,
-        successStateForTracking?.currentPositionMs
+        currentPositionMs
     ) {
         val state = successStateForTracking ?: return@LaunchedEffect
         val videoId = state.project.id
@@ -220,7 +241,7 @@ fun EditorScreen(
             )
             hasTrackedVideoPreview = true
         }
-        if (!hasTrackedVideoPreviewComplete && state.currentPositionMs >= 3000L) {
+        if (!hasTrackedVideoPreviewComplete && currentPositionMs >= 3000L) {
             Analytics.trackVideoPreviewComplete(
                 videoId = videoId,
                 templateId = state.displaySettings.templateId
@@ -337,22 +358,17 @@ fun EditorScreen(
         }
     }
 
-    // Track preview state to show fullscreen blur overlay
-    var previewState by remember {
-        mutableStateOf<com.videomaker.aimusic.modules.editor.components.PreviewState>(
-            com.videomaker.aimusic.modules.editor.components.PreviewState.Building
-        )
-    }
+    // Track preview readiness — GL renderer is instant, so preview is ready
+    // once renderState has images. No CompositionPlayer build step.
     var hasBeenReady by remember { mutableStateOf(false) }
-    LaunchedEffect(previewState) {
-        if (previewState is com.videomaker.aimusic.modules.editor.components.PreviewState.Ready) {
+    LaunchedEffect(renderState) {
+        if (renderState.imageUris.isNotEmpty()) {
             hasBeenReady = true
         }
     }
-    val isPreviewBuilding =
-        previewState is com.videomaker.aimusic.modules.editor.components.PreviewState.Building
     val isProcessingAudio = (uiState as? EditorUiState.Success)?.isProcessingAudio == true
-    val showComposingOverlay = (!hasBeenReady && isPreviewBuilding) || isProcessingAudio
+    // Show overlay before initial render OR during music change processing
+    val showComposingOverlay = !hasBeenReady || isProcessingAudio
 
     Column(
         modifier = Modifier
@@ -374,6 +390,7 @@ fun EditorScreen(
                             EditorTopBar(
                                 selectedQuality = selectedQuality,
                                 canExport = !showComposingOverlay &&
+                                        !isProcessingAudio &&
                                         (successState?.isMusicCached ?: true) &&
                                         !(successState?.isCachingMusic ?: false),
                                 isQualityLocked = viewModel.isQualityLocked(selectedQuality),
@@ -435,8 +452,8 @@ fun EditorScreen(
                         EditorMainContent(
                             project = state.previewProject, // Use previewProject: pendingSettings but actual assets
                             isPlaying = state.isPlaying,
-                            currentPositionMs = state.currentPositionMs,
-                            durationMs = state.durationMs,
+                            currentPositionMs = currentPositionMs,
+                            durationMs = durationMs,
                             seekToPosition = state.seekToPosition,
                             scrubToPosition = state.scrubToPosition,
                             effectSetName = state.effectSetName,
@@ -450,15 +467,12 @@ fun EditorScreen(
                                 }
                                 viewModel.togglePlayback()
                             },
-                            onPlaybackStateChange = viewModel::setPlaybackState,
-                            onPositionUpdate = viewModel::updatePlaybackPosition,
                             onSeek = viewModel::seekTo,
                             onScrub = viewModel::scrubTo,
                             onSeekStart = viewModel::stopPlayback,
                             onSeekEnd = {}, // Resume happens in clearSeekRequest after seek completes
                             onSeekComplete = viewModel::clearSeekRequest,
                             onScrubComplete = viewModel::clearScrubRequest,
-                            onPreviewStateChange = { previewState = it },
                             onImagesClick = {
                                 Analytics.trackPhotoEdit()
                                 showImagesSheet = true
@@ -705,6 +719,7 @@ fun EditorScreen(
                                 location = AnalyticsEvent.Value.Location.VIDEO_EDITOR
                             )
                         }
+                        // ViewModel handles seek-to-0 + auto-play after preprocessing
                         viewModel.updateMusicTrack(
                             songId = song.id,
                             songName = song.name,
@@ -712,10 +727,6 @@ fun EditorScreen(
                             songCoverUrl = song.coverUrl
                         )
                         showMusicSearchSheet = false
-                        // Resume playback if it was playing before
-                        if (wasPlayingBeforeMusicSheet) {
-                            viewModel.setPlaybackState(true)
-                        }
                     },
                     onDismiss = {
                         val videoId = currentVideoId()
@@ -815,12 +826,11 @@ fun EditorScreen(
                             )
                         },
                         onConfirm = { updatedAssets ->
+                            // Close sheet immediately — GL renderer updates instantly
+                            isEditingImages = false
+                            showImagesSheet = false
                             scope.launch {
-                                hasBeenReady = false
-                                // Apply pending assets - this triggers video rebuild
                                 viewModel.applyPendingAssets(updatedAssets)
-                                isEditingImages = false
-                                showImagesSheet = false
                             }
                         }
                     )
@@ -861,27 +871,8 @@ fun EditorScreen(
                 }
             }
 
-            // Error overlay - shows preview errors
-            val previewErrorMessage =
-                (previewState as? com.videomaker.aimusic.modules.editor.components.PreviewState.Error)?.message
-
-            if (previewErrorMessage != null) {
-                ErrorOverlay(
-                    errorType = ErrorType.MusicLoading,
-                    title = stringResource(R.string.error_preview_title),
-                    message = previewErrorMessage,
-                    onRetry = {
-                        // Clear error and trigger rebuild
-                        previewState =
-                            com.videomaker.aimusic.modules.editor.components.PreviewState.Building
-                    },
-                    onDismiss = {
-                        // Clear error state
-                        previewState =
-                            com.videomaker.aimusic.modules.editor.components.PreviewState.Building
-                    }
-                )
-            }
+            // Preview error overlay removed — no CompositionPlayer to produce errors.
+            // Audio errors are handled by ExoPlayer internally (retry/fallback).
 
             // Network error dialog (beat-sync or effect set loading failure)
             if (showBeatSyncErrorDialog) {
@@ -1043,15 +1034,12 @@ internal fun EditorMainContent(
     renderState: RenderState,
     playbackClock: PlaybackClock,
     onPlayPauseClick: () -> Unit,
-    onPlaybackStateChange: (Boolean) -> Unit,
-    onPositionUpdate: (Long, Long) -> Unit,
     onSeek: (Long) -> Unit,
     onScrub: (Long) -> Unit,
     onSeekStart: () -> Unit,
     onSeekEnd: () -> Unit,
     onSeekComplete: () -> Unit,
     onScrubComplete: () -> Unit,
-    onPreviewStateChange: (com.videomaker.aimusic.modules.editor.components.PreviewState) -> Unit,
     onImagesClick: () -> Unit,
     onEffectClick: () -> Unit,
     onRatioClick: () -> Unit,
@@ -1077,27 +1065,23 @@ internal fun EditorMainContent(
             PreviewSurfaceView(
                 renderState = renderState,
                 playbackClock = playbackClock,
+                isPlaying = isPlaying,
                 modifier = Modifier
                     .fillMaxSize()
                     .aspectRatio(renderState.aspectRatio.ratio)
             )
 
-            // Audio-only: VideoPreviewPlayer handles audio playback, position tracking,
-            // and seek/scrub logic. Hidden (0dp) so it doesn't render video on top of
-            // PreviewSurfaceView. The CompositionPlayer inside still drives audio output.
-            VideoPreviewPlayer(
-                project = project,
+            // Audio-only player: syncs ExoPlayer audio to PlaybackClock.
+            // No CompositionPlayer — no GPU composition rebuilds on effect/ratio changes.
+            AudioPreviewPlayer(
+                audioNodes = project.settings.audioNodes,
+                hookStartTimeMs = project.settings.hookStartTimeMs,
                 isPlaying = isPlaying,
-                onPlayPauseClick = onPlayPauseClick,
-                onPlaybackStateChange = onPlaybackStateChange,
-                onPositionUpdate = onPositionUpdate,
+                playbackClock = playbackClock,
                 seekToPosition = seekToPosition,
                 scrubToPosition = scrubToPosition,
                 onSeekComplete = onSeekComplete,
-                onScrubComplete = onScrubComplete,
-                onPreviewStateChange = onPreviewStateChange,
-                autoPlay = true,
-                modifier = Modifier.size(0.dp)
+                onScrubComplete = onScrubComplete
             )
         }
 

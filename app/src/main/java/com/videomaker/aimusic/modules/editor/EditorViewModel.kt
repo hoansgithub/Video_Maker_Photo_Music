@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.UUID
 
 // ============================================
@@ -59,8 +60,6 @@ sealed class EditorUiState {
         val showSettingsPanel: Boolean = false,
         val pendingSettings: ProjectSettings? = null,
         val pendingAssets: List<Asset>? = null, // Temporary assets for ImagesBottomSheet - not saved/rebuilt until confirmed
-        val currentPositionMs: Long = 0L,
-        val durationMs: Long = 0L,
         val seekToPosition: Long? = null,
         val scrubToPosition: Long? = null,
         val wasPlayingBeforeSeek: Boolean = false,
@@ -174,6 +173,13 @@ class EditorViewModel(
     private val _renderState = MutableStateFlow(RenderState.EMPTY)
     val renderState: StateFlow<RenderState> = _renderState.asStateFlow()
 
+    // Playback position — separate from uiState to avoid 240 state copies/sec.
+    // Only the slider and time label observe these, not the entire EditorScreen tree.
+    private val _currentPositionMs = MutableStateFlow(0L)
+    val currentPositionMs: StateFlow<Long> = _currentPositionMs.asStateFlow()
+    private val _durationMs = MutableStateFlow(0L)
+    val durationMs: StateFlow<Long> = _durationMs.asStateFlow()
+
     // Shared playback clock between GL renderer and ExoPlayer audio
     val playbackClock = PlaybackClock()
 
@@ -190,6 +196,16 @@ class EditorViewModel(
     // Observer job for existing projects
     private var projectObserverJob: Job? = null
     private var musicUpdateJob: Job? = null
+    private var positionTickerJob: Job? = null
+
+    // Distinguishes music-change errors (stay in editor) from initial-load errors (navigate back)
+    private var isMusicChangeError = false
+
+    // Auto-play: start playback once on first project load
+    private var hasAutoPlayed = false
+
+    // Screen lifecycle: remember play state across pause/resume
+    private var wasPlayingBeforeScreenPause = false
 
     init {
         require(projectId != null || initialData != null) {
@@ -423,21 +439,25 @@ class EditorViewModel(
                         // Load effect set name
                         val effectSetName = getEffectSetName(project.settings.effectSetId)
 
+                        val shouldAutoPlay = prev == null && !hasAutoPlayed
                         _uiState.value = EditorUiState.Success(
                             project = project,
                             isUnsavedProject = false,
                             selectedAssetIndex = selectedIndex,
-                            isPlaying = prev?.isPlaying ?: false,
+                            isPlaying = prev?.isPlaying ?: shouldAutoPlay,
                             showSettingsPanel = prev?.showSettingsPanel ?: false,
                             pendingSettings = prev?.pendingSettings,
-                            currentPositionMs = prev?.currentPositionMs ?: 0L,
-                            durationMs = prev?.durationMs ?: 0L,
                             seekToPosition = prev?.seekToPosition,
                             scrubToPosition = prev?.scrubToPosition,
                             wasPlayingBeforeSeek = prev?.wasPlayingBeforeSeek ?: false,
                             effectSetName = effectSetName
                         )
                         refreshRenderState()
+                        startPositionTicker()
+                        if (shouldAutoPlay) {
+                            hasAutoPlayed = true
+                            playbackClock.play()
+                        }
                     } else {
                         _uiState.value = EditorUiState.Error("Project not found")
                     }
@@ -619,9 +639,13 @@ class EditorViewModel(
                 _uiState.value = EditorUiState.Success(
                     project = project,
                     isUnsavedProject = true,
+                    isPlaying = true,
                     effectSetName = effectSetName
                 )
                 refreshRenderState()
+                startPositionTicker()
+                hasAutoPlayed = true
+                playbackClock.play()
                 trackVideoGenerateCompleteReadyToEdit(
                     data = data,
                     totalDurationMs = settings.totalDurationMs,
@@ -849,20 +873,33 @@ class EditorViewModel(
                     0L
                 }
 
-                // Preprocess audio BEFORE updating settings (wait for all assets ready)
-                // This prevents double "Preparing video" by ensuring everything is ready before update
+                // Preprocess audio with timeout — if slow network causes hang, proceed without preprocessed audio
+                // AudioTimelinePlayer falls back to source audio with clipping when processedAudioUri is null
                 val preprocessedUri = if (beatSyncData != null && songId != null && song?.mp3Url != null && totalDurationMs > 0) {
                     val trimStartMs = song.hookStartTimeMs ?: 0L
-                    withContext(Dispatchers.IO) {
-                        preprocessBeatSyncAudio(
-                            songId = songId,
-                            songUrl = song.mp3Url,
-                            beatSyncData = beatSyncData,
-                            totalDurationMs = totalDurationMs,
-                            trimStartMs = trimStartMs
-                        )
-                    }.also {
-                        android.util.Log.d("EditorViewModel", "✅ Preprocessed audio ready")
+                    try {
+                        withTimeoutOrNull(30_000L) {
+                            withContext(Dispatchers.IO) {
+                                preprocessBeatSyncAudio(
+                                    songId = songId,
+                                    songUrl = song.mp3Url,
+                                    beatSyncData = beatSyncData,
+                                    totalDurationMs = totalDurationMs,
+                                    trimStartMs = trimStartMs
+                                )
+                            }
+                        }.also { uri ->
+                            if (uri != null) {
+                                android.util.Log.d("EditorViewModel", "✅ Preprocessed audio ready")
+                            } else {
+                                android.util.Log.w("EditorViewModel", "Audio preprocessing timed out after 30s, proceeding without fadeout")
+                            }
+                        }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        android.util.Log.w("EditorViewModel", "Audio preprocessing failed, proceeding without: ${e.message}")
+                        null
                     }
                 } else {
                     null
@@ -894,7 +931,7 @@ class EditorViewModel(
             } catch (e: CancellationException) {
                 throw e // Don't catch cancellation
             } catch (e: Exception) {
-                // ANY failure (beat-sync load, preprocessing, etc.) → show error dialog
+                // ANY failure (beat-sync load, song fetch, etc.) → show error dialog
                 android.util.Log.e("EditorViewModel", "Music update failed: ${e.message}", e)
                 _showBeatSyncErrorDialog.value = true
             }
@@ -902,9 +939,16 @@ class EditorViewModel(
     }
 
     fun updateMusicTrack(songId: Long, songName: String, songUrl: String, songCoverUrl: String) {
+        // Reset error flag from any previous failed music change
+        isMusicChangeError = false
+
+        // Save original settings for revert on failure
+        val originalState = _uiState.value as? EditorUiState.Success
+        val originalSettings = originalState?.pendingSettings ?: originalState?.project?.settings
+
         // Immediately update display-only fields (MusicSection UI) via primary audio node
         // without touching player-facing fields to avoid triggering error/loading state
-        updatePendingSettings { settings ->
+        updatePendingSettingsAudioOnly { settings ->
             val existingNode = settings.primaryAudioNode
             val displayNode = (existingNode ?: AudioNode()).copy(
                 songName = songName,
@@ -934,6 +978,9 @@ class EditorViewModel(
 
                 // Beat-sync load failure already shows error dialog and returns null
                 if (beatSyncData == null) {
+                    // Revert display changes and mark as music-change error (stay in editor)
+                    revertMusicDisplayChanges(originalSettings)
+                    isMusicChangeError = true
                     // Error dialog already shown by loadBeatSyncWithRetry
                     return@launch
                 }
@@ -956,19 +1003,32 @@ class EditorViewModel(
                     throw Exception("Invalid duration for beat-sync preprocessing")
                 }
 
-                // Preprocess audio BEFORE updating settings (wait for all assets ready)
-                // This prevents double "Preparing video" by ensuring everything is ready before update
+                // Preprocess audio with timeout — if slow network, proceed without fadeout
+                // AudioTimelinePlayer falls back to source audio with clipping
                 val trimStartMs = song?.hookStartTimeMs ?: 0L
-                val preprocessedUri = withContext(Dispatchers.IO) {
-                    preprocessBeatSyncAudio(
-                        songId = songId,
-                        songUrl = songUrl,
-                        beatSyncData = beatSyncData,
-                        totalDurationMs = totalDurationMs,
-                        trimStartMs = trimStartMs
-                    )
-                }.also {
-                    android.util.Log.d("EditorViewModel", "✅ Preprocessed audio ready")
+                val preprocessedUri = try {
+                    withTimeoutOrNull(30_000L) {
+                        withContext(Dispatchers.IO) {
+                            preprocessBeatSyncAudio(
+                                songId = songId,
+                                songUrl = songUrl,
+                                beatSyncData = beatSyncData,
+                                totalDurationMs = totalDurationMs,
+                                trimStartMs = trimStartMs
+                            )
+                        }
+                    }.also { uri ->
+                        if (uri != null) {
+                            android.util.Log.d("EditorViewModel", "✅ Preprocessed audio ready")
+                        } else {
+                            android.util.Log.w("EditorViewModel", "Audio preprocessing timed out after 30s, proceeding without fadeout")
+                        }
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    android.util.Log.w("EditorViewModel", "Audio preprocessing failed, proceeding without: ${e.message}")
+                    null
                 }
 
                 // Build audio node with all data
@@ -984,25 +1044,36 @@ class EditorViewModel(
                     processedAudioUri = preprocessedUri?.toString()
                 )
 
-                // Update settings once with all assets ready (including preprocessed audio)
-                updatePendingSettings {
-                    it.copy(
-                        audioNodes = listOf(node),
-                        // Beat-sync integration
-                        beatSyncData = beatSyncData,
-                        hookStartTimeMs = song?.hookStartTimeMs ?: 0L,
-                        totalDurationMs = totalDurationMs // Pre-calculated (prevents ANR)
+                // Seek to start — beat-sync timing is completely different with new song
+                playbackClock.pause()
+                playbackClock.setDuration(totalDurationMs)
+                playbackClock.seekTo(0L)
+                _currentPositionMs.value = 0L
+                _durationMs.value = totalDurationMs
+
+                // Update settings with new audio + auto-play from position 0
+                _uiState.update { current ->
+                    val latest = current as? EditorUiState.Success ?: return@update current
+                    val baseSettings = latest.pendingSettings ?: latest.project.settings
+                    latest.copy(
+                        pendingSettings = baseSettings.copy(
+                            audioNodes = listOf(node),
+                            beatSyncData = beatSyncData,
+                            hookStartTimeMs = song?.hookStartTimeMs ?: 0L,
+                            totalDurationMs = totalDurationMs
+                        ),
+                        isPlaying = true
                     )
                 }
-
-                // Auto-processing disabled temporarily due to player freeze issues
-                // User must manually trim music to match video duration
-                // autoProcessAudioForVideoDuration(songUrl)
+                refreshRenderState()
+                playbackClock.play()
             } catch (e: CancellationException) {
                 throw e // Don't catch cancellation
             } catch (e: Exception) {
-                // ANY failure (beat-sync load, preprocessing, etc.) → show error dialog
+                // Music change failed — revert display, show error, stay in editor
                 android.util.Log.e("EditorViewModel", "Music update failed: ${e.message}", e)
+                revertMusicDisplayChanges(originalSettings)
+                isMusicChangeError = true
                 _showBeatSyncErrorDialog.value = true
             } finally {
                 // Hide composing overlay regardless of success or failure
@@ -1011,6 +1082,18 @@ class EditorViewModel(
                     _uiState.value = finalState.copy(isProcessingAudio = false)
                 }
             }
+        }
+    }
+
+    /**
+     * Revert display-only audio node changes on music change failure.
+     * Restores the original pending settings so the UI shows the previous song info.
+     */
+    private fun revertMusicDisplayChanges(originalSettings: ProjectSettings?) {
+        if (originalSettings == null) return
+        _uiState.update { current ->
+            val latest = current as? EditorUiState.Success ?: return@update current
+            latest.copy(pendingSettings = originalSettings)
         }
     }
 
@@ -1162,8 +1245,8 @@ class EditorViewModel(
 
                 if (success) {
                     android.util.Log.d("EditorViewModel", "Auto-processing successful: ${outputFile.absolutePath}")
-                    // Update primary audio node with processed audio
-                    updatePendingSettings { settings ->
+                    // Update primary audio node with processed audio — no GL render needed
+                    updatePendingSettingsAudioOnly { settings ->
                         settings.copy(
                             audioNodes = settings.audioNodes.mapIndexed { i, node ->
                                 if (i == 0) node.copy(processedAudioUri = Uri.fromFile(outputFile).toString()) else node
@@ -1180,8 +1263,8 @@ class EditorViewModel(
     }
 
     fun updateAudioVolume(volume: Float) {
-        // Update the primary audio node's volume
-        updatePendingSettings { settings ->
+        // Update the primary audio node's volume — audio only, no GL render needed
+        updatePendingSettingsAudioOnly { settings ->
             settings.copy(
                 audioNodes = settings.audioNodes.mapIndexed { i, node ->
                     if (i == 0) node.copy(volume = volume) else node
@@ -1199,13 +1282,13 @@ class EditorViewModel(
     // ============================================
 
     fun addAudioNode(node: AudioNode) {
-        updatePendingSettings { settings ->
+        updatePendingSettingsAudioOnly { settings ->
             settings.copy(audioNodes = settings.audioNodes + node)
         }
     }
 
     fun removeAudioNode(nodeId: String) {
-        updatePendingSettings { settings ->
+        updatePendingSettingsAudioOnly { settings ->
             settings.copy(audioNodes = settings.audioNodes.filter { it.id != nodeId })
         }
         // Deselect if the removed node was selected
@@ -1216,7 +1299,7 @@ class EditorViewModel(
     }
 
     fun updateAudioNode(nodeId: String, update: (AudioNode) -> AudioNode) {
-        updatePendingSettings { settings ->
+        updatePendingSettingsAudioOnly { settings ->
             settings.copy(
                 audioNodes = settings.audioNodes.map { node ->
                     if (node.id == nodeId) update(node) else node
@@ -1232,45 +1315,89 @@ class EditorViewModel(
         }
     }
 
+    /**
+     * Update pending settings AND refresh GL render state.
+     * Use for visual changes: effectSet, aspectRatio, overlay, images.
+     */
     private fun updatePendingSettings(update: (ProjectSettings) -> ProjectSettings) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
             val baseSettings = currentState.pendingSettings ?: currentState.project.settings
             _uiState.value = currentState.copy(pendingSettings = update(baseSettings))
-            // Update GL renderer state instantly (no composition rebuild)
             refreshRenderState()
         }
     }
 
     /**
-     * Refresh the GL renderer state from current project + pending settings.
-     * Called on every property change for instant preview updates.
+     * Update pending settings WITHOUT refreshing GL render state.
+     * Use for audio-only changes: volume, audioNodes — no GL render needed.
      */
+    private fun updatePendingSettingsAudioOnly(update: (ProjectSettings) -> ProjectSettings) {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success) {
+            val baseSettings = currentState.pendingSettings ?: currentState.project.settings
+            _uiState.value = currentState.copy(pendingSettings = update(baseSettings))
+        }
+    }
+
+    /**
+     * Refresh the GL renderer state from current project + pending settings.
+     * Called on visual property changes for instant preview updates.
+     * Caches transitions and imageUris to avoid re-allocating identical lists.
+     */
+    private var cachedEffectSetId: String? = null
+    private var cachedTransitions: List<com.videomaker.aimusic.domain.model.Transition> = emptyList()
+    private var cachedImageUris: List<android.net.Uri> = emptyList()
+    private var cachedAssets: List<Asset>? = null
+
     private fun refreshRenderState() {
         val state = _uiState.value as? EditorUiState.Success ?: return
         val settings = state.displaySettings
         val assets = state.project.assets
 
-        // Resolve transitions for the current effect set
-        // Fallback matches CompositionFactory.resolveTransitions(): use default crossfade
-        val effectSet = settings.effectSetId?.let { TransitionSetLibrary.getById(it) }
-        val transitions = effectSet?.transitions?.ifEmpty {
-            listOfNotNull(com.videomaker.aimusic.media.library.TransitionShaderLibrary.getDefault())
-        } ?: listOfNotNull(com.videomaker.aimusic.media.library.TransitionShaderLibrary.getDefault())
+        // Cache transitions by effectSetId — only re-resolve when effect set changes
+        val effectSetId = settings.effectSetId
+        val transitions = if (effectSetId == cachedEffectSetId && cachedTransitions.isNotEmpty()) {
+            cachedTransitions
+        } else {
+            val effectSet = effectSetId?.let { TransitionSetLibrary.getById(it) }
+            val resolved = if (effectSet != null) {
+                val r = effectSet.transitionIds.mapNotNull {
+                    com.videomaker.aimusic.media.library.TransitionShaderLibrary.getById(it)
+                }
+                r.ifEmpty {
+                    listOfNotNull(com.videomaker.aimusic.media.library.TransitionShaderLibrary.getDefault())
+                }
+            } else {
+                listOfNotNull(com.videomaker.aimusic.media.library.TransitionShaderLibrary.getDefault())
+            }
+            cachedEffectSetId = effectSetId
+            cachedTransitions = resolved
+            resolved
+        }
+
+        // Cache imageUris — only rebuild when assets list changes (reference equality)
+        val imageUris = if (assets === cachedAssets) {
+            cachedImageUris
+        } else {
+            val uris = assets.map { it.uri }
+            cachedImageUris = uris
+            cachedAssets = assets
+            uris
+        }
 
         _renderState.value = RenderState(
-            imageUris = assets.map { it.uri },
+            imageUris = imageUris,
             transitions = transitions,
             beatSyncData = settings.beatSyncData,
             aspectRatio = settings.aspectRatio,
             overlayFrameId = settings.overlayFrameId,
-            currentTimeMs = playbackClock.currentTimeMs(),
-            isPlaying = state.isPlaying,
             hookStartTimeMs = settings.hookStartTimeMs,
             totalDurationMs = settings.totalDurationMs
         )
 
         playbackClock.setDuration(settings.totalDurationMs)
+        _durationMs.value = settings.totalDurationMs
     }
 
     suspend fun applySettings() {
@@ -1323,26 +1450,126 @@ class EditorViewModel(
     }
 
     /**
+     * Recalculate project settings when asset count changes.
+     * If beat-sync music is present and image count changed, recalculates duration
+     * and reprocesses audio with new fadeout timing.
+     * Shows processing overlay during audio reprocessing.
+     */
+    private suspend fun recalculateSettingsForAssets(
+        assets: List<Asset>,
+        currentState: EditorUiState.Success
+    ): ProjectSettings {
+        val beatSyncData = currentState.project.settings.beatSyncData
+        val primaryNode = currentState.project.settings.primaryAudioNode
+
+        if (beatSyncData == null || primaryNode?.songId == null) {
+            // No beat-sync — settings unchanged
+            return currentState.project.settings
+        }
+
+        val newDuration = Project.calculateBeatSyncDuration(
+            beatData = beatSyncData,
+            assetCount = assets.size,
+            trimStartMs = currentState.project.settings.hookStartTimeMs
+        ) ?: currentState.project.settings.totalDurationMs
+
+        val durationChanged = newDuration != currentState.project.settings.totalDurationMs
+        if (!durationChanged) {
+            // Same duration — just update totalDurationMs (may differ slightly)
+            return currentState.project.settings.copy(totalDurationMs = newDuration)
+        }
+
+        val nodeSongUrl = primaryNode.songUrl
+        if (nodeSongUrl == null) {
+            return currentState.project.settings.copy(totalDurationMs = newDuration)
+        }
+
+        // Duration changed and has audio — show overlay and reprocess
+        _uiState.update { current ->
+            val latest = current as? EditorUiState.Success ?: return@update current
+            latest.copy(isProcessingAudio = true)
+        }
+
+        android.util.Log.d("EditorViewModel", "recalculateSettingsForAssets: Duration ${currentState.project.settings.totalDurationMs}ms → ${newDuration}ms (${assets.size} images)")
+
+        val newProcessedUri = try {
+            withTimeoutOrNull(30_000L) {
+                preprocessBeatSyncAudio(
+                    songId = primaryNode.songId,
+                    songUrl = nodeSongUrl,
+                    beatSyncData = beatSyncData,
+                    totalDurationMs = newDuration,
+                    trimStartMs = currentState.project.settings.hookStartTimeMs
+                )
+            }.also { uri ->
+                if (uri == null) {
+                    android.util.Log.w("EditorViewModel", "Audio preprocessing timed out after 30s during recalculation")
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            android.util.Log.e("EditorViewModel", "Audio preprocessing failed: ${e.message}", e)
+            null
+        }
+
+        val updatedNode = primaryNode.copy(processedAudioUri = newProcessedUri?.toString())
+        return currentState.project.settings.copy(
+            totalDurationMs = newDuration,
+            audioNodes = listOf(updatedNode) + currentState.project.settings.audioNodes.drop(1)
+        )
+    }
+
+    /**
      * Apply pending assets to the project - this will trigger video rebuild
      * @param assets The reordered/updated assets list from ImagesBottomSheet
      */
-    suspend fun applyPendingAssets(assets: List<Asset>) {
+    suspend fun applyPendingAssets(assets: List<Asset>) = assetMutex.withLock {
         val currentState = _uiState.value
-        if (currentState is EditorUiState.Success) {
-            android.util.Log.d("EditorViewModel", "applyPendingAssets: Applying ${assets.size} assets")
-
-            val updatedProject = currentState.project.copy(
-                assets = assets,
-                updatedAt = System.currentTimeMillis()
-            )
-            _uiState.value = currentState.copy(project = updatedProject, pendingAssets = null)
-
-            // Note: Assets are already saved to DB by asset picker
-            // This just updates the project reference and triggers video rebuild
-            android.util.Log.d("EditorViewModel", "applyPendingAssets: Assets applied, video will rebuild")
-        } else {
+        if (currentState !is EditorUiState.Success) {
             android.util.Log.d("EditorViewModel", "applyPendingAssets: Not in Success state")
+            return@withLock
         }
+
+        android.util.Log.d("EditorViewModel", "applyPendingAssets: Applying ${assets.size} assets (was ${currentState.project.assets.size})")
+
+        // Pause playback during asset change
+        playbackClock.pause()
+
+        // Recalculate duration + reprocess audio if image count changed with beat-sync
+        val updatedSettings = recalculateSettingsForAssets(
+            assets = assets,
+            currentState = currentState
+        )
+
+        val updatedProject = currentState.project.copy(
+            assets = assets,
+            settings = updatedSettings,
+            updatedAt = System.currentTimeMillis()
+        )
+        // Set duration on clock BEFORE updating UI state so slider has correct bounds
+        playbackClock.setDuration(updatedSettings.totalDurationMs)
+        playbackClock.seekTo(0L)
+
+        // Update position/duration StateFlows directly (no full state copy)
+        _currentPositionMs.value = 0L
+        _durationMs.value = updatedSettings.totalDurationMs
+
+        // Atomic update: re-reads latest state to preserve concurrent changes
+        _uiState.update { current ->
+            val latest = current as? EditorUiState.Success ?: return@update current
+            latest.copy(
+                project = updatedProject,
+                pendingAssets = null,
+                isPlaying = true,
+                isProcessingAudio = false
+            )
+        }
+
+        refreshRenderState()
+        playbackClock.play()
+
+        android.util.Log.d("EditorViewModel", "applyPendingAssets: ${assets.size} assets, ${updatedSettings.totalDurationMs}ms, playing from start")
     }
 
     /**
@@ -1392,81 +1619,48 @@ class EditorViewModel(
         val currentAssetUris = currentState.project.assets.map { it.uri.toString() }
         if (currentAssetUris == selectedUris) {
             android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Assets unchanged, skipping update")
-            // Clear pending assets but don't update project
             _uiState.value = currentState.copy(pendingAssets = null)
             return@withLock
         }
 
-        // Recalculate duration and reprocess audio if beat-sync music is present
-        val beatSyncData = currentState.project.settings.beatSyncData
-        val replaceNode = currentState.project.settings.primaryAudioNode
-        val updatedSettings = if (beatSyncData != null && replaceNode?.songId != null) {
-            val newDuration = Project.calculateBeatSyncDuration(
-                beatData = beatSyncData,
-                assetCount = finalAssets.size,
-                trimStartMs = currentState.project.settings.hookStartTimeMs
-            ) ?: currentState.project.settings.totalDurationMs
+        // Pause playback during asset change
+        playbackClock.pause()
 
-            val durationChanged = newDuration != currentState.project.settings.totalDurationMs
+        // Recalculate duration + reprocess audio if image count changed with beat-sync
+        val updatedSettings = recalculateSettingsForAssets(
+            assets = finalAssets,
+            currentState = currentState
+        )
 
-            android.util.Log.d("EditorViewModel", "Duration recalculated: ${currentState.project.settings.totalDurationMs}ms → ${newDuration}ms (${finalAssets.size} images)")
-
-            val nodeSongId = replaceNode.songId
-            val nodeSongUrl = replaceNode.songUrl
-
-            if (durationChanged && nodeSongUrl != null) {
-                // Show loading overlay during preprocessing
-                _uiState.value = currentState.copy(isProcessingAudio = true)
-
-                // Reprocess audio with new duration and fadeout
-                android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: Duration changed from ${currentState.project.settings.totalDurationMs}ms to ${newDuration}ms")
-                android.util.Log.d("EditorViewModel", "Old processedAudioUri: ${replaceNode.processedAudioUri}")
-                android.util.Log.d("EditorViewModel", "Starting audio preprocessing with new duration...")
-
-                val newProcessedUri = try {
-                    preprocessBeatSyncAudio(
-                        songId = nodeSongId,
-                        songUrl = nodeSongUrl,
-                        beatSyncData = beatSyncData,
-                        totalDurationMs = newDuration,
-                        trimStartMs = currentState.project.settings.hookStartTimeMs
-                    )
-                } catch (e: Exception) {
-                    android.util.Log.e("EditorViewModel", "Audio preprocessing FAILED: ${e.message}", e)
-                    null
-                }
-
-                android.util.Log.d("EditorViewModel", "New processedAudioUri: $newProcessedUri")
-
-                // Update audio node with new processedAudioUri
-                val updatedNode = replaceNode.copy(processedAudioUri = newProcessedUri?.toString())
-                currentState.project.settings.copy(
-                    totalDurationMs = newDuration,
-                    audioNodes = listOf(updatedNode) + currentState.project.settings.audioNodes.drop(1)
-                )
-            } else {
-                android.util.Log.d("EditorViewModel", "Duration not changed or no music URL - durationChanged=$durationChanged, songUrl=${nodeSongUrl != null}")
-                currentState.project.settings.copy(totalDurationMs = newDuration)
-            }
-        } else {
-            currentState.project.settings
-        }
-
-        // Apply directly to project - triggers ONE rebuild with updated duration
         val updatedProject = currentState.project.copy(
             assets = finalAssets,
             settings = updatedSettings,
             updatedAt = System.currentTimeMillis()
         )
 
-        android.util.Log.d("EditorViewModel", "Applying changes: ${finalAssets.size} images, ${updatedSettings.totalDurationMs}ms - video will rebuild")
+        android.util.Log.d("EditorViewModel", "Applying changes: ${finalAssets.size} images, ${updatedSettings.totalDurationMs}ms")
 
-        // Update state immediately with new project (don't wait for database)
-        _uiState.value = currentState.copy(
-            project = updatedProject,
-            pendingAssets = null,
-            isProcessingAudio = false
-        )
+        // Set duration on clock BEFORE updating UI state so slider has correct bounds
+        playbackClock.setDuration(updatedSettings.totalDurationMs)
+        playbackClock.seekTo(0L)
+
+        // Update position/duration StateFlows directly (no full state copy)
+        _currentPositionMs.value = 0L
+        _durationMs.value = updatedSettings.totalDurationMs
+
+        // Atomic update: re-reads latest state to preserve concurrent changes
+        _uiState.update { current ->
+            val latest = current as? EditorUiState.Success ?: return@update current
+            latest.copy(
+                project = updatedProject,
+                pendingAssets = null,
+                isProcessingAudio = false,
+                isPlaying = true
+            )
+        }
+
+        refreshRenderState()
+        playbackClock.play()
 
         // Save to database in background (saved projects only)
         if (!currentState.isUnsavedProject) {
@@ -1714,15 +1908,7 @@ class EditorViewModel(
 
                     // Beat-sync mode: Music trimming is handled via hookStartTimeMs in beat-sync data
                     // No need to update totalDurationMs here - it's calculated from beats
-                    updatePendingSettings { settings ->
-                        settings.copy(
-                            audioNodes = settings.audioNodes.mapIndexed { i, node ->
-                                if (i == 0) node.copy(processedAudioUri = null) else node
-                            }
-                        )
-                    }
-
-                    // Auto-apply settings to save to database
+                    // Don't clear processedAudioUri — it contains the beat-sync fadeout
                     applySettings()
 
                     android.util.Log.d("EditorViewModel", "applyMusicTrim: Trim positions saved (Media3 will handle looping)")
@@ -1750,15 +1936,7 @@ class EditorViewModel(
             trimStateMutex.withLock {
                 try {
                     if (applyChanges && currentTrimState.isValid) {
-                        // Apply trim positions before closing
-                        val startMs = currentTrimState.trimStartMs
-                        val endMs = currentTrimState.trimEndMs
-
-                        updatePendingSettings {
-                            it.copy(
-                            )
-                        }
-
+                        // In beat-sync mode, trim is handled via hookStartTimeMs
                         applySettings()
                     }
 
@@ -1798,16 +1976,8 @@ class EditorViewModel(
         viewModelScope.launch {
             trimStateMutex.withLock {
                 try {
-                    // Reset trim positions to default (full song: 0 → null)
-                    // null means "use entire song, no trimming"
-                    updatePendingSettings { settings ->
-                        settings.copy(
-                            audioNodes = settings.audioNodes.mapIndexed { i, node ->
-                                if (i == 0) node.copy(processedAudioUri = null) else node
-                            }
-                        )
-                    }
-
+                    // Reset trim positions to default (full song)
+                    // Don't clear processedAudioUri — it contains the beat-sync fadeout
                     applySettings()
 
                     // Close trimmer if open
@@ -1826,6 +1996,26 @@ class EditorViewModel(
     // PLAYBACK CONTROLS
     // ============================================
 
+    /**
+     * Start a coroutine-based position ticker that reads from PlaybackClock
+     * at 4Hz to update the UI slider. Replaces the Handler-based position
+     * tracking that was previously in VideoPreviewPlayer.
+     */
+    private fun startPositionTicker() {
+        positionTickerJob?.cancel()
+        positionTickerJob = viewModelScope.launch {
+            while (true) {
+                val timeMs = playbackClock.currentTimeMs()
+                val duration = playbackClock.totalDurationMs
+                // Write to dedicated StateFlows — no full EditorUiState copy needed.
+                // Only slider/time-label composables observe these, not the entire tree.
+                _currentPositionMs.value = timeMs
+                _durationMs.value = duration
+                delay(250) // 4Hz update for slider
+            }
+        }
+    }
+
     fun togglePlayback() {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
@@ -1843,6 +2033,31 @@ class EditorViewModel(
         }
     }
 
+    /**
+     * Called when editor screen pauses (app backgrounded, screen off, etc.).
+     * Remembers play state so it can resume when screen returns.
+     */
+    fun onScreenPause() {
+        val currentState = _uiState.value as? EditorUiState.Success ?: return
+        wasPlayingBeforeScreenPause = currentState.isPlaying
+        if (currentState.isPlaying) {
+            _uiState.value = currentState.copy(isPlaying = false)
+            playbackClock.pause()
+        }
+    }
+
+    /**
+     * Called when editor screen resumes (app foregrounded).
+     * Resumes playback if it was playing before the pause.
+     */
+    fun onScreenResume() {
+        if (!wasPlayingBeforeScreenPause) return
+        wasPlayingBeforeScreenPause = false
+        val currentState = _uiState.value as? EditorUiState.Success ?: return
+        _uiState.value = currentState.copy(isPlaying = true)
+        playbackClock.play()
+    }
+
     fun stopPlayback() {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success) {
@@ -1851,15 +2066,6 @@ class EditorViewModel(
                 isPlaying = false
             )
             playbackClock.pause()
-        }
-    }
-
-    fun updatePlaybackPosition(currentMs: Long, durationMs: Long) {
-        val currentState = _uiState.value
-        if (currentState is EditorUiState.Success) {
-            if (currentState.currentPositionMs != currentMs || currentState.durationMs != durationMs) {
-                _uiState.value = currentState.copy(currentPositionMs = currentMs, durationMs = durationMs)
-            }
         }
     }
 
@@ -2018,9 +2224,19 @@ class EditorViewModel(
 
     fun onBeatSyncErrorDismissed() {
         _showBeatSyncErrorDialog.value = false
-        // Navigate back to home (no ad on error case)
-        viewModelScope.launch {
-            _navigationEvent.send(EditorNavigationEvent.RequestBackWithAd(shouldShowAd = false))
+        if (isMusicChangeError) {
+            // Music change failed — stay in editor with previous song, resume playback
+            isMusicChangeError = false
+            val currentState = _uiState.value as? EditorUiState.Success
+            if (currentState != null && !currentState.isPlaying) {
+                _uiState.value = currentState.copy(isPlaying = true)
+                playbackClock.play()
+            }
+        } else {
+            // Initial load failed — navigate back to home (no ad on error case)
+            viewModelScope.launch {
+                _navigationEvent.send(EditorNavigationEvent.RequestBackWithAd(shouldShowAd = false))
+            }
         }
     }
 
@@ -2032,6 +2248,8 @@ class EditorViewModel(
         projectObserverJob = null
         musicUpdateJob?.cancel()
         musicUpdateJob = null
+        positionTickerJob?.cancel()
+        positionTickerJob = null
 
         // Close music trimmer and release resources (prevents memory leak)
         val currentTrimState = _musicTrimmerState.value
