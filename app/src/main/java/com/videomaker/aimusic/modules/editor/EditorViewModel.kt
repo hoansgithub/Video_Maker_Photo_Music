@@ -1921,6 +1921,12 @@ class EditorViewModel(
         }
     }
 
+    /** Dismiss the network/beat-sync error dialog and re-run the load. */
+    fun onBeatSyncErrorRetry() {
+        _showBeatSyncErrorDialog.value = false
+        retry()
+    }
+
     override fun onCleared() {
         super.onCleared()
 

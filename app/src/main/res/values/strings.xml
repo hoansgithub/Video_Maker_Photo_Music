@@ -428,6 +428,8 @@
     <string name="error_video_network">Network error loading video. Please check your connection and try again.</string>
     <string name="video_retrying">Loading preview…</string>
     <string name="dialog_ok">OK</string>
+    <string name="error_dialog_try_again">Try again</string>
+    <string name="error_dialog_back_home">Close back to home</string>
 
     <!-- Songs -->
     <string name="start_project">Start project</string>

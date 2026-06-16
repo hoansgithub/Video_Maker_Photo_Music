@@ -90,8 +90,7 @@ import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
 import com.videomaker.aimusic.modules.editor.components.VideoPreviewPlayer
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
-import com.videomaker.aimusic.ui.components.ErrorOverlay
-import com.videomaker.aimusic.ui.components.ErrorType
+import com.videomaker.aimusic.ui.components.EditorErrorDialog
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.Image
@@ -618,9 +617,12 @@ fun EditorScreen(
             // Error popup over the (loading-like) placeholder view
             (uiState as? EditorUiState.Error)?.let { errorState ->
                 EditorErrorDialog(
+                    title = stringResource(R.string.error_network_title),
                     message = errorState.message,
-                    onRetry = { viewModel.retry() },
-                    onCancel = { onNavigateBack() }
+                    primaryText = stringResource(R.string.error_dialog_try_again),
+                    onPrimary = { viewModel.retry() },
+                    secondaryText = stringResource(R.string.error_dialog_back_home),
+                    onSecondary = { onNavigateBack() }
                 )
             }
 
@@ -1001,35 +1003,29 @@ fun EditorScreen(
                 (previewState as? com.videomaker.aimusic.modules.editor.components.PreviewState.Error)?.message
 
             if (previewErrorMessage != null) {
-                ErrorOverlay(
-                    errorType = ErrorType.MusicLoading,
+                EditorErrorDialog(
                     title = stringResource(R.string.error_preview_title),
                     message = previewErrorMessage,
-                    onRetry = {
+                    primaryText = stringResource(R.string.error_dialog_try_again),
+                    onPrimary = {
                         // Clear error and trigger rebuild
                         previewState =
                             com.videomaker.aimusic.modules.editor.components.PreviewState.Building
                     },
-                    onDismiss = {
-                        // Clear error state
-                        previewState =
-                            com.videomaker.aimusic.modules.editor.components.PreviewState.Building
-                    }
+                    secondaryText = stringResource(R.string.error_dialog_back_home),
+                    onSecondary = { onNavigateBack() }
                 )
             }
 
             // Network error dialog (beat-sync or effect set loading failure)
             if (showBeatSyncErrorDialog) {
-                //TODO: Change
-                androidx.compose.material3.AlertDialog(
-                    onDismissRequest = viewModel::onBeatSyncErrorDismissed,
-                    title = { androidx.compose.material3.Text(stringResource(R.string.error_network_title)) },
-                    text = { androidx.compose.material3.Text(stringResource(R.string.error_data_load_failed)) },
-                    confirmButton = {
-                        androidx.compose.material3.TextButton(onClick = viewModel::onBeatSyncErrorDismissed) {
-                            androidx.compose.material3.Text(stringResource(R.string.dialog_ok))
-                        }
-                    }
+                EditorErrorDialog(
+                    title = stringResource(R.string.error_network_title),
+                    message = stringResource(R.string.error_data_load_failed),
+                    primaryText = stringResource(R.string.error_dialog_try_again),
+                    onPrimary = viewModel::onBeatSyncErrorRetry,
+                    secondaryText = stringResource(R.string.error_dialog_back_home),
+                    onSecondary = viewModel::onBeatSyncErrorDismissed
                 )
             }
 
@@ -1212,32 +1208,6 @@ private fun PreviewPlaceholder(
     }
 }
 
-
-/**
- * Error popup shown over the placeholder view: Retry reloads the project, Cancel exits.
- */
-@Composable
-private fun EditorErrorDialog(
-    message: String,
-    onRetry: () -> Unit,
-    onCancel: () -> Unit
-) {
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onCancel,
-        title = { Text(stringResource(R.string.error_network_title)) },
-        text = { Text(message) },
-        confirmButton = {
-            TextButton(onClick = onRetry) {
-                Text(stringResource(R.string.retry))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancel) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
-    )
-}
 
 private fun AspectRatio.toAnalyticsRatioSize(): String = when (this) {
     AspectRatio.RATIO_16_9 -> "16:9"
