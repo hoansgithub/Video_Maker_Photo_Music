@@ -922,12 +922,10 @@ fun EditorScreen(
             Spacer(Modifier.navigationBarsPadding())
             if (editorScreenState == EditorScreenState.LOADING) {
                 // Native ad at bottom (edge-to-edge, no horizontal padding)
-                Spacer(Modifier.height(250.dp))
                 NativeAdView(
                     placement = AdPlacement.NATIVE_EDITOR_LOADING,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp),
+                        .fillMaxWidth(),
                     isDebug = BuildConfig.DEBUG,
                     onAdClicked = { adClickDetector.onAdClick(it) }
                 )
