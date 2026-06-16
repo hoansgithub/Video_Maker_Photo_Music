@@ -1001,6 +1001,24 @@ object Analytics {
         )
     }
 
+    fun trackVideoEditorRender() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.VIDEO_EDITOR_RENDER,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackVideoPreviewFailed(videoId: String) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.VIDEO_PREVIEW_FAILED,
+            params = mapOf(AnalyticsEvent.Param.VIDEO_ID to videoId),
+            requiredParams = setOf(AnalyticsEvent.Param.VIDEO_ID),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackVideoPreview(videoId: String, location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.VIDEO_PREVIEW,

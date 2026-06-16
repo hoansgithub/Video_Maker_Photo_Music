@@ -69,7 +69,8 @@ sealed class ProjectsNavigationEvent {
     data object NavigateBack : ProjectsNavigationEvent()
     data class NavigateToEditor(
         val projectId: String,
-        val shouldShowAd: Boolean = false
+        val shouldShowAd: Boolean = false,
+        val thumbnailUri: String? = null
     ) : ProjectsNavigationEvent()
     data class NavigateToTemplateDetail(
         val templateId: String,
@@ -220,7 +221,8 @@ class ProjectsViewModel(
         val isAdReady = adsLoaderService.isInterstitialReady(com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP)
         _navigationEvent.value = ProjectsNavigationEvent.NavigateToEditor(
             projectId = project.id,
-            shouldShowAd = isAdReady
+            shouldShowAd = isAdReady,
+            thumbnailUri = project.thumbnailUri?.toString()
         )
     }
 

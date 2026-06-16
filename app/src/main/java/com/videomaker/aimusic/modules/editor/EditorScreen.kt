@@ -12,6 +12,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,8 +23,10 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,6 +64,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
@@ -85,14 +90,46 @@ import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
 import com.videomaker.aimusic.modules.editor.components.VideoPreviewPlayer
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
-import com.videomaker.aimusic.ui.components.ErrorOverlay
-import com.videomaker.aimusic.ui.components.ErrorType
+import com.videomaker.aimusic.ui.components.EditorErrorDialog
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
+import coil.compose.SubcomposeAsyncImage
+import com.videomaker.aimusic.modules.editor.components.PlayMusicSlider
+import com.videomaker.aimusic.ui.components.AppAsyncImage
+import com.videomaker.aimusic.ui.components.PlayingAnimationBars
 import com.videomaker.aimusic.ui.components.QualityPicker
+import com.videomaker.aimusic.ui.components.QualityPickerV2
+import com.videomaker.aimusic.ui.components.ShimmerBox
+import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
+import com.videomaker.aimusic.ui.theme.Gray500
+import com.videomaker.aimusic.ui.theme.Neutral_N100
+import com.videomaker.aimusic.ui.theme.Neutral_N600
+import com.videomaker.aimusic.ui.theme.Neutral_N800
+import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
+import com.videomaker.aimusic.ui.theme.TextTertiary
+import com.videomaker.aimusic.ui.theme.White10
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.dropWhile
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -118,6 +155,7 @@ fun EditorScreen(
     viewModel: EditorViewModel,
     // musicPickerViewModelFactory: MusicPickerViewModelFactory, // Commented out - using Supabase only
     onNavigateBack: () -> Unit,
+    onNavigateToHome: () -> Unit,
     onNavigateToPreview: (String) -> Unit,
     onNavigateToExport: (String, com.videomaker.aimusic.domain.model.VideoQuality) -> Unit,
     onNavigateToAddAssets: (projectId: String, assetUris: List<String>, songId: Long, hookStartMs: Long) -> Unit
@@ -142,7 +180,12 @@ fun EditorScreen(
     var wasPlayingBeforeQualityAd by remember { mutableStateOf(false) }
     var hasTrackedVideoPreview by remember { mutableStateOf(false) }
     var hasTrackedVideoPreviewComplete by remember { mutableStateOf(false) }
+    var hasTrackedEditorRender by remember { mutableStateOf(false) }
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
+    // Preview render-failure retry budget: allow up to 2 re-renders. After that the
+    // "Try again" CTA is hidden and only "Close" (→ home gallery) remains.
+    var previewRetryCount by remember { mutableStateOf(0) }
+    var hasTrackedPreviewFailed by remember { mutableStateOf(false) }
     var ratioConfirmed by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -204,6 +247,10 @@ fun EditorScreen(
     ) {
         val state = successStateForTracking ?: return@LaunchedEffect
         val videoId = state.project.id
+        if (!hasTrackedEditorRender) {
+            Analytics.trackVideoEditorRender()
+            hasTrackedEditorRender = true
+        }
         if (!hasTrackedVideoPreview) {
             Analytics.trackVideoPreview(
                 videoId = videoId,
@@ -295,7 +342,10 @@ fun EditorScreen(
                             placement = AdPlacement.INTERSTITIAL_UNLOCK_QUALITY,
                             action = {
                                 // Called after user closes the ad or ad fails to show
-                                android.util.Log.d("EditorScreen", "✅ Quality interstitial closed - proceeding to export")
+                                android.util.Log.d(
+                                    "EditorScreen",
+                                    "✅ Quality interstitial closed - proceeding to export"
+                                )
                                 viewModel.onQualityInterstitialClosed()
                             },
                             bypassFrequencyCap = true,
@@ -338,195 +388,267 @@ fun EditorScreen(
             com.videomaker.aimusic.modules.editor.components.PreviewState.Building
         )
     }
+    // True once the video composition has reached Ready at least once.
+    // Until then the preview area shows the first image placeholder (not the player).
+    // NOTE: plain remember → resets when the editor is recomposed fresh (e.g. returning from the
+    // asset picker), which is what we want for the placeholder cover during a replace rebuild.
     var hasBeenReady by remember { mutableStateOf(false) }
+    // Same signal but kept in the ViewModel (survives the asset-picker round trip and config
+    // changes), so editorScreenState stays READY across replace/effect and only reports LOADING
+    // for the very first load. Reset by the VM on a fresh load (initial/retry).
+    val hasPreviewBeenReady by viewModel.hasPreviewBeenReady.collectAsStateWithLifecycle()
     LaunchedEffect(previewState) {
-        if (previewState is com.videomaker.aimusic.modules.editor.components.PreviewState.Ready) {
-            hasBeenReady = true
+        when (previewState) {
+            is com.videomaker.aimusic.modules.editor.components.PreviewState.Ready -> {
+                hasBeenReady = true
+                viewModel.markPreviewReady()
+                hasTrackedPreviewFailed = false
+                // A successful render refreshes the retry budget for any later failure.
+                previewRetryCount = 0
+            }
+
+            is com.videomaker.aimusic.modules.editor.components.PreviewState.Error -> {
+                // Fire once per failure; the flag is cleared when a rebuild starts (Building/Ready).
+                if (!hasTrackedPreviewFailed) {
+                    currentVideoId()?.let { Analytics.trackVideoPreviewFailed(it) }
+                    hasTrackedPreviewFailed = true
+                }
+            }
+
+            else -> hasTrackedPreviewFailed = false
         }
     }
-    val isPreviewBuilding =
-        previewState is com.videomaker.aimusic.modules.editor.components.PreviewState.Building
     val isProcessingAudio = (uiState as? EditorUiState.Success)?.isProcessingAudio == true
-    val showComposingOverlay = (!hasBeenReady && isPreviewBuilding) || isProcessingAudio
+
+    // Explicit cover for the replace-images flow: set true the moment we start applying a new
+    // selection (before the project changes) and held until the rebuilt video is Ready. Driven
+    // by the apply call (not by isProcessingAudio, which is conflated when no audio reprocessing
+    // is needed), so the overlay shows continuously with no flicker.
+    var isApplyingReplacement by remember { mutableStateOf(false) }
+
+    // Resume playback after audio reprocessing finishes (e.g. music change), so the video
+    // auto-plays once the rebuilt composition reaches Ready.
+    var wasProcessingAudio by remember { mutableStateOf(false) }
+    LaunchedEffect(isProcessingAudio) {
+        if (wasProcessingAudio && !isProcessingAudio) viewModel.setPlaybackState(true)
+        wasProcessingAudio = isProcessingAudio
+    }
+
+    // First load is covered by the preview placeholder. The blur/spinner overlay covers the
+    // replace-images flow and the in-place audio reprocessing (music change).
+    val showComposingOverlay = isProcessingAudio || isApplyingReplacement
+    // Playback gated only by audio processing; the Ready guard inside VideoPreviewPlayer ensures
+    // the player only starts once previewState == Ready.
+    val canPlay = !isProcessingAudio
+
+    // Combined screen state for the FIRST load only (data load + first video build):
+    // - LOADING until data is ready AND the video has reached Ready for the first time.
+    // - READY afterwards, and it STAYS READY across replace/effect/music (those are handled by
+    //   the overlay, not a state change) — hasPreviewEverBeenReady survives the picker round trip.
+    // - ERROR on data-load failure or preview build failure.
+    val editorScreenState = when {
+        uiState.contentState == EditorContentState.ERROR ||
+                previewState is com.videomaker.aimusic.modules.editor.components.PreviewState.Error ->
+            EditorScreenState.ERROR
+
+        uiState.contentState == EditorContentState.SUCCESS && hasPreviewBeenReady ->
+            EditorScreenState.READY
+
+        else -> EditorScreenState.LOADING
+    }
+
+    // Remember the last known first-image URI + aspect ratio from the Loading state so the
+    // Error state keeps showing the same placeholder view (Error doesn't carry them itself).
+    var lastFirstImageUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var lastAspectRatio by remember { mutableStateOf(AspectRatio.RATIO_9_16) }
+    LaunchedEffect(uiState) {
+        (uiState as? EditorUiState.Loading)?.let { loading ->
+            loading.firstImageUri?.let { lastFirstImageUri = it }
+            lastAspectRatio = loading.aspectRatio
+        }
+    }
+    // Aspect ratio used to frame the placeholder exactly like the video preview.
+    val previewAspectRatio =
+        (uiState as? EditorUiState.Success)?.displaySettings?.aspectRatio?.ratio
+            ?: lastAspectRatio.ratio
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(SplashBackground)
+            .statusBarsPadding()
     ) {
-        Box(modifier = Modifier.weight(1f)) {
-            // Main editor UI with Scaffold - blur when preview is building
-            val editorTitle = stringResource(R.string.editor_title)
-            Scaffold(
-                topBar = {
-                    val successState = uiState as? EditorUiState.Success
-                    val selectedQuality = successState?.selectedQuality ?: VideoQuality.DEFAULT
-                    Box {
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = !showEffectSetSheet,
-                            enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
-                            exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
-                        ) {
-                            EditorTopBar(
-                                selectedQuality = selectedQuality,
-                                canExport = !showComposingOverlay &&
-                                        (successState?.isMusicCached ?: true) &&
-                                        !(successState?.isCachingMusic ?: false),
-                                isQualityLocked = viewModel.isQualityLocked(selectedQuality),
-                                onBackClick = { requestExitFromEditor() },
-                                onQualityMenuOpen = {
-                                    val state = currentState() ?: return@EditorTopBar
-                                    Analytics.trackQualityEdit(
-                                        videoId = state.project.id,
-                                        qualityNumber = state.selectedQuality.displayName
-                                    )
-                                },
-                                onQualityChange = { quality ->
-                                    val state = currentState()
-                                    if (state != null && state.selectedQuality != quality) {
-                                        val videoId = state.project.id
-                                        val qualityLabel = quality.displayName
-                                        Analytics.trackQualityClick(videoId, qualityLabel)
-                                        Analytics.trackQualitySelect(videoId, qualityLabel)
-                                    }
-                                    viewModel.updateQuality(quality)
-                                },
-                                onDoneClick = {
-                                    val state = currentState()
-                                    if (state != null) {
-                                        Analytics.trackVideoExport(
-                                            videoId = state.project.id,
-                                            templateId = state.displaySettings.templateId,
-                                            songId = state.displaySettings.musicSongId?.toString(),
-                                            quality = state.selectedQuality.displayName,
-                                            duration = state.displayProject.totalDurationMs,
-                                            ratioSize = state.displaySettings.aspectRatio.toAnalyticsRatioSize(),
-                                            volume = (state.displaySettings.audioVolume * 100f).roundToInt(),
-                                            mediaQuantity = state.project.assets.size
-                                        )
-                                    }
-                                    viewModel.onDoneClick()
-                                }
-                            )
-                        }
-                    }
+        val successState = uiState as? EditorUiState.Success
+        val selectedQuality = successState?.selectedQuality ?: VideoQuality.DEFAULT
+        androidx.compose.animation.AnimatedVisibility(
+            visible = !showEffectSetSheet,
+            enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+            exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
+        ) {
+            EditorTopBar(
+                selectedQuality = selectedQuality,
+                isLoading = editorScreenState == EditorScreenState.LOADING,
+                canExport = successState != null &&
+                        !showComposingOverlay &&
+                        successState.isMusicCached &&
+                        !successState.isCachingMusic,
+                isQualityLocked = viewModel.isQualityLocked(selectedQuality),
+                onBackClick = { requestExitFromEditor() },
+                onQualityMenuOpen = {
+                    val state = currentState() ?: return@EditorTopBar
+                    Analytics.trackQualityEdit(
+                        videoId = state.project.id,
+                        qualityNumber = state.selectedQuality.displayName
+                    )
                 },
-                containerColor = SplashBackground, // #101010 (closest to #101313)
-                contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                modifier = if (showComposingOverlay) Modifier.blur(16.dp) else Modifier
-            ) { paddingValues ->
-                when (val state = uiState) {
-                    is EditorUiState.Loading -> {
-                        LoadingContent(modifier = Modifier.padding(paddingValues))
+                onQualityChange = { quality ->
+                    val state = currentState()
+                    if (state != null && state.selectedQuality != quality) {
+                        val videoId = state.project.id
+                        val qualityLabel = quality.displayName
+                        Analytics.trackQualityClick(videoId, qualityLabel)
+                        Analytics.trackQualitySelect(videoId, qualityLabel)
                     }
-
-                    is EditorUiState.Error -> {
-                        ErrorContent(
-                            message = state.message,
-                            modifier = Modifier.padding(paddingValues)
+                    viewModel.updateQuality(quality)
+                },
+                onDoneClick = {
+                    val state = currentState()
+                    if (state != null) {
+                        Analytics.trackVideoExport(
+                            videoId = state.project.id,
+                            templateId = state.displaySettings.templateId,
+                            songId = state.displaySettings.musicSongId?.toString(),
+                            quality = state.selectedQuality.displayName,
+                            duration = state.displayProject.totalDurationMs,
+                            ratioSize = state.displaySettings.aspectRatio.toAnalyticsRatioSize(),
+                            volume = (state.displaySettings.audioVolume * 100f).roundToInt(),
+                            mediaQuantity = state.project.assets.size
                         )
                     }
-
-                    is EditorUiState.Success -> {
-                        EditorMainContent(
-                            project = state.previewProject, // Use previewProject: pendingSettings but actual assets
-                            isPlaying = state.isPlaying,
-                            currentPositionMs = state.currentPositionMs,
-                            durationMs = state.durationMs,
-                            seekToPosition = state.seekToPosition,
-                            scrubToPosition = state.scrubToPosition,
-                            effectSetName = state.effectSetName,
-                            onPlayPauseClick = {
-                                if (state.isPlaying) {
-                                    Analytics.trackVideoPause(state.project.id)
-                                } else {
-                                    Analytics.trackVideoPlay(state.project.id)
-                                }
-                                viewModel.togglePlayback()
-                            },
-                            onPlaybackStateChange = viewModel::setPlaybackState,
-                            onPositionUpdate = viewModel::updatePlaybackPosition,
-                            onSeek = viewModel::seekTo,
-                            onScrub = viewModel::scrubTo,
-                            onSeekStart = viewModel::stopPlayback,
-                            onSeekEnd = {}, // Resume happens in clearSeekRequest after seek completes
-                            onSeekComplete = viewModel::clearSeekRequest,
-                            onScrubComplete = viewModel::clearScrubRequest,
-                            onPreviewStateChange = { previewState = it },
-                            onImagesClick = {
-                                Analytics.trackPhotoEdit()
-                                showImagesSheet = true
-                            },
-                            onEffectClick = {
-                                Analytics.trackEffectEdit(
-                                    videoId = state.project.id,
-                                    templateId = state.displaySettings.templateId
-                                )
-                                showEffectSetSheet = true
-                            },
-                            onRatioClick = {
-                                Analytics.trackRatioEdit(
-                                    videoId = state.project.id,
-                                    ratioSize = state.displaySettings.aspectRatio.toAnalyticsRatioSize()
-                                )
-                                ratioConfirmed = false
-                                showRatioSheet = true
-                            },
-                            onVolumeClick = {
-                                Analytics.trackVolumeEdit(
-                                    videoId = state.project.id,
-                                    volumeNumber = (state.displaySettings.audioVolume * 100f).roundToInt()
-                                )
-                                showVolumeSheet = true
-                            },
-                            onMusicSelectorClick = {
-                                val videoId = currentVideoId()
-                                if (videoId != null) {
-                                    Analytics.trackSongEdit(
-                                        videoId = videoId,
-                                        songId = currentSongId(),
-                                        songName = currentSongName(),
-                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR
-                                    )
-                                }
-                                wasPlayingBeforeMusicSheet = state.isPlaying
-                                if (state.isPlaying) viewModel.stopPlayback()
-                                showMusicSearchSheet = true
-                            },
-                            showEffectSetPanel = showEffectSetSheet,
-                            effectSetViewModel = effectSetViewModel,
-                            onEffectPanelDismiss = {
-                                val videoId = currentVideoId()
-                                if (videoId != null) {
-                                    Analytics.trackEffectClose(
-                                        videoId = videoId,
-                                        effectId = state.displaySettings.effectSetId,
-                                        effectName = state.effectSetName
-                                    )
-                                }
-                                showEffectSetSheet = false
-                            },
-                            onEffectSetSelected = { effectSet ->
-                                val videoId = currentVideoId()
-                                if (videoId != null) {
-                                    Analytics.trackEffectClick(
-                                        videoId = videoId,
-                                        effectId = effectSet.id,
-                                        effectName = effectSet.name,
-                                        isPremium = effectSet.isPremium
-                                    )
-                                    Analytics.trackEffectSelect(
-                                        videoId = videoId,
-                                        effectId = effectSet.id,
-                                        effectName = effectSet.name,
-                                        isPremium = effectSet.isPremium
-                                    )
-                                }
-                                viewModel.updateEffectSet(effectSet.id)
-                            },
-                            modifier = Modifier.padding(paddingValues)
-                        )
-                    }
+                    viewModel.onDoneClick()
                 }
+            )
+        }
+
+        Box(modifier = Modifier.weight(1f)) {
+            // All three states render EditorMainContent. Loading/Error show the first-image
+            // placeholder (controls become a shimmer skeleton); Success shows the real editor.
+            EditorMainContent(
+                currentState = editorScreenState,
+                contentState = uiState.contentState,
+                project = successState?.previewProject, // Use previewProject: pendingSettings but actual assets
+                firstImageUri = lastFirstImageUri,
+                previewAspectRatio = previewAspectRatio,
+                isPreviewReady = hasBeenReady,
+                canPlay = canPlay,
+                isPlaying = successState?.isPlaying ?: false,
+                currentPositionMs = successState?.currentPositionMs ?: 0L,
+                durationMs = successState?.durationMs ?: 0L,
+                seekToPosition = successState?.seekToPosition,
+                scrubToPosition = successState?.scrubToPosition,
+                effectSetName = successState?.effectSetName ?: "",
+                onPlayPauseClick = {
+                    val state = currentState() ?: return@EditorMainContent
+                    if (state.isPlaying) {
+                        Analytics.trackVideoPause(state.project.id)
+                    } else {
+                        Analytics.trackVideoPlay(state.project.id)
+                    }
+                    viewModel.togglePlayback()
+                },
+                onPlaybackStateChange = viewModel::setPlaybackState,
+                onPositionUpdate = viewModel::updatePlaybackPosition,
+                onSeek = viewModel::seekTo,
+                onScrub = viewModel::scrubTo,
+                onSeekStart = viewModel::stopPlayback,
+                onSeekEnd = {}, // Resume happens in clearSeekRequest after seek completes
+                onSeekComplete = viewModel::clearSeekRequest,
+                onScrubComplete = viewModel::clearScrubRequest,
+                onPreviewStateChange = { previewState = it },
+                onImagesClick = {
+                    Analytics.trackPhotoEdit()
+                    showImagesSheet = true
+                },
+                onEffectClick = {
+                    val state = currentState() ?: return@EditorMainContent
+                    Analytics.trackEffectEdit(
+                        videoId = state.project.id,
+                        templateId = state.displaySettings.templateId
+                    )
+                    showEffectSetSheet = true
+                },
+                onRatioClick = {
+                    val state = currentState() ?: return@EditorMainContent
+                    Analytics.trackRatioEdit(
+                        videoId = state.project.id,
+                        ratioSize = state.displaySettings.aspectRatio.toAnalyticsRatioSize()
+                    )
+                    ratioConfirmed = false
+                    showRatioSheet = true
+                },
+                onVolumeClick = {
+                    val state = currentState() ?: return@EditorMainContent
+                    Analytics.trackVolumeEdit(
+                        videoId = state.project.id,
+                        volumeNumber = (state.displaySettings.audioVolume * 100f).roundToInt()
+                    )
+                    showVolumeSheet = true
+                },
+                onMusicSelectorClick = {
+                    val state = currentState() ?: return@EditorMainContent
+                    Analytics.trackSongEdit(
+                        videoId = state.project.id,
+                        songId = currentSongId(),
+                        songName = currentSongName(),
+                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR
+                    )
+                    wasPlayingBeforeMusicSheet = state.isPlaying
+                    if (state.isPlaying) viewModel.stopPlayback()
+                    showMusicSearchSheet = true
+                },
+                showEffectSetPanel = showEffectSetSheet,
+                effectSetViewModel = effectSetViewModel,
+                onEffectPanelDismiss = {
+                    val state = currentState()
+                    if (state != null) {
+                        Analytics.trackEffectClose(
+                            videoId = state.project.id,
+                            effectId = state.displaySettings.effectSetId,
+                            effectName = state.effectSetName
+                        )
+                    }
+                    showEffectSetSheet = false
+                },
+                onEffectSetSelected = { effectSet ->
+                    val videoId = currentVideoId()
+                    if (videoId != null) {
+                        Analytics.trackEffectClick(
+                            videoId = videoId,
+                            effectId = effectSet.id,
+                            effectName = effectSet.name,
+                            isPremium = effectSet.isPremium
+                        )
+                        Analytics.trackEffectSelect(
+                            videoId = videoId,
+                            effectId = effectSet.id,
+                            effectName = effectSet.name,
+                            isPremium = effectSet.isPremium
+                        )
+                    }
+                    viewModel.updateEffectSet(effectSet.id)
+                }
+            )
+
+            // Error popup over the (loading-like) placeholder view
+            (uiState as? EditorUiState.Error)?.let { errorState ->
+                EditorErrorDialog(
+                    title = stringResource(R.string.error_network_title),
+                    message = errorState.message,
+                    primaryText = stringResource(R.string.error_dialog_try_again),
+                    onPrimary = { viewModel.retry() },
+                    secondaryText = stringResource(R.string.error_dialog_back_home),
+                    onSecondary = { onNavigateBack() }
+                )
             }
 
             // Fullscreen Settings Panel - Removed (using individual bottom sheets)
@@ -765,13 +887,35 @@ fun EditorScreen(
             // Flow-based approach: reactive, no polling, no cancellation issues
             LaunchedEffect(Unit) {
                 com.videomaker.aimusic.modules.picker.AssetSelectionCache.selectionFlow.collect { selectedUris ->
-                    android.util.Log.d("EditorScreen", "Received ${selectedUris.size} selected assets from AssetPicker")
-                    // Save project and rebuild video with new assets
-                    viewModel.replaceAssetsFromUris(selectedUris)
-                    // Clear pending assets and close sheet
-                    viewModel.discardPendingAssets()
-                    isEditingImages = false
-                    showImagesSheet = false
+                    android.util.Log.d(
+                        "EditorScreen",
+                        "Received ${selectedUris.size} selected assets from AssetPicker"
+                    )
+                    // Show the overlay continuously from here until the rebuilt video is Ready.
+                    // try/finally guarantees the overlay never gets stuck (which would freeze the
+                    // UI, since it blocks all interaction) even if applying assets throws.
+                    isApplyingReplacement = true
+                    try {
+                        // Save project and rebuild video with new assets
+                        viewModel.replaceAssetsFromUris(selectedUris)
+                        // Clear pending assets and close sheet
+                        viewModel.discardPendingAssets()
+                        isEditingImages = false
+                        showImagesSheet = false
+                        // Resume playback and keep the overlay until the new composition genuinely
+                        // settles — Ready (play) or Error (error UI takes over). No timeout: we wait
+                        // for the real result. Skip the stale current Ready. The try/finally still
+                        // resets the flag if this coroutine is cancelled (e.g. editor disposed).
+                        viewModel.setPlaybackState(true)
+                        androidx.compose.runtime.snapshotFlow { previewState }
+                            .dropWhile { it is com.videomaker.aimusic.modules.editor.components.PreviewState.Ready }
+                            .first {
+                                it is com.videomaker.aimusic.modules.editor.components.PreviewState.Ready ||
+                                        it is com.videomaker.aimusic.modules.editor.components.PreviewState.Error
+                            }
+                    } finally {
+                        isApplyingReplacement = false
+                    }
                 }
             }
 
@@ -799,7 +943,8 @@ fun EditorScreen(
                             // Navigate to asset picker in editing mode.
                             // Pass the project's song + hook start so the picker's duration estimate
                             // matches what the editor will re-render after assets change.
-                            val currentAssetUris = successState.displayAssets.map { it.uri.toString() }
+                            val currentAssetUris =
+                                successState.displayAssets.map { it.uri.toString() }
                             onNavigateToAddAssets(
                                 successState.project.id,
                                 currentAssetUris,
@@ -809,47 +954,71 @@ fun EditorScreen(
                         },
                         onConfirm = { updatedAssets ->
                             scope.launch {
-                                hasBeenReady = false
-                                // Apply pending assets - this triggers video rebuild
-                                viewModel.applyPendingAssets(updatedAssets)
-                                isEditingImages = false
-                                showImagesSheet = false
+                                // Show the overlay continuously until the rebuilt video is Ready.
+                                // try/finally guarantees the overlay never gets stuck (UI freeze).
+                                isApplyingReplacement = true
+                                try {
+                                    // Apply pending assets - this triggers video rebuild.
+                                    viewModel.applyPendingAssets(updatedAssets)
+                                    isEditingImages = false
+                                    showImagesSheet = false
+                                    viewModel.setPlaybackState(true)
+                                    androidx.compose.runtime.snapshotFlow { previewState }
+                                        .dropWhile { it is com.videomaker.aimusic.modules.editor.components.PreviewState.Ready }
+                                        .first {
+                                            it is com.videomaker.aimusic.modules.editor.components.PreviewState.Ready ||
+                                                    it is com.videomaker.aimusic.modules.editor.components.PreviewState.Error
+                                        }
+                                } finally {
+                                    isApplyingReplacement = false
+                                }
                             }
                         }
                     )
                 }
             }
 
-            // Fullscreen Processing Overlay - blocks all interactions, content is blurred
+            // Fullscreen Processing Overlay - blocks all interactions, content is blurred.
+            // Only shown for the replace-image audio reprocessing flow (showComposingOverlay
+            // = isProcessingAudio), which can only happen in the Success state.
             if (showComposingOverlay) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.6f))
-                        .clickable(
-                            enabled = true,
-                            onClick = { /* Block all clicks */ },
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }
-                        ),
-                    contentAlignment = Alignment.Center
+                Dialog(
+                    onDismissRequest = {
+                    },
+                    properties = DialogProperties(
+                        usePlatformDefaultWidth = false,
+                        decorFitsSystemWindows = false
+                    )
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.6f))
+                            .clickable(
+                                enabled = true,
+                                onClick = { /* Block all clicks */ },
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(64.dp),
-                            strokeWidth = 5.dp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(
-                            text = stringResource(R.string.editor_preparing_video),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(64.dp),
+                                strokeWidth = 5.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = stringResource(R.string.editor_preparing_video),
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
             }
@@ -859,34 +1028,40 @@ fun EditorScreen(
                 (previewState as? com.videomaker.aimusic.modules.editor.components.PreviewState.Error)?.message
 
             if (previewErrorMessage != null) {
-                ErrorOverlay(
-                    errorType = ErrorType.MusicLoading,
+                // Allow up to 2 re-renders. Once exhausted, hide "Try again" — only "Close" remains.
+                val canRetry = previewRetryCount < 2
+                EditorErrorDialog(
                     title = stringResource(R.string.error_preview_title),
                     message = previewErrorMessage,
-                    onRetry = {
-                        // Clear error and trigger rebuild
-                        previewState =
-                            com.videomaker.aimusic.modules.editor.components.PreviewState.Building
+                    primaryText = if (canRetry) {
+                        stringResource(R.string.error_dialog_try_again)
+                    } else {
+                        null
                     },
-                    onDismiss = {
-                        // Clear error state
-                        previewState =
-                            com.videomaker.aimusic.modules.editor.components.PreviewState.Building
-                    }
+                    onPrimary = if (canRetry) {
+                        {
+                            previewRetryCount++
+                            // Clear error and trigger re-render
+                            previewState =
+                                com.videomaker.aimusic.modules.editor.components.PreviewState.Building
+                        }
+                    } else {
+                        null
+                    },
+                    secondaryText = stringResource(R.string.error_dialog_back_home),
+                    onSecondary = { onNavigateToHome() }
                 )
             }
 
             // Network error dialog (beat-sync or effect set loading failure)
             if (showBeatSyncErrorDialog) {
-                androidx.compose.material3.AlertDialog(
-                    onDismissRequest = viewModel::onBeatSyncErrorDismissed,
-                    title = { androidx.compose.material3.Text(stringResource(R.string.error_network_title)) },
-                    text = { androidx.compose.material3.Text(stringResource(R.string.error_data_load_failed)) },
-                    confirmButton = {
-                        androidx.compose.material3.TextButton(onClick = viewModel::onBeatSyncErrorDismissed) {
-                            androidx.compose.material3.Text(stringResource(R.string.dialog_ok))
-                        }
-                    }
+                EditorErrorDialog(
+                    title = stringResource(R.string.error_network_title),
+                    message = stringResource(R.string.error_data_load_failed),
+                    primaryText = stringResource(R.string.error_dialog_try_again),
+                    onPrimary = viewModel::onBeatSyncErrorRetry,
+                    secondaryText = stringResource(R.string.error_dialog_back_home),
+                    onSecondary = viewModel::onBeatSyncErrorDismissed
                 )
             }
 
@@ -902,23 +1077,39 @@ fun EditorScreen(
         }
 
         // Remote Config toggle: native ad (default) or standard banner
-        if (adPlacementConfigService.bannerUseNative) {
-            NativeAdView(
-                placement = AdPlacement.NATIVE_EDITOR_BANNER,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp),
-                isDebug = BuildConfig.DEBUG,
-                onAdClicked = { adClickDetector.onAdClick(it) }
-            )
-        } else {
-            BannerAdView(
-                placement = AdPlacement.BANNER_EDITOR,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                onAdClicked = { adClickDetector.onAdClick(it) }
-            )
+        Box {
+            Spacer(Modifier.navigationBarsPadding())
+            if (editorScreenState == EditorScreenState.LOADING) {
+                // Native ad at bottom (edge-to-edge, no horizontal padding)
+                Spacer(Modifier.height(250.dp))
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_EDITOR_LOADING,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp),
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
+                )
+            } else {
+                if (adPlacementConfigService.bannerUseNative) {
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_EDITOR_BANNER,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                } else {
+                    BannerAdView(
+                        placement = AdPlacement.BANNER_EDITOR,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                }
+            }
         }
     }
 }
@@ -927,6 +1118,7 @@ fun EditorScreen(
 @Composable
 internal fun EditorTopBar(
     selectedQuality: VideoQuality,
+    isLoading: Boolean,
     canExport: Boolean,
     isQualityLocked: Boolean,
     onBackClick: () -> Unit,
@@ -934,85 +1126,124 @@ internal fun EditorTopBar(
     onQualityChange: (VideoQuality) -> Unit,
     onDoneClick: () -> Unit
 ) {
-    TopAppBar(
-        title = {
-            // Empty title - quality button moved to actions
-        },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.back)
-                )
-            }
-        },
-        actions = {
+    Row(
+        modifier = Modifier
+            .padding(top = 10.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = stringResource(R.string.back),
+            modifier = Modifier
+                .size(32.dp)
+                .clickableSingle {
+                    onBackClick.invoke()
+                }
+                .padding(4.dp)
+        )
+
+        Spacer(Modifier.weight(1f))
+        if (isLoading.not()) {
             // Quality picker (reusable component) - shows [AD] badge for locked qualities
-            QualityPicker(
+            QualityPickerV2(
                 selectedQuality = selectedQuality,
                 onQualityChange = onQualityChange,
                 isQualityUnlocked = !isQualityLocked,
                 onMenuOpen = onQualityMenuOpen,
-                modifier = Modifier.height(40.dp)
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
-
             // Done button - disabled during processing
-            Button(
-                onClick = onDoneClick,
-                enabled = canExport,
-                modifier = Modifier.height(40.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                ),
-                shape = RoundedCornerShape(16.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    horizontal = 16.dp,
-                    vertical = 0.dp
-                )
-            ) {
-                Text(
-                    text = stringResource(R.string.done),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = SplashBackground // #101010 (closest to #101313)
-        )
-    )
-}
-
-@Composable
-internal fun LoadingContent(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
+            Text(
+                text = stringResource(R.string.done),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Neutral_N100,
+                modifier = Modifier
+                    .padding(start = 12.dp)
+                    .background(
+                        if (canExport) Primary else Primary.copy(alpha = 0.5f),
+                        RoundedCornerShape(16.dp)
+                    )
+                    .clickableSingle(canExport) {
+                        onDoneClick.invoke()
+                    }
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
+            )
+        }
     }
 }
 
+/**
+ * Preview-area placeholder shown while the video composition isn't ready yet.
+ *
+ * Frames the first image exactly like the video preview (same padding, aspect ratio, rounded
+ * corners) and pulses the image scale 1f -> 1.2f on a continuous loop. The image is clipped to
+ * the fixed frame, so the frame size/ratio stays matched to the video while the content zooms.
+ * Falls back to a shimmer when the URI is null or fails to load.
+ */
 @Composable
-internal fun ErrorContent(
-    message: String,
+private fun PreviewPlaceholder(
+    imageUri: android.net.Uri?,
+    aspectRatio: Float,
     modifier: Modifier = Modifier
 ) {
+    val pulse =
+        androidx.compose.animation.core.rememberInfiniteTransition(label = "placeholder_pulse")
+    val scale by pulse.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.2f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            animation = androidx.compose.animation.core.tween(
+                durationMillis = 1200,
+                easing = androidx.compose.animation.core.FastOutSlowInEasing
+            ),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+        ),
+        label = "placeholder_scale"
+    )
+
+    // Outer box mirrors VideoPreviewPlayer's container: padding + centered, aspect-ratio frame.
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = message,
-            color = MaterialTheme.colorScheme.error,
-            textAlign = TextAlign.Center
-        )
+        Box(
+            modifier = Modifier
+                .aspectRatio(aspectRatio)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.Black),
+            contentAlignment = Alignment.Center
+        ) {
+            if (imageUri == null) {
+                ShimmerPlaceholder(modifier = Modifier.fillMaxSize(), cornerRadius = 0.dp)
+            } else {
+                SubcomposeAsyncImage(
+                    model = imageUri,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .scale(scale),
+                    loading = {
+                        ShimmerPlaceholder(
+                            modifier = Modifier.fillMaxSize(),
+                            cornerRadius = 0.dp
+                        )
+                    },
+                    error = {
+                        ShimmerPlaceholder(
+                            modifier = Modifier.fillMaxSize(),
+                            cornerRadius = 0.dp
+                        )
+                    }
+                )
+            }
+        }
     }
 }
+
 
 private fun AspectRatio.toAnalyticsRatioSize(): String = when (this) {
     AspectRatio.RATIO_16_9 -> "16:9"
@@ -1026,7 +1257,12 @@ private fun AspectRatio.toAnalyticsRatioSize(): String = when (this) {
 
 @Composable
 internal fun EditorMainContent(
-    project: Project,
+    currentState: EditorScreenState,
+    contentState: EditorContentState,
+    project: Project?,
+    firstImageUri: android.net.Uri?,
+    previewAspectRatio: Float,
+    isPreviewReady: Boolean,
     isPlaying: Boolean,
     currentPositionMs: Long,
     durationMs: Long,
@@ -1043,6 +1279,7 @@ internal fun EditorMainContent(
     onSeekComplete: () -> Unit,
     onScrubComplete: () -> Unit,
     onPreviewStateChange: (com.videomaker.aimusic.modules.editor.components.PreviewState) -> Unit,
+    canPlay: Boolean,
     onImagesClick: () -> Unit,
     onEffectClick: () -> Unit,
     onRatioClick: () -> Unit,
@@ -1065,21 +1302,35 @@ internal fun EditorMainContent(
                 .weight(1f),
             contentAlignment = Alignment.Center
         ) {
-            VideoPreviewPlayer(
-                project = project,
-                isPlaying = isPlaying,
-                onPlayPauseClick = onPlayPauseClick,
-                onPlaybackStateChange = onPlaybackStateChange,
-                onPositionUpdate = onPositionUpdate,
-                seekToPosition = seekToPosition,
-                scrubToPosition = scrubToPosition,
-                onSeekComplete = onSeekComplete,
-                onScrubComplete = onScrubComplete,
-                onPreviewStateChange = onPreviewStateChange,
-                autoPlay = true,
-                modifier = Modifier.fillMaxSize()
-            )
+            // Mount the player only in Success so it can build the composition.
+            if (project != null) {
+                VideoPreviewPlayer(
+                    project = project,
+                    isPlaying = isPlaying,
+                    onPlayPauseClick = onPlayPauseClick,
+                    onPlaybackStateChange = onPlaybackStateChange,
+                    onPositionUpdate = onPositionUpdate,
+                    seekToPosition = seekToPosition,
+                    scrubToPosition = scrubToPosition,
+                    onSeekComplete = onSeekComplete,
+                    onScrubComplete = onScrubComplete,
+                    onPreviewStateChange = onPreviewStateChange,
+                    autoPlay = true,
+                    canPlay = canPlay,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            // Show the first image until the composition is ready (Loading/Error, or Success
+            // still building). The player keeps building underneath.
+            if (contentState != EditorContentState.SUCCESS || !isPreviewReady) {
+                PreviewPlaceholder(
+                    imageUri = project?.assets?.firstOrNull()?.uri ?: firstImageUri,
+                    aspectRatio = previewAspectRatio,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
+
 
         AnimatedContent(
             targetState = showEffectSetPanel,
@@ -1117,7 +1368,7 @@ internal fun EditorMainContent(
                     )
                     com.videomaker.aimusic.modules.editor.components.EffectSetPanel(
                         viewModel = effectSetViewModel,
-                        selectedEffectSetId = project.settings.effectSetId,
+                        selectedEffectSetId = project?.settings?.effectSetId,
                         onDismiss = onEffectPanelDismiss,
                         onEffectSetSelected = onEffectSetSelected,
                         modifier = Modifier
@@ -1126,59 +1377,182 @@ internal fun EditorMainContent(
                     )
                 }
             } else {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // Music Section - song info and player
-                    MusicSection(
-                        songName = project.settings.musicSongName
-                            ?: stringResource(R.string.editor_no_music_selected),
-                        artistName = project.settings.musicSongArtist ?: "",
-                        coverUrl = project.settings.musicSongCoverUrl ?: "",
-                        duration = project.formattedDuration,
-                        currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,
-                        isPlaying = isPlaying,
-                        onSeek = { position ->
-                            if (durationMs > 0) {
-                                onSeek((position * durationMs).toLong())
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (currentState == EditorScreenState.LOADING) {
+                        val tipMessages = listOf(
+                            "Collecting your best moments...",
+                            "Turning photos into motion...",
+                            "Matching every moment to the beat...",
+                            "Making it look amazing...",
+                            "Your music video is ready! ✨",
+                        )
+
+                        var currentTipIndex by remember { mutableStateOf(0) }
+
+                        // Rotate tips every 4 seconds
+                        LaunchedEffect(Unit) {
+                            while (true) {
+                                delay(4000)
+                                currentTipIndex = (currentTipIndex + 1) % tipMessages.size
                             }
-                        },
-                        onScrub = { position ->
-                            if (durationMs > 0) {
-                                onScrub((position * durationMs).toLong())
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Image(
+                            painter = painterResource(R.drawable.img_content_edit_loading),
+                            contentDescription = null,
+                            contentScale = ContentScale.FillHeight,
+                            modifier = Modifier
+                                .height(36.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = tipMessages[currentTipIndex],
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.W400,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Row(
+                            modifier = Modifier
+                                .border(1.dp, Color.White.copy(0.08f), RoundedCornerShape(120.dp))
+                                .padding(vertical = 6.dp, horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_outline_info),
+                                contentDescription = null,
+                                tint = Neutral_N600,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "Please don't close app",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.W400,
+                                color = Neutral_N600,
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                    } else {
+                        PlayMusicSlider(
+                            currentPositionMs = currentPositionMs,
+                            durationMs = durationMs,
+                            currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,
+                            isPlaying = isPlaying,
+                            onSeek = { position ->
+                                if (durationMs > 0) {
+                                    onSeek((position * durationMs).toLong())
+                                }
+                            },
+                            onScrub = { position ->
+                                if (durationMs > 0) {
+                                    onScrub((position * durationMs).toLong())
+                                }
+                            },
+                            onSeekStart = onSeekStart,
+                            onSeekEnd = onSeekEnd,
+                            onPlayPauseClick = onPlayPauseClick,
+                        )
+
+                        // Music Section - song info and player
+                        Row(
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp)
+                                .fillMaxWidth()
+                                .shadow(
+                                    elevation = 16.dp,            // approximates the 32px blur radius
+                                    shape = RoundedCornerShape(20.dp),
+                                    ambientColor = Color(0x3D000000),
+                                    spotColor = Color(0x3D000000),
+                                    clip = false
+                                )
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color(0xFF575757).copy(0.4f))
+                                .border(1.dp, Color.White.copy(0.4f), RoundedCornerShape(20.dp))
+                                .clickable(onClick = onMusicSelectorClick)
+                                .padding(vertical = 8.dp, horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Album cover thumbnail
+                            AppAsyncImage(
+                                imageUrl = project?.settings?.musicSongCoverUrl ?: "",
+                                contentDescription = project?.settings?.musicSongName
+                                    ?: stringResource(R.string.editor_no_music_selected),
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                            )
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            // Song name + artist
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = project?.settings?.musicSongName
+                                        ?: stringResource(R.string.editor_no_music_selected),
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.W500,
+                                    color = TextPrimary,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                if (project?.settings?.musicSongArtist.isNullOrBlank().not()) {
+                                    Text(
+                                        text = project.settings.musicSongArtist,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.W400,
+                                        color = TextPrimary,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
-                        },
-                        onSeekStart = onSeekStart,
-                        onSeekEnd = onSeekEnd,
-                        onPlayPauseClick = onPlayPauseClick,
-                        onMusicSelectorClick = onMusicSelectorClick
-                    )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
 
-                    // Separator
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(Color.White.copy(alpha = 0.1f))
-                    )
+                            // Chevron arrow
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = TextPrimary,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    // Settings Tab Bar - Images, Effect, Ratio, Volume (horizontally scrollable)
-                    val hasMusic =
-                        project.settings.musicSongId != null || project.settings.customAudioUri != null
-                    SettingsTabBar(
-                        currentImageCount = project.assets.size,
-                        currentEffectSetName = effectSetName,
-                        currentRatio = project.settings.aspectRatio,
-                        showMusicControls = hasMusic,
-                        currentVolume = project.settings.audioVolume,
-                        onImagesClick = onImagesClick,
-                        onEffectClick = onEffectClick,
-                        onRatioClick = onRatioClick,
-                        onVolumeClick = onVolumeClick,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                        // Separator
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(Color.White.copy(alpha = 0.1f))
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Settings Tab Bar - Images, Effect, Ratio, Volume (horizontally scrollable)
+                        val hasMusic =
+                            project?.settings?.musicSongId != null || project?.settings?.customAudioUri != null
+                        SettingsTabBar(
+                            showMusicControls = hasMusic,
+                            onImagesClick = onImagesClick,
+                            onEffectClick = onEffectClick,
+                            onRatioClick = onRatioClick,
+                            onVolumeClick = onVolumeClick,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
@@ -1315,7 +1689,8 @@ private fun EditorPlayerControls(
     onPlayPauseClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val sliderInteractionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val sliderInteractionSource =
+        remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     var isDragging by remember { androidx.compose.runtime.mutableStateOf(false) }
     var localPosition by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
     var lastScrubTime by remember { androidx.compose.runtime.mutableLongStateOf(0L) }

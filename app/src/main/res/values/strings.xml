@@ -171,7 +171,7 @@
     <string name="editor_music_trim_skip_to_start">Jump to Start</string>
     <string name="editor_music_trim_skip_to_end">Jump to End</string>
     <string name="editor_photos_count">%d photos</string>
-    <string name="editor_photos_label">Photos</string>
+    <string name="editor_photos_label">Photo</string>
     <string name="editor_save_dialog_title">Save Project?</string>
     <string name="editor_save_dialog_message">Your project will be saved and available in My Projects.</string>
     <string name="editor_save_and_exit">Save &amp; Exit</string>
@@ -428,6 +428,8 @@
     <string name="error_video_network">Network error loading video. Please check your connection and try again.</string>
     <string name="video_retrying">Loading preview…</string>
     <string name="dialog_ok">OK</string>
+    <string name="error_dialog_try_again">Try again</string>
+    <string name="error_dialog_back_home">Close back to home</string>
 
     <!-- Songs -->
     <string name="start_project">Start project</string>

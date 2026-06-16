@@ -969,6 +969,15 @@ class AdPlacementConfigService(
             ),
             enabled = true
         )
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_EDITOR_LOADING,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1709251222",  // Primary
+                "ca-app-pub-7121075950716954/3435442033"   // Secondary
+            ),
+            enabled = true
+        )
 
         // Asset Picker Banner Native Ad (replaces standard banner)
         // Shown at the bottom of the asset picker screen

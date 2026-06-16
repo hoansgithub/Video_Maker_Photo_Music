@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -27,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -35,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import com.videomaker.aimusic.ui.theme.Neutral_N600
+import com.videomaker.aimusic.ui.theme.SplashBackground
 
 /**
  * Reusable Quality Picker Component
@@ -147,6 +151,109 @@ fun QualityPicker(
                                     )
                                 )
                             }
+                        }
+                    },
+                    onClick = {
+                        onQualityChange(quality)
+                        showQualityMenu = false
+                    },
+                    leadingIcon = if (quality == selectedQuality) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    } else null
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun QualityPickerV2(
+    selectedQuality: VideoQuality,
+    onQualityChange: (VideoQuality) -> Unit,
+    isQualityUnlocked: Boolean = true,
+    onMenuOpen: () -> Unit = {},
+) {
+    var showQualityMenu by remember { mutableStateOf(false) }
+
+    Box {
+        // Quality button
+        Row(
+            modifier = Modifier
+                .clickableSingle {
+                    onMenuOpen()
+                    showQualityMenu = true
+                }
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.5.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // HD badge for 1080p (on the left)
+            if (selectedQuality == VideoQuality.FHD_1080) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Neutral_N600,
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .padding(horizontal = 1.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.editor_hd),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SplashBackground
+                    )
+                }
+            }
+            Text(
+                text = selectedQuality.displayName,
+                color = Neutral_N600,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.width(1.5.dp))
+            Icon(
+                painter = painterResource(R.drawable.ic_arrow_down),
+                contentDescription = stringResource(R.string.editor_select_quality),
+                tint = Neutral_N600,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+
+        // Quality dropdown menu
+        DropdownMenu(
+            expanded = showQualityMenu,
+            onDismissRequest = { showQualityMenu = false }
+        ) {
+            VideoQuality.entries.forEach { quality ->
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // HD badge for 1080p
+                            if (quality == VideoQuality.FHD_1080) {
+                                HdBadge()
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            Text(
+                                text = quality.displayName,
+                                fontWeight = if (quality == selectedQuality) {
+                                    FontWeight.Bold
+                                } else {
+                                    FontWeight.Normal
+                                },
+                                textAlign = TextAlign.End
+                            )
                         }
                     },
                     onClick = {

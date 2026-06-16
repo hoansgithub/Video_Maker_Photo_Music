@@ -108,7 +108,7 @@ fun ProjectsTabContent(
     highlightProjectId: String? = null,
     hintMode: String? = null,
     onCreateClick: () -> Unit,
-    onProjectClick: (String) -> Unit,
+    onProjectClick: (projectId: String, thumbnailUri: String?) -> Unit,
     onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToSongSearch: () -> Unit = {},
     onNavigateToAllSongs: () -> Unit = {},
@@ -173,7 +173,7 @@ fun ProjectsTabContent(
     // Extract editor navigation data
     val editorNavigation = remember(navigationEvent) {
         (navigationEvent as? ProjectsNavigationEvent.NavigateToEditor)?.let {
-            it.projectId to it.shouldShowAd
+            Triple(it.projectId, it.shouldShowAd, it.thumbnailUri)
         }
     }
 
@@ -198,7 +198,7 @@ fun ProjectsTabContent(
     }
 
     // Handle editor navigation with ad
-    editorNavigation?.let { (projectId, shouldShowAd) ->
+    editorNavigation?.let { (projectId, shouldShowAd, thumbnailUri) ->
         LaunchedEffect(projectId, shouldShowAd) {
             if (shouldShowAd && activity != null) {
                 com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.showInterstitial(
@@ -206,7 +206,7 @@ fun ProjectsTabContent(
                     activity = activity,
                     placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_LIBRARY_PROJECT_TAP,
                     action = {
-                        onProjectClick(projectId)
+                        onProjectClick(projectId, thumbnailUri)
                         viewModel.onNavigationHandled()
                     },
                     onShown = {
@@ -216,7 +216,7 @@ fun ProjectsTabContent(
                     showLoadingOverlay = false
                 )
             } else {
-                onProjectClick(projectId)
+                onProjectClick(projectId, thumbnailUri)
                 viewModel.onNavigationHandled()
             }
         }
