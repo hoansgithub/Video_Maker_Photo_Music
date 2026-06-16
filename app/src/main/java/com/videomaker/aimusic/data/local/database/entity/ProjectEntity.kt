@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
  *
  * Stores project metadata and settings in a single table.
  * Assets are stored in a separate table with foreign key relationship.
- * All legacy fixed-duration fields removed.
+ * Audio is stored as serialized JSON list of AudioNode in audioNodesJson.
  */
 @Entity(tableName = "projects")
 data class ProjectEntity(
@@ -24,15 +24,10 @@ data class ProjectEntity(
     val effectSetId: String? = "dreamy_vibes",
     val templateId: String? = null,
     val overlayFrameId: String? = null,
-    val musicSongId: Long? = null,
-    val musicSongName: String? = null, // Cached song name for display
-    val musicSongArtist: String? = null, // Cached artist name for display
-    val musicSongUrl: String? = null, // Cached song URL for playback
-    val musicSongCoverUrl: String? = null, // Cached cover URL for display
-    val customAudioUri: String? = null,
-    val processedAudioUri: String? = null, // Preprocessed audio with fadeout
-    val audioVolume: Float = 1.0f,
     val aspectRatio: String = "RATIO_9_16",
+
+    // Multi-track audio (serialized List<AudioNode> as JSON)
+    val audioNodesJson: String? = null,
 
     // Watermark removal (rewarded ad unlock)
     val isWatermarkFree: Boolean = false // True if user watched ad to remove watermark for this project

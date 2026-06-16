@@ -405,17 +405,15 @@ fun VideoPreviewPlayer(
         project.assets.joinToString(",") { it.id },
         project.settings.effectSetId,
         project.settings.overlayFrameId,
-        project.settings.musicSongId,
-        project.settings.customAudioUri,
+        project.settings.audioNodes,  // Any audio node change triggers rebuild
         project.settings.aspectRatio,
         project.settings.beatSyncData?.bpm,  // Beat-sync: rebuild when BPM changes
         project.settings.hookStartTimeMs,     // Beat-sync: rebuild when hook start changes
         project.settings.totalDurationMs,     // Rebuild when duration changes (e.g., asset count changed)
-        project.settings.processedAudioUri,   // Beat-sync: rebuild when preprocessed audio ready
         rebuildTrigger
         // audioVolume intentionally excluded - handled separately
     ) {
-        "${project.id}_${project.assets.joinToString(",") { it.id }}_${project.settings.effectSetId}_${project.settings.overlayFrameId}_${project.settings.musicSongId}_${project.settings.customAudioUri}_${project.settings.aspectRatio}_${project.settings.beatSyncData?.bpm}_${project.settings.hookStartTimeMs}_${project.settings.totalDurationMs}_${project.settings.processedAudioUri}_${rebuildTrigger}"
+        "${project.id}_${project.assets.joinToString(",") { it.id }}_${project.settings.effectSetId}_${project.settings.overlayFrameId}_${project.settings.audioNodes.hashCode()}_${project.settings.aspectRatio}_${project.settings.beatSyncData?.bpm}_${project.settings.hookStartTimeMs}_${project.settings.totalDurationMs}_${rebuildTrigger}"
     }
 
     // Build composition when key changes
@@ -470,30 +468,35 @@ fun VideoPreviewPlayer(
             newVideoPlayer.volume = 0f // Video player has no audio
             newVideoPlayer.prepare()
 
-            // Create AUDIO PLAYER if music is selected
-            // CRITICAL: Check musicSongUrl too, not just musicSongId (for existing projects after migration)
-            val newAudioPlayer = if (project.settings.musicSongId != null ||
-                                     project.settings.musicSongUrl != null ||
-                                     project.settings.customAudioUri != null) {
+            // Create AUDIO PLAYER if audio nodes exist
+            val newAudioPlayer = if (project.settings.audioNodes.isNotEmpty()) {
                 android.util.Log.d("VideoPreviewPlayer", "TWO-PLAYER MODE: Creating audio player")
-                android.util.Log.d("VideoPreviewPlayer", "Music settings: songId=${project.settings.musicSongId}, songUrl=${project.settings.musicSongUrl}, customUri=${project.settings.customAudioUri}, processedUri=${project.settings.processedAudioUri}")
+                val audioNode = project.settings.primaryAudioNode
+                android.util.Log.d("VideoPreviewPlayer", "Music settings: songId=${audioNode?.songId}, songUrl=${audioNode?.songUrl}, customUri=${audioNode?.customAudioUri}, processedUri=${audioNode?.processedAudioUri}")
 
                 // Get audio URI - prioritize preprocessed audio (has fadeout baked in)
+                // Verify cached files still exist before using (LRU eviction safety)
                 val audioUri = when {
-                    project.settings.processedAudioUri != null -> {
-                        android.util.Log.d("VideoPreviewPlayer", "Using preprocessed audio with fadeout")
-                        project.settings.processedAudioUri
+                    audioNode?.processedAudioUri != null -> {
+                        val uri = Uri.parse(audioNode.processedAudioUri)
+                        val fileExists = uri.scheme == "file" && uri.path?.let { java.io.File(it).exists() } == true
+                        if (fileExists) {
+                            android.util.Log.d("VideoPreviewPlayer", "Using preprocessed audio with fadeout")
+                            uri
+                        } else {
+                            android.util.Log.w("VideoPreviewPlayer", "Preprocessed audio cache evicted, falling back to source URL")
+                            audioNode.songUrl?.let { Uri.parse(it) }
+                        }
                     }
-                    project.settings.customAudioUri != null -> project.settings.customAudioUri
-                    project.settings.musicSongUrl != null -> Uri.parse(project.settings.musicSongUrl)
+                    audioNode?.customAudioUri != null -> Uri.parse(audioNode.customAudioUri)
+                    audioNode?.songUrl != null -> Uri.parse(audioNode.songUrl)
                     else -> null
                 }
+                val isPreprocessedAudio = audioUri?.toString() == audioNode?.processedAudioUri
 
                 android.util.Log.d("VideoPreviewPlayer", "Audio URI resolved to: $audioUri")
 
                 if (audioUri != null) {
-                    val isPreprocessedAudio = audioUri == project.settings.processedAudioUri
-
                     // Build MediaItem - Beat-sync mode uses preprocessed audio
                     val mediaItem = if (isPreprocessedAudio) {
                         android.util.Log.d("VideoPreviewPlayer", "Preprocessed audio: using as-is (no clipping, fadeout baked in)")
@@ -613,7 +616,7 @@ fun VideoPreviewPlayer(
                         })
                     }
 
-                    audio.volume = project.settings.audioVolume
+                    audio.volume = project.settings.primaryAudioNode?.volume ?: 1f
                     audio.prepare()
                     audio
                 } else {
@@ -720,7 +723,7 @@ fun VideoPreviewPlayer(
     }
 
     // Real-time volume control for AUDIO PLAYER - NO composition rebuild required!
-    LaunchedEffect(project.settings.audioVolume, audioPlayer, previewState) {
+    LaunchedEffect(project.settings.primaryAudioNode?.volume, audioPlayer, previewState) {
         // THREAD SAFETY: Ensure player access happens on main thread
         withContext(Dispatchers.Main.immediate) {
             val currentAudioPlayer = audioPlayer ?: return@withContext
@@ -736,7 +739,7 @@ fun VideoPreviewPlayer(
 
             // Set audio player volume (0.0 to 1.0)
             // This is instant - no composition rebuild needed!
-            currentAudioPlayer.volume = project.settings.audioVolume
+            currentAudioPlayer.volume = project.settings.primaryAudioNode?.volume ?: 1f
         }
     }
 

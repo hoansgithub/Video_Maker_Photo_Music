@@ -173,9 +173,9 @@ fun SettingsPanel(
 
             // Background Music
             AudioSection(
-                selectedSongId = settings.musicSongId,
-                customAudioUri = settings.customAudioUri,
-                audioVolume = settings.audioVolume,
+                selectedSongId = settings.primaryAudioNode?.songId,
+                customAudioUri = settings.primaryAudioNode?.customAudioUri?.let { android.net.Uri.parse(it) },
+                audioVolume = settings.primaryAudioNode?.volume ?: 1f,
                 onSongSelect = onMusicSongChange,
                 onCustomAudioSelect = onCustomAudioChange,
                 onVolumeChange = onAudioVolumeChange,

@@ -14,12 +14,12 @@ import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.Effects
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.Asset
+import com.videomaker.aimusic.domain.model.AudioNode
 import com.videomaker.aimusic.domain.model.BeatSyncData
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.Transition
 import com.videomaker.aimusic.domain.model.VideoQuality
-import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.media.audio.VolumeAudioProcessor
 import com.videomaker.aimusic.media.audio.FadeoutAudioProcessor
 import com.videomaker.aimusic.media.effects.FrameOverlayEffect
@@ -52,8 +52,7 @@ import kotlinx.coroutines.withContext
  * Call createComposition from a coroutine scope.
  */
 class CompositionFactory(
-    private val context: Context,
-    private val songRepository: SongRepository
+    private val context: Context
 ) {
 
     /**
@@ -191,17 +190,13 @@ class CompositionFactory(
 
         val sequences = mutableListOf(videoSequence)
 
-        // Add audio sequence if enabled
-        if (includeAudio) {
-            val audioSequence = createAudioSequence(
-                settings = settings,
-                totalVideoDurationMs = project.totalDurationMs,
-                forExport = forExport,
-                beatSyncData = settings.beatSyncData
+        // Add audio sequences from audioNodes if enabled
+        if (includeAudio && settings.audioNodes.isNotEmpty()) {
+            val audioSequences = createMultiTrackAudioSequences(
+                settings.audioNodes,
+                project.totalDurationMs
             )
-            if (audioSequence != null) {
-                sequences.add(audioSequence)
-            }
+            sequences.addAll(audioSequences)
         }
 
         return Composition.Builder(sequences).build()
@@ -648,46 +643,86 @@ class CompositionFactory(
         )
     }
 
-    private suspend fun createAudioSequence(
-        settings: ProjectSettings,
-        totalVideoDurationMs: Long,
-        forExport: Boolean,
-        beatSyncData: BeatSyncData?
-    ): EditedMediaItemSequence? {
-        // BEAT-SYNC MODE: preprocessed audio is REQUIRED
-        if (beatSyncData == null) {
-            throw IllegalStateException("Please select music to preview your video")
+    /**
+     * Create multiple audio sequences from AudioNode list (multi-track timeline).
+     *
+     * Each AudioNode becomes a separate EditedMediaItemSequence with its own:
+     * - Source URI and clipping (trim start/end)
+     * - Volume processor
+     * - Duration set to match video
+     *
+     * @param audioNodes List of audio nodes on the timeline
+     * @param totalVideoDurationMs Total video duration for matching
+     * @return List of audio sequences, one per node
+     */
+    /**
+     * Create audio sequences from AudioNode list.
+     *
+     * Each AudioNode becomes a separate EditedMediaItemSequence with its own
+     * source URI, trim, volume, and duration.
+     *
+     * Source priority: processedAudioUri (already trimmed + faded) > customAudioUri > songUrl
+     */
+    private fun createMultiTrackAudioSequences(
+        audioNodes: List<AudioNode>,
+        totalVideoDurationMs: Long
+    ): List<EditedMediaItemSequence> {
+        return audioNodes.mapNotNull { node ->
+            // Prefer preprocessed audio (has fadeout baked in)
+            // Verify cached files still exist (LRU eviction safety)
+            val resolvedUri: String?
+            val isPreprocessed: Boolean
+            if (node.processedAudioUri != null) {
+                val processedUri = android.net.Uri.parse(node.processedAudioUri)
+                val fileExists = processedUri.scheme == "file" &&
+                    processedUri.path?.let { java.io.File(it).exists() } == true
+                if (fileExists) {
+                    resolvedUri = node.processedAudioUri
+                    isPreprocessed = true
+                } else {
+                    android.util.Log.w("CompositionFactory", "Preprocessed cache evicted for node ${node.id}, falling back to source")
+                    resolvedUri = node.customAudioUri ?: node.songUrl
+                    isPreprocessed = false
+                }
+            } else {
+                resolvedUri = node.customAudioUri ?: node.songUrl
+                isPreprocessed = false
+            }
+
+            if (resolvedUri == null) {
+                android.util.Log.w("CompositionFactory", "Skipping audio node ${node.id}: no URI")
+                return@mapNotNull null
+            }
+
+            // Build media item — skip clipping if using preprocessed audio (trim already baked in)
+            val mediaItemBuilder = MediaItem.Builder().setUri(resolvedUri)
+            if (!isPreprocessed) {
+                val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
+                    .setStartPositionMs(node.trimStartMs)
+
+                if (node.trimEndMs != null) {
+                    clippingBuilder.setEndPositionMs(node.trimEndMs)
+                }
+
+                mediaItemBuilder.setClippingConfiguration(clippingBuilder.build())
+            }
+
+            // Per-node volume processor
+            val volumeProcessors = if (node.volume != 1.0f) {
+                listOf(VolumeAudioProcessor(node.volume))
+            } else {
+                emptyList()
+            }
+            val audioEffects = Effects(volumeProcessors, emptyList())
+
+            val editedAudioItem = EditedMediaItem.Builder(mediaItemBuilder.build())
+                .setRemoveVideo(true)
+                .setEffects(audioEffects)
+                .setDurationUs(totalVideoDurationMs * 1000L)
+                .build()
+
+            EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
         }
-
-        // Preprocessed audio with fadeout baked in
-        val preprocessedUri = settings.processedAudioUri
-        if (preprocessedUri == null) {
-            android.util.Log.w("CompositionFactory", "No preprocessed audio available")
-            return null
-        }
-
-        android.util.Log.d("CompositionFactory", "Using preprocessed audio with baked-in fadeout: $preprocessedUri (volume=${settings.audioVolume})")
-
-        // Fadeout is baked into the preprocessed file; volume is applied here so a single
-        // volume-agnostic cache file can serve every audioVolume value.
-        val volumeProcessors = if (settings.audioVolume != 1.0f) {
-            listOf(VolumeAudioProcessor(settings.audioVolume))
-        } else {
-            emptyList()
-        }
-        val audioEffects = Effects(volumeProcessors, emptyList())
-
-        val mediaItem = MediaItem.Builder()
-            .setUri(preprocessedUri)
-            .build()
-
-        val editedAudioItem = EditedMediaItem.Builder(mediaItem)
-            .setRemoveVideo(true)
-            .setEffects(audioEffects)
-            .setDurationUs(totalVideoDurationMs * 1000L)
-            .build()
-
-        return EditedMediaItemSequence.Builder(listOf(editedAudioItem)).build()
     }
 
     /**
@@ -767,31 +802,6 @@ class CompositionFactory(
         }
     }
 
-    private suspend fun getAudioUri(settings: ProjectSettings): Uri? {
-        // Priority 1: Custom audio from device (local file)
-        settings.customAudioUri?.let { return it }
-
-        // Priority 2: Music song from Supabase (remote URL)
-        settings.musicSongId?.let { songId ->
-            // Look up song from repository to get mp3Url
-            val result = songRepository.getSongById(songId)
-            result.onSuccess { song ->
-                // Use mp3Url (full track) for export, not previewUrl
-                if (song.mp3Url.isNotBlank()) {
-                    return Uri.parse(song.mp3Url)
-                }
-            }
-        }
-
-        // Fallback: Use cached musicSongUrl if available (backward compatibility)
-        settings.musicSongUrl?.let { url ->
-            if (url.isNotBlank()) {
-                return Uri.parse(url)
-            }
-        }
-
-        return null
-    }
 
     private fun copyAssetToCache(assetPath: String): Uri? {
         return try {

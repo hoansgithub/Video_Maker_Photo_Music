@@ -11,7 +11,9 @@ import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.storage.UnlockedEffectSetsManager
 import com.videomaker.aimusic.domain.model.EffectSet
+import com.videomaker.aimusic.domain.repository.TransitionRepository
 import com.videomaker.aimusic.domain.usecase.GetEffectSetsPagedUseCase
+import com.videomaker.aimusic.media.library.TransitionShaderLibrary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
@@ -20,6 +22,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 
 // ============================================
@@ -52,12 +56,17 @@ sealed class DownloadState {
 class EffectSetViewModel(
     private val getEffectSetsPagedUseCase: GetEffectSetsPagedUseCase,
     private val unlockedEffectSetsManager: UnlockedEffectSetsManager,
-    private val adsLoaderService: AdsLoaderService
+    private val adsLoaderService: AdsLoaderService,
+    private val transitionRepository: TransitionRepository
 ) : ViewModel() {
 
     companion object {
         private const val PAGE_SIZE = 30
+        private const val TAG = "EffectSetVM"
     }
+
+    // Mutex for thread-safe _downloadStates map mutations
+    private val downloadStatesMutex = Mutex()
 
     // UI State
     private val _uiState = MutableStateFlow<EffectSetUiState>(EffectSetUiState.Loading)
@@ -201,7 +210,11 @@ class EffectSetViewModel(
     }
 
     /**
-     * Start downloading an effect set.
+     * Start downloading missing transition shaders for an effect set.
+     *
+     * Checks which transition IDs are missing from TransitionShaderLibrary,
+     * fetches them from Supabase via TransitionRepository, and reports real progress.
+     * If all transitions are already available, completes immediately.
      */
     fun startDownload(effectSetId: String, onFinished: () -> Unit = {}) {
         if (_downloadStates.value[effectSetId] is DownloadState.Downloaded) {
@@ -220,21 +233,77 @@ class EffectSetViewModel(
             return
         }
 
-        viewModelScope.launch {
-            _downloadStates.value = _downloadStates.value.toMutableMap().apply {
-                put(effectSetId, DownloadState.Downloading(0f))
+        viewModelScope.launch(Dispatchers.IO) {
+            updateDownloadState(effectSetId, DownloadState.Downloading(0f))
+
+            // Find the effect set to get its transition IDs
+            val effectSet = findEffectSetById(effectSetId)
+            if (effectSet == null) {
+                // No effect set found — mark as downloaded (nothing to fetch)
+                updateDownloadState(effectSetId, DownloadState.Downloaded)
+                onFinished()
+                return@launch
             }
-            for (progress in 1..10) {
-                delay(200)
-                _downloadStates.value = _downloadStates.value.toMutableMap().apply {
-                    put(effectSetId, DownloadState.Downloading(progress / 10f))
+
+            // Find which transition IDs are missing from TransitionShaderLibrary
+            val allIds = effectSet.transitionIds
+            val missingIds = allIds.filter { TransitionShaderLibrary.getById(it) == null }
+
+            if (missingIds.isEmpty()) {
+                // All transitions already available
+                updateDownloadState(effectSetId, DownloadState.Downloaded)
+                onFinished()
+                return@launch
+            }
+
+            updateDownloadState(effectSetId, DownloadState.Downloading(0.1f))
+
+            // Fetch missing transitions from Supabase
+            val result = transitionRepository.fetchRemoteTransitions(missingIds)
+
+            result.fold(
+                onSuccess = { fetched ->
+                    android.util.Log.d(TAG, "Downloaded ${fetched.size}/${missingIds.size} shaders for $effectSetId")
+                    updateDownloadState(effectSetId, DownloadState.Downloaded)
+                    onFinished()
+                },
+                onFailure = { error ->
+                    android.util.Log.e(TAG, "Failed to download shaders for $effectSetId: ${error.message}")
+                    // Mark as downloaded anyway if all transitions are available
+                    // (some may have been loaded from disk cache by the repository)
+                    val stillMissing = allIds.filter { TransitionShaderLibrary.getById(it) == null }
+                    if (stillMissing.isEmpty()) {
+                        updateDownloadState(effectSetId, DownloadState.Downloaded)
+                        onFinished()
+                    } else {
+                        // Reset to not-downloaded on failure so user can retry
+                        updateDownloadState(effectSetId, DownloadState.NotDownloaded)
+                    }
                 }
-            }
-            _downloadStates.value = _downloadStates.value.toMutableMap().apply {
-                put(effectSetId, DownloadState.Downloaded)
-            }
-            onFinished()
+            )
         }
+    }
+
+    /**
+     * Thread-safe update of download state map.
+     */
+    private suspend fun updateDownloadState(effectSetId: String, state: DownloadState) {
+        downloadStatesMutex.withLock {
+            _downloadStates.value = _downloadStates.value.toMutableMap().apply {
+                put(effectSetId, state)
+            }
+        }
+    }
+
+    /**
+     * Find an effect set by ID from the current UI state.
+     */
+    private fun findEffectSetById(effectSetId: String): EffectSet? {
+        val state = _uiState.value
+        if (state is EffectSetUiState.Success) {
+            return state.effectSets.find { it.id == effectSetId }
+        }
+        return null
     }
 
     /**

@@ -35,6 +35,11 @@ enum class TransitionCategory(val displayName: String) {
 
 /**
  * EffectSet - A collection of transitions with a common theme
+ *
+ * @param transitionIds Raw transition IDs from Supabase (preserved for download logic).
+ *        Unlike [transitions], this list is not filtered by availability —
+ *        it contains all IDs the effect set references, even if not yet downloaded.
+ * @param transitions Resolved Transition objects (only contains transitions available locally or in remote cache).
  */
 data class EffectSet(
     val id: String,
@@ -43,6 +48,7 @@ data class EffectSet(
     val thumbnailUrl: String = "",
     val isPremium: Boolean = false,
     val isActive: Boolean = true,
+    val transitionIds: List<String> = emptyList(),
     val transitions: List<Transition> = emptyList(),
     val sortOrder: Int = 0,
     val isNew: Boolean = false

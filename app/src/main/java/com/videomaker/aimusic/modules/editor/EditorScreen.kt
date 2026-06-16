@@ -14,6 +14,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -85,6 +86,9 @@ import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
 import com.videomaker.aimusic.modules.editor.components.VideoPreviewPlayer
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
+import com.videomaker.aimusic.media.renderer.PreviewSurfaceView
+import com.videomaker.aimusic.media.renderer.PlaybackClock
+import com.videomaker.aimusic.media.renderer.RenderState
 import com.videomaker.aimusic.ui.components.ErrorOverlay
 import com.videomaker.aimusic.ui.components.ErrorType
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
@@ -129,6 +133,7 @@ fun EditorScreen(
     val qualityAdError by viewModel.qualityAdError.collectAsStateWithLifecycle()
     val isQualityUnlocked by viewModel.isQualityUnlocked.collectAsStateWithLifecycle()
     val showBeatSyncErrorDialog by viewModel.showBeatSyncErrorDialog.collectAsStateWithLifecycle()
+    val renderState by viewModel.renderState.collectAsStateWithLifecycle()
 
     var showExitConfirmation by remember { mutableStateOf(false) }
     // var showMusicPicker by remember { mutableStateOf(false) } // Commented out - using Supabase only
@@ -170,10 +175,10 @@ fun EditorScreen(
     fun currentTemplateId(): String? = currentState()?.displaySettings?.templateId
 
     fun currentSongId(): String =
-        currentState()?.displaySettings?.musicSongId?.toString() ?: "unknown"
+        currentState()?.displaySettings?.primaryAudioNode?.songId?.toString() ?: "unknown"
 
     fun currentSongName(): String =
-        currentState()?.displaySettings?.musicSongName ?: "unknown"
+        currentState()?.displaySettings?.primaryAudioNode?.songName ?: "unknown"
 
     fun currentRatioLabel(): String =
         currentState()?.displaySettings?.aspectRatio?.toAnalyticsRatioSize()
@@ -396,11 +401,11 @@ fun EditorScreen(
                                         Analytics.trackVideoExport(
                                             videoId = state.project.id,
                                             templateId = state.displaySettings.templateId,
-                                            songId = state.displaySettings.musicSongId?.toString(),
+                                            songId = state.displaySettings.primaryAudioNode?.songId?.toString(),
                                             quality = state.selectedQuality.displayName,
                                             duration = state.displayProject.totalDurationMs,
                                             ratioSize = state.displaySettings.aspectRatio.toAnalyticsRatioSize(),
-                                            volume = (state.displaySettings.audioVolume * 100f).roundToInt(),
+                                            volume = ((state.displaySettings.primaryAudioNode?.volume ?: 1f) * 100f).roundToInt(),
                                             mediaQuantity = state.project.assets.size
                                         )
                                     }
@@ -435,6 +440,8 @@ fun EditorScreen(
                             seekToPosition = state.seekToPosition,
                             scrubToPosition = state.scrubToPosition,
                             effectSetName = state.effectSetName,
+                            renderState = renderState,
+                            playbackClock = viewModel.playbackClock,
                             onPlayPauseClick = {
                                 if (state.isPlaying) {
                                     Analytics.trackVideoPause(state.project.id)
@@ -474,7 +481,7 @@ fun EditorScreen(
                             onVolumeClick = {
                                 Analytics.trackVolumeEdit(
                                     videoId = state.project.id,
-                                    volumeNumber = (state.displaySettings.audioVolume * 100f).roundToInt()
+                                    volumeNumber = ((state.displaySettings.primaryAudioNode?.volume ?: 1f) * 100f).roundToInt()
                                 )
                                 showVolumeSheet = true
                             },
@@ -733,7 +740,7 @@ fun EditorScreen(
             if (showVolumeSheet) {
                 val successState = uiState as? EditorUiState.Success
                 VolumeBottomSheet(
-                    currentVolume = successState?.displaySettings?.audioVolume ?: 1f,
+                    currentVolume = successState?.displaySettings?.primaryAudioNode?.volume ?: 1f,
                     onVolumeChange = { volume ->
                         viewModel.updateAudioVolume(volume)
                     },
@@ -803,7 +810,7 @@ fun EditorScreen(
                             onNavigateToAddAssets(
                                 successState.project.id,
                                 currentAssetUris,
-                                successState.project.settings.musicSongId ?: -1L,
+                                successState.project.settings.primaryAudioNode?.songId ?: -1L,
                                 successState.project.settings.hookStartTimeMs
                             )
                         },
@@ -1033,6 +1040,8 @@ internal fun EditorMainContent(
     seekToPosition: Long?,
     scrubToPosition: Long?,
     effectSetName: String,
+    renderState: RenderState,
+    playbackClock: PlaybackClock,
     onPlayPauseClick: () -> Unit,
     onPlaybackStateChange: (Boolean) -> Unit,
     onPositionUpdate: (Long, Long) -> Unit,
@@ -1058,13 +1067,24 @@ internal fun EditorMainContent(
         modifier = modifier
             .fillMaxSize()
     ) {
-        // Real-time Video Preview using CompositionPlayer
+        // Real-time Video Preview using GL renderer (instant property changes)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
             contentAlignment = Alignment.Center
         ) {
+            PreviewSurfaceView(
+                renderState = renderState,
+                playbackClock = playbackClock,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .aspectRatio(renderState.aspectRatio.ratio)
+            )
+
+            // Audio-only: VideoPreviewPlayer handles audio playback, position tracking,
+            // and seek/scrub logic. Hidden (0dp) so it doesn't render video on top of
+            // PreviewSurfaceView. The CompositionPlayer inside still drives audio output.
             VideoPreviewPlayer(
                 project = project,
                 isPlaying = isPlaying,
@@ -1077,7 +1097,7 @@ internal fun EditorMainContent(
                 onScrubComplete = onScrubComplete,
                 onPreviewStateChange = onPreviewStateChange,
                 autoPlay = true,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.size(0.dp)
             )
         }
 
@@ -1127,12 +1147,13 @@ internal fun EditorMainContent(
                 }
             } else {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    // Music Section - song info and player
+                    // Music Section - song info and player (reads from primary audio node)
+                    val primaryNode = project.settings.primaryAudioNode
                     MusicSection(
-                        songName = project.settings.musicSongName
+                        songName = primaryNode?.songName
                             ?: stringResource(R.string.editor_no_music_selected),
-                        artistName = project.settings.musicSongArtist ?: "",
-                        coverUrl = project.settings.musicSongCoverUrl ?: "",
+                        artistName = primaryNode?.songArtist ?: "",
+                        coverUrl = primaryNode?.coverUrl ?: "",
                         duration = project.formattedDuration,
                         currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,
                         isPlaying = isPlaying,
@@ -1165,14 +1186,13 @@ internal fun EditorMainContent(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     // Settings Tab Bar - Images, Effect, Ratio, Volume (horizontally scrollable)
-                    val hasMusic =
-                        project.settings.musicSongId != null || project.settings.customAudioUri != null
+                    val hasMusic = project.settings.audioNodes.isNotEmpty()
                     SettingsTabBar(
                         currentImageCount = project.assets.size,
                         currentEffectSetName = effectSetName,
                         currentRatio = project.settings.aspectRatio,
                         showMusicControls = hasMusic,
-                        currentVolume = project.settings.audioVolume,
+                        currentVolume = primaryNode?.volume ?: 1f,
                         onImagesClick = onImagesClick,
                         onEffectClick = onEffectClick,
                         onRatioClick = onRatioClick,

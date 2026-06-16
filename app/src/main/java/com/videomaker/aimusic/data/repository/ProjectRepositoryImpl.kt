@@ -6,12 +6,15 @@ import com.videomaker.aimusic.data.local.database.dao.ProjectDao
 import com.videomaker.aimusic.data.local.database.entity.ProjectEntity
 import com.videomaker.aimusic.data.mapper.ProjectMapper
 import com.videomaker.aimusic.domain.model.Asset
+import com.videomaker.aimusic.domain.model.AudioNode
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 import java.util.UUID
 
 /**
@@ -23,6 +26,8 @@ class ProjectRepositoryImpl(
     private val projectDao: ProjectDao,
     private val assetDao: AssetDao
 ) : ProjectRepository {
+
+    private val json = Json { ignoreUnknownKeys = true }
 
     override suspend fun createProject(assets: List<Uri>): Project {
         val projectId = UUID.randomUUID().toString()
@@ -60,6 +65,13 @@ class ProjectRepositoryImpl(
         val projectId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
 
+        // Serialize audio nodes
+        val audioNodesJson = if (settings.audioNodes.isNotEmpty()) {
+            json.encodeToString(ListSerializer(AudioNode.serializer()), settings.audioNodes)
+        } else {
+            null
+        }
+
         // Create project entity with settings
         val projectEntity = ProjectEntity(
             id = projectId,
@@ -71,14 +83,8 @@ class ProjectRepositoryImpl(
             effectSetId = settings.effectSetId,
             templateId = settings.templateId?.takeIf { it.isNotBlank() },
             overlayFrameId = settings.overlayFrameId,
-            musicSongId = settings.musicSongId,
-            musicSongName = settings.musicSongName,
-            musicSongArtist = settings.musicSongArtist,
-            musicSongUrl = settings.musicSongUrl,
-            musicSongCoverUrl = settings.musicSongCoverUrl,
-            customAudioUri = settings.customAudioUri?.toString(),
-            audioVolume = settings.audioVolume,
-            aspectRatio = settings.aspectRatio.name
+            aspectRatio = settings.aspectRatio.name,
+            audioNodesJson = audioNodesJson
         )
 
         // Create asset entities
@@ -122,23 +128,29 @@ class ProjectRepositoryImpl(
     }
 
     override suspend fun updateSettings(projectId: String, settings: ProjectSettings) {
-        projectDao.updateSettings(
-            id = projectId,
+        // Load existing entity
+        val existingEntity = projectDao.getById(projectId) ?: return
+
+        // Serialize audio nodes
+        val audioNodesJson = if (settings.audioNodes.isNotEmpty()) {
+            json.encodeToString(ListSerializer(AudioNode.serializer()), settings.audioNodes)
+        } else {
+            null
+        }
+
+        // Update entity with new settings
+        val updatedEntity = existingEntity.copy(
             totalDurationMs = settings.totalDurationMs,
             effectSetId = settings.effectSetId,
             templateId = settings.templateId?.takeIf { it.isNotBlank() },
             overlayFrameId = settings.overlayFrameId,
-            musicSongId = settings.musicSongId,
-            musicSongName = settings.musicSongName,
-            musicSongArtist = settings.musicSongArtist,
-            musicSongUrl = settings.musicSongUrl,
-            musicSongCoverUrl = settings.musicSongCoverUrl,
-            customAudioUri = settings.customAudioUri?.toString(),
-            processedAudioUri = settings.processedAudioUri?.toString(),
-            audioVolume = settings.audioVolume,
             aspectRatio = settings.aspectRatio.name,
+            audioNodesJson = audioNodesJson,
             updatedAt = System.currentTimeMillis()
         )
+
+        // Save updated entity
+        projectDao.update(updatedEntity)
     }
 
     override suspend fun reorderAssets(projectId: String, assets: List<Asset>) {
