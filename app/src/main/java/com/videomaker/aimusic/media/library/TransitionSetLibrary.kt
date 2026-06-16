@@ -74,6 +74,7 @@ object TransitionSetLibrary {
                     thumbnailUrl = jsonSet.thumbnailUrl,
                     isPremium = jsonSet.isPremium,
                     isActive = jsonSet.isActive,
+                    transitionIds = jsonSet.transitionIds,
                     transitions = jsonSet.transitionIds.mapNotNull { id ->
                         TransitionShaderLibrary.getById(id)
                     },

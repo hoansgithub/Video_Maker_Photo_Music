@@ -53,6 +53,10 @@ object TransitionShaderLibrary {
     // Pre-computed cached values for fast access
     @Volatile private var cachedGroupedByCategory: Map<TransitionCategory, List<Transition>>? = null
 
+    // Remote cache for transitions fetched from Supabase — prioritized over local assets.
+    // Thread-safe: @Synchronized on registerRemote prevents lost updates from concurrent downloads.
+    @Volatile private var remoteCache: Map<String, Transition> = emptyMap()
+
     /**
      * Initialize the library with application context.
      * Must be called before using other methods (typically in Application.onCreate)
@@ -78,14 +82,32 @@ object TransitionShaderLibrary {
     }
 
     /**
-     * Get all available transitions
+     * Register transitions fetched from Supabase (remote shaders).
+     * Remote transitions override local ones with the same ID.
+     * Thread-safe: synchronized to prevent lost updates from concurrent downloads.
      */
-    fun getAll(): List<Transition> = getLoader().loadAll()
+    @Synchronized
+    fun registerRemote(transitions: List<Transition>) {
+        val updated = remoteCache.toMutableMap()
+        transitions.forEach { updated[it.id] = it }
+        remoteCache = updated.toMap()
+        // Invalidate grouped cache since contents changed
+        cachedGroupedByCategory = null
+    }
 
     /**
-     * Get transition by ID
+     * Get all available transitions (remote overrides local).
      */
-    fun getById(id: String): Transition? = getLoader().getById(id)
+    fun getAll(): List<Transition> {
+        val local = getLoader().loadAll().associateBy { it.id }
+        return (local + remoteCache).values.toList()
+    }
+
+    /**
+     * Get transition by ID (remote first, then local fallback).
+     */
+    fun getById(id: String): Transition? =
+        remoteCache[id] ?: getLoader().getById(id)
 
     /**
      * Get transitions by category
@@ -131,6 +153,7 @@ object TransitionShaderLibrary {
 
         loader?.clearCache()
         cachedGroupedByCategory = null
+        remoteCache = emptyMap()
     }
 
     private fun getLoader(): TransitionLoader {

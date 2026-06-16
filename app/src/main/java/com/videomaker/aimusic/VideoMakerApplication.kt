@@ -531,23 +531,19 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         // ============================================
         applicationScope.launch(Dispatchers.IO) {
             runCatching {
-                val effectSetRepository = org.koin.core.context.GlobalContext.get().getOrNull<com.videomaker.aimusic.domain.repository.EffectSetRepository>()
-                if (effectSetRepository != null) {
-                    android.util.Log.d("VideoMakerApp", "🚀 Starting background prefetch of effect sets...")
-                    val result = effectSetRepository.getEffectSetsPaged(offset = 0, limit = 30)
-                    result.fold(
-                        onSuccess = { effectSets ->
-                            android.util.Log.d("VideoMakerApp", "✅ Prefetched first page of effect sets: ${effectSets.size} items loaded")
-                        },
-                        onFailure = { error ->
-                            android.util.Log.e("VideoMakerApp", "❌ Failed to prefetch effect sets: ${error.message}", error)
-                        }
-                    )
-                } else {
-                    android.util.Log.e("VideoMakerApp", "❌ EffectSetRepository not found during prefetch")
-                }
+                val effectSetRepository: com.videomaker.aimusic.domain.repository.EffectSetRepository = get()
+                android.util.Log.d("VideoMakerApp", "Starting background prefetch of effect sets...")
+                val result = effectSetRepository.getEffectSetsPaged(offset = 0, limit = 30)
+                result.fold(
+                    onSuccess = { effectSets ->
+                        android.util.Log.d("VideoMakerApp", "Prefetched first page of effect sets: ${effectSets.size} items loaded")
+                    },
+                    onFailure = { error ->
+                        android.util.Log.e("VideoMakerApp", "Failed to prefetch effect sets: ${error.message}", error)
+                    }
+                )
             }.onFailure { e ->
-                android.util.Log.e("VideoMakerApp", "❌ Error during effect set prefetch", e)
+                android.util.Log.e("VideoMakerApp", "Error during effect set prefetch", e)
             }
         }
 

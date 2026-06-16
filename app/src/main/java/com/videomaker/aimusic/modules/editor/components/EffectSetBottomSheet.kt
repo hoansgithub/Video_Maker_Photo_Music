@@ -89,6 +89,7 @@ fun EffectSetPanel(
     viewModel: EffectSetViewModel,
     selectedEffectSetId: String?,
     onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
     onEffectSetSelected: (EffectSet) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -147,11 +148,13 @@ fun EffectSetPanel(
         gridState = gridState,
         snackbarHostState = snackbarHostState,
         onDismiss = onDismiss,
+        onConfirm = onConfirm,
         onEffectSetClick = { effectSet ->
+            onEffectSetSelected(effectSet)
             viewModel.onEffectSetClick(
                 effectSet = effectSet,
                 onUnlockedEffectSetSelected = {
-                    onEffectSetSelected(effectSet)
+                    // Highlight only — apply happens on confirm
                 }
             )
         },
@@ -173,6 +176,7 @@ fun EffectSetPanelContent(
     gridState: LazyGridState,
     snackbarHostState: SnackbarHostState,
     onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
     onEffectSetClick: (EffectSet) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
@@ -235,7 +239,7 @@ fun EffectSetPanelContent(
                         .size(28.dp)
                         .clip(CircleShape)
                         .background(Primary)
-                        .clickable(onClick = onDismiss),
+                        .clickable(onClick = { onConfirm(); onDismiss() }),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -699,6 +703,7 @@ private fun EffectSetPanelSuccessPreview() {
             gridState = rememberLazyGridState(),
             snackbarHostState = remember { SnackbarHostState() },
             onDismiss = {},
+            onConfirm = {},
             onEffectSetClick = {},
             onRetry = {},
             modifier = Modifier
