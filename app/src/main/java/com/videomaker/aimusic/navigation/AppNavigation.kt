@@ -481,8 +481,8 @@ fun AppNavigation(
                             sourceLocation = AnalyticsEvent.Value.Location.SONG
                         ))
                     },
-                    onProjectClick = { projectId ->
-                        backStack.add(AppRoute.Editor(projectId))
+                    onProjectClick = { projectId, thumbnailUri ->
+                        backStack.add(AppRoute.Editor(projectId, thumbnailUri = thumbnailUri))
                     }
                 )
             }
@@ -626,7 +626,7 @@ fun AppNavigation(
                 val editorViewModel: EditorViewModel = viewModel(
                     key = "editor_${route.projectId ?: route.initialData.hashCode()}",
                     factory = createSafeViewModelFactory {
-                        factory.create(route.projectId, route.initialData)
+                        factory.create(route.projectId, route.initialData, route.thumbnailUri)
                     }
                 )
                 EditorScreen(

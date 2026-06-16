@@ -26,12 +26,14 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.border
@@ -46,6 +48,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -318,13 +321,200 @@ internal fun MusicSection(
             ) {
                 Icon(
                     imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (isPlaying) stringResource(R.string.editor_pause) else stringResource(R.string.editor_play),
+                    contentDescription = if (isPlaying) stringResource(R.string.editor_pause) else stringResource(
+                        R.string.editor_play
+                    ),
                     tint = TextPrimary,
                     modifier = Modifier.size(20.dp)
                 )
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PlayMusicSlider(
+    currentPositionMs: Long,
+    durationMs: Long,
+    currentPosition: Float,
+    isPlaying: Boolean,
+    onSeek: (Float) -> Unit,
+    onScrub: (Float) -> Unit = {},
+    onSeekStart: () -> Unit = {},
+    onSeekEnd: () -> Unit = {},
+    onPlayPauseClick: () -> Unit
+) {
+    // Hoist interaction source to prevent recreation on every recomposition
+    val sliderInteractionSource = remember { MutableInteractionSource() }
+
+    // Local state for smooth slider dragging (prevents jumps during drag)
+    var isDragging by remember { mutableStateOf(false) }
+    var localPosition by remember { mutableFloatStateOf(currentPosition) }
+    // Track last scrub time for throttling
+    var lastScrubTime by remember { mutableLongStateOf(0L) }
+    // After releasing the thumb we keep showing the dragged value until the
+    // player's reported position catches up. Without this the thumb snaps back
+    // to the stale position and then jumps forward once the seek lands (giật).
+    var pendingSeek by remember { mutableStateOf(false) }
+
+    // Sync external position into the slider only when the user is not dragging.
+    if (!isDragging) {
+        if (pendingSeek) {
+            // Resume external sync once the reported position converges on the seek target.
+            if (kotlin.math.abs(currentPosition - localPosition) < SLIDER_SEEK_SETTLE_THRESHOLD) {
+                pendingSeek = false
+                localPosition = currentPosition
+            }
+        } else {
+            localPosition = currentPosition
+        }
+    }
+
+    // Smooth running clock: the player only reports its position every ~500ms,
+    // which makes a hundredths counter (and the thumb) tick in coarse jumps.
+    // Interpolate locally at frame rate between those coarse updates, re-anchoring
+    // whenever a fresh position arrives so it never drifts.
+    var smoothMs by remember { mutableLongStateOf(currentPositionMs) }
+    LaunchedEffect(isPlaying, currentPositionMs, isDragging, pendingSeek) {
+        if (isDragging || pendingSeek) return@LaunchedEffect
+        smoothMs = currentPositionMs
+        if (!isPlaying) return@LaunchedEffect
+        val anchorRealtime = android.os.SystemClock.elapsedRealtime()
+        val anchorPos = currentPositionMs
+        while (true) {
+            withFrameMillis { }
+            val elapsed = android.os.SystemClock.elapsedRealtime() - anchorRealtime
+            smoothMs = if (durationMs > 0) {
+                (anchorPos + elapsed).coerceIn(0L, durationMs)
+            } else {
+                anchorPos + elapsed
+            }
+        }
+    }
+
+    // Running time shown next to the slider. While the user interacts (drag or
+    // settling seek) it follows the thumb; during playback it uses the smooth
+    // interpolated clock; otherwise it tracks the reported playback position.
+    val displayedMs = when {
+        isDragging || pendingSeek -> (localPosition.coerceIn(0f, 1f) * durationMs).toLong()
+        isPlaying -> smoothMs
+        else -> currentPositionMs
+    }
+
+    // Thumb position: follow the finger while seeking, otherwise the smooth clock.
+    val sliderValue = when {
+        isDragging || pendingSeek -> localPosition
+        isPlaying && durationMs > 0 -> smoothMs / durationMs.toFloat()
+        else -> localPosition
+    }.coerceIn(0f, 1f)
+
+    // Seeker row - slider + play/pause aligned horizontally
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // Play/pause button - circle shape, aligned with slider
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(White10)
+                .clickable(onClick = onPlayPauseClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                contentDescription = if (isPlaying) stringResource(R.string.editor_pause) else stringResource(
+                    R.string.editor_play
+                ),
+                tint = TextPrimary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        // Slider with smooth dragging and real-time scrubbing
+        Slider(
+            value = sliderValue,
+            onValueChange = { newValue ->
+                if (!isDragging) {
+                    isDragging = true
+                    pendingSeek = false
+                    onSeekStart() // Pause playback when starting to drag
+                }
+                localPosition = newValue
+
+                // Throttled scrubbing - show preview frame while dragging.
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastScrubTime >= SLIDER_SCRUB_THROTTLE_MS) {
+                    lastScrubTime = currentTime
+                    onScrub(newValue) // Real-time preview during drag
+                }
+            },
+            onValueChangeFinished = {
+                isDragging = false
+                pendingSeek = true // Hold the dragged value until the seek settles
+                onSeek(localPosition) // Seek when user releases
+                onSeekEnd() // Resume playback
+            },
+            modifier = Modifier.weight(1f),
+            colors = SliderDefaults.colors(
+                thumbColor = TextPrimary,
+                activeTrackColor = TextPrimary,
+                inactiveTrackColor = Gray500,
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent
+            ),
+            thumb = {
+                SliderDefaults.Thumb(
+                    interactionSource = sliderInteractionSource,
+                    thumbSize = androidx.compose.ui.unit.DpSize(18.dp, 18.dp),
+                    colors = SliderDefaults.colors(thumbColor = TextPrimary)
+                )
+            },
+            track = { sliderState ->
+                SliderDefaults.Track(
+                    sliderState = sliderState,
+                    modifier = Modifier.height(4.dp),
+                    colors = SliderDefaults.colors(
+                        activeTrackColor = TextPrimary,
+                        inactiveTrackColor = Gray500,
+                        activeTickColor = Color.Transparent,
+                        inactiveTickColor = Color.Transparent
+                    ),
+                    drawStopIndicator = null
+                )
+            }
+        )
+
+        // Running time label (format m:ss.SS) - follows the thumb while seeking
+        Text(
+            text = formatPlaybackTime(displayedMs),
+            fontSize = 10.sp,
+            color = TextPrimary,
+            textAlign = TextAlign.End,
+            modifier = Modifier.width(40.dp)
+        )
+    }
+}
+
+/** Throttle interval for scrub previews while dragging the seek bar. */
+private const val SLIDER_SCRUB_THROTTLE_MS = 120L
+
+/** Slider keeps the dragged value until the reported position is within this fraction of the target. */
+private const val SLIDER_SEEK_SETTLE_THRESHOLD = 0.02f
+
+/** Formats a playback position in milliseconds as m:ss.SS (e.g. 0:07.42). */
+private fun formatPlaybackTime(ms: Long): String {
+    val safeMs = ms.coerceAtLeast(0L)
+    val totalSeconds = safeMs / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    val hundredths = (safeMs % 1000) / 10
+    return String.format(java.util.Locale.US, "%d:%02d.%02d", minutes, seconds, hundredths)
 }
 
 @Preview(showBackground = true, backgroundColor = 0xFF1A1A1A)

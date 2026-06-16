@@ -223,6 +223,9 @@ fun VideoPreviewPlayer(
     onScrubComplete: () -> Unit = {},
     onPreviewStateChange: (PreviewState) -> Unit = {},
     autoPlay: Boolean = false,
+    // Gate for playback: while false (e.g. composing overlay visible) the preview stays paused.
+    // Playback auto-starts the moment this flips to true and the player is ready (if autoPlay).
+    canPlay: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -691,8 +694,10 @@ fun VideoPreviewPlayer(
             // Await for video player to be truly ready using suspend function (no delay!)
             val isReady = newVideoPlayer.awaitReady()
 
-            // Handle autoPlay after player is confirmed ready
-            if (isReady && autoPlay) {
+            // Handle autoPlay after player is confirmed ready.
+            // Only auto-start if playback is currently allowed (overlay hidden);
+            // otherwise the canPlay effect below starts it once the overlay disappears.
+            if (isReady && autoPlay && canPlay) {
                 newVideoPlayer.play()
                 newAudioPlayer?.play() // Audio synced with video
             }
@@ -741,7 +746,7 @@ fun VideoPreviewPlayer(
     }
 
     // Control playback based on isPlaying state - sync both players
-    LaunchedEffect(isPlaying, videoPlayer, previewState) {
+    LaunchedEffect(isPlaying, videoPlayer, previewState, canPlay) {
         val currentVideoPlayer = videoPlayer ?: return@LaunchedEffect
 
         // Don't wait if player is still building - will auto-play when ready (if autoPlay is true)
@@ -749,6 +754,13 @@ fun VideoPreviewPlayer(
 
         // Don't try to play if player is in error state
         if (previewState is PreviewState.Error) return@LaunchedEffect
+
+        // Playback not allowed yet (e.g. composing overlay visible) — force paused.
+        if (!canPlay) {
+            currentVideoPlayer.pause()
+            audioPlayer?.pause()
+            return@LaunchedEffect
+        }
 
         if (isPlaying) {
             try {
@@ -779,6 +791,22 @@ fun VideoPreviewPlayer(
             } catch (e: Exception) {
                 android.util.Log.e("VideoPreviewPlayer", "Error pausing playback", e)
             }
+        }
+    }
+
+    // Auto-start playback the moment playback becomes allowed (e.g. composing overlay hides)
+    // and the player is ready. Keyed on canPlay/previewState (not isPlaying) so it only fires
+    // on the gate/ready transition and never fights with manual pause from the user.
+    LaunchedEffect(canPlay, previewState, videoPlayer) {
+        if (!canPlay || !autoPlay) return@LaunchedEffect
+        val currentVideoPlayer = videoPlayer ?: return@LaunchedEffect
+        if (previewState !is PreviewState.Ready || !playerReadyFlow.value) return@LaunchedEffect
+
+        withContext(Dispatchers.Main.immediate) {
+            syncAudioToVideo(currentVideoPlayer.currentPosition)
+            currentVideoPlayer.play()
+            audioPlayer?.play()
+            onPlaybackStateChange(true)
         }
     }
 

@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.editor.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -24,14 +25,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.applovin.impl.sdk.i
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import com.videomaker.aimusic.ui.theme.FoundationBlack_100
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 
@@ -42,11 +48,7 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
  */
 @Composable
 internal fun SettingsTabBar(
-    currentImageCount: Int,
-    currentEffectSetName: String,
-    currentRatio: AspectRatio,
     showMusicControls: Boolean, // Show volume tab if music is selected
-    currentVolume: Float, // 0.0 to 1.0
     onImagesClick: () -> Unit,
     onEffectClick: () -> Unit,
     onRatioClick: () -> Unit,
@@ -58,41 +60,38 @@ internal fun SettingsTabBar(
             .fillMaxWidth()
             .background(SplashBackground)
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceAround
     ) {
-        // Images button - shows "Photos" label
-        SettingsTabButton(
-            icon = Icons.Default.Image,
-            label = stringResource(R.string.editor_photos_label),
-            onClick = onImagesClick,
-            modifier = Modifier.width(70.dp)
-        )
-
         // Effect button - displays effect set name
         SettingsTabButton(
-            icon = Icons.Default.AutoAwesome,
-            label = currentEffectSetName,
+            icon = R.drawable.img_effect_video,
+            label = "Effect",
             onClick = onEffectClick,
-            modifier = Modifier.width(70.dp)
         )
+
+        // Images button - shows "Photos" label
+        SettingsTabButton(
+            icon = R.drawable.img_replace_gallery,
+            label = stringResource(R.string.editor_photos_label),
+            onClick = onImagesClick,
+        )
+
 
         // Ratio button - shows current ratio
         SettingsTabButton(
-            icon = Icons.Default.AspectRatio,
-            label = currentRatio.shortLabel,
+            icon = R.drawable.img_ratio_frame,
+            label = "Ratio",
             onClick = onRatioClick,
-            modifier = Modifier.width(70.dp)
         )
 
         // Volume control (only show if music is selected)
         if (showMusicControls) {
             // Volume button - shows current volume percentage
             SettingsTabButton(
-                icon = Icons.AutoMirrored.Filled.VolumeUp,
-                label = "${(currentVolume * 100).toInt()}%",
+                icon = R.drawable.img_edit_sound,
+                label = "Volume",
                 onClick = onVolumeClick,
-                modifier = Modifier.width(70.dp)
             )
         }
 
@@ -101,30 +100,30 @@ internal fun SettingsTabBar(
 
 @Composable
 private fun SettingsTabButton(
-    icon: ImageVector,
+    icon: Int,
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
-            .clickable(onClick = onClick)
+            .clickableSingle(onClick = onClick)
             .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = icon,
+        Image(
+            painter = painterResource(icon),
             contentDescription = label,
-            tint = TextPrimary,
+            contentScale = ContentScale.Crop,
             modifier = Modifier.size(24.dp)
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = label,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            color = TextPrimary,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.W500,
+            color = FoundationBlack_100,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,

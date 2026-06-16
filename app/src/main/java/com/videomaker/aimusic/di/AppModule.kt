@@ -564,12 +564,14 @@ class EditorViewModelFactory(
 ) {
     fun create(
         projectId: String?,
-        initialData: com.videomaker.aimusic.domain.model.EditorInitialData?
+        initialData: com.videomaker.aimusic.domain.model.EditorInitialData?,
+        initialThumbnailUri: String? = null
     ): EditorViewModel {
         return EditorViewModel(
             context = context,
             projectId = projectId,
             initialData = initialData,
+            initialThumbnailUri = initialThumbnailUri,
             getProjectUseCase = getProjectUseCase,
             createProjectUseCase = createProjectUseCase,
             updateSettingsUseCase = updateSettingsUseCase,

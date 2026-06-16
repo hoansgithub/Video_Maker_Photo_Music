@@ -45,7 +45,13 @@ import java.util.UUID
 // ============================================
 
 sealed class EditorUiState {
-    data object Loading : EditorUiState()
+    // firstImageUri lets the editor show the first picked image (or saved-project thumbnail)
+    // as a placeholder while data loads. Null -> ShimmerPlaceholder.
+    // aspectRatio frames the placeholder exactly like the upcoming video preview.
+    data class Loading(
+        val firstImageUri: Uri? = null,
+        val aspectRatio: AspectRatio = AspectRatio.RATIO_9_16
+    ) : EditorUiState()
 
     data class Success(
         val project: Project,
@@ -90,8 +96,34 @@ sealed class EditorUiState {
         )
     }
 
+    // On error the screen keeps the last Loading view (remembered firstImageUri) and shows
+    // an error popup on top — so Error doesn't need to carry the image itself.
     data class Error(val message: String) : EditorUiState()
 }
+
+/**
+ * High-level editor content state for driving the UI (placeholder vs player, skeleton vs real
+ * controls, error popup). Derived from [EditorUiState] — a flat enum that's convenient to branch on.
+ */
+enum class EditorContentState { LOADING, SUCCESS, ERROR }
+
+val EditorUiState.contentState: EditorContentState
+    get() = when (this) {
+        is EditorUiState.Loading -> EditorContentState.LOADING
+        is EditorUiState.Success -> EditorContentState.SUCCESS
+        is EditorUiState.Error -> EditorContentState.ERROR
+    }
+
+/**
+ * Combined editor screen state covering BOTH the data load and the video preview build:
+ * - LOADING: data loading, or data ready but the video composition is still building/processing.
+ * - READY:   data ready AND the video has reached Ready AND nothing is reprocessing → video plays.
+ * - ERROR:   data load failed or the preview failed to build.
+ *
+ * Unlike [EditorContentState] (data only), this reflects what the user actually sees, so it must
+ * be derived in EditorScreen where the preview state lives (not in the ViewModel).
+ */
+enum class EditorScreenState { LOADING, READY, ERROR }
 
 // ============================================
 // NAVIGATION EVENTS
@@ -117,6 +149,9 @@ class EditorViewModel(
     private val context: android.content.Context,
     private val projectId: String?,
     private val initialData: EditorInitialData?,
+    // Thumbnail of a saved project, passed via navigation so the Loading state can show
+    // the first image immediately (before the full project is loaded from DB).
+    private val initialThumbnailUri: String? = null,
     private val getProjectUseCase: GetProjectUseCase,
     private val createProjectUseCase: CreateProjectUseCase,
     private val updateSettingsUseCase: UpdateProjectSettingsUseCase,
@@ -131,7 +166,7 @@ class EditorViewModel(
     private val adPlacementConfigService: AdPlacementConfigService
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<EditorUiState>(EditorUiState.Loading)
+    private val _uiState = MutableStateFlow<EditorUiState>(EditorUiState.Loading())
     val uiState: StateFlow<EditorUiState> = _uiState.asStateFlow()
 
     // Navigation events are separate from UI state — never embedded in high-frequency state
@@ -142,6 +177,16 @@ class EditorViewModel(
     // Music Trimmer State — modal bottom sheet with isolated music player
     private val _musicTrimmerState = MutableStateFlow<MusicTrimmerState>(MusicTrimmerState.Closed)
     val musicTrimmerState: StateFlow<MusicTrimmerState> = _musicTrimmerState.asStateFlow()
+
+    // Whether the video preview has reached Ready at least once for the current load. Lives in the
+    // ViewModel (retained across the asset-picker round trip and config changes) so the screen can
+    // stay READY across replace/effect without flickering back to LOADING. Reset on a fresh load.
+    private val _hasPreviewBeenReady = MutableStateFlow(false)
+    val hasPreviewBeenReady: StateFlow<Boolean> = _hasPreviewBeenReady.asStateFlow()
+
+    fun markPreviewReady() {
+        _hasPreviewBeenReady.value = true
+    }
 
     // Quality unlock state — session-based (reset when ViewModel cleared)
     // 720p and 1080p require watching rewarded ad to unlock
@@ -292,10 +337,18 @@ class EditorViewModel(
         }
     }
 
+    /** Re-run the initial load/init — used by the Error popup's Retry action. */
+    fun retry() {
+        loadOrInitializeProject()
+    }
+
     private fun loadExistingProject(id: String) {
         projectObserverJob?.cancel()
+        _hasPreviewBeenReady.value = false // fresh load → preview not ready yet
         projectObserverJob = viewModelScope.launch {
-            _uiState.value = EditorUiState.Loading
+            _uiState.value = EditorUiState.Loading(
+                firstImageUri = initialThumbnailUri?.takeIf { it.isNotBlank() }?.let { Uri.parse(it) }
+            )
             try {
                 getProjectUseCase.observe(id).collect { loadedProject ->
                     if (loadedProject != null) {
@@ -420,8 +473,12 @@ class EditorViewModel(
     }
 
     private fun initializeNewProject(data: EditorInitialData) {
+        _hasPreviewBeenReady.value = false // fresh load → preview not ready yet
         viewModelScope.launch {
-            _uiState.value = EditorUiState.Loading
+            _uiState.value = EditorUiState.Loading(
+                firstImageUri = data.imageUris.firstOrNull()?.takeIf { it.isNotBlank() }?.let { Uri.parse(it) },
+                aspectRatio = data.aspectRatio
+            )
             try {
                 // Generate temporary project ID
                 val tempId = UUID.randomUUID().toString()
