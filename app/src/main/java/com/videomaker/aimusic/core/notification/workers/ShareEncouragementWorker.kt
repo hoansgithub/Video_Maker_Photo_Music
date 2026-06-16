@@ -60,7 +60,7 @@ class ShareEncouragementWorker(
         )
         if (!gateDecision.allowed) return Result.success()
 
-        val songName = project?.settings?.musicSongName?.takeIf { it.isNotBlank() } ?: "your"
+        val songName = project?.settings?.primaryAudioNode?.songName?.takeIf { it.isNotBlank() } ?: "your"
         Analytics.trackNotificationEligible(
             type = NotificationType.SHARE_ENCOURAGEMENT.analyticsValue,
             itemId = projectId,

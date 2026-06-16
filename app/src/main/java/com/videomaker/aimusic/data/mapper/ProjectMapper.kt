@@ -7,13 +7,18 @@ import com.videomaker.aimusic.data.local.database.entity.ProjectWithAssets
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.AssetType
+import com.videomaker.aimusic.domain.model.AudioNode
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 
 /**
  * ProjectMapper - Maps between database entities and domain models
  */
 object ProjectMapper {
+
+    private val json = Json { ignoreUnknownKeys = true }
 
     /**
      * Map ProjectWithAssets entity to Project domain model
@@ -34,23 +39,25 @@ object ProjectMapper {
     }
 
     /**
-     * Map ProjectEntity to ProjectSettings (BEAT-SYNC ONLY)
+     * Map ProjectEntity to ProjectSettings
      */
     private fun toSettings(entity: ProjectEntity): ProjectSettings {
+        val audioNodes = entity.audioNodesJson?.let { jsonStr ->
+            try {
+                json.decodeFromString(ListSerializer(AudioNode.serializer()), jsonStr)
+            } catch (e: Exception) {
+                android.util.Log.w("ProjectMapper", "Failed to deserialize audioNodesJson: ${e.message}")
+                emptyList()
+            }
+        } ?: emptyList()
+
         return ProjectSettings(
             totalDurationMs = entity.totalDurationMs,
             effectSetId = entity.effectSetId,
             templateId = entity.templateId?.takeIf { it.isNotBlank() },
             overlayFrameId = entity.overlayFrameId,
-            musicSongId = entity.musicSongId,
-            musicSongName = entity.musicSongName,
-            musicSongArtist = entity.musicSongArtist,
-            musicSongUrl = entity.musicSongUrl,
-            musicSongCoverUrl = entity.musicSongCoverUrl,
-            customAudioUri = entity.customAudioUri?.let { Uri.parse(it) },
-            processedAudioUri = entity.processedAudioUri?.let { Uri.parse(it) },
-            audioVolume = entity.audioVolume,
-            aspectRatio = AspectRatio.fromString(entity.aspectRatio)
+            aspectRatio = AspectRatio.fromString(entity.aspectRatio),
+            audioNodes = audioNodes
         )
     }
 
@@ -67,9 +74,15 @@ object ProjectMapper {
     }
 
     /**
-     * Map Project domain model to ProjectEntity (BEAT-SYNC ONLY)
+     * Map Project domain model to ProjectEntity
      */
     fun toEntity(project: Project): ProjectEntity {
+        val audioNodesJson = if (project.settings.audioNodes.isNotEmpty()) {
+            json.encodeToString(ListSerializer(AudioNode.serializer()), project.settings.audioNodes)
+        } else {
+            null
+        }
+
         return ProjectEntity(
             id = project.id,
             name = project.name,
@@ -80,15 +93,8 @@ object ProjectMapper {
             effectSetId = project.settings.effectSetId,
             templateId = project.settings.templateId?.takeIf { it.isNotBlank() },
             overlayFrameId = project.settings.overlayFrameId,
-            musicSongId = project.settings.musicSongId,
-            musicSongName = project.settings.musicSongName,
-            musicSongArtist = project.settings.musicSongArtist,
-            musicSongUrl = project.settings.musicSongUrl,
-            musicSongCoverUrl = project.settings.musicSongCoverUrl,
-            customAudioUri = project.settings.customAudioUri?.toString(),
-            processedAudioUri = project.settings.processedAudioUri?.toString(),
-            audioVolume = project.settings.audioVolume,
             aspectRatio = project.settings.aspectRatio.name,
+            audioNodesJson = audioNodesJson,
             isWatermarkFree = project.isWatermarkFree
         )
     }

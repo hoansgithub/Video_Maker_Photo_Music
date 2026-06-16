@@ -387,7 +387,7 @@ fun ProjectsTabContent(
                                         Analytics.trackVideoClick(
                                             videoId = project.id,
                                             templateId = project.settings.templateId,
-                                            songId = project.settings.musicSongId?.toString(),
+                                            songId = project.settings.primaryAudioNode?.songId?.toString(),
                                             location = AnalyticsEvent.Value.Location.LIBRARY
                                         )
                                         viewModel.onProjectClick(project)
@@ -399,10 +399,10 @@ fun ProjectsTabContent(
                                         Analytics.trackVideoDelete(
                                             videoId = project.id,
                                             templateId = project.settings.templateId,
-                                            songId = project.settings.musicSongId?.toString(),
+                                            songId = project.settings.primaryAudioNode?.songId?.toString(),
                                             duration = project.totalDurationMs,
                                             ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
-                                            volume = (project.settings.audioVolume * 100f).toInt(),
+                                            volume = ((project.settings.primaryAudioNode?.volume ?: 1f) * 100f).toInt(),
                                             mediaQuality = AnalyticsEvent.Value.Location.UNKNOWN
                                         )
                                         viewModel.onDeleteProject(project)
@@ -411,10 +411,10 @@ fun ProjectsTabContent(
                                         Analytics.trackVideoDownload(
                                             videoId = project.id,
                                             templateId = project.settings.templateId,
-                                            songId = project.settings.musicSongId?.toString(),
+                                            songId = project.settings.primaryAudioNode?.songId?.toString(),
                                             duration = project.totalDurationMs,
                                             ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
-                                            volume = (project.settings.audioVolume * 100f).toInt(),
+                                            volume = ((project.settings.primaryAudioNode?.volume ?: 1f) * 100f).toInt(),
                                             mediaQuantity = project.assets.size,
                                             location = AnalyticsEvent.Value.Location.LIBRARY
                                         )
@@ -424,10 +424,10 @@ fun ProjectsTabContent(
                                         Analytics.trackVideoShare(
                                             videoId = project.id,
                                             templateId = project.settings.templateId,
-                                            songId = project.settings.musicSongId?.toString(),
+                                            songId = project.settings.primaryAudioNode?.songId?.toString(),
                                             duration = project.totalDurationMs,
                                             ratioSize = project.settings.aspectRatio.toAnalyticsRatioSize(),
-                                            volume = (project.settings.audioVolume * 100f).toInt(),
+                                            volume = ((project.settings.primaryAudioNode?.volume ?: 1f) * 100f).toInt(),
                                             mediaQuantity = project.assets.size,
                                             location = AnalyticsEvent.Value.Location.LIBRARY
                                         )

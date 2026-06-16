@@ -164,6 +164,7 @@ class EffectSetRepositoryImpl(
             thumbnailUrl = getThumbnailUrl(thumbnailPath),
             isPremium = isPremium,
             isActive = isActive,
+            transitionIds = transitionIds ?: emptyList(),
             transitions = transitionIds
                 ?.mapNotNull { TransitionShaderLibrary.getById(it) }
                 ?: emptyList(),

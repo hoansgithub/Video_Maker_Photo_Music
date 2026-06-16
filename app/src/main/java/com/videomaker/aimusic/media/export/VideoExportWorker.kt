@@ -147,11 +147,12 @@ class VideoExportWorker(
 
             // Load beat-sync data if music is selected but beatSyncData is null
             // (beatSyncData is not persisted in database, must be loaded from Supabase)
-            if (project.settings.musicSongId != null && project.settings.beatSyncData == null) {
-                android.util.Log.d("VideoExportWorker", "Loading beat-sync data for song ${project.settings.musicSongId}")
+            val exportSongId = project.settings.primaryAudioNode?.songId
+            if (exportSongId != null && project.settings.beatSyncData == null) {
+                android.util.Log.d("VideoExportWorker", "Loading beat-sync data for song $exportSongId")
 
                 val beatSyncData = try {
-                    beatSyncRepository.getBeatData(project.settings.musicSongId).getOrNull()
+                    beatSyncRepository.getBeatData(exportSongId).getOrNull()
                         ?: return Result.failure(workDataOf(KEY_ERROR to "Beat-sync data not available for this song"))
                 } catch (e: Exception) {
                     android.util.Log.e("VideoExportWorker", "Failed to load beat-sync data", e)
@@ -178,8 +179,9 @@ class VideoExportWorker(
 
             // Re-preprocess to ensure processedAudioUri points to a valid cached file.
             // Volume is applied by VolumeAudioProcessor in CompositionFactory, NOT baked in here.
-            if (project.settings.musicSongId != null &&
-                project.settings.musicSongUrl != null &&
+            val exportNode = project.settings.primaryAudioNode
+            if (exportNode?.songId != null &&
+                exportNode.songUrl != null &&
                 project.settings.beatSyncData != null) {
 
                 android.util.Log.d("VideoExportWorker", "Preprocessing audio with fadeout for export")
@@ -190,22 +192,27 @@ class VideoExportWorker(
                 val hookStartTimeMs = project.settings.hookStartTimeMs
 
                 val preprocessedUri = audioPreprocessingService.preprocessAudioWithFadeout(
-                    sourceUri = android.net.Uri.parse(project.settings.musicSongUrl),
-                    songId = project.settings.musicSongId,
+                    sourceUri = android.net.Uri.parse(exportNode.songUrl),
+                    songId = exportNode.songId,
                     trimStartMs = hookStartTimeMs,
                     totalDurationMs = project.settings.totalDurationMs,
                     fadeoutDurationMs = fadeoutDurationMs
                 )
 
                 if (preprocessedUri != null) {
+                    val updatedNode = exportNode.copy(processedAudioUri = preprocessedUri.toString())
                     project = project.copy(
                         settings = project.settings.copy(
-                            processedAudioUri = preprocessedUri
+                            audioNodes = listOf(updatedNode) + project.settings.audioNodes.drop(1)
                         )
                     )
-                    android.util.Log.d("VideoExportWorker", "✅ Audio preprocessed with fadeout: $preprocessedUri")
+                    android.util.Log.d("VideoExportWorker", "Audio preprocessed with fadeout: $preprocessedUri")
                 } else {
-                    android.util.Log.w("VideoExportWorker", "⚠️ Audio preprocessing failed, export will have no audio")
+                    android.util.Log.e("VideoExportWorker", "Audio preprocessing failed — aborting export")
+                    return Result.failure(workDataOf(
+                        KEY_ERROR to "Audio processing failed. Please check your network and try again.",
+                        KEY_ERROR_CODE to -1
+                    ))
                 }
             }
 

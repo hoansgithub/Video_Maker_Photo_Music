@@ -42,6 +42,7 @@ import com.videomaker.aimusic.data.remote.SupabaseClientProvider
 import com.videomaker.aimusic.data.repository.BeatSyncRepositoryImpl
 import com.videomaker.aimusic.data.repository.EffectSetRepositoryImpl
 import com.videomaker.aimusic.data.repository.ExportRepositoryImpl
+import com.videomaker.aimusic.data.repository.TransitionRepositoryImpl
 import com.videomaker.aimusic.data.repository.FeedbackRepositoryImpl
 import com.videomaker.aimusic.data.repository.LikedSongRepositoryImpl
 import com.videomaker.aimusic.data.repository.LikedTemplateRepositoryImpl
@@ -51,6 +52,7 @@ import com.videomaker.aimusic.data.repository.TemplateRepositoryImpl
 import com.videomaker.aimusic.domain.repository.BeatSyncRepository
 import com.videomaker.aimusic.domain.repository.EffectSetRepository
 import com.videomaker.aimusic.domain.repository.ExportRepository
+import com.videomaker.aimusic.domain.repository.TransitionRepository
 import com.videomaker.aimusic.domain.repository.FeedbackRepository
 import com.videomaker.aimusic.domain.repository.LikedSongRepository
 import com.videomaker.aimusic.domain.repository.LikedTemplateRepository
@@ -261,6 +263,7 @@ val dataModule = module {
     single<BeatSyncRepository> { BeatSyncRepositoryImpl(androidContext(), get()) }
     single<TemplateRepository> { TemplateRepositoryImpl(get(), get(), regionProvider = get(), languageManager = get()) }
     single<EffectSetRepository> { EffectSetRepositoryImpl(get(), get(), get()) }
+    single<TransitionRepository> { TransitionRepositoryImpl(androidContext(), get()) }
     single<LikedSongRepository> { LikedSongRepositoryImpl(get()) }
     single<LikedTemplateRepository> { LikedTemplateRepositoryImpl(get()) }
 
@@ -287,7 +290,7 @@ val dataModule = module {
  * Scope: Singleton - Expensive to create
  */
 val mediaModule = module {
-    single { CompositionFactory(androidContext(), get()) }
+    single { CompositionFactory(androidContext()) }
     single { AudioPreviewCache(androidContext()) }
     single { com.videomaker.aimusic.media.audio.AudioPreprocessingService(androidContext()) }
 
@@ -810,13 +813,15 @@ class WeeklyRankingListViewModelFactory(
 class EffectSetViewModelFactory(
     private val getEffectSetsPagedUseCase: GetEffectSetsPagedUseCase,
     private val unlockedEffectSetsManager: com.videomaker.aimusic.core.storage.UnlockedEffectSetsManager,
-    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+    private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
+    private val transitionRepository: TransitionRepository
 ) {
     fun create(): com.videomaker.aimusic.modules.editor.EffectSetViewModel {
         return com.videomaker.aimusic.modules.editor.EffectSetViewModel(
             getEffectSetsPagedUseCase = getEffectSetsPagedUseCase,
             unlockedEffectSetsManager = unlockedEffectSetsManager,
-            adsLoaderService = adsLoaderService
+            adsLoaderService = adsLoaderService,
+            transitionRepository = transitionRepository
         )
     }
 }
@@ -959,7 +964,8 @@ val presentationModule = module {
         com.videomaker.aimusic.modules.editor.EffectSetViewModel(
             getEffectSetsPagedUseCase = get(),
             unlockedEffectSetsManager = get(),
-            adsLoaderService = get()
+            adsLoaderService = get(),
+            transitionRepository = get()
         )
     }
 
@@ -1126,7 +1132,8 @@ val presentationModule = module {
         EffectSetViewModelFactory(
             getEffectSetsPagedUseCase = get(),
             unlockedEffectSetsManager = get(),
-            adsLoaderService = get()
+            adsLoaderService = get(),
+            transitionRepository = get()
         )
     }
 
