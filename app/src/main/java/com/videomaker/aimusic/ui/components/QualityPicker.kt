@@ -218,17 +218,6 @@ fun QualityPickerV2(
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
             )
-            // [AD] badge for locked qualities (720p/1080p)
-            val isLocked =
-                (selectedQuality == VideoQuality.HD_720 || selectedQuality == VideoQuality.FHD_1080) && !isQualityUnlocked
-            if (isLocked) {
-                AdBadge(
-                    style = AdBadgeStyle.Small(
-                        textColor = Color.White,
-                        backgroundColor = Color.White.copy(alpha = 0.2f)
-                    )
-                )
-            }
             Spacer(modifier = Modifier.width(1.5.dp))
             Icon(
                 painter = painterResource(R.drawable.ic_arrow_down),
@@ -244,8 +233,6 @@ fun QualityPickerV2(
             onDismissRequest = { showQualityMenu = false }
         ) {
             VideoQuality.entries.forEach { quality ->
-                val isQualityLocked =
-                    (quality == VideoQuality.HD_720 || quality == VideoQuality.FHD_1080) && !isQualityUnlocked
                 DropdownMenuItem(
                     text = {
                         Row(
@@ -267,15 +254,6 @@ fun QualityPickerV2(
                                 },
                                 textAlign = TextAlign.End
                             )
-                            // [AD] badge for locked qualities
-                            if (isQualityLocked) {
-                                Spacer(modifier = Modifier.width(6.dp))
-                                AdBadge(
-                                    style = AdBadgeStyle.Small(
-                                        textColor = MaterialTheme.colorScheme.onSurface
-                                    )
-                                )
-                            }
                         }
                     },
                     onClick = {

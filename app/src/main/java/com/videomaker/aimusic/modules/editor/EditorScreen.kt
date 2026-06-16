@@ -155,6 +155,7 @@ fun EditorScreen(
     viewModel: EditorViewModel,
     // musicPickerViewModelFactory: MusicPickerViewModelFactory, // Commented out - using Supabase only
     onNavigateBack: () -> Unit,
+    onNavigateToHome: () -> Unit,
     onNavigateToPreview: (String) -> Unit,
     onNavigateToExport: (String, com.videomaker.aimusic.domain.model.VideoQuality) -> Unit,
     onNavigateToAddAssets: (projectId: String, assetUris: List<String>, songId: Long, hookStartMs: Long) -> Unit
@@ -179,7 +180,12 @@ fun EditorScreen(
     var wasPlayingBeforeQualityAd by remember { mutableStateOf(false) }
     var hasTrackedVideoPreview by remember { mutableStateOf(false) }
     var hasTrackedVideoPreviewComplete by remember { mutableStateOf(false) }
+    var hasTrackedEditorRender by remember { mutableStateOf(false) }
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
+    // Preview render-failure retry budget: allow up to 2 re-renders. After that the
+    // "Try again" CTA is hidden and only "Close" (→ home gallery) remains.
+    var previewRetryCount by remember { mutableStateOf(0) }
+    var hasTrackedPreviewFailed by remember { mutableStateOf(false) }
     var ratioConfirmed by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -241,6 +247,10 @@ fun EditorScreen(
     ) {
         val state = successStateForTracking ?: return@LaunchedEffect
         val videoId = state.project.id
+        if (!hasTrackedEditorRender) {
+            Analytics.trackVideoEditorRender()
+            hasTrackedEditorRender = true
+        }
         if (!hasTrackedVideoPreview) {
             Analytics.trackVideoPreview(
                 videoId = videoId,
@@ -388,9 +398,24 @@ fun EditorScreen(
     // for the very first load. Reset by the VM on a fresh load (initial/retry).
     val hasPreviewBeenReady by viewModel.hasPreviewBeenReady.collectAsStateWithLifecycle()
     LaunchedEffect(previewState) {
-        if (previewState is com.videomaker.aimusic.modules.editor.components.PreviewState.Ready) {
-            hasBeenReady = true
-            viewModel.markPreviewReady()
+        when (previewState) {
+            is com.videomaker.aimusic.modules.editor.components.PreviewState.Ready -> {
+                hasBeenReady = true
+                viewModel.markPreviewReady()
+                hasTrackedPreviewFailed = false
+                // A successful render refreshes the retry budget for any later failure.
+                previewRetryCount = 0
+            }
+
+            is com.videomaker.aimusic.modules.editor.components.PreviewState.Error -> {
+                // Fire once per failure; the flag is cleared when a rebuild starts (Building/Ready).
+                if (!hasTrackedPreviewFailed) {
+                    currentVideoId()?.let { Analytics.trackVideoPreviewFailed(it) }
+                    hasTrackedPreviewFailed = true
+                }
+            }
+
+            else -> hasTrackedPreviewFailed = false
         }
     }
     val isProcessingAudio = (uiState as? EditorUiState.Success)?.isProcessingAudio == true
@@ -1003,17 +1028,28 @@ fun EditorScreen(
                 (previewState as? com.videomaker.aimusic.modules.editor.components.PreviewState.Error)?.message
 
             if (previewErrorMessage != null) {
+                // Allow up to 2 re-renders. Once exhausted, hide "Try again" — only "Close" remains.
+                val canRetry = previewRetryCount < 2
                 EditorErrorDialog(
                     title = stringResource(R.string.error_preview_title),
                     message = previewErrorMessage,
-                    primaryText = stringResource(R.string.error_dialog_try_again),
-                    onPrimary = {
-                        // Clear error and trigger rebuild
-                        previewState =
-                            com.videomaker.aimusic.modules.editor.components.PreviewState.Building
+                    primaryText = if (canRetry) {
+                        stringResource(R.string.error_dialog_try_again)
+                    } else {
+                        null
+                    },
+                    onPrimary = if (canRetry) {
+                        {
+                            previewRetryCount++
+                            // Clear error and trigger re-render
+                            previewState =
+                                com.videomaker.aimusic.modules.editor.components.PreviewState.Building
+                        }
+                    } else {
+                        null
                     },
                     secondaryText = stringResource(R.string.error_dialog_back_home),
-                    onSecondary = { onNavigateBack() }
+                    onSecondary = { onNavigateToHome() }
                 )
             }
 

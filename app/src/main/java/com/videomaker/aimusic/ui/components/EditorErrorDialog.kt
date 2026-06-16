@@ -43,15 +43,16 @@ import com.videomaker.aimusic.ui.theme.TextSecondary
  *
  * - Tapping outside the card does NOT dismiss (onDismissRequest is a no-op and the
  *   scrim swallows all clicks) — the user must choose [primaryText] or [secondaryText].
- * - [primaryText] is the lime pill CTA (e.g. "Try again").
+ * - [primaryText] is the lime pill CTA (e.g. "Try again"). Pass null (with null [onPrimary])
+ *   to hide it entirely — e.g. after retries are exhausted, only [secondaryText] remains.
  * - [secondaryText] is the plain text CTA (e.g. "Close back to home").
  */
 @Composable
 fun EditorErrorDialog(
     title: String,
     message: String,
-    primaryText: String,
-    onPrimary: () -> Unit,
+    primaryText: String?,
+    onPrimary: (() -> Unit)?,
     secondaryText: String,
     onSecondary: () -> Unit,
     modifier: Modifier = Modifier,
@@ -127,27 +128,30 @@ fun EditorErrorDialog(
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-                // CTA 1 — lime pill, single click
-                Text(
-                    text = primaryText,
-                    color = CtaText,
-                    fontFamily = FontFamily.Default,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp,
-                    lineHeight = 22.4.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(160.dp))
-                        .background(Primary)
-                        .clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() },
-                            onClick = onPrimary
-                        )
-                        .padding(vertical = 16.dp, horizontal = 49.dp)
-                )
+                // CTA 1 — lime pill, single click. Hidden when primaryText/onPrimary are null
+                // (e.g. retries exhausted — only the Close CTA remains).
+                if (primaryText != null && onPrimary != null) {
+                    Text(
+                        text = primaryText,
+                        color = CtaText,
+                        fontFamily = FontFamily.Default,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp,
+                        lineHeight = 22.4.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(160.dp))
+                            .background(Primary)
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() },
+                                onClick = onPrimary
+                            )
+                            .padding(vertical = 16.dp, horizontal = 49.dp)
+                    )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
 
                 // CTA 2 — plain text, single click
                 Text(

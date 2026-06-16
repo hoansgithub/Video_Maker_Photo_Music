@@ -633,6 +633,12 @@ fun AppNavigation(
                     viewModel = editorViewModel,
                     // musicPickerViewModelFactory = musicPickerFactory,
                     onNavigateBack = { backStack.safeRemoveLast() },
+                    onNavigateToHome = {
+                        backStack.apply {
+                            clear()
+                            add(AppRoute.Home(initialTab = 0)) // Tab 0 = Gallery (home gallery)
+                        }
+                    },
                     onNavigateToPreview = { projectId ->
                         backStack.add(AppRoute.Preview(projectId))
                     },

@@ -111,7 +111,9 @@ object AnalyticsEvent {
     // ============================================
     // 9. VIDEO EDITOR SCREEN
     // ============================================
+    const val VIDEO_EDITOR_RENDER = "video_editor_render"
     const val VIDEO_PREVIEW = "video_preview"
+    const val VIDEO_PREVIEW_FAILED = "video_preview_failed"
     const val VIDEO_PREVIEW_COMPLETE = "video_preview_complete"
     const val VIDEO_PLAY = "video_play"
     const val VIDEO_PAUSE = "video_pause"
