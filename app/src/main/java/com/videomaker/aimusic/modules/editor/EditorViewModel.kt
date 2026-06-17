@@ -609,7 +609,7 @@ class EditorViewModel(
                 }
 
                 // Always use the song's hook start time when song metadata is available
-                val hookStartTimeMs = song?.hookStartTimeMs ?: 0L
+                val hookStartTimeMs = song?.hookStartTimes?.firstOrNull() ?: 0L
 
                 // Calculate total duration from beat-sync data
                 val totalDurationMs = if (beatSyncData != null) {
@@ -919,7 +919,7 @@ class EditorViewModel(
 
                 // Pre-calculate beat-sync duration (avoid ANR in getter)
                 val currentState = _uiState.value as? EditorUiState.Success
-                val songTrimStart = song?.hookStartTimeMs ?: 0L
+                val songTrimStart = song?.hookStartTimes?.firstOrNull() ?: 0L
                 val totalDurationMs = if (beatSyncData != null && currentState != null) {
                     Project.calculateBeatSyncDuration(
                         beatData = beatSyncData,
@@ -969,7 +969,7 @@ class EditorViewModel(
                     songUrl = song?.mp3Url,
                     coverUrl = song?.coverUrl,
                     startTimeMs = 0L,
-                    trimStartMs = song?.hookStartTimeMs ?: 0L,
+                    trimStartMs = song?.hookStartTimes?.firstOrNull() ?: 0L,
                     volume = 1.0f,
                     processedAudioUri = preprocessedUri?.toString(),
                     hookStartTimes = song?.hookStartTimes ?: emptyList()
@@ -981,7 +981,7 @@ class EditorViewModel(
                         audioNodes = listOf(node),
                         // Beat-sync integration
                         beatSyncData = beatSyncData,
-                        hookStartTimeMs = song?.hookStartTimeMs ?: 0L,
+                        hookStartTimeMs = song?.hookStartTimes?.firstOrNull() ?: 0L,
                         totalDurationMs = totalDurationMs // Pre-calculated (prevents ANR)
                     )
                 }

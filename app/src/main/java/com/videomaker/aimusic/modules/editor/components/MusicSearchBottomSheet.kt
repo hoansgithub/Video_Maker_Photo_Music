@@ -234,7 +234,7 @@ internal fun MusicSearchBottomSheet(
     val displaySong = resolveSong(selectedForConfirmId ?: previewingSongId) ?: initialSong
 
     var selectionStartMs by remember(displaySong?.id) {
-        mutableLongStateOf(displaySong?.hookStartTimeMs ?: 0L)
+        mutableLongStateOf(displaySong?.hookStartTimes?.firstOrNull() ?: 0L)
     }
 
     // Handle confirm button click
