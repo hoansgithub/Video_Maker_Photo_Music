@@ -495,7 +495,7 @@ fun PlayMusicSlider(
             text = formatPlaybackTime(displayedMs),
             fontSize = 10.sp,
             color = TextPrimary,
-            textAlign = TextAlign.End,
+            textAlign = TextAlign.Start,
             modifier = Modifier.width(40.dp)
         )
     }
