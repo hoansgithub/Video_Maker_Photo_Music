@@ -191,8 +191,6 @@ internal fun MusicSearchBottomSheet(
     val selectedForConfirmId by MusicPreviewManager.selectedForConfirmId.collectAsStateWithLifecycle()
     val isLoadingPreview by MusicPreviewManager.isLoadingPreview.collectAsStateWithLifecycle()
 
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val focusManager = LocalFocusManager.current
     val dimens = AppDimens.current
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -273,27 +271,6 @@ internal fun MusicSearchBottomSheet(
     fun onAdFailed() {
         pendingSongToUnlock = null
         shouldPresentAd = false
-    }
-
-    // Shared song tap handler — used by the Results and Idle lists.
-    val onSongPreview: (MusicSong, String) -> Unit = { song, location ->
-        onSongClick(song)
-        selectedSongLocation = location
-        Analytics.trackSongClick(
-            songId = song.id.toString(),
-            songName = song.name,
-            location = location,
-            isPremium = song.isPremium
-        )
-        Analytics.trackSongPreview(
-            songId = song.id.toString(),
-            songName = song.name,
-            location = location,
-            isPremium = song.isPremium
-        )
-        focusManager.clearFocus()
-        keyboardController?.hide()
-        MusicPreviewManager.togglePreview(song.id)
     }
 
     // ExoPlayer for preview with cache
@@ -482,6 +459,33 @@ internal fun MusicSearchBottomSheet(
             decorFitsSystemWindows = false
         )
     ) {
+        // IME/focus controllers MUST be obtained INSIDE the Dialog: the Dialog hosts its own
+        // window with a separate FocusOwner and IME. Controllers read in the outer composition
+        // target the host window and have no effect on the search field shown here.
+        val focusManager = LocalFocusManager.current
+        val keyboardController = LocalSoftwareKeyboardController.current
+
+        // Shared song tap handler — used by the Results and Idle lists.
+        val onSongPreview: (MusicSong, String) -> Unit = { song, location ->
+            onSongClick(song)
+            selectedSongLocation = location
+            Analytics.trackSongClick(
+                songId = song.id.toString(),
+                songName = song.name,
+                location = location,
+                isPremium = song.isPremium
+            )
+            Analytics.trackSongPreview(
+                songId = song.id.toString(),
+                songName = song.name,
+                location = location,
+                isPremium = song.isPremium
+            )
+            focusManager.clearFocus()
+            keyboardController?.hide()
+            MusicPreviewManager.togglePreview(song.id)
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -538,8 +542,9 @@ internal fun MusicSearchBottomSheet(
                 snapshotFlow {
                     listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
                 }.collect { (index, offset) ->
-                    if (index != previousIndex || kotlin.math.abs(offset - previousOffset) > 0) {
+                    if (index != previousIndex || offset != previousOffset) {
                         focusManager.clearFocus()
+                        keyboardController?.hide()
                     }
                     previousIndex = index
                     previousOffset = offset
