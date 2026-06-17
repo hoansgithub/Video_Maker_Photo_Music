@@ -11,6 +11,6 @@ enum class VideoQuality(val displayName: String, val height: Int) {
     FHD_1080("1080p", 1080);
 
     companion object {
-        val DEFAULT = HD_720
+        val DEFAULT = FHD_1080
     }
 }

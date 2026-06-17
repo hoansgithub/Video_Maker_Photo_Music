@@ -2212,11 +2212,11 @@ class EditorViewModel(
     }
 
     /**
-     * Check if selected quality requires ad unlock.
-     * 720p and 1080p are locked until user watches rewarded ad.
+     * Check if export requires ad unlock.
+     * All qualities are locked until user watches a rewarded ad.
      */
     fun isQualityLocked(quality: VideoQuality): Boolean {
-        return (quality == VideoQuality.HD_720 || quality == VideoQuality.FHD_1080) && !_isQualityUnlocked.value
+        return !_isQualityUnlocked.value
     }
 
     /**

@@ -1,7 +1,6 @@
 package com.videomaker.aimusic.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -14,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -38,7 +36,6 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Neutral_N600
-import com.videomaker.aimusic.ui.theme.SplashBackground
 
 /**
  * Reusable Quality Picker Component
@@ -83,9 +80,15 @@ fun QualityPicker(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // HD badge for 1080p (on the left)
-            if (selectedQuality == VideoQuality.FHD_1080) {
-                HdBadge()
+            // [AD] badge for locked qualities
+            val isLocked = !isQualityUnlocked
+            if (isLocked) {
+                AdBadge(
+                    style = AdBadgeStyle.Small(
+                        textColor = textColor,
+                        backgroundColor = textColor.copy(alpha = 0.2f)
+                    )
+                )
                 Spacer(modifier = Modifier.width(6.dp))
             }
             Text(
@@ -94,17 +97,6 @@ fun QualityPicker(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold
             )
-            // [AD] badge for locked qualities (720p/1080p)
-            val isLocked = (selectedQuality == VideoQuality.HD_720 || selectedQuality == VideoQuality.FHD_1080) && !isQualityUnlocked
-            if (isLocked) {
-                Spacer(modifier = Modifier.width(6.dp))
-                AdBadge(
-                    style = AdBadgeStyle.Small(
-                        textColor = textColor,
-                        backgroundColor = textColor.copy(alpha = 0.2f)
-                    )
-                )
-            }
             Spacer(modifier = Modifier.width(4.dp))
             Icon(
                 imageVector = Icons.Default.ArrowDropDown,
@@ -120,7 +112,7 @@ fun QualityPicker(
             onDismissRequest = { showQualityMenu = false }
         ) {
             VideoQuality.entries.forEach { quality ->
-                val isQualityLocked = (quality == VideoQuality.HD_720 || quality == VideoQuality.FHD_1080) && !isQualityUnlocked
+                val isQualityLocked = !isQualityUnlocked
                 DropdownMenuItem(
                     text = {
                         Row(
@@ -128,11 +120,6 @@ fun QualityPicker(
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // HD badge for 1080p
-                            if (quality == VideoQuality.FHD_1080) {
-                                HdBadge()
-                                Spacer(modifier = Modifier.width(8.dp))
-                            }
                             Text(
                                 text = quality.displayName,
                                 fontWeight = if (quality == selectedQuality) {
@@ -193,24 +180,14 @@ fun QualityPickerV2(
             horizontalArrangement = Arrangement.spacedBy(2.5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // HD badge for 1080p (on the left)
-            if (selectedQuality == VideoQuality.FHD_1080) {
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = Neutral_N600,
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .padding(horizontal = 1.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.editor_hd),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = SplashBackground
+            // [AD] badge for locked qualities
+            if (!isQualityUnlocked) {
+                AdBadge(
+                    style = AdBadgeStyle.Small(
+                        textColor = Neutral_N600,
+                        backgroundColor = Neutral_N600.copy(alpha = 0.2f)
                     )
-                }
+                )
             }
             Text(
                 text = selectedQuality.displayName,
@@ -240,11 +217,6 @@ fun QualityPickerV2(
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // HD badge for 1080p
-                            if (quality == VideoQuality.FHD_1080) {
-                                HdBadge()
-                                Spacer(modifier = Modifier.width(8.dp))
-                            }
                             Text(
                                 text = quality.displayName,
                                 fontWeight = if (quality == selectedQuality) {
@@ -254,6 +226,14 @@ fun QualityPickerV2(
                                 },
                                 textAlign = TextAlign.End
                             )
+                            if (!isQualityUnlocked) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                AdBadge(
+                                    style = AdBadgeStyle.Small(
+                                        textColor = MaterialTheme.colorScheme.onSurface
+                                    )
+                                )
+                            }
                         }
                     },
                     onClick = {
@@ -275,24 +255,3 @@ fun QualityPickerV2(
     }
 }
 
-/**
- * HD Badge for 1080p quality indicator
- */
-@Composable
-private fun HdBadge(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .background(
-                color = MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(4.dp)
-            )
-            .padding(horizontal = 4.dp, vertical = 2.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.editor_hd),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimary
-        )
-    }
-}
