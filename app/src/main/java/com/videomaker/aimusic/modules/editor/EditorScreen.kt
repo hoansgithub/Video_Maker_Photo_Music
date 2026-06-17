@@ -179,6 +179,8 @@ fun EditorScreen(
     // var showMusicPicker by remember { mutableStateOf(false) } // Commented out - using Supabase only
     var showRatioSheet by remember { mutableStateOf(false) }
     var showEffectSetSheet by remember { mutableStateOf(false) }
+    var effectSetIdBeforePanel by remember { mutableStateOf<String?>(null) }
+    var effectPanelConfirmed by remember { mutableStateOf(false) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
     var showImagesSheet by remember { mutableStateOf(false) }
@@ -298,6 +300,23 @@ fun EditorScreen(
         qualityAdError?.let { message ->
             snackbarHostState.showSnackbar(message)
             viewModel.onQualityAdErrorShown()
+        }
+    }
+
+    // Track editor screen render / failure once at launch
+    var hasTrackedEditorLaunch by remember { mutableStateOf(false) }
+    LaunchedEffect(uiState) {
+        if (hasTrackedEditorLaunch) return@LaunchedEffect
+        when (uiState) {
+            is EditorUiState.Success -> {
+                hasTrackedEditorLaunch = true
+                Analytics.trackVideoEditorRender()
+            }
+            is EditorUiState.Error -> {
+                hasTrackedEditorLaunch = true
+                Analytics.trackVideoPreviewFailed(videoId = "")
+            }
+            else -> {}
         }
     }
 
@@ -490,6 +509,7 @@ fun EditorScreen(
                         videoId = state.project.id,
                         templateId = state.displaySettings.templateId
                     )
+                    effectSetIdBeforePanel = state.displaySettings.effectSetId
                     showEffectSetSheet = true
                 },
                 onRatioClick = {
@@ -532,20 +552,36 @@ fun EditorScreen(
                             effectName = state.effectSetName
                         )
                     }
-                    // Reset highlight to currently applied effect set
-                    effectSetViewModel.setSelectedEffectSetId(state?.displaySettings?.effectSetId)
+                    if (!effectPanelConfirmed) {
+                        // Revert to the effect set that was active before opening the panel
+                        viewModel.updateEffectSet(effectSetIdBeforePanel)
+                        effectSetViewModel.setSelectedEffectSetId(effectSetIdBeforePanel)
+                    }
+                    effectPanelConfirmed = false
                     showEffectSetSheet = false
                 },
                 onEffectPanelConfirm = {
+                    // Effect is already applied via preview — mark as confirmed so dismiss won't revert
+                    effectPanelConfirmed = true
                     val selectedId = effectSetViewModel.activeEffectSetId.value
                     if (selectedId != null) {
                         val state = currentState()
-                        if (state?.displaySettings?.effectSetId != selectedId) {
-                            viewModel.updateEffectSet(selectedId)
+                        if (effectSetIdBeforePanel != selectedId) {
+                            val effectSet = (effectSetViewModel.uiState.value as? EffectSetUiState.Success)
+                                ?.effectSets?.find { it.id == selectedId }
+                            if (effectSet != null) {
+                                Analytics.trackEffectSelect(
+                                    videoId = state?.project?.id ?: "",
+                                    effectId = effectSet.id,
+                                    effectName = effectSet.name,
+                                    isPremium = effectSet.isPremium
+                                )
+                            }
                         }
                     }
                 },
                 onEffectSetSelected = { effectSet ->
+                    viewModel.updateEffectSet(effectSet.id)
                     val videoId = currentVideoId()
                     if (videoId != null) {
                         Analytics.trackEffectClick(
