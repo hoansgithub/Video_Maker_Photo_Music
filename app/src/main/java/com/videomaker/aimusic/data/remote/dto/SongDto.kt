@@ -51,6 +51,8 @@ data class SongDto(
     val usageCount: Int = 0,
     @SerialName("hook_start_time")
     val hookStartTimeMs: Long? = null,
+    @SerialName("hook_start_times")
+    val hookStartTimes: List<Long>? = null,
     @SerialName("created_at")
     val createdAt: String? = null,
     @SerialName("updated_at")

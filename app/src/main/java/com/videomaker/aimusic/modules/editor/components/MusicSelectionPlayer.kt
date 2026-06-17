@@ -502,18 +502,6 @@ private fun HookProgressBar(
             strokeWidth = trackHeight,
             cap = StrokeCap.Round
         )
-        // Hook segments (green pills) — span the actual [start, end] (= start → +15s)
-        hookSegments.forEach { hook ->
-            val startX = msToX(hook.startMs.toFloat())
-            val endX = msToX(hook.endMs.toFloat())
-            drawLine(
-                color = Primary,
-                start = Offset(startX, centerY),
-                end = Offset(endX.coerceAtLeast(startX + trackHeight), centerY),
-                strokeWidth = trackHeight,
-                cap = StrokeCap.Round
-            )
-        }
         // Selected video window (white) — uses the animated start for smooth movement
         if (videoDurationMs > 0L) {
             val drawnStart = animatedStartMs.value
@@ -524,6 +512,18 @@ private fun HookProgressBar(
                 start = Offset(startX, centerY),
                 end = Offset(endX.coerceAtLeast(startX + trackHeight), centerY),
                 strokeWidth = trackHeight + 2.dp.toPx(),
+                cap = StrokeCap.Round
+            )
+        }
+        // Hook points (green capsule dots) — drawn last so they render on top of everything
+        val capsuleWidth = 8.dp.toPx()
+        hookSegments.forEach { hook ->
+            val cx = msToX(hook.startMs.toFloat())
+            drawLine(
+                color = Primary,
+                start = Offset((cx - capsuleWidth / 2f).coerceAtLeast(0f), centerY),
+                end = Offset((cx + capsuleWidth / 2f).coerceAtMost(w), centerY),
+                strokeWidth = trackHeight,
                 cap = StrokeCap.Round
             )
         }

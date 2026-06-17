@@ -6,6 +6,8 @@ import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.repository.LikedSongRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 
 class LikedSongRepositoryImpl(
     private val dao: LikedSongDao
@@ -36,17 +38,23 @@ class LikedSongRepositoryImpl(
         mp3Url = mp3Url,
         previewUrl = previewUrl,
         durationMs = durationMs ?: 0,
-        hookStartTimeMs = hookStartTimeMs
+        hookStartTimeMs = hookStartTimeMs,
+        hookStartTimesJson = Json.encodeToString(hookStartTimes)
     )
 
-    private fun LikedSongEntity.toModel() = MusicSong(
-        id = songId,
-        name = name,
-        artist = artist,
-        coverUrl = coverUrl,
-        mp3Url = mp3Url,
-        previewUrl = previewUrl,
-        durationMs = durationMs,
-        hookStartTimeMs = hookStartTimeMs
-    )
+    private fun LikedSongEntity.toModel(): MusicSong {
+        val hookTimes = runCatching { Json.decodeFromString<List<Long>>(hookStartTimesJson) }
+            .getOrDefault(emptyList())
+        return MusicSong(
+            id = songId,
+            name = name,
+            artist = artist,
+            coverUrl = coverUrl,
+            mp3Url = mp3Url,
+            previewUrl = previewUrl,
+            durationMs = durationMs,
+            hookStartTimeMs = hookTimes.firstOrNull() ?: hookStartTimeMs,
+            hookStartTimes = hookTimes.ifEmpty { listOfNotNull(hookStartTimeMs.takeIf { it > 0L }) }
+        )
+    }
 }

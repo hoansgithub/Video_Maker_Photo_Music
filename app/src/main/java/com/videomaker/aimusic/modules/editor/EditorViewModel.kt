@@ -608,12 +608,8 @@ class EditorViewModel(
                     data.effectSetId
                 }
 
-                // Calculate hook start time (use song's default or 0)
-                val hookStartTimeMs = if (data.applyHookStartDefaults) {
-                    song?.hookStartTimeMs ?: 0L
-                } else {
-                    0L
-                }
+                // Always use the song's hook start time when song metadata is available
+                val hookStartTimeMs = song?.hookStartTimeMs ?: 0L
 
                 // Calculate total duration from beat-sync data
                 val totalDurationMs = if (beatSyncData != null) {

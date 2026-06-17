@@ -411,12 +411,10 @@ internal fun MusicSearchBottomSheet(
     var isPreviewPlaying by remember { mutableStateOf(false) }
 
     val waveform = remember(displaySong?.id) { placeholderWaveform(seed = displaySong?.id ?: 0L) }
-    val hookSegments = remember(displaySong?.id, currentVideoDurationMs) {
-        val start = displaySong?.hookStartTimeMs ?: 0L
-        if (start > 0L) {
-            listOf(MusicHookSegment(start, start + currentVideoDurationMs.coerceAtLeast(1000L)))
-        } else {
-            emptyList()
+    val hookSegments = remember(displaySong?.id) {
+        val hookTimes = displaySong?.hookStartTimes ?: emptyList()
+        hookTimes.filter { it > 0L }.map { start ->
+            MusicHookSegment(startMs = start, endMs = start)
         }
     }
     val songDurationMs = displaySong?.durationMs?.toLong()?.takeIf { it > 0L } ?: playerDurationMs

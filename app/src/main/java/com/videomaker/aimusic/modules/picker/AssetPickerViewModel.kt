@@ -1000,7 +1000,6 @@ class AssetPickerViewModel(
                                     musicSongId = songId,
                                     musicSongName = songName,
                                     aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio),
-                                    applyHookStartDefaults = overrideSongId >= 0L,
                                     analyticsVideoId = analyticsVideoId
                                 )
 
@@ -1025,7 +1024,6 @@ class AssetPickerViewModel(
                                 musicSongId = overrideSongId,
                                 musicSongName = null,  // Will be loaded by editor
                                 aspectRatio = AspectRatio.RATIO_9_16,
-                                applyHookStartDefaults = true,  // Apply hook start for song-to-video mode
                                 analyticsVideoId = analyticsVideoId
                             )
                         )

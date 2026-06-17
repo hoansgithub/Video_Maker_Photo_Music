@@ -113,9 +113,9 @@ class SongRepositoryImpl(
 
     override suspend fun getSongById(id: Long): Result<MusicSong> = withContext(Dispatchers.IO) {
         songsByIdMemoryCache[id]?.let { cachedSong ->
-            // Trust in-memory cache only when hook is present; otherwise refetch to self-heal
-            // from legacy cached list payloads that may not contain hook_start_time yet.
-            if (cachedSong.hookStartTimeMs > 0L) {
+            // Trust in-memory cache only when hook times are present; otherwise refetch to
+            // self-heal from legacy cached list payloads that may not contain hook data yet.
+            if (cachedSong.hookStartTimes.isNotEmpty()) {
                 return@withContext Result.success(cachedSong)
             }
         }

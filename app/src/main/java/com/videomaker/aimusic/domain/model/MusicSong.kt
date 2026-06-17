@@ -28,7 +28,9 @@ data class MusicSong(
     val isActive: Boolean = true,
     val sortOrder: Int = 0,
     val usageCount: Int = 0,
-    val hookStartTimeMs: Long = 0L
+    @Deprecated("Use hookStartTimes instead. Kept for backward compatibility — derived from hookStartTimes.first().")
+    val hookStartTimeMs: Long = 0L,
+    val hookStartTimes: List<Long> = emptyList()
 ) {
     /** Formatted duration string (e.g., "3:45") */
     val formattedDuration: String
