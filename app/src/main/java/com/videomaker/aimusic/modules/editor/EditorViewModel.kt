@@ -657,7 +657,8 @@ class EditorViewModel(
                             startTimeMs = 0L,
                             trimStartMs = hookStartTimeMs,
                             volume = 1.0f,
-                            processedAudioUri = preprocessedUri?.toString()
+                            processedAudioUri = preprocessedUri?.toString(),
+                            hookStartTimes = song.hookStartTimes
                         )
                     )
                 } else {
@@ -970,7 +971,8 @@ class EditorViewModel(
                     startTimeMs = 0L,
                     trimStartMs = song?.hookStartTimeMs ?: 0L,
                     volume = 1.0f,
-                    processedAudioUri = preprocessedUri?.toString()
+                    processedAudioUri = preprocessedUri?.toString(),
+                    hookStartTimes = song?.hookStartTimes ?: emptyList()
                 )
 
                 // Update settings once with all assets ready (including preprocessed audio)
@@ -997,7 +999,7 @@ class EditorViewModel(
         }
     }
 
-    fun updateMusicTrack(songId: Long, songName: String, songArtist: String, songUrl: String, songCoverUrl: String, trimStartMs: Long? = null) {
+    fun updateMusicTrack(songId: Long, songName: String, songArtist: String, songUrl: String, songCoverUrl: String, trimStartMs: Long? = null, hookStartTimes: List<Long> = emptyList()) {
         // Reset error flag from any previous failed music change
         isMusicChangeError = false
 
@@ -1099,7 +1101,8 @@ class EditorViewModel(
                     startTimeMs = 0L,
                     trimStartMs = effectiveTrimStart,
                     volume = 1.0f,
-                    processedAudioUri = preprocessedUri?.toString()
+                    processedAudioUri = preprocessedUri?.toString(),
+                    hookStartTimes = hookStartTimes
                 )
 
                 // Seek to start — beat-sync timing is completely different with new song

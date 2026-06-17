@@ -764,7 +764,8 @@ fun EditorScreen(
                         artist = audioNode.songArtist ?: "",
                         mp3Url = audioNode.songUrl ?: "",
                         coverUrl = audioNode.coverUrl ?: "",
-                        hookStartTimeMs = audioNode.trimStartMs
+                        hookStartTimeMs = audioNode.trimStartMs,
+                        hookStartTimes = audioNode.hookStartTimes
                     )
                 }
 
@@ -801,7 +802,8 @@ fun EditorScreen(
                             songArtist = song.artist,
                             songUrl = song.mp3Url,
                             songCoverUrl = song.coverUrl,
-                            trimStartMs = selectionStartMs
+                            trimStartMs = selectionStartMs,
+                            hookStartTimes = song.hookStartTimes
                         )
                         showMusicSearchSheet = false
                         // ViewModel handles auto-play after music change completes
