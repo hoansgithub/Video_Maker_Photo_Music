@@ -275,77 +275,102 @@ fun MusicSelectionPlayer(
 fun MusicSelectionPlayerSkeleton(
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF2B2B2B))
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+    // Mirrors MusicSelectionPlayer 1:1 (same wrapper, paddings and element sizes) so the
+    // card does not change size / position when the swap happens — only the content fades.
+    Box(
+        modifier = modifier.fillMaxWidth()
     ) {
-        // Header: cover + title/artist + confirm
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ShimmerPlaceholder(
-                modifier = Modifier.size(56.dp),
-                cornerRadius = 12.dp
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                ShimmerPlaceholder(
-                    modifier = Modifier
-                        .fillMaxWidth(0.6f)
-                        .height(18.dp),
-                    cornerRadius = 4.dp
+        Spacer(
+            modifier = Modifier
+                .matchParentSize()
+                .shadow(
+                    elevation = 12.dp,
+                    shape = RoundedCornerShape(20.dp),
+                    ambientColor = Color.Black.copy(alpha = 0.24f),
+                    spotColor = Color.Black.copy(alpha = 0.24f)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                ShimmerPlaceholder(
-                    modifier = Modifier
-                        .fillMaxWidth(0.35f)
-                        .height(14.dp),
-                    cornerRadius = 4.dp
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xFF575757))
+                .border(
+                    width = 1.dp,
+                    color = Color.White.copy(alpha = 0.4f),
+                    shape = RoundedCornerShape(20.dp)
                 )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            ShimmerPlaceholder(
-                modifier = Modifier.size(52.dp),
-                cornerRadius = 26.dp
-            )
-        }
+        )
 
-        Spacer(modifier = Modifier.height(12.dp))
-        HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Progress row: time + bar + play/pause
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ShimmerPlaceholder(
-                modifier = Modifier
-                    .width(40.dp)
-                    .height(18.dp),
-                cornerRadius = 4.dp
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            ShimmerPlaceholder(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(8.dp),
-                cornerRadius = 4.dp
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            ShimmerPlaceholder(
-                modifier = Modifier.size(52.dp),
-                cornerRadius = 26.dp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Waveform
-        ShimmerPlaceholder(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp),
-            cornerRadius = 12.dp
-        )
+                .clip(RoundedCornerShape(20.dp))
+                .padding(horizontal = 10.dp, vertical = 12.dp)
+        ) {
+            // Header: cover + title/artist + confirm (matches player sizes)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ShimmerPlaceholder(
+                    modifier = Modifier.size(36.dp),
+                    cornerRadius = 8.dp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    ShimmerPlaceholder(
+                        modifier = Modifier
+                            .fillMaxWidth(0.55f)
+                            .height(15.dp),
+                        cornerRadius = 4.dp
+                    )
+                    ShimmerPlaceholder(
+                        modifier = Modifier
+                            .fillMaxWidth(0.3f)
+                            .height(12.dp),
+                        cornerRadius = 4.dp
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                ShimmerPlaceholder(
+                    modifier = Modifier.size(36.dp),
+                    cornerRadius = 18.dp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.8f))
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Progress row: time + bar + play/pause (matches player sizes)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ShimmerPlaceholder(
+                    modifier = Modifier
+                        .width(28.dp)
+                        .height(12.dp),
+                    cornerRadius = 4.dp
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                ShimmerPlaceholder(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(6.dp),
+                    cornerRadius = 4.dp
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                ShimmerPlaceholder(
+                    modifier = Modifier.size(36.dp),
+                    cornerRadius = 18.dp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Waveform scrubber (matches player's 40.dp height)
+            ShimmerPlaceholder(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp),
+                cornerRadius = 10.dp
+            )
+        }
     }
 }
 
