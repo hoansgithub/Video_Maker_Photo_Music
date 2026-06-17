@@ -232,7 +232,12 @@ internal fun MusicSearchBottomSheet(
     val displaySong = resolveSong(selectedForConfirmId ?: previewingSongId) ?: initialSong
 
     var selectionStartMs by remember(displaySong?.id) {
-        mutableLongStateOf(displaySong?.hookStartTimes?.firstOrNull() ?: 0L)
+        // When displaying the saved project song, start from its saved trim position.
+        // When previewing a new song from the picker, use first hook point.
+        val savedPosition = if (displaySong == initialSong && initialSong != null) {
+            initialSong.hookStartTimeMs.takeIf { it > 0L }
+        } else null
+        mutableLongStateOf(savedPosition ?: displaySong?.hookStartTimes?.firstOrNull() ?: 0L)
     }
 
     // Handle confirm button click
@@ -943,6 +948,11 @@ internal fun MusicSearchBottomSheet(
                             .padding(horizontal = 10.dp, vertical = 8.dp)
                             // Smoothly animate any residual height delta between skeleton/player.
                             .animateContentSize()
+                            // Consume all touches so they don't pass through to the song list
+                            // or the keyboard-dismiss handler behind this overlay.
+                            .pointerInput(Unit) {
+                                detectTapGestures { /* consumed */ }
+                            }
                     ) {
                         val playerSong = displaySong
                         // Newly-selected song still preparing — show shimmer until ready.
