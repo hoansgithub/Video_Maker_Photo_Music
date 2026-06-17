@@ -190,6 +190,17 @@
     <string name="editor_images_title">Tap to Edit • Hold to Rearrange</string>
     <string name="editor_add_images">Add Images</string>
     <string name="editor_delete_image">Delete</string>
+    <!-- Editor loading tips (rotating while the video is being prepared) -->
+    <string name="editor_loading_tip_1">Collecting your best moments...</string>
+    <string name="editor_loading_tip_2">Turning photos into motion...</string>
+    <string name="editor_loading_tip_3">Matching every moment to the beat...</string>
+    <string name="editor_loading_tip_4">Making it look amazing...</string>
+    <string name="editor_loading_tip_5">Your music video is ready! ✨</string>
+    <string name="editor_loading_dont_close">Please don\'t close app</string>
+    <string name="editor_ratio_label">Ratio</string>
+    <string name="editor_image_dragging">Dragging</string>
+    <string name="editor_image_drag_to_reorder">Drag to reorder</string>
+    <string name="editor_image_content_desc">Image %1$s</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Created Video</string>

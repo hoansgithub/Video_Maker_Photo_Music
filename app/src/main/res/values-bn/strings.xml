@@ -638,4 +638,21 @@
     <string name="banner_trending_now">এখন ট্রেন্ডিং</string>
     <string name="banner_new_arrivals">নতুন আগমন</string>
 
+    <!-- Editor / music-search strings (mapped from English) -->
+    <string name="error_dialog_try_again">আবার চেষ্টা করুন</string>
+    <string name="error_dialog_back_home">হোমে ফিরে যান</string>
+    <string name="song_search_title">সঙ্গীত</string>
+    <string name="song_search_sheet_hint">আপনার স্টাইল খুঁজছি</string>
+    <string name="song_search_searching">খোঁজা হচ্ছে...</string>
+    <string name="song_search_results_found">%1$dটি ফলাফল পাওয়া গেছে</string>
+    <string name="editor_loading_tip_1">আপনার সেরা মুহূর্তগুলো সংগ্রহ করা হচ্ছে...</string>
+    <string name="editor_loading_tip_2">ছবিগুলোকে গতিতে রূপান্তর করা হচ্ছে...</string>
+    <string name="editor_loading_tip_3">প্রতিটি মুহূর্ত বিটের সাথে মেলানো হচ্ছে...</string>
+    <string name="editor_loading_tip_4">এটিকে অসাধারণ করে তোলা হচ্ছে...</string>
+    <string name="editor_loading_tip_5">আপনার মিউজিক ভিডিও প্রস্তুত! ✨</string>
+    <string name="editor_loading_dont_close">অনুগ্রহ করে অ্যাপ বন্ধ করবেন না</string>
+    <string name="editor_ratio_label">অনুপাত</string>
+    <string name="editor_image_dragging">টেনে নেওয়া হচ্ছে</string>
+    <string name="editor_image_drag_to_reorder">পুনর্বিন্যাস করতে টেনে আনুন</string>
+    <string name="editor_image_content_desc">ছবি %1$s</string>
 </resources>

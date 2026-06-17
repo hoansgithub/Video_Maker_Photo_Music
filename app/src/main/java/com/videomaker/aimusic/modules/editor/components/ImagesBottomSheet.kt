@@ -290,7 +290,7 @@ internal fun ImagesBottomSheet(
                                 }
                                 AsyncImage(
                                     model = dragImageRequest,
-                                    contentDescription = "Dragging",
+                                    contentDescription = stringResource(R.string.editor_image_dragging),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxSize()
                                 )
@@ -390,7 +390,7 @@ private fun ImageItem(
         }
         AsyncImage(
             model = imageRequest,
-            contentDescription = "Image ${asset.id}",
+            contentDescription = stringResource(R.string.editor_image_content_desc, asset.id),
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
@@ -407,7 +407,7 @@ private fun ImageItem(
             ) {
                 Icon(
                     imageVector = Icons.Default.OpenWith,
-                    contentDescription = "Drag to reorder",
+                    contentDescription = stringResource(R.string.editor_image_drag_to_reorder),
                     tint = Color.White,
                     modifier = Modifier.size(14.dp)
                 )
@@ -429,7 +429,7 @@ private fun ImageItem(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete",
+                        contentDescription = stringResource(R.string.editor_delete_image),
                         tint = Color.Red,
                         modifier = Modifier.size(28.dp)
                     )

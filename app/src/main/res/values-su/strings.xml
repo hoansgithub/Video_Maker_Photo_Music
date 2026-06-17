@@ -638,4 +638,21 @@
     <string name="banner_trending_now">KEUR NGETREN</string>
     <string name="banner_new_arrivals">PANGANYARNA</string>
 
+    <!-- Editor / music-search strings (mapped from English) -->
+    <string name="error_dialog_try_again">Coba deui</string>
+    <string name="error_dialog_back_home">Balik ka beranda</string>
+    <string name="song_search_title">Musik</string>
+    <string name="song_search_sheet_hint">Téangan gaya anjeun</string>
+    <string name="song_search_searching">Néangan...</string>
+    <string name="song_search_results_found">%1$d hasil kapanggih</string>
+    <string name="editor_loading_tip_1">Ngumpulkeun momen pangsaéna anjeun...</string>
+    <string name="editor_loading_tip_2">Ngarobah foto jadi gerakan...</string>
+    <string name="editor_loading_tip_3">Nyaluyukeun unggal momen jeung wirahma...</string>
+    <string name="editor_loading_tip_4">Ngajadikeun éndah...</string>
+    <string name="editor_loading_tip_5">Video musik anjeun parantos siap! ✨</string>
+    <string name="editor_loading_dont_close">Mangga ulah nutup aplikasi</string>
+    <string name="editor_ratio_label">Rasio</string>
+    <string name="editor_image_dragging">Nyered</string>
+    <string name="editor_image_drag_to_reorder">Séred pikeun nyusun ulang</string>
+    <string name="editor_image_content_desc">Gambar %1$s</string>
 </resources>
