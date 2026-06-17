@@ -426,7 +426,23 @@ private fun EffectSetCard(
                 )
             }
             
-            if (showAds) {
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(6.dp)
+                        .size(20.dp)
+                        .background(Color.Black.copy(alpha = 0.4f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Primary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            } else if (showAds) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_ads),
                     contentDescription = null,
