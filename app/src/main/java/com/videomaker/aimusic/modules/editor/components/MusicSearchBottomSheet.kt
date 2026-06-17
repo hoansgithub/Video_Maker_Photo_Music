@@ -955,16 +955,42 @@ internal fun MusicSearchBottomSheet(
                                     onPlayPauseClick = {
                                         if (exoPlayer.isPlaying) {
                                             exoPlayer.pause()
-                                        } else if (previewingSongId == playerSong.id) {
-                                            exoPlayer.play()
+                                            Analytics.trackSongPause(
+                                                songId = playerSong.id.toString(),
+                                                songName = playerSong.name,
+                                                location = AnalyticsEvent.Value.Location.EDITOR_SONG,
+                                                isPremium = playerSong.isPremium
+                                            )
                                         } else {
-                                            MusicPreviewManager.togglePreview(playerSong.id)
+                                            if (previewingSongId == playerSong.id) {
+                                                exoPlayer.play()
+                                            } else {
+                                                MusicPreviewManager.togglePreview(playerSong.id)
+                                            }
+                                            Analytics.trackSongPlay(
+                                                songId = playerSong.id.toString(),
+                                                songName = playerSong.name,
+                                                location = AnalyticsEvent.Value.Location.EDITOR_SONG,
+                                                isPremium = playerSong.isPremium
+                                            )
                                         }
                                     },
                                     onConfirmClick = { onConfirmClick() },
                                     onSelectionChange = { newStart ->
                                         selectionStartMs = newStart
                                         runCatching { exoPlayer.seekTo(newStart) }
+                                    },
+                                    onStartTimeCommit = { source ->
+                                        val loc = when (source) {
+                                            StartTimeChangeSource.DURATION_BAR ->
+                                                AnalyticsEvent.Value.Location.DURATION_BAR
+                                            StartTimeChangeSource.DRAG_BAR ->
+                                                AnalyticsEvent.Value.Location.DRAG_BAR
+                                        }
+                                        Analytics.trackSongStartTimeChange(
+                                            songId = playerSong.id.toString(),
+                                            location = loc
+                                        )
                                     },
                                 )
                             }
@@ -1261,7 +1287,6 @@ fun SongEditItem(
                     color = TextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
                 )
                 Spacer(modifier = Modifier.height(dimens.spaceXxs))
                 Text(

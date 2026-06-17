@@ -643,6 +643,26 @@ object Analytics {
         )
     }
 
+    /**
+     * Fired when the user changes a song's start time in the editor change-song view,
+     * either by dragging the scrubber ([AnalyticsEvent.Value.Location.DRAG_BAR]) or
+     * tapping the duration bar ([AnalyticsEvent.Value.Location.DURATION_BAR]).
+     */
+    fun trackSongStartTimeChange(songId: String, location: String) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.SONG_STARTTIME_CHANGE,
+            params = mapOf(
+                AnalyticsEvent.Param.SONG_ID to songId,
+                AnalyticsEvent.Param.LOCATION to location
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.SONG_ID,
+                AnalyticsEvent.Param.LOCATION
+            ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackCreationStart(location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.CREATION_START,

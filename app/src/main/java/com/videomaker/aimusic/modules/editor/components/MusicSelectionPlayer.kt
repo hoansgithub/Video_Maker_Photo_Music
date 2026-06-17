@@ -31,6 +31,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -81,6 +94,12 @@ import kotlin.random.Random
 data class MusicHookSegment(val startMs: Long, val endMs: Long)
 
 /**
+ * Which UI element changed the song start time — drives the song_starttime_change location.
+ * [DURATION_BAR]: the slim hook progress bar (tap or drag). [DRAG_BAR]: the waveform scrubber.
+ */
+enum class StartTimeChangeSource { DURATION_BAR, DRAG_BAR }
+
+/**
  * The floating "now selecting" music player shown at the bottom of the music search sheet.
  *
  * Layout (Figma #7):
@@ -108,7 +127,9 @@ fun MusicSelectionPlayer(
     onPlayPauseClick: () -> Unit,
     onConfirmClick: () -> Unit,
     onSelectionChange: (Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Fired once per gesture (drag end / tap) so the caller can emit song_starttime_change.
+    onStartTimeCommit: (StartTimeChangeSource) -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -227,6 +248,8 @@ fun MusicSelectionPlayer(
                     videoDurationMs = videoDurationMs,
                     songDurationMs = songDurationMs,
                     hookSegments = hookSegments,
+                    onSeek = { newStart -> onSelectionChange(newStart) },
+                    onSeekCommit = { onStartTimeCommit(StartTimeChangeSource.DURATION_BAR) },
                     modifier = Modifier
                         .weight(1f)
                         .height(20.dp)
@@ -258,6 +281,7 @@ fun MusicSelectionPlayer(
                 selectionStartMs = selectionStartMs,
                 positionMs = positionMs,
                 onSelectionChange = onSelectionChange,
+                onDragCommit = { onStartTimeCommit(StartTimeChangeSource.DRAG_BAR) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(40.dp)
@@ -375,11 +399,14 @@ fun MusicSelectionPlayerSkeleton(
 }
 
 /**
- * Slim progress bar (Figma #8). Does NOT animate with playback — it only reflects the
- * currently-selected frame:
+ * Slim progress bar (Figma #8). Reflects the currently-selected frame:
  *  - gray full track
- *  - Primary (green) pills at hook segments
+ *  - Primary (green) pill spanning each hook segment [startMs, endMs] (start → +15s)
  *  - white window = the currently-selected video portion [selectionStart, selectionStart+videoDuration]
+ *
+ * Interaction: tap jumps to a point (white window glides there smoothly), and the bar can be
+ * dragged horizontally — the white window follows the finger and stays where released.
+ * [onSeek] fires continuously with the new start; [onSeekCommit] fires once per gesture.
  */
 @Composable
 private fun HookProgressBar(
@@ -387,15 +414,85 @@ private fun HookProgressBar(
     videoDurationMs: Long,
     songDurationMs: Long,
     hookSegments: List<MusicHookSegment>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onSeek: (Long) -> Unit = {},
+    onSeekCommit: () -> Unit = {}
 ) {
-    val duration = songDurationMs.coerceAtLeast(1L)
-    Canvas(modifier = modifier) {
+    val duration = songDurationMs.coerceAtLeast(1L).toFloat()
+    // Largest start so the [start, start+videoDuration] window still fits in the song.
+    val maxStartMs = (songDurationMs - videoDurationMs).coerceAtLeast(0L)
+    val canSeek = songDurationMs > 0L && videoDurationMs > 0L && maxStartMs > 0L
+
+    val scope = rememberCoroutineScope()
+    // Drawn position (ms) of the white window's start — animated for smooth gliding on tap /
+    // external changes, snapped 1:1 to the finger while dragging.
+    val animatedStartMs = remember { Animatable(selectionStartMs.toFloat()) }
+    var isDragging by remember { mutableStateOf(false) }
+
+    // Glide to the selection whenever it changes outside of an active drag (tap, song change,
+    // or the waveform scrubber moving it).
+    LaunchedEffect(selectionStartMs, isDragging) {
+        if (!isDragging && animatedStartMs.value != selectionStartMs.toFloat()) {
+            animatedStartMs.animateTo(
+                targetValue = selectionStartMs.toFloat(),
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            )
+        }
+    }
+
+    fun xToStart(x: Float, w: Float): Long =
+        (x / w * duration).toLong().coerceIn(0L, maxStartMs)
+
+    Canvas(
+        modifier = modifier
+            .pointerInput(songDurationMs, videoDurationMs, maxStartMs) {
+                if (!canSeek) return@pointerInput
+                detectTapGestures { offset ->
+                    val w = size.width.toFloat()
+                    if (w <= 0f) return@detectTapGestures
+                    onSeek(xToStart(offset.x, w))
+                    onSeekCommit()
+                }
+            }
+            .pointerInput(songDurationMs, videoDurationMs, maxStartMs) {
+                if (!canSeek) return@pointerInput
+                var changed = false
+                detectHorizontalDragGestures(
+                    onDragStart = { offset ->
+                        isDragging = true
+                        changed = false
+                        val w = size.width.toFloat()
+                        if (w > 0f) {
+                            val s = xToStart(offset.x, w)
+                            scope.launch { animatedStartMs.snapTo(s.toFloat()) }
+                            onSeek(s)
+                            changed = true
+                        }
+                    },
+                    onDragEnd = {
+                        isDragging = false
+                        if (changed) onSeekCommit()
+                    },
+                    onDragCancel = { isDragging = false }
+                ) { change, _ ->
+                    val w = size.width.toFloat()
+                    if (w <= 0f) return@detectHorizontalDragGestures
+                    change.consume()
+                    val s = xToStart(change.position.x, w)
+                    scope.launch { animatedStartMs.snapTo(s.toFloat()) }
+                    onSeek(s)
+                    changed = true
+                }
+            }
+    ) {
         val w = size.width
         val centerY = size.height / 2f
         val trackHeight = 4.dp.toPx()
 
-        fun msToX(ms: Long): Float = (ms.toFloat() / duration).coerceIn(0f, 1f) * w
+        fun msToX(ms: Float): Float = (ms / duration).coerceIn(0f, 1f) * w
 
         // Full track
         drawLine(
@@ -405,22 +502,23 @@ private fun HookProgressBar(
             strokeWidth = trackHeight,
             cap = StrokeCap.Round
         )
-        // Hook markers (green pills)
-        val markerWidth = 16.dp.toPx()
+        // Hook segments (green pills) — span the actual [start, end] (= start → +15s)
         hookSegments.forEach { hook ->
-            val x = msToX((hook.startMs + hook.endMs) / 2L)
+            val startX = msToX(hook.startMs.toFloat())
+            val endX = msToX(hook.endMs.toFloat())
             drawLine(
                 color = Primary,
-                start = Offset((x - markerWidth / 2f).coerceAtLeast(0f), centerY),
-                end = Offset((x + markerWidth / 2f).coerceAtMost(w), centerY),
+                start = Offset(startX, centerY),
+                end = Offset(endX.coerceAtLeast(startX + trackHeight), centerY),
                 strokeWidth = trackHeight,
                 cap = StrokeCap.Round
             )
         }
-        // Selected video window (white)
+        // Selected video window (white) — uses the animated start for smooth movement
         if (videoDurationMs > 0L) {
-            val startX = msToX(selectionStartMs)
-            val endX = msToX(selectionStartMs + videoDurationMs)
+            val drawnStart = animatedStartMs.value
+            val startX = msToX(drawnStart)
+            val endX = msToX(drawnStart + videoDurationMs)
             drawLine(
                 color = Color.White,
                 start = Offset(startX, centerY),
@@ -448,7 +546,9 @@ fun MusicScrubber(
     positionMs: Long,
     onSelectionChange: (Long) -> Unit,
     modifier: Modifier = Modifier,
-    frameWidth: androidx.compose.ui.unit.Dp = 100.dp
+    frameWidth: androidx.compose.ui.unit.Dp = 100.dp,
+    // Fired once when a drag gesture ends and the start actually moved.
+    onDragCommit: () -> Unit = {}
 ) {
     val density = LocalDensity.current
     val frameWidthPx = with(density) { frameWidth.toPx() }
@@ -458,12 +558,18 @@ fun MusicScrubber(
     val maxStartMs = (songDurationMs - videoDurationMs).coerceAtLeast(0L)
     val canScrub = pxPerMs > 0f && songDurationMs > 0L && maxStartMs > 0L
 
+    // Tracks whether the in-progress drag actually changed the start, so we only emit a
+    // commit (analytics) once per meaningful gesture.
+    var draggedThisGesture by remember { mutableStateOf(false) }
     val draggable = rememberDraggableState { delta ->
         if (canScrub) {
             // Dragging the track right (+delta) reveals earlier song → start decreases.
             val deltaMs = (delta / pxPerMs).toLong()
             val newStart = (selectionStartMs - deltaMs).coerceIn(0L, maxStartMs)
-            if (newStart != selectionStartMs) onSelectionChange(newStart)
+            if (newStart != selectionStartMs) {
+                draggedThisGesture = true
+                onSelectionChange(newStart)
+            }
         }
     }
 
@@ -471,7 +577,14 @@ fun MusicScrubber(
         modifier = modifier.draggable(
             state = draggable,
             orientation = Orientation.Horizontal,
-            enabled = canScrub
+            enabled = canScrub,
+            onDragStarted = { draggedThisGesture = false },
+            onDragStopped = {
+                if (draggedThisGesture) {
+                    onDragCommit()
+                    draggedThisGesture = false
+                }
+            }
         )
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
