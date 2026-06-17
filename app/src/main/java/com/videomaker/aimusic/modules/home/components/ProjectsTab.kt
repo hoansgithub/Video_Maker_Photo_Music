@@ -692,7 +692,6 @@ private fun ProjectsEmptyState(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
             .padding(top = 40.dp),
     ) {
         Column(

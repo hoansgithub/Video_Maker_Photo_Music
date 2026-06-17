@@ -60,8 +60,7 @@ fun LikeTemplateEmpty(
 
     LazyColumn(
         modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+            .fillMaxSize(),
         contentPadding = PaddingValues(
             bottom = dimens.space3Xl + dimens.space2Xl
         ),

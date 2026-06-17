@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -55,8 +56,10 @@ fun LikeSongEmpty(
 
     LazyColumn(
         modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+            .fillMaxSize(),
+        contentPadding = PaddingValues(
+            bottom = dimens.space3Xl + dimens.space2Xl
+        ),
         verticalArrangement = Arrangement.spacedBy(dimens.spaceSm)
     ) {
         item {

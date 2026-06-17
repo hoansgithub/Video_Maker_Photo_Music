@@ -36,6 +36,7 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Neutral_N600
+import com.videomaker.aimusic.ui.theme.SplashBackground
 
 /**
  * Reusable Quality Picker Component
@@ -181,13 +182,32 @@ fun QualityPickerV2(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // [AD] badge for locked qualities
-            if (!isQualityUnlocked) {
-                AdBadge(
-                    style = AdBadgeStyle.Small(
-                        textColor = Neutral_N600,
-                        backgroundColor = Neutral_N600.copy(alpha = 0.2f)
+//            if (!isQualityUnlocked) {
+//                AdBadge(
+//                    style = AdBadgeStyle.Small(
+//                        textColor = Neutral_N600,
+//                        backgroundColor = Neutral_N600.copy(alpha = 0.2f)
+//                    )
+//                )
+//            }
+            // HD badge for 1080p (on the left)
+            if (selectedQuality == VideoQuality.FHD_1080) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Neutral_N600,
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .padding(horizontal = 1.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.editor_hd),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SplashBackground
                     )
-                )
+                }
             }
             Text(
                 text = selectedQuality.displayName,
@@ -217,6 +237,26 @@ fun QualityPickerV2(
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // HD badge for 1080p (on the left)
+                            if (quality == VideoQuality.FHD_1080) {
+                                Box(
+                                    modifier = Modifier
+                                        .background(
+                                            color = Neutral_N600,
+                                            shape = RoundedCornerShape(4.dp)
+                                        )
+                                        .padding(horizontal = 1.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.editor_hd),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = SplashBackground
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(2.5.dp))
+                            }
                             Text(
                                 text = quality.displayName,
                                 fontWeight = if (quality == selectedQuality) {
@@ -226,14 +266,14 @@ fun QualityPickerV2(
                                 },
                                 textAlign = TextAlign.End
                             )
-                            if (!isQualityUnlocked) {
-                                Spacer(modifier = Modifier.width(6.dp))
-                                AdBadge(
-                                    style = AdBadgeStyle.Small(
-                                        textColor = MaterialTheme.colorScheme.onSurface
-                                    )
-                                )
-                            }
+//                            if (!isQualityUnlocked) {
+//                                Spacer(modifier = Modifier.width(6.dp))
+//                                AdBadge(
+//                                    style = AdBadgeStyle.Small(
+//                                        textColor = MaterialTheme.colorScheme.onSurface
+//                                    )
+//                                )
+//                            }
                         }
                     },
                     onClick = {
