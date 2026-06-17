@@ -750,20 +750,20 @@ fun EditorScreen(
 
                 val editorState = currentState()
                 val editorSettings = editorState?.displaySettings
-                val editorInitialSong = editorSettings?.musicSongId?.let { sid ->
+                val editorInitialSong = currentState()?.displaySettings?.primaryAudioNode?.songId?.let { sid ->
                     com.videomaker.aimusic.domain.model.MusicSong(
                         id = sid,
-                        name = editorSettings.musicSongName ?: "",
-                        artist = editorSettings.musicSongArtist ?: "",
-                        mp3Url = editorSettings.musicSongUrl ?: "",
-                        coverUrl = editorSettings.musicSongCoverUrl ?: "",
-                        hookStartTimeMs = editorSettings.hookStartTimeMs
+                        name = editorSettings?.primaryAudioNode?.songName ?: "",
+                        artist = editorSettings?.primaryAudioNode?.songArtist ?: "",
+                        mp3Url = editorSettings?.primaryAudioNode?.songUrl ?: "",
+                        coverUrl = editorSettings?.primaryAudioNode?.songUrl ?: "",
+                        hookStartTimeMs = editorSettings?.hookStartTimeMs?:0L
                     )
                 }
 
                 MusicSearchBottomSheet(
                     viewModel = songSearchViewModel,
-                    currentVideoDurationMs = editorState?.durationMs ?: 0L,
+                    currentVideoDurationMs = currentState()?.displaySettings?.totalDurationMs ?: 0L,
                     initialSong = editorInitialSong,
                     onSongClick = { song ->
                         val videoId = currentVideoId()
