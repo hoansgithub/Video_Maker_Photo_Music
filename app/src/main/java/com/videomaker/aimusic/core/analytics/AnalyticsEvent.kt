@@ -86,6 +86,7 @@ object AnalyticsEvent {
     const val SONG_UNFAVORITE = "song_unfavorite"
     const val SONG_SHARE = "song_share"
     const val SONG_SELECT = "song_select"
+    const val SONG_STARTTIME_CHANGE = "song_starttime_change"
 
     // ============================================
     // 7. LIBRARY SCREEN
@@ -452,6 +453,12 @@ object AnalyticsEvent {
             const val VIDEO_EDITOR_SEARCH = "video_editor_search"
             const val VIDEO_EDITOR_RCM = "video_editor_rcm"
             const val UNINSTALL = "uninstall"
+
+            // Editor bottom player (change-song view)
+            const val EDITOR_SONG = "editor_song"
+            // song_starttime_change sources
+            const val DURATION_BAR = "duration_bar"
+            const val DRAG_BAR = "drag_bar"
 
             // Song list screens
             const val SUGGESTED_SONGS = "suggested_songs"

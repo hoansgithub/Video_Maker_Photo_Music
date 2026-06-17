@@ -635,4 +635,21 @@
     <string name="banner_trending_now">अभी ट्रेंडिंग</string>
     <string name="banner_new_arrivals">नए आगमन</string>
 
+    <!-- Editor / music-search strings (mapped from English) -->
+    <string name="error_dialog_try_again">फिर से कोशिश करें</string>
+    <string name="error_dialog_back_home">होम पर वापस जाएं</string>
+    <string name="song_search_title">संगीत</string>
+    <string name="song_search_sheet_hint">अपनी शैली खोजें</string>
+    <string name="song_search_searching">खोज रहे हैं...</string>
+    <string name="song_search_results_found">%1$d परिणाम मिले</string>
+    <string name="editor_loading_tip_1">आपके सबसे अच्छे पल इकट्ठा किए जा रहे हैं...</string>
+    <string name="editor_loading_tip_2">फ़ोटो को गति में बदला जा रहा है...</string>
+    <string name="editor_loading_tip_3">हर पल को बीट से मिलाया जा रहा है...</string>
+    <string name="editor_loading_tip_4">इसे शानदार बनाया जा रहा है...</string>
+    <string name="editor_loading_tip_5">आपका म्यूज़िक वीडियो तैयार है! ✨</string>
+    <string name="editor_loading_dont_close">कृपया ऐप बंद न करें</string>
+    <string name="editor_ratio_label">अनुपात</string>
+    <string name="editor_image_dragging">खींचा जा रहा है</string>
+    <string name="editor_image_drag_to_reorder">पुनर्व्यवस्थित करने के लिए खींचें</string>
+    <string name="editor_image_content_desc">छवि %1$s</string>
 </resources>

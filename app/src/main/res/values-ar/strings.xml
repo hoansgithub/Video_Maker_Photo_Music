@@ -633,4 +633,21 @@
     <string name="banner_trending_now">الأكثر رواجًا</string>
     <string name="banner_new_arrivals">وصل حديثًا</string>
 
+    <!-- Editor / music-search strings (mapped from English) -->
+    <string name="error_dialog_try_again">حاول مرة أخرى</string>
+    <string name="error_dialog_back_home">العودة إلى الرئيسية</string>
+    <string name="song_search_title">الموسيقى</string>
+    <string name="song_search_sheet_hint">ابحث عن أسلوبك</string>
+    <string name="song_search_searching">جارٍ البحث...</string>
+    <string name="song_search_results_found">تم العثور على %1$d نتيجة</string>
+    <string name="editor_loading_tip_1">نجمع أفضل لحظاتك...</string>
+    <string name="editor_loading_tip_2">نحوّل الصور إلى حركة...</string>
+    <string name="editor_loading_tip_3">نطابق كل لحظة مع الإيقاع...</string>
+    <string name="editor_loading_tip_4">نجعلها تبدو رائعة...</string>
+    <string name="editor_loading_tip_5">فيديو الموسيقى جاهز! ✨</string>
+    <string name="editor_loading_dont_close">الرجاء عدم إغلاق التطبيق</string>
+    <string name="editor_ratio_label">النسبة</string>
+    <string name="editor_image_dragging">جارٍ السحب</string>
+    <string name="editor_image_drag_to_reorder">اسحب لإعادة الترتيب</string>
+    <string name="editor_image_content_desc">صورة %1$s</string>
 </resources>

@@ -31,8 +31,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -61,11 +75,13 @@ import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.PlayingAnimationBars
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
+import com.videomaker.aimusic.ui.theme.Neutral_N700
 import com.videomaker.aimusic.ui.theme.PlayerCardInnerGlow
 import com.videomaker.aimusic.ui.theme.PlayerCardTopHighlight
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
+import com.videomaker.aimusic.ui.theme.TextTertiary
 import kotlin.math.max
 import kotlin.random.Random
 
@@ -76,6 +92,12 @@ import kotlin.random.Random
  */
 @Immutable
 data class MusicHookSegment(val startMs: Long, val endMs: Long)
+
+/**
+ * Which UI element changed the song start time — drives the song_starttime_change location.
+ * [DURATION_BAR]: the slim hook progress bar (tap or drag). [DRAG_BAR]: the waveform scrubber.
+ */
+enum class StartTimeChangeSource { DURATION_BAR, DRAG_BAR }
 
 /**
  * The floating "now selecting" music player shown at the bottom of the music search sheet.
@@ -105,7 +127,9 @@ fun MusicSelectionPlayer(
     onPlayPauseClick: () -> Unit,
     onConfirmClick: () -> Unit,
     onSelectionChange: (Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Fired once per gesture (drag end / tap) so the caller can emit song_starttime_change.
+    onStartTimeCommit: (StartTimeChangeSource) -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -128,7 +152,6 @@ fun MusicSelectionPlayer(
                     color = Color.White.copy(alpha = 0.4f),
                     shape = RoundedCornerShape(20.dp)
                 )
-                .blur(16.dp)
         )
 
         Column(
@@ -144,17 +167,24 @@ fun MusicSelectionPlayer(
                     contentDescription = name,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(8.dp))
                 )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(modifier = Modifier.width(8.dp))
+                // Song name + artist
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // Song title row with playing animation bars
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
                             text = name,
-                            color = TextPrimary,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f, fill = false)
@@ -169,18 +199,21 @@ fun MusicSelectionPlayer(
                             )
                         }
                     }
-                    Text(
-                        text = artist,
-                        color = TextSecondary,
-                        fontSize = 15.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    if (artist.isNotBlank()) {
+                        Text(
+                            text = artist,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.W400,
+                            color = TextTertiary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
                         .background(Primary)
                         .clickableSingle { onConfirmClick() },
@@ -190,14 +223,14 @@ fun MusicSelectionPlayer(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
                         tint = Color.Black,
-                        modifier = Modifier.size(26.dp)
+                        modifier = Modifier.size(21.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.8f))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Progress row: time + hook progress bar + play/pause
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -205,9 +238,9 @@ fun MusicSelectionPlayer(
                 // with playback — only changes when the frame selection changes).
                 Text(
                     text = formatPlayerTime(videoDurationMs),
-                    color = TextPrimary,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.W500
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 HookProgressBar(
@@ -215,6 +248,8 @@ fun MusicSelectionPlayer(
                     videoDurationMs = videoDurationMs,
                     songDurationMs = songDurationMs,
                     hookSegments = hookSegments,
+                    onSeek = { newStart -> onSelectionChange(newStart) },
+                    onSeekCommit = { onStartTimeCommit(StartTimeChangeSource.DURATION_BAR) },
                     modifier = Modifier
                         .weight(1f)
                         .height(20.dp)
@@ -222,9 +257,9 @@ fun MusicSelectionPlayer(
                 Spacer(modifier = Modifier.width(12.dp))
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.14f))
+                        .background(Neutral_N700)
                         .clickableSingle { onPlayPauseClick() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -232,12 +267,12 @@ fun MusicSelectionPlayer(
                         imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(26.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             MusicScrubber(
                 waveform = waveform,
@@ -246,9 +281,10 @@ fun MusicSelectionPlayer(
                 selectionStartMs = selectionStartMs,
                 positionMs = positionMs,
                 onSelectionChange = onSelectionChange,
+                onDragCommit = { onStartTimeCommit(StartTimeChangeSource.DRAG_BAR) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
+                    .height(40.dp)
             )
         }
     }
@@ -263,86 +299,114 @@ fun MusicSelectionPlayer(
 fun MusicSelectionPlayerSkeleton(
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF2B2B2B))
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+    // Mirrors MusicSelectionPlayer 1:1 (same wrapper, paddings and element sizes) so the
+    // card does not change size / position when the swap happens — only the content fades.
+    Box(
+        modifier = modifier.fillMaxWidth()
     ) {
-        // Header: cover + title/artist + confirm
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ShimmerPlaceholder(
-                modifier = Modifier.size(56.dp),
-                cornerRadius = 12.dp
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                ShimmerPlaceholder(
-                    modifier = Modifier
-                        .fillMaxWidth(0.6f)
-                        .height(18.dp),
-                    cornerRadius = 4.dp
+        Spacer(
+            modifier = Modifier
+                .matchParentSize()
+                .shadow(
+                    elevation = 12.dp,
+                    shape = RoundedCornerShape(20.dp),
+                    ambientColor = Color.Black.copy(alpha = 0.24f),
+                    spotColor = Color.Black.copy(alpha = 0.24f)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                ShimmerPlaceholder(
-                    modifier = Modifier
-                        .fillMaxWidth(0.35f)
-                        .height(14.dp),
-                    cornerRadius = 4.dp
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0xFF575757))
+                .border(
+                    width = 1.dp,
+                    color = Color.White.copy(alpha = 0.4f),
+                    shape = RoundedCornerShape(20.dp)
                 )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            ShimmerPlaceholder(
-                modifier = Modifier.size(52.dp),
-                cornerRadius = 26.dp
-            )
-        }
+        )
 
-        Spacer(modifier = Modifier.height(12.dp))
-        HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Progress row: time + bar + play/pause
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ShimmerPlaceholder(
-                modifier = Modifier
-                    .width(40.dp)
-                    .height(18.dp),
-                cornerRadius = 4.dp
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            ShimmerPlaceholder(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(8.dp),
-                cornerRadius = 4.dp
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            ShimmerPlaceholder(
-                modifier = Modifier.size(52.dp),
-                cornerRadius = 26.dp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Waveform
-        ShimmerPlaceholder(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp),
-            cornerRadius = 12.dp
-        )
+                .clip(RoundedCornerShape(20.dp))
+                .padding(horizontal = 10.dp, vertical = 12.dp)
+        ) {
+            // Header: cover + title/artist + confirm (matches player sizes)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ShimmerPlaceholder(
+                    modifier = Modifier.size(36.dp),
+                    cornerRadius = 8.dp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    ShimmerPlaceholder(
+                        modifier = Modifier
+                            .fillMaxWidth(0.55f)
+                            .height(15.dp),
+                        cornerRadius = 4.dp
+                    )
+                    ShimmerPlaceholder(
+                        modifier = Modifier
+                            .fillMaxWidth(0.3f)
+                            .height(12.dp),
+                        cornerRadius = 4.dp
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                ShimmerPlaceholder(
+                    modifier = Modifier.size(36.dp),
+                    cornerRadius = 18.dp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.8f))
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Progress row: time + bar + play/pause (matches player sizes)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ShimmerPlaceholder(
+                    modifier = Modifier
+                        .width(28.dp)
+                        .height(12.dp),
+                    cornerRadius = 4.dp
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                ShimmerPlaceholder(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(6.dp),
+                    cornerRadius = 4.dp
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                ShimmerPlaceholder(
+                    modifier = Modifier.size(36.dp),
+                    cornerRadius = 18.dp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Waveform scrubber (matches player's 40.dp height)
+            ShimmerPlaceholder(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp),
+                cornerRadius = 10.dp
+            )
+        }
     }
 }
 
 /**
- * Slim progress bar (Figma #8). Does NOT animate with playback — it only reflects the
- * currently-selected frame:
+ * Slim progress bar (Figma #8). Reflects the currently-selected frame:
  *  - gray full track
- *  - Primary (green) pills at hook segments
+ *  - Primary (green) pill spanning each hook segment [startMs, endMs] (start → +15s)
  *  - white window = the currently-selected video portion [selectionStart, selectionStart+videoDuration]
+ *
+ * Interaction: tap jumps to a point (white window glides there smoothly), and the bar can be
+ * dragged horizontally — the white window follows the finger and stays where released.
+ * [onSeek] fires continuously with the new start; [onSeekCommit] fires once per gesture.
  */
 @Composable
 private fun HookProgressBar(
@@ -350,15 +414,85 @@ private fun HookProgressBar(
     videoDurationMs: Long,
     songDurationMs: Long,
     hookSegments: List<MusicHookSegment>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onSeek: (Long) -> Unit = {},
+    onSeekCommit: () -> Unit = {}
 ) {
-    val duration = songDurationMs.coerceAtLeast(1L)
-    Canvas(modifier = modifier) {
+    val duration = songDurationMs.coerceAtLeast(1L).toFloat()
+    // Largest start so the [start, start+videoDuration] window still fits in the song.
+    val maxStartMs = (songDurationMs - videoDurationMs).coerceAtLeast(0L)
+    val canSeek = songDurationMs > 0L && videoDurationMs > 0L && maxStartMs > 0L
+
+    val scope = rememberCoroutineScope()
+    // Drawn position (ms) of the white window's start — animated for smooth gliding on tap /
+    // external changes, snapped 1:1 to the finger while dragging.
+    val animatedStartMs = remember { Animatable(selectionStartMs.toFloat()) }
+    var isDragging by remember { mutableStateOf(false) }
+
+    // Glide to the selection whenever it changes outside of an active drag (tap, song change,
+    // or the waveform scrubber moving it).
+    LaunchedEffect(selectionStartMs, isDragging) {
+        if (!isDragging && animatedStartMs.value != selectionStartMs.toFloat()) {
+            animatedStartMs.animateTo(
+                targetValue = selectionStartMs.toFloat(),
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            )
+        }
+    }
+
+    fun xToStart(x: Float, w: Float): Long =
+        (x / w * duration).toLong().coerceIn(0L, maxStartMs)
+
+    Canvas(
+        modifier = modifier
+            .pointerInput(songDurationMs, videoDurationMs, maxStartMs) {
+                if (!canSeek) return@pointerInput
+                detectTapGestures { offset ->
+                    val w = size.width.toFloat()
+                    if (w <= 0f) return@detectTapGestures
+                    onSeek(xToStart(offset.x, w))
+                    onSeekCommit()
+                }
+            }
+            .pointerInput(songDurationMs, videoDurationMs, maxStartMs) {
+                if (!canSeek) return@pointerInput
+                var changed = false
+                detectHorizontalDragGestures(
+                    onDragStart = { offset ->
+                        isDragging = true
+                        changed = false
+                        val w = size.width.toFloat()
+                        if (w > 0f) {
+                            val s = xToStart(offset.x, w)
+                            scope.launch { animatedStartMs.snapTo(s.toFloat()) }
+                            onSeek(s)
+                            changed = true
+                        }
+                    },
+                    onDragEnd = {
+                        isDragging = false
+                        if (changed) onSeekCommit()
+                    },
+                    onDragCancel = { isDragging = false }
+                ) { change, _ ->
+                    val w = size.width.toFloat()
+                    if (w <= 0f) return@detectHorizontalDragGestures
+                    change.consume()
+                    val s = xToStart(change.position.x, w)
+                    scope.launch { animatedStartMs.snapTo(s.toFloat()) }
+                    onSeek(s)
+                    changed = true
+                }
+            }
+    ) {
         val w = size.width
         val centerY = size.height / 2f
         val trackHeight = 4.dp.toPx()
 
-        fun msToX(ms: Long): Float = (ms.toFloat() / duration).coerceIn(0f, 1f) * w
+        fun msToX(ms: Float): Float = (ms / duration).coerceIn(0f, 1f) * w
 
         // Full track
         drawLine(
@@ -368,22 +502,23 @@ private fun HookProgressBar(
             strokeWidth = trackHeight,
             cap = StrokeCap.Round
         )
-        // Hook markers (green pills)
-        val markerWidth = 16.dp.toPx()
+        // Hook segments (green pills) — span the actual [start, end] (= start → +15s)
         hookSegments.forEach { hook ->
-            val x = msToX((hook.startMs + hook.endMs) / 2L)
+            val startX = msToX(hook.startMs.toFloat())
+            val endX = msToX(hook.endMs.toFloat())
             drawLine(
                 color = Primary,
-                start = Offset((x - markerWidth / 2f).coerceAtLeast(0f), centerY),
-                end = Offset((x + markerWidth / 2f).coerceAtMost(w), centerY),
+                start = Offset(startX, centerY),
+                end = Offset(endX.coerceAtLeast(startX + trackHeight), centerY),
                 strokeWidth = trackHeight,
                 cap = StrokeCap.Round
             )
         }
-        // Selected video window (white)
+        // Selected video window (white) — uses the animated start for smooth movement
         if (videoDurationMs > 0L) {
-            val startX = msToX(selectionStartMs)
-            val endX = msToX(selectionStartMs + videoDurationMs)
+            val drawnStart = animatedStartMs.value
+            val startX = msToX(drawnStart)
+            val endX = msToX(drawnStart + videoDurationMs)
             drawLine(
                 color = Color.White,
                 start = Offset(startX, centerY),
@@ -411,7 +546,9 @@ fun MusicScrubber(
     positionMs: Long,
     onSelectionChange: (Long) -> Unit,
     modifier: Modifier = Modifier,
-    frameWidth: androidx.compose.ui.unit.Dp = 100.dp
+    frameWidth: androidx.compose.ui.unit.Dp = 100.dp,
+    // Fired once when a drag gesture ends and the start actually moved.
+    onDragCommit: () -> Unit = {}
 ) {
     val density = LocalDensity.current
     val frameWidthPx = with(density) { frameWidth.toPx() }
@@ -421,12 +558,18 @@ fun MusicScrubber(
     val maxStartMs = (songDurationMs - videoDurationMs).coerceAtLeast(0L)
     val canScrub = pxPerMs > 0f && songDurationMs > 0L && maxStartMs > 0L
 
+    // Tracks whether the in-progress drag actually changed the start, so we only emit a
+    // commit (analytics) once per meaningful gesture.
+    var draggedThisGesture by remember { mutableStateOf(false) }
     val draggable = rememberDraggableState { delta ->
         if (canScrub) {
             // Dragging the track right (+delta) reveals earlier song → start decreases.
             val deltaMs = (delta / pxPerMs).toLong()
             val newStart = (selectionStartMs - deltaMs).coerceIn(0L, maxStartMs)
-            if (newStart != selectionStartMs) onSelectionChange(newStart)
+            if (newStart != selectionStartMs) {
+                draggedThisGesture = true
+                onSelectionChange(newStart)
+            }
         }
     }
 
@@ -434,7 +577,14 @@ fun MusicScrubber(
         modifier = modifier.draggable(
             state = draggable,
             orientation = Orientation.Horizontal,
-            enabled = canScrub
+            enabled = canScrub,
+            onDragStarted = { draggedThisGesture = false },
+            onDragStopped = {
+                if (draggedThisGesture) {
+                    onDragCommit()
+                    draggedThisGesture = false
+                }
+            }
         )
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {

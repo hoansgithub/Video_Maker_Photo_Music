@@ -66,7 +66,7 @@ internal fun SettingsTabBar(
         // Effect button - displays effect set name
         SettingsTabButton(
             icon = R.drawable.img_effect_video,
-            label = "Effect",
+            label = stringResource(R.string.editor_effect),
             onClick = onEffectClick,
         )
 
@@ -81,7 +81,7 @@ internal fun SettingsTabBar(
         // Ratio button - shows current ratio
         SettingsTabButton(
             icon = R.drawable.img_ratio_frame,
-            label = "Ratio",
+            label = stringResource(R.string.editor_ratio_label),
             onClick = onRatioClick,
         )
 
@@ -90,7 +90,7 @@ internal fun SettingsTabBar(
             // Volume button - shows current volume percentage
             SettingsTabButton(
                 icon = R.drawable.img_edit_sound,
-                label = "Volume",
+                label = stringResource(R.string.editor_volume),
                 onClick = onVolumeClick,
             )
         }

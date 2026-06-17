@@ -1296,11 +1296,11 @@ internal fun EditorMainContent(
             ) {
                 if (currentState == EditorScreenState.LOADING) {
                     val tipMessages = listOf(
-                        "Collecting your best moments...",
-                        "Turning photos into motion...",
-                        "Matching every moment to the beat...",
-                        "Making it look amazing...",
-                        "Your music video is ready! ✨",
+                        stringResource(R.string.editor_loading_tip_1),
+                        stringResource(R.string.editor_loading_tip_2),
+                        stringResource(R.string.editor_loading_tip_3),
+                        stringResource(R.string.editor_loading_tip_4),
+                        stringResource(R.string.editor_loading_tip_5),
                     )
 
                     var currentTipIndex by remember { mutableStateOf(0) }
@@ -1346,7 +1346,7 @@ internal fun EditorMainContent(
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
-                            text = "Please don't close app",
+                            text = stringResource(R.string.editor_loading_dont_close),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.W400,
                             color = Neutral_N600,

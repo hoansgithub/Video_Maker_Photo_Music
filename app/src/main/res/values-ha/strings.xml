@@ -638,4 +638,21 @@
     <string name="banner_trending_now">MAI YADUWA YANZU</string>
     <string name="banner_new_arrivals">SABBIN ZUWA</string>
 
+    <!-- Editor / music-search strings (mapped from English) -->
+    <string name="error_dialog_try_again">Sake gwadawa</string>
+    <string name="error_dialog_back_home">Koma gida</string>
+    <string name="song_search_title">Kiɗa</string>
+    <string name="song_search_sheet_hint">Nemo salonka</string>
+    <string name="song_search_searching">Ana nema...</string>
+    <string name="song_search_results_found">An sami sakamako %1$d</string>
+    <string name="editor_loading_tip_1">Ana tattara mafi kyawun lokutanka...</string>
+    <string name="editor_loading_tip_2">Ana mai da hotuna zuwa motsi...</string>
+    <string name="editor_loading_tip_3">Ana daidaita kowane lokaci da bugun...</string>
+    <string name="editor_loading_tip_4">Ana sa shi ya yi kyau...</string>
+    <string name="editor_loading_tip_5">Bidiyon kiɗanka ya shirya! ✨</string>
+    <string name="editor_loading_dont_close">Don Allah kar a rufe manhajar</string>
+    <string name="editor_ratio_label">Rabo</string>
+    <string name="editor_image_dragging">Ana ja</string>
+    <string name="editor_image_drag_to_reorder">Ja don sake tsarawa</string>
+    <string name="editor_image_content_desc">Hoto %1$s</string>
 </resources>

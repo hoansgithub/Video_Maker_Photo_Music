@@ -638,4 +638,21 @@
     <string name="banner_trending_now">ORIN TÓ GBÀJÚMỌ̀</string>
     <string name="banner_new_arrivals">TÓ ṢẸ̀ṢẸ̀ DÉ</string>
 
+    <!-- Editor / music-search strings (mapped from English) -->
+    <string name="error_dialog_try_again">Gbiyanju lẹẹkansi</string>
+    <string name="error_dialog_back_home">Pada si ile</string>
+    <string name="song_search_title">Orin</string>
+    <string name="song_search_sheet_hint">Wa ara rẹ</string>
+    <string name="song_search_searching">Ń wá...</string>
+    <string name="song_search_results_found">%1$d àbájáde rí</string>
+    <string name="editor_loading_tip_1">Ń kó àwọn àkókò rẹ tó dára jù...</string>
+    <string name="editor_loading_tip_2">Ń sọ àwòrán di ìṣípòpadà...</string>
+    <string name="editor_loading_tip_3">Ń mú gbogbo àkókò bá lù mu...</string>
+    <string name="editor_loading_tip_4">Ń mú kí ó rẹwà...</string>
+    <string name="editor_loading_tip_5">Fídíò orin rẹ ti ṣetán! ✨</string>
+    <string name="editor_loading_dont_close">Jọwọ má ṣe ti ohun elo náà</string>
+    <string name="editor_ratio_label">Ìpín</string>
+    <string name="editor_image_dragging">Ń fà</string>
+    <string name="editor_image_drag_to_reorder">Fà láti tún ṣètò</string>
+    <string name="editor_image_content_desc">Àwòrán %1$s</string>
 </resources>

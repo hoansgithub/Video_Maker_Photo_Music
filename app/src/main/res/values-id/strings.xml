@@ -633,4 +633,21 @@
     <string name="banner_trending_now">SEDANG TREN</string>
     <string name="banner_new_arrivals">TERBARU</string>
 
+    <!-- Editor / music-search strings (mapped from English) -->
+    <string name="error_dialog_try_again">Coba lagi</string>
+    <string name="error_dialog_back_home">Kembali ke beranda</string>
+    <string name="song_search_title">Musik</string>
+    <string name="song_search_sheet_hint">Cari gayamu</string>
+    <string name="song_search_searching">Mencari...</string>
+    <string name="song_search_results_found">%1$d hasil ditemukan</string>
+    <string name="editor_loading_tip_1">Mengumpulkan momen terbaikmu...</string>
+    <string name="editor_loading_tip_2">Mengubah foto menjadi gerakan...</string>
+    <string name="editor_loading_tip_3">Menyelaraskan setiap momen dengan irama...</string>
+    <string name="editor_loading_tip_4">Membuatnya terlihat menakjubkan...</string>
+    <string name="editor_loading_tip_5">Video musikmu sudah siap! ✨</string>
+    <string name="editor_loading_dont_close">Mohon jangan tutup aplikasi</string>
+    <string name="editor_ratio_label">Rasio</string>
+    <string name="editor_image_dragging">Menyeret</string>
+    <string name="editor_image_drag_to_reorder">Seret untuk menyusun ulang</string>
+    <string name="editor_image_content_desc">Gambar %1$s</string>
 </resources>

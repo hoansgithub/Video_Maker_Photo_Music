@@ -638,4 +638,21 @@
     <string name="banner_trending_now">ಈಗ ಟ್ರೆಂಡಿಂಗ್</string>
     <string name="banner_new_arrivals">ಹೊಸ ಆಗಮನ</string>
 
+    <!-- Editor / music-search strings (mapped from English) -->
+    <string name="error_dialog_try_again">ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ</string>
+    <string name="error_dialog_back_home">ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ</string>
+    <string name="song_search_title">ಸಂಗೀತ</string>
+    <string name="song_search_sheet_hint">ನಿಮ್ಮ ಶೈಲಿಯನ್ನು ಹುಡುಕಿ</string>
+    <string name="song_search_searching">ಹುಡುಕಲಾಗುತ್ತಿದೆ...</string>
+    <string name="song_search_results_found">%1$d ಫಲಿತಾಂಶಗಳು ಸಿಕ್ಕಿವೆ</string>
+    <string name="editor_loading_tip_1">ನಿಮ್ಮ ಅತ್ಯುತ್ತಮ ಕ್ಷಣಗಳನ್ನು ಸಂಗ್ರಹಿಸಲಾಗುತ್ತಿದೆ...</string>
+    <string name="editor_loading_tip_2">ಫೋಟೋಗಳನ್ನು ಚಲನೆಗೆ ಪರಿವರ್ತಿಸಲಾಗುತ್ತಿದೆ...</string>
+    <string name="editor_loading_tip_3">ಪ್ರತಿ ಕ್ಷಣವನ್ನು ಬೀಟ್‌ಗೆ ಹೊಂದಿಸಲಾಗುತ್ತಿದೆ...</string>
+    <string name="editor_loading_tip_4">ಇದನ್ನು ಅದ್ಭುತವಾಗಿ ಮಾಡಲಾಗುತ್ತಿದೆ...</string>
+    <string name="editor_loading_tip_5">ನಿಮ್ಮ ಸಂಗೀತ ವೀಡಿಯೊ ಸಿದ್ಧವಾಗಿದೆ! ✨</string>
+    <string name="editor_loading_dont_close">ದಯವಿಟ್ಟು ಅಪ್ಲಿಕೇಶನ್ ಮುಚ್ಚಬೇಡಿ</string>
+    <string name="editor_ratio_label">ಅನುಪಾತ</string>
+    <string name="editor_image_dragging">ಎಳೆಯಲಾಗುತ್ತಿದೆ</string>
+    <string name="editor_image_drag_to_reorder">ಮರುಜೋಡಿಸಲು ಎಳೆಯಿರಿ</string>
+    <string name="editor_image_content_desc">ಚಿತ್ರ %1$s</string>
 </resources>
