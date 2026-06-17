@@ -64,7 +64,6 @@ import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.Neutral_N700
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.TextTertiary
-import kotlin.math.max
 import kotlin.random.Random
 
 /**
@@ -211,7 +210,7 @@ fun MusicSelectionPlayer(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider(color = Color.White.copy(alpha = 0.8f))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
             Spacer(modifier = Modifier.height(10.dp))
 
             // Progress row: time + hook progress bar + play/pause
@@ -342,7 +341,7 @@ fun MusicSelectionPlayerSkeleton(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider(color = Color.White.copy(alpha = 0.8f))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
             Spacer(modifier = Modifier.height(10.dp))
 
             // Progress row: time + bar + play/pause (matches player sizes)
@@ -580,14 +579,26 @@ fun MusicScrubber(
             // trackOffset so that selectionStartMs sits at the left edge of the frame.
             val trackOffset = frameLeft - selectionStartMs * pxPerMs
             val trackWidth = if (pxPerMs > 0f) songDurationMs * pxPerMs else w
-            val barSpacing = (trackWidth / waveform.size).coerceAtLeast(1f)
-            val barW = max(barSpacing * 0.5f, 2f)
+
+            // Fixed bar geometry so the waveform looks identical no matter how short or long
+            // the video is: every bar is the same width with a constant 4.dp gap between them.
+            val barW = 3.dp.toPx()
+            val barGap = 4.dp.toPx()
+            val pitch = barW + barGap
+            // How many evenly-spaced bars fit across the full track at the fixed pitch.
+            val barCount = (trackWidth / pitch).toInt().coerceAtLeast(1)
 
             // Green fills left→right with playback progress inside the frame (Figma #11).
-            waveform.forEachIndexed { i, amp ->
-                val timeMs = i.toFloat() / waveform.size * songDurationMs
-                val x = trackOffset + i * barSpacing
-                if (x < -barSpacing || x > w + barSpacing) return@forEachIndexed
+            for (b in 0 until barCount) {
+                // Center of this bar slot, mapped to its position along the track.
+                val barFrac = (b + 0.5f) / barCount
+                val x = trackOffset + b * pitch + barW / 2f
+                if (x < -pitch || x > w + pitch) continue
+                // Sample the source waveform proportionally so its shape is preserved
+                // regardless of how many bars we end up drawing.
+                val sampleIndex = (barFrac * waveform.size).toInt().coerceIn(0, waveform.size - 1)
+                val amp = waveform[sampleIndex]
+                val timeMs = barFrac * songDurationMs
                 val inFrame = x in frameLeft..frameRight
                 val played = timeMs in selectionStartMs.toFloat()..positionMs.toFloat()
                 val color = when {

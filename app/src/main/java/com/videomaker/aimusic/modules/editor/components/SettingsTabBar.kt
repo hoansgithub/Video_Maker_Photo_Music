@@ -60,7 +60,7 @@ internal fun SettingsTabBar(
             .fillMaxWidth()
             .background(SplashBackground)
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.SpaceAround
     ) {
         // Effect button - displays effect set name
@@ -118,7 +118,7 @@ private fun SettingsTabButton(
             contentScale = ContentScale.Crop,
             modifier = Modifier.size(24.dp)
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = label,
             fontSize = 10.sp,

@@ -788,6 +788,10 @@ internal fun MusicSearchBottomSheet(
                                         }
                                     }
                                 }
+
+                                item{
+                                    Spacer(Modifier.height(167.dp))
+                                }
                             }
 
                             is SongSearchUiState.Empty -> {
@@ -936,6 +940,10 @@ internal fun MusicSearchBottomSheet(
                                             }
                                         }
                                     }
+                                }
+
+                                item{
+                                    Spacer(Modifier.height(167.dp))
                                 }
                             }
                         }
