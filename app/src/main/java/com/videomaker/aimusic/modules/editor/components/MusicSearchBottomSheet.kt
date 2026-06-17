@@ -303,6 +303,13 @@ internal fun MusicSearchBottomSheet(
         }
     }
 
+    // While a fullscreen ad (AOA / interstitial) is up we PAUSE the preview but must keep it
+    // resumable. exoPlayer.pause() fires onPlayWhenReadyChanged(false) which normally tears the
+    // preview down (stopPreview → previewingSongId=null → exoPlayer.stop()), so a later play()
+    // would do nothing. This flag tells that listener to skip the teardown so ON_RESUME can
+    // simply resume playback when the ad closes.
+    var suppressStopForAdResume by remember { mutableStateOf(false) }
+
     // Pause/resume when Activity loses focus (AOA, interstitial ads)
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -311,12 +318,16 @@ internal fun MusicSearchBottomSheet(
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> {
                     wasPlayingBeforeActivityPause = exoPlayer.isPlaying
-                    if (exoPlayer.isPlaying) exoPlayer.pause()
+                    if (exoPlayer.isPlaying) {
+                        suppressStopForAdResume = true
+                        exoPlayer.pause()
+                    }
                 }
 
                 Lifecycle.Event.ON_RESUME -> {
                     if (wasPlayingBeforeActivityPause) exoPlayer.play()
                     wasPlayingBeforeActivityPause = false
+                    suppressStopForAdResume = false
                 }
 
                 else -> {}
@@ -356,7 +367,9 @@ internal fun MusicSearchBottomSheet(
                                 playWhenReady: Boolean,
                                 reason: Int
                             ) {
-                                if (!playWhenReady) {
+                                // Skip teardown when we paused only to show a fullscreen ad —
+                                // the lifecycle observer resumes playback when the ad closes.
+                                if (!playWhenReady && !suppressStopForAdResume) {
                                     MusicPreviewManager.stopPreview()
                                 }
                             }

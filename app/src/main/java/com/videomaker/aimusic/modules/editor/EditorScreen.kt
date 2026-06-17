@@ -369,12 +369,24 @@ fun EditorScreen(
         if (isEditorReady && !afterPrepareInterShown && activity != null) {
             afterPrepareInterShown = true
             delay(1000)
+            // Remember whether the preview was playing so we can resume it after the ad closes.
+            // This pairs with onScreenPause()/onScreenResume(): whichever callback captures the
+            // play state first wins, the other sees isPlaying=false — so we resume exactly once
+            // regardless of the onShown vs ON_PAUSE ordering.
+            var wasPlayingBeforeAfterPrepareAd = false
             InterstitialAdHelperExt.showInterstitial(
                 adsLoaderService = adsLoaderService,
                 activity = activity,
                 placement = AdPlacement.INTERSTITIAL_EDITOR_AFTER_PREPARE,
-                action = { /* no-op: keep editing after the ad closes */ },
-                onShown = { viewModel.stopPlayback() },
+                action = {
+                    // Called after the ad closes (or fails to show) — resume only if we paused
+                    // for it. If the ad never showed, onShown didn't run and this is a no-op.
+                    if (wasPlayingBeforeAfterPrepareAd) viewModel.setPlaybackState(true)
+                },
+                onShown = {
+                    wasPlayingBeforeAfterPrepareAd = currentState()?.isPlaying == true
+                    viewModel.setPlaybackState(false)
+                },
                 bypassFrequencyCap = true,   // always show right after prepare
                 showLoadingOverlay = false   // background preloaded, don't block editing
             )
