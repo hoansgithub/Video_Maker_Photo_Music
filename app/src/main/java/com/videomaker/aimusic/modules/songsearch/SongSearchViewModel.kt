@@ -28,7 +28,10 @@ import kotlinx.coroutines.launch
 
 sealed class SongSearchUiState {
     data object Idle : SongSearchUiState()
+    /** Initial full-screen skeleton shown while suggested songs load. */
     data object Loading : SongSearchUiState()
+    /** Text search in progress — shows the "Searching…" skeleton. */
+    data object Searching : SongSearchUiState()
     @Immutable data class Results(
         val query: String,
         val songs: List<MusicSong>
@@ -59,7 +62,9 @@ class SongSearchViewModel(
     private val getSongsByGenreUseCase: GetSongsByGenreUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<SongSearchUiState>(SongSearchUiState.Idle)
+    // Starts in Loading so the initial open shows the full-screen skeleton until
+    // suggested songs arrive, then transitions to Idle.
+    private val _uiState = MutableStateFlow<SongSearchUiState>(SongSearchUiState.Loading)
     val uiState: StateFlow<SongSearchUiState> = _uiState.asStateFlow()
 
     // Text shown in the search bar — updated on every keystroke, genre tap, or recent tap.
@@ -82,7 +87,8 @@ class SongSearchViewModel(
     private val _selectedGenre = MutableStateFlow<String?>(null) // null = "All"
     val selectedGenre: StateFlow<String?> = _selectedGenre.asStateFlow()
 
-    private val _suggestedSongsLoading = MutableStateFlow(false)
+    // Starts true so the initial open renders the loading skeleton.
+    private val _suggestedSongsLoading = MutableStateFlow(true)
     val suggestedSongsLoading: StateFlow<Boolean> = _suggestedSongsLoading.asStateFlow()
 
     // Suggested/genre pagination
@@ -110,6 +116,10 @@ class SongSearchViewModel(
     private val _isLoadingPreview = MutableStateFlow(false)
     val isLoadingPreview: StateFlow<Boolean> = _isLoadingPreview.asStateFlow()
 
+    // When opened from the editor with a current song, stay in Loading until that song's
+    // preview is prepared (can auto-play), then switch to Idle.
+    @Volatile private var awaitingInitialSong = false
+
     // Tracks the explicit search job (keyboard Search / recent tap / genre tap).
     private var explicitSearchJob: Job? = null
 
@@ -123,12 +133,21 @@ class SongSearchViewModel(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            getSuggestedSongsUseCase(limit = PAGE_SIZE)
-                .onSuccess {
-                    _suggestedSongs.value = it
-                    suggestedOffset = it.size
-                    suggestedHasMore = it.size >= PAGE_SIZE && suggestedOffset < SUGGESTED_MAX_ITEMS
+            try {
+                getSuggestedSongsUseCase(limit = PAGE_SIZE)
+                    .onSuccess {
+                        _suggestedSongs.value = it
+                        suggestedOffset = it.size
+                        suggestedHasMore = it.size >= PAGE_SIZE && suggestedOffset < SUGGESTED_MAX_ITEMS
+                    }
+            } finally {
+                _suggestedSongsLoading.value = false
+                // Leave the initial skeleton only if the user hasn't started searching yet and
+                // we're not still waiting for the editor's current song to become playable.
+                if (_uiState.value is SongSearchUiState.Loading && !awaitingInitialSong) {
+                    _uiState.value = SongSearchUiState.Idle
                 }
+            }
         }
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -146,16 +165,18 @@ class SongSearchViewModel(
                         if (query.isBlank()) {
                             emit(SongSearchUiState.Idle)
                         } else {
-                            emit(SongSearchUiState.Loading)
+                            emit(SongSearchUiState.Searching)
                             emit(runSearch(query))
                         }
                     }
                 }
                 .collect { state ->
                     // Suppress debounce output while an explicit search has taken control.
-                    if (!debounceLockedOut) {
-                        _uiState.value = state
-                    }
+                    if (debounceLockedOut) return@collect
+                    // Hold the initial skeleton until the editor's current song can auto-play
+                    // (don't let the blank-query debounce flip us to Idle early).
+                    if (awaitingInitialSong && state is SongSearchUiState.Idle) return@collect
+                    _uiState.value = state
                 }
         }
     }
@@ -284,14 +305,14 @@ class SongSearchViewModel(
     }
 
     private fun launchExplicitSearch(query: String) {
-        _uiState.value = SongSearchUiState.Loading
+        _uiState.value = SongSearchUiState.Searching
         explicitSearchJob = viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = runSearch(query)
         }
     }
 
     private fun launchGenreSearch(genre: SongGenre) {
-        _uiState.value = SongSearchUiState.Loading
+        _uiState.value = SongSearchUiState.Searching
         explicitSearchJob = viewModelScope.launch(Dispatchers.IO) {
             val result = getSongsByGenreUseCase(genre.id)
             _uiState.value = toUiState(result, label = genre.displayName)
@@ -398,6 +419,27 @@ class SongSearchViewModel(
         _previewingSongId.value = null
         _selectedForConfirmId.value = null
         _isLoadingPreview.value = false
+    }
+
+    /**
+     * Called when the sheet opens from the editor with a song already in use.
+     * Keeps the UI in [SongSearchUiState.Loading] until [onInitialSongReady].
+     */
+    fun beginWithInitialSong() {
+        awaitingInitialSong = true
+        _uiState.value = SongSearchUiState.Loading
+    }
+
+    /**
+     * Called once the editor's current song is prepared / actually playing.
+     * Releases the initial loading gate and switches to Idle.
+     */
+    fun onInitialSongReady() {
+        if (!awaitingInitialSong) return
+        awaitingInitialSong = false
+        if (_uiState.value is SongSearchUiState.Loading) {
+            _uiState.value = SongSearchUiState.Idle
+        }
     }
 
     companion object {

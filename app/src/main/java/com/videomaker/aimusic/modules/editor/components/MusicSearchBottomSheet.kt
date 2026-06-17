@@ -1,8 +1,17 @@
 package com.videomaker.aimusic.modules.editor.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
+import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +34,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,14 +50,14 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -58,15 +68,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -90,7 +101,6 @@ import com.videomaker.aimusic.modules.songsearch.SongSearchViewModel
 import com.videomaker.aimusic.ui.components.AdBadge
 import com.videomaker.aimusic.ui.components.AdBadgeStyle
 import com.videomaker.aimusic.ui.components.AdsLoadingOverlay
-import com.videomaker.aimusic.ui.components.AppFilterChip
 import com.videomaker.aimusic.ui.components.SongFeedItem
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.components.buildSongFeedWithAds
@@ -113,6 +123,13 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import co.alcheclub.lib.acccore.ads.compose.BannerAdView
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
+import com.videomaker.aimusic.modules.editor.EditorScreenState
+import com.videomaker.aimusic.ui.components.AppAsyncImage
+import com.videomaker.aimusic.ui.components.PlayingAnimationBars
+import com.videomaker.aimusic.ui.components.SongItemMore
+import com.videomaker.aimusic.ui.theme.TextPrimaryDark
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -149,8 +166,11 @@ internal fun MusicSearchBottomSheet(
     viewModel: SongSearchViewModel,
     onSongClick: (MusicSong) -> Unit,
     onSongSelected: (MusicSong) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    currentVideoDurationMs: Long = 0L,
+    initialSong: MusicSong? = null
 ) {
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val displayText by viewModel.displayText.collectAsStateWithLifecycle()
     val genres by viewModel.genres.collectAsStateWithLifecycle()
@@ -166,7 +186,6 @@ internal fun MusicSearchBottomSheet(
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    val focusRequester = remember { FocusRequester() }
     val dimens = AppDimens.current
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -196,13 +215,18 @@ internal fun MusicSearchBottomSheet(
         return song.isPremium && !unlockedSongsManager.isUnlocked(song.id)
     }
 
+    // Resolve a song by id across results / suggested / the editor's current (initial) song.
+    fun resolveSong(id: Long?): MusicSong? {
+        if (id == null) return null
+        return (uiState as? SongSearchUiState.Results)?.songs?.find { it.id == id }
+            ?: suggestedSongs.find { it.id == id }
+            ?: initialSong?.takeIf { it.id == id }
+    }
+
     // Handle confirm button click
     fun onConfirmClick() {
         val selectedId = MusicPreviewManager.getSelectedId() ?: return
-        val song = when (val state = uiState) {
-            is SongSearchUiState.Results -> state.songs.find { it.id == selectedId }
-            else -> suggestedSongs.find { it.id == selectedId }
-        } ?: return
+        val song = resolveSong(selectedId) ?: return
 
         if (isSongLocked(song)) {
             // Song is locked - present rewarded ad directly
@@ -237,9 +261,26 @@ internal fun MusicSearchBottomSheet(
         shouldPresentAd = false
     }
 
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true
-    )
+    // Shared song tap handler — used by the Results and Idle lists.
+    val onSongPreview: (MusicSong, String) -> Unit = { song, location ->
+        onSongClick(song)
+        selectedSongLocation = location
+        Analytics.trackSongClick(
+            songId = song.id.toString(),
+            songName = song.name,
+            location = location,
+            isPremium = song.isPremium
+        )
+        Analytics.trackSongPreview(
+            songId = song.id.toString(),
+            songName = song.name,
+            location = location,
+            isPremium = song.isPremium
+        )
+        focusManager.clearFocus()
+        keyboardController?.hide()
+        MusicPreviewManager.togglePreview(song.id)
+    }
 
     // ExoPlayer for preview with cache
     val exoPlayer = remember {
@@ -281,10 +322,12 @@ internal fun MusicSearchBottomSheet(
                     wasPlayingBeforeActivityPause = exoPlayer.isPlaying
                     if (exoPlayer.isPlaying) exoPlayer.pause()
                 }
+
                 Lifecycle.Event.ON_RESUME -> {
                     if (wasPlayingBeforeActivityPause) exoPlayer.play()
                     wasPlayingBeforeActivityPause = false
                 }
+
                 else -> {}
             }
         }
@@ -298,11 +341,7 @@ internal fun MusicSearchBottomSheet(
 
         try {
             if (previewingSongId != null) {
-                val state = uiState
-                val song = when (state) {
-                    is SongSearchUiState.Results -> state.songs.find { it.id == previewingSongId }
-                    else -> suggestedSongs.find { it.id == previewingSongId }
-                }
+                val song = resolveSong(previewingSongId)
 
                 song?.let {
                     try {
@@ -316,10 +355,16 @@ internal fun MusicSearchBottomSheet(
                             override fun onPlaybackStateChanged(playbackState: Int) {
                                 if (playbackState == Player.STATE_READY) {
                                     MusicPreviewManager.onPreviewPrepared()
+                                    // Release the initial loading gate once the editor's
+                                    // current song is ready to auto-play.
+                                    viewModel.onInitialSongReady()
                                 }
                             }
 
-                            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                            override fun onPlayWhenReadyChanged(
+                                playWhenReady: Boolean,
+                                reason: Int
+                            ) {
                                 if (!playWhenReady) {
                                     MusicPreviewManager.stopPreview()
                                 }
@@ -344,39 +389,123 @@ internal fun MusicSearchBottomSheet(
         }
     }
 
-    // Dismiss keyboard when sheet is being dragged
-    LaunchedEffect(sheetState.currentValue) {
-        focusManager.clearFocus()
+    // ============================================
+    // BOTTOM PLAYER CARD STATE
+    // ============================================
+    var positionMs by remember { mutableLongStateOf(0L) }
+    var playerDurationMs by remember { mutableLongStateOf(0L) }
+    var isPreviewPlaying by remember { mutableStateOf(false) }
+
+    // The song shown in the bottom player: the one selected/previewing, else the editor's song.
+    val displaySong = resolveSong(selectedForConfirmId ?: previewingSongId) ?: initialSong
+
+    var selectionStartMs by remember(displaySong?.id) {
+        mutableLongStateOf(displaySong?.hookStartTimeMs ?: 0L)
+    }
+    val waveform = remember(displaySong?.id) { placeholderWaveform(seed = displaySong?.id ?: 0L) }
+    val hookSegments = remember(displaySong?.id, currentVideoDurationMs) {
+        val start = displaySong?.hookStartTimeMs ?: 0L
+        if (start > 0L) {
+            listOf(MusicHookSegment(start, start + currentVideoDurationMs.coerceAtLeast(1000L)))
+        } else {
+            emptyList()
+        }
+    }
+    val songDurationMs = displaySong?.durationMs?.toLong()?.takeIf { it > 0L } ?: playerDurationMs
+
+    // Seed the editor's current song on open and stay in Loading until it can auto-play.
+    LaunchedEffect(initialSong?.id) {
+        val seed = initialSong ?: return@LaunchedEffect
+        if (MusicPreviewManager.getSelectedId() == null) {
+            viewModel.beginWithInitialSong()
+            MusicPreviewManager.togglePreview(seed.id)
+        }
     }
 
-    val sheetHeight = (LocalConfiguration.current.screenHeightDp * 2 / 3).dp
+    // Poll playback position / duration / playing state for the player UI, and loop
+    // playback only within the selected frame [selectionStart, selectionStart + videoDuration].
+    LaunchedEffect(previewingSongId) {
+        while (true) {
+            if (currentVideoDurationMs > 0L && previewingSongId != null && exoPlayer.isPlaying) {
+                val winStart = selectionStartMs
+                val winEnd = selectionStartMs + currentVideoDurationMs
+                val pos = exoPlayer.currentPosition
+                if (pos < winStart || pos >= winEnd) {
+                    exoPlayer.seekTo(winStart)
+                }
+            }
+            positionMs = exoPlayer.currentPosition.coerceAtLeast(0L)
+            playerDurationMs = exoPlayer.duration.takeIf { it > 0L } ?: 0L
+            isPreviewPlaying = exoPlayer.isPlaying
+            // Authoritatively clear the loading flag once the player is actually ready —
+            // the Player.Listener can miss STATE_READY for cached audio (prepare resolves
+            // before/around addListener), which would otherwise keep the shimmer forever.
+            if (isLoadingPreview &&
+                (exoPlayer.isPlaying || exoPlayer.playbackState == Player.STATE_READY)
+            ) {
+                MusicPreviewManager.onPreviewPrepared()
+            }
+            delay(60)
+        }
+    }
 
-    ModalBottomSheet(
+    // Pause preview while searching / on empty results. Resume only on explicit play
+    // or when the user selects another song.
+    LaunchedEffect(uiState) {
+        if (uiState is SongSearchUiState.Searching || uiState is SongSearchUiState.Empty) {
+            if (exoPlayer.isPlaying) exoPlayer.pause()
+        }
+    }
+
+    // Robustly release the initial loading gate: the moment the seeded song is ready /
+    // actually playing, leave the Loading skeleton for Idle. This is decoupled from the
+    // ExoPlayer listener timing so it can't get stuck.
+    LaunchedEffect(isPreviewPlaying, isLoadingPreview) {
+        if (isPreviewPlaying || (previewingSongId != null && !isLoadingPreview)) {
+            viewModel.onInitialSongReady()
+        }
+    }
+
+    Dialog(
         onDismissRequest = {
             MusicPreviewManager.clearPreviewState()
             onDismiss()
         },
-        sheetState = sheetState,
-        containerColor = SplashBackground,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
-        // Box wrapper to allow overlay to cover entire bottom sheet area
-        Box(modifier = Modifier.height(sheetHeight)) {
-            Column(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp)
+                .background(SplashBackground)
+                .statusBarsPadding()
         ) {
-            // Title row with centered title and confirm button on right
+            // Title row with close button (left), centered title and confirm button (right)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
+                    .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
+                // Close button - left aligned
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.close),
+                    tint = TextPrimary,
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .size(28.dp)
+                        .clickableSingle {
+                            MusicPreviewManager.clearPreviewState()
+                            onDismiss()
+                        }
+                )
+
                 // Centered title
                 Text(
-                    text = stringResource(R.string.song_search_change_music),
+                    text = stringResource(R.string.song_search_title),
                     color = TextMuted,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
@@ -442,463 +571,447 @@ internal fun MusicSearchBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            val listState = rememberLazyListState()
 
-            // Search field - matching SongSearchTopBar style
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = SearchFieldBackground,
-                        shape = RoundedCornerShape(dimens.radiusXl)
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = SearchFieldBorder,
-                        shape = RoundedCornerShape(dimens.radiusXl)
-                    )
-                    .padding(horizontal = dimens.spaceMd, vertical = dimens.spaceMd)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.MusicNote,
-                        contentDescription = null,
-                        tint = TextTertiary,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Spacer(modifier = Modifier.width(dimens.spaceSm))
-                    Box(modifier = Modifier.weight(1f)) {
-                        if (displayText.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.song_search_hint),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = TextTertiary
-                            )
-                        }
-                        BasicTextField(
-                            value = displayText,
-                            onValueChange = viewModel::onQueryChange,
-                            singleLine = true,
-                            textStyle = MaterialTheme.typography.titleSmall.copy(
-                                color = MaterialTheme.colorScheme.onSurface
-                            ),
-                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            keyboardActions = KeyboardActions(
-                                onSearch = {
-                                    viewModel.onSearch()
-                                    keyboardController?.hide()
-                                }
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .focusRequester(focusRequester)
-                        )
+            // Aggressive keyboard dismissal on ANY scroll movement
+            LaunchedEffect(listState) {
+                var previousIndex = listState.firstVisibleItemIndex
+                var previousOffset = listState.firstVisibleItemScrollOffset
+                snapshotFlow {
+                    listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+                }.collect { (index, offset) ->
+                    if (index != previousIndex || kotlin.math.abs(offset - previousOffset) > 0) {
+                        focusManager.clearFocus()
                     }
-                    if (displayText.isNotEmpty()) {
-                        Spacer(modifier = Modifier.width(dimens.spaceXs))
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.close),
-                            tint = TextTertiary,
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clickableSingle { viewModel.onClearQuery() }
-                        )
-                    }
+                    previousIndex = index
+                    previousOffset = offset
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Results
-            when (val state = uiState) {
-                is SongSearchUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    }
+            // Scroll-position-based pagination — only while browsing suggested songs (Idle)
+            val shouldLoadMore by remember(listState) {
+                derivedStateOf {
+                    if (uiState !is SongSearchUiState.Idle) return@derivedStateOf false
+                    val layoutInfo = listState.layoutInfo
+                    val totalItems = layoutInfo.totalItemsCount
+                    val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                    !suggestedLoadingMore && lastVisibleIndex >= totalItems - 4
                 }
+            }
+            LaunchedEffect(shouldLoadMore) {
+                if (shouldLoadMore) viewModel.loadMoreSuggested()
+            }
 
-                is SongSearchUiState.Results -> {
-                    val listState = rememberLazyListState()
+            // Feed items built at composable scope (not inside LazyListScope)
+            val resultsFeedItems = remember(uiState, infeedInterval) {
+                (uiState as? SongSearchUiState.Results)
+                    ?.let { buildSongFeedWithAds(it.songs, infeedInterval) }
+                    ?: emptyList()
+            }
+            val suggestedFeedItems = remember(suggestedSongs, infeedInterval) {
+                buildSongFeedWithAds(suggestedSongs, infeedInterval)
+            }
 
-                    // Aggressive keyboard dismissal on ANY scroll movement
-                    LaunchedEffect(listState) {
-                        var previousIndex = listState.firstVisibleItemIndex
-                        var previousOffset = listState.firstVisibleItemScrollOffset
-
-                        snapshotFlow {
-                            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
-                        }.collect { (index, offset) ->
-                            if (index != previousIndex || kotlin.math.abs(offset - previousOffset) > 0) {
-                                focusManager.clearFocus()
-                            }
-                            previousIndex = index
-                            previousOffset = offset
-                        }
-                    }
-
+            // Single scroll container: only the title row above stays fixed; the search
+            // field, genre tabs and lists all scroll together.
+            ProvideShimmerEffect {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                ) {
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        contentPadding = PaddingValues(bottom = dimens.spaceMd)
                     ) {
-                        items(state.songs, key = { "song_${it.id}" }) { song ->
-                            SongListItem(
-                                name = song.name,
-                                artist = song.artist,
-                                coverUrl = song.coverUrl,
-                                isPlaying = song.id == previewingSongId,
-                                isSelected = song.id == selectedForConfirmId,
-                                isLoading = song.id == selectedForConfirmId && isLoadingPreview,
-                                onSongClick = {
-                                    onSongClick(song)
-                                    selectedSongLocation = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
-                                    Analytics.trackSongClick(
-                                        songId = song.id.toString(),
-                                        songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH,
-                                        isPremium = song.isPremium
-                                    )
-                                    Analytics.trackSongPreview(
-                                        songId = song.id.toString(),
-                                        songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH,
-                                        isPremium = song.isPremium
-                                    )
-                                    focusManager.clearFocus()
-                                    keyboardController?.hide()
-                                    MusicPreviewManager.togglePreview(song.id)
-                                },
-                                modifier = Modifier.onFirstVisible(key = song.id) {
-                                    sessionManager.trackSongImpressionAndMark(
-                                        songId = song.id.toString(),
-                                        songName = song.name,
-                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH,
-                                        isPremium = song.isPremium
-                                    )
-                                }
-                            )
-                        }
-                    }
-                }
+                        // Search field (scrolls with the content)
+                        item(key = "search_field") {
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                is SongSearchUiState.Empty -> {
-                    val listState = rememberLazyListState()
-
-                    // Aggressive keyboard dismissal on ANY scroll movement
-                    LaunchedEffect(listState) {
-                        var previousIndex = listState.firstVisibleItemIndex
-                        var previousOffset = listState.firstVisibleItemScrollOffset
-
-                        snapshotFlow {
-                            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
-                        }.collect { (index, offset) ->
-                            if (index != previousIndex || kotlin.math.abs(offset - previousOffset) > 0) {
-                                focusManager.clearFocus()
-                            }
-                            previousIndex = index
-                            previousOffset = offset
-                        }
-                    }
-
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(vertical = dimens.spaceMd)
-                    ) {
-                        // Empty message
-                        item(key = "empty_message") {
-                            Column(
+                            // Search field - matching SongSearchTopBar style
+                            Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = dimens.spaceXxl),
-                                horizontalAlignment = Alignment.CenterHorizontally
+                                    .background(
+                                        color = Color.White.copy(0.1f),
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = Color.White.copy(0.16f),
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.MusicNote,
+                                    painter = painterResource(R.drawable.ic_music_note),
                                     contentDescription = null,
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(48.dp)
-                                )
-                                Spacer(modifier = Modifier.height(dimens.spaceMd))
-                                Text(
-                                    text = stringResource(R.string.song_search_no_results),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Spacer(modifier = Modifier.height(dimens.spaceSm))
-                                Text(
-                                    text = stringResource(R.string.search_no_results_hint),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = TextSecondary
-                                )
-                            }
-                        }
-
-                        // Genre filter chips
-                        if (genres.isNotEmpty()) {
-                            item(key = "empty_genre_chips") {
-                                LazyRow(
-                                    horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
-                                ) {
-                                    item(key = "all") {
-                                        AppFilterChip(
-                                            text = stringResource(R.string.settings_all),
-                                            isSelected = selectedGenre == null,
-                                            onClick = { viewModel.onGenreSelected(null) }
-                                        )
-                                    }
-                                    items(genres, key = { it.id }) { genre ->
-                                        AppFilterChip(
-                                            text = genre.displayName,
-                                            isSelected = selectedGenre == genre.id,
-                                            onClick = { viewModel.onGenreSelected(genre.id) }
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(dimens.spaceMd))
-                            }
-                        }
-
-                        // Suggested songs section
-                        if (suggestedSongs.isNotEmpty()) {
-                            items(suggestedSongs, key = { "empty_song_${it.id}" }) { song ->
-                                SongListItem(
-                                    name = song.name,
-                                    artist = song.artist,
-                                    coverUrl = song.coverUrl,
-                                    isPlaying = song.id == previewingSongId,
-                                    isSelected = song.id == selectedForConfirmId,
-                                    isLoading = song.id == selectedForConfirmId && isLoadingPreview,
-                                    onSongClick = {
-                                        onSongClick(song)
-                                        selectedSongLocation = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
-                                        Analytics.trackSongClick(
-                                            songId = song.id.toString(),
-                                            songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
-                                            isPremium = song.isPremium
-                                        )
-                                        Analytics.trackSongPreview(
-                                            songId = song.id.toString(),
-                                            songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
-                                            isPremium = song.isPremium
-                                        )
-                                        focusManager.clearFocus()
-                                        keyboardController?.hide()
-                                        MusicPreviewManager.togglePreview(song.id)
-                                    },
-                                    modifier = Modifier.onFirstVisible(key = song.id) {
-                                        sessionManager.trackSongImpressionAndMark(
-                                            songId = song.id.toString(),
-                                            songName = song.name,
-                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
-                                            isPremium = song.isPremium
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                is SongSearchUiState.Error -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = state.message,
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 16.sp
-                        )
-                    }
-                }
-
-                is SongSearchUiState.Idle -> {
-                    val listState = rememberLazyListState()
-
-                    // Aggressive keyboard dismissal on ANY scroll movement
-                    LaunchedEffect(listState) {
-                        var previousIndex = listState.firstVisibleItemIndex
-                        var previousOffset = listState.firstVisibleItemScrollOffset
-
-                        snapshotFlow {
-                            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
-                        }.collect { (index, offset) ->
-                            if (index != previousIndex || kotlin.math.abs(offset - previousOffset) > 0) {
-                                focusManager.clearFocus()
-                            }
-                            previousIndex = index
-                            previousOffset = offset
-                        }
-                    }
-
-                    // Scroll-position-based pagination: load more when near bottom
-                    val shouldLoadMore by remember(listState, suggestedLoadingMore) {
-                        derivedStateOf {
-                            val layoutInfo = listState.layoutInfo
-                            val totalItems = layoutInfo.totalItemsCount
-                            val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                            !suggestedLoadingMore && lastVisibleIndex >= totalItems - 4
-                        }
-                    }
-
-                    LaunchedEffect(shouldLoadMore) {
-                        if (shouldLoadMore) viewModel.loadMoreSuggested()
-                    }
-
-                    // Build feed items at composable scope (not inside LazyListScope)
-                    val suggestedFeedItems = remember(suggestedSongs, infeedInterval) {
-                        buildSongFeedWithAds(suggestedSongs, infeedInterval)
-                    }
-
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(vertical = dimens.spaceMd)
-                    ) {
-                        // Genre filter chips
-                        if (genres.isNotEmpty()) {
-                            item(key = "genre_chips") {
-                                LazyRow(
-                                    horizontalArrangement = Arrangement.spacedBy(dimens.spaceSm)
-                                ) {
-                                    item(key = "all") {
-                                        AppFilterChip(
-                                            text = stringResource(R.string.settings_all),
-                                            isSelected = selectedGenre == null,
-                                            onClick = { viewModel.onGenreSelected(null) }
-                                        )
-                                    }
-                                    items(genres, key = { it.id }) { genre ->
-                                        AppFilterChip(
-                                            text = genre.displayName,
-                                            isSelected = selectedGenre == genre.id,
-                                            onClick = { viewModel.onGenreSelected(genre.id) }
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(dimens.spaceMd))
-                            }
-                        }
-
-                        // Loading indicator when switching genres
-                        if (suggestedSongsLoading) {
-                            item(key = "genre_loading") {
-                                Box(
+                                    tint = TextPrimaryDark,
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = dimens.spaceXl),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(32.dp)
+                                        .padding(end = 8.dp)
+                                        .size(20.dp)
+                                )
+                                Box(modifier = Modifier.weight(1f)) {
+                                    if (displayText.isEmpty()) {
+                                        Text(
+                                            text = stringResource(R.string.song_search_sheet_hint),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = TextTertiary
+                                        )
+                                    }
+                                    BasicTextField(
+                                        value = displayText,
+                                        onValueChange = viewModel::onQueryChange,
+                                        singleLine = true,
+                                        textStyle = MaterialTheme.typography.titleSmall.copy(
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        ),
+                                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                        keyboardActions = KeyboardActions(
+                                            onSearch = {
+                                                viewModel.onSearch()
+                                                keyboardController?.hide()
+                                            }),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                    )
+                                }
+                                if (displayText.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.width(dimens.spaceXs))
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.close),
+                                        tint = SplashBackground,
+                                        modifier = Modifier
+                                            .background(Color.White, CircleShape)
+                                            .size(20.dp)
+                                            .clickableSingle { viewModel.onClearQuery() }
+                                            .padding(4.dp)
                                     )
                                 }
                             }
-                        } else {
-                            // Song list with interleaved native ads
-                            items(
-                                items = suggestedFeedItems,
-                                key = { item -> songFeedItemKey(item, "suggested_") },
-                                contentType = { item ->
-                                    when (item) {
-                                        is SongFeedItem.Song -> "song"
-                                        is SongFeedItem.Ad -> "ad"
-                                    }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+
+                        // Results
+                        when (val state = uiState) {
+                            is SongSearchUiState.Loading -> {
+                                // Initial skeleton: genre tabs + shimmer rows
+                                item(key = "loading_tabs") {
+                                    GenreTabRow(
+                                        genres = genres,
+                                        selectedGenre = selectedGenre,
+                                        onGenreSelected = viewModel::onGenreSelected
+                                    )
+                                    Spacer(modifier = Modifier.height(dimens.spaceMd))
                                 }
-                            ) { item ->
-                                when (item) {
-                                    is SongFeedItem.Song -> {
-                                        val song = item.song
-                                        SongListItem(
-                                            name = song.name,
-                                            artist = song.artist,
-                                            coverUrl = song.coverUrl,
-                                            isPlaying = song.id == previewingSongId,
-                                            isSelected = song.id == selectedForConfirmId,
-                                            isLoading = song.id == selectedForConfirmId && isLoadingPreview,
-                                            onSongClick = {
-                                                onSongClick(song)
-                                                selectedSongLocation = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
-                                                Analytics.trackSongClick(
-                                                    songId = song.id.toString(),
-                                                    songName = song.name,
-                                                    location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
-                                                    isPremium = song.isPremium
-                                                )
-                                                Analytics.trackSongPreview(
-                                                    songId = song.id.toString(),
-                                                    songName = song.name,
-                                                    location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
-                                                    isPremium = song.isPremium
-                                                )
-                                                focusManager.clearFocus()
-                                                keyboardController?.hide()
-                                                MusicPreviewManager.togglePreview(song.id)
-                                            },
-                                            modifier = Modifier.onFirstVisible(key = song.id) {
-                                                sessionManager.trackSongImpressionAndMark(
-                                                    songId = song.id.toString(),
-                                                    songName = song.name,
-                                                    location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
-                                                    isPremium = song.isPremium
+                                items(6, key = { "loading_skeleton_$it" }) {
+                                    SongSkeletonItem()
+                                }
+                            }
+
+                            is SongSearchUiState.Searching -> {
+                                item(key = "searching") {
+                                    Text(
+                                        text = stringResource(R.string.song_search_searching),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextSecondary,
+                                        modifier = Modifier.padding(vertical = dimens.spaceSm)
+                                    )
+                                    SongSkeletonItem()
+                                }
+                            }
+
+                            is SongSearchUiState.Results -> {
+                                // Results count header
+                                item(key = "results_header") {
+                                    Text(
+                                        text = stringResource(
+                                            R.string.song_search_results_found,
+                                            state.songs.size
+                                        ),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextSecondary,
+                                        modifier = Modifier.padding(bottom = dimens.spaceSm)
+                                    )
+                                }
+                                items(
+                                    items = resultsFeedItems,
+                                    key = { item -> songFeedItemKey(item, "results_") },
+                                    contentType = { item ->
+                                        when (item) {
+                                            is SongFeedItem.Song -> "song"
+                                            is SongFeedItem.Ad -> "ad"
+                                        }
+                                    }
+                                ) { item ->
+                                    when (item) {
+                                        is SongFeedItem.Song -> {
+                                            val song = item.song
+                                            SongListItem(
+                                                name = song.name,
+                                                artist = song.artist,
+                                                coverUrl = song.coverUrl,
+                                                isPlaying = song.id == previewingSongId,
+                                                isSelected = song.id == selectedForConfirmId,
+                                                isLoading = song.id == selectedForConfirmId && isLoadingPreview,
+                                                onSongClick = {
+                                                    onSongPreview(
+                                                        song,
+                                                        AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
+                                                    )
+                                                },
+                                                modifier = Modifier.onFirstVisible(key = song.id) {
+                                                    sessionManager.trackSongImpressionAndMark(
+                                                        songId = song.id.toString(),
+                                                        songName = song.name,
+                                                        location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH,
+                                                        isPremium = song.isPremium
+                                                    )
+                                                }
+                                            )
+                                        }
+
+                                        is SongFeedItem.Ad -> {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(dimens.radiusXl))
+                                                    .background(MaterialTheme.colorScheme.surface)
+                                            ) {
+                                                NativeAdView(
+                                                    placement = AdPlacement.NATIVE_EDITOR_MUSIC_INFEED,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(100.dp),
+                                                    autoLoad = true,
+                                                    isDebug = BuildConfig.DEBUG,
+                                                    onAdClicked = { adClickDetector.onAdClick(it) }
                                                 )
                                             }
-                                        )
-                                    }
-                                    is SongFeedItem.Ad -> {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(dimens.radiusXl))
-                                                .background(MaterialTheme.colorScheme.surface)
-                                        ) {
-                                            NativeAdView(
-                                                placement = AdPlacement.NATIVE_EDITOR_MUSIC_INFEED,
-                                                modifier = Modifier.fillMaxWidth().height(100.dp),
-                                                autoLoad = true,
-                                                isDebug = BuildConfig.DEBUG,
-                                                onAdClicked = { adClickDetector.onAdClick(it) }
-                                            )
                                         }
                                     }
                                 }
                             }
 
-                            // Loading indicator at bottom when loading more
-                            if (suggestedLoadingMore) {
-                                item(key = "suggested_load_more") {
-                                    Box(
+                            is SongSearchUiState.Empty -> {
+                                item(key = "empty") {
+                                    Column(
                                         modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = dimens.spaceMd),
+                                            .padding(top = 36.dp)
+                                            .fillMaxWidth(),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Image(
+                                            painter = painterResource(R.drawable.img_empty_search),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(80.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(dimens.spaceMd))
+                                        Text(
+                                            text = stringResource(R.string.song_search_no_results),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = TextPrimary,
+                                            fontWeight = FontWeight.W600,
+                                            fontSize = 18.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(dimens.spaceSm))
+                                        Text(
+                                            text = stringResource(R.string.search_no_results_hint),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextSecondary
+                                        )
+                                    }
+                                }
+                            }
+
+                            is SongSearchUiState.Error -> {
+                                item(key = "error") {
+                                    Box(
+                                        modifier = Modifier.fillParentMaxSize(),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(24.dp),
-                                            strokeWidth = 2.dp,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                        Text(
+                                            text = state.message,
+                                            color = MaterialTheme.colorScheme.error,
+                                            fontSize = 16.sp
                                         )
+                                    }
+                                }
+                            }
+
+                            is SongSearchUiState.Idle -> {
+                                // Genre tabs above the scrolling suggested feed
+                                item(key = "idle_tabs") {
+                                    GenreTabRow(
+                                        genres = genres,
+                                        selectedGenre = selectedGenre,
+                                        onGenreSelected = viewModel::onGenreSelected
+                                    )
+                                    Spacer(modifier = Modifier.height(dimens.spaceMd))
+                                }
+
+                                if (suggestedSongsLoading) {
+                                    // Genre switch / initial load — show skeleton rows
+                                    items(6, key = { "idle_skeleton_$it" }) {
+                                        SongSkeletonItem()
+                                    }
+                                } else {
+                                    // Song list with interleaved native ads
+                                    items(
+                                        items = suggestedFeedItems,
+                                        key = { item -> songFeedItemKey(item, "suggested_") },
+                                        contentType = { item ->
+                                            when (item) {
+                                                is SongFeedItem.Song -> "song"
+                                                is SongFeedItem.Ad -> "ad"
+                                            }
+                                        }
+                                    ) { item ->
+                                        when (item) {
+                                            is SongFeedItem.Song -> {
+                                                val song = item.song
+                                                SongListItem(
+                                                    name = song.name,
+                                                    artist = song.artist,
+                                                    coverUrl = song.coverUrl,
+                                                    isPlaying = song.id == previewingSongId,
+                                                    isSelected = song.id == selectedForConfirmId,
+                                                    isLoading = song.id == selectedForConfirmId && isLoadingPreview,
+                                                    onSongClick = {
+                                                        onSongPreview(
+                                                            song,
+                                                            AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
+                                                        )
+                                                    },
+                                                    modifier = Modifier.onFirstVisible(key = song.id) {
+                                                        sessionManager.trackSongImpressionAndMark(
+                                                            songId = song.id.toString(),
+                                                            songName = song.name,
+                                                            location = AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM,
+                                                            isPremium = song.isPremium
+                                                        )
+                                                    }
+                                                )
+                                            }
+
+                                            is SongFeedItem.Ad -> {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .clip(RoundedCornerShape(dimens.radiusXl))
+                                                        .background(MaterialTheme.colorScheme.surface)
+                                                ) {
+                                                    NativeAdView(
+                                                        placement = AdPlacement.NATIVE_EDITOR_MUSIC_INFEED,
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .height(100.dp),
+                                                        autoLoad = true,
+                                                        isDebug = BuildConfig.DEBUG,
+                                                        onAdClicked = { adClickDetector.onAdClick(it) }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Loading indicator at bottom when loading more
+                                    if (suggestedLoadingMore) {
+                                        item(key = "suggested_load_more") {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = dimens.spaceMd),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.size(24.dp),
+                                                    strokeWidth = 2.dp,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(
+                                                        alpha = 0.5f
+                                                    )
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                            .padding(horizontal = 10.dp, vertical = 8.dp)
+                    ) {
+                        val playerSong = displaySong
+                        if (playerSong != null && isLoadingPreview && !isPreviewPlaying) {
+                            // Newly-selected song still preparing — show shimmer until ready.
+                            MusicSelectionPlayerSkeleton()
+                        } else if (playerSong != null) {
+                            MusicSelectionPlayer(
+                                coverUrl = playerSong.coverUrl,
+                                name = playerSong.name,
+                                artist = playerSong.artist,
+                                isPlaying = isPreviewPlaying,
+                                positionMs = positionMs,
+                                songDurationMs = songDurationMs,
+                                videoDurationMs = currentVideoDurationMs,
+                                selectionStartMs = selectionStartMs,
+                                hookSegments = hookSegments,
+                                waveform = waveform,
+                                onPlayPauseClick = {
+                                    if (exoPlayer.isPlaying) {
+                                        exoPlayer.pause()
+                                    } else if (previewingSongId == playerSong.id) {
+                                        exoPlayer.play()
+                                    } else {
+                                        MusicPreviewManager.togglePreview(playerSong.id)
+                                    }
+                                },
+                                onConfirmClick = { onConfirmClick() },
+                                onSelectionChange = { newStart ->
+                                    selectionStartMs = newStart
+                                    runCatching { exoPlayer.seekTo(newStart) }
+                                },
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)
+                            )
+                        }
+                    }
+                }
+            }  // End ProvideShimmerEffect
+
+            Box {
+                Spacer(Modifier.navigationBarsPadding())
+                if (adPlacementConfigService.bannerUseNative) {
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_EDITOR_BANNER,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                } else {
+                    BannerAdView(
+                        placement = AdPlacement.BANNER_EDITOR,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
                 }
             }
-            }  // End Column
-
-            // Ads loading overlay - covers entire bottom sheet area (inside same window)
-            AdsLoadingOverlay()
-        }  // End Box
-    }  // End ModalBottomSheet
+        }  // End Column
+    }  // End Dialog
 
     // Handle rewarded ad presentation
     RewardedAdPresenter(
@@ -908,12 +1021,106 @@ internal fun MusicSearchBottomSheet(
         onRewardEarned = ::onRewardEarned,
         onAdFailed = ::onAdFailed
     )
+}
 
-    LaunchedEffect(Unit) {
-        try {
-            delay(100)
-            focusRequester.requestFocus()
-        } catch (_: Exception) { }
+// ============================================
+// GENRE TABS (underline style)
+// ============================================
+
+@Composable
+private fun GenreTabRow(
+    genres: List<SongGenre>,
+    selectedGenre: String?,
+    onGenreSelected: (String?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (genres.isEmpty()) return
+    val dimens = AppDimens.current
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(dimens.spaceLg)
+    ) {
+        item(key = "all") {
+            GenreTab(
+                text = stringResource(R.string.settings_all),
+                isSelected = selectedGenre == null,
+                onClick = { onGenreSelected(null) }
+            )
+        }
+        items(genres, key = { it.id }) { genre ->
+            GenreTab(
+                text = genre.displayName,
+                isSelected = selectedGenre == genre.id,
+                onClick = { onGenreSelected(genre.id) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun GenreTab(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickableSingle(onClick = onClick)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (isSelected) MaterialTheme.colorScheme.primary else TextTertiary,
+            modifier = Modifier.padding(vertical = 6.dp)
+        )
+        Box(
+            modifier = Modifier
+                .width(20.dp)
+                .height(2.dp)
+                .clip(RoundedCornerShape(1.dp))
+                .background(
+                    if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+                )
+        )
+    }
+}
+
+// ============================================
+// SKELETON ROW (shimmer placeholder for a song item)
+// ============================================
+
+@Composable
+private fun SongSkeletonItem(
+    modifier: Modifier = Modifier
+) {
+    val dimens = AppDimens.current
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(dimens.spaceSm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ShimmerPlaceholder(
+            modifier = Modifier.size(40.dp),
+            cornerRadius = dimens.radiusMd
+        )
+        Spacer(modifier = Modifier.width(dimens.spaceMd))
+        Column(modifier = Modifier.weight(1f)) {
+            ShimmerPlaceholder(
+                modifier = Modifier
+                    .fillMaxWidth(0.55f)
+                    .height(14.dp),
+                cornerRadius = 4.dp
+            )
+            Spacer(modifier = Modifier.height(dimens.spaceXs))
+            ShimmerPlaceholder(
+                modifier = Modifier
+                    .fillMaxWidth(0.3f)
+                    .height(12.dp),
+                cornerRadius = 4.dp
+            )
+        }
     }
 }
 
@@ -945,13 +1152,10 @@ private fun MusicSearchContentPreview() {
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = SearchFieldBackground,
-                    shape = RoundedCornerShape(16.dp)
+                    color = SearchFieldBackground, shape = RoundedCornerShape(16.dp)
                 )
                 .border(
-                    width = 1.dp,
-                    color = SearchFieldBorder,
-                    shape = RoundedCornerShape(16.dp)
+                    width = 1.dp, color = SearchFieldBorder, shape = RoundedCornerShape(16.dp)
                 )
                 .padding(horizontal = 12.dp, vertical = 12.dp)
         ) {
@@ -987,6 +1191,7 @@ private fun MusicSearchContentPreview() {
             name = "Blinding Lights",
             artist = "The Weeknd",
             coverUrl = "",
+            isLoading = true,
             onSongClick = {}
         )
         // Selected but not playing
@@ -1004,5 +1209,105 @@ private fun MusicSearchContentPreview() {
             coverUrl = "",
             onSongClick = {}
         )
+    }
+}
+
+@Composable
+fun SongEditItem(
+    name: String,
+    artist: String,
+    coverUrl: String,
+    isShowOption: Boolean = false,
+    onClickDelete: () -> Unit = {},
+    onSongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isPlaying: Boolean = false,
+    isSelected: Boolean = false,
+    isLoading: Boolean = false
+) {
+    val dimens = AppDimens.current
+
+    Card(
+        onClick = onSongClick,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(dimens.radiusLg),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dimens.spaceSm),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Thumbnail
+            AppAsyncImage(
+                imageUrl = coverUrl,
+                contentDescription = name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(dimens.radiusMd))
+            )
+
+            Spacer(modifier = Modifier.width(dimens.spaceMd))
+
+            // Song name + artist
+            Column(modifier = Modifier.weight(1f)) {
+                // Title row with animated bars when playing
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 15.sp
+                        ),
+                        color = TextPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (isPlaying) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        PlayingAnimationBars(
+                            barColor = MaterialTheme.colorScheme.primary,
+                            barWidth = 3.dp,
+                            maxBarHeight = 14.dp,
+                            containerSize = 16.dp
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(dimens.spaceXxs))
+                Text(
+                    text = artist,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 13.sp
+                    ),
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            // Green checkmark when selected
+            if (isSelected) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            if (isShowOption) {
+                Spacer(modifier = Modifier.width(dimens.spaceMd))
+                SongItemMore {
+                    onClickDelete.invoke()
+                }
+            }
+        }
     }
 }

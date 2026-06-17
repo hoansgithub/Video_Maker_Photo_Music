@@ -748,8 +748,23 @@ fun EditorScreen(
                     }
                 }
 
+                val editorState = currentState()
+                val editorSettings = editorState?.displaySettings
+                val editorInitialSong = editorSettings?.musicSongId?.let { sid ->
+                    com.videomaker.aimusic.domain.model.MusicSong(
+                        id = sid,
+                        name = editorSettings.musicSongName ?: "",
+                        artist = editorSettings.musicSongArtist ?: "",
+                        mp3Url = editorSettings.musicSongUrl ?: "",
+                        coverUrl = editorSettings.musicSongCoverUrl ?: "",
+                        hookStartTimeMs = editorSettings.hookStartTimeMs
+                    )
+                }
+
                 MusicSearchBottomSheet(
                     viewModel = songSearchViewModel,
+                    currentVideoDurationMs = editorState?.durationMs ?: 0L,
+                    initialSong = editorInitialSong,
                     onSongClick = { song ->
                         val videoId = currentVideoId()
                         if (videoId != null) {
