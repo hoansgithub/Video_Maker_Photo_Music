@@ -126,6 +126,7 @@ import androidx.lifecycle.lifecycleScope
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.modules.editor.EditorScreenState
+import com.videomaker.aimusic.modules.home.components.innerShadow
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.PlayingAnimationBars
 import com.videomaker.aimusic.ui.components.SongItemMore
@@ -486,6 +487,7 @@ internal fun MusicSearchBottomSheet(
             // Title row with close button (left), centered title and confirm button (right)
             Box(
                 modifier = Modifier
+                    .padding(horizontal = 16.dp)
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
@@ -513,63 +515,6 @@ internal fun MusicSearchBottomSheet(
                     lineHeight = 18.sp,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
-
-                // Confirm button - right aligned, only visible when song is selected
-                if (selectedForConfirmId != null) {
-                    val selectedSong = remember(selectedForConfirmId, uiState, suggestedSongs) {
-                        val selectedId = selectedForConfirmId
-                        when (val state = uiState) {
-                            is SongSearchUiState.Results -> state.songs.find { it.id == selectedId }
-                            else -> suggestedSongs.find { it.id == selectedId }
-                        }
-                    }
-                    val isLocked = selectedSong?.let { isSongLocked(it) } ?: false
-
-                    Box(modifier = Modifier.align(Alignment.CenterEnd)) {
-                        if (isLocked) {
-                            // Locked song - show "Done" button with ad badge
-                            Box(
-                                modifier = Modifier
-                                    .height(36.dp)
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .background(MaterialTheme.colorScheme.primary)
-                                    .clickableSingle { onConfirmClick() }
-                                    .padding(horizontal = 12.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Done,
-                                        contentDescription = stringResource(R.string.confirm),
-                                        tint = SplashBackground,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    AdBadge(style = AdBadgeStyle.Small(textColor = SplashBackground))
-                                }
-                            }
-                        } else {
-                            // Unlocked song - show checkmark button
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primary)
-                                    .clickableSingle { onConfirmClick() },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = stringResource(R.string.confirm),
-                                    tint = SplashBackground,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                    }
-                }
             }
 
             val listState = rememberLazyListState()
@@ -634,6 +579,7 @@ internal fun MusicSearchBottomSheet(
                             // Search field - matching SongSearchTopBar style
                             Row(
                                 modifier = Modifier
+                                    .padding(horizontal = 16.dp)
                                     .fillMaxWidth()
                                     .background(
                                         color = Color.White.copy(0.1f),
@@ -712,7 +658,9 @@ internal fun MusicSearchBottomSheet(
                                     Spacer(modifier = Modifier.height(dimens.spaceMd))
                                 }
                                 items(6, key = { "loading_skeleton_$it" }) {
-                                    SongSkeletonItem()
+                                    SongSkeletonItem(
+                                        modifier = Modifier.padding(horizontal = 12.dp)
+                                    )
                                 }
                             }
 
@@ -722,9 +670,10 @@ internal fun MusicSearchBottomSheet(
                                         text = stringResource(R.string.song_search_searching),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = TextSecondary,
-                                        modifier = Modifier.padding(vertical = dimens.spaceSm)
+                                        modifier = Modifier
+                                            .padding(vertical = dimens.spaceSm, horizontal = 12.dp)
                                     )
-                                    SongSkeletonItem()
+                                    SongSkeletonItem(modifier = Modifier.padding(horizontal = 12.dp))
                                 }
                             }
 
@@ -738,7 +687,9 @@ internal fun MusicSearchBottomSheet(
                                         ),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = TextSecondary,
-                                        modifier = Modifier.padding(bottom = dimens.spaceSm)
+                                        modifier = Modifier
+                                            .padding(horizontal = 12.dp)
+                                            .padding(bottom = dimens.spaceSm)
                                     )
                                 }
                                 items(
@@ -767,7 +718,9 @@ internal fun MusicSearchBottomSheet(
                                                         AnalyticsEvent.Value.Location.VIDEO_EDITOR_SEARCH
                                                     )
                                                 },
-                                                modifier = Modifier.onFirstVisible(key = song.id) {
+                                                modifier = Modifier
+                                                    .padding(horizontal = 12.dp)
+                                                    .onFirstVisible(key = song.id) {
                                                     sessionManager.trackSongImpressionAndMark(
                                                         songId = song.id.toString(),
                                                         songName = song.name,
@@ -781,6 +734,7 @@ internal fun MusicSearchBottomSheet(
                                         is SongFeedItem.Ad -> {
                                             Box(
                                                 modifier = Modifier
+                                                    .padding(horizontal = 12.dp)
                                                     .fillMaxWidth()
                                                     .clip(RoundedCornerShape(dimens.radiusXl))
                                                     .background(MaterialTheme.colorScheme.surface)
@@ -804,6 +758,7 @@ internal fun MusicSearchBottomSheet(
                                 item(key = "empty") {
                                     Column(
                                         modifier = Modifier
+                                            .padding(horizontal = 12.dp)
                                             .padding(top = 36.dp)
                                             .fillMaxWidth(),
                                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -861,7 +816,7 @@ internal fun MusicSearchBottomSheet(
                                 if (suggestedSongsLoading) {
                                     // Genre switch / initial load — show skeleton rows
                                     items(6, key = { "idle_skeleton_$it" }) {
-                                        SongSkeletonItem()
+                                        SongSkeletonItem(modifier = Modifier.padding(horizontal = 12.dp))
                                     }
                                 } else {
                                     // Song list with interleaved native ads
@@ -891,7 +846,9 @@ internal fun MusicSearchBottomSheet(
                                                             AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM
                                                         )
                                                     },
-                                                    modifier = Modifier.onFirstVisible(key = song.id) {
+                                                    modifier = Modifier
+                                                        .padding(horizontal = 12.dp)
+                                                        .onFirstVisible(key = song.id) {
                                                         sessionManager.trackSongImpressionAndMark(
                                                             songId = song.id.toString(),
                                                             songName = song.name,
@@ -905,6 +862,7 @@ internal fun MusicSearchBottomSheet(
                                             is SongFeedItem.Ad -> {
                                                 Box(
                                                     modifier = Modifier
+                                                        .padding(horizontal = 12.dp)
                                                         .fillMaxWidth()
                                                         .clip(RoundedCornerShape(dimens.radiusXl))
                                                         .background(MaterialTheme.colorScheme.surface)
@@ -1037,23 +995,35 @@ private fun GenreTabRow(
 ) {
     if (genres.isEmpty()) return
     val dimens = AppDimens.current
-    LazyRow(
+    Box(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(dimens.spaceLg)
     ) {
-        item(key = "all") {
-            GenreTab(
-                text = stringResource(R.string.settings_all),
-                isSelected = selectedGenre == null,
-                onClick = { onGenreSelected(null) }
-            )
-        }
-        items(genres, key = { it.id }) { genre ->
-            GenreTab(
-                text = genre.displayName,
-                isSelected = selectedGenre == genre.id,
-                onClick = { onGenreSelected(genre.id) }
-            )
+        Spacer(
+            Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color.White.copy(0.08f))
+                .align(Alignment.BottomCenter)
+        )
+        LazyRow(
+            modifier = modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spaceLg),
+            contentPadding = PaddingValues(horizontal = 12.dp)
+        ) {
+            item(key = "all") {
+                GenreTab(
+                    text = stringResource(R.string.settings_all),
+                    isSelected = selectedGenre == null,
+                    onClick = { onGenreSelected(null) }
+                )
+            }
+            items(genres, key = { it.id }) { genre ->
+                GenreTab(
+                    text = genre.displayName,
+                    isSelected = selectedGenre == genre.id,
+                    onClick = { onGenreSelected(genre.id) }
+                )
+            }
         }
     }
 }

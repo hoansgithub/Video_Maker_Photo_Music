@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -61,11 +62,13 @@ import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.PlayingAnimationBars
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
+import com.videomaker.aimusic.ui.theme.Neutral_N700
 import com.videomaker.aimusic.ui.theme.PlayerCardInnerGlow
 import com.videomaker.aimusic.ui.theme.PlayerCardTopHighlight
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
+import com.videomaker.aimusic.ui.theme.TextTertiary
 import kotlin.math.max
 import kotlin.random.Random
 
@@ -128,7 +131,6 @@ fun MusicSelectionPlayer(
                     color = Color.White.copy(alpha = 0.4f),
                     shape = RoundedCornerShape(20.dp)
                 )
-                .blur(16.dp)
         )
 
         Column(
@@ -144,17 +146,24 @@ fun MusicSelectionPlayer(
                     contentDescription = name,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(8.dp))
                 )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(modifier = Modifier.width(8.dp))
+                // Song name + artist
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // Song title row with playing animation bars
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
                             text = name,
-                            color = TextPrimary,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f, fill = false)
@@ -169,18 +178,21 @@ fun MusicSelectionPlayer(
                             )
                         }
                     }
-                    Text(
-                        text = artist,
-                        color = TextSecondary,
-                        fontSize = 15.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    if (artist.isNotBlank()) {
+                        Text(
+                            text = artist,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.W400,
+                            color = TextTertiary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
                         .background(Primary)
                         .clickableSingle { onConfirmClick() },
@@ -190,14 +202,14 @@ fun MusicSelectionPlayer(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
                         tint = Color.Black,
-                        modifier = Modifier.size(26.dp)
+                        modifier = Modifier.size(21.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = Color.White.copy(alpha = 0.10f))
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.8f))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Progress row: time + hook progress bar + play/pause
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -205,9 +217,9 @@ fun MusicSelectionPlayer(
                 // with playback — only changes when the frame selection changes).
                 Text(
                     text = formatPlayerTime(videoDurationMs),
-                    color = TextPrimary,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.W500
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 HookProgressBar(
@@ -222,9 +234,9 @@ fun MusicSelectionPlayer(
                 Spacer(modifier = Modifier.width(12.dp))
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.14f))
+                        .background(Neutral_N700)
                         .clickableSingle { onPlayPauseClick() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -232,12 +244,12 @@ fun MusicSelectionPlayer(
                         imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(26.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             MusicScrubber(
                 waveform = waveform,
@@ -248,7 +260,7 @@ fun MusicSelectionPlayer(
                 onSelectionChange = onSelectionChange,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
+                    .height(40.dp)
             )
         }
     }
