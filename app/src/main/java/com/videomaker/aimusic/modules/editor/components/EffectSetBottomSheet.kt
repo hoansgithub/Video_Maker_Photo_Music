@@ -70,7 +70,6 @@ import com.videomaker.aimusic.modules.editor.EffectSetUiState
 import com.videomaker.aimusic.modules.editor.EffectSetViewModel
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.theme.EffectUnselectedBg
-import com.videomaker.aimusic.ui.theme.Gray600
 import com.videomaker.aimusic.ui.theme.Neutral_N600
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SplashBackground
@@ -192,16 +191,6 @@ fun EffectSetPanelContent(
                 .padding(horizontal = 20.dp)
                 .padding(top = 8.dp)
         ) {
-            // Drag handle top indicator
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(vertical = 8.dp)
-                    .size(width = 36.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(Gray600)
-            )
-
             // Header row
             Row(
                 modifier = Modifier.fillMaxWidth(),

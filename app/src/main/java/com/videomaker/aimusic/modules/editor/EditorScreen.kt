@@ -3,18 +3,18 @@ package com.videomaker.aimusic.modules.editor
 // import com.videomaker.aimusic.di.MusicPickerViewModelFactory // Commented out - using Supabase only
 // import com.videomaker.aimusic.modules.editor.components.SettingsPanel // Removed - using individual bottom sheets
 // import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen // Commented out - using Supabase only
+
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,7 +39,6 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -56,12 +55,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -90,16 +95,17 @@ import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.EffectSet
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
+import com.videomaker.aimusic.media.renderer.PlaybackClock
+import com.videomaker.aimusic.media.renderer.PreviewSurfaceView
+import com.videomaker.aimusic.media.renderer.RenderState
+import com.videomaker.aimusic.modules.editor.components.AudioPreviewPlayer
+import com.videomaker.aimusic.modules.editor.components.EffectSetPanel
 import com.videomaker.aimusic.modules.editor.components.ImagesBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
 import com.videomaker.aimusic.modules.editor.components.PlayMusicSlider
 import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
-import com.videomaker.aimusic.modules.editor.components.AudioPreviewPlayer
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
-import com.videomaker.aimusic.media.renderer.PreviewSurfaceView
-import com.videomaker.aimusic.media.renderer.PlaybackClock
-import com.videomaker.aimusic.media.renderer.RenderState
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.EditorErrorDialog
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
@@ -1150,20 +1156,67 @@ internal fun EditorMainContent(
     modifier: Modifier = Modifier
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val panelHeight = remember(context) {
+    val density = LocalDensity.current
+    val minHeight = remember(context) {
         val displayMetrics = context.resources.displayMetrics
         val xdpi = if (displayMetrics.xdpi > 100f) displayMetrics.xdpi.toDouble() else displayMetrics.densityDpi.toDouble()
         val ydpi = if (displayMetrics.ydpi > 100f) displayMetrics.ydpi.toDouble() else displayMetrics.densityDpi.toDouble()
         val wi = displayMetrics.widthPixels.toDouble() / xdpi
         val hi = displayMetrics.heightPixels.toDouble() / ydpi
         val screenInches = kotlin.math.sqrt(wi * wi + hi * hi)
-        if (screenInches < 5.5) 250.dp else 320.dp
+        if (screenInches < 5.5) 250.dp else 350.dp
+    }
+    val maxHeight = 620.dp
+    var currentPanelHeight by remember(minHeight) { mutableStateOf(minHeight) }
+
+    LaunchedEffect(showEffectSetPanel, minHeight) {
+        if (showEffectSetPanel) {
+            currentPanelHeight = minHeight
+        }
     }
 
-    Column(
+    val nestedScrollConnection = remember(minHeight) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val deltaY = available.y
+                if (deltaY < 0 && currentPanelHeight < maxHeight) {
+                    val dragDp = with(density) { -deltaY.toDp() }
+                    val newHeight = (currentPanelHeight + dragDp).coerceAtMost(maxHeight)
+                    val consumedDp = newHeight - currentPanelHeight
+                    currentPanelHeight = newHeight
+                    val consumedY = with(density) { -consumedDp.toPx() }
+                    return Offset(0f, consumedY)
+                }
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                val deltaY = available.y
+                if (deltaY > 0 && currentPanelHeight > minHeight) {
+                    val dragDp = with(density) { -deltaY.toDp() }
+                    val newHeight = (currentPanelHeight + dragDp).coerceAtLeast(minHeight)
+                    val consumedDp = currentPanelHeight - newHeight
+                    currentPanelHeight = newHeight
+                    val consumedY = with(density) { consumedDp.toPx() }
+                    return Offset(0f, consumedY)
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
+    Box(
         modifier = modifier
             .fillMaxSize()
+            .background(SplashBackground)
     ) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
         // Top bar rendered inside the same Column as the GL preview so it participates
         // in the normal layout order. If placed in a parent Column, GLSurfaceView's
         // separate hardware surface layer can overlap it.
@@ -1215,24 +1268,94 @@ internal fun EditorMainContent(
         }
 
 
-        AnimatedContent(
-            targetState = showEffectSetPanel,
-            transitionSpec = {
-                if (targetState) {
-                    (slideInVertically(initialOffsetY = { it }) + fadeIn()) togetherWith
-                            (slideOutVertically(targetOffsetY = { it }) + fadeOut())
-                } else {
-                    (slideInVertically(initialOffsetY = { -it }) + fadeIn()) togetherWith
-                            (slideOutVertically(targetOffsetY = { it }) + fadeOut())
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(if (showEffectSetPanel) 0f else 1f)
+        ) {
+            val normalControlsInteractionModifier = if (showEffectSetPanel) {
+                Modifier.pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            awaitPointerEvent()
+                        }
+                    }
                 }
-            },
-            label = "bottom_controls_transition"
-        ) { isEffectOpen ->
-            if (isEffectOpen) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    EditorPlayerControls(
+            } else {
+                Modifier
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(normalControlsInteractionModifier),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                if (currentState == EditorScreenState.LOADING) {
+                    val tipMessages = listOf(
+                        "Collecting your best moments...",
+                        "Turning photos into motion...",
+                        "Matching every moment to the beat...",
+                        "Making it look amazing...",
+                        "Your music video is ready! ✨",
+                    )
+
+                    var currentTipIndex by remember { mutableStateOf(0) }
+
+                    // Rotate tips every 4 seconds
+                    LaunchedEffect(Unit) {
+                        while (true) {
+                            delay(4000)
+                            currentTipIndex = (currentTipIndex + 1) % tipMessages.size
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Image(
+                        painter = painterResource(R.drawable.img_content_edit_loading),
+                        contentDescription = null,
+                        contentScale = ContentScale.FillHeight,
+                        modifier = Modifier
+                            .height(36.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = tipMessages[currentTipIndex],
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.W400,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .border(1.dp, Color.White.copy(0.08f), RoundedCornerShape(120.dp))
+                            .padding(vertical = 6.dp, horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_outline_info),
+                            contentDescription = null,
+                            tint = Neutral_N600,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Please don't close app",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.W400,
+                            color = Neutral_N600,
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                } else {
+                    PlayMusicSlider(
                         currentPositionMs = currentPositionMs,
                         durationMs = durationMs,
+                        currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,
                         isPlaying = isPlaying,
                         onSeek = { position ->
                             if (durationMs > 0) {
@@ -1247,200 +1370,173 @@ internal fun EditorMainContent(
                         onSeekStart = onSeekStart,
                         onSeekEnd = onSeekEnd,
                         onPlayPauseClick = onPlayPauseClick,
-                        modifier = Modifier.fillMaxWidth()
                     )
-                    com.videomaker.aimusic.modules.editor.components.EffectSetPanel(
-                        viewModel = effectSetViewModel,
-                        selectedEffectSetId = project?.settings?.effectSetId,
-                        onDismiss = onEffectPanelDismiss,
-                        onConfirm = onEffectPanelConfirm,
-                        onEffectSetSelected = onEffectSetSelected,
+
+                    // Music Section - song info and player
+                    Row(
                         modifier = Modifier
+                            .padding(horizontal = 12.dp)
                             .fillMaxWidth()
-                            .height(panelHeight)
-                    )
-                }
-            } else {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (currentState == EditorScreenState.LOADING) {
-                        val tipMessages = listOf(
-                            "Collecting your best moments...",
-                            "Turning photos into motion...",
-                            "Matching every moment to the beat...",
-                            "Making it look amazing...",
-                            "Your music video is ready! ✨",
-                        )
-
-                        var currentTipIndex by remember { mutableStateOf(0) }
-
-                        // Rotate tips every 4 seconds
-                        LaunchedEffect(Unit) {
-                            while (true) {
-                                delay(4000)
-                                currentTipIndex = (currentTipIndex + 1) % tipMessages.size
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Image(
-                            painter = painterResource(R.drawable.img_content_edit_loading),
-                            contentDescription = null,
-                            contentScale = ContentScale.FillHeight,
-                            modifier = Modifier
-                                .height(36.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = tipMessages[currentTipIndex],
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.W400,
-                            color = Color.White,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 32.dp)
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Row(
-                            modifier = Modifier
-                                .border(1.dp, Color.White.copy(0.08f), RoundedCornerShape(120.dp))
-                                .padding(vertical = 6.dp, horizontal = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_outline_info),
-                                contentDescription = null,
-                                tint = Neutral_N600,
-                                modifier = Modifier.size(20.dp)
+                            .shadow(
+                                elevation = 16.dp,            // approximates the 32px blur radius
+                                shape = RoundedCornerShape(20.dp),
+                                ambientColor = Color(0x3D000000),
+                                spotColor = Color(0x3D000000),
+                                clip = false
                             )
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFF575757).copy(0.4f))
+                            .border(1.dp, Color.White.copy(0.4f), RoundedCornerShape(20.dp))
+                            .clickable(onClick = onMusicSelectorClick)
+                            .padding(vertical = 8.dp, horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Album cover thumbnail
+                        AppAsyncImage(
+                            imageUrl = project?.settings?.primaryAudioNode?.coverUrl ?: "",
+                            contentDescription = project?.settings?.primaryAudioNode?.songName
+                                ?: stringResource(R.string.editor_no_music_selected),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        // Song name + artist
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Please don't close app",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.W400,
-                                color = Neutral_N600,
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                    } else {
-                        PlayMusicSlider(
-                            currentPositionMs = currentPositionMs,
-                            durationMs = durationMs,
-                            currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,
-                            isPlaying = isPlaying,
-                            onSeek = { position ->
-                                if (durationMs > 0) {
-                                    onSeek((position * durationMs).toLong())
-                                }
-                            },
-                            onScrub = { position ->
-                                if (durationMs > 0) {
-                                    onScrub((position * durationMs).toLong())
-                                }
-                            },
-                            onSeekStart = onSeekStart,
-                            onSeekEnd = onSeekEnd,
-                            onPlayPauseClick = onPlayPauseClick,
-                        )
-
-                        // Music Section - song info and player
-                        Row(
-                            modifier = Modifier
-                                .padding(horizontal = 12.dp)
-                                .fillMaxWidth()
-                                .shadow(
-                                    elevation = 16.dp,            // approximates the 32px blur radius
-                                    shape = RoundedCornerShape(20.dp),
-                                    ambientColor = Color(0x3D000000),
-                                    spotColor = Color(0x3D000000),
-                                    clip = false
-                                )
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(Color(0xFF575757).copy(0.4f))
-                                .border(1.dp, Color.White.copy(0.4f), RoundedCornerShape(20.dp))
-                                .clickable(onClick = onMusicSelectorClick)
-                                .padding(vertical = 8.dp, horizontal = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Album cover thumbnail
-                            AppAsyncImage(
-                                imageUrl = project?.settings?.primaryAudioNode?.coverUrl ?: "",
-                                contentDescription = project?.settings?.primaryAudioNode?.songName
+                                text = project?.settings?.primaryAudioNode?.songName
                                     ?: stringResource(R.string.editor_no_music_selected),
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(RoundedCornerShape(8.dp))
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.W500,
+                                color = TextPrimary,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
                             )
-
-                            Spacer(modifier = Modifier.width(10.dp))
-
-                            // Song name + artist
-                            Column(modifier = Modifier.weight(1f)) {
+                            Spacer(Modifier.height(2.dp))
+                            val songArtist = project?.settings?.primaryAudioNode?.songArtist
+                            if (!songArtist.isNullOrBlank()) {
                                 Text(
-                                    text = project?.settings?.primaryAudioNode?.songName
-                                        ?: stringResource(R.string.editor_no_music_selected),
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.W500,
+                                    text = songArtist,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.W400,
                                     color = TextPrimary,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
-                                Spacer(Modifier.height(2.dp))
-                                val songArtist = project?.settings?.primaryAudioNode?.songArtist
-                                if (!songArtist.isNullOrBlank()) {
-                                    Text(
-                                        text = songArtist,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.W400,
-                                        color = TextPrimary,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
                             }
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            // Chevron arrow
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = null,
-                                tint = TextPrimary,
-                                modifier = Modifier.size(32.dp)
-                            )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
 
-                        // Separator
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(Color.White.copy(alpha = 0.1f))
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        // Settings Tab Bar - Images, Effect, Ratio, Volume (horizontally scrollable)
-                        val hasMusic = project?.settings?.primaryAudioNode != null
-                        SettingsTabBar(
-                            showMusicControls = hasMusic,
-                            onImagesClick = onImagesClick,
-                            onEffectClick = onEffectClick,
-                            onRatioClick = onRatioClick,
-                            onVolumeClick = onVolumeClick,
-                            modifier = Modifier.fillMaxWidth()
+                        // Chevron arrow
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = TextPrimary,
+                            modifier = Modifier.size(32.dp)
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Separator
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(Color.White.copy(alpha = 0.1f))
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Settings Tab Bar - Images, Effect, Ratio, Volume (horizontally scrollable)
+                    val hasMusic = project?.settings?.primaryAudioNode != null
+                    SettingsTabBar(
+                        showMusicControls = hasMusic,
+                        onImagesClick = onImagesClick,
+                        onEffectClick = onEffectClick,
+                        onRatioClick = onRatioClick,
+                        onVolumeClick = onVolumeClick,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
     }
+
+    if (showEffectSetPanel) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(currentPanelHeight)
+                .background(SplashBackground)
+                .nestedScroll(nestedScrollConnection)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { /* consume clicks */ }
+        ) {
+            // Drag handle area
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            val dragDp = with(density) { -dragAmount.y.toDp() }
+                            currentPanelHeight = (currentPanelHeight + dragDp).coerceIn(minHeight, maxHeight)
+                        }
+                    }
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 36.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color.Gray)
+                )
+            }
+
+            // Inline EffectSetPanel
+            EffectSetPanel(
+                viewModel = effectSetViewModel,
+                selectedEffectSetId = project?.settings?.effectSetId,
+                onDismiss = onEffectPanelDismiss,
+                onConfirm = onEffectPanelConfirm,
+                onEffectSetSelected = onEffectSetSelected,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
+
+            // Player Controls
+            EditorPlayerControls(
+                currentPositionMs = currentPositionMs,
+                durationMs = durationMs,
+                isPlaying = isPlaying,
+                onSeek = { position ->
+                    if (durationMs > 0) {
+                        onSeek((position * durationMs).toLong())
+                    }
+                },
+                onScrub = { position ->
+                    if (durationMs > 0) {
+                        onScrub((position * durationMs).toLong())
+                    }
+                },
+                onSeekStart = onSeekStart,
+                onSeekEnd = onSeekEnd,
+                onPlayPauseClick = onPlayPauseClick,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
 }
 
 @Composable
