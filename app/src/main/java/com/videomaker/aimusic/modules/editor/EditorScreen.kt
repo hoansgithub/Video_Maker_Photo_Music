@@ -750,20 +750,21 @@ fun EditorScreen(
 
                 val editorState = currentState()
                 val editorSettings = editorState?.displaySettings
-                val editorInitialSong = editorSettings?.musicSongId?.let { sid ->
+                val audioNode = editorSettings?.primaryAudioNode
+                val editorInitialSong = audioNode?.songId?.let { sid ->
                     com.videomaker.aimusic.domain.model.MusicSong(
                         id = sid,
-                        name = editorSettings.musicSongName ?: "",
-                        artist = editorSettings.musicSongArtist ?: "",
-                        mp3Url = editorSettings.musicSongUrl ?: "",
-                        coverUrl = editorSettings.musicSongCoverUrl ?: "",
-                        hookStartTimeMs = editorSettings.hookStartTimeMs
+                        name = audioNode.songName ?: "",
+                        artist = audioNode.songArtist ?: "",
+                        mp3Url = audioNode.songUrl ?: "",
+                        coverUrl = audioNode.coverUrl ?: "",
+                        hookStartTimeMs = audioNode.trimStartMs
                     )
                 }
 
                 MusicSearchBottomSheet(
                     viewModel = songSearchViewModel,
-                    currentVideoDurationMs = editorState?.durationMs ?: 0L,
+                    currentVideoDurationMs = durationMs,
                     initialSong = editorInitialSong,
                     onSongClick = { song ->
                         val videoId = currentVideoId()
@@ -777,7 +778,7 @@ fun EditorScreen(
                             )
                         }
                     },
-                    onSongSelected = { song ->
+                    onSongSelected = { song, selectionStartMs ->
                         val videoId = currentVideoId()
                         if (videoId != null) {
                             Analytics.trackEditorSongSelect(
@@ -791,8 +792,10 @@ fun EditorScreen(
                         viewModel.updateMusicTrack(
                             songId = song.id,
                             songName = song.name,
+                            songArtist = song.artist,
                             songUrl = song.mp3Url,
-                            songCoverUrl = song.coverUrl
+                            songCoverUrl = song.coverUrl,
+                            trimStartMs = selectionStartMs
                         )
                         showMusicSearchSheet = false
                         // ViewModel handles auto-play after music change completes
