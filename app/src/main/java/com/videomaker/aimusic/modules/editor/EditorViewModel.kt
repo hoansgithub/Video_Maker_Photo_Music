@@ -429,10 +429,11 @@ class EditorViewModel(
 
                             if (beatSyncData != null) {
                                 // Calculate total duration with beat-sync data
+                                val savedTrimStart = project.settings.primaryAudioNode?.trimStartMs ?: project.settings.hookStartTimeMs
                                 val totalDurationMs = Project.calculateBeatSyncDuration(
                                     beatData = beatSyncData,
                                     assetCount = project.assets.size,
-                                    trimStartMs = 0L
+                                    trimStartMs = savedTrimStart
                                 ) ?: 0L
 
                                 // Update project with beat-sync data
@@ -469,7 +470,7 @@ class EditorViewModel(
                                         songUrl = loadNode.songUrl,
                                         beatSyncData = project.settings.beatSyncData,
                                         totalDurationMs = project.settings.totalDurationMs,
-                                        trimStartMs = project.settings.hookStartTimeMs
+                                        trimStartMs = loadNode.trimStartMs
                                     )
                                 }
                             } catch (e: Exception) {
@@ -619,7 +620,7 @@ class EditorViewModel(
                     Project.calculateBeatSyncDuration(
                         beatData = beatSyncData,
                         assetCount = imageUris.size,
-                        trimStartMs = 0L
+                        trimStartMs = hookStartTimeMs
                     ) ?: 0L
                 } else {
                     0L
@@ -921,11 +922,12 @@ class EditorViewModel(
 
                 // Pre-calculate beat-sync duration (avoid ANR in getter)
                 val currentState = _uiState.value as? EditorUiState.Success
+                val songTrimStart = song?.hookStartTimeMs ?: 0L
                 val totalDurationMs = if (beatSyncData != null && currentState != null) {
                     Project.calculateBeatSyncDuration(
                         beatData = beatSyncData,
                         assetCount = currentState.project.assets.size,
-                        trimStartMs = 0L
+                        trimStartMs = songTrimStart
                     ) ?: 0L
                 } else {
                     0L
@@ -934,7 +936,6 @@ class EditorViewModel(
                 // Preprocess audio with timeout — if slow network causes hang, proceed without preprocessed audio
                 // AudioTimelinePlayer falls back to source audio with clipping when processedAudioUri is null
                 val preprocessedUri = if (beatSyncData != null && songId != null && song?.mp3Url != null && totalDurationMs > 0) {
-                    val trimStartMs = song.hookStartTimeMs ?: 0L
                     try {
                         withTimeoutOrNull(30_000L) {
                             withContext(Dispatchers.IO) {
@@ -943,7 +944,7 @@ class EditorViewModel(
                                     songUrl = song.mp3Url,
                                     beatSyncData = beatSyncData,
                                     totalDurationMs = totalDurationMs,
-                                    trimStartMs = trimStartMs
+                                    trimStartMs = songTrimStart
                                 )
                             }
                         }.also { uri ->
@@ -1000,7 +1001,7 @@ class EditorViewModel(
         }
     }
 
-    fun updateMusicTrack(songId: Long, songName: String, songUrl: String, songCoverUrl: String) {
+    fun updateMusicTrack(songId: Long, songName: String, songArtist: String, songUrl: String, songCoverUrl: String, trimStartMs: Long? = null) {
         // Reset error flag from any previous failed music change
         isMusicChangeError = false
 
@@ -1031,12 +1032,9 @@ class EditorViewModel(
         musicUpdateJob?.cancel()
         musicUpdateJob = viewModelScope.launch {
             try {
-                // Fetch song and beat-sync data in parallel to reduce wait time
-                val songDeferred = async { songRepository.getSongById(songId).getOrNull() }
-                val beatSyncDeferred = async { loadBeatSyncWithRetry(songId) }
-
-                val song = songDeferred.await()
-                val beatSyncData = beatSyncDeferred.await()
+                // Beat-sync data has 3-layer cache (memory → file → network)
+                // Song data is already passed from the music sheet — no need to re-fetch
+                val beatSyncData = loadBeatSyncWithRetry(songId)
 
                 // Beat-sync load failure already shows error dialog and returns null
                 if (beatSyncData == null) {
@@ -1049,13 +1047,16 @@ class EditorViewModel(
 
                 android.util.Log.i("EditorViewModel", "Beat-sync loaded: BPM=${beatSyncData.bpm}, beats=${beatSyncData.beats.size}")
 
+                // Resolve the effective trim start: user's scrubber selection, or 0
+                val effectiveTrimStart = trimStartMs ?: 0L
+
                 // Pre-calculate beat-sync duration (avoid ANR in getter)
                 val currentState = _uiState.value as? EditorUiState.Success
                 val totalDurationMs = if (currentState != null) {
                     Project.calculateBeatSyncDuration(
                         beatData = beatSyncData,
                         assetCount = currentState.project.assets.size,
-                        trimStartMs = 0L
+                        trimStartMs = effectiveTrimStart
                     ) ?: 0L
                 } else {
                     0L
@@ -1067,7 +1068,6 @@ class EditorViewModel(
 
                 // Preprocess audio with timeout — if slow network, proceed without fadeout
                 // AudioTimelinePlayer falls back to source audio with clipping
-                val trimStartMs = song?.hookStartTimeMs ?: 0L
                 val preprocessedUri = try {
                     withTimeoutOrNull(30_000L) {
                         withContext(Dispatchers.IO) {
@@ -1076,7 +1076,7 @@ class EditorViewModel(
                                 songUrl = songUrl,
                                 beatSyncData = beatSyncData,
                                 totalDurationMs = totalDurationMs,
-                                trimStartMs = trimStartMs
+                                trimStartMs = effectiveTrimStart
                             )
                         }
                     }.also { uri ->
@@ -1097,11 +1097,11 @@ class EditorViewModel(
                 val node = AudioNode(
                     songId = songId,
                     songName = songName,
-                    songArtist = song?.artist,
+                    songArtist = songArtist,
                     songUrl = songUrl,
                     coverUrl = songCoverUrl,
                     startTimeMs = 0L,
-                    trimStartMs = song?.hookStartTimeMs ?: 0L,
+                    trimStartMs = effectiveTrimStart,
                     volume = 1.0f,
                     processedAudioUri = preprocessedUri?.toString()
                 )
@@ -1121,7 +1121,7 @@ class EditorViewModel(
                         pendingSettings = baseSettings.copy(
                             audioNodes = listOf(node),
                             beatSyncData = beatSyncData,
-                            hookStartTimeMs = song?.hookStartTimeMs ?: 0L,
+                            hookStartTimeMs = effectiveTrimStart,
                             totalDurationMs = totalDurationMs
                         ),
                         isPlaying = true

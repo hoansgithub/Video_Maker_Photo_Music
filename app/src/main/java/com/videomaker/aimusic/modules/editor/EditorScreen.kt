@@ -750,20 +750,21 @@ fun EditorScreen(
 
                 val editorState = currentState()
                 val editorSettings = editorState?.displaySettings
-                val editorInitialSong = currentState()?.displaySettings?.primaryAudioNode?.songId?.let { sid ->
+                val audioNode = editorSettings?.primaryAudioNode
+                val editorInitialSong = audioNode?.songId?.let { sid ->
                     com.videomaker.aimusic.domain.model.MusicSong(
                         id = sid,
-                        name = editorSettings?.primaryAudioNode?.songName ?: "",
-                        artist = editorSettings?.primaryAudioNode?.songArtist ?: "",
-                        mp3Url = editorSettings?.primaryAudioNode?.songUrl ?: "",
-                        coverUrl = editorSettings?.primaryAudioNode?.songUrl ?: "",
-                        hookStartTimeMs = editorSettings?.hookStartTimeMs?:0L
+                        name = audioNode.songName ?: "",
+                        artist = audioNode.songArtist ?: "",
+                        mp3Url = audioNode.songUrl ?: "",
+                        coverUrl = audioNode.coverUrl ?: "",
+                        hookStartTimeMs = audioNode.trimStartMs
                     )
                 }
 
                 MusicSearchBottomSheet(
                     viewModel = songSearchViewModel,
-                    currentVideoDurationMs = currentState()?.displaySettings?.totalDurationMs ?: 0L,
+                    currentVideoDurationMs = durationMs,
                     initialSong = editorInitialSong,
                     onSongClick = { song ->
                         val videoId = currentVideoId()
@@ -777,7 +778,7 @@ fun EditorScreen(
                             )
                         }
                     },
-                    onSongSelected = { song ->
+                    onSongSelected = { song, selectionStartMs ->
                         val videoId = currentVideoId()
                         if (videoId != null) {
                             Analytics.trackEditorSongSelect(
@@ -791,8 +792,10 @@ fun EditorScreen(
                         viewModel.updateMusicTrack(
                             songId = song.id,
                             songName = song.name,
+                            songArtist = song.artist,
                             songUrl = song.mp3Url,
-                            songCoverUrl = song.coverUrl
+                            songCoverUrl = song.coverUrl,
+                            trimStartMs = selectionStartMs
                         )
                         showMusicSearchSheet = false
                         // ViewModel handles auto-play after music change completes

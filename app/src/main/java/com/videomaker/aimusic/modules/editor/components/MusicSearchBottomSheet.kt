@@ -165,7 +165,7 @@ private fun ExoPlayer.releaseAsync() {
 internal fun MusicSearchBottomSheet(
     viewModel: SongSearchViewModel,
     onSongClick: (MusicSong) -> Unit,
-    onSongSelected: (MusicSong) -> Unit,
+    onSongSelected: (MusicSong, Long) -> Unit,
     onDismiss: () -> Unit,
     currentVideoDurationMs: Long = 0L,
     initialSong: MusicSong? = null
@@ -223,6 +223,13 @@ internal fun MusicSearchBottomSheet(
             ?: initialSong?.takeIf { it.id == id }
     }
 
+    // The song shown in the bottom player: the one selected/previewing, else the editor's song.
+    val displaySong = resolveSong(selectedForConfirmId ?: previewingSongId) ?: initialSong
+
+    var selectionStartMs by remember(displaySong?.id) {
+        mutableLongStateOf(displaySong?.hookStartTimeMs ?: 0L)
+    }
+
     // Handle confirm button click
     fun onConfirmClick() {
         val selectedId = MusicPreviewManager.getSelectedId() ?: return
@@ -235,7 +242,7 @@ internal fun MusicSearchBottomSheet(
         } else {
             // Song is unlocked or free - directly select
             MusicPreviewManager.clearPreviewState()
-            onSongSelected(song)
+            onSongSelected(song, selectionStartMs)
             Analytics.trackSongSelect(
                 songId = song.id.toString(),
                 songName = song.name,
@@ -252,7 +259,7 @@ internal fun MusicSearchBottomSheet(
             pendingSongToUnlock = null
             shouldPresentAd = false
             MusicPreviewManager.clearPreviewState()
-            onSongSelected(song)
+            onSongSelected(song, selectionStartMs)
         }
     }
 
@@ -396,12 +403,6 @@ internal fun MusicSearchBottomSheet(
     var playerDurationMs by remember { mutableLongStateOf(0L) }
     var isPreviewPlaying by remember { mutableStateOf(false) }
 
-    // The song shown in the bottom player: the one selected/previewing, else the editor's song.
-    val displaySong = resolveSong(selectedForConfirmId ?: previewingSongId) ?: initialSong
-
-    var selectionStartMs by remember(displaySong?.id) {
-        mutableLongStateOf(displaySong?.hookStartTimeMs ?: 0L)
-    }
     val waveform = remember(displaySong?.id) { placeholderWaveform(seed = displaySong?.id ?: 0L) }
     val hookSegments = remember(displaySong?.id, currentVideoDurationMs) {
         val start = displaySong?.hookStartTimeMs ?: 0L

@@ -160,10 +160,11 @@ class VideoExportWorker(
                 }
 
                 // Calculate total duration with beat-sync data
+                val exportTrimStart = project.settings.primaryAudioNode?.trimStartMs ?: project.settings.hookStartTimeMs
                 val totalDurationMs = com.videomaker.aimusic.domain.model.Project.calculateBeatSyncDuration(
                     beatData = beatSyncData,
                     assetCount = project.assets.size,
-                    trimStartMs = 0L
+                    trimStartMs = exportTrimStart
                 ) ?: 0L
 
                 // Update project settings with beat-sync data
@@ -189,12 +190,10 @@ class VideoExportWorker(
                 val beatData = project.settings.beatSyncData
                 val beatMs = 60000.0 / beatData.bpm
                 val fadeoutDurationMs = (beatMs * 6).toLong() // 6 beats fadeout
-                val hookStartTimeMs = project.settings.hookStartTimeMs
-
                 val preprocessedUri = audioPreprocessingService.preprocessAudioWithFadeout(
                     sourceUri = android.net.Uri.parse(exportNode.songUrl),
                     songId = exportNode.songId,
-                    trimStartMs = hookStartTimeMs,
+                    trimStartMs = exportNode.trimStartMs,
                     totalDurationMs = project.settings.totalDurationMs,
                     fadeoutDurationMs = fadeoutDurationMs
                 )

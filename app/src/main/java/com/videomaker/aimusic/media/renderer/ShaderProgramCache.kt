@@ -151,14 +151,14 @@ uniform float uInputAspectTo;
 uniform float uTargetAspect;
 $BLUR_BG_HELPERS
 vec4 getFromColor(vec2 uv) {
-    return sampleWithBlurBg(uTexFrom, uv, uInputAspectFrom, uTargetAspect);
+    return sampleWithBlurBg(uTexFrom, vec2(uv.x, 1.0 - uv.y), uInputAspectFrom, uTargetAspect);
 }
 vec4 getToColor(vec2 uv) {
-    return sampleWithBlurBg(uTexTo, uv, uInputAspectTo, uTargetAspect);
+    return sampleWithBlurBg(uTexTo, vec2(uv.x, 1.0 - uv.y), uInputAspectTo, uTargetAspect);
 }
 $transitionCode
 void main() {
-    gl_FragColor = transition(vTexCoord);
+    gl_FragColor = transition(vec2(vTexCoord.x, 1.0 - vTexCoord.y));
 }
 """
 
