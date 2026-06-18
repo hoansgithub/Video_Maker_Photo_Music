@@ -81,9 +81,7 @@ fun QualityPicker(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // [AD] badge for locked qualities
-            val isLocked = !isQualityUnlocked
-            if (isLocked) {
+            if (!isQualityUnlocked) {
                 AdBadge(
                     style = AdBadgeStyle.Small(
                         textColor = textColor,
@@ -113,7 +111,6 @@ fun QualityPicker(
             onDismissRequest = { showQualityMenu = false }
         ) {
             VideoQuality.entries.forEach { quality ->
-                val isQualityLocked = !isQualityUnlocked
                 DropdownMenuItem(
                     text = {
                         Row(
@@ -130,15 +127,6 @@ fun QualityPicker(
                                 },
                                 textAlign = TextAlign.End
                             )
-                            // [AD] badge for locked qualities
-                            if (isQualityLocked) {
-                                Spacer(modifier = Modifier.width(6.dp))
-                                AdBadge(
-                                    style = AdBadgeStyle.Small(
-                                        textColor = MaterialTheme.colorScheme.onSurface
-                                    )
-                                )
-                            }
                         }
                     },
                     onClick = {
@@ -181,34 +169,6 @@ fun QualityPickerV2(
             horizontalArrangement = Arrangement.spacedBy(2.5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // [AD] badge for locked qualities
-//            if (!isQualityUnlocked) {
-//                AdBadge(
-//                    style = AdBadgeStyle.Small(
-//                        textColor = Neutral_N600,
-//                        backgroundColor = Neutral_N600.copy(alpha = 0.2f)
-//                    )
-//                )
-//            }
-            // HD badge for 1080p (on the left)
-            if (selectedQuality == VideoQuality.FHD_1080) {
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = Neutral_N600,
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .padding(horizontal = 1.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.editor_hd),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = SplashBackground
-                    )
-                }
-            }
             Text(
                 text = selectedQuality.displayName,
                 color = Neutral_N600,
@@ -266,14 +226,6 @@ fun QualityPickerV2(
                                 },
                                 textAlign = TextAlign.End
                             )
-//                            if (!isQualityUnlocked) {
-//                                Spacer(modifier = Modifier.width(6.dp))
-//                                AdBadge(
-//                                    style = AdBadgeStyle.Small(
-//                                        textColor = MaterialTheme.colorScheme.onSurface
-//                                    )
-//                                )
-//                            }
                         }
                     },
                     onClick = {

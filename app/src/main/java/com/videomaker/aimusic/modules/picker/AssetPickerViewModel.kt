@@ -979,10 +979,10 @@ class AssetPickerViewModel(
                 // - Gallery → Template → Image → Editor
                 // - Music → Template → Image → Editor (templateId + overrideSongId both set)
                 templateId != null -> {
-                    // Fetch templates and find by ID
-                    templateRepository.getTemplates(limit = 100, offset = 0)
-                        .onSuccess { templates ->
-                            val template = templates.find { it.id == templateId }
+                    // Fetch the specific template by ID (handles search-result templates
+                    // that may not appear in the default top-N sorted list).
+                    templateRepository.getTemplateById(templateId)
+                        .onSuccess { template ->
                             if (template != null) {
                                 // Determine song ID (override or template's song)
                                 val songId = if (overrideSongId >= 0L) overrideSongId

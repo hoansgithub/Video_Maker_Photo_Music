@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.applovin.impl.sdk.i
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.FoundationBlack_100
 import com.videomaker.aimusic.ui.theme.SplashBackground
@@ -132,14 +131,3 @@ private fun SettingsTabButton(
     }
 }
 
-// ============================================
-// ASPECT RATIO EXTENSION
-// ============================================
-
-private val AspectRatio.shortLabel: String
-    get() = when (this) {
-        AspectRatio.RATIO_16_9 -> "16:9"
-        AspectRatio.RATIO_9_16 -> "9:16"
-        AspectRatio.RATIO_4_5 -> "4:5"
-        AspectRatio.RATIO_1_1 -> "1:1"
-    }

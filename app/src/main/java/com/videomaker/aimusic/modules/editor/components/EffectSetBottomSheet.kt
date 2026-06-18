@@ -228,7 +228,7 @@ fun EffectSetPanelContent(
                         .size(28.dp)
                         .clip(CircleShape)
                         .background(Primary)
-                        .clickable(onClick = { onConfirm(); onDismiss() }),
+                        .clickable(onClick = onConfirm),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(

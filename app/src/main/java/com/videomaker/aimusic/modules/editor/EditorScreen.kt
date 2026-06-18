@@ -102,7 +102,7 @@ import com.videomaker.aimusic.modules.editor.components.EffectSetPanel
 import com.videomaker.aimusic.modules.editor.components.ImagesBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
 import com.videomaker.aimusic.modules.editor.components.PlayMusicSlider
-import com.videomaker.aimusic.modules.editor.components.SelectRatioBottomSheet
+import com.videomaker.aimusic.modules.editor.components.RatioPanel
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.ui.components.AppAsyncImage
@@ -179,6 +179,7 @@ fun EditorScreen(
     // var showMusicPicker by remember { mutableStateOf(false) } // Commented out - using Supabase only
     var showRatioSheet by remember { mutableStateOf(false) }
     var showEffectSetSheet by remember { mutableStateOf(false) }
+    var effectSetIdBeforePanel by remember { mutableStateOf<String?>(null) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
     var showImagesSheet by remember { mutableStateOf(false) }
@@ -188,7 +189,7 @@ fun EditorScreen(
     var hasTrackedVideoPreview by remember { mutableStateOf(false) }
     var hasTrackedVideoPreviewComplete by remember { mutableStateOf(false) }
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
-    var ratioConfirmed by remember { mutableStateOf(false) }
+    var ratioBeforePanel by remember { mutableStateOf<AspectRatio?>(null) }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
     val activity = context as? android.app.Activity
@@ -298,6 +299,23 @@ fun EditorScreen(
         qualityAdError?.let { message ->
             snackbarHostState.showSnackbar(message)
             viewModel.onQualityAdErrorShown()
+        }
+    }
+
+    // Track editor screen render / failure once at launch
+    var hasTrackedEditorLaunch by remember { mutableStateOf(false) }
+    LaunchedEffect(uiState) {
+        if (hasTrackedEditorLaunch) return@LaunchedEffect
+        when (uiState) {
+            is EditorUiState.Success -> {
+                hasTrackedEditorLaunch = true
+                Analytics.trackVideoEditorRender()
+            }
+            is EditorUiState.Error -> {
+                hasTrackedEditorLaunch = true
+                Analytics.trackVideoPreviewFailed(videoId = "")
+            }
+            else -> {}
         }
     }
 
@@ -490,6 +508,7 @@ fun EditorScreen(
                         videoId = state.project.id,
                         templateId = state.displaySettings.templateId
                     )
+                    effectSetIdBeforePanel = state.displaySettings.effectSetId
                     showEffectSetSheet = true
                 },
                 onRatioClick = {
@@ -498,7 +517,7 @@ fun EditorScreen(
                         videoId = state.project.id,
                         ratioSize = state.displaySettings.aspectRatio.toAnalyticsRatioSize()
                     )
-                    ratioConfirmed = false
+                    ratioBeforePanel = state.displaySettings.aspectRatio
                     showRatioSheet = true
                 },
                 onVolumeClick = {
@@ -532,20 +551,40 @@ fun EditorScreen(
                             effectName = state.effectSetName
                         )
                     }
-                    // Reset highlight to currently applied effect set
-                    effectSetViewModel.setSelectedEffectSetId(state?.displaySettings?.effectSetId)
+                    // Only revert if the effect actually changed during preview
+                    if (state?.displaySettings?.effectSetId != effectSetIdBeforePanel) {
+                        viewModel.updateEffectSet(effectSetIdBeforePanel)
+                        effectSetViewModel.setSelectedEffectSetId(effectSetIdBeforePanel)
+                    }
                     showEffectSetSheet = false
                 },
                 onEffectPanelConfirm = {
+                    // Effect is already applied via preview — just track and close
                     val selectedId = effectSetViewModel.activeEffectSetId.value
-                    if (selectedId != null) {
-                        val state = currentState()
-                        if (state?.displaySettings?.effectSetId != selectedId) {
-                            viewModel.updateEffectSet(selectedId)
+                    val state = currentState()
+                    if (state != null) {
+                        Analytics.trackEffectClose(
+                            videoId = state.project.id,
+                            effectId = state.displaySettings.effectSetId,
+                            effectName = state.effectSetName
+                        )
+                    }
+                    if (selectedId != null && effectSetIdBeforePanel != selectedId) {
+                        val effectSet = (effectSetViewModel.uiState.value as? EffectSetUiState.Success)
+                            ?.effectSets?.find { it.id == selectedId }
+                        if (effectSet != null) {
+                            Analytics.trackEffectSelect(
+                                videoId = state?.project?.id ?: "",
+                                effectId = effectSet.id,
+                                effectName = effectSet.name,
+                                isPremium = effectSet.isPremium
+                            )
                         }
                     }
+                    showEffectSetSheet = false
                 },
                 onEffectSetSelected = { effectSet ->
+                    viewModel.updateEffectSet(effectSet.id)
                     val videoId = currentVideoId()
                     if (videoId != null) {
                         Analytics.trackEffectClick(
@@ -556,9 +595,46 @@ fun EditorScreen(
                         )
                     }
                 },
+                showRatioPanel = showRatioSheet,
+                onRatioPanelDismiss = {
+                    val state = currentState()
+                    if (state != null) {
+                        Analytics.trackRatioClose(
+                            videoId = state.project.id,
+                            ratioSize = state.displaySettings.aspectRatio.toAnalyticsRatioSize()
+                        )
+                    }
+                    // Revert if ratio changed during preview
+                    val before = ratioBeforePanel
+                    if (before != null && state?.displaySettings?.aspectRatio != before) {
+                        viewModel.updateAspectRatio(before)
+                    }
+                    showRatioSheet = false
+                },
+                onRatioPanelConfirm = {
+                    val state = currentState()
+                    if (state != null) {
+                        val ratioSize = state.displaySettings.aspectRatio.toAnalyticsRatioSize()
+                        Analytics.trackRatioSelect(
+                            videoId = state.project.id,
+                            ratioSize = ratioSize
+                        )
+                    }
+                    showRatioSheet = false
+                },
+                onRatioSelected = { selectedRatio ->
+                    viewModel.updateAspectRatio(selectedRatio)
+                    val videoId = currentVideoId()
+                    if (videoId != null) {
+                        Analytics.trackRatioClick(
+                            videoId = videoId,
+                            ratioSize = selectedRatio.toAnalyticsRatioSize()
+                        )
+                    }
+                },
                 topBar = {
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = !showEffectSetSheet,
+                        visible = !showEffectSetSheet && !showRatioSheet,
                         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
                     ) {
@@ -717,42 +793,7 @@ fun EditorScreen(
             //     )
             // }
 
-            // Ratio Bottom Sheet
-            if (showRatioSheet) {
-                val successState = uiState as? EditorUiState.Success
-                if (successState != null) {
-                    SelectRatioBottomSheet(
-                        currentRatio = successState.displaySettings.aspectRatio,
-                        onDismiss = {
-                            if (!ratioConfirmed) {
-                                Analytics.trackRatioClose(
-                                    videoId = successState.project.id,
-                                    ratioSize = successState.displaySettings.aspectRatio.toAnalyticsRatioSize()
-                                )
-                            }
-                            showRatioSheet = false
-                        },
-                        onRatioClick = { selectedRatio ->
-                            Analytics.trackRatioClick(
-                                videoId = successState.project.id,
-                                ratioSize = selectedRatio.toAnalyticsRatioSize()
-                            )
-                        },
-                        onConfirm = { selectedRatio ->
-                            val ratioSize = selectedRatio.toAnalyticsRatioSize()
-                            Analytics.trackRatioSelect(
-                                videoId = successState.project.id,
-                                ratioSize = ratioSize
-                            )
-                            ratioConfirmed = true
-                            viewModel.updateAspectRatio(selectedRatio)
-                            showRatioSheet = false
-                        }
-                    )
-                }
-            }
-
-            // Inline panel replaces bottom sheets, so we only handle non-effect sheets here
+            // Inline panels replace bottom sheets for ratio and effect — other sheets below
 
             // Music Search Bottom Sheet
             if (showMusicSearchSheet) {
@@ -1168,6 +1209,10 @@ internal fun EditorMainContent(
     onEffectPanelDismiss: () -> Unit,
     onEffectPanelConfirm: () -> Unit,
     onEffectSetSelected: (EffectSet) -> Unit,
+    showRatioPanel: Boolean = false,
+    onRatioPanelDismiss: () -> Unit = {},
+    onRatioPanelConfirm: () -> Unit = {},
+    onRatioSelected: (AspectRatio) -> Unit = {},
     topBar: @Composable () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -1185,8 +1230,8 @@ internal fun EditorMainContent(
     val maxHeight = 620.dp
     var currentPanelHeight by remember(minHeight) { mutableStateOf(minHeight) }
 
-    LaunchedEffect(showEffectSetPanel, minHeight) {
-        if (showEffectSetPanel) {
+    LaunchedEffect(showEffectSetPanel, showRatioPanel, minHeight) {
+        if (showEffectSetPanel || showRatioPanel) {
             currentPanelHeight = minHeight
         }
     }
@@ -1286,6 +1331,8 @@ internal fun EditorMainContent(
 
         if (showEffectSetPanel) {
             Spacer(modifier = Modifier.height(minHeight))
+        } else if (showRatioPanel) {
+            Spacer(modifier = Modifier.height(210.dp))
         } else {
             Box(
                 modifier = Modifier
@@ -1518,6 +1565,49 @@ internal fun EditorMainContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+            )
+
+            // Player Controls
+            EditorPlayerControls(
+                currentPositionMs = currentPositionMs,
+                durationMs = durationMs,
+                isPlaying = isPlaying,
+                onSeek = { position ->
+                    if (durationMs > 0) {
+                        onSeek((position * durationMs).toLong())
+                    }
+                },
+                onScrub = { position ->
+                    if (durationMs > 0) {
+                        onScrub((position * durationMs).toLong())
+                    }
+                },
+                onSeekStart = onSeekStart,
+                onSeekEnd = onSeekEnd,
+                onPlayPauseClick = onPlayPauseClick,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+
+    if (showRatioPanel) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(SplashBackground)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { /* consume clicks */ }
+        ) {
+            // Inline RatioPanel
+            RatioPanel(
+                selectedRatio = project?.settings?.aspectRatio ?: AspectRatio.RATIO_9_16,
+                onDismiss = onRatioPanelDismiss,
+                onConfirm = onRatioPanelConfirm,
+                onRatioSelected = onRatioSelected,
+                modifier = Modifier.fillMaxWidth()
             )
 
             // Player Controls
