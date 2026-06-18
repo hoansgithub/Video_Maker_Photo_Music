@@ -48,7 +48,7 @@ sealed class TemplatePreviewerUiState {
 
 // ============================================
 // SONG LOAD STATE - REMOVED
-// Videos now have built-in music (template-preview-videos-v2 bucket)
+// Videos now have built-in music
 // No separate music player needed
 // ============================================
 

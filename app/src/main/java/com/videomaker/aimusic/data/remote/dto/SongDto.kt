@@ -58,5 +58,7 @@ data class SongDto(
     @SerialName("updated_at")
     val updatedAt: String? = null,
     @SerialName("target_regions")
-    val targetRegions: List<String>? = null
+    val targetRegions: List<String>? = null,
+    @SerialName("beats_url")
+    val beatsUrl: String? = null
 )

@@ -4,7 +4,7 @@ package com.videomaker.aimusic.domain.model
  * ProjectSettings - Domain model for project editing settings
  *
  * BEAT-SYNC MODE ONLY:
- * - beatSyncData: Beat positions from Supabase beats-cache bucket (REQUIRED)
+ * - beatSyncData: Beat positions from song's beats_url (REQUIRED)
  * - hookStartTimeMs: Where to start music playback (best part of song)
  * - Transitions land on every 4th beat, duration = min(60000/BPM, 1000)ms
  * - Last image holds for 6 beats with audio fadeout
