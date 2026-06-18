@@ -55,7 +55,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
@@ -1285,200 +1284,190 @@ internal fun EditorMainContent(
         }
 
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .alpha(if (showEffectSetPanel) 0f else 1f)
-        ) {
-            val normalControlsInteractionModifier = if (showEffectSetPanel) {
-                Modifier.pointerInput(Unit) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            awaitPointerEvent()
-                        }
-                    }
-                }
-            } else {
-                Modifier
-            }
-
-            Column(
+        if (showEffectSetPanel) {
+            Spacer(modifier = Modifier.height(minHeight))
+        } else {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .then(normalControlsInteractionModifier),
-                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (currentState == EditorScreenState.LOADING) {
-                    val tipMessages = listOf(
-                        stringResource(R.string.editor_loading_tip_1),
-                        stringResource(R.string.editor_loading_tip_2),
-                        stringResource(R.string.editor_loading_tip_3),
-                        stringResource(R.string.editor_loading_tip_4),
-                        stringResource(R.string.editor_loading_tip_5),
-                    )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (currentState == EditorScreenState.LOADING) {
+                        val tipMessages = listOf(
+                            stringResource(R.string.editor_loading_tip_1),
+                            stringResource(R.string.editor_loading_tip_2),
+                            stringResource(R.string.editor_loading_tip_3),
+                            stringResource(R.string.editor_loading_tip_4),
+                            stringResource(R.string.editor_loading_tip_5),
+                        )
 
-                    var currentTipIndex by remember { mutableStateOf(0) }
+                        var currentTipIndex by remember { mutableStateOf(0) }
 
-                    // Rotate tips every 4 seconds
-                    LaunchedEffect(Unit) {
-                        while (true) {
-                            delay(4000)
-                            currentTipIndex = (currentTipIndex + 1) % tipMessages.size
+                        // Rotate tips every 4 seconds
+                        LaunchedEffect(Unit) {
+                            while (true) {
+                                delay(4000)
+                                currentTipIndex = (currentTipIndex + 1) % tipMessages.size
+                            }
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Image(
-                        painter = painterResource(R.drawable.img_content_edit_loading),
-                        contentDescription = null,
-                        contentScale = ContentScale.FillHeight,
-                        modifier = Modifier
-                            .height(36.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = tipMessages[currentTipIndex],
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.W400,
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 32.dp)
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Row(
-                        modifier = Modifier
-                            .border(1.dp, Color.White.copy(0.08f), RoundedCornerShape(120.dp))
-                            .padding(vertical = 6.dp, horizontal = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_outline_info),
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Image(
+                            painter = painterResource(R.drawable.img_content_edit_loading),
                             contentDescription = null,
-                            tint = Neutral_N600,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.editor_loading_dont_close),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.W400,
-                            color = Neutral_N600,
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                } else {
-                    PlayMusicSlider(
-                        currentPositionMs = currentPositionMs,
-                        durationMs = durationMs,
-                        currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,
-                        isPlaying = isPlaying,
-                        onSeek = { position ->
-                            if (durationMs > 0) {
-                                onSeek((position * durationMs).toLong())
-                            }
-                        },
-                        onScrub = { position ->
-                            if (durationMs > 0) {
-                                onScrub((position * durationMs).toLong())
-                            }
-                        },
-                        onSeekStart = onSeekStart,
-                        onSeekEnd = onSeekEnd,
-                        onPlayPauseClick = onPlayPauseClick,
-                    )
-
-                    // Music Section - song info and player
-                    Row(
-                        modifier = Modifier
-                            .padding(horizontal = 12.dp)
-                            .fillMaxWidth()
-                            .shadow(
-                                elevation = 16.dp,            // approximates the 32px blur radius
-                                shape = RoundedCornerShape(20.dp),
-                                ambientColor = Color(0x3D000000),
-                                spotColor = Color(0x3D000000),
-                                clip = false
-                            )
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Color(0xFF575757).copy(0.4f))
-                            .border(1.dp, Color.White.copy(0.4f), RoundedCornerShape(20.dp))
-                            .clickable(onClick = onMusicSelectorClick)
-                            .padding(vertical = 8.dp, horizontal = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Album cover thumbnail
-                        AppAsyncImage(
-                            imageUrl = project?.settings?.primaryAudioNode?.coverUrl ?: "",
-                            contentDescription = project?.settings?.primaryAudioNode?.songName
-                                ?: stringResource(R.string.editor_no_music_selected),
-                            contentScale = ContentScale.Crop,
+                            contentScale = ContentScale.FillHeight,
                             modifier = Modifier
-                                .size(64.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .height(36.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = tipMessages[currentTipIndex],
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.W400,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Row(
+                            modifier = Modifier
+                                .border(1.dp, Color.White.copy(0.08f), RoundedCornerShape(120.dp))
+                                .padding(vertical = 6.dp, horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_outline_info),
+                                contentDescription = null,
+                                tint = Neutral_N600,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = stringResource(R.string.editor_loading_dont_close),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.W400,
+                                color = Neutral_N600,
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                    } else {
+                        PlayMusicSlider(
+                            currentPositionMs = currentPositionMs,
+                            durationMs = durationMs,
+                            currentPosition = if (durationMs > 0) currentPositionMs / durationMs.toFloat() else 0f,
+                            isPlaying = isPlaying,
+                            onSeek = { position ->
+                                if (durationMs > 0) {
+                                    onSeek((position * durationMs).toLong())
+                                }
+                            },
+                            onScrub = { position ->
+                                if (durationMs > 0) {
+                                    onScrub((position * durationMs).toLong())
+                                }
+                            },
+                            onSeekStart = onSeekStart,
+                            onSeekEnd = onSeekEnd,
+                            onPlayPauseClick = onPlayPauseClick,
                         )
 
-                        Spacer(modifier = Modifier.width(10.dp))
-
-                        // Song name + artist
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = project?.settings?.primaryAudioNode?.songName
-                                    ?: stringResource(R.string.editor_no_music_selected),
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.W500,
-                                color = TextPrimary,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Spacer(Modifier.height(2.dp))
-                            val songArtist = project?.settings?.primaryAudioNode?.songArtist
-                            if (!songArtist.isNullOrBlank()) {
-                                Text(
-                                    text = songArtist,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.W400,
-                                    color = TextPrimary,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                        // Music Section - song info and player
+                        Row(
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp)
+                                .fillMaxWidth()
+                                .shadow(
+                                    elevation = 16.dp,            // approximates the 32px blur radius
+                                    shape = RoundedCornerShape(20.dp),
+                                    ambientColor = Color(0x3D000000),
+                                    spotColor = Color(0x3D000000),
+                                    clip = false
                                 )
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color(0xFF575757).copy(0.4f))
+                                .border(1.dp, Color.White.copy(0.4f), RoundedCornerShape(20.dp))
+                                .clickable(onClick = onMusicSelectorClick)
+                                .padding(vertical = 8.dp, horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Album cover thumbnail
+                            AppAsyncImage(
+                                imageUrl = project?.settings?.primaryAudioNode?.coverUrl ?: "",
+                                contentDescription = project?.settings?.primaryAudioNode?.songName
+                                    ?: stringResource(R.string.editor_no_music_selected),
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                            )
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            // Song name + artist
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = project?.settings?.primaryAudioNode?.songName
+                                        ?: stringResource(R.string.editor_no_music_selected),
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.W500,
+                                    color = TextPrimary,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                val songArtist = project?.settings?.primaryAudioNode?.songArtist
+                                if (!songArtist.isNullOrBlank()) {
+                                    Text(
+                                        text = songArtist,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.W400,
+                                        color = TextPrimary,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            // Chevron arrow
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = TextPrimary,
+                                modifier = Modifier.size(32.dp)
+                            )
                         }
 
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                        // Chevron arrow
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            tint = TextPrimary,
-                            modifier = Modifier.size(32.dp)
+                        // Separator
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(Color.White.copy(alpha = 0.1f))
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Settings Tab Bar - Images, Effect, Ratio, Volume (horizontally scrollable)
+                        val hasMusic = project?.settings?.primaryAudioNode != null
+                        SettingsTabBar(
+                            showMusicControls = hasMusic,
+                            onImagesClick = onImagesClick,
+                            onEffectClick = onEffectClick,
+                            onRatioClick = onRatioClick,
+                            onVolumeClick = onVolumeClick,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Separator
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(Color.White.copy(alpha = 0.1f))
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    // Settings Tab Bar - Images, Effect, Ratio, Volume (horizontally scrollable)
-                    val hasMusic = project?.settings?.primaryAudioNode != null
-                    SettingsTabBar(
-                        showMusicControls = hasMusic,
-                        onImagesClick = onImagesClick,
-                        onEffectClick = onEffectClick,
-                        onRatioClick = onRatioClick,
-                        onVolumeClick = onVolumeClick,
-                        modifier = Modifier.fillMaxWidth()
-                    )
                 }
             }
         }
