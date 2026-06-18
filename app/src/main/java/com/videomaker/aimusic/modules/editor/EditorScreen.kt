@@ -551,9 +551,11 @@ fun EditorScreen(
                             effectName = state.effectSetName
                         )
                     }
-                    // Revert to the effect set that was active before opening the panel
-                    viewModel.updateEffectSet(effectSetIdBeforePanel)
-                    effectSetViewModel.setSelectedEffectSetId(effectSetIdBeforePanel)
+                    // Only revert if the effect actually changed during preview
+                    if (state?.displaySettings?.effectSetId != effectSetIdBeforePanel) {
+                        viewModel.updateEffectSet(effectSetIdBeforePanel)
+                        effectSetViewModel.setSelectedEffectSetId(effectSetIdBeforePanel)
+                    }
                     showEffectSetSheet = false
                 },
                 onEffectPanelConfirm = {
