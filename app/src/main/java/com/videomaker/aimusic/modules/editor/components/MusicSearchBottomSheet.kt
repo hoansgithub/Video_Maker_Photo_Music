@@ -1055,6 +1055,8 @@ internal fun MusicSearchBottomSheet(
                 }
             }
         }  // End Column
+        // Ads loading overlay - covers entire bottom sheet area (inside same window)
+        AdsLoadingOverlay()
     }  // End Dialog
 
     // Handle rewarded ad presentation
