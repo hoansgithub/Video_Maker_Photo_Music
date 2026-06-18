@@ -39,6 +39,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -66,7 +67,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -97,7 +97,7 @@ import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.analytics.trackSongImpressionAndMark
 import com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager
 import com.videomaker.aimusic.core.constants.AdPlacement
-import com.videomaker.aimusic.core.storage.UnlockedSongsManager
+import com.videomaker.aimusic.core.storage.SessionUnlockedSongs
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.SongGenre
@@ -193,9 +193,7 @@ internal fun MusicSearchBottomSheet(
 
     val dimens = AppDimens.current
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     val audioCache: AudioPreviewCache = koinInject()
-    val unlockedSongsManager: UnlockedSongsManager = koinInject()
     val adsLoaderService: AdsLoaderService = koinInject()
     val adClickDetector: AdClickDetector = koinInject()
     val sessionManager: MusicPlaybackSessionManager = koinInject()
@@ -215,16 +213,30 @@ internal fun MusicSearchBottomSheet(
         mutableStateOf(AnalyticsEvent.Value.Location.VIDEO_EDITOR_RCM)
     }
 
+    // App-session-scoped unlock cache: a premium song unlocked by watching the rewarded ad
+    // stays unlocked for the lifetime of the app process (survives closing/reopening this
+    // sheet) but is NOT persisted — it resets on app restart. See [SessionUnlockedSongs].
+    val sessionUnlockedSongIds by SessionUnlockedSongs.unlockedIds.collectAsStateWithLifecycle()
+
     // Helper function to check if song is locked
     fun isSongLocked(song: MusicSong): Boolean {
-        return song.isPremium && !unlockedSongsManager.isUnlocked(song.id)
+        return song.isPremium && !sessionUnlockedSongIds.contains(song.id)
     }
 
-    // Resolve a song by id across results / suggested / the editor's current (initial) song.
+    // Cache of songs the user has actually previewed/selected. Needed because the bottom
+    // player must keep showing the chosen song even after the underlying list changes —
+    // e.g. selecting a song from search Results then clearing the query returns the Idle
+    // suggested list, which may not contain that song. Without this cache resolveSong()
+    // would fail and fall back to initialSong (the video's current song).
+    val selectedSongCache = remember { mutableStateMapOf<Long, MusicSong>() }
+
+    // Resolve a song by id across results / suggested / the selection cache / the editor's
+    // current (initial) song.
     fun resolveSong(id: Long?): MusicSong? {
         if (id == null) return null
         return (uiState as? SongSearchUiState.Results)?.songs?.find { it.id == id }
             ?: suggestedSongs.find { it.id == id }
+            ?: selectedSongCache[id]
             ?: initialSong?.takeIf { it.id == id }
     }
 
@@ -251,6 +263,7 @@ internal fun MusicSearchBottomSheet(
             shouldPresentAd = true
         } else {
             // Song is unlocked or free - directly select
+            viewModel.onClearQuery()
             MusicPreviewManager.clearPreviewState()
             onSongSelected(song, selectionStartMs)
             Analytics.trackSongSelect(
@@ -264,21 +277,21 @@ internal fun MusicSearchBottomSheet(
 
     fun onRewardEarned() {
         val song = pendingSongToUnlock ?: return
-        coroutineScope.launch {
-            // Reward earned → unlock the song, then APPLY THE PREVIEW (start it playing in
-            // the picker). We intentionally stay in the sheet so the user can still adjust
-            // the trim and confirm afterwards without watching a second ad.
-            unlockedSongsManager.unlockSong(song.id)
-            pendingSongToUnlock = null
-            shouldPresentAd = false
-            Analytics.trackSongPreview(
-                songId = song.id.toString(),
-                songName = song.name,
-                location = selectedSongLocation,
-                isPremium = song.isPremium
-            )
-            MusicPreviewManager.togglePreview(song.id)
-        }
+        // Reward earned → unlock the song FOR THIS APP SESSION, then APPLY THE PREVIEW
+        // (start it playing in the picker). We stay in the sheet so the user can still
+        // adjust the trim and confirm without watching a second ad. The unlock is not
+        // persisted — it resets only on app restart, not when the sheet closes.
+        SessionUnlockedSongs.unlock(song.id)
+        pendingSongToUnlock = null
+        shouldPresentAd = false
+        selectedSongCache[song.id] = song
+        Analytics.trackSongPreview(
+            songId = song.id.toString(),
+            songName = song.name,
+            location = selectedSongLocation,
+            isPremium = song.isPremium
+        )
+        MusicPreviewManager.togglePreview(song.id)
     }
 
     fun onAdFailed() {
@@ -477,6 +490,7 @@ internal fun MusicSearchBottomSheet(
 
     Dialog(
         onDismissRequest = {
+            viewModel.onClearQuery()
             MusicPreviewManager.clearPreviewState()
             onDismiss()
         },
@@ -512,6 +526,7 @@ internal fun MusicSearchBottomSheet(
                 shouldPresentAd = true
             } else {
                 // Free / already-unlocked song → preview immediately.
+                selectedSongCache[song.id] = song
                 Analytics.trackSongPreview(
                     songId = song.id.toString(),
                     songName = song.name,
@@ -553,6 +568,7 @@ internal fun MusicSearchBottomSheet(
                         .align(Alignment.CenterStart)
                         .size(28.dp)
                         .clickableSingle {
+                            viewModel.onClearQuery()
                             MusicPreviewManager.clearPreviewState()
                             onDismiss()
                         }
@@ -765,7 +781,7 @@ internal fun MusicSearchBottomSheet(
                                                 coverUrl = song.coverUrl,
                                                 isPlaying = song.id == previewingSongId,
                                                 isSelected = song.id == selectedForConfirmId,
-                                                isShowAD = song.isPremium,
+                                                isShowAD = isSongLocked(song),
                                                 onSongClick = {
                                                     onSongPreview(
                                                         song,
@@ -897,7 +913,7 @@ internal fun MusicSearchBottomSheet(
                                                     coverUrl = song.coverUrl,
                                                     isPlaying = song.id == previewingSongId,
                                                     isSelected = song.id == selectedForConfirmId,
-                                                    isShowAD = song.isPremium,
+                                                    isShowAD = isSongLocked(song),
                                                     onSongClick = {
                                                         onSongPreview(
                                                             song,
