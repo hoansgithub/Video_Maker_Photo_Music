@@ -180,7 +180,6 @@ fun EditorScreen(
     var showRatioSheet by remember { mutableStateOf(false) }
     var showEffectSetSheet by remember { mutableStateOf(false) }
     var effectSetIdBeforePanel by remember { mutableStateOf<String?>(null) }
-    var effectPanelConfirmed by remember { mutableStateOf(false) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
     var showImagesSheet by remember { mutableStateOf(false) }
@@ -552,33 +551,35 @@ fun EditorScreen(
                             effectName = state.effectSetName
                         )
                     }
-                    if (!effectPanelConfirmed) {
-                        // Revert to the effect set that was active before opening the panel
-                        viewModel.updateEffectSet(effectSetIdBeforePanel)
-                        effectSetViewModel.setSelectedEffectSetId(effectSetIdBeforePanel)
-                    }
-                    effectPanelConfirmed = false
+                    // Revert to the effect set that was active before opening the panel
+                    viewModel.updateEffectSet(effectSetIdBeforePanel)
+                    effectSetViewModel.setSelectedEffectSetId(effectSetIdBeforePanel)
                     showEffectSetSheet = false
                 },
                 onEffectPanelConfirm = {
-                    // Effect is already applied via preview — mark as confirmed so dismiss won't revert
-                    effectPanelConfirmed = true
+                    // Effect is already applied via preview — just track and close
                     val selectedId = effectSetViewModel.activeEffectSetId.value
-                    if (selectedId != null) {
-                        val state = currentState()
-                        if (effectSetIdBeforePanel != selectedId) {
-                            val effectSet = (effectSetViewModel.uiState.value as? EffectSetUiState.Success)
-                                ?.effectSets?.find { it.id == selectedId }
-                            if (effectSet != null) {
-                                Analytics.trackEffectSelect(
-                                    videoId = state?.project?.id ?: "",
-                                    effectId = effectSet.id,
-                                    effectName = effectSet.name,
-                                    isPremium = effectSet.isPremium
-                                )
-                            }
+                    val state = currentState()
+                    if (state != null) {
+                        Analytics.trackEffectClose(
+                            videoId = state.project.id,
+                            effectId = state.displaySettings.effectSetId,
+                            effectName = state.effectSetName
+                        )
+                    }
+                    if (selectedId != null && effectSetIdBeforePanel != selectedId) {
+                        val effectSet = (effectSetViewModel.uiState.value as? EffectSetUiState.Success)
+                            ?.effectSets?.find { it.id == selectedId }
+                        if (effectSet != null) {
+                            Analytics.trackEffectSelect(
+                                videoId = state?.project?.id ?: "",
+                                effectId = effectSet.id,
+                                effectName = effectSet.name,
+                                isPremium = effectSet.isPremium
+                            )
                         }
                     }
+                    showEffectSetSheet = false
                 },
                 onEffectSetSelected = { effectSet ->
                     viewModel.updateEffectSet(effectSet.id)
