@@ -3,6 +3,8 @@ package com.videomaker.aimusic.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,16 +22,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
@@ -153,14 +160,22 @@ fun QualityPickerV2(
     selectedQuality: VideoQuality,
     onQualityChange: (VideoQuality) -> Unit,
     isQualityUnlocked: Boolean = true,
+    isAdTypeInterstitial: Boolean = false,
     onMenuOpen: () -> Unit = {},
 ) {
     var showQualityMenu by remember { mutableStateOf(false) }
+
+    // Measure anchor (button) and menu widths so the dropdown can be right-aligned
+    // under the button instead of the default start-alignment (which pushes it right).
+    val density = LocalDensity.current
+    var buttonWidthPx by remember { mutableIntStateOf(0) }
+    var menuWidthPx by remember { mutableIntStateOf(0) }
 
     Box {
         // Quality button
         Row(
             modifier = Modifier
+                .onSizeChanged { buttonWidthPx = it.width }
                 .clickableSingle {
                     onMenuOpen()
                     showQualityMenu = true
@@ -169,8 +184,9 @@ fun QualityPickerV2(
             horizontalArrangement = Arrangement.spacedBy(2.5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // [AD] badge for locked qualities
-            if (!isQualityUnlocked) {
+            // [AD] badge for locked qualities — only when the unlock ad type is NOT
+            // interstitial (interstitial shows on export anyway; badge is for rewarded unlocks)
+            if (!isQualityUnlocked && !isAdTypeInterstitial) {
                 AdBadge(
                     style = AdBadgeStyle.Small(
                         textColor = Neutral_N600,
@@ -193,44 +209,53 @@ fun QualityPickerV2(
             )
         }
 
-        // Quality dropdown menu
+        // Quality dropdown menu — right-aligned under the button with an 8.dp gap.
+        // offset.x is negative (menu is wider than the button) so its right edge lines
+        // up with the button's right edge; offset.y adds the vertical spacing.
+        val menuOffsetX = with(density) { (buttonWidthPx - menuWidthPx).toDp() }
         DropdownMenu(
             expanded = showQualityMenu,
-            onDismissRequest = { showQualityMenu = false }
+            onDismissRequest = { showQualityMenu = false },
+            offset = DpOffset(x = menuOffsetX, y = 8.dp)
         ) {
-            VideoQuality.entries.forEach { quality ->
-                DropdownMenuItem(
-                    text = {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = quality.displayName,
-                                fontWeight = if (quality == selectedQuality) {
-                                    FontWeight.Bold
-                                } else {
-                                    FontWeight.Normal
-                                },
-                                textAlign = TextAlign.End
-                            )
-                        }
-                    },
-                    onClick = {
-                        onQualityChange(quality)
-                        showQualityMenu = false
-                    },
-                    leadingIcon = if (quality == selectedQuality) {
-                        {
+            Column(
+                modifier = Modifier
+                    .width(IntrinsicSize.Max)
+                    .onSizeChanged { menuWidthPx = it.width }
+            ) {
+                VideoQuality.entries.forEach { quality ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickableSingle{
+                                onQualityChange(quality)
+                                showQualityMenu = false
+                            }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (quality == selectedQuality) {
                             Icon(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary
                             )
+                            Spacer(Modifier.width(8.dp))
                         }
-                    } else null
-                )
+
+                        Text(
+                            text = quality.displayName,
+                            fontWeight = if (quality == selectedQuality) {
+                                FontWeight.Bold
+                            } else {
+                                FontWeight.Normal
+                            },
+                            textAlign = TextAlign.End
+                        )
+                    }
+
+                }
             }
         }
     }

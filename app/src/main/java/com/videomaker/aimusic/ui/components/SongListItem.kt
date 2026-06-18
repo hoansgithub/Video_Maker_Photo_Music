@@ -206,7 +206,7 @@ internal fun PlayingAnimationBars(
     containerSize: androidx.compose.ui.unit.Dp = 24.dp
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.size(containerSize)
     ) {

@@ -646,6 +646,7 @@ fun EditorScreen(
                                     successState.isMusicCached &&
                                     !successState.isCachingMusic,
                             isQualityLocked = viewModel.isQualityLocked(selectedQuality),
+                            isAdTypeInterstitial = viewModel.isQualityInterstitialAd(selectedQuality),
                             onBackClick = { requestExitFromEditor() },
                             onQualityMenuOpen = {
                                 val state = currentState() ?: return@EditorTopBar
@@ -1038,6 +1039,7 @@ internal fun EditorTopBar(
     isLoading: Boolean,
     canExport: Boolean,
     isQualityLocked: Boolean,
+    isAdTypeInterstitial: Boolean,
     onBackClick: () -> Unit,
     onQualityMenuOpen: () -> Unit,
     onQualityChange: (VideoQuality) -> Unit,
@@ -1069,6 +1071,7 @@ internal fun EditorTopBar(
                 selectedQuality = selectedQuality,
                 onQualityChange = onQualityChange,
                 isQualityUnlocked = !isQualityLocked,
+                isAdTypeInterstitial = isAdTypeInterstitial,
                 onMenuOpen = onQualityMenuOpen,
             )
 

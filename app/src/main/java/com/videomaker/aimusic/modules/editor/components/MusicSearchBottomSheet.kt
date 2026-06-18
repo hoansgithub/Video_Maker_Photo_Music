@@ -609,7 +609,7 @@ internal fun MusicSearchBottomSheet(
                     ) {
                         // Search field (scrolls with the content)
                         item(key = "search_field") {
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
                             // Search field - matching SongSearchTopBar style
                             Row(

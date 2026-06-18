@@ -2223,6 +2223,15 @@ class EditorViewModel(
     }
 
     /**
+     * Whether the unlock ad type for this quality is "interstitial".
+     * Used to suppress the [AD] badge for interstitial qualities (the interstitial
+     * is shown on export anyway; the badge only makes sense for rewarded unlocks).
+     */
+    fun isQualityInterstitialAd(quality: VideoQuality): Boolean {
+        return adPlacementConfigService.getAdTypeForQuality(quality) == "interstitial"
+    }
+
+    /**
      * Handle Done button click.
      * If quality is locked, present rewarded ad.
      * If unlocked, proceed to export.
