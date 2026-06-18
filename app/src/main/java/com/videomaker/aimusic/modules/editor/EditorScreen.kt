@@ -1555,6 +1555,33 @@ internal fun EditorMainContent(
                 )
             }
 
+            // Player Controls — hidden when user swipes the panel up
+            androidx.compose.animation.AnimatedVisibility(
+                visible = currentPanelHeight <= minHeight + 30.dp,
+                enter = fadeIn() + androidx.compose.animation.expandVertically(),
+                exit = fadeOut() + androidx.compose.animation.shrinkVertically()
+            ) {
+                EditorPlayerControls(
+                    currentPositionMs = currentPositionMs,
+                    durationMs = durationMs,
+                    isPlaying = isPlaying,
+                    onSeek = { position ->
+                        if (durationMs > 0) {
+                            onSeek((position * durationMs).toLong())
+                        }
+                    },
+                    onScrub = { position ->
+                        if (durationMs > 0) {
+                            onScrub((position * durationMs).toLong())
+                        }
+                    },
+                    onSeekStart = onSeekStart,
+                    onSeekEnd = onSeekEnd,
+                    onPlayPauseClick = onPlayPauseClick,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
             // Inline EffectSetPanel
             EffectSetPanel(
                 viewModel = effectSetViewModel,
@@ -1565,27 +1592,6 @@ internal fun EditorMainContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-            )
-
-            // Player Controls
-            EditorPlayerControls(
-                currentPositionMs = currentPositionMs,
-                durationMs = durationMs,
-                isPlaying = isPlaying,
-                onSeek = { position ->
-                    if (durationMs > 0) {
-                        onSeek((position * durationMs).toLong())
-                    }
-                },
-                onScrub = { position ->
-                    if (durationMs > 0) {
-                        onScrub((position * durationMs).toLong())
-                    }
-                },
-                onSeekStart = onSeekStart,
-                onSeekEnd = onSeekEnd,
-                onPlayPauseClick = onPlayPauseClick,
-                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -1869,8 +1875,7 @@ private fun formatTime(ms: Long): String {
     val totalSeconds = ms / 1000
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
-    val hundredths = (ms % 1000) / 10
-    return String.format(java.util.Locale.US, "%d:%02d.%02d", minutes, seconds, hundredths)
+    return String.format(java.util.Locale.US, "%d:%02d", minutes, seconds)
 }
 
 // SelectRatioBottomSheet, RatioOptionCard, AspectRatioIcon, DurationBottomSheet,

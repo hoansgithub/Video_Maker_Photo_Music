@@ -412,8 +412,6 @@ private fun EffectSetCard(
             // Right-bottom indicator badge
             val showNewItem = effectSet.isNew && downloadState is DownloadState.NotDownloaded
             val showAds = effectSet.isPremium && isLocked
-            val showDownload =
-                !showAds && downloadState is DownloadState.NotDownloaded && !isLocked
 
             if (showNewItem) {
                 Image(
@@ -446,16 +444,6 @@ private fun EffectSetCard(
                 Image(
                     painter = painterResource(id = R.drawable.ic_ads),
                     contentDescription = null,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(6.dp)
-                        .size(18.dp)
-                )
-            } else if (showDownload) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_download),
-                    contentDescription = null,
-                    tint = Color.White,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(6.dp)

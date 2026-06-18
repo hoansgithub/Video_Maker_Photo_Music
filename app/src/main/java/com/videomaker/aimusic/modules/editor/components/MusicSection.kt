@@ -490,7 +490,7 @@ fun PlayMusicSlider(
             }
         )
 
-        // Running time label (format m:ss.SS) - follows the thumb while seeking
+        // Running time label (format m:ss) - follows the thumb while seeking
         Text(
             text = formatPlaybackTime(displayedMs),
             fontSize = 10.sp,
@@ -507,14 +507,13 @@ private const val SLIDER_SCRUB_THROTTLE_MS = 120L
 /** Slider keeps the dragged value until the reported position is within this fraction of the target. */
 private const val SLIDER_SEEK_SETTLE_THRESHOLD = 0.02f
 
-/** Formats a playback position in milliseconds as m:ss.SS (e.g. 0:07.42). */
+/** Formats a playback position in milliseconds as m:ss (e.g. 0:07). */
 private fun formatPlaybackTime(ms: Long): String {
     val safeMs = ms.coerceAtLeast(0L)
     val totalSeconds = safeMs / 1000
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
-    val hundredths = (safeMs % 1000) / 10
-    return String.format(java.util.Locale.US, "%d:%02d.%02d", minutes, seconds, hundredths)
+    return String.format(java.util.Locale.US, "%d:%02d", minutes, seconds)
 }
 
 @Preview(showBackground = true, backgroundColor = 0xFF1A1A1A)
