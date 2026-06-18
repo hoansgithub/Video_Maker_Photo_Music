@@ -265,11 +265,19 @@ internal fun MusicSearchBottomSheet(
     fun onRewardEarned() {
         val song = pendingSongToUnlock ?: return
         coroutineScope.launch {
+            // Reward earned → unlock the song, then APPLY THE PREVIEW (start it playing in
+            // the picker). We intentionally stay in the sheet so the user can still adjust
+            // the trim and confirm afterwards without watching a second ad.
             unlockedSongsManager.unlockSong(song.id)
             pendingSongToUnlock = null
             shouldPresentAd = false
-            MusicPreviewManager.clearPreviewState()
-            onSongSelected(song, selectionStartMs)
+            Analytics.trackSongPreview(
+                songId = song.id.toString(),
+                songName = song.name,
+                location = selectedSongLocation,
+                isPremium = song.isPremium
+            )
+            MusicPreviewManager.togglePreview(song.id)
         }
     }
 
@@ -493,15 +501,25 @@ internal fun MusicSearchBottomSheet(
                 location = location,
                 isPremium = song.isPremium
             )
-            Analytics.trackSongPreview(
-                songId = song.id.toString(),
-                songName = song.name,
-                location = location,
-                isPremium = song.isPremium
-            )
             focusManager.clearFocus()
             keyboardController?.hide()
-            MusicPreviewManager.togglePreview(song.id)
+            if (isSongLocked(song)) {
+                // Locked song → gate the preview behind a rewarded ad. Do NOT start the
+                // preview or change the selection yet: this keeps the previously selected
+                // song in the bottom player if the user cancels/backs out of the ad, and
+                // only the reward callback (onRewardEarned) will apply the preview.
+                pendingSongToUnlock = song
+                shouldPresentAd = true
+            } else {
+                // Free / already-unlocked song → preview immediately.
+                Analytics.trackSongPreview(
+                    songId = song.id.toString(),
+                    songName = song.name,
+                    location = location,
+                    isPremium = song.isPremium
+                )
+                MusicPreviewManager.togglePreview(song.id)
+            }
         }
 
         Column(
