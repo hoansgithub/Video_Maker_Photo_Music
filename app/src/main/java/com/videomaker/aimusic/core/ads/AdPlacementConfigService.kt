@@ -969,12 +969,17 @@ class AdPlacementConfigService(
             ),
             enabled = true
         )
+        // Editor loading native ad (shown while editor prepares content)
+        // Fallback ad units mirror NATIVE_EXPORT_GENERATING (ad_native_export_generating)
+        // Remote Config key: ad_native_editor_loading (overrides these fallback units)
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_EDITOR_LOADING,
             layoutName = "native_big_bait",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/1709251222",  // Primary
-                "ca-app-pub-7121075950716954/3435442033"   // Secondary
+                "ca-app-pub-7121075950716954/9046582121",  // Primary (from ad_native_export_generating)
+                "ca-app-pub-7121075950716954/1359663791"   // Secondary (from ad_native_export_generating)
             ),
             enabled = true
         )
