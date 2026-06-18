@@ -283,11 +283,16 @@ fun LanguageSelectionScreen(
                                     text = stringResource(R.string.done),
                                     onClick = {
                                         onContinue.invoke()
-                                        selectedLanguage?.let {
+                                        selectedLanguage?.let { lang ->
+                                            val resolvedLang = if (lang == LanguageManager.LANGUAGE_SYSTEM) {
+                                                languageManager.getDeviceLanguage()
+                                            } else {
+                                                lang
+                                            }
                                             Analytics.track(
                                                 name = AnalyticsEvent.LANGUAGE_NEXT,
                                                 params = mapOf(
-                                                    AnalyticsEvent.Param.LANGUAGE to it
+                                                    AnalyticsEvent.Param.LANGUAGE to resolvedLang
                                                 )
                                             )
                                         }
@@ -383,11 +388,16 @@ fun LanguageSelectionScreen(
                                 color = Primary,
                                 onClick = {
                                     onContinue.invoke()
-                                    selectedLanguage?.let {
+                                    selectedLanguage?.let { lang ->
+                                        val resolvedLang = if (lang == LanguageManager.LANGUAGE_SYSTEM) {
+                                            languageManager.getDeviceLanguage()
+                                        } else {
+                                            lang
+                                        }
                                         Analytics.track(
                                             name = AnalyticsEvent.LANGUAGE_NEXT,
                                             params = mapOf(
-                                                AnalyticsEvent.Param.LANGUAGE to it
+                                                AnalyticsEvent.Param.LANGUAGE to resolvedLang
                                             )
                                         )
                                     }

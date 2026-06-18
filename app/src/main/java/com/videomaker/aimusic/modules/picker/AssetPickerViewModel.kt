@@ -1076,10 +1076,16 @@ class AssetPickerViewModel(
      * Navigate back
      */
     fun navigateBack() {
-        // Check if exit ad is ready (non-blocking)
-        val isAdReady = adsLoaderService.isInterstitialReady(AdPlacement.INTERSTITIAL_ASSET_PICKER_EXIT)
+        // In editing mode, skip exit ad — just pop back to the editor.
+        // The exit ad's onShown + action both call onNavigateBack(), which would
+        // double-pop the backstack (picker + editor) and land on Home.
+        val isAdReady = if (isEditingMode) {
+            false
+        } else {
+            adsLoaderService.isInterstitialReady(AdPlacement.INTERSTITIAL_ASSET_PICKER_EXIT)
+        }
 
-        android.util.Log.d("AssetPickerVM", "🔙 navigateBack - Ad ready: $isAdReady")
+        android.util.Log.d("AssetPickerVM", "🔙 navigateBack - Ad ready: $isAdReady, editMode: $isEditingMode")
 
         // Send navigation event with ad status (Channel - one-time event, no replay)
         // Screen will show ad if ready, otherwise navigate immediately
