@@ -17,7 +17,7 @@ Native Ad Layout: Fullscreen Bait
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/foundation_black">
+    android:background="#1E1E1E">
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -39,6 +39,21 @@ Native Ad Layout: Fullscreen Bait
             android:layout_margin="8dp"
             android:minWidth="15dp"
             android:minHeight="15dp" />
+
+        <!-- Ad badge (required by AdMob policy) -->
+        <TextView
+            android:id="@+id/ad_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:layout_margin="8dp"
+            android:text="Ad"
+            android:textSize="9sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:background="@drawable/bg_ad_badge"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="2dp" />
 
         <!-- Top overlay card (headline + body + ad badge) -->
         <LinearLayout
