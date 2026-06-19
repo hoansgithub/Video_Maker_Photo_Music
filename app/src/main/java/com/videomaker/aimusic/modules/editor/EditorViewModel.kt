@@ -294,6 +294,31 @@ class EditorViewModel(
                 android.util.Log.e("EditorViewModel", "❌ After-prepare ad preload exception: ${e.message}", e)
             }
         }
+
+        // Preload quality-unlock interstitial if remote config routes to interstitial type.
+        // Non-blocking background load — if not ready when Done is tapped, we skip the ad.
+        if (adPlacementConfigService.getAdTypeForQuality(com.videomaker.aimusic.domain.model.VideoQuality.HD_720) == "interstitial" ||
+            adPlacementConfigService.getAdTypeForQuality(com.videomaker.aimusic.domain.model.VideoQuality.FHD_1080) == "interstitial") {
+            viewModelScope.launch {
+                android.util.Log.d("EditorViewModel", "🎬 Preloading quality-unlock interstitial...")
+                runCatching {
+                    com.videomaker.aimusic.core.ads.InterstitialAdHelperExt.preloadInterstitial(
+                        adsLoaderService = adsLoaderService,
+                        placement = com.videomaker.aimusic.core.constants.AdPlacement.INTERSTITIAL_UNLOCK_QUALITY,
+                        loadTimeoutMillis = null,
+                        showLoadingOverlay = false
+                    )
+                }.onSuccess { success ->
+                    if (success) {
+                        android.util.Log.d("EditorViewModel", "✅ Quality-unlock interstitial preload SUCCESS")
+                    } else {
+                        android.util.Log.w("EditorViewModel", "⚠️ Quality-unlock interstitial preload FAILED")
+                    }
+                }.onFailure { e ->
+                    android.util.Log.e("EditorViewModel", "❌ Quality-unlock interstitial preload exception: ${e.message}", e)
+                }
+            }
+        }
     }
 
     /**

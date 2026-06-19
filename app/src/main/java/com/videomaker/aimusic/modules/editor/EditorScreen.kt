@@ -351,13 +351,16 @@ fun EditorScreen(
                 )
 
                 is EditorNavigationEvent.RequestQualityInterstitial -> {
-                    if (activity != null) {
+                    val currentActivity = activity
+                    if (currentActivity != null &&
+                        adsLoaderService.isInterstitialReady(AdPlacement.INTERSTITIAL_UNLOCK_QUALITY)
+                    ) {
+                        // Ad was preloaded on editor launch and is ready — show it
                         InterstitialAdHelperExt.showInterstitial(
                             adsLoaderService = adsLoaderService,
-                            activity = activity,
+                            activity = currentActivity,
                             placement = AdPlacement.INTERSTITIAL_UNLOCK_QUALITY,
                             action = {
-                                // Called after user closes the ad or ad fails to show
                                 android.util.Log.d(
                                     "EditorScreen",
                                     "✅ Quality interstitial closed - proceeding to export"
@@ -365,11 +368,12 @@ fun EditorScreen(
                                 viewModel.onQualityInterstitialClosed()
                             },
                             bypassFrequencyCap = true,
-                            loadTimeoutMillis = 30_000L, // 30 second timeout (matches rewarded ad)
-                            showLoadingOverlay = true // Show loading indicator while ad loads
+                            loadTimeoutMillis = 0L,
+                            showLoadingOverlay = false
                         )
                     } else {
-                        // activity null (rare) — unlock for free and proceed
+                        // Ad not ready (still loading or failed) — skip and proceed to export
+                        android.util.Log.d("EditorScreen", "⏭️ Quality interstitial not ready - skipping")
                         viewModel.onQualityInterstitialClosed()
                     }
                 }
